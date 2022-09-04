@@ -1,0 +1,57 @@
+name: reboot_launcher
+description: Launcher for project reboot
+
+publish_to: 'none'
+
+environment:
+  sdk: ">=2.17.6 <3.0.5"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  bitsdojo_window: ^0.1.2
+  fluent_ui: ^3.12.0
+  system_theme: ^2.0.0
+  http: ^0.13.5
+  html: ^0.15.0
+  skeleton_loader: ^2.0.0+4
+  shared_preferences: ^2.0.15
+  flutter_desktop_folder_picker: ^0.0.1
+  context_menus: ^1.0.1
+  process_run: ^0.12.3+2
+  url_launcher: ^6.1.5
+  archive: ^3.3.1
+  win32_suspend_process: ^1.0.0
+  version: ^3.0.2
+  unrar_file: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.1
+  msix: ^3.6.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/
+    - assets/binaries/
+    - assets/images/
+
+msix_config:
+  display_name: Reboot Launcher
+  app_installer:
+    publish_folder_path: ./dist
+    hours_between_update_checks: 0
+    automatic_background_task: false
+    update_blocks_activation: true
+    show_prompt: true
+    force_update_from_any_version: false
+  publisher_display_name: Reboot
+  publisher: it.auties.reboot
+  msix_version: 2.0.0.0
+  logo_path: ./assets/icons/fortnite.ico
+  architecture: x64
+  capabilities: "internetClient"
