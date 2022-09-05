@@ -25,6 +25,7 @@ dependencies:
   win32_suspend_process: ^1.0.0
   version: ^3.0.2
   unrar_file: ^1.1.0
+  crypto: ^3.0.2
 
 dev_dependencies:
   flutter_test:

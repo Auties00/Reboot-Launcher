@@ -11,6 +11,7 @@ import 'package:reboot_launcher/src/widget/window_buttons.dart';
 
 import '../model/fortnite_version.dart';
 import '../util/generic_controller.dart';
+import '../util/reboot.dart';
 import '../util/version_controller.dart';
 
 class HomePage extends StatefulWidget {
@@ -31,9 +32,15 @@ class _HomePageState extends State<HomePage> {
   late final GenericController<Process?> _serverController;
   late final GenericController<bool> _startedServerController;
   late final GenericController<bool> _startedGameController;
-
+  late Future _future;
   bool _loaded = false;
   int _index = 0;
+
+  @override
+  void initState(){
+    _future = _load();
+    super.initState();
+  }
 
   Future<bool> _load() async {
     if (_loaded) {
@@ -41,6 +48,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     var preferences = await SharedPreferences.getInstance();
+    await downloadRebootDll(preferences);
 
     Iterable json = jsonDecode(preferences.getString("versions") ?? "[]");
     var versions =
@@ -103,7 +111,7 @@ class _HomePageState extends State<HomePage> {
           ],
           trailing: const WindowTitleBar()),
       content: FutureBuilder(
-          future: _load(),
+          future: _future,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Center(

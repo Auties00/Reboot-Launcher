@@ -164,7 +164,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     try{
-      var success = await injectDll(gameProcess.pid, await locateBinary(binary));
+      var success = await injectDll(gameProcess.pid, await locateAndCopyBinary(binary));
       if(success){
         return;
       }

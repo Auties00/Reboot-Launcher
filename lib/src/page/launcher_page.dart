@@ -52,7 +52,7 @@ class LauncherPage extends StatelessWidget {
         DeploymentSelector(
             controller: rebootController,
             onSelected: () => _streamController.add(null),
-            enabled: false
+            enabled: true
         ),
         LaunchButton(
             usernameController: usernameController,

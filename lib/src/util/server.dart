@@ -7,20 +7,30 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/util/locate_binary.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+final serverLocation = Directory("${Platform.environment["UserProfile"]}/.lawin");
 const String _serverUrl =
     "https://github.com/Lawin0129/LawinServer/archive/refs/heads/main.zip";
 const String _nodeUrl =
     "https://nodejs.org/dist/v16.16.0/node-v16.16.0-x64.msi";
 
-Future<void> downloadServer(Directory output) async {
+Future<void> downloadServer() async {
   var response = await http.get(Uri.parse(_serverUrl));
   var tempZip = File("${Platform.environment["Temp"]}/lawin.zip")
     ..writeAsBytesSync(response.bodyBytes);
-  await extractFileToDisk(tempZip.path, output.parent.path);
-  var result = Directory("${output.parent.path}/LawinServer-main");
-  result.renameSync("${output.parent.path}/${path.basename(output.path)}");
+  await extractFileToDisk(tempZip.path, serverLocation.parent.path);
+  var result = Directory("${serverLocation.parent.path}/LawinServer-main");
+  await result.rename("${serverLocation.parent.path}/${path.basename(serverLocation.path)}");
+  await updateEngineConfig();
+}
+
+Future<void> updateEngineConfig() async {
+  var engine = File("${serverLocation.path}/CloudStorage/DefaultEngine.ini");
+  await engine.writeAsString(await locateBinary("DefaultEngine.ini").readAsString());
+  var preferences = await SharedPreferences.getInstance();
+  preferences.setBool("config_update", true);
 }
 
 Future<File> downloadNode() async {
@@ -34,7 +44,7 @@ Future<File> downloadNode() async {
 }
 
 Future<bool> isPortFree() async {
-  var process = await Process.run(await locateBinary("port.bat"), []);
+  var process = await Process.run(await locateAndCopyBinary("port.bat"), []);
   return !process.outText.contains(" LISTENING "); // Goofy way, best we got
 }
 
@@ -87,27 +97,24 @@ Future<bool> _pingAddress(String host, String port) async {
       && process.outText.contains("TcpTestSucceeded : True");
 }
 
-Future<Process?> startEmbedded(BuildContext context, bool running, bool askFreePort) async {
+Future<Process?> startEmbedded(BuildContext context, bool running, bool needsFreePort) async {
   if (running) {
-    await Process.run(await locateBinary("release.bat"), []);
+    await Process.run(await locateAndCopyBinary("release.bat"), []);
     return null;
   }
 
   var free = await isPortFree();
-  if (!free) {
-    if(askFreePort) {
-      var shouldKill = await _showAlreadyBindPortWarning(context);
-      if (!shouldKill) {
-        return null;
-      }
+  if (!free && needsFreePort) {
+    var shouldKill = await _showAlreadyBindPortWarning(context);
+    if (!shouldKill) {
+      return null;
     }
 
-    await Process.run(await locateBinary("release.bat"), []);
+    await Process.run(await locateAndCopyBinary("release.bat"), []);
   }
 
-  var serverLocation = Directory("${Platform.environment["UserProfile"]}/.lawin");
   if (!(await serverLocation.exists())) {
-    await downloadServer(serverLocation);
+    await downloadServer();
   }
 
   var serverRunner = File("${serverLocation.path}/start.bat");
@@ -141,7 +148,7 @@ Future<Process?> startEmbedded(BuildContext context, bool running, bool askFreeP
     showSnackbar(
         context,
         const Snackbar(
-            content: Text("Start the server when node is installed"))); // Using a infobr could be nicer
+            content: Text("Start the server when node is installed"))); // Using a infobar could be nicer
     return null;
   }
 
@@ -149,6 +156,11 @@ Future<Process?> startEmbedded(BuildContext context, bool running, bool askFreeP
   if (!(await nodeModules.exists())) {
     await Process.run("${serverLocation.path}/install_packages.bat", [],
         workingDirectory: serverLocation.path);
+  }
+
+  var preferences = await SharedPreferences.getInstance();
+  if(!(preferences.getBool("config_update") ?? false)){
+    await updateEngineConfig();
   }
 
   return await Process.start(serverRunner.path, [],

@@ -31,6 +31,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   late TextEditingController _nameController;
   late TextEditingController _pathController;
   late DownloadStatus _status;
+  late Future _future;
   double _downloadProgress = 0;
   String? _error;
   Process? _process;
@@ -38,6 +39,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
   @override
   void initState() {
+    _future = _fetchBuilds();
     _buildController = GenericController(initialValue: null);
     _nameController = TextEditingController();
     _pathController = TextEditingController();
@@ -51,7 +53,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
     _pathController.dispose();
     _nameController.dispose();
     if (_process != null && _status == DownloadStatus.downloading) {
-      locateBinary("stop.bat")
+      locateAndCopyBinary("stop.bat")
           .then((value) => Process.runSync(value, [])); // kill doesn't work :/
       widget.onCancel();
     }
@@ -79,21 +81,20 @@ class _AddServerVersionState extends State<AddServerVersion> {
               style: ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
               child: const Text('Close')),
           FilledButton(
-              onPressed: () => _startDownload(context),
-              child: const Text('Download'),
+            onPressed: () => _startDownload(context),
+            child: const Text('Download'),
           )
         ];
 
       case DownloadStatus.error:
         return [
           SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-                onPressed: () => _onClose(),
-                style: ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
-                child: const Text('Close')
-            )
-          )
+              width: double.infinity,
+              child: FilledButton(
+                  onPressed: () => _onClose(),
+                  style:
+                      ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
+                  child: const Text('Close')))
         ];
       default:
         return [
@@ -122,12 +123,13 @@ class _AddServerVersionState extends State<AddServerVersion> {
     try {
       setState(() => _status = DownloadStatus.downloading);
       var build = _buildController.value!;
-      if(build.hasManifest) {
-        _process = await downloadManifestBuild(build.link, _pathController.text,
-            _onDownloadProgress);
+      if (build.hasManifest) {
+        _process = await downloadManifestBuild(
+            build.link, _pathController.text, _onDownloadProgress);
         _process!.exitCode.then((value) => _onDownloadComplete());
-      }else{
-        downloadArchiveBuild(build.link, _pathController.text, _onDownloadProgress, _onUnrar)
+      } else {
+        downloadArchiveBuild(
+                build.link, _pathController.text, _onDownloadProgress, _onUnrar)
             .then((value) => _onDownloadComplete())
             .catchError(_handleError);
       }
@@ -137,7 +139,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   }
 
   void _handleError(Object exception) {
-        var message = exception.toString();
+    var message = exception.toString();
     _onDownloadError(message.contains(":")
         ? " ${message.substring(message.indexOf(":") + 1)}"
         : message);
@@ -184,7 +186,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
   Widget _createDownloadVersionBody() {
     return FutureBuilder(
-        future: _fetchBuilds(),
+        future: _future,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Text("Cannot fetch builds: ${snapshot.error}",
@@ -199,61 +201,60 @@ class _AddServerVersionState extends State<AddServerVersion> {
             );
           }
 
-          switch (_status) {
-            case DownloadStatus.none:
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  BuildSelector(builds: _builds!, controller: _buildController),
-                  VersionNameInput(
-                    controller: _nameController,
-                    versions: widget.controller.versions,
-                  ),
-                  SelectFile(
-                      label: "Destination",
-                      placeholder: "Type the download destination",
-                      windowTitle: "Select download destination",
-                      allowNavigator: false,
-                      controller: _pathController,
-                      validator: _checkDownloadDestination),
-                ],
-              );
-            case DownloadStatus.downloading:
-              return InfoLabel(
-                label: "Downloading",
-                child: InfoLabel(
-                    label: "${_downloadProgress.round()}%",
-                    child: SizedBox(
-                        width: double.infinity,
-                        child:
-                            ProgressBar(value: _downloadProgress.toDouble()))),
-              );
-            case DownloadStatus.extracting:
-              return const InfoLabel(
-                label: "Extracting",
-                child: InfoLabel(
-                  label: "This might take a while...",
-                  child: SizedBox(
-                          width: double.infinity,
-                          child:
-                          ProgressBar()
-                  ),
-                ),
-              );
-            case DownloadStatus.done:
-              return const SizedBox(
-                  width: double.infinity,
-                  child: Text("The download was completed successfully!",
-                      textAlign: TextAlign.center));
-            case DownloadStatus.error:
-              return SizedBox(
-                  width: double.infinity,
-                  child: Text(
-                      "An exception was thrown during the download process:$_error",
-                      textAlign: TextAlign.center));
-          }
+          return _buildBody();
         });
+  }
+
+  Widget _buildBody() {
+    switch (_status) {
+      case DownloadStatus.none:
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            BuildSelector(builds: _builds!, controller: _buildController),
+            VersionNameInput(
+              controller: _nameController,
+              versions: widget.controller.versions,
+            ),
+            SelectFile(
+                label: "Destination",
+                placeholder: "Type the download destination",
+                windowTitle: "Select download destination",
+                allowNavigator: false,
+                controller: _pathController,
+                validator: _checkDownloadDestination),
+          ],
+        );
+      case DownloadStatus.downloading:
+        return InfoLabel(
+          label: "Downloading",
+          child: InfoLabel(
+              label: "${_downloadProgress.round()}%",
+              child: SizedBox(
+                  width: double.infinity,
+                  child: ProgressBar(value: _downloadProgress.toDouble()))),
+        );
+      case DownloadStatus.extracting:
+        return const InfoLabel(
+          label: "Extracting",
+          child: InfoLabel(
+            label: "This might take a while...",
+            child: SizedBox(width: double.infinity, child: ProgressBar()),
+          ),
+        );
+      case DownloadStatus.done:
+        return const SizedBox(
+            width: double.infinity,
+            child: Text("The download was completed successfully!",
+                textAlign: TextAlign.center));
+      case DownloadStatus.error:
+        return SizedBox(
+            width: double.infinity,
+            child: Text(
+                "An exception was thrown during the download process:$_error",
+                textAlign: TextAlign.center));
+    }
   }
 
   Future<bool> _fetchBuilds() async {

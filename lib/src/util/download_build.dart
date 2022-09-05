@@ -8,7 +8,7 @@ import 'package:unrar_file/unrar_file.dart';
 
 Future<Process> downloadManifestBuild(String manifestUrl, String destination,
     Function(double) onProgress) async {
-  var process = await Process.start(await locateBinary("build.exe"), [manifestUrl, destination]);
+  var process = await Process.start(await locateAndCopyBinary("build.exe"), [manifestUrl, destination]);
 
   process.errLines
       .where((message) => message.contains("%"))

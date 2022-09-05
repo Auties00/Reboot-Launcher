@@ -48,12 +48,7 @@ class _SmartInputState extends State<SmartInput> {
       return;
     }
 
-    var decoded = preferences.getString(widget.keyName);
-    if(decoded == null) {
-      return;
-    }
-
-    widget.controller.text = decoded;
+    widget.controller.text = preferences.getString(widget.keyName) ?? "";
   }
 
   TextBox _buildTextBox() {
