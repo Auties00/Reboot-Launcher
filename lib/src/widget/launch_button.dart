@@ -1,37 +1,21 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
 import 'package:process_run/shell.dart';
-import 'package:reboot_launcher/src/util/game_process_controller.dart';
-import 'package:reboot_launcher/src/util/generic_controller.dart';
+import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/util/injector.dart';
-import 'package:reboot_launcher/src/util/locate_binary.dart';
+import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
 
-import '../util/server.dart';
-import '../util/version_controller.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 
 class LaunchButton extends StatefulWidget {
-  final TextEditingController usernameController;
-  final VersionController versionController;
-  final GenericController<bool> rebootController;
-  final GenericController<bool> localController;
-  final GenericController<Process?> serverController;
-  final GameProcessController gameProcessController;
-  final GenericController<bool> startedGameController;
-  final GenericController<bool> startedServerController;
-
   const LaunchButton(
-      {Key? key,
-      required this.usernameController,
-      required this.versionController,
-      required this.rebootController,
-      required this.serverController,
-      required this.localController,
-      required this.gameProcessController,
-      required this.startedGameController,
-        required this.startedServerController})
+      {Key? key})
       : super(key: key);
 
   @override
@@ -39,6 +23,9 @@ class LaunchButton extends StatefulWidget {
 }
 
 class _LaunchButtonState extends State<LaunchButton> {
+  final GameController _gameController = Get.find<GameController>();
+  final ServerController _serverController = Get.find<ServerController>();
+
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -46,90 +33,94 @@ class _LaunchButtonState extends State<LaunchButton> {
       child: SizedBox(
         width: double.infinity,
         child: Listener(
-          child: Button(
-              onPressed: _onPressed,
-              child: Text(widget.startedGameController.value
-                  ? "Close"
-                  : "Launch")),
+          child: Obx(() => Button(
+              onPressed: () => _onPressed(context),
+              child: Text(_gameController.started.value ? "Close" : "Launch")
+          )),
         ),
       ),
     );
   }
 
-  void _onPressed() async {
-    // Set state immediately for responsive reasons
-    if (widget.usernameController.text.isEmpty) {
+  void _onPressed(BuildContext context) async {
+    if (_gameController.username.text.isEmpty) {
       showSnackbar(
           context, const Snackbar(content: Text("Please type a username")));
-      setState(() => widget.startedGameController.value = false);
+      _updateServerState(false);
       return;
     }
 
-    if (widget.versionController.selectedVersion == null) {
+    if (_gameController.selectedVersionObs.value == null) {
       showSnackbar(
           context, const Snackbar(content: Text("Please select a version")));
-      setState(() => widget.startedGameController.value = false);
+      _updateServerState(false);
       return;
     }
 
-    if (widget.startedGameController.value) {
+    if (_gameController.started.value) {
       _onStop();
       return;
     }
 
-    if (widget.serverController.value == null && widget.localController.value && await isPortFree()) {
+    _updateServerState(true);
+    if (!_serverController.started.value && _serverController.embedded.value && await isPortFree()) {
       var process = await startEmbedded(context, false, false);
-      widget.serverController.value = process;
-      widget.startedServerController.value = process != null;
+      _serverController.process = process;
+      _serverController.started(process != null);
     }
 
     _onStart();
-    setState(() => widget.startedGameController.value = true);
+  }
+
+  Future<void> _updateServerState(bool value) async {
+    if (_serverController.started.value == value) {
+      return;
+    }
+
+    _serverController.started(value);
   }
 
   Future<void> _onStart() async {
-      try{
-      var version = widget.versionController.selectedVersion!;
-
-      if(await version.launcher.exists()) {
-        widget.gameProcessController.launcherProcess =
-        await Process.start(version.launcher.path, []);
-        Win32Process(widget.gameProcessController.launcherProcess!.pid)
-            .suspend();
+    try {
+      _gameController.started(true);
+      var version = _gameController.selectedVersionObs.value!;
+      if (await version.launcher.exists()) {
+        _gameController.launcherProcess = await Process.start(version.launcher.path, []);
+        Win32Process(_gameController.launcherProcess!.pid).suspend();
       }
 
-      if(await version.eacExecutable.exists()){
-        widget.gameProcessController.eacProcess = await Process.start(version.eacExecutable.path, []);
-        Win32Process(widget.gameProcessController.eacProcess!.pid).suspend();
+      if (await version.eacExecutable.exists()) {
+        _gameController.eacProcess = await Process.start(version.eacExecutable.path, []);
+        Win32Process(_gameController.eacProcess!.pid).suspend();
       }
 
-      widget.gameProcessController.gameProcess = await Process.start(widget.versionController.selectedVersion!.executable.path, _createProcessArguments())
+      _gameController.gameProcess = await Process.start(version.executable.path, _createProcessArguments())
         ..exitCode.then((_) => _onStop())
         ..outLines.forEach(_onGameOutput);
       _injectOrShowError("cranium.dll");
-    }catch(exception){
-      setState(() => widget.startedGameController.value = false);
+    } catch (exception) {
+      _gameController.started(false);
       _onError(exception);
     }
   }
 
   void _onGameOutput(line) {
-      if (line.contains("FOnlineSubsystemGoogleCommon::Shutdown()")) {
-        _onStop();
-        return;
-      }
-
-      if (!line.contains("Game Engine Initialized")) {
-        return;
-      }
-
-      if (!widget.rebootController.value) {
-        _injectOrShowError("console.dll");
-        return;
-      }
-
-      _injectOrShowError("reboot.dll");
+    if (line.contains("FOnlineSubsystemGoogleCommon::Shutdown()")) {
+      _onStop();
+      return;
     }
+
+    if (!line.contains("Game Engine Initialized")) {
+      return;
+    }
+
+    if (!_gameController.host.value) {
+      _injectOrShowError("console.dll");
+      return;
+    }
+
+    _injectOrShowError("reboot.dll");
+  }
 
   Future<Object?> _onError(exception) {
     return showDialog(
@@ -153,24 +144,25 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   void _onStop() {
-    setState(() => widget.startedGameController.value = false);
-    widget.gameProcessController.kill();
+    _updateServerState(false);
+    _gameController.kill();
   }
 
   void _injectOrShowError(String binary) async {
-    var gameProcess = widget.gameProcessController.gameProcess;
+    var gameProcess = _gameController.gameProcess;
     if (gameProcess == null) {
       return;
     }
 
-    try{
-      var success = await injectDll(gameProcess.pid, await locateAndCopyBinary(binary));
-      if(success){
+    try {
+      var dll = await loadBinary(binary, true);
+      var success = await injectDll(gameProcess.pid, dll.path);
+      if (success) {
         return;
       }
 
       _onInjectError(binary);
-    }catch(exception){
+    } catch (exception) {
       _onInjectError(binary);
     }
   }
@@ -191,7 +183,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       "-fromfl=eac",
       "-fltoken=3db3ba5dcbd2e16703f3978d",
       "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ",
-      "-AUTH_LOGIN=${widget.usernameController.text}@projectreboot.dev",
+      "-AUTH_LOGIN=${_gameController.username.text}@projectreboot.dev",
       "-AUTH_PASSWORD=Rebooted",
       "-AUTH_TYPE=epic"
     ];

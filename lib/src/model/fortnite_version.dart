@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as path;
 
 class FortniteVersion {
   String name;
@@ -11,8 +12,11 @@ class FortniteVersion {
   FortniteVersion({required this.name, required this.location});
 
   static File findExecutable(Directory directory, String name) {
-    return File(
-        "${directory.path}/FortniteGame/Binaries/Win64/$name");
+    var home = path.basename(directory.path) == "FortniteGame"
+        ? directory
+        : directory.listSync(recursive: true).firstWhere(
+            (element) => path.basename(element.path) == "FortniteGame");
+    return File("${home.path}/Binaries/Win64/$name");
   }
 
   File get executable {

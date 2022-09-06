@@ -1,10 +1,14 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await GetStorage.init("game");
+  await GetStorage.init("server");
   SystemTheme.accentColor.load();
   doWhenWindowReady(() {
     const size = Size(600, 380);

@@ -3,14 +3,15 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:process_run/shell.dart';
-import 'package:reboot_launcher/src/util/locate_binary.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:reboot_launcher/src/controller/warning_controller.dart';
+import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-final serverLocation = Directory("${Platform.environment["UserProfile"]}/.lawin");
+final serverLocation = Directory("${Platform.environment["UserProfile"]}/.reboot_launcher/lawin");
 const String _serverUrl =
     "https://github.com/Lawin0129/LawinServer/archive/refs/heads/main.zip";
 const String _nodeUrl =
@@ -28,9 +29,8 @@ Future<void> downloadServer() async {
 
 Future<void> updateEngineConfig() async {
   var engine = File("${serverLocation.path}/CloudStorage/DefaultEngine.ini");
-  await engine.writeAsString(await locateBinary("DefaultEngine.ini").readAsString());
-  var preferences = await SharedPreferences.getInstance();
-  preferences.setBool("config_update", true);
+  var patchedEngine = await loadBinary("DefaultEngine.ini", true);
+  await engine.writeAsString(await patchedEngine.readAsString());
 }
 
 Future<File> downloadNode() async {
@@ -44,7 +44,8 @@ Future<File> downloadNode() async {
 }
 
 Future<bool> isPortFree() async {
-  var process = await Process.run(await locateAndCopyBinary("port.bat"), []);
+  var portBat = await loadBinary("port.bat", false);
+  var process = await Process.run(portBat.path, []);
   return !process.outText.contains(" LISTENING "); // Goofy way, best we got
 }
 
@@ -57,7 +58,6 @@ void checkAddress(BuildContext context, String host, String port) {
             builder: (context, snapshot) {
               if(snapshot.hasData){
                 return SizedBox(
-                    height: 32,
                     width: double.infinity,
                     child: Text(snapshot.data! ? "Valid address" : "Invalid address" , textAlign: TextAlign.center)
                 );
@@ -66,7 +66,6 @@ void checkAddress(BuildContext context, String host, String port) {
               return const InfoLabel(
                   label: "Checking address...",
                   child: SizedBox(
-                      height: 32,
                       width: double.infinity,
                       child: ProgressBar()
                   )
@@ -98,8 +97,9 @@ Future<bool> _pingAddress(String host, String port) async {
 }
 
 Future<Process?> startEmbedded(BuildContext context, bool running, bool needsFreePort) async {
+  var releaseBat = await loadBinary("release.bat", false);
   if (running) {
-    await Process.run(await locateAndCopyBinary("release.bat"), []);
+    await Process.run(releaseBat.path, []);
     return null;
   }
 
@@ -110,7 +110,7 @@ Future<Process?> startEmbedded(BuildContext context, bool running, bool needsFre
       return null;
     }
 
-    await Process.run(await locateAndCopyBinary("release.bat"), []);
+    await Process.run(releaseBat.path, []);
   }
 
   if (!(await serverLocation.exists())) {
@@ -136,7 +136,7 @@ Future<Process?> startEmbedded(BuildContext context, bool running, bool needsFre
           context,
           const Snackbar(
               content: Text(
-                  "Node installer download cancelled"
+                  "Node download cancelled"
               )
           )
       );
@@ -144,11 +144,9 @@ Future<Process?> startEmbedded(BuildContext context, bool running, bool needsFre
       return null;
     }
 
+    var controller = Get.find<WarningController>();
+    controller.warning(true);
     await launchUrl(result.uri);
-    showSnackbar(
-        context,
-        const Snackbar(
-            content: Text("Start the server when node is installed"))); // Using a infobar could be nicer
     return null;
   }
 
@@ -156,11 +154,6 @@ Future<Process?> startEmbedded(BuildContext context, bool running, bool needsFre
   if (!(await nodeModules.exists())) {
     await Process.run("${serverLocation.path}/install_packages.bat", [],
         workingDirectory: serverLocation.path);
-  }
-
-  var preferences = await SharedPreferences.getInstance();
-  if(!(preferences.getBool("config_update") ?? false)){
-    await updateEngineConfig();
   }
 
   return await Process.start(serverRunner.path, [],
@@ -193,7 +186,6 @@ Future<File?> _showNodeInfo(BuildContext context) async {
               return const InfoLabel(
                   label: "Downloading node installer...",
                   child: SizedBox(
-                      height: 32,
                       width: double.infinity,
                       child: ProgressBar()
                   )
@@ -245,7 +237,6 @@ Future<bool> _showMissingNodeWarning(BuildContext context) async {
       context: context,
       builder: (context) => ContentDialog(
         content: const SizedBox(
-            height: 32,
             width: double.infinity,
             child: Text("Node is required to run the embedded server",
                 textAlign: TextAlign.center)),

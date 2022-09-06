@@ -1,24 +1,21 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:async/async.dart';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:reboot_launcher/src/util/download_build.dart';
-import 'package:reboot_launcher/src/util/locate_binary.dart';
-import 'package:reboot_launcher/src/util/version_controller.dart';
+import 'package:get/get.dart';
+import 'package:reboot_launcher/src/controller/build_controller.dart';
+import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/util/build.dart';
+import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/widget/select_file.dart';
 import 'package:reboot_launcher/src/widget/version_name_input.dart';
 
-import '../model/fortnite_build.dart';
-import '../model/fortnite_version.dart';
-import '../util/builds_scraper.dart';
-import '../util/generic_controller.dart';
+import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'build_selector.dart';
 
 class AddServerVersion extends StatefulWidget {
-  final VersionController controller;
-  final Function onCancel;
-
   const AddServerVersion(
-      {required this.controller, Key? key, required this.onCancel})
+      {Key? key})
       : super(key: key);
 
   @override
@@ -26,39 +23,55 @@ class AddServerVersion extends StatefulWidget {
 }
 
 class _AddServerVersionState extends State<AddServerVersion> {
-  static List<FortniteBuild>? _builds;
-  late GenericController<FortniteBuild?> _buildController;
-  late TextEditingController _nameController;
-  late TextEditingController _pathController;
-  late DownloadStatus _status;
+  final GameController _gameController = Get.find<GameController>();
+  final BuildController _buildController = Get.put(BuildController());
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _pathController = TextEditingController();
   late Future _future;
+  DownloadStatus _status = DownloadStatus.none;
   double _downloadProgress = 0;
   String? _error;
-  Process? _process;
-  bool _disposed = false;
+  Process? _manifestDownloadProcess;
+  CancelableOperation? _driveDownloadOperation;
 
   @override
   void initState() {
     _future = _fetchBuilds();
-    _buildController = GenericController(initialValue: null);
-    _nameController = TextEditingController();
-    _pathController = TextEditingController();
-    _status = DownloadStatus.none;
     super.initState();
   }
 
   @override
   void dispose() {
-    _disposed = true;
     _pathController.dispose();
     _nameController.dispose();
-    if (_process != null && _status == DownloadStatus.downloading) {
-      locateAndCopyBinary("stop.bat")
-          .then((value) => Process.runSync(value, [])); // kill doesn't work :/
-      widget.onCancel();
+    _onDisposed();
+    super.dispose();
+  }
+
+  void _onDisposed() {
+    if(_status != DownloadStatus.downloading && _status != DownloadStatus.extracting){
+      return;
     }
 
-    super.dispose();
+    if (_manifestDownloadProcess != null) {
+      loadBinary("stop.bat", false)
+          .then((value) => Process.runSync(value.path, [])); // kill doesn't work :/
+      _onCancelDownload();
+      return;
+    }
+
+    if(_driveDownloadOperation == null){
+      return;
+    }
+
+    _driveDownloadOperation!.cancel();
+    _onCancelDownload();
+  }
+
+  void _onCancelDownload() {
+       WidgetsBinding.instance.addPostFrameCallback((_) =>
+        showSnackbar(context,
+            const Snackbar(content: Text("Download cancelled"))));
   }
 
   @override
@@ -122,27 +135,28 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
     try {
       setState(() => _status = DownloadStatus.downloading);
-      var build = _buildController.value!;
-      if (build.hasManifest) {
-        _process = await downloadManifestBuild(
-            build.link, _pathController.text, _onDownloadProgress);
-        _process!.exitCode.then((value) => _onDownloadComplete());
+      if (_buildController.selectedBuild.hasManifest) {
+        _manifestDownloadProcess = await downloadManifestBuild(
+            _buildController.selectedBuild.link, _pathController.text, _onDownloadProgress);
+        _manifestDownloadProcess!.exitCode.then((value) => _onDownloadComplete());
       } else {
-        downloadArchiveBuild(
-                build.link, _pathController.text, _onDownloadProgress, _onUnrar)
-            .then((value) => _onDownloadComplete())
-            .catchError(_handleError);
+        _driveDownloadOperation = CancelableOperation.fromFuture(
+                downloadArchiveBuild(_buildController.selectedBuild.link, _pathController.text,
+                    _onDownloadProgress, _onUnrar))
+            .then((_) => _onDownloadComplete(),
+                onError: (error, _) => _handleError(error));
       }
     } catch (exception) {
       _handleError(exception);
     }
   }
 
-  void _handleError(Object exception) {
+  FutureOr? _handleError(Object exception) {
     var message = exception.toString();
     _onDownloadError(message.contains(":")
         ? " ${message.substring(message.indexOf(":") + 1)}"
         : message);
+    return null;
   }
 
   void _onUnrar() {
@@ -150,20 +164,20 @@ class _AddServerVersionState extends State<AddServerVersion> {
   }
 
   void _onDownloadComplete() {
-    if (_disposed) {
+    if (!mounted) {
       return;
     }
 
     setState(() {
       _status = DownloadStatus.done;
-      widget.controller.add(FortniteVersion(
+      _gameController.addVersion(FortniteVersion(
           name: _nameController.text,
           location: Directory(_pathController.text)));
     });
   }
 
   void _onDownloadError(String message) {
-    if (_disposed) {
+    if (!mounted) {
       return;
     }
 
@@ -174,7 +188,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   }
 
   void _onDownloadProgress(double progress) {
-    if (_disposed) {
+    if (!mounted) {
       return;
     }
 
@@ -189,6 +203,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
+            snapshot.printError();
             return Text("Cannot fetch builds: ${snapshot.error}",
                 textAlign: TextAlign.center);
           }
@@ -197,7 +212,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
             return const InfoLabel(
               label: "Fetching builds...",
               child: SizedBox(
-                  height: 32, width: double.infinity, child: ProgressBar()),
+                  width: double.infinity, child: ProgressBar()),
             );
           }
 
@@ -212,11 +227,8 @@ class _AddServerVersionState extends State<AddServerVersion> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            BuildSelector(builds: _builds!, controller: _buildController),
-            VersionNameInput(
-              controller: _nameController,
-              versions: widget.controller.versions,
-            ),
+            const BuildSelector(),
+            VersionNameInput(controller: _nameController),
             SelectFile(
                 label: "Destination",
                 placeholder: "Type the download destination",
@@ -238,10 +250,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
       case DownloadStatus.extracting:
         return const InfoLabel(
           label: "Extracting",
-          child: InfoLabel(
-            label: "This might take a while...",
-            child: SizedBox(width: double.infinity, child: ProgressBar()),
-          ),
+          child: SizedBox(width: double.infinity, child: ProgressBar())
         );
       case DownloadStatus.done:
         return const SizedBox(
@@ -258,11 +267,11 @@ class _AddServerVersionState extends State<AddServerVersion> {
   }
 
   Future<bool> _fetchBuilds() async {
-    if (_builds != null) {
+    if (_buildController.builds != null) {
       return false;
     }
 
-    _builds = await fetchBuilds();
+    _buildController.builds = await fetchBuilds();
     return true;
   }
 

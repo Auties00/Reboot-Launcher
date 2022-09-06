@@ -1,46 +1,46 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
+import 'package:reboot_launcher/src/controller/build_controller.dart';
 
-import '../model/fortnite_build.dart';
-import '../util/generic_controller.dart';
+import 'package:reboot_launcher/src/model/fortnite_build.dart';
 
 class BuildSelector extends StatefulWidget {
-  final List<FortniteBuild> builds;
-  final GenericController<FortniteBuild?> controller;
 
-  const BuildSelector(
-      {required this.builds, required this.controller, Key? key})
-      : super(key: key);
+  const BuildSelector({Key? key}) : super(key: key);
 
   @override
   State<BuildSelector> createState() => _BuildSelectorState();
 }
 
 class _BuildSelectorState extends State<BuildSelector> {
-  String? value;
+  final BuildController _buildController = Get.find<BuildController>();
 
   @override
   Widget build(BuildContext context) {
-    widget.controller.value = widget.controller.value ?? widget.builds[0];
     return InfoLabel(
-      label: "Build",
-      child: Combobox<FortniteBuild>(
-          placeholder: const Text('Select a fortnite build'),
-          isExpanded: true,
-          items: _createItems(),
-          value: widget.controller.value,
-          onChanged: (value) => value == null ? {} : setState(() => widget.controller.value = value)
-      ),
+        label: "Build",
+        child: Combobox<FortniteBuild>(
+            placeholder: const Text('Select a fortnite build'),
+            isExpanded: true,
+            items: _createItems(),
+            value: _buildController.selectedBuild,
+            onChanged: (value) =>
+            value == null ? {} : setState(() => _buildController.selectedBuild = value)
+        )
     );
   }
 
   List<ComboboxItem<FortniteBuild>> _createItems() {
-    return widget.builds.map((element) => _createItem(element)).toList();
+    return _buildController.builds!
+        .map((element) => _createItem(element))
+        .toList();
   }
 
   ComboboxItem<FortniteBuild> _createItem(FortniteBuild element) {
     return ComboboxItem<FortniteBuild>(
       value: element,
-      child: Text("${element.version} ${element.hasManifest ? '[Fortnite Manifest]' : '[Google Drive]'}"),
+      child: Text(
+          "${element.version} ${element.hasManifest ? '[Fortnite Manifest]' : '[Google Drive]'}"),
     );
   }
 }

@@ -24,8 +24,10 @@ dependencies:
   archive: ^3.3.1
   win32_suspend_process: ^1.0.0
   version: ^3.0.2
-  unrar_file: ^1.1.0
   crypto: ^3.0.2
+  async: ^2.8.2
+  get: ^4.6.5
+  get_storage: ^2.0.3
 
 dev_dependencies:
   flutter_test:
@@ -52,7 +54,7 @@ msix_config:
     force_update_from_any_version: false
   publisher_display_name: Reboot
   publisher: it.auties.reboot
-  msix_version: 2.0.0.0
+  msix_version: 2.1.0.0
   logo_path: ./assets/icons/fortnite.ico
   architecture: x64
   capabilities: "internetClient"

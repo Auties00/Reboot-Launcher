@@ -1,29 +1,28 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
 import 'package:reboot_launcher/src/widget/smart_input.dart';
 
-import '../util/generic_controller.dart';
+import 'package:reboot_launcher/src/controller/server_controller.dart';
 
 class PortInput extends StatelessWidget {
-  final TextEditingController controller;
-  final GenericController<bool> localController;
+  final ServerController _serverController = Get.put(ServerController());
 
-  const PortInput({
-    Key? key,
-    required this.controller,
-    required this.localController
-  }) : super(key: key);
+  PortInput({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SmartInput(
+    return Obx(() => SmartInput(
       keyName: "port",
       label: "Port",
       placeholder: "Type the host port",
-      controller: controller,
-      enabled: !localController.value,
-      onTap: () => localController.value
-          ? showSnackbar(context, const Snackbar(content: Text("The port is locked when embedded is on")))
+      controller: _serverController.port,
+      enabled: !_serverController.embedded.value,
+      onTap: () => _serverController.embedded.value
+          ? showSnackbar(
+          context,
+          const Snackbar(
+              content: Text("The port is locked when embedded is on")))
           : {},
-    );
+    ));
   }
 }

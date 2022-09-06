@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 import 'dart:io';
 
@@ -5,24 +7,18 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart'
     show showMenu, PopupMenuEntry, PopupMenuItem;
-import 'package:reboot_launcher/src/util/version_controller.dart';
+import 'package:get/get.dart';
 import 'package:reboot_launcher/src/widget/add_local_version.dart';
 import 'package:reboot_launcher/src/widget/add_server_version.dart';
-import 'package:reboot_launcher/src/widget/smart_selector.dart';
 
-import '../model/fortnite_version.dart';
+import 'package:reboot_launcher/src/model/fortnite_version.dart';
 
-class VersionSelector extends StatefulWidget {
-  final VersionController controller;
+import 'package:reboot_launcher/src/controller/game_controller.dart';
 
-  const VersionSelector({Key? key, required this.controller}) : super(key: key);
+class VersionSelector extends StatelessWidget {
+  final GameController _gameController = Get.find<GameController>();
 
-  @override
-  State<VersionSelector> createState() => _VersionSelectorState();
-}
-
-class _VersionSelectorState extends State<VersionSelector> {
-  final StreamController _streamController = StreamController();
+  VersionSelector({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,24 +28,7 @@ class _VersionSelectorState extends State<VersionSelector> {
             alignment: AlignmentDirectional.centerStart,
             child: Row(
               children: [
-                Expanded(
-                    child: StreamBuilder(
-                        stream: _streamController.stream,
-                        builder: (context, snapshot) => SmartSelector(
-                            keyName: "version",
-                            placeholder: "Select a version",
-                            options: widget.controller.isEmpty ? ["No versions available"] : widget.controller.versions
-                                .map((element) => element.name)
-                                .toList(),
-                            useFirstItemByDefault: false,
-                            itemBuilder: (name) => _createVersionItem(name, widget.controller.versions.isNotEmpty),
-                            onSelected: _onSelected,
-                            serializer: false,
-                            initialValue: widget.controller.selectedVersion?.name,
-                            enabled: widget.controller.versions.isNotEmpty
-                        )
-                    )
-                ),
+                Expanded(child: _createSelector(context)),
                 const SizedBox(
                   width: 16,
                 ),
@@ -57,8 +36,7 @@ class _VersionSelectorState extends State<VersionSelector> {
                   message: "Add a local fortnite build to the versions list",
                   child: Button(
                       child: const Icon(FluentIcons.open_file),
-                      onPressed: () => _openLocalVersionDialog(context)
-                  ),
+                      onPressed: () => _openLocalVersionDialog(context)),
                 ),
                 const SizedBox(
                   width: 16,
@@ -73,117 +51,107 @@ class _VersionSelectorState extends State<VersionSelector> {
             )));
   }
 
-  void _onSelected(String selected) {
-    widget.controller.selectedVersion = widget.controller.versions
-        .firstWhere((element) => selected == element.name);
+  Widget _createSelector(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Obx(() => DropDownButton(
+            leading: Text(_gameController.selectedVersionObs.value?.name ??
+                "Select a version"),
+            items: _gameController.hasNoVersions
+                ? [_createDefaultVersionItem()]
+                : _gameController.versions.value
+                .map((version) => _createVersionItem(context, version))
+                .toList()))
+    );
   }
 
-  SmartSelectorItem _createVersionItem(String name, bool enabled) {
-    return SmartSelectorItem(
-        text: _withListener(name, enabled, SizedBox(width: double.infinity, child: Text(name))),
-        trailing: const Expanded(child: SizedBox()));
+  MenuFlyoutItem _createVersionItem(
+      BuildContext context, FortniteVersion version) {
+    return MenuFlyoutItem(
+        text: Listener(
+            onPointerDown: (event) async {
+              if (event.kind != PointerDeviceKind.mouse ||
+                  event.buttons != kSecondaryMouseButton) {
+                return;
+              }
+
+              await _openMenu(context, version, event.position);
+            },
+            child: SizedBox(width: double.infinity, child: Text(version.name))),
+        trailing: const Expanded(child: SizedBox()),
+        onPressed: () => _gameController.selectedVersion = version);
   }
 
-  Listener _withListener(String name, bool enabled, Widget child) {
-    return Listener(
-          onPointerDown: (event) {
-            if (event.kind != PointerDeviceKind.mouse ||
-                event.buttons != kSecondaryMouseButton
-                || !enabled) {
-              return;
-            }
-
-            _openMenu(context, name, event.position);
-          },
-          child: child
-      );
+  MenuFlyoutItem _createDefaultVersionItem() {
+    return MenuFlyoutItem(
+        text: const SizedBox(
+            width: double.infinity, child: Text("No versions available")),
+        trailing: const Expanded(child: SizedBox()),
+        onPressed: () {});
   }
 
   void _openDownloadVersionDialog(BuildContext context) async {
-   await showDialog<bool>(
+    await showDialog<bool>(
         context: context,
-        builder: (dialogContext) => AddServerVersion(
-            controller: widget.controller,
-            onCancel: ()  => WidgetsBinding.instance
-                .addPostFrameCallback((_) => showSnackbar(
-                context,
-                const Snackbar(content: Text("Download cancelled"))
-            ))
-        )
+        builder: (dialogContext) => const AddServerVersion()
     );
-
-    _streamController.add(true);
   }
 
   void _openLocalVersionDialog(BuildContext context) async {
-    var result = await showDialog<bool>(
+    await showDialog<bool>(
         context: context,
-        builder: (context) => AddLocalVersion(controller: widget.controller));
-
-    if(result == null || !result){
-      return;
-    }
-
-    _streamController.add(false);
+        builder: (context) => AddLocalVersion());
   }
 
-  void _openMenu(
-      BuildContext context, String name, Offset offset) {
-    showMenu(
+  Future<void> _openMenu(
+      BuildContext context, FortniteVersion version, Offset offset) async {
+    var result = await showMenu(
       context: context,
       items: <PopupMenuEntry>[
         const PopupMenuItem(value: 0, child: Text("Open in explorer")),
         const PopupMenuItem(value: 1, child: Text("Delete"))
       ],
-      position: RelativeRect.fromLTRB(offset.dx, offset.dy, offset.dx, offset.dy),
-    ).then((value) {
-      if(value == 0){
+      position:
+          RelativeRect.fromLTRB(offset.dx, offset.dy, offset.dx, offset.dy),
+    );
+
+    switch (result) {
+      case 0:
         Navigator.of(context).pop();
-        Process.run(
-            "explorer.exe",
-            [widget.controller.versions.firstWhere((element) => element.name == name).location.path]
-        );
-        return;
-      }
+        Process.run("explorer.exe", [version.location.path]);
+        break;
 
-      if(value != 1) {
-        return;
-      }
+      case 1:
+        _gameController.removeVersion(version);
+        await _openDeleteDialog(context, version);
+        Navigator.of(context).pop();
+        if (_gameController.selectedVersionObs.value?.name == version.name || _gameController.hasNoVersions) {
+          _gameController.selectedVersionObs.value = null;
+        }
 
-      Navigator.of(context).pop();
-      var version = widget.controller.removeByName(name);
-      _openDeleteDialog(context, version);
-      _streamController.add(false);
-      if (widget.controller.selectedVersion?.name != name &&
-          widget.controller.isNotEmpty) {
-        return;
-      }
-
-      widget.controller.selectedVersion = null;
-      _streamController.add(false);
-    });
+        break;
+    }
   }
 
-  void _openDeleteDialog(BuildContext context, FortniteVersion version) {
-    showDialog(
+  Future _openDeleteDialog(BuildContext context, FortniteVersion version) {
+    return showDialog(
         context: context,
         builder: (context) => ContentDialog(
               content: const SizedBox(
-                  height: 32,
                   width: double.infinity,
                   child: Text("Delete associated game path?",
                       textAlign: TextAlign.center)),
               actions: [
                 FilledButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  style: ButtonStyle(
-                      backgroundColor: ButtonState.all(Colors.green)),
                   child: const Text('Keep'),
                 ),
                 FilledButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.of(context).pop();
-                    version.location.delete();
+                    if (await version.location.exists()) {
+                      version.location.delete(recursive: true);
+                    }
                   },
                   style:
                       ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),

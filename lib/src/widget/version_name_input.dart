@@ -1,29 +1,31 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
 
-import '../model/fortnite_version.dart';
+import 'package:reboot_launcher/src/controller/game_controller.dart';
 
 class VersionNameInput extends StatelessWidget {
+  final GameController _gameController = Get.find<GameController>();
   final TextEditingController controller;
-  final List<FortniteVersion> versions;
-  const VersionNameInput({required this.controller, required this.versions, Key? key}) : super(key: key);
+
+  VersionNameInput({Key? key, required this.controller}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return TextFormBox(
-      controller: controller,
       header: "Name",
       placeholder: "Type the version's name",
+      controller: controller,
       autofocus: true,
       validator: _validate,
     );
   }
 
-  String? _validate(String? text){
+  String? _validate(String? text) {
     if (text == null || text.isEmpty) {
       return 'Invalid version name';
     }
 
-    if (versions.any((element) => element.name == text)) {
+    if (_gameController.versions.value.any((element) => element.name == text)) {
       return 'Existent game version';
     }
 

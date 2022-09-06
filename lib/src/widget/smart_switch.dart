@@ -1,23 +1,17 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get/get.dart';
 import 'package:system_theme/system_theme.dart';
 
-import '../util/generic_controller.dart';
-
 class SmartSwitch extends StatefulWidget {
-  final String keyName;
   final String label;
   final bool enabled;
-  final Function(bool)? onSelected;
   final Function()? onDisabledPress;
-  final GenericController<bool> controller;
+  final Rx<bool> value;
 
   const SmartSwitch(
       {Key? key,
-      required this.keyName,
       required this.label,
-      required this.controller,
-      this.onSelected,
+      required this.value,
       this.enabled = true,
       this.onDisabledPress})
       : super(key: key);
@@ -27,29 +21,24 @@ class SmartSwitch extends StatefulWidget {
 }
 
 class _SmartSwitchState extends State<SmartSwitch> {
-  Future<void> _save(bool state) async {
-    final preferences = await SharedPreferences.getInstance();
-    preferences.setBool(widget.keyName, state);
-  }
-
   @override
   Widget build(BuildContext context) {
     return InfoLabel(
         label: widget.label,
-        child: ToggleSwitch(
+        child: Obx(() => ToggleSwitch(
             enabled: widget.enabled,
             onDisabledPress: widget.onDisabledPress,
-            checked: widget.controller.value,
+            checked: widget.value.value,
             onChanged: _onChanged,
             style: ToggleSwitchThemeData.standard(ThemeData(
                 checkedColor: _toolTipColor.withOpacity(_checkedOpacity),
                 uncheckedColor: _toolTipColor.withOpacity(_uncheckedOpacity),
                 borderInputColor: _toolTipColor.withOpacity(_uncheckedOpacity),
                 accentColor: _bodyColor
-                    .withOpacity(widget.controller.value
+                    .withOpacity(widget.value.value
                         ? _checkedOpacity
                         : _uncheckedOpacity)
-                    .toAccentColor()))));
+                    .toAccentColor())))));
   }
 
   Color get _toolTipColor =>
@@ -66,10 +55,6 @@ class _SmartSwitchState extends State<SmartSwitch> {
       return;
     }
 
-    setState(() {
-      widget.controller.value = checked;
-      widget.onSelected?.call(widget.controller.value);
-      _save(checked);
-    });
+    setState(() => widget.value(checked));
   }
 }

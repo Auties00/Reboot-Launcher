@@ -1,17 +1,18 @@
 import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
+import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/widget/select_file.dart';
 
-import '../model/fortnite_version.dart';
-import '../util/version_controller.dart';
+import 'package:reboot_launcher/src/model/fortnite_version.dart';
 
 class AddLocalVersion extends StatelessWidget {
-  final VersionController controller;
+  final GameController _gameController = Get.find<GameController>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _gamePathController = TextEditingController();
 
-  AddLocalVersion({required this.controller, Key? key})
+  AddLocalVersion({Key? key})
       : super(key: key);
 
   @override
@@ -44,7 +45,7 @@ class AddLocalVersion extends StatelessWidget {
         return;
       }
 
-      controller.add(FortniteVersion(
+      _gameController.addVersion(FortniteVersion(
           name: _nameController.text,
           location: Directory(_gamePathController.text)));
     }
@@ -67,7 +68,7 @@ class AddLocalVersion extends StatelessWidget {
               return 'Invalid version name';
             }
 
-            if (controller.versions.any((element) => element.name == text)) {
+            if (_gameController.versions.value.any((element) => element.name == text)) {
               return 'Existent game version';
             }
 

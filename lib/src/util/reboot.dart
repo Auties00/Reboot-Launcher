@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
-import 'package:reboot_launcher/src/util/locate_binary.dart';
+import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,7 +16,7 @@ Future<DateTime?> _getLastUpdate(SharedPreferences preferences) async {
 
 Future<File> downloadRebootDll(SharedPreferences preferences) async {
   var now = DateTime.now();
-  var oldRebootDll = locateBinary("reboot.dll");
+  var oldRebootDll = await loadBinary("reboot.dll", true);
   var lastUpdate = await _getLastUpdate(preferences);
   var exists = await oldRebootDll.exists();
   if(lastUpdate != null && now.difference(lastUpdate).inHours <= 24 && exists){
@@ -26,9 +26,10 @@ Future<File> downloadRebootDll(SharedPreferences preferences) async {
   var response = await http.get(Uri.parse(_rebootUrl));
   var tempZip = File("${Platform.environment["Temp"]}/reboot.zip")
     ..writeAsBytesSync(response.bodyBytes);
-  await extractFileToDisk(tempZip.path, binariesDirectory);
-  locateBinary("Project Reboot.pdb").delete();
-  var rebootDll = locateBinary("Project Reboot.dll");
+  await extractFileToDisk(tempZip.path, safeBinariesDirectory);
+  var pdb = await loadBinary("Project Reboot.pdb", true);
+  pdb.delete();
+  var rebootDll = await loadBinary("Project Reboot.dll", true);
   if (!(await rebootDll.exists())) {
     throw Exception("Missing reboot dll");
   }

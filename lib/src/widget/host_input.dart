@@ -1,27 +1,28 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
 import 'package:reboot_launcher/src/widget/smart_input.dart';
 
-import '../util/generic_controller.dart';
+import 'package:reboot_launcher/src/controller/server_controller.dart';
 
 class HostInput extends StatelessWidget {
-  final TextEditingController controller;
-  final GenericController<bool> localController;
+  final ServerController _serverController = Get.put(ServerController());
 
-  const HostInput(
-      {Key? key, required this.controller, required this.localController})
-      : super(key: key);
+  HostInput({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SmartInput(
-      keyName: "host",
-      label: "Host",
-      placeholder: "Type the host name",
-      controller: controller,
-      enabled: !localController.value,
-      onTap: () => localController.value
-          ? showSnackbar(context, const Snackbar(content: Text("The host is locked when embedded is on")))
-          : {},
-    );
+    return Obx(() => SmartInput(
+          keyName: "host",
+          label: "Host",
+          placeholder: "Type the host name",
+          controller: _serverController.host,
+          enabled: !_serverController.embedded.value,
+          onTap: () => _serverController.embedded.value
+              ? showSnackbar(
+                  context,
+                  const Snackbar(
+                      content: Text("The host is locked when embedded is on")))
+              : {},
+        ));
   }
 }

@@ -1,22 +1,19 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
 import 'package:reboot_launcher/src/widget/smart_switch.dart';
 
-import '../util/generic_controller.dart';
+import 'package:reboot_launcher/src/controller/server_controller.dart';
 
 class LocalServerSwitch extends StatelessWidget {
-  final GenericController<bool> controller;
-  final Function(bool)? onSelected;
+  final ServerController _serverController = Get.put(ServerController());
 
-  const LocalServerSwitch({Key? key, required this.controller, this.onSelected})
-      : super(key: key);
+  LocalServerSwitch({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return SmartSwitch(
-      keyName: "local",
-      label: "Embedded",
-      controller: controller,
-      onSelected: onSelected
+        value: _serverController.embedded,
+        label: "Embedded"
     );
   }
 }

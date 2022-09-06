@@ -10,10 +10,7 @@ class InfoPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Expanded(
-            child: SizedBox()
-        ),
-
+        const Expanded(child: SizedBox()),
         Column(
           children: [
             const CircleAvatar(
@@ -31,13 +28,9 @@ class InfoPage extends StatelessWidget {
                 onPressed: () => launchUrl(Uri.parse(_discordLink))),
           ],
         ),
-
         const Expanded(
             child: Align(
-                alignment: Alignment.bottomLeft,
-                child: Text("Version 1.0")
-            )
-        )
+                alignment: Alignment.bottomLeft, child: Text("Version 2.2")))
       ],
     );
   }
