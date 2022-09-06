@@ -73,16 +73,16 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   Future<void> _updateServerState(bool value) async {
-    if (_serverController.started.value == value) {
+    if (_gameController.started.value == value) {
       return;
     }
 
-    _serverController.started(value);
+    _gameController.started(value);
   }
 
   Future<void> _onStart() async {
     try {
-      _gameController.started(true);
+      _updateServerState(true);
       var version = _gameController.selectedVersionObs.value!;
       if (await version.launcher.exists()) {
         _gameController.launcherProcess = await Process.start(version.launcher.path, []);
@@ -99,7 +99,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         ..outLines.forEach(_onGameOutput);
       _injectOrShowError("cranium.dll");
     } catch (exception) {
-      _gameController.started(false);
+      _updateServerState(false);
       _onError(exception);
     }
   }

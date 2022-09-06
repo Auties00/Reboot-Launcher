@@ -5,7 +5,7 @@ import 'package:reboot_launcher/src/widget/smart_switch.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 
 class LocalServerSwitch extends StatelessWidget {
-  final ServerController _serverController = Get.put(ServerController());
+  final ServerController _serverController = Get.find<ServerController>();
 
   LocalServerSwitch({Key? key}) : super(key: key);
 

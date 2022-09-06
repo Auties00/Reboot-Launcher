@@ -54,7 +54,7 @@ msix_config:
     force_update_from_any_version: false
   publisher_display_name: Reboot
   publisher: it.auties.reboot
-  msix_version: 2.1.0.0
+  msix_version: 2.2.0.0
   logo_path: ./assets/icons/fortnite.ico
   architecture: x64
   capabilities: "internetClient"

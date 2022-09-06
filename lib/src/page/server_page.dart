@@ -11,8 +11,7 @@ import 'package:reboot_launcher/src/widget/server_button.dart';
 import 'package:reboot_launcher/src/widget/restart_warning.dart';
 
 class ServerPage extends StatelessWidget {
-  final WarningController _warningController = Get.put(WarningController());
-  final ServerController _serverController = Get.put(ServerController());
+  final WarningController _warningController = Get.find<WarningController>();
 
   ServerPage({Key? key}) : super(key: key);
 

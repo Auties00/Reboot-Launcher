@@ -24,7 +24,7 @@ class AddServerVersion extends StatefulWidget {
 
 class _AddServerVersionState extends State<AddServerVersion> {
   final GameController _gameController = Get.find<GameController>();
-  final BuildController _buildController = Get.put(BuildController());
+  final BuildController _buildController = Get.find<BuildController>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _pathController = TextEditingController();
   late Future _future;

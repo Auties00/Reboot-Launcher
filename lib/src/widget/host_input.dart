@@ -5,14 +5,13 @@ import 'package:reboot_launcher/src/widget/smart_input.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 
 class HostInput extends StatelessWidget {
-  final ServerController _serverController = Get.put(ServerController());
+  final ServerController _serverController = Get.find<ServerController>();
 
   HostInput({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Obx(() => SmartInput(
-          keyName: "host",
           label: "Host",
           placeholder: "Type the host name",
           controller: _serverController.host,

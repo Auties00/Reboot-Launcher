@@ -15,10 +15,10 @@ class ServerController extends GetxController {
 
   ServerController() {
     var storage = GetStorage("server");
-    host = TextEditingController(text: storage.read("host"));
+    host = TextEditingController(text: storage.read("host") ?? "");
     host.addListener(() => storage.write("host", host.text));
 
-    port = TextEditingController(text: storage.read("port"));
+    port = TextEditingController(text: storage.read("port") ?? "");
     port.addListener(() => storage.write("port", port.text));
 
     embedded = RxBool(storage.read("embedded") ?? true);

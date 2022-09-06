@@ -11,8 +11,7 @@ import 'package:reboot_launcher/src/widget/version_selector.dart';
 import 'package:reboot_launcher/src/controller/warning_controller.dart';
 
 class LauncherPage extends StatelessWidget {
-  final WarningController _warningController = Get.put(WarningController());
-  final GameController _gameController = Get.put(GameController());
+  final WarningController _warningController = Get.find<WarningController>();
 
   LauncherPage({Key? key}) : super(key: key);
 

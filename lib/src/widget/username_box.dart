@@ -12,7 +12,6 @@ class UsernameBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => SmartInput(
-        keyName: "${_gameController.host.value ? 'host' : 'game'}_username",
         label: "Username",
         placeholder: "Type your ${_gameController.host.value ? 'hosting' : "in-game"} username",
         controller: _gameController.username,

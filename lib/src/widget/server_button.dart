@@ -5,7 +5,7 @@ import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/util/server.dart';
 
 class ServerButton extends StatelessWidget {
-  final ServerController _serverController = Get.put(ServerController());
+  final ServerController _serverController = Get.find<ServerController>();
   ServerButton({Key? key}) : super(key: key);
 
   @override
