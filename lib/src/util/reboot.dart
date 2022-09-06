@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
@@ -8,16 +9,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _rebootUrl =
     "https://nightly.link/UWUFN/Universal-Walking-Simulator/workflows/msbuild/master/Release.zip";
+final GetStorage _storage = GetStorage("update");
 
-Future<DateTime?> _getLastUpdate(SharedPreferences preferences) async {
-  var timeInMillis = preferences.getInt("last_update");
+Future<DateTime?> _getLastUpdate() async {
+  int? timeInMillis = _storage.read("last_update");
   return timeInMillis != null ? DateTime.fromMillisecondsSinceEpoch(timeInMillis) : null;
 }
 
-Future<File> downloadRebootDll(SharedPreferences preferences) async {
+Future<File> downloadRebootDll() async {
   var now = DateTime.now();
   var oldRebootDll = await loadBinary("reboot.dll", true);
-  var lastUpdate = await _getLastUpdate(preferences);
+  var lastUpdate = await _getLastUpdate();
   var exists = await oldRebootDll.exists();
   if(lastUpdate != null && now.difference(lastUpdate).inHours <= 24 && exists){
     return oldRebootDll;
@@ -34,7 +36,7 @@ Future<File> downloadRebootDll(SharedPreferences preferences) async {
     throw Exception("Missing reboot dll");
   }
 
-  preferences.setInt("last_update", now.millisecondsSinceEpoch);
+  _storage.write("last_update", now.millisecondsSinceEpoch);
   if (exists && sha1.convert(await oldRebootDll.readAsBytes()) == sha1.convert(await rebootDll.readAsBytes())) {
     rebootDll.delete();
     return oldRebootDll;

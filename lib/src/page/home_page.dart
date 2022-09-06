@@ -4,6 +4,8 @@ import 'package:reboot_launcher/src/page/launcher_page.dart';
 import 'package:reboot_launcher/src/page/server_page.dart';
 import 'package:reboot_launcher/src/widget/window_buttons.dart';
 
+import '../util/reboot.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
@@ -13,7 +15,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final List<Widget> _children = [LauncherPage(), ServerPage(), const InfoPage()];
+  late final Future _future;
   int _index = 0;
+
+  @override
+  void initState() {
+    _future = downloadRebootDll();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +38,25 @@ class _HomePageState extends State<HomePage> {
               _createPane("Info", FluentIcons.info),
             ],
             trailing: const WindowTitleBar()),
-        content: NavigationBody(
-            index: _index,
-            children: _children
+        content: FutureBuilder(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                  child: Text(
+                      "An error occurred while loading the launcher: ${snapshot.error}",
+                      textAlign: TextAlign.center));
+            }
+
+            if (!snapshot.hasData) {
+              return const Center(child: ProgressRing());
+            }
+
+            return NavigationBody(
+                index: _index,
+                children: _children
+            );
+          }
         )
     );
   }

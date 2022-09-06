@@ -2,6 +2,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/controller/warning_controller.dart';
@@ -12,8 +13,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init("game");
   await GetStorage.init("server");
+  await GetStorage.init("update");
   Get.put(GameController());
   Get.put(ServerController());
+  Get.put(BuildController());
   Get.put(WarningController());
   SystemTheme.accentColor.load();
   doWhenWindowReady(() {
