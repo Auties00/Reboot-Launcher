@@ -26,8 +26,8 @@ Future<File> downloadRebootDll() async {
   }
 
   var response = await http.get(Uri.parse(_rebootUrl));
-  var tempZip = File("${Platform.environment["Temp"]}/reboot.zip")
-    ..writeAsBytesSync(response.bodyBytes);
+  var tempZip = File("${Platform.environment["Temp"]}/reboot.zip");
+  await tempZip.writeAsBytes(response.bodyBytes);
   await extractFileToDisk(tempZip.path, safeBinariesDirectory);
   var pdb = await loadBinary("Project Reboot.pdb", true);
   pdb.delete();

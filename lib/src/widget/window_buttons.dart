@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:system_theme/system_theme.dart';
 
 class WindowTitleBar extends StatelessWidget {
-  const WindowTitleBar({Key? key}) : super(key: key);
+  final bool focused;
+  
+  const WindowTitleBar({Key? key, required this.focused}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -13,28 +18,25 @@ class WindowTitleBar extends StatelessWidget {
       children: [
         MinimizeWindowButton(
           colors: WindowButtonColors(
-              iconNormal: lightMode ? Colors.black : Colors.white,
+              iconNormal: focused || !isWin11 ? lightMode ? Colors.black : Colors.white : SystemTheme.accentColor.lighter,
               iconMouseDown: lightMode ? Colors.black : Colors.white,
               iconMouseOver: lightMode ? Colors.black : Colors.white,
               normal: Colors.transparent,
-              mouseOver: _getColor(context),
-              mouseDown: _getColor(context).withOpacity(0.7)),
+              mouseOver: _color,
+              mouseDown: _color.withOpacity(0.7)),
         ),
         MaximizeWindowButton(
           colors: WindowButtonColors(
-              iconNormal: lightMode ? Colors.black : Colors.white,
+              iconNormal: focused || !isWin11 ? lightMode ? Colors.black : Colors.white : SystemTheme.accentColor.lighter,
               iconMouseDown: lightMode ? Colors.black : Colors.white,
               iconMouseOver: lightMode ? Colors.black : Colors.white,
               normal: Colors.transparent,
-              mouseOver: _getColor(context),
-              mouseDown: _getColor(context).withOpacity(0.7)),
+              mouseOver: _color,
+              mouseDown: _color.withOpacity(0.7)),
         ),
         CloseWindowButton(
-          onPressed: () {
-            appWindow.close();
-          },
           colors: WindowButtonColors(
-            iconNormal: lightMode ? Colors.black : Colors.white,
+            iconNormal: focused || !isWin11 ? lightMode ? Colors.black : Colors.white : SystemTheme.accentColor.lighter,
             iconMouseDown: lightMode ? Colors.black : Colors.white,
             iconMouseOver: lightMode ? Colors.black : Colors.white,
             normal: Colors.transparent,
@@ -46,8 +48,6 @@ class WindowTitleBar extends StatelessWidget {
     );
   }
 
-  Color _getColor(BuildContext context) =>
-      FluentTheme.of(context).brightness.isDark
-          ? SystemTheme.accentColor.light
-          : SystemTheme.accentColor.light;
+  Color get _color =>
+      SystemTheme.accentColor.accent;
 }

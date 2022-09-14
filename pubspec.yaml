@@ -15,7 +15,6 @@ dependencies:
   system_theme: ^2.0.0
   http: ^0.13.5
   html: ^0.15.0
-  skeleton_loader: ^2.0.0+4
   shared_preferences: ^2.0.15
   flutter_desktop_folder_picker: ^0.0.1
   context_menus: ^1.0.1
@@ -28,6 +27,7 @@ dependencies:
   async: ^2.8.2
   get: ^4.6.5
   get_storage: ^2.0.3
+  window_manager: ^0.2.7
 
 dev_dependencies:
   flutter_test:
@@ -45,16 +45,11 @@ flutter:
 
 msix_config:
   display_name: Reboot Launcher
-  app_installer:
-    publish_folder_path: ./dist
-    hours_between_update_checks: 0
-    automatic_background_task: false
-    update_blocks_activation: true
-    show_prompt: true
-    force_update_from_any_version: false
-  publisher_display_name: Reboot
-  publisher: it.auties.reboot
-  msix_version: 2.2.0.0
-  logo_path: ./assets/icons/fortnite.ico
+  publisher_display_name: Auties00
+  identity_name: 31868Auties00.RebootLauncher
+  msix_version: 2.3.0.0
+  publisher: CN=E6CD08C6-DECF-4034-A3EB-2D5FA2CA8029
+  logo_path: ./assets/icons/reboot.ico
   architecture: x64
+  store: true
   capabilities: "internetClient"

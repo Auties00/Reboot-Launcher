@@ -19,10 +19,12 @@ final _manifestSourceUrl = Uri.parse(
 final _archiveCookieUrl = Uri.parse("http://allinstaller.xyz/rel");
 final _archiveSourceUrl = Uri.parse("http://allinstaller.xyz/rel?i=1");
 
-Future<List<FortniteBuild>> fetchBuilds() async => [
-      ...await _fetchArchives(),
-      ...await _fetchManifests()
-    ]..sort((first, second) => first.version.compareTo(second.version));
+Future<List<FortniteBuild>> fetchBuilds(ignored) async {
+  var futures = await Future.wait([_fetchArchives(), _fetchManifests()]);
+  return futures.expand((element) => element)
+      .toList()
+      ..sort((first, second) => first.version.compareTo(second.version));
+}
 
 Future<List<FortniteBuild>> _fetchArchives() async {
   var cookieResponse = await http.get(_archiveCookieUrl);
@@ -118,22 +120,6 @@ Future<void> downloadArchiveBuild(String archiveUrl, String destination,
     await output.create(recursive: true);
     var shell = Shell(workingDirectory: internalBinariesDirectory);
     await shell.run("./winrar.exe x ${tempFile.path} *.* \"${output.path}\"");
-    var children = output.listSync();
-    if(children.isEmpty){
-      throw Exception("Missing extracted directory"); // No content
-    }
-
-    if(children.length != 1){
-      return; // Already in the correct schema
-    }
-
-    // Extract directories from wrapper directory
-    var wrapper = Directory(children[0].path);
-    for(var entry in wrapper.listSync()){
-      await entry.rename("${output.path}/${path.basename(entry.path)}");
-    }
-
-    await wrapper.delete();
   } finally {
     if (await tempFile.exists()) {
       tempFile.delete();

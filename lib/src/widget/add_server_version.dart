@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:async/async.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
@@ -36,7 +37,10 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
   @override
   void initState() {
-    _future = _fetchBuilds();
+    _future = _buildController.builds != null
+        ? Future.value(true)
+        : compute(fetchBuilds, null)
+            .then((value) => _buildController.builds = value);
     super.initState();
   }
 
@@ -264,15 +268,6 @@ class _AddServerVersionState extends State<AddServerVersion> {
                 "An exception was thrown during the download process:$_error",
                 textAlign: TextAlign.center));
     }
-  }
-
-  Future<bool> _fetchBuilds() async {
-    if (_buildController.builds != null) {
-      return false;
-    }
-
-    _buildController.builds = await fetchBuilds();
-    return true;
   }
 
   String? _checkDownloadDestination(text) {
