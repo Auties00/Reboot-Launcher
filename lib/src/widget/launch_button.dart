@@ -174,7 +174,6 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   List<String> _createProcessArguments() {
     return [
-      "-log",
       "-epicapp=Fortnite",
       "-epicenv=Prod",
       "-epiclocale=en-us",

@@ -7,7 +7,6 @@ import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
-import 'package:reboot_launcher/src/controller/warning_controller.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
@@ -21,7 +20,6 @@ void main() async {
   Get.put(GameController());
   Get.put(ServerController());
   Get.put(BuildController());
-  Get.put(WarningController());
   SystemTheme.accentColor.load();
   doWhenWindowReady(() {
     const size = Size(600, 380);

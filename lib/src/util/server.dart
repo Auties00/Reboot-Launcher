@@ -3,28 +3,36 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:process_run/shell.dart';
-import 'package:reboot_launcher/src/controller/warning_controller.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 final serverLocation = Directory("${Platform.environment["UserProfile"]}/.reboot_launcher/lawin");
 const String _serverUrl =
     "https://github.com/Lawin0129/LawinServer/archive/refs/heads/main.zip";
+const String _portableServerUrl =
+    "https://cdn.discordapp.com/attachments/998020695223193673/1019999251994005504/LawinServer.exe";
 const String _nodeUrl =
     "https://nodejs.org/dist/v16.16.0/node-v16.16.0-x64.msi";
 
-Future<void> downloadServer() async {
-  var response = await http.get(Uri.parse(_serverUrl));
-  var tempZip = File("${Platform.environment["Temp"]}/lawin.zip")
-    ..writeAsBytesSync(response.bodyBytes);
-  await extractFileToDisk(tempZip.path, serverLocation.parent.path);
-  var result = Directory("${serverLocation.parent.path}/LawinServer-main");
-  await result.rename("${serverLocation.parent.path}/${path.basename(serverLocation.path)}");
-  await updateEngineConfig();
+Future<bool> downloadServer(bool portable) async {
+  if(!portable){
+    var response = await http.get(Uri.parse(_serverUrl));
+    var tempZip = File("${Platform.environment["Temp"]}/lawin.zip");
+    await tempZip.writeAsBytes(response.bodyBytes);
+    await extractFileToDisk(tempZip.path, serverLocation.parent.path);
+    var result = Directory("${serverLocation.parent.path}/LawinServer-main");
+    await result.rename("${serverLocation.parent.path}/${path.basename(serverLocation.path)}");
+    await Process.run("${serverLocation.path}/install_packages.bat", [], workingDirectory: serverLocation.path);
+    await updateEngineConfig();
+    return true;
+  }
+
+  var response = await http.get(Uri.parse(_portableServerUrl));
+  var server = await loadBinary("LawinServer.exe", true);
+  await server.writeAsBytes(response.bodyBytes);
+  return true;
 }
 
 Future<void> updateEngineConfig() async {
@@ -113,55 +121,38 @@ Future<Process?> startEmbedded(BuildContext context, bool running, bool needsFre
     await Process.run(releaseBat.path, []);
   }
 
-  if (!(await serverLocation.exists())) {
-    await downloadServer();
-  }
-
-  var serverRunner = File("${serverLocation.path}/start.bat");
-  if (!(await serverRunner.exists())) {
-    _showNoRunnerError(context, serverRunner);
-    return null;
-  }
-
   var nodeProcess = await Process.run("where", ["node"]);
-  if(nodeProcess.exitCode != 0) {
-    var shouldInstall = await _showMissingNodeWarning(context);
-    if (!shouldInstall) {
+  if(nodeProcess.exitCode == 0) {
+    if(!(await serverLocation.exists()) && !(await _showServerDownloadInfo(context, false))){
       return null;
     }
 
-    var result = await _showNodeInfo(context);
-    if(result == null){
-      showSnackbar(
-          context,
-          const Snackbar(
-              content: Text(
-                  "Node download cancelled"
-              )
-          )
-      );
-
+    var serverRunner = File("${serverLocation.path}/start.bat");
+    if (!(await serverRunner.exists())) {
+      _showEmbeddedError(context, serverRunner.path);
       return null;
     }
 
-    var controller = Get.find<WarningController>();
-    controller.warning(true);
-    await launchUrl(result.uri);
-    return null;
-  }
+    var nodeModules = Directory("${serverLocation.path}/node_modules");
+    if (!(await nodeModules.exists())) {
+      await Process.run("${serverLocation.path}/install_packages.bat", [],
+          workingDirectory: serverLocation.path);
+    }
 
-  var nodeModules = Directory("${serverLocation.path}/node_modules");
-  if (!(await nodeModules.exists())) {
-    await Process.run("${serverLocation.path}/install_packages.bat", [],
+    return await Process.start(serverRunner.path, [],
         workingDirectory: serverLocation.path);
   }
 
-  return await Process.start(serverRunner.path, [],
-      workingDirectory: serverLocation.path);
+  var portableServer = await loadBinary("LawinServer.exe", true);
+  if(!(await portableServer.exists()) && !(await _showServerDownloadInfo(context, true))){
+    return null;
+  }
+
+  return await Process.start(portableServer.path, []);
 }
 
-Future<File?> _showNodeInfo(BuildContext context) async {
-  var nodeFuture = downloadNode();
+Future<bool> _showServerDownloadInfo(BuildContext context, bool portable) async {
+  var nodeFuture = downloadServer(portable);
   var result = await showDialog<bool>(
       context: context,
       builder: (context) => ContentDialog(
@@ -184,7 +175,7 @@ Future<File?> _showNodeInfo(BuildContext context) async {
               }
 
               return const InfoLabel(
-                  label: "Downloading node installer...",
+                  label: "Downloading lawin server...",
                   child: SizedBox(
                       width: double.infinity,
                       child: ProgressBar()
@@ -209,15 +200,15 @@ Future<File?> _showNodeInfo(BuildContext context) async {
       )
   );
 
-  return result == null || !result ? null : await nodeFuture;
+  return result != null && result;
 }
 
-void _showNoRunnerError(BuildContext context, File serverRunner) {
+void _showEmbeddedError(BuildContext context, String path) {
   showDialog(
       context: context,
       builder: (context) => ContentDialog(
         content: Text(
-            "Cannot start server, missing start.bat at ${serverRunner.path}",
+            "Cannot start server, missing $path",
             textAlign: TextAlign.center),
         actions: [
           SizedBox(
@@ -232,28 +223,6 @@ void _showNoRunnerError(BuildContext context, File serverRunner) {
       ));
 }
 
-Future<bool> _showMissingNodeWarning(BuildContext context) async {
-  return await showDialog<bool>(
-      context: context,
-      builder: (context) => ContentDialog(
-        content: const SizedBox(
-            width: double.infinity,
-            child: Text("Node is required to run the embedded server",
-                textAlign: TextAlign.center)),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            style: ButtonStyle(
-                backgroundColor: ButtonState.all(Colors.red)),
-            child: const Text('Close'),
-          ),
-          FilledButton(
-              child: const Text('Install'),
-              onPressed: () => Navigator.of(context).pop(true)),
-        ],
-      )) ??
-      false;
-}
 
 Future<bool> _showAlreadyBindPortWarning(BuildContext context) async {
   return await showDialog<bool>(

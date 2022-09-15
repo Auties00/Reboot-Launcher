@@ -84,8 +84,8 @@ class _HomePageState extends State<HomePage> with WindowListener {
 
   List<Widget> _createPages(bool data) {
     return [
-      data ? LauncherPage() : _createDownloadWarning(),
-      ServerPage(),
+      data ? const LauncherPage() : _createDownloadWarning(),
+      const ServerPage(),
       const InfoPage()
     ];
   }
