@@ -15,7 +15,7 @@ const _userAgent =
 
 final _cookieRegex = RegExp("cookie=\"(.*?);");
 final _manifestSourceUrl = Uri.parse(
-    "https://github.com/VastBlast/FortniteManifestArchive/blob/main/README.md");
+    "https://github.com/VastBlast/FortniteManifestArchive/blob/main/INSTALLATION.md");
 final _archiveCookieUrl = Uri.parse("http://allinstaller.xyz/rel");
 final _archiveSourceUrl = Uri.parse("http://allinstaller.xyz/rel?i=1");
 

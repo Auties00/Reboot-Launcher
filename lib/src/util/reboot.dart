@@ -8,7 +8,7 @@ import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _rebootUrl =
-    "https://nightly.link/UWUFN/Universal-Walking-Simulator/workflows/msbuild/master/Release.zip";
+    "https://nightly.link/Milxnor/Universal-Walking-Simulator/workflows/msbuild/master/Release.zip";
 final GetStorage _storage = GetStorage("update");
 
 Future<DateTime?> _getLastUpdate() async {

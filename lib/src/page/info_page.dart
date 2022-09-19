@@ -2,7 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const String _discordLink = "https://discord.gg/rTzBQH3N";
+const String _discordLink = "https://discord.gg/NJU4QjxSMF";
 
 class InfoPage extends StatelessWidget {
   const InfoPage({Key? key}) : super(key: key);
@@ -31,7 +31,7 @@ class InfoPage extends StatelessWidget {
         ),
         const Expanded(
             child: Align(
-                alignment: Alignment.bottomLeft, child: Text("Version 3.0${kDebugMode ? '-DEBUG' : ''}")))
+                alignment: Alignment.bottomLeft, child: Text("Version 3.1${kDebugMode ? '-DEBUG' : ''}")))
       ],
     );
   }

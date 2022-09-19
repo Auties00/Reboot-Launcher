@@ -1,0 +1,2 @@
+flutter pub run msix:create
+flutter_distributor package --platform windows --targets exe
