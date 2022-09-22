@@ -32,12 +32,13 @@ class _LaunchButtonState extends State<LaunchButton> {
       alignment: AlignmentDirectional.bottomCenter,
       child: SizedBox(
         width: double.infinity,
-        child: Listener(
-          child: Obx(() => Button(
+        child: Obx(() => Tooltip(
+          message: _gameController.started.value ? "Close the running Fortnite instance" : "Launch a new Fortnite instance",
+          child: Button(
               onPressed: () => _onPressed(context),
               child: Text(_gameController.started.value ? "Close" : "Launch")
-          )),
-        ),
+          ),
+        )),
       ),
     );
   }
@@ -63,10 +64,9 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     _updateServerState(true);
-    if (!_serverController.started.value && _serverController.embedded.value && await isPortFree()) {
-      var process = await startEmbedded(context, false, false);
-      _serverController.process = process;
-      _serverController.started(process != null);
+    if (!_serverController.started.value && _serverController.embedded.value && await isLawinPortFree()) {
+      var result = await changeEmbeddedServerState(context, false);
+      _serverController.started(result);
     }
 
     _onStart();

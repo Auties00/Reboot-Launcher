@@ -22,33 +22,36 @@ class VersionSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InfoLabel(
-        label: "Version",
-        child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Row(
-              children: [
-                Expanded(child: _createSelector(context)),
-                const SizedBox(
-                  width: 16,
-                ),
-                Tooltip(
-                  message: "Add a local fortnite build to the versions list",
-                  child: Button(
-                      child: const Icon(FluentIcons.open_file),
-                      onPressed: () => _openLocalVersionDialog(context)),
-                ),
-                const SizedBox(
-                  width: 16,
-                ),
-                Tooltip(
-                  message: "Download a fortnite build from the archive",
-                  child: Button(
-                      child: const Icon(FluentIcons.download),
-                      onPressed: () => _openDownloadVersionDialog(context)),
-                )
-              ],
-            )));
+    return Tooltip(
+      message: "The version of Fortnite to launch",
+      child: InfoLabel(
+          label: "Version",
+          child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Row(
+                children: [
+                  Expanded(child: _createSelector(context)),
+                  const SizedBox(
+                    width: 16,
+                  ),
+                  Tooltip(
+                    message: "Add a local fortnite build to the versions list",
+                    child: Button(
+                        child: const Icon(FluentIcons.open_file),
+                        onPressed: () => _openLocalVersionDialog(context)),
+                  ),
+                  const SizedBox(
+                    width: 16,
+                  ),
+                  Tooltip(
+                    message: "Download a fortnite build from the archive",
+                    child: Button(
+                        child: const Icon(FluentIcons.download),
+                        onPressed: () => _openDownloadVersionDialog(context)),
+                  )
+                ],
+              ))),
+    );
   }
 
   Widget _createSelector(BuildContext context) {

@@ -5,13 +5,14 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 
 class ServerController extends GetxController {
   late final TextEditingController host;
   late final TextEditingController port;
   late final RxBool embedded;
-  late final RxBool started;
-  Process? process;
+  late final RxBool warning;
+  late RxBool started;
 
   ServerController() {
     var storage = GetStorage("server");
@@ -24,7 +25,12 @@ class ServerController extends GetxController {
     embedded = RxBool(storage.read("embedded") ?? true);
     embedded.listen((value) => storage.write("embedded", value));
 
+    warning = RxBool(storage.read("warning") ?? true);
+    warning.listen((value) => storage.write("warning", value));
+
     started = RxBool(false);
+    isLawinPortFree()
+        .then((value) => started = RxBool(!value));
   }
 
   Future kill() async {

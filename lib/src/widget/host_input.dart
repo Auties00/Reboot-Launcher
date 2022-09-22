@@ -11,17 +11,26 @@ class HostInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => SmartInput(
-          label: "Host",
-          placeholder: "Type the host name",
-          controller: _serverController.host,
-          enabled: !_serverController.embedded.value,
-          onTap: () => _serverController.embedded.value
-              ? showSnackbar(
-                  context,
-                  const Snackbar(
-                      content: Text("The host is locked when embedded is on")))
-              : {},
+    return Obx(() => Tooltip(
+          message: _serverController.embedded.value
+              ? "The remote lawin host cannot be set when running on embedded"
+              : "The remote host of the lawin server to use for authentication",
+          child: _buildInput(context),
         ));
+  }
+
+  SmartInput _buildInput(BuildContext context) {
+    return SmartInput(
+      label: "Host",
+      placeholder: "Type the host name",
+      controller: _serverController.host,
+      enabled: !_serverController.embedded.value,
+      onTap: () => _serverController.embedded.value
+          ? showSnackbar(
+              context,
+              const Snackbar(
+                  content: Text("The host is locked when embedded is on")))
+          : {},
+    );
   }
 }

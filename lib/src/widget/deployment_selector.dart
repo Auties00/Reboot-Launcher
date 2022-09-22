@@ -12,14 +12,21 @@ class DeploymentSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SmartSwitch(
-        value: _gameController.host,
-        onDisabledPress: !enabled
-            ? () => showSnackbar(context,
-                const Snackbar(content: Text("Hosting is not allowed")))
-            : null,
-        label: "Host",
-        enabled: enabled
+    return Tooltip(
+      message: enabled ? "Whether the launched client should be used to host multiplayer games or not" : "Hosting is not allowed",
+      child: _buildSwitch(context)
     );
+  }
+
+  SmartSwitch _buildSwitch(BuildContext context) {
+    return SmartSwitch(
+      value: _gameController.host,
+      onDisabledPress: !enabled
+          ? () => showSnackbar(context,
+              const Snackbar(content: Text("Hosting is not allowed")))
+          : null,
+      label: "Host",
+      enabled: enabled
+  );
   }
 }

@@ -25,5 +25,8 @@ File _locateInternalBinary(String binary){
 String get internalBinariesDirectory =>
     "${File(Platform.resolvedExecutable).parent.path}\\data\\flutter_assets\\assets\\binaries";
 
+Directory get tempDirectory =>
+    Directory("${Platform.environment["Temp"]}");
+
 String get safeBinariesDirectory =>
     "${Platform.environment["UserProfile"]}\\.reboot_launcher";

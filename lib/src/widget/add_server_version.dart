@@ -4,6 +4,7 @@ import 'package:async/async.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/util/build.dart';
@@ -12,6 +13,7 @@ import 'package:reboot_launcher/src/widget/select_file.dart';
 import 'package:reboot_launcher/src/widget/version_name_input.dart';
 
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
+import '../model/fortnite_build.dart';
 import 'build_selector.dart';
 
 class AddServerVersion extends StatefulWidget {
@@ -40,7 +42,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
     _future = _buildController.builds != null
         ? Future.value(true)
         : compute(fetchBuilds, null)
-            .then((value) => _buildController.builds = value);
+        .then((value) => _buildController.builds = value);
     super.initState();
   }
 

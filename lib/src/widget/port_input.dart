@@ -11,17 +11,25 @@ class PortInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => SmartInput(
+    return Obx(() => Tooltip(
+        message: _serverController.embedded.value
+            ? "The remote lawin port cannot be set when running on embedded"
+            : "The remote port of the lawin server to use for authentication",
+        child: _buildInput(context)));
+  }
+
+  SmartInput _buildInput(BuildContext context) {
+    return SmartInput(
       label: "Port",
       placeholder: "Type the host port",
       controller: _serverController.port,
       enabled: !_serverController.embedded.value,
       onTap: () => _serverController.embedded.value
           ? showSnackbar(
-          context,
-          const Snackbar(
-              content: Text("The port is locked when embedded is on")))
+              context,
+              const Snackbar(
+                  content: Text("The port is locked when embedded is on")))
           : {},
-    ));
+    );
   }
 }

@@ -1,5 +1,6 @@
-import 'package:bitsdojo_window/bitsdojo_window.dart' hide WindowBorder;
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/page/info_page.dart';
 import 'package:reboot_launcher/src/page/launcher_page.dart';
 import 'package:reboot_launcher/src/page/server_page.dart';
@@ -25,7 +26,10 @@ class _HomePageState extends State<HomePage> with WindowListener {
   @override
   void initState() {
     windowManager.addListener(this);
-    _future = downloadRebootDll();
+    var storage = GetStorage("update");
+    int? lastUpdateMs = storage.read("last_update");
+    _future = compute(downloadRebootDll, lastUpdateMs);
+    _future.then((value) => storage.write("last_update", value));
     super.initState();
   }
 
@@ -56,8 +60,8 @@ class _HomePageState extends State<HomePage> with WindowListener {
                 displayMode: PaneDisplayMode.top,
                 indicator: const EndNavigationIndicator(),
                 items: [
-                  _createPane("Launcher", FluentIcons.game),
-                  _createPane("Server", FluentIcons.server_enviroment),
+                  _createPane("Home", FluentIcons.game),
+                  _createPane("Lawin", FluentIcons.server_enviroment),
                   _createPane("Info", FluentIcons.info),
                 ],
                 trailing: WindowTitleBar(focused: _focused)),
@@ -70,6 +74,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
                             "An error occurred while loading the launcher: ${snapshot.error}",
                             textAlign: TextAlign.center));
                   }
+
                   return NavigationBody(
                       index: _index,
                       children: _createPages(snapshot.hasData));

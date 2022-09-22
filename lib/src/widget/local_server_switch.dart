@@ -11,9 +11,12 @@ class LocalServerSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SmartSwitch(
-        value: _serverController.embedded,
-        label: "Embedded"
+    return Tooltip(
+      message: "Determines whether an embedded or remote lawin server should be used",
+      child: SmartSwitch(
+          value: _serverController.embedded,
+          label: "Embedded"
+      ),
     );
   }
 }

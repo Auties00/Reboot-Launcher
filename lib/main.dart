@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bitsdojo_window_windows/bitsdojo_window_windows.dart'
     show WinDesktopWindow;
@@ -7,11 +9,14 @@ import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
+import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
 
 void main() async {
+  await Directory(safeBinariesDirectory)
+      .create(recursive: true);
   WidgetsFlutterBinding.ensureInitialized();
   await SystemTheme.accentColor.load();
   await GetStorage.init("game");
@@ -22,7 +27,7 @@ void main() async {
   Get.put(BuildController());
   SystemTheme.accentColor.load();
   doWhenWindowReady(() {
-    const size = Size(600, 380);
+    const size = Size(600, 365);
     var window = appWindow as WinDesktopWindow;
     window.setWindowCutOnMaximize(appBarSize * 2);
     appWindow.size = size;

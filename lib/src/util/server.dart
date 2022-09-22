@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:process_run/shell.dart';
@@ -13,8 +14,6 @@ const String _serverUrl =
     "https://github.com/Lawin0129/LawinServer/archive/refs/heads/main.zip";
 const String _portableServerUrl =
     "https://cdn.discordapp.com/attachments/998020695223193673/1019999251994005504/LawinServer.exe";
-const String _nodeUrl =
-    "https://nodejs.org/dist/v16.16.0/node-v16.16.0-x64.msi";
 
 Future<bool> downloadServer(bool portable) async {
   if(!portable){
@@ -41,17 +40,7 @@ Future<void> updateEngineConfig() async {
   await engine.writeAsString(await patchedEngine.readAsString());
 }
 
-Future<File> downloadNode() async {
-  var client = HttpClient();
-  client.badCertificateCallback = ((cert, host, port) => true);
-  var request = await client.getUrl(Uri.parse(_nodeUrl));
-  var response = await request.close();
-  var file = File("${Platform.environment["Temp"]}\\node.msi");
-  await response.pipe(file.openWrite());
-  return file;
-}
-
-Future<bool> isPortFree() async {
+Future<bool> isLawinPortFree() async {
   var portBat = await loadBinary("port.bat", false);
   var process = await Process.run(portBat.path, []);
   return !process.outText.contains(" LISTENING "); // Goofy way, best we got
@@ -104,33 +93,23 @@ Future<bool> _pingAddress(String host, String port) async {
       && process.outText.contains("TcpTestSucceeded : True");
 }
 
-Future<Process?> startEmbedded(BuildContext context, bool running, bool needsFreePort) async {
-  var releaseBat = await loadBinary("release.bat", false);
+Future<bool> changeEmbeddedServerState(BuildContext context, bool running) async {
   if (running) {
+    var releaseBat = await loadBinary("release.bat", false);
     await Process.run(releaseBat.path, []);
-    return null;
-  }
-
-  var free = await isPortFree();
-  if (!free && needsFreePort) {
-    var shouldKill = await _showAlreadyBindPortWarning(context);
-    if (!shouldKill) {
-      return null;
-    }
-
-    await Process.run(releaseBat.path, []);
+    return false;
   }
 
   var nodeProcess = await Process.run("where", ["node"]);
   if(nodeProcess.exitCode == 0) {
     if(!(await serverLocation.exists()) && !(await _showServerDownloadInfo(context, false))){
-      return null;
+      return false;
     }
 
     var serverRunner = File("${serverLocation.path}/start.bat");
     if (!(await serverRunner.exists())) {
       _showEmbeddedError(context, serverRunner.path);
-      return null;
+      return false;
     }
 
     var nodeModules = Directory("${serverLocation.path}/node_modules");
@@ -139,20 +118,21 @@ Future<Process?> startEmbedded(BuildContext context, bool running, bool needsFre
           workingDirectory: serverLocation.path);
     }
 
-    return await Process.start(serverRunner.path, [],
-        workingDirectory: serverLocation.path);
+    await Process.start(serverRunner.path, [],  workingDirectory: serverLocation.path);
+    return true;
   }
 
   var portableServer = await loadBinary("LawinServer.exe", true);
   if(!(await portableServer.exists()) && !(await _showServerDownloadInfo(context, true))){
-    return null;
+    return false;
   }
 
-  return await Process.start(portableServer.path, []);
+  await Process.start(portableServer.path, []);
+  return true;
 }
 
 Future<bool> _showServerDownloadInfo(BuildContext context, bool portable) async {
-  var nodeFuture = downloadServer(portable);
+  var nodeFuture = compute(downloadServer, portable);
   var result = await showDialog<bool>(
       context: context,
       builder: (context) => ContentDialog(
@@ -221,27 +201,4 @@ void _showEmbeddedError(BuildContext context, String path) {
               ))
         ],
       ));
-}
-
-
-Future<bool> _showAlreadyBindPortWarning(BuildContext context) async {
-  return await showDialog<bool>(
-      context: context,
-      builder: (context) => ContentDialog(
-        content: const Text(
-            "Port 3551 is already in use, do you want to kill the associated process?",
-            textAlign: TextAlign.center),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            style: ButtonStyle(
-                backgroundColor: ButtonState.all(Colors.red)),
-            child: const Text('Close'),
-          ),
-          FilledButton(
-              child: const Text('Kill'),
-              onPressed: () => Navigator.of(context).pop(true)),
-        ],
-      )) ??
-      false;
 }
