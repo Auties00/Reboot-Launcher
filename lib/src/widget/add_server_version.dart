@@ -13,7 +13,7 @@ import 'package:reboot_launcher/src/widget/select_file.dart';
 import 'package:reboot_launcher/src/widget/version_name_input.dart';
 
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
-import '../model/fortnite_build.dart';
+import 'package:reboot_launcher/src/model/fortnite_build.dart';
 import 'build_selector.dart';
 
 class AddServerVersion extends StatefulWidget {

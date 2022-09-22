@@ -8,8 +8,8 @@ import 'package:reboot_launcher/src/widget/window_buttons.dart';
 import 'package:reboot_launcher/src/widget/window_border.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../util/os.dart';
-import '../util/reboot.dart';
+import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/util/reboot.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
   List<Widget> _createPages(bool data) {
     return [
       data ? const LauncherPage() : _createDownloadWarning(),
-      const ServerPage(),
+      ServerPage(),
       const InfoPage()
     ];
   }

@@ -25,8 +25,8 @@ class ServerController extends GetxController {
     embedded = RxBool(storage.read("embedded") ?? true);
     embedded.listen((value) => storage.write("embedded", value));
 
-    warning = RxBool(storage.read("warning") ?? true);
-    warning.listen((value) => storage.write("warning", value));
+    warning = RxBool(storage.read("lawin_value") ?? true);
+    warning.listen((value) => storage.write("lawin_value", value));
 
     started = RxBool(false);
     isLawinPortFree()

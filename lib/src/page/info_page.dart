@@ -31,7 +31,7 @@ class InfoPage extends StatelessWidget {
         ),
         const Expanded(
             child: Align(
-                alignment: Alignment.bottomLeft, child: Text("Version 3.4${kDebugMode ? '-DEBUG' : ''}")))
+                alignment: Alignment.bottomLeft, child: Text("Version 3.5${kDebugMode ? '-DEBUG' : ''}")))
       ],
     );
   }

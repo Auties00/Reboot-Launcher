@@ -16,7 +16,7 @@ class LauncherPage extends StatelessWidget {
       children: [
         UsernameBox(),
         VersionSelector(),
-        DeploymentSelector(enabled: false),
+        DeploymentSelector(enabled: true),
         const LaunchButton()
       ],
     );
