@@ -20,8 +20,10 @@ class AddLocalVersion extends StatelessWidget {
     return Form(
         child: Builder(
             builder: (formContext) => ContentDialog(
-                constraints:
-                    const BoxConstraints(maxWidth: 368, maxHeight: 278),
+                style: const ContentDialogThemeData(
+                  padding: EdgeInsets.only(left: 20, right: 20, top: 15.0, bottom: 5.0)
+                ),
+                constraints: const BoxConstraints(maxWidth: 368, maxHeight: 258),
                 content: _createLocalVersionDialogBody(),
                 actions: _createLocalVersionActions(formContext))));
   }
@@ -65,16 +67,17 @@ class AddLocalVersion extends StatelessWidget {
           autofocus: true,
           validator: (text) {
             if (text == null || text.isEmpty) {
-              return 'Invalid version name';
+              return 'Empty version name';
             }
 
             if (_gameController.versions.value.any((element) => element.name == text)) {
-              return 'Existent game version';
+              return 'This version already exists';
             }
 
             return null;
           },
         ),
+
         SelectFile(
             label: "Location",
             placeholder: "Type the game folder",
@@ -87,16 +90,12 @@ class AddLocalVersion extends StatelessWidget {
 
   String? _checkGameFolder(text) {
     if (text == null || text.isEmpty) {
-      return 'Invalid game path';
+      return 'Empty game path';
     }
 
     var directory = Directory(text);
     if (!directory.existsSync()) {
-      return "Nonexistent game path";
-    }
-
-    if (!directory.existsSync()) {
-      return "Nonexistent game path";
+      return "Directory doesn't exist";
     }
 
     if (!FortniteVersion.findExecutable(directory, "FortniteClient-Win64-Shipping.exe").existsSync()) {

@@ -1,5 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_desktop_folder_picker/flutter_desktop_folder_picker.dart';
+import 'package:flutter/foundation.dart';
+
+import '../util/os.dart';
 
 class SelectFile extends StatefulWidget {
   final String label;
@@ -24,6 +26,8 @@ class SelectFile extends StatefulWidget {
 }
 
 class _SelectFileState extends State<SelectFile> {
+  bool _selecting = false;
+
   @override
   Widget build(BuildContext context) {
     return InfoLabel(
@@ -34,19 +38,36 @@ class _SelectFileState extends State<SelectFile> {
                 child: TextFormBox(
                     controller: widget.controller,
                     placeholder: widget.placeholder,
-                    validator: widget.validator)),
+                    validator: widget.validator,
+                    hidePadding: true
+                )
+            ),
             if (widget.allowNavigator) const SizedBox(width: 8.0),
             if (widget.allowNavigator)
-              IconButton(
-                  icon: const Icon(FluentIcons.open_folder_horizontal),
-                  onPressed: _onPressed)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 21.0),
+                child: Tooltip(
+                  message: "Select a folder",
+                  child: Button(
+                      onPressed: _onPressed,
+                      child: const Icon(FluentIcons.open_folder_horizontal)
+                  ),
+                ),
+              )
           ],
-        ));
+        )
+    );
   }
 
-  void _onPressed() async {
-    var result = await FlutterDesktopFolderPicker.openFolderPickerDialog(
-        title: "Select the game folder");
-    widget.controller.text = result ?? "";
+  void _onPressed() {
+    if(_selecting){
+      showSnackbar(context, const Snackbar(content: Text("Folder selector is already opened")));
+      return;
+    }
+
+    _selecting = true;
+    compute(openFilePicker, "Select the game folder")
+        .then((value) => widget.controller.text = value ?? "")
+        .then((_) => _selecting = false);
   }
 }

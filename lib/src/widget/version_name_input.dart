@@ -22,11 +22,11 @@ class VersionNameInput extends StatelessWidget {
 
   String? _validate(String? text) {
     if (text == null || text.isEmpty) {
-      return 'Invalid version name';
+      return 'Empty version name';
     }
 
     if (_gameController.versions.value.any((element) => element.name == text)) {
-      return 'Existent game version';
+      return 'This version already exists';
     }
 
     return null;

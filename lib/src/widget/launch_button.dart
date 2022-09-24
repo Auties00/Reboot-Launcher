@@ -110,16 +110,9 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    if (!line.contains("Game Engine Initialized")) {
-      return;
+    if (line.contains("[UFortUIManagerWidget_NUI::SetUIState]") && line.contains("FrontEnd")) {
+      _injectOrShowError(_gameController.host.value ? "reboot.dll" : "console.dll");
     }
-
-    if (!_gameController.host.value) {
-      _injectOrShowError("console.dll");
-      return;
-    }
-
-    _injectOrShowError("reboot.dll");
   }
 
   Future<Object?> _onError(exception) {

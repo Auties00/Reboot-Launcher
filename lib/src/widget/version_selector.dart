@@ -14,57 +14,72 @@ import 'package:reboot_launcher/src/widget/add_server_version.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 
 import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/widget/scan_local_version.dart';
+
+import '../controller/build_controller.dart';
 
 class VersionSelector extends StatelessWidget {
   final GameController _gameController = Get.find<GameController>();
+  final bool enableScanner;
 
-  VersionSelector({Key? key}) : super(key: key);
+  VersionSelector({Key? key, this.enableScanner = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: "The version of Fortnite to launch",
-      child: InfoLabel(
-          label: "Version",
-          child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Row(
-                children: [
-                  Expanded(child: _createSelector(context)),
+    return InfoLabel(
+        label: "Version",
+        child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Row(
+              children: [
+                Expanded(child: _createSelector(context)),
+                const SizedBox(
+                  width: 16,
+                ),
+                Tooltip(
+                  message: "Add a local fortnite build to the versions list",
+                  child: Button(
+                      child: const Icon(FluentIcons.open_file),
+                      onPressed: () => _openAddLocalVersionDialog(context)),
+                ),
+                const SizedBox(
+                  width: 16,
+                ),
+                if(enableScanner)
+                  Tooltip(
+                    message: "Scan all fortnite builds in a directory",
+                    child: Button(
+                        child: const Icon(FluentIcons.site_scan),
+                        onPressed: () => _openScanLocalVersionDialog(context)),
+                  ),
+                if(enableScanner)
                   const SizedBox(
                     width: 16,
                   ),
-                  Tooltip(
-                    message: "Add a local fortnite build to the versions list",
-                    child: Button(
-                        child: const Icon(FluentIcons.open_file),
-                        onPressed: () => _openLocalVersionDialog(context)),
-                  ),
-                  const SizedBox(
-                    width: 16,
-                  ),
-                  Tooltip(
-                    message: "Download a fortnite build from the archive",
-                    child: Button(
-                        child: const Icon(FluentIcons.download),
-                        onPressed: () => _openDownloadVersionDialog(context)),
-                  )
-                ],
-              ))),
-    );
+                Tooltip(
+                  message: "Download a fortnite build from the archive",
+                  child: Button(
+                      child: const Icon(FluentIcons.download),
+                      onPressed: () => _openDownloadVersionDialog(context)),
+                ),
+              ],
+            )));
   }
 
   Widget _createSelector(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: Obx(() => DropDownButton(
-            leading: Text(_gameController.selectedVersionObs.value?.name ??
-                "Select a version"),
-            items: _gameController.hasNoVersions
-                ? [_createDefaultVersionItem()]
-                : _gameController.versions.value
-                .map((version) => _createVersionItem(context, version))
-                .toList()))
+    return Tooltip(
+      message: "The version of Fortnite to launch",
+      child: SizedBox(
+        width: double.infinity,
+        child: Obx(() => DropDownButton(
+              leading: Text(_gameController.selectedVersionObs.value?.name ??
+                  "Select a version"),
+              items: _gameController.hasNoVersions
+                  ? [_createDefaultVersionItem()]
+                  : _gameController.versions.value
+                  .map((version) => _createVersionItem(context, version))
+                  .toList()))
+      ),
     );
   }
 
@@ -100,10 +115,16 @@ class VersionSelector extends StatelessWidget {
     );
   }
 
-  void _openLocalVersionDialog(BuildContext context) async {
+  void _openAddLocalVersionDialog(BuildContext context) async {
     await showDialog<bool>(
         context: context,
         builder: (context) => AddLocalVersion());
+  }
+
+  void _openScanLocalVersionDialog(BuildContext context) async {
+    await showDialog<bool>(
+        context: context,
+        builder: (context) => ScanLocalVersion());
   }
 
   Future<void> _openMenu(
@@ -142,7 +163,7 @@ class VersionSelector extends StatelessWidget {
         builder: (context) => ContentDialog(
               content: const SizedBox(
                   width: double.infinity,
-                  child: Text("Delete associated game path?",
+                  child: Text("Do you want to also delete the files for this version?",
                       textAlign: TextAlign.center)),
               actions: [
                 FilledButton(

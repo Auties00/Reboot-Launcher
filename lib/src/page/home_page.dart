@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/page/info_page.dart';
 import 'package:reboot_launcher/src/page/launcher_page.dart';
@@ -9,7 +12,10 @@ import 'package:reboot_launcher/src/widget/window_border.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'package:reboot_launcher/src/util/os.dart';
-import 'package:reboot_launcher/src/util/reboot.dart';
+import 'package:get/get.dart';
+
+import '../controller/build_controller.dart';
+import '../util/reboot.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -67,18 +73,11 @@ class _HomePageState extends State<HomePage> with WindowListener {
                 trailing: WindowTitleBar(focused: _focused)),
             content: FutureBuilder(
                 future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(
-                        child: Text(
-                            "An error occurred while loading the launcher: ${snapshot.error}",
-                            textAlign: TextAlign.center));
-                  }
-
-                  return NavigationBody(
+                builder: (context, snapshot) => NavigationBody(
                       index: _index,
-                      children: _createPages(snapshot.hasData));
-                })
+                      children: _createPages(snapshot)
+                )
+            )
         ),
 
         if(_focused && isWin11)
@@ -87,28 +86,17 @@ class _HomePageState extends State<HomePage> with WindowListener {
     );
   }
 
-  List<Widget> _createPages(bool data) {
+  List<Widget> _createPages(AsyncSnapshot snapshot) {
+
     return [
-      data ? const LauncherPage() : _createDownloadWarning(),
+      LauncherPage(
+          ready: snapshot.hasData,
+          error: snapshot.error,
+          stackTrace: snapshot.stackTrace
+      ),
       ServerPage(),
       const InfoPage()
     ];
-  }
-
-  Widget _createDownloadWarning() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            ProgressRing(),
-            SizedBox(height: 16.0),
-            Text("Updating Reboot DLL...")
-          ],
-        ),
-      ],
-    );
   }
 
   PaneItem _createPane(String label, IconData icon) {

@@ -33,6 +33,10 @@ class _AddServerVersionState extends State<AddServerVersion> {
   late Future _future;
   DownloadStatus _status = DownloadStatus.none;
   double _downloadProgress = 0;
+  DateTime? _downloadStartTime;
+  DateTime? _lastUpdateTime;
+  Duration? _lastUpdateTimeLeft;
+  String? _lastUpdateTimeFormatted;
   String? _error;
   Process? _manifestDownloadProcess;
   CancelableOperation? _driveDownloadOperation;
@@ -62,7 +66,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
     if (_manifestDownloadProcess != null) {
       loadBinary("stop.bat", false)
           .then((value) => Process.runSync(value.path, [])); // kill doesn't work :/
-      _onCancelDownload();
+      _buildController.cancelledDownload.value = true;
       return;
     }
 
@@ -71,13 +75,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
     }
 
     _driveDownloadOperation!.cancel();
-    _onCancelDownload();
-  }
-
-  void _onCancelDownload() {
-       WidgetsBinding.instance.addPostFrameCallback((_) =>
-        showSnackbar(context,
-            const Snackbar(content: Text("Download cancelled"))));
+    _buildController.cancelledDownload.value = true;
   }
 
   @override
@@ -85,8 +83,10 @@ class _AddServerVersionState extends State<AddServerVersion> {
     return Form(
         child: Builder(
             builder: (context) => ContentDialog(
-                constraints:
-                    const BoxConstraints(maxWidth: 368, maxHeight: 338),
+                style: const ContentDialogThemeData(
+                    padding: EdgeInsets.only(left: 20, right: 20, top: 15.0, bottom: 5.0)
+                ),
+                constraints: const BoxConstraints(maxWidth: 368, maxHeight: 321),
                 content: _createDownloadVersionBody(),
                 actions: _createDownloadVersionOption(context))));
   }
@@ -131,7 +131,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   }
 
   void _onClose() {
-    Navigator.of(context).pop(true);
+    Navigator.of(context).pop();
   }
 
   void _startDownload(BuildContext context) async {
@@ -198,6 +198,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
       return;
     }
 
+    _downloadStartTime ??= DateTime.now();
     setState(() {
       _status = DownloadStatus.downloading;
       _downloadProgress = progress;
@@ -209,16 +210,24 @@ class _AddServerVersionState extends State<AddServerVersion> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            snapshot.printError();
-            return Text("Cannot fetch builds: ${snapshot.error}",
-                textAlign: TextAlign.center);
+            WidgetsBinding.instance.addPostFrameCallback((_) =>
+                setState(() => _status = DownloadStatus.error));
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Text("Cannot fetch builds: ${snapshot.error}",
+                  textAlign: TextAlign.center),
+            );
           }
 
           if (!snapshot.hasData) {
-            return const InfoLabel(
+            return InfoLabel(
               label: "Fetching builds...",
-              child: SizedBox(
-                  width: double.infinity, child: ProgressBar()),
+              child: Container(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  width: double.infinity,
+                  child: const ProgressBar()
+              ),
             );
           }
 
@@ -234,51 +243,128 @@ class _AddServerVersionState extends State<AddServerVersion> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const BuildSelector(),
+
+            const SizedBox(height: 16.0),
+
             VersionNameInput(controller: _nameController),
+
             SelectFile(
                 label: "Destination",
                 placeholder: "Type the download destination",
                 windowTitle: "Select download destination",
-                allowNavigator: false,
                 controller: _pathController,
-                validator: _checkDownloadDestination),
+                validator: _checkDownloadDestination
+            ),
           ],
         );
       case DownloadStatus.downloading:
-        return InfoLabel(
-          label: "Downloading",
-          child: InfoLabel(
-              label: "${_downloadProgress.round()}%",
-              child: SizedBox(
-                  width: double.infinity,
-                  child: ProgressBar(value: _downloadProgress.toDouble()))),
+        var timeLeft = _timeLeft;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Downloading...",
+                style: FluentTheme.maybeOf(context)?.typography.body,
+                textAlign: TextAlign.start,
+              ),
+            ),
+
+            const SizedBox(
+              height: 8,
+            ),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "${_downloadProgress.round()}%",
+                  style: FluentTheme.maybeOf(context)?.typography.body,
+                ),
+
+                Text(
+                  "Time left: ${timeLeft ?? "00:00:00"}",
+                  style: FluentTheme.maybeOf(context)?.typography.body,
+                ),
+              ],
+            ),
+
+            const SizedBox(
+              height: 8,
+            ),
+
+            SizedBox(
+                width: double.infinity,
+                child: ProgressBar(value: _downloadProgress.toDouble())
+            ),
+
+            const SizedBox(
+              height: 16,
+            )
+          ],
         );
       case DownloadStatus.extracting:
-        return const InfoLabel(
-          label: "Extracting",
-          child: SizedBox(width: double.infinity, child: ProgressBar())
+        return const Padding(
+          padding: EdgeInsets.only(bottom: 16),
+          child: InfoLabel(
+            label: "Extracting...",
+            child: SizedBox(width: double.infinity, child: ProgressBar())
+          ),
         );
       case DownloadStatus.done:
-        return const SizedBox(
-            width: double.infinity,
-            child: Text("The download was completed successfully!",
-                textAlign: TextAlign.center));
+        return const Padding(
+          padding: EdgeInsets.only(bottom: 16),
+          child: SizedBox(
+              width: double.infinity,
+              child: Text("The download was completed successfully!",
+                  textAlign: TextAlign.center)),
+        );
       case DownloadStatus.error:
-        return SizedBox(
-            width: double.infinity,
-            child: Text(
-                "An exception was thrown during the download process:$_error",
-                textAlign: TextAlign.center));
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: SizedBox(
+              width: double.infinity,
+              child: Text(
+                  "An error was occurred while downloading:$_error",
+                  textAlign: TextAlign.center)),
+        );
     }
   }
+
+  String? get _timeLeft {
+    if(_downloadStartTime == null){
+      return null;
+    }
+
+    var now = DateTime.now();
+    var elapsed = now.difference(_downloadStartTime!);
+    var msLeft = (elapsed.inMilliseconds * 100) / _downloadProgress;
+    if(!msLeft.isFinite){
+      return null;
+    }
+
+    var timeLeft = Duration(milliseconds: msLeft.round() - elapsed.inMilliseconds);
+    var delta = _lastUpdateTime == null || _lastUpdateTimeLeft == null ? -1
+        : timeLeft.inMilliseconds - _lastUpdateTimeLeft!.inMilliseconds;
+    var shouldSkip = delta == -1 || now.difference(_lastUpdateTime!).inMilliseconds > delta.abs() * 3;
+    _lastUpdateTime = now;
+    _lastUpdateTimeLeft = timeLeft;
+    if(shouldSkip){
+      return _lastUpdateTimeFormatted;
+    }
+
+    var twoDigitMinutes = _twoDigits(timeLeft.inMinutes.remainder(60));
+    var twoDigitSeconds = _twoDigits(timeLeft.inSeconds.remainder(60));
+    return _lastUpdateTimeFormatted =
+            "${_twoDigits(timeLeft.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  }
+
+  String _twoDigits(int n) => n.toString().padLeft(2, "0");
 
   String? _checkDownloadDestination(text) {
     if (text == null || text.isEmpty) {
       return 'Invalid download path';
-    }
-
-    if (Directory(text).existsSync()) {
-      return "Existent download destination";
     }
 
     return null;

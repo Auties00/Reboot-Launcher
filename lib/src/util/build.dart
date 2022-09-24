@@ -96,7 +96,8 @@ Future<Process> downloadManifestBuild(
 Future<void> downloadArchiveBuild(String archiveUrl, String destination,
     Function(double) onProgress, Function() onRar) async {
   var tempFile = File(
-      "${Platform.environment["Temp"]}\\FortniteBuild${Random.secure().nextInt(1000000)}.rar");
+      "$destination\\.temp\\FortniteBuild${Random.secure().nextInt(1000000)}.rar");
+  await tempFile.parent.create(recursive: true);
   try {
     var client = http.Client();
     var request = http.Request("GET", Uri.parse(archiveUrl));
