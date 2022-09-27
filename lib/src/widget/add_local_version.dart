@@ -98,7 +98,7 @@ class AddLocalVersion extends StatelessWidget {
       return "Directory doesn't exist";
     }
 
-    if (!FortniteVersion.findExecutable(directory, "FortniteClient-Win64-Shipping.exe").existsSync()) {
+    if (FortniteVersion.findExecutable(directory, "FortniteClient-Win64-Shipping.exe") == null) {
       return "Invalid game path";
     }
 

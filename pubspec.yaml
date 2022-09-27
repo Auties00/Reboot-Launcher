@@ -1,6 +1,6 @@
 name: reboot_launcher
 description: Launcher for project reboot
-version: "3.6.0"
+version: "3.7.0"
 
 publish_to: 'none'
 
@@ -29,6 +29,7 @@ dependencies:
   get: ^4.6.5
   get_storage: ^2.0.3
   window_manager: ^0.2.7
+  hex: ^0.2.0
 
 dev_dependencies:
   flutter_test:
@@ -48,7 +49,7 @@ msix_config:
   display_name: Reboot Launcher
   publisher_display_name: Auties00
   identity_name: 31868Auties00.RebootLauncher
-  msix_version: 3.6.0.0
+  msix_version: 3.7.0.0
   publisher: CN=E6CD08C6-DECF-4034-A3EB-2D5FA2CA8029
   logo_path: ./assets/icons/reboot.ico
   architecture: x64

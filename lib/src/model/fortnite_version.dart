@@ -12,33 +12,29 @@ class FortniteVersion {
 
   FortniteVersion({required this.name, required this.location});
 
-  static File findExecutable(Directory directory, String name) {
-    if(path.basename(directory.path) == "FortniteGame"){
-      return File("$directory/Binaries/Win64/$name");
-    }
-
+  static File? findExecutable(Directory directory, String name) {
     try{
-      var gameDirectory = directory.listSync(recursive: true)
-          .firstWhereOrNull((element) => path.basename(element.path) == "FortniteGame");
-      if(gameDirectory == null){
-        return File("${directory.path}/Binaries/Win64/$name");
+      var result = directory.listSync(recursive: true)
+          .firstWhereOrNull((element) => path.basename(element.path) == name);
+      if(result == null){
+        return null;
       }
 
-      return File("${gameDirectory.path}/Binaries/Win64/$name");
+      return File(result.path);
     }catch(_){
-      return File("${directory.path}/Binaries/Win64/$name");
+      return null;
     }
   }
 
-  File get executable {
+  File? get executable {
     return findExecutable(location, "FortniteClient-Win64-Shipping.exe");
   }
 
-  File get launcher {
+  File? get launcher {
     return findExecutable(location, "FortniteLauncher.exe");
   }
 
-  File get eacExecutable {
+  File? get eacExecutable {
     return findExecutable(location, "FortniteClient-Win64-Shipping_EAC.exe");
   }
 

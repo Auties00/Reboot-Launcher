@@ -12,7 +12,7 @@ Future<bool> injectDll(int pid, String dll) async {
   var process = await shell.run("./injector.exe -p $pid --inject \"$dll\"");
   var success = process.outText.contains("Successfully injected module");
   if (!success) {
-    injectLogFile.writeAsString(process.outText, mode: FileMode.append);
+    injectLogFile.writeAsString(process.outText);
   }
 
   return success;

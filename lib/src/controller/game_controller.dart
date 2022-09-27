@@ -36,14 +36,15 @@ class GameController extends GetxController {
     _selectedVersion = Rxn(decodedSelectedVersion);
 
     host = RxBool(_storage.read("host") ?? false);
+    host.listen((value) {
+      _storage.write("host", value);
+      username.text = _storage.read("${host.value ? 'host' : 'game'}_username") ?? "";
+    });
 
     username = TextEditingController(text: _storage.read("${host.value ? 'host' : 'game'}_username") ?? "");
     username.addListener(() async {
       await _storage.write("${host.value ? 'host' : 'game'}_username", username.text);
     });
-
-    host.listen((value) => _storage.write("host", value));
-    host.listen((value) => username.text = _storage.read("${host.value ? 'host' : 'game'}_username") ?? "");
 
     started = RxBool(false);
   }

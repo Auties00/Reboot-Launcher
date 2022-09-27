@@ -8,6 +8,7 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/util/injector.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:reboot_launcher/src/util/patcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
 
@@ -35,7 +36,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         child: Obx(() => Tooltip(
           message: _gameController.started.value ? "Close the running Fortnite instance" : "Launch a new Fortnite instance",
           child: Button(
-              onPressed: () => _onPressed(context),
+              onPressed: _onPressed,
               child: Text(_gameController.started.value ? "Close" : "Launch")
           ),
         )),
@@ -43,7 +44,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     );
   }
 
-  void _onPressed(BuildContext context) async {
+  void _onPressed() async {
     if (_gameController.username.text.isEmpty) {
       showSnackbar(
           context, const Snackbar(content: Text("Please type a username")));
@@ -84,38 +85,103 @@ class _LaunchButtonState extends State<LaunchButton> {
     try {
       _updateServerState(true);
       var version = _gameController.selectedVersionObs.value!;
-      if (await version.launcher.exists()) {
-        _gameController.launcherProcess = await Process.start(version.launcher.path, []);
+      var hosting = _gameController.host.value;
+      if (version.launcher != null) {
+        _gameController.launcherProcess = await Process.start(version.launcher!.path, []);
         Win32Process(_gameController.launcherProcess!.pid).suspend();
       }
 
-      if (await version.eacExecutable.exists()) {
-        _gameController.eacProcess = await Process.start(version.eacExecutable.path, []);
+      if (version.eacExecutable != null) {
+        _gameController.eacProcess = await Process.start(version.eacExecutable!.path, []);
         Win32Process(_gameController.eacProcess!.pid).suspend();
       }
 
-      _gameController.gameProcess = await Process.start(version.executable.path, _createProcessArguments())
-        ..exitCode.then((_) => _onStop())
+      if(hosting){
+        await patchExe(version.executable!);
+      }
+
+      _gameController.gameProcess = await Process.start(version.executable!.path, _createProcessArguments())
+        ..exitCode.then((_) => _onEnd())
         ..outLines.forEach(_onGameOutput);
-      _injectOrShowError("cranium.dll");
+      await _injectOrShowError("cranium.dll");
+
+      if(hosting){
+        _showServerLaunchingWarning();
+      }
     } catch (exception) {
-      _updateServerState(false);
+      _closeDialogIfOpen();
       _onError(exception);
     }
   }
 
-  void _onGameOutput(line) {
+  void _onEnd() {
+    _closeDialogIfOpen();
+    _onStop();
+  }
+
+  void _closeDialogIfOpen() {
+    if(!mounted){
+      return;
+    }
+
+    var route = ModalRoute.of(context);
+    if(route != null && !route.isCurrent){
+      Navigator.of(context).pop(false);
+    }
+  }
+
+  void _showServerLaunchingWarning() async {
+    var result = await showDialog<bool>(
+        context: context,
+        builder: (context) => ContentDialog(
+          content:  const InfoLabel(
+              label: "Launching reboot server...",
+              child: SizedBox(
+                  width: double.infinity,
+                  child: ProgressBar()
+              )
+          ),
+          actions: [
+            SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    _onStop();
+                  },
+                  style: ButtonStyle(
+                      backgroundColor: ButtonState.all(Colors.red)),
+                  child: const Text('Cancel'),
+                )
+            )
+          ],
+        )
+    );
+
+    if(result != null && result){
+      return;
+    }
+
+    _onStop();
+  }
+
+  void _onGameOutput(String line) {
     if (line.contains("FOnlineSubsystemGoogleCommon::Shutdown()")) {
       _onStop();
       return;
     }
 
-    if (line.contains("[UFortUIManagerWidget_NUI::SetUIState]") && line.contains("FrontEnd")) {
-      _injectOrShowError(_gameController.host.value ? "reboot.dll" : "console.dll");
+    if (line.contains("Game Engine Initialized") && !_gameController.host.value) {
+      _injectOrShowError("console.dll");
+    }
+
+    if(line.contains("added to UI Party led ") && _gameController.host.value){
+      _injectOrShowError("reboot.dll")
+          .then((value) => Navigator.of(context).pop(true));
     }
   }
 
-  Future<Object?> _onError(exception) {
+  Future<Object?> _onError(Object exception) {
     return showDialog(
         context: context,
         builder: (context) => ContentDialog(
@@ -127,7 +193,7 @@ class _LaunchButtonState extends State<LaunchButton> {
                 SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => Navigator.of(context).pop(true),
                       style: ButtonStyle(
                           backgroundColor: ButtonState.all(Colors.red)),
                       child: const Text('Close'),
@@ -141,7 +207,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     _gameController.kill();
   }
 
-  void _injectOrShowError(String binary) async {
+  Future<void> _injectOrShowError(String binary) async {
     var gameProcess = _gameController.gameProcess;
     if (gameProcess == null) {
       return;
@@ -166,7 +232,7 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   List<String> _createProcessArguments() {
-    return [
+    var args = [
       "-epicapp=Fortnite",
       "-epicenv=Prod",
       "-epiclocale=en-us",
@@ -179,5 +245,11 @@ class _LaunchButtonState extends State<LaunchButton> {
       "-AUTH_PASSWORD=Rebooted",
       "-AUTH_TYPE=epic"
     ];
+
+    if(_gameController.host.value){
+      args.addAll(["-log", "-nullrhi", "-nosplash", "-nosound", "-unattended"]);
+    }
+
+    return args;
   }
 }

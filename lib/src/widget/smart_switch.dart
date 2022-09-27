@@ -50,11 +50,11 @@ class _SmartSwitchState extends State<SmartSwitch> {
 
   double get _uncheckedOpacity => widget.enabled ? 0.8 : 0.5;
 
-  void _onChanged(checked) {
+  void _onChanged(bool checked) {
     if (!widget.enabled) {
       return;
     }
 
-    setState(() => widget.value(checked));
+    setState(() => widget.value.value = checked);
   }
 }

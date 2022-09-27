@@ -15,6 +15,7 @@ import 'package:reboot_launcher/src/model/fortnite_version.dart';
 
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/widget/scan_local_version.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../controller/build_controller.dart';
 
@@ -142,7 +143,7 @@ class VersionSelector extends StatelessWidget {
     switch (result) {
       case 0:
         Navigator.of(context).pop();
-        Process.run("explorer.exe", [version.location.path]);
+        launchUrl(version.location.uri);
         break;
 
       case 1:
