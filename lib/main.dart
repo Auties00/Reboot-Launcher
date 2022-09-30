@@ -25,7 +25,6 @@ void main() async {
   Get.put(GameController());
   Get.put(ServerController());
   Get.put(BuildController());
-  SystemTheme.accentColor.load();
   doWhenWindowReady(() {
     const size = Size(600, 365);
     var window = appWindow as WinDesktopWindow;

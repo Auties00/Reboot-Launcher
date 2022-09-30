@@ -29,7 +29,6 @@ dependencies:
   get: ^4.6.5
   get_storage: ^2.0.3
   window_manager: ^0.2.7
-  hex: ^0.2.0
 
 dev_dependencies:
   flutter_test:
