@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:process_run/shell.dart';
@@ -46,22 +47,29 @@ Future<bool> isLawinPortFree() async {
   return !process.outText.contains(" LISTENING "); // Goofy way, best we got
 }
 
-void checkAddress(BuildContext context, String host, String port) {
-  showDialog(
+Future<bool> showRemoteServerCheck(BuildContext context, String host, String port, [bool autoClose = false]) async {
+  var future = _pingServer(host, port).then((value) {
+    if(value && autoClose){
+      Navigator.of(context).pop();
+    }
+
+    return value;
+  });
+  await showDialog(
       context: context,
       builder: (context) => ContentDialog(
         content: FutureBuilder<bool>(
-            future: _pingAddress(host, port),
+            future: future,
             builder: (context, snapshot) {
               if(snapshot.hasData){
                 return SizedBox(
                     width: double.infinity,
-                    child: Text(snapshot.data! ? "Valid address" : "Invalid address" , textAlign: TextAlign.center)
+                    child: Text(snapshot.data! ? "The server answered correctly" : "The remote server doesn't work correctly or the IP and/or the port are incorrect" , textAlign: TextAlign.center)
                 );
               }
 
               return const InfoLabel(
-                  label: "Checking address...",
+                  label: "Pinging remote lawin server...",
                   child: SizedBox(
                       width: double.infinity,
                       child: ProgressBar()
@@ -81,16 +89,25 @@ void checkAddress(BuildContext context, String host, String port) {
         ],
       )
   );
+
+  return await future;
 }
 
-Future<bool> _pingAddress(String host, String port) async {
-  var process = await Process.run(
-      "powershell",
-      ["Test-NetConnection", "-computername", host, "-port", port]
-  );
-
-  return process.exitCode == 0
-      && process.outText.contains("TcpTestSucceeded : True");
+Future<bool> _pingServer(String host, String port, [bool https=false]) async {
+  try{
+    var uri = Uri(
+        scheme: https ? "https" : "http",
+        host: host,
+        port: int.parse(port)
+    );
+    var client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 5);
+    var request = await client.getUrl(uri);
+    var response = await request.close();
+    return response.statusCode == 200;
+  }catch(_){
+    return https ? false : await _pingServer(host, port, true);
+  }
 }
 
 Future<bool> changeEmbeddedServerState(BuildContext context, bool running) async {

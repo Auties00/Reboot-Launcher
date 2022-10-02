@@ -26,6 +26,7 @@ class LaunchButton extends StatefulWidget {
 class _LaunchButtonState extends State<LaunchButton> {
   final GameController _gameController = Get.find<GameController>();
   final ServerController _serverController = Get.find<ServerController>();
+  bool _lawinFail = false;
 
   @override
   Widget build(BuildContext context) {
@@ -64,12 +65,16 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    _updateServerState(true);
-    if (!_serverController.started.value && _serverController.embedded.value && await isLawinPortFree()) {
+    if (_serverController.embedded.value && !_serverController.started.value && await isLawinPortFree()) {
+      if(!mounted){
+        return;
+      }
+
       var result = await changeEmbeddedServerState(context, false);
       _serverController.started(result);
     }
 
+    _updateServerState(true);
     _onStart();
   }
 
@@ -96,6 +101,13 @@ class _LaunchButtonState extends State<LaunchButton> {
         Win32Process(_gameController.eacProcess!.pid).suspend();
       }
 
+      if(!_serverController.embedded.value){
+        var available = await _showPingWarning();
+        if(!available) {
+          return;
+        }
+      }
+
       if(hosting){
         await patchExe(version.executable!);
       }
@@ -106,7 +118,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       await _injectOrShowError("cranium.dll");
 
       if(hosting){
-        _showServerLaunchingWarning();
+        await _showServerLaunchingWarning();
       }
     } catch (exception) {
       _closeDialogIfOpen();
@@ -115,6 +127,10 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   void _onEnd() {
+    if(_lawinFail){
+      return;
+    }
+
     _closeDialogIfOpen();
     _onStop();
   }
@@ -125,16 +141,62 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     var route = ModalRoute.of(context);
-    if(route != null && !route.isCurrent){
-      Navigator.of(context).pop(false);
+    if(route == null || route.isCurrent){
+      return;
     }
+
+    Navigator.of(context).pop(false);
   }
 
-  void _showServerLaunchingWarning() async {
+  Future<bool> _showPingWarning() async {
+    if(!mounted){
+      return false;
+    }
+
+    return await showRemoteServerCheck(
+        context,
+        _serverController.host.text,
+        _serverController.port.text,
+        true
+    );
+  }
+
+  Future<void> _showBrokenServerWarning() async {
+    if(!mounted){
+      return;
+    }
+
+    showDialog(
+        context: context,
+        builder: (context) => ContentDialog(
+          content: const SizedBox(
+              width: double.infinity,
+              child: Text("The lawin server is not working correctly", textAlign: TextAlign.center)
+          ),
+          actions: [
+            SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () =>  Navigator.of(context).pop(),
+                  style: ButtonStyle(
+                      backgroundColor: ButtonState.all(Colors.red)),
+                  child: const Text('Close'),
+                )
+            )
+          ],
+        )
+    );
+  }
+
+  Future<void> _showServerLaunchingWarning() async {
+    if(!mounted){
+      return;
+    }
+
     var result = await showDialog<bool>(
         context: context,
         builder: (context) => ContentDialog(
-          content:  const InfoLabel(
+          content: const InfoLabel(
               label: "Launching reboot server...",
               child: SizedBox(
                   width: double.infinity,
@@ -171,8 +233,16 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
+    if(line.contains("port 3551 failed: Connection refused")){
+      _lawinFail = true;
+      _closeDialogIfOpen();
+      _showBrokenServerWarning();
+      return;
+    }
+
     if (line.contains("Game Engine Initialized") && !_gameController.host.value) {
       _injectOrShowError("console.dll");
+      return;
     }
 
     if(line.contains("added to UI Party led ") && _gameController.host.value){

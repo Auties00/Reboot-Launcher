@@ -27,7 +27,7 @@ class ServerButton extends StatelessWidget {
                       ? !_serverController.started.value
                           ? "Start"
                           : "Stop"
-                      : "Check address")),
+                      : "Ping Server")),
             )),
       ),
     );
@@ -35,7 +35,7 @@ class ServerButton extends StatelessWidget {
 
   void _onPressed(BuildContext context) async {
     if (!_serverController.embedded.value) {
-      checkAddress(
+      showRemoteServerCheck(
           context, _serverController.host.text, _serverController.port.text);
       return;
     }

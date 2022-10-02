@@ -1,8 +1,6 @@
-import 'dart:ui';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/page/info_page.dart';
 import 'package:reboot_launcher/src/page/launcher_page.dart';
@@ -12,9 +10,7 @@ import 'package:reboot_launcher/src/widget/window_border.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'package:reboot_launcher/src/util/os.dart';
-import 'package:get/get.dart';
 
-import '../controller/build_controller.dart';
 import '../util/reboot.dart';
 
 class HomePage extends StatefulWidget {

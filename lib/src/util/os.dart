@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter_desktop_folder_picker/flutter_desktop_folder_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 
 File errorFile = File("${Platform.environment["Temp"]}/error.txt");
@@ -19,7 +19,7 @@ bool get isWin11 {
 }
 
 Future<String?> openFilePicker(String title) async =>
-    FlutterDesktopFolderPicker.openFolderPickerDialog(title: title);
+    await FilePicker.platform.getDirectoryPath(dialogTitle: title);
 
 Future<List<Directory>> scanInstallations(String input) => Directory(input)
     .list(recursive: true)
