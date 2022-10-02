@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as path;
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/widget/select_file.dart';
-import 'package:path/path.dart' as path;
 
 
 class ScanLocalVersion extends StatefulWidget {

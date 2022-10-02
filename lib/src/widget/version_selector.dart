@@ -1,29 +1,28 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:async';
-import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart'
     show showMenu, PopupMenuEntry, PopupMenuItem;
 import 'package:get/get.dart';
+import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/widget/add_local_version.dart';
 import 'package:reboot_launcher/src/widget/add_server_version.dart';
-
-import 'package:reboot_launcher/src/model/fortnite_version.dart';
-
-import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/widget/scan_local_version.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../controller/build_controller.dart';
-
-class VersionSelector extends StatelessWidget {
-  final GameController _gameController = Get.find<GameController>();
+class VersionSelector extends StatefulWidget {
   final bool enableScanner;
 
-  VersionSelector({Key? key, this.enableScanner = false}) : super(key: key);
+  const VersionSelector({Key? key, this.enableScanner = false}) : super(key: key);
+
+  @override
+  State<VersionSelector> createState() => _VersionSelectorState();
+}
+
+class _VersionSelectorState extends State<VersionSelector> {
+  final GameController _gameController = Get.find<GameController>();
 
   @override
   Widget build(BuildContext context) {
@@ -46,14 +45,14 @@ class VersionSelector extends StatelessWidget {
                 const SizedBox(
                   width: 16,
                 ),
-                if(enableScanner)
+                if(widget.enableScanner)
                   Tooltip(
                     message: "Scan all fortnite builds in a directory",
                     child: Button(
                         child: const Icon(FluentIcons.site_scan),
                         onPressed: () => _openScanLocalVersionDialog(context)),
                   ),
-                if(enableScanner)
+                if(widget.enableScanner)
                   const SizedBox(
                     width: 16,
                   ),
@@ -125,7 +124,7 @@ class VersionSelector extends StatelessWidget {
   void _openScanLocalVersionDialog(BuildContext context) async {
     await showDialog<bool>(
         context: context,
-        builder: (context) => ScanLocalVersion());
+        builder: (context) => const ScanLocalVersion());
   }
 
   Future<void> _openMenu(
@@ -142,13 +141,26 @@ class VersionSelector extends StatelessWidget {
 
     switch (result) {
       case 0:
+        if(!mounted){
+          return;
+        }
+
         Navigator.of(context).pop();
         launchUrl(version.location.uri);
         break;
 
       case 1:
         _gameController.removeVersion(version);
+
+        if(!mounted){
+          return;
+        }
+
         await _openDeleteDialog(context, version);
+        if(!mounted){
+          return;
+        }
+
         Navigator.of(context).pop();
         if (_gameController.selectedVersionObs.value?.name == version.name || _gameController.hasNoVersions) {
           _gameController.selectedVersionObs.value = null;

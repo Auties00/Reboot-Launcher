@@ -5,11 +5,10 @@ import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/page/info_page.dart';
 import 'package:reboot_launcher/src/page/launcher_page.dart';
 import 'package:reboot_launcher/src/page/server_page.dart';
-import 'package:reboot_launcher/src/widget/window_buttons.dart';
-import 'package:reboot_launcher/src/widget/window_border.dart';
-import 'package:window_manager/window_manager.dart';
-
 import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/widget/window_border.dart';
+import 'package:reboot_launcher/src/widget/window_buttons.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../util/reboot.dart';
 

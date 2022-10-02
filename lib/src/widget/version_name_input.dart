@@ -1,6 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 
 class VersionNameInput extends StatelessWidget {

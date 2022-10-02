@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/widget/select_file.dart';
-
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
+import 'package:reboot_launcher/src/widget/select_file.dart';
 
 class AddLocalVersion extends StatelessWidget {
   final GameController _gameController = Get.find<GameController>();

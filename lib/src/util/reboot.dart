@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
-import 'package:get/get.dart';
-import 'package:reboot_launcher/src/util/binary.dart';
-import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
+import 'package:reboot_launcher/src/util/binary.dart';
 
 const _rebootUrl =
     "https://nightly.link/Milxnor/Universal-Walking-Simulator/workflows/msbuild/master/Release.zip";

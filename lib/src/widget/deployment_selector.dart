@@ -1,8 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/widget/smart_switch.dart';
-
 import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/widget/smart_switch.dart';
 
 class DeploymentSelector extends StatelessWidget {
   final GameController _gameController = Get.find<GameController>();

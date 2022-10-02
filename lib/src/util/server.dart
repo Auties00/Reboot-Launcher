@@ -1,14 +1,14 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:io';
+
 import 'package:archive/archive_io.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:shelf/shelf_io.dart' as shelf_io;
+import 'package:shelf_proxy/shelf_proxy.dart';
 
 final serverLocation = Directory("${Platform.environment["UserProfile"]}/.reboot_launcher/lawin");
 const String _serverUrl =
@@ -47,25 +47,74 @@ Future<bool> isLawinPortFree() async {
   return !process.outText.contains(" LISTENING "); // Goofy way, best we got
 }
 
-Future<bool> showRemoteServerCheck(BuildContext context, String host, String port, [bool autoClose = false]) async {
-  var future = _pingServer(host, port).then((value) {
-    if(value && autoClose){
-      Navigator.of(context).pop();
+Future<HttpServer?> changeReverseProxyState(BuildContext context, String host, String port, HttpServer? server) async {
+  if(server != null){
+    try{
+      server.close(force: true);
+      return null;
+    }catch(error){
+      _showStopProxyError(context, error);
+      return server;
+    }
+  }
+
+  host = host.trim();
+  if(host.isEmpty){
+    showSnackbar(
+        context, const Snackbar(content: Text("Missing host name")));
+    return null;
+  }
+
+  port = port.trim();
+  if(port.isEmpty){
+    showSnackbar(
+        context, const Snackbar(content: Text("Missing port", textAlign: TextAlign.center)));
+    return null;
+  }
+
+  if(int.tryParse(port) == null){
+    showSnackbar(
+        context, const Snackbar(content: Text("Invalid port, use only numbers", textAlign: TextAlign.center)));
+    return null;
+  }
+
+  try{
+    var uri = await _showReverseProxyCheck(context, host, port);
+    if(uri == null){
+      return null;
     }
 
-    return value;
-  });
-  await showDialog(
+    return await shelf_io.serve(proxyHandler(uri), 'localhost', 3551);
+  }catch(error){
+    _showStartProxyError(context, error);
+    return null;
+  }
+}
+
+Future<Uri?> _showReverseProxyCheck(BuildContext context, String host, String port) async {
+  var future = _pingServer(host, port);
+  return await showDialog(
       context: context,
       builder: (context) => ContentDialog(
-        content: FutureBuilder<bool>(
+        content: FutureBuilder<Uri?>(
             future: future,
             builder: (context, snapshot) {
-              if(snapshot.hasData){
+              if(snapshot.hasError){
                 return SizedBox(
                     width: double.infinity,
-                    child: Text(snapshot.data! ? "The server answered correctly" : "The remote server doesn't work correctly or the IP and/or the port are incorrect" , textAlign: TextAlign.center)
+                    child: Text("Cannot ping remote server: ${snapshot.error}" , textAlign: TextAlign.center)
                 );
+              }
+
+              if(snapshot.connectionState == ConnectionState.done && !snapshot.hasData){
+                return const SizedBox(
+                    width: double.infinity,
+                    child: Text("The remote server doesn't work correctly or the IP and/or the port are incorrect" , textAlign: TextAlign.center)
+                );
+              }
+
+              if(snapshot.hasData){
+                Navigator.of(context).pop(snapshot.data);
               }
 
               return const InfoLabel(
@@ -86,28 +135,79 @@ Future<bool> showRemoteServerCheck(BuildContext context, String host, String por
                     backgroundColor: ButtonState.all(Colors.red)),
                 child: const Text('Close'),
               ))
-        ],
+        ]
       )
   );
-
-  return await future;
 }
 
-Future<bool> _pingServer(String host, String port, [bool https=false]) async {
+Future<Uri?> _pingServer(String host, String port, [bool https=false]) async {
+  var hostName = _getHostName(host);
+  var declaredScheme = _getScheme(host);
   try{
     var uri = Uri(
-        scheme: https ? "https" : "http",
-        host: host,
+        scheme: declaredScheme ?? (https ? "https" : "http"),
+        host: hostName,
         port: int.parse(port)
     );
     var client = HttpClient()
       ..connectionTimeout = const Duration(seconds: 5);
     var request = await client.getUrl(uri);
     var response = await request.close();
-    return response.statusCode == 200;
+    return response.statusCode == 200 ? uri : null;
   }catch(_){
-    return https ? false : await _pingServer(host, port, true);
+    return https || declaredScheme != null ? null : await _pingServer(host, port, true);
   }
+}
+
+String? _getHostName(String host) => host.replaceFirst("http://", "").replaceFirst("https://", "");
+
+String? _getScheme(String host) => host.startsWith("http://") ? "http" : host.startsWith("https://") ? "https" : null;
+
+
+void _showStartProxyError(BuildContext context, Object error) {
+    showDialog(
+      context: context,
+      builder: (context) => ContentDialog(
+        content: SizedBox(
+            width: double.infinity,
+            child: Text("Cannot create the reverse proxy: $error", textAlign: TextAlign.center)
+        ),
+        actions: [
+          SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () =>  Navigator.of(context).pop(),
+                style: ButtonStyle(
+                    backgroundColor: ButtonState.all(Colors.red)),
+                child: const Text('Close'),
+              )
+          )
+        ],
+      )
+  );
+}
+
+void _showStopProxyError(BuildContext context, Object error) {
+  showDialog(
+      context: context,
+      builder: (context) => ContentDialog(
+        content: SizedBox(
+            width: double.infinity,
+            child: Text("Cannot kill the reverse proxy: $error", textAlign: TextAlign.center)
+        ),
+        actions: [
+          SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () =>  Navigator.of(context).pop(),
+                style: ButtonStyle(
+                    backgroundColor: ButtonState.all(Colors.red)),
+                child: const Text('Close'),
+              )
+          )
+        ],
+      )
+  );
 }
 
 Future<bool> changeEmbeddedServerState(BuildContext context, bool running) async {

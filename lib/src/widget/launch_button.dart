@@ -6,13 +6,12 @@ import 'package:get/get.dart';
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
-import 'package:reboot_launcher/src/util/injector.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:reboot_launcher/src/util/injector.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
-
-import 'package:reboot_launcher/src/util/server.dart';
 
 class LaunchButton extends StatefulWidget {
   const LaunchButton(
@@ -65,28 +64,6 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    if (_serverController.embedded.value && !_serverController.started.value && await isLawinPortFree()) {
-      if(!mounted){
-        return;
-      }
-
-      var result = await changeEmbeddedServerState(context, false);
-      _serverController.started(result);
-    }
-
-    _updateServerState(true);
-    _onStart();
-  }
-
-  Future<void> _updateServerState(bool value) async {
-    if (_gameController.started.value == value) {
-      return;
-    }
-
-    _gameController.started(value);
-  }
-
-  Future<void> _onStart() async {
     try {
       _updateServerState(true);
       var version = _gameController.selectedVersionObs.value!;
@@ -101,15 +78,14 @@ class _LaunchButtonState extends State<LaunchButton> {
         Win32Process(_gameController.eacProcess!.pid).suspend();
       }
 
-      if(!_serverController.embedded.value){
-        var available = await _showPingWarning();
-        if(!available) {
-          return;
-        }
-      }
-
       if(hosting){
         await patchExe(version.executable!);
+      }
+
+      await _startServerIfNecessary();
+      if(!_serverController.started.value){
+        _onStop();
+        return;
       }
 
       _gameController.gameProcess = await Process.start(version.executable!.path, _createProcessArguments())
@@ -124,6 +100,43 @@ class _LaunchButtonState extends State<LaunchButton> {
       _closeDialogIfOpen();
       _onError(exception);
     }
+  }
+
+  Future<void> _startServerIfNecessary() async {
+    if (!mounted) {
+      return;
+    }
+
+    if(_serverController.started.value){
+      return;
+    }
+
+    if(!(await isLawinPortFree())){
+      _serverController.started(true);
+      return;
+    }
+
+    if (_serverController.embedded.value) {
+      var result = await changeEmbeddedServerState(context, false);
+      _serverController.started(result);
+      return;
+    }
+
+    _serverController.reverseProxy = await changeReverseProxyState(
+        context,
+        _serverController.host.text,
+        _serverController.port.text,
+        _serverController.reverseProxy
+    );
+    _serverController.started(_serverController.reverseProxy != null);
+  }
+
+  Future<void> _updateServerState(bool value) async {
+    if (_gameController.started.value == value) {
+      return;
+    }
+
+    _gameController.started(value);
   }
 
   void _onEnd() {
@@ -146,19 +159,6 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     Navigator.of(context).pop(false);
-  }
-
-  Future<bool> _showPingWarning() async {
-    if(!mounted){
-      return false;
-    }
-
-    return await showRemoteServerCheck(
-        context,
-        _serverController.host.text,
-        _serverController.port.text,
-        true
-    );
   }
 
   Future<void> _showBrokenServerWarning() async {

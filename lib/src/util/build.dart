@@ -1,14 +1,12 @@
 import 'dart:io';
 import 'dart:math';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as path;
-import 'package:reboot_launcher/src/util/version.dart' as parser;
+
 import 'package:html/parser.dart' show parse;
-
-import 'package:reboot_launcher/src/model/fortnite_build.dart';
-
+import 'package:http/http.dart' as http;
 import 'package:process_run/shell.dart';
+import 'package:reboot_launcher/src/model/fortnite_build.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:reboot_launcher/src/util/version.dart' as parser;
 
 const _userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36";

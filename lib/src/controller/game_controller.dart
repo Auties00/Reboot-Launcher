@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 
 class GameController extends GetxController {

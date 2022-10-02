@@ -1,13 +1,12 @@
 import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/widget/deployment_selector.dart';
 import 'package:reboot_launcher/src/widget/launch_button.dart';
 import 'package:reboot_launcher/src/widget/username_box.dart';
-import 'package:get/get.dart';
-
 import 'package:reboot_launcher/src/widget/version_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
 

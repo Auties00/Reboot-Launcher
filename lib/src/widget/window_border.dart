@@ -1,8 +1,7 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
-import 'package:system_theme/system_theme.dart';
-
 import 'package:reboot_launcher/src/util/os.dart';
+import 'package:system_theme/system_theme.dart';
 
 class WindowBorder extends StatelessWidget {
   const WindowBorder({Key? key}) : super(key: key);

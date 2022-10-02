@@ -1,7 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
-
 import 'package:reboot_launcher/src/util/server.dart';
 
 class ServerButton extends StatelessWidget {
@@ -16,35 +15,56 @@ class ServerButton extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         child: Obx(() => Tooltip(
-              message: !_serverController.embedded.value
-                  ? "Check the address of the remote Lawin server"
-                  : _serverController.started.value
-                      ? "Stop the running Lawin server instance"
-                      : "Start a new Lawin server instance",
+          message: _helpMessage,
               child: Button(
                   onPressed: () => _onPressed(context),
-                  child: Text(_serverController.embedded.value
-                      ? !_serverController.started.value
+                  child: Text(!_serverController.started.value
                           ? "Start"
-                          : "Stop"
-                      : "Ping Server")),
+                          : "Stop")),
             )),
       ),
     );
   }
 
+  String get  _helpMessage {
+    if (_serverController.embedded.value) {
+      if (_serverController.started.value) {
+        return "Stop the Lawin server currently running";
+      }
+
+      return "Start a new local Lawin server";
+    }
+
+    if (_serverController.started.value) {
+      return "Stop the reverse proxy currently running";
+    }
+
+    return "Start a reverse proxy targeting the remote Lawin server";
+  }
+
   void _onPressed(BuildContext context) async {
+    var running = _serverController.started.value;
+    _serverController.started.value = !running;
     if (!_serverController.embedded.value) {
-      showRemoteServerCheck(
-          context, _serverController.host.text, _serverController.port.text);
+      _serverController.reverseProxy = await changeReverseProxyState(
+          context,
+          _serverController.host.text,
+          _serverController.port.text,
+          _serverController.reverseProxy
+      );
+      _updateStarted(_serverController.reverseProxy != null);
       return;
     }
 
-    var running = _serverController.started.value;
-    _serverController.started.value = !running;
     var updatedRunning = await changeEmbeddedServerState(context, running);
-    if (updatedRunning != _serverController.started.value) {
-      _serverController.started.value = updatedRunning;
+    _updateStarted(updatedRunning);
+  }
+
+  void _updateStarted(bool updatedRunning) {
+    if (updatedRunning == _serverController.started.value) {
+      return;
     }
+
+    _serverController.started.value = updatedRunning;
   }
 }

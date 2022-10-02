@@ -30,6 +30,7 @@ dependencies:
   get: ^4.6.5
   get_storage: ^2.0.3
   window_manager: ^0.2.7
+  shelf_proxy: ^1.0.2
 
 dependency_overrides:
   win32: ^3.0.0
