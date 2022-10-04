@@ -10,6 +10,7 @@ import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/widget/add_local_version.dart';
 import 'package:reboot_launcher/src/widget/add_server_version.dart';
 import 'package:reboot_launcher/src/widget/scan_local_version.dart';
+import 'package:reboot_launcher/src/widget/smart_check_box.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class VersionSelector extends StatefulWidget {
@@ -23,6 +24,7 @@ class VersionSelector extends StatefulWidget {
 
 class _VersionSelectorState extends State<VersionSelector> {
   final GameController _gameController = Get.find<GameController>();
+  final CheckboxController _deleteFilesController = CheckboxController();
 
   @override
   Widget build(BuildContext context) {
@@ -146,55 +148,78 @@ class _VersionSelectorState extends State<VersionSelector> {
         }
 
         Navigator.of(context).pop();
-        launchUrl(version.location.uri);
+        launchUrl(version.location.uri)
+            .onError((error, stackTrace) => _onExplorerError());
         break;
 
       case 1:
-        _gameController.removeVersion(version);
-
         if(!mounted){
           return;
         }
 
-        await _openDeleteDialog(context, version);
-        if(!mounted){
+        var result = await _openDeleteDialog(context, version) ?? false;
+        if(!mounted || !result){
           return;
         }
 
         Navigator.of(context).pop();
+
+        _gameController.removeVersion(version);
         if (_gameController.selectedVersionObs.value?.name == version.name || _gameController.hasNoVersions) {
           _gameController.selectedVersionObs.value = null;
+        }
+
+        if (_deleteFilesController.value && await version.location.exists()) {
+          version.location.delete(recursive: true);
         }
 
         break;
     }
   }
 
-  Future _openDeleteDialog(BuildContext context, FortniteVersion version) {
-    return showDialog(
+  bool _onExplorerError() {
+    showSnackbar(
+        context,
+        const Snackbar(
+            content: Text("This version doesn't exist on the local machine", textAlign: TextAlign.center),
+            extended: true
+        )
+    );
+    return false;
+  }
+
+  Future<bool?> _openDeleteDialog(BuildContext context, FortniteVersion version) {
+    return showDialog<bool>(
         context: context,
         builder: (context) => ContentDialog(
-              content: const SizedBox(
-                  width: double.infinity,
-                  child: Text("Do you want to also delete the files for this version?",
-                      textAlign: TextAlign.center)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(
+                      width: double.infinity,
+                      child: Text("Are you sure you want to delete this version?")),
+
+                  const SizedBox(height: 12.0),
+
+                  SmartCheckBox(
+                      controller: _deleteFilesController,
+                      content: const Text("Delete version files from disk")
+                  )
+                ],
+              ),
               actions: [
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                Button(
+                  onPressed: () => Navigator.of(context).pop(false),
                   child: const Text('Keep'),
                 ),
                 FilledButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    if (await version.location.exists()) {
-                      version.location.delete(recursive: true);
-                    }
-                  },
-                  style:
-                      ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
+                  onPressed: ()  => Navigator.of(context).pop(true),
                   child: const Text('Delete'),
                 )
               ],
-            ));
+            )
+    );
   }
 }

@@ -38,7 +38,7 @@ Future<int> downloadRebootDll(int? lastUpdateMs) async {
 
   if (exists && sha1.convert(await oldRebootDll.readAsBytes()) == sha1.convert(await File(rebootDll.path).readAsBytes())) {
     outputDir.delete();
-    return lastUpdateMs!;
+    return lastUpdateMs ?? now.millisecondsSinceEpoch;
   }
 
   await rebootDll.rename(oldRebootDll.path);

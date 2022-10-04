@@ -94,9 +94,8 @@ class _AddServerVersionState extends State<AddServerVersion> {
     switch (_status) {
       case DownloadStatus.none:
         return [
-          FilledButton(
+          Button(
               onPressed: () => _onClose(),
-              style: ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
               child: const Text('Close')),
           FilledButton(
             onPressed: () => _startDownload(context),
@@ -108,20 +107,16 @@ class _AddServerVersionState extends State<AddServerVersion> {
         return [
           SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: Button(
                   onPressed: () => _onClose(),
-                  style:
-                      ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
                   child: const Text('Close')))
         ];
       default:
         return [
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
+            child: Button(
                 onPressed: () => _onClose(),
-                style:
-                    ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
                 child: Text(
                     _status == DownloadStatus.downloading ? 'Stop' : 'Close')),
           )

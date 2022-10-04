@@ -65,9 +65,9 @@ Future<List<FortniteBuild>> _fetchManifests() async {
     var children = tableEntry.querySelectorAll("td");
 
     var name = children[0].text;
-    var separator = name.indexOf("-") + 1;
+    var minifiedName = name.substring(name.indexOf("-") + 1, name.lastIndexOf("-"));
     var version = parser
-        .tryParse(name.substring(separator, name.indexOf("-", separator)));
+        .tryParse(minifiedName.replaceFirst("-CL", ""));
     if (version == null) {
       continue;
     }

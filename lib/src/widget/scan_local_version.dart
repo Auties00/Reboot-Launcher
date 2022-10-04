@@ -35,9 +35,8 @@ class _ScanLocalVersionState extends State<ScanLocalVersion> {
   List<Widget> _createLocalVersionActions(BuildContext context) {
     if(_future == null) {
       return [
-        FilledButton(
+        Button(
           onPressed: () => Navigator.of(context).pop(),
-          style: ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
           child: const Text('Close'),
         ),
         FilledButton(
@@ -53,9 +52,8 @@ class _ScanLocalVersionState extends State<ScanLocalVersion> {
             if(!snapshot.hasData || snapshot.hasError) {
               return SizedBox(
                 width: double.infinity,
-                child: FilledButton(
+                child: Button(
                   onPressed: () => Navigator.of(context).pop(),
-                  style: ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
                   child: const Text('Close'),
                 ),
               );

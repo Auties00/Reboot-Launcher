@@ -84,7 +84,7 @@ Future<HttpServer?> changeReverseProxyState(BuildContext context, String host, S
       return null;
     }
 
-    return await shelf_io.serve(proxyHandler(uri), 'localhost', 3551);
+    return await shelf_io.serve(proxyHandler(uri), "127.0.0.1", 3551);
   }catch(error){
     _showStartProxyError(context, error);
     return null;
@@ -129,10 +129,8 @@ Future<Uri?> _showReverseProxyCheck(BuildContext context, String host, String po
         actions: [
           SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: Button(
                 onPressed: () => Navigator.of(context).pop(),
-                style: ButtonStyle(
-                    backgroundColor: ButtonState.all(Colors.red)),
                 child: const Text('Close'),
               ))
         ]
@@ -175,10 +173,8 @@ void _showStartProxyError(BuildContext context, Object error) {
         actions: [
           SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: Button(
                 onPressed: () =>  Navigator.of(context).pop(),
-                style: ButtonStyle(
-                    backgroundColor: ButtonState.all(Colors.red)),
                 child: const Text('Close'),
               )
           )
@@ -198,10 +194,8 @@ void _showStopProxyError(BuildContext context, Object error) {
         actions: [
           SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: Button(
                 onPressed: () =>  Navigator.of(context).pop(),
-                style: ButtonStyle(
-                    backgroundColor: ButtonState.all(Colors.red)),
                 child: const Text('Close'),
               )
           )
@@ -285,10 +279,8 @@ Future<bool> _showServerDownloadInfo(BuildContext context, bool portable) async 
               future: nodeFuture,
               builder: (builder, snapshot) => SizedBox(
                   width: double.infinity,
-                  child: FilledButton(
+                  child: Button(
                     onPressed: () => Navigator.of(context).pop(snapshot.hasData && !snapshot.hasError),
-                    style: ButtonStyle(
-                        backgroundColor: ButtonState.all(Colors.red)),
                     child: Text(!snapshot.hasData && !snapshot.hasError ? 'Stop' : 'Close'),
                   )
               )
@@ -310,10 +302,8 @@ void _showEmbeddedError(BuildContext context, String path) {
         actions: [
           SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: Button(
                 onPressed: () => Navigator.of(context).pop(),
-                style: ButtonStyle(
-                    backgroundColor: ButtonState.all(Colors.red)),
                 child: const Text('Close'),
               ))
         ],

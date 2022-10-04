@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 
-File errorFile = File("${Platform.environment["Temp"]}/error.txt");
-
 const int appBarSize = 2;
 final RegExp _regex = RegExp(r'(?<=\(Build )(.*)(?=\))');
 

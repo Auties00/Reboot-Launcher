@@ -2,16 +2,20 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
+import 'package:reboot_launcher/src/model/game_type.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/injector.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
 import 'package:reboot_launcher/src/util/server.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
+
+import '../util/os.dart';
 
 class LaunchButton extends StatefulWidget {
   const LaunchButton(
@@ -25,7 +29,15 @@ class LaunchButton extends StatefulWidget {
 class _LaunchButtonState extends State<LaunchButton> {
   final GameController _gameController = Get.find<GameController>();
   final ServerController _serverController = Get.find<ServerController>();
-  bool _lawinFail = false;
+  File? _logFile;
+  bool _fail = false;
+
+  @override
+  void initState() {
+    loadBinary("log.txt", true)
+        .then((value) => _logFile = value);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +79,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     try {
       _updateServerState(true);
       var version = _gameController.selectedVersionObs.value!;
-      var hosting = _gameController.host.value;
+      var hosting = _gameController.type.value == GameType.headlessServer;
       if (version.launcher != null) {
         _gameController.launcherProcess = await Process.start(version.launcher!.path, []);
         Win32Process(_gameController.launcherProcess!.pid).suspend();
@@ -88,7 +100,18 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
 
-      _gameController.gameProcess = await Process.start(version.executable!.path, _createProcessArguments())
+      if(_logFile != null && await _logFile!.exists()){
+        await _logFile!.delete();
+      }
+
+      var gamePath = version.executable?.path;
+      if(gamePath == null){
+        _onError("${version.location.path} no longer contains a Fortnite executable. Did you delete it?", null);
+        _onStop();
+        return;
+      }
+
+      _gameController.gameProcess = await Process.start(gamePath, _createProcessArguments())
         ..exitCode.then((_) => _onEnd())
         ..outLines.forEach(_onGameOutput);
       await _injectOrShowError("cranium.dll");
@@ -96,9 +119,10 @@ class _LaunchButtonState extends State<LaunchButton> {
       if(hosting){
         await _showServerLaunchingWarning();
       }
-    } catch (exception) {
-      _closeDialogIfOpen();
-      _onError(exception);
+    } catch (exception, stacktrace) {
+      _closeDialogIfOpen(false);
+      _onError(exception, stacktrace);
+      _onStop();
     }
   }
 
@@ -140,15 +164,15 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   void _onEnd() {
-    if(_lawinFail){
+    if(_fail){
       return;
     }
 
-    _closeDialogIfOpen();
+    _closeDialogIfOpen(false);
     _onStop();
   }
 
-  void _closeDialogIfOpen() {
+  void _closeDialogIfOpen(bool success) {
     if(!mounted){
       return;
     }
@@ -158,7 +182,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    Navigator.of(context).pop(false);
+    Navigator.of(context).pop(success);
   }
 
   Future<void> _showBrokenServerWarning() async {
@@ -176,10 +200,33 @@ class _LaunchButtonState extends State<LaunchButton> {
           actions: [
             SizedBox(
                 width: double.infinity,
-                child: FilledButton(
+                child: Button(
                   onPressed: () =>  Navigator.of(context).pop(),
-                  style: ButtonStyle(
-                      backgroundColor: ButtonState.all(Colors.red)),
+                  child: const Text('Close'),
+                )
+            )
+          ],
+        )
+    );
+  }
+
+  Future<void> _showUnsupportedHeadless() async {
+    if(!mounted){
+      return;
+    }
+
+    showDialog(
+        context: context,
+        builder: (context) => ContentDialog(
+          content: const SizedBox(
+              width: double.infinity,
+              child: Text("This version of Fortnite doesn't support headless hosting", textAlign: TextAlign.center)
+          ),
+          actions: [
+            SizedBox(
+                width: double.infinity,
+                child: Button(
+                  onPressed: () =>  Navigator.of(context).pop(),
                   child: const Text('Close'),
                 )
             )
@@ -197,7 +244,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         context: context,
         builder: (context) => ContentDialog(
           content: const InfoLabel(
-              label: "Launching reboot server...",
+              label: "Launching headless reboot server...",
               child: SizedBox(
                   width: double.infinity,
                   child: ProgressBar()
@@ -206,13 +253,11 @@ class _LaunchButtonState extends State<LaunchButton> {
           actions: [
             SizedBox(
                 width: double.infinity,
-                child: FilledButton(
+                child: Button(
                   onPressed: () {
                     Navigator.of(context).pop(false);
                     _onStop();
                   },
-                  style: ButtonStyle(
-                      backgroundColor: ButtonState.all(Colors.red)),
                   child: const Text('Cancel'),
                 )
             )
@@ -228,30 +273,52 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   void _onGameOutput(String line) {
+    if(kDebugMode){
+      print(line);
+    }
+
+    if(_logFile != null){
+      _logFile!.writeAsString("$line\n", mode: FileMode.append);
+    }
+
     if (line.contains("FOnlineSubsystemGoogleCommon::Shutdown()")) {
       _onStop();
       return;
     }
 
     if(line.contains("port 3551 failed: Connection refused")){
-      _lawinFail = true;
-      _closeDialogIfOpen();
+      _fail = true;
+      _closeDialogIfOpen(false);
       _showBrokenServerWarning();
       return;
     }
 
-    if (line.contains("Game Engine Initialized") && !_gameController.host.value) {
+    if(line.contains("HTTP 400 response from ")){
+      _fail = true;
+      _closeDialogIfOpen(false);
+      _showUnsupportedHeadless();
+      return;
+    }
+
+    if (line.contains("Game Engine Initialized") &&  _gameController.type.value == GameType.client) {
       _injectOrShowError("console.dll");
       return;
     }
 
-    if(line.contains("added to UI Party led ") && _gameController.host.value){
+    if(line.contains("Region") && _gameController.type.value != GameType.client){
       _injectOrShowError("reboot.dll")
-          .then((value) => Navigator.of(context).pop(true));
+          .then((value) => _closeDialogIfOpen(true));
     }
   }
 
-  Future<Object?> _onError(Object exception) {
+  Future<Object?> _onError(Object exception, StackTrace? stackTrace) async {
+    if (stackTrace != null) {
+      var errorFile = await loadBinary("error.txt", true);
+      errorFile.writeAsString(
+          "Error: $exception\nStacktrace: $stackTrace", mode: FileMode.write);
+      launchUrl(errorFile.uri);
+    }
+
     return showDialog(
         context: context,
         builder: (context) => ContentDialog(
@@ -262,10 +329,8 @@ class _LaunchButtonState extends State<LaunchButton> {
               actions: [
                 SizedBox(
                     width: double.infinity,
-                    child: FilledButton(
+                    child: Button(
                       onPressed: () => Navigator.of(context).pop(true),
-                      style: ButtonStyle(
-                          backgroundColor: ButtonState.all(Colors.red)),
                       child: const Text('Close'),
                     ))
               ],
@@ -316,8 +381,8 @@ class _LaunchButtonState extends State<LaunchButton> {
       "-AUTH_TYPE=epic"
     ];
 
-    if(_gameController.host.value){
-      args.addAll(["-log", "-nullrhi", "-nosplash", "-nosound", "-unattended"]);
+    if(_gameController.type.value == GameType.headlessServer){
+      args.addAll(["-nullrhi", "-nosplash", "-nosound"]);
     }
 
     return args;

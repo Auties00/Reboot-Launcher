@@ -29,9 +29,8 @@ class AddLocalVersion extends StatelessWidget {
 
   List<Widget> _createLocalVersionActions(BuildContext context) {
     return [
-      FilledButton(
+      Button(
         onPressed: () => _closeLocalVersionDialog(context, false),
-        style: ButtonStyle(backgroundColor: ButtonState.all(Colors.red)),
         child: const Text('Close'),
       ),
       FilledButton(

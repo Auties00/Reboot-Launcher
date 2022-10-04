@@ -5,6 +5,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
+import 'package:reboot_launcher/src/model/game_type.dart';
 
 class GameController extends GetxController {
   late final GetStorage _storage;
@@ -12,8 +13,9 @@ class GameController extends GetxController {
   late final TextEditingController version;
   late final Rx<List<FortniteVersion>> versions;
   late final Rxn<FortniteVersion> _selectedVersion;
-  late final RxBool host;
+  late final Rx<GameType> type;
   late final RxBool started;
+  Future? updater;
   Process? gameProcess;
   Process? launcherProcess;
   Process? eacProcess;
@@ -34,15 +36,15 @@ class GameController extends GetxController {
         (element) => element.name == decodedSelectedVersionName);
     _selectedVersion = Rxn(decodedSelectedVersion);
 
-    host = RxBool(_storage.read("host") ?? false);
-    host.listen((value) {
-      _storage.write("host", value);
-      username.text = _storage.read("${host.value ? 'host' : 'game'}_username") ?? "";
+    type = Rx(GameType.values.elementAt(_storage.read("type") ?? 0));
+    type.listen((value) {
+      _storage.write("type", value.index);
+      username.text = _storage.read("${type.value == GameType.client ? 'game' : 'host'}_username") ?? "";
     });
 
-    username = TextEditingController(text: _storage.read("${host.value ? 'host' : 'game'}_username") ?? "");
+    username = TextEditingController(text: _storage.read("${type.value == GameType.client ? 'game' : 'host'}_username") ?? "");
     username.addListener(() async {
-      await _storage.write("${host.value ? 'host' : 'game'}_username", username.text);
+      await _storage.write("${type.value == GameType.client ? 'game' : 'host'}_username", username.text);
     });
 
     started = RxBool(false);
