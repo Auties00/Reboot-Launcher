@@ -15,7 +15,7 @@ import 'package:reboot_launcher/src/util/server.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
 
-import '../util/os.dart';
+import '../util/server_standalone.dart';
 
 class LaunchButton extends StatefulWidget {
   const LaunchButton(
@@ -111,7 +111,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
 
-      _gameController.gameProcess = await Process.start(gamePath, _createProcessArguments())
+      _gameController.gameProcess = await Process.start(gamePath, createRebootArgs(_gameController.username.text, hosting))
         ..exitCode.then((_) => _onEnd())
         ..outLines.forEach(_onGameOutput);
       await _injectOrShowError("cranium.dll");
@@ -196,6 +196,31 @@ class _LaunchButtonState extends State<LaunchButton> {
           content: const SizedBox(
               width: double.infinity,
               child: Text("The lawin server is not working correctly", textAlign: TextAlign.center)
+          ),
+          actions: [
+            SizedBox(
+                width: double.infinity,
+                child: Button(
+                  onPressed: () =>  Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                )
+            )
+          ],
+        )
+    );
+  }
+
+  Future<void> _showTokenError() async {
+    if(!mounted){
+      return;
+    }
+
+    showDialog(
+        context: context,
+        builder: (context) => ContentDialog(
+          content: const SizedBox(
+              width: double.infinity,
+              child: Text("A token error occurred, restart the game and try again", textAlign: TextAlign.center)
           ),
           actions: [
             SizedBox(
@@ -300,6 +325,13 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
+    if(line.contains("Network failure when attempting to check platform restrictions")){
+      _fail = true;
+      _closeDialogIfOpen(false);
+      _showTokenError();
+      return;
+    }
+
     if (line.contains("Game Engine Initialized") &&  _gameController.type.value == GameType.client) {
       _injectOrShowError("console.dll");
       return;
@@ -364,27 +396,5 @@ class _LaunchButtonState extends State<LaunchButton> {
   void _onInjectError(String binary) {
     showSnackbar(context, Snackbar(content: Text("Cannot inject $binary")));
     launchUrl(injectLogFile.uri);
-  }
-
-  List<String> _createProcessArguments() {
-    var args = [
-      "-epicapp=Fortnite",
-      "-epicenv=Prod",
-      "-epiclocale=en-us",
-      "-epicportal",
-      "-skippatchcheck",
-      "-fromfl=eac",
-      "-fltoken=3db3ba5dcbd2e16703f3978d",
-      "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ",
-      "-AUTH_LOGIN=${_gameController.username.text}@projectreboot.dev",
-      "-AUTH_PASSWORD=Rebooted",
-      "-AUTH_TYPE=epic"
-    ];
-
-    if(_gameController.type.value == GameType.headlessServer){
-      args.addAll(["-nullrhi", "-nosplash", "-nosound"]);
-    }
-
-    return args;
   }
 }

@@ -6,6 +6,7 @@ import 'package:bitsdojo_window_windows/bitsdojo_window_windows.dart'
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:reboot_launcher/cli.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
@@ -14,9 +15,14 @@ import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:system_theme/system_theme.dart';
 
-void main() async {
+void main(List<String> args) async {
   await Directory(safeBinariesDirectory)
       .create(recursive: true);
+  if(args.isNotEmpty){
+    handleCLI(args);
+    return;
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
   await SystemTheme.accentColor.load();
   await GetStorage.init("game");
@@ -34,6 +40,7 @@ void main() async {
     appWindow.title = "Reboot Launcher";
     appWindow.show();
   });
+
   runApp(const RebootApplication());
 }
 

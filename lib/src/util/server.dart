@@ -1,51 +1,12 @@
 import 'dart:io';
+import 'dart:math';
 
-import 'package:archive/archive_io.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as path;
-import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:reboot_launcher/src/util/server_standalone.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_proxy/shelf_proxy.dart';
-
-final serverLocation = Directory("${Platform.environment["UserProfile"]}/.reboot_launcher/lawin");
-const String _serverUrl =
-    "https://github.com/Lawin0129/LawinServer/archive/refs/heads/main.zip";
-const String _portableServerUrl =
-    "https://cdn.discordapp.com/attachments/998020695223193673/1019999251994005504/LawinServer.exe";
-
-Future<bool> downloadServer(bool portable) async {
-  if(!portable){
-    var response = await http.get(Uri.parse(_serverUrl));
-    var tempZip = File("${Platform.environment["Temp"]}/lawin.zip");
-    await tempZip.writeAsBytes(response.bodyBytes);
-    await extractFileToDisk(tempZip.path, serverLocation.parent.path);
-    var result = Directory("${serverLocation.parent.path}/LawinServer-main");
-    await result.rename("${serverLocation.parent.path}/${path.basename(serverLocation.path)}");
-    await Process.run("${serverLocation.path}/install_packages.bat", [], workingDirectory: serverLocation.path);
-    await updateEngineConfig();
-    return true;
-  }
-
-  var response = await http.get(Uri.parse(_portableServerUrl));
-  var server = await loadBinary("LawinServer.exe", true);
-  await server.writeAsBytes(response.bodyBytes);
-  return true;
-}
-
-Future<void> updateEngineConfig() async {
-  var engine = File("${serverLocation.path}/CloudStorage/DefaultEngine.ini");
-  var patchedEngine = await loadBinary("DefaultEngine.ini", true);
-  await engine.writeAsString(await patchedEngine.readAsString());
-}
-
-Future<bool> isLawinPortFree() async {
-  var portBat = await loadBinary("port.bat", false);
-  var process = await Process.run(portBat.path, []);
-  return !process.outText.contains(" LISTENING "); // Goofy way, best we got
-}
 
 Future<HttpServer?> changeReverseProxyState(BuildContext context, String host, String port, HttpServer? server) async {
   if(server != null){
@@ -92,7 +53,7 @@ Future<HttpServer?> changeReverseProxyState(BuildContext context, String host, S
 }
 
 Future<Uri?> _showReverseProxyCheck(BuildContext context, String host, String port) async {
-  var future = _pingServer(host, port);
+  var future = ping(host, port);
   return await showDialog(
       context: context,
       builder: (context) => ContentDialog(
@@ -137,30 +98,6 @@ Future<Uri?> _showReverseProxyCheck(BuildContext context, String host, String po
       )
   );
 }
-
-Future<Uri?> _pingServer(String host, String port, [bool https=false]) async {
-  var hostName = _getHostName(host);
-  var declaredScheme = _getScheme(host);
-  try{
-    var uri = Uri(
-        scheme: declaredScheme ?? (https ? "https" : "http"),
-        host: hostName,
-        port: int.parse(port)
-    );
-    var client = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 5);
-    var request = await client.getUrl(uri);
-    var response = await request.close();
-    return response.statusCode == 200 ? uri : null;
-  }catch(_){
-    return https || declaredScheme != null ? null : await _pingServer(host, port, true);
-  }
-}
-
-String? _getHostName(String host) => host.replaceFirst("http://", "").replaceFirst("https://", "");
-
-String? _getScheme(String host) => host.startsWith("http://") ? "http" : host.startsWith("https://") ? "https" : null;
-
 
 void _showStartProxyError(BuildContext context, Object error) {
     showDialog(

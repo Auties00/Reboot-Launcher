@@ -6,6 +6,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/server.dart';
 
+import '../util/server_standalone.dart';
+
 class ServerController extends GetxController {
   late final TextEditingController host;
   late final TextEditingController port;

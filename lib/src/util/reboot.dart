@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:archive/archive_io.dart';
 import 'package:crypto/crypto.dart';
-import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:reboot_launcher/src/util/binary.dart';
@@ -31,17 +30,13 @@ Future<int> downloadRebootDll(int? lastUpdateMs) async {
   await extractFileToDisk(tempZip.path, outputDir.path);
   
   var rebootDll = outputDir.listSync()
-      .firstWhereOrNull((element) => path.extension(element.path) == ".dll");
-  if(rebootDll == null){
-    throw Exception("Missing reboot dll");
-  }
-
+      .firstWhere((element) => path.extension(element.path) == ".dll");
   if (exists && sha1.convert(await oldRebootDll.readAsBytes()) == sha1.convert(await File(rebootDll.path).readAsBytes())) {
-    outputDir.delete();
+    outputDir.delete(recursive: true);
     return lastUpdateMs ?? now.millisecondsSinceEpoch;
   }
 
   await rebootDll.rename(oldRebootDll.path);
-  outputDir.delete();
+  outputDir.delete(recursive: true);
   return now.millisecondsSinceEpoch;
 }
