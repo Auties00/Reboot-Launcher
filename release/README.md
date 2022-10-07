@@ -54,13 +54,9 @@ A switch to determine whether an embedded lawin server should be used or if you 
 
 If the embedded switch is off, this button checks that the remote server actually works. If it's on, instead, it will start or stop the lawin server. If you click on the launch button in the launcher page, the server will automatically start if you are using the embedded server and if it's not already running. If the 3551 port is already in use on your pc, the launcher will tell you and provide an option to stop the associated process automatically.
 
-
-
 # Info 
 
 Just a nice page to see the version of the launcher and the join discord button
-
-
 
 # FAQ
 

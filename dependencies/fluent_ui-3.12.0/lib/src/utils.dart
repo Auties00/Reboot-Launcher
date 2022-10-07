@@ -1,0 +1,123 @@
+import 'dart:ui' as ui;
+import 'dart:math' as math;
+
+import 'package:fluent_ui/fluent_ui.dart';
+
+/// Asserts that the given context has a [FluentTheme] ancestor.
+///
+/// To call this function, use the following pattern, typically in the
+/// relevant Widget's build method:
+///
+/// ```dart
+/// assert(debugCheckHasFluentTheme(context));
+/// ```
+///
+/// Does nothing if asserts are disabled. Always returns true.
+bool debugCheckHasFluentTheme(BuildContext context, [bool check = true]) {
+  assert(() {
+    if (FluentTheme.maybeOf(context) == null) {
+      throw FlutterError.fromParts(<DiagnosticsNode>[
+        ErrorSummary('A FluentTheme widget is necessary to draw this layout.'),
+        ErrorHint(
+          'To introduce a FluentTheme widget, you can either directly '
+          'include one, or use a widget that contains FluentTheme itself, '
+          'such as FluentApp',
+        ),
+        ...context.describeMissingAncestor(expectedAncestorType: FluentTheme),
+      ]);
+    }
+    return true;
+  }());
+  return true;
+}
+
+/// Asserts that the given context has a [Localizations] ancestor that contains
+/// a [FluentLocalizations] delegate.
+///
+/// Used by many fluent design widgets to make sure that they are
+/// only used in contexts where they have access to localizations.
+///
+/// To call this function, use the following pattern, typically in the
+/// relevant Widget's build method:
+///
+/// ```dart
+/// assert(debugCheckHasFluentLocalizations(context));
+/// ```
+///
+/// Does nothing if asserts are disabled. Always returns true.
+bool debugCheckHasFluentLocalizations(BuildContext context) {
+  assert(() {
+    if (Localizations.of<FluentLocalizations>(context, FluentLocalizations) ==
+        null) {
+      throw FlutterError.fromParts(<DiagnosticsNode>[
+        ErrorSummary('No FluentLocalizations found.'),
+        ErrorDescription(
+          '${context.widget.runtimeType} widgets require FluentLocalizations '
+          'to be provided by a Localizations widget ancestor.',
+        ),
+        ErrorDescription(
+          'The fluent library uses Localizations to generate messages, '
+          'labels, and abbreviations.',
+        ),
+        ErrorHint(
+          'To introduce a FluentLocalizations, either use a '
+          'FluentApp at the root of your application to include them '
+          'automatically, or add a Localization widget with a '
+          'FluentLocalizations delegate.',
+        ),
+        ...context.describeMissingAncestor(
+            expectedAncestorType: FluentLocalizations)
+      ]);
+    }
+    return true;
+  }());
+  return true;
+}
+
+/// Check if the current screen is 10 foot long or bigger.
+///
+/// [width] is the width of the current screen. If not provided,
+/// [SingletonFlutterWindow.physicalSize] is used
+bool is10footScreen([double? width]) {
+  width ??= ui.window.physicalSize.width;
+  return width >= 11520;
+}
+
+Offset horizontalPositionDependentBox({
+  required Size size,
+  required Size childSize,
+  required Offset target,
+  required bool preferLeft,
+  double verticalOffset = 0.0,
+  double margin = 10.0,
+}) {
+  // Horizontal DIRECTION
+  final bool fitsLeft =
+      target.dx + verticalOffset + childSize.width <= size.width - margin;
+  final bool fitsRight = target.dx - verticalOffset - childSize.width >= margin;
+  final bool tooltipLeft =
+      preferLeft ? fitsLeft || !fitsRight : !(fitsRight || !fitsLeft);
+  double x;
+  if (tooltipLeft) {
+    x = math.min(target.dx + verticalOffset, size.width - margin);
+  } else {
+    x = math.max(target.dx - verticalOffset - childSize.width, margin);
+  }
+  // Vertical DIRECTION
+  double y;
+  if (size.height - margin * 2.0 < childSize.height) {
+    y = (size.height - childSize.height) / 2.0;
+  } else {
+    final double normalizedTargetY =
+        target.dy.clamp(margin, size.height - margin);
+    final double edge = margin + childSize.height / 2.0;
+    if (normalizedTargetY < edge) {
+      y = margin;
+    } else if (normalizedTargetY > size.height - edge) {
+      y = size.height - margin - childSize.height;
+    } else {
+      y = normalizedTargetY - childSize.height / 2.0;
+    }
+  }
+  return Offset(x, y);
+}
