@@ -16,8 +16,21 @@ bool get isWin11 {
   return intBuild != null && intBuild > 22000;
 }
 
-Future<String?> openFilePicker(String title) async =>
+Future<String?> openFolderPicker(String title) async =>
     await FilePicker.platform.getDirectoryPath(dialogTitle: title);
+
+Future<String?> openFilePicker(String extension) async {
+  var result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowMultiple: false,
+      allowedExtensions: [extension]
+  );
+  if(result == null || result.files.isEmpty){
+    return null;
+  }
+
+  return result.files.first.path;
+}
 
 Future<List<Directory>> scanInstallations(String input) => Directory(input)
     .list(recursive: true)

@@ -15,6 +15,7 @@ import 'package:reboot_launcher/src/util/server.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
 
+import '../controller/settings_controller.dart';
 import '../util/server_standalone.dart';
 
 class LaunchButton extends StatefulWidget {
@@ -29,6 +30,7 @@ class LaunchButton extends StatefulWidget {
 class _LaunchButtonState extends State<LaunchButton> {
   final GameController _gameController = Get.find<GameController>();
   final ServerController _serverController = Get.find<ServerController>();
+  final SettingsController _settingsController = Get.find<SettingsController>();
   File? _logFile;
   bool _fail = false;
 
@@ -114,7 +116,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       _gameController.gameProcess = await Process.start(gamePath, createRebootArgs(_gameController.username.text, hosting))
         ..exitCode.then((_) => _onEnd())
         ..outLines.forEach(_onGameOutput);
-      await _injectOrShowError("cranium.dll");
+      await _injectOrShowError(Injectable.cranium);
 
       if(hosting){
         await _showServerLaunchingWarning();
@@ -333,12 +335,12 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     if (line.contains("Game Engine Initialized") &&  _gameController.type.value == GameType.client) {
-      _injectOrShowError("console.dll");
+      _injectOrShowError(Injectable.console);
       return;
     }
 
     if(line.contains("Region") && _gameController.type.value != GameType.client){
-      _injectOrShowError("reboot.dll")
+      _injectOrShowError(Injectable.reboot)
           .then((value) => _closeDialogIfOpen(true));
     }
   }
@@ -374,22 +376,33 @@ class _LaunchButtonState extends State<LaunchButton> {
     _gameController.kill();
   }
 
-  Future<void> _injectOrShowError(String binary) async {
+  Future<void> _injectOrShowError(Injectable injectable) async {
     var gameProcess = _gameController.gameProcess;
     if (gameProcess == null) {
       return;
     }
 
     try {
-      var dll = await loadBinary(binary, true);
-      var success = await injectDll(gameProcess.pid, dll.path);
+      var dllPath = _getDllPath(injectable);
+      var success = await injectDll(gameProcess.pid, dllPath);
       if (success) {
         return;
       }
 
-      _onInjectError(binary);
+      _onInjectError(injectable.name);
     } catch (exception) {
-      _onInjectError(binary);
+      _onInjectError(injectable.name);
+    }
+  }
+
+  String _getDllPath(Injectable injectable){
+    switch(injectable){
+      case Injectable.reboot:
+        return _settingsController.rebootDll.text;
+      case Injectable.console:
+        return _settingsController.consoleDll.text;
+      case Injectable.cranium:
+        return _settingsController.craniumDll.text;
     }
   }
 
@@ -397,4 +410,10 @@ class _LaunchButtonState extends State<LaunchButton> {
     showSnackbar(context, Snackbar(content: Text("Cannot inject $binary")));
     launchUrl(injectLogFile.uri);
   }
+}
+
+enum Injectable {
+  console,
+  cranium,
+  reboot
 }

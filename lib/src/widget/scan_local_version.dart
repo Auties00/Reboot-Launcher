@@ -4,7 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:reboot_launcher/src/util/os.dart';
-import 'package:reboot_launcher/src/widget/select_file.dart';
+import 'package:reboot_launcher/src/widget/file_selector.dart';
 
 
 class ScanLocalVersion extends StatefulWidget {
@@ -83,12 +83,14 @@ class _ScanLocalVersionState extends State<ScanLocalVersion> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SelectFile(
+          FileSelector(
               label: "Location",
               placeholder: "Type the folder to scan",
               windowTitle: "Select the folder to scan",
               controller: _folderController,
-              validator: _checkScanFolder)
+              validator: _checkScanFolder,
+              folder: true
+          )
         ],
       );
     }

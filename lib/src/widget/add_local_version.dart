@@ -4,7 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
-import 'package:reboot_launcher/src/widget/select_file.dart';
+import 'package:reboot_launcher/src/widget/file_selector.dart';
 
 class AddLocalVersion extends StatelessWidget {
   final GameController _gameController = Get.find<GameController>();
@@ -76,12 +76,14 @@ class AddLocalVersion extends StatelessWidget {
           },
         ),
 
-        SelectFile(
+        FileSelector(
             label: "Location",
             placeholder: "Type the game folder",
             windowTitle: "Select game folder",
             controller: _gamePathController,
-            validator: _checkGameFolder)
+            validator: _checkGameFolder,
+            folder: true
+        )
       ],
     );
   }

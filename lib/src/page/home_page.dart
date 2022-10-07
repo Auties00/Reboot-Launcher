@@ -1,6 +1,6 @@
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:reboot_launcher/src/page/info_page.dart';
+import 'package:reboot_launcher/src/page/settings_page.dart';
 import 'package:reboot_launcher/src/page/launcher_page.dart';
 import 'package:reboot_launcher/src/page/server_page.dart';
 import 'package:reboot_launcher/src/util/os.dart';
@@ -54,7 +54,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
                 items: [
                   _createPane("Home", FluentIcons.game),
                   _createPane("Lawin", FluentIcons.server_enviroment),
-                  _createPane("Info", FluentIcons.info),
+                  _createPane("Settings", FluentIcons.settings)
                 ],
                 trailing: WindowTitleBar(focused: _focused)),
             content: NavigationBody(
@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
                 children: [
                   const LauncherPage(),
                   ServerPage(),
-                  const InfoPage()
+                  SettingsPage()
                 ]
             )
         ),

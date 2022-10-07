@@ -10,6 +10,7 @@ import 'package:reboot_launcher/cli.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
+import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/os.dart';
@@ -28,9 +29,11 @@ void main(List<String> args) async {
   await GetStorage.init("game");
   await GetStorage.init("server");
   await GetStorage.init("update");
+  await GetStorage.init("settings");
   Get.put(GameController());
   Get.put(ServerController());
   Get.put(BuildController());
+  Get.put(SettingsController());
   doWhenWindowReady(() {
     const size = Size(600, 365);
     var window = appWindow as WinDesktopWindow;
@@ -52,6 +55,8 @@ class RebootApplication extends StatefulWidget {
 }
 
 class _RebootApplicationState extends State<RebootApplication> {
+  final SettingsController _settingsController = Get.find<SettingsController>();
+
   @override
   Widget build(BuildContext context) {
     final color = SystemTheme.accentColor.accent.toAccentColor();
@@ -60,23 +65,20 @@ class _RebootApplicationState extends State<RebootApplication> {
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       color: color,
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        accentColor: color,
-        visualDensity: VisualDensity.standard,
-        focusTheme: FocusThemeData(
-          glowFactor: is10footScreen() ? 2.0 : 0.0,
-        ),
-      ),
-      theme: ThemeData(
-        brightness: Brightness.light,
-        accentColor: color,
-        visualDensity: VisualDensity.standard,
-        focusTheme: FocusThemeData(
-          glowFactor: is10footScreen() ? 2.0 : 0.0,
-        ),
-      ),
+      darkTheme: _createTheme(Brightness.dark),
+      theme: _createTheme(Brightness.light),
       home: const HomePage(),
+    );
+  }
+
+  ThemeData _createTheme(Brightness brightness) {
+    return ThemeData(
+      brightness: brightness,
+      accentColor: SystemTheme.accentColor.accent.toAccentColor(),
+      visualDensity: VisualDensity.standard,
+      focusTheme: FocusThemeData(
+        glowFactor: is10footScreen() ? 2.0 : 0.0,
+      ),
     );
   }
 }

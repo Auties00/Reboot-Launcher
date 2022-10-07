@@ -1,7 +1,7 @@
 import 'dart:io';
 
 Future<File> loadBinary(String binary, bool safe) async{
-  var safeBinary = File("$safeBinariesDirectory/$binary");
+  var safeBinary = File("$safeBinariesDirectory\\$binary");
   if(await safeBinary.exists()){
     return safeBinary;
   }

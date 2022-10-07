@@ -1,7 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 class SmartInput extends StatelessWidget {
-  final String label;
+  final String? label;
   final String placeholder;
   final TextEditingController controller;
   final TextInputType type;
@@ -11,13 +11,13 @@ class SmartInput extends StatelessWidget {
 
   const SmartInput(
       {Key? key,
-      required this.label,
-      required this.placeholder,
-      required this.controller,
-      this.onTap,
-      this.enabled = true,
-      this.populate = false,
-      this.type = TextInputType.text})
+        required this.placeholder,
+        required this.controller,
+        this.label,
+        this.onTap,
+        this.enabled = true,
+        this.populate = false,
+        this.type = TextInputType.text})
       : super(key: key);
   
   @override

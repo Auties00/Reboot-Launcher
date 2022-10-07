@@ -10,7 +10,7 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/build.dart';
-import 'package:reboot_launcher/src/widget/select_file.dart';
+import 'package:reboot_launcher/src/widget/file_selector.dart';
 import 'package:reboot_launcher/src/widget/version_name_input.dart';
 
 import 'build_selector.dart';
@@ -242,12 +242,13 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
             VersionNameInput(controller: _nameController),
 
-            SelectFile(
+            FileSelector(
                 label: "Destination",
                 placeholder: "Type the download destination",
                 windowTitle: "Select download destination",
                 controller: _pathController,
-                validator: _checkDownloadDestination
+                validator: _checkDownloadDestination,
+                folder: true
             ),
           ],
         );

@@ -13,6 +13,7 @@ import 'package:reboot_launcher/src/widget/username_box.dart';
 import 'package:reboot_launcher/src/widget/version_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../controller/settings_controller.dart';
 import '../util/binary.dart';
 import '../util/reboot.dart';
 import '../widget/warning_info.dart';
@@ -29,10 +30,11 @@ class LauncherPage extends StatefulWidget {
 class _LauncherPageState extends State<LauncherPage> {
   final GameController _gameController = Get.find<GameController>();
   final BuildController _buildController = Get.find<BuildController>();
+  final SettingsController _settingsController = Get.find<SettingsController>();
 
   @override
   void initState() {
-    if(_gameController.updater == null) {
+    if(_gameController.updater == null && _settingsController.autoUpdate.value){
       _gameController.updater = compute(downloadRebootDll, _updateTime)
         ..then((value) => _updateTime = value)
         ..onError(_saveError);

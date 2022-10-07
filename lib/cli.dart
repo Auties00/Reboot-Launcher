@@ -20,6 +20,7 @@ import 'package:win32/win32.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:http/http.dart' as http;
 
+// Needed because binaries can't be loaded in any other way
 const String _craniumDownload = "https://cdn.discordapp.com/attachments/1001161930599317524/1027684488718860309/cranium.dll";
 const String _consoleDownload = "https://cdn.discordapp.com/attachments/1001161930599317524/1027684489184432188/console.dll";
 const String _injectorDownload = "https://cdn.discordapp.com/attachments/1001161930599317524/1027686593697435799/injector.exe";
@@ -74,20 +75,23 @@ Future<String?> _getWindowsPath(String folderID) {
 Future<void> handleCLI(List<String> args) async {
   stdout.writeln("Reboot Launcher CLI Tool");
   stdout.writeln("Wrote by Auties00");
-  stdout.writeln("Version 3.10");
+  stdout.writeln("Version 3.11");
 
-  var gameJson = await _getControllerJson("game1");
-  var serverJson = await _getControllerJson("server1");
+  var gameJson = await _getControllerJson("game");
+  var serverJson = await _getControllerJson("server");
+  var settingsJson = await _getControllerJson("settings");
   var versions = _getVersions(gameJson);
   var parser = ArgParser()
-    ..addCommand("list")..addCommand("launch")
+    ..addCommand("list")
+    ..addCommand("launch")
     ..addOption("version", defaultsTo: gameJson["version"])
     ..addOption("username")
     ..addOption("server-type", allowed: ["embedded", "remote"], defaultsTo: serverJson["embedded"] ?? true ? "embedded" : "remote")
     ..addOption("server-host", defaultsTo: serverJson["host"])
     ..addOption("server-port", defaultsTo: serverJson["port"])
+    ..addOption("dll", defaultsTo: settingsJson["reboot"] ?? await loadBinary("reboot.dll", true))
     ..addOption("type", allowed: ["client", "server", "headless_server"], defaultsTo: _getDefaultType(gameJson))
-    ..addFlag("update", defaultsTo: true, negatable: true)
+    ..addFlag("update", defaultsTo: settingsJson["auto_update"] ?? true, negatable: true)
     ..addFlag("log", defaultsTo: false);
   var result = parser.parse(args);
   if (result.command?.name == "list") {
@@ -104,7 +108,7 @@ Future<void> handleCLI(List<String> args) async {
   var dummyVersion = _createVersion(gameJson["version"], result["version"], versions);
   await _updateDLLs();
   if(result["update"]) {
-    stdout.writeln("Updating DLL...");
+    stdout.writeln("Updating reboot dll...");
     await downloadRebootDll(0);
   }
 
@@ -121,7 +125,7 @@ Future<void> handleCLI(List<String> args) async {
     return;
   }
 
-  await _startGameProcess(dummyVersion, type != GameType.client, result);
+  await _startGameProcess(dummyVersion, result["dll"], type != GameType.client, result);
   await _injectOrShowError("cranium.dll");
 }
 
@@ -193,7 +197,7 @@ List<FortniteVersion> _getVersions(Map<String, dynamic> gameJson) {
       .toList();
 }
 
-Future<void> _startGameProcess(FortniteVersion dummyVersion, bool host, ArgResults result) async {
+Future<void> _startGameProcess(FortniteVersion dummyVersion, String rebootDll, bool host, ArgResults result) async {
   var gamePath = dummyVersion.executable?.path;
   if (gamePath == null) {
     throw Exception("${dummyVersion.location
@@ -209,7 +213,7 @@ Future<void> _startGameProcess(FortniteVersion dummyVersion, bool host, ArgResul
   var verbose = result["log"];
   _gameProcess = await Process.start(gamePath, createRebootArgs(username, result["type"] == "headless_server"))
     ..exitCode.then((_) => _onClose())
-    ..outLines.forEach((line) => _onGameOutput(line, host, verbose));
+    ..outLines.forEach((line) => _onGameOutput(line, rebootDll, host, verbose));
 }
 
 void _onClose() {
@@ -323,7 +327,7 @@ FortniteVersion _createVersion(String? versionName, String? versionPath, List<Fo
   return FortniteVersion(name: "dummy", location: Directory(versionPath));
 }
 
-void _onGameOutput(String line, bool host, bool verbose) {
+void _onGameOutput(String line, String rebootDll, bool host, bool verbose) {
   if(verbose) {
     stdout.writeln(line);
   }
@@ -353,18 +357,22 @@ void _onGameOutput(String line, bool host, bool verbose) {
   }
 
   if(line.contains("Region") && host){
-    _injectOrShowError("reboot.dll");
+    _injectOrShowError(rebootDll, false);
   }
 }
 
-Future<void> _injectOrShowError(String binary) async {
+Future<void> _injectOrShowError(String binary, [bool locate = true]) async {
   if (_gameProcess == null) {
     return;
   }
 
   try {
     stdout.writeln("Injecting $binary...");
-    var dll = await loadBinary(binary, true);
+    var dll = locate ? await loadBinary(binary, true) : File(binary);
+    if(!dll.existsSync()){
+      throw Exception("Cannot inject $dll: missing file");
+    }
+
     var success = await injectDll(_gameProcess!.pid, dll.path, true);
     if (success) {
       return;

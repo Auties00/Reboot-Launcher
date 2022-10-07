@@ -43,9 +43,7 @@ class GameController extends GetxController {
     });
 
     username = TextEditingController(text: _storage.read("${type.value == GameType.client ? 'game' : 'host'}_username") ?? "");
-    username.addListener(() async {
-      await _storage.write("${type.value == GameType.client ? 'game' : 'host'}_username", username.text);
-    });
+    username.addListener(() => _storage.write("${type.value == GameType.client ? 'game' : 'host'}_username", username.text));
 
     started = RxBool(false);
   }
