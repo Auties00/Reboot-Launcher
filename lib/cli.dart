@@ -89,7 +89,7 @@ Future<void> handleCLI(List<String> args) async {
     ..addOption("server-type", allowed: ["embedded", "remote"], defaultsTo: serverJson["embedded"] ?? true ? "embedded" : "remote")
     ..addOption("server-host", defaultsTo: serverJson["host"])
     ..addOption("server-port", defaultsTo: serverJson["port"])
-    ..addOption("dll", defaultsTo: settingsJson["reboot"] ?? await loadBinary("reboot.dll", true))
+    ..addOption("dll", defaultsTo: settingsJson["reboot"] ?? (await loadBinary("reboot.dll", true)).path)
     ..addOption("type", allowed: ["client", "server", "headless_server"], defaultsTo: _getDefaultType(gameJson))
     ..addFlag("update", defaultsTo: settingsJson["auto_update"] ?? true, negatable: true)
     ..addFlag("log", defaultsTo: false);
@@ -311,6 +311,10 @@ Future<HttpServer?> _changeReverseProxyState(String host, String port) async {
 
 
 FortniteVersion _createVersion(String? versionName, String? versionPath, List<FortniteVersion> versions) {
+  if (versionPath != null) {
+    return FortniteVersion(name: "dummy", location: Directory(versionPath));
+  }
+
   if(versionName != null){
     try {
       return versions.firstWhere((element) => versionName == element.name);
@@ -319,12 +323,8 @@ FortniteVersion _createVersion(String? versionName, String? versionPath, List<Fo
     }
   }
 
-  if (versionPath == null) {
-    throw Exception(
-        "Specify a version using --version or open the launcher GUI and select it manually");
-  }
-
-  return FortniteVersion(name: "dummy", location: Directory(versionPath));
+  throw Exception(
+      "Specify a version using --version or open the launcher GUI and select it manually");
 }
 
 void _onGameOutput(String line, String rebootDll, bool host, bool verbose) {
