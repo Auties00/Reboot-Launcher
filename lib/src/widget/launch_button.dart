@@ -222,7 +222,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         builder: (context) => ContentDialog(
           content: const SizedBox(
               width: double.infinity,
-              child: Text("A token error occurred, restart the game and try again", textAlign: TextAlign.center)
+              child: Text("A token error occurred, restart the game and the lawin server, then try again", textAlign: TextAlign.center)
           ),
           actions: [
             SizedBox(

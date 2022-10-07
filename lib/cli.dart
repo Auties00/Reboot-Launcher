@@ -21,9 +21,9 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:http/http.dart' as http;
 
 // Needed because binaries can't be loaded in any other way
-const String _craniumDownload = "https://cdn.discordapp.com/attachments/1001161930599317524/1027684488718860309/cranium.dll";
-const String _consoleDownload = "https://cdn.discordapp.com/attachments/1001161930599317524/1027684489184432188/console.dll";
-const String _injectorDownload = "https://cdn.discordapp.com/attachments/1001161930599317524/1027686593697435799/injector.exe";
+const String _craniumDownload = "https://filebin.net/ybn0gme7dqjr4zup/cranium.dll";
+const String _consoleDownload = "https://filebin.net/ybn0gme7dqjr4zup/console.dll";
+const String _injectorDownload = "https://filebin.net/ybn0gme7dqjr4zup/injector.exe";
 
 Process? _gameProcess;
 
@@ -116,6 +116,10 @@ Future<void> handleCLI(List<String> args) async {
   await _startLauncherProcess(dummyVersion);
   await _startEacProcess(dummyVersion);
   if (result["type"] == "headless_server") {
+    if(dummyVersion.executable == null){
+      throw Exception("Missing game executable at: ${dummyVersion.location.path}");
+    }
+
     await patchExe(dummyVersion.executable!);
   }
 
