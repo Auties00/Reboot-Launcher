@@ -14,11 +14,11 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-       Form(
-         autovalidateMode: AutovalidateMode.always,
-         child:  Column(
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Stack(
+        children: [
+         Column(
            mainAxisAlignment: MainAxisAlignment.spaceBetween,
            crossAxisAlignment: CrossAxisAlignment.start,
            children: [
@@ -29,7 +29,8 @@ class SettingsPage extends StatelessWidget {
                  windowTitle: "Select a dll",
                  folder: false,
                  extension: "dll",
-                 validator: _checkDll
+                 validator: _checkDll,
+                 validatorMode: AutovalidateMode.always
              ),
 
              FileSelector(
@@ -39,7 +40,8 @@ class SettingsPage extends StatelessWidget {
                  windowTitle: "Select a dll",
                  folder: false,
                  extension: "dll",
-                 validator: _checkDll
+                 validator: _checkDll,
+                 validatorMode: AutovalidateMode.always
              ),
 
              FileSelector(
@@ -49,22 +51,23 @@ class SettingsPage extends StatelessWidget {
                  windowTitle: "Select a dll",
                  folder: false,
                  extension: "dll",
-                 validator: _checkDll
+                 validator: _checkDll,
+                 validatorMode: AutovalidateMode.always
              ),
 
              SmartSwitch(
                  value: _settingsController.autoUpdate,
                  label: "Update DLLs"
-             ),
+             )
            ],
-         )
-       ),
+         ),
 
-        const Align(
-            alignment: Alignment.bottomRight,
-            child: Text("Version 3.11${kDebugMode ? '-DEBUG' : ''}")
-        )
-      ],
+          const Align(
+              alignment: Alignment.bottomRight,
+              child: Text("Version 3.13${kDebugMode ? '-DEBUG' : ''}")
+          )
+        ],
+      ),
     );
   }
 

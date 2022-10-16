@@ -11,11 +11,14 @@ import 'package:reboot_launcher/src/model/game_type.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/injector.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
+import 'package:reboot_launcher/src/util/reboot.dart';
 import 'package:reboot_launcher/src/util/server.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
+import 'package:path/path.dart' as path;
 
 import '../controller/settings_controller.dart';
+import '../model/server_type.dart';
 import '../util/server_standalone.dart';
 
 class LaunchButton extends StatefulWidget {
@@ -36,7 +39,7 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   @override
   void initState() {
-    loadBinary("log.txt", true)
+    loadBinary("game.txt", true)
         .then((value) => _logFile = value);
     super.initState();
   }
@@ -137,24 +140,31 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    if(!(await isLawinPortFree())){
-      _serverController.started(true);
-      return;
+    switch(_serverController.type.value){
+      case ServerType.embedded:
+        var result = await changeEmbeddedServerState(context, false);
+        _serverController.started(result);
+        break;
+      case ServerType.remote:
+        _serverController.reverseProxy = await changeReverseProxyState(
+            context,
+            _serverController.host.text,
+            _serverController.port.text,
+            false,
+            _serverController.reverseProxy
+        );
+        _serverController.started(_serverController.reverseProxy != null);
+        break;
+      case ServerType.local:
+        var result = await checkLocalServer(
+          context,
+          _serverController.host.text,
+          _serverController.port.text,
+          true
+        );
+        _serverController.started(result);
+        break;
     }
-
-    if (_serverController.embedded.value) {
-      var result = await changeEmbeddedServerState(context, false);
-      _serverController.started(result);
-      return;
-    }
-
-    _serverController.reverseProxy = await changeReverseProxyState(
-        context,
-        _serverController.host.text,
-        _serverController.port.text,
-        _serverController.reverseProxy
-    );
-    _serverController.started(_serverController.reverseProxy != null);
   }
 
   Future<void> _updateServerState(bool value) async {
@@ -204,6 +214,31 @@ class _LaunchButtonState extends State<LaunchButton> {
                 width: double.infinity,
                 child: Button(
                   onPressed: () =>  Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                )
+            )
+          ],
+        )
+    );
+  }
+
+  Future<void> _showMissingDllError(String name) async {
+    if(!mounted){
+      return;
+    }
+
+    showDialog(
+        context: context,
+        builder: (context) => ContentDialog(
+          content: SizedBox(
+              width: double.infinity,
+              child: Text("$name dll is not a valid dll, fix it in the settings tab", textAlign: TextAlign.center)
+          ),
+          actions: [
+            SizedBox(
+                width: double.infinity,
+                child: Button(
+                  onPressed: () => Navigator.of(context).pop(),
                   child: const Text('Close'),
                 )
             )
@@ -270,9 +305,9 @@ class _LaunchButtonState extends State<LaunchButton> {
     var result = await showDialog<bool>(
         context: context,
         builder: (context) => ContentDialog(
-          content: const InfoLabel(
+          content: InfoLabel(
               label: "Launching headless reboot server...",
-              child: SizedBox(
+              child: const SizedBox(
                   width: double.infinity,
                   child: ProgressBar()
               )
@@ -313,7 +348,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    if(line.contains("port 3551 failed: Connection refused")){
+    if(line.contains("port 3551 failed: Connection refused") || line.contains("Unable to login to Fortnite servers")){
       _fail = true;
       _closeDialogIfOpen(false);
       _showBrokenServerWarning();
@@ -327,7 +362,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    if(line.contains("Network failure when attempting to check platform restrictions")){
+    if(line.contains("Network failure when attempting to check platform restrictions") || line.contains("UOnlineAccountCommon::ForceLogout")){
       _fail = true;
       _closeDialogIfOpen(false);
       _showTokenError();
@@ -384,31 +419,50 @@ class _LaunchButtonState extends State<LaunchButton> {
 
     try {
       var dllPath = _getDllPath(injectable);
-      var success = await injectDll(gameProcess.pid, dllPath);
-      if (success) {
-        return;
+      if(!dllPath.existsSync()) {
+        await _downloadMissingDll(injectable);
+        if(!dllPath.existsSync()){
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _fail = true;
+            _closeDialogIfOpen(false);
+            _showMissingDllError(path.basename(dllPath.path));
+            _onStop();
+          });
+          return;
+        }
       }
 
-      _onInjectError(injectable.name);
+      await injectDll(gameProcess.pid, dllPath.path);
     } catch (exception) {
-      _onInjectError(injectable.name);
+      showSnackbar(
+          context,
+          Snackbar(
+              content: Text("Cannot inject $injectable.dll: $exception", textAlign: TextAlign.center),
+              extended: true
+          )
+      );
+      _onStop();
     }
   }
 
-  String _getDllPath(Injectable injectable){
+  File _getDllPath(Injectable injectable){
     switch(injectable){
       case Injectable.reboot:
-        return _settingsController.rebootDll.text;
+        return File(_settingsController.rebootDll.text);
       case Injectable.console:
-        return _settingsController.consoleDll.text;
+        return File(_settingsController.consoleDll.text);
       case Injectable.cranium:
-        return _settingsController.craniumDll.text;
+        return File(_settingsController.craniumDll.text);
     }
   }
 
-  void _onInjectError(String binary) {
-    showSnackbar(context, Snackbar(content: Text("Cannot inject $binary")));
-    launchUrl(injectLogFile.uri);
+  Future<void> _downloadMissingDll(Injectable injectable) async {
+    if(injectable != Injectable.reboot){
+      await loadBinary("$injectable.dll", true);
+      return;
+    }
+
+    await downloadRebootDll(0);
   }
 }
 

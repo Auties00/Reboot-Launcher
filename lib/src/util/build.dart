@@ -117,7 +117,11 @@ Future<void> downloadArchiveBuild(String archiveUrl, String destination,
 
     var output = Directory(destination);
     await output.create(recursive: true);
-    var shell = Shell(workingDirectory: internalBinariesDirectory);
+    var shell = Shell(
+        commandVerbose: false,
+        commentVerbose: false,
+        workingDirectory: internalBinariesDirectory
+    );
     await shell.run("./winrar.exe x ${tempFile.path} *.* \"${output.path}\"");
   } finally {
     if (await tempFile.exists()) {

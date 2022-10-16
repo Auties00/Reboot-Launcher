@@ -109,11 +109,11 @@ class _ScanLocalVersionState extends State<ScanLocalVersion> {
           }
 
           if(!snapshot.hasData){
-            return const Padding(
-              padding: EdgeInsets.only(bottom: 16),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
               child: InfoLabel(
                   label: "Searching...",
-                  child: SizedBox(width: double.infinity, child: ProgressBar())
+                  child: const SizedBox(width: double.infinity, child: ProgressBar())
               ),
             );
           }

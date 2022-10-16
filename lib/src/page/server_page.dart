@@ -14,21 +14,24 @@ class ServerPage extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return Obx(() => Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if(_serverController.warning.value)
-            WarningInfo(
-                text: "The lawin server handles authentication and parties, not game hosting",
-                icon: FluentIcons.accept,
-                onPressed: () => _serverController.warning.value = false
-            ),
-          HostInput(),
-          PortInput(),
-          LocalServerSwitch(),
-          ServerButton()
-        ]
-    ));
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Obx(() => Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if(_serverController.warning.value)
+              WarningInfo(
+                  text: "The lawin server handles authentication and parties, not game hosting",
+                  icon: FluentIcons.accept,
+                  onPressed: () => _serverController.warning.value = false
+              ),
+            HostInput(),
+            PortInput(),
+            LocalServerSwitch(),
+            ServerButton()
+          ]
+      )),
+    );
   }
 }

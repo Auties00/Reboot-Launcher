@@ -4,35 +4,35 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
-import 'package:reboot_launcher/src/util/server.dart';
 
-import '../util/server_standalone.dart';
+import '../model/server_type.dart';
 
 class ServerController extends GetxController {
+  static const String _serverName = "127.0.0.1";
+  static const String _serverPort = "3551";
+
+  late final GetStorage _storage;
   late final TextEditingController host;
   late final TextEditingController port;
-  late final RxBool embedded;
+  late final Rx<ServerType> type;
   late final RxBool warning;
   late RxBool started;
   HttpServer? reverseProxy;
 
   ServerController() {
-    var storage = GetStorage("server");
-    host = TextEditingController(text: storage.read("host") ?? "");
-    host.addListener(() => storage.write("host", host.text));
+    _storage = GetStorage("server");
 
-    port = TextEditingController(text: storage.read("port") ?? "");
-    port.addListener(() => storage.write("port", port.text));
-
-    embedded = RxBool(storage.read("embedded") ?? true);
-    embedded.listen((value) {
-      storage.write("embedded", value);
+    type = Rx(ServerType.values.elementAt(_storage.read("type") ?? 0));
+    type.listen((value) {
+      host.text = _readHost();
+      port.text = _readPort();
+      _storage.write("type", value.index);
 
       if(!started.value) {
         return;
       }
 
-      if(value){
+      if(value == ServerType.remote){
         reverseProxy?.close(force: true);
         reverseProxy = null;
         started(false);
@@ -44,11 +44,25 @@ class ServerController extends GetxController {
           .then((value) => started(false));
     });
 
-    warning = RxBool(storage.read("lawin_value") ?? true);
-    warning.listen((value) => storage.write("lawin_value", value));
+    host = TextEditingController(text: _readHost());
+    host.addListener(() => _storage.write("${type.value.id}_host", host.text));
+
+    port = TextEditingController(text: _readPort());
+    port.addListener(() => _storage.write("${type.value.id}_port", port.text));
+
+    warning = RxBool(_storage.read("lawin_value") ?? true);
+    warning.listen((value) => _storage.write("lawin_value", value));
 
     started = RxBool(false);
-    isLawinPortFree()
-        .then((value) => !embedded.value ? {} : started = RxBool(!value));
+  }
+
+  String _readHost() {
+    String? value = _storage.read("${type.value.id}_host");
+    return value != null && value.isNotEmpty ? value
+        : type.value != ServerType.remote ? _serverName : "";
+  }
+
+  String _readPort() {
+    return _storage.read("${type.value.id}_port") ?? _serverPort;
   }
 }

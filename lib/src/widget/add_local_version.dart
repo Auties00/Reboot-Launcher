@@ -22,7 +22,6 @@ class AddLocalVersion extends StatelessWidget {
                 style: const ContentDialogThemeData(
                   padding: EdgeInsets.only(left: 20, right: 20, top: 15.0, bottom: 5.0)
                 ),
-                constraints: const BoxConstraints(maxWidth: 368, maxHeight: 258),
                 content: _createLocalVersionDialogBody(),
                 actions: _createLocalVersionActions(formContext))));
   }
@@ -55,6 +54,7 @@ class AddLocalVersion extends StatelessWidget {
 
   Widget _createLocalVersionDialogBody() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -63,17 +63,11 @@ class AddLocalVersion extends StatelessWidget {
           header: "Name",
           placeholder: "Type the version's name",
           autofocus: true,
-          validator: (text) {
-            if (text == null || text.isEmpty) {
-              return 'Empty version name';
-            }
+          validator: _checkVersion
+        ),
 
-            if (_gameController.versions.value.any((element) => element.name == text)) {
-              return 'This version already exists';
-            }
-
-            return null;
-          },
+        const SizedBox(
+          height: 16.0
         ),
 
         FileSelector(
@@ -83,9 +77,23 @@ class AddLocalVersion extends StatelessWidget {
             controller: _gamePathController,
             validator: _checkGameFolder,
             folder: true
-        )
+        ),
+
+        const SizedBox(height: 8.0),
       ],
     );
+  }
+
+  String? _checkVersion(String? text) {
+       if (text == null || text.isEmpty) {
+      return 'Empty version name';
+    }
+
+    if (_gameController.versions.value.any((element) => element.name == text)) {
+      return 'This version already exists';
+    }
+
+    return null;
   }
 
   String? _checkGameFolder(text) {

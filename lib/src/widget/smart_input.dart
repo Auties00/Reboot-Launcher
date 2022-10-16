@@ -7,7 +7,7 @@ class SmartInput extends StatelessWidget {
   final TextInputType type;
   final bool enabled;
   final VoidCallback? onTap;
-  final bool populate;
+  final bool readOnly;
 
   const SmartInput(
       {Key? key,
@@ -16,7 +16,7 @@ class SmartInput extends StatelessWidget {
         this.label,
         this.onTap,
         this.enabled = true,
-        this.populate = false,
+        this.readOnly = false,
         this.type = TextInputType.text})
       : super(key: key);
   
@@ -29,6 +29,7 @@ class SmartInput extends StatelessWidget {
       keyboardType: type,
       placeholder: placeholder,
       onTap: onTap,
+      readOnly: readOnly,
     );
   }
 }

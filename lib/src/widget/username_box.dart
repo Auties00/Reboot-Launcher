@@ -16,8 +16,7 @@ class UsernameBox extends StatelessWidget {
       child: SmartInput(
           label: "Username",
           placeholder: "Type your ${_gameController.type.value != GameType.client ? 'hosting' : "in-game"} username",
-          controller: _gameController.username,
-          populate: true
+          controller: _gameController.username
       ),
     ));
   }

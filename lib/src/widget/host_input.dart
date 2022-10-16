@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
+import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/widget/smart_input.dart';
 
 class HostInput extends StatelessWidget {
@@ -10,26 +11,14 @@ class HostInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => Tooltip(
-          message: _serverController.embedded.value
-              ? "The remote lawin host cannot be set when running on embedded"
-              : "The remote host of the lawin server to use for authentication",
-          child: _buildInput(context),
-        ));
-  }
-
-  SmartInput _buildInput(BuildContext context) {
-    return SmartInput(
-      label: "Host",
-      placeholder: "Type the host name",
-      controller: _serverController.host,
-      enabled: !_serverController.embedded.value,
-      onTap: () => _serverController.embedded.value
-          ? showSnackbar(
-              context,
-              const Snackbar(
-                  content: Text("The host is locked when embedded is on")))
-          : {},
+    return Tooltip(
+        message: "The hostname of the lawin server",
+        child: Obx(() => SmartInput(
+          label: "Host",
+          placeholder: "Type the lawin server's hostname",
+          controller: _serverController.host,
+          enabled: _serverController.type.value == ServerType.remote
+        ))
     );
   }
 }

@@ -18,7 +18,7 @@ class _BuildSelectorState extends State<BuildSelector> {
   Widget build(BuildContext context) {
     return InfoLabel(
         label: "Build",
-        child: Combobox<FortniteBuild>(
+        child: ComboBox<FortniteBuild>(
             placeholder: const Text('Select a fortnite build'),
             isExpanded: true,
             items: _createItems(),
@@ -29,14 +29,14 @@ class _BuildSelectorState extends State<BuildSelector> {
     );
   }
 
-  List<ComboboxItem<FortniteBuild>> _createItems() {
+  List<ComboBoxItem<FortniteBuild>> _createItems() {
     return _buildController.builds!
         .map((element) => _createItem(element))
         .toList();
   }
 
-  ComboboxItem<FortniteBuild> _createItem(FortniteBuild element) {
-    return ComboboxItem<FortniteBuild>(
+  ComboBoxItem<FortniteBuild> _createItem(FortniteBuild element) {
+    return ComboBoxItem<FortniteBuild>(
       value: element,
       child: Text(
           "${element.version} ${element.hasManifest ? '[Fortnite Manifest]' : '[Google Drive]'}"),

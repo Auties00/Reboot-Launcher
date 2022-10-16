@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:archive/archive_io.dart';
 import 'package:http/http.dart' as http;
@@ -9,25 +11,16 @@ import 'package:reboot_launcher/src/util/binary.dart';
 final serverLocation = Directory("${Platform.environment["UserProfile"]}/.reboot_launcher/lawin");
 const String _serverUrl =
     "https://github.com/Lawin0129/LawinServer/archive/refs/heads/main.zip";
-const String _portableServerUrl =
-    "https://cdn.discordapp.com/attachments/998020695223193673/1019999251994005504/LawinServer.exe";
 
-Future<bool> downloadServer(bool portable) async {
-  if(!portable){
-    var response = await http.get(Uri.parse(_serverUrl));
-    var tempZip = File("${Platform.environment["Temp"]}/lawin.zip");
-    await tempZip.writeAsBytes(response.bodyBytes);
-    await extractFileToDisk(tempZip.path, serverLocation.parent.path);
-    var result = Directory("${serverLocation.parent.path}/LawinServer-main");
-    await result.rename("${serverLocation.parent.path}/${path.basename(serverLocation.path)}");
-    await Process.run("${serverLocation.path}/install_packages.bat", [], workingDirectory: serverLocation.path);
-    await updateEngineConfig();
-    return true;
-  }
-
-  var response = await http.get(Uri.parse(_portableServerUrl));
-  var server = await loadBinary("LawinServer.exe", true);
-  await server.writeAsBytes(response.bodyBytes);
+Future<bool> downloadServer(ignored) async {
+  var response = await http.get(Uri.parse(_serverUrl));
+  var tempZip = File("${Platform.environment["Temp"]}/lawin.zip");
+  await tempZip.writeAsBytes(response.bodyBytes);
+  await extractFileToDisk(tempZip.path, serverLocation.parent.path);
+  var result = Directory("${serverLocation.parent.path}/LawinServer-main");
+  await result.rename("${serverLocation.parent.path}/${path.basename(serverLocation.path)}");
+  await Process.run("${serverLocation.path}/install_packages.bat", [], workingDirectory: serverLocation.path);
+  await updateEngineConfig();
   return true;
 }
 
@@ -38,10 +31,9 @@ Future<void> updateEngineConfig() async {
 }
 
 Future<bool> isLawinPortFree() async {
-  return ServerSocket.bind("localhost", 3551)
-      .then((socket) => socket.close())
-      .then((_) => true)
-      .onError((error, _) => false);
+  var portBat = await loadBinary("port.bat", true);
+  var process = await Process.run(portBat.path, []);
+  return !process.outText.contains(" LISTENING "); // Goofy way, best we got
 }
 
 List<String> createRebootArgs(String username, bool headless) {
@@ -52,7 +44,6 @@ List<String> createRebootArgs(String username, bool headless) {
     "-epicportal",
     "-skippatchcheck",
     "-fromfl=eac",
-    "-fltoken=3db3ba5dcbd2e16703f3978d",
     "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ",
     "-AUTH_LOGIN=$username@projectreboot.dev",
     "-AUTH_PASSWORD=Rebooted",
@@ -79,7 +70,8 @@ Future<Uri?> ping(String host, String port, [bool https=false]) async {
       ..connectionTimeout = const Duration(seconds: 5);
     var request = await client.getUrl(uri);
     var response = await request.close();
-    return response.statusCode == 200 ? uri : null;
+    var body = utf8.decode(await response.single);
+    return response.statusCode == 200 && body.contains("Welcome to LawinServer!") ? uri : null;
   }catch(_){
     return https || declaredScheme != null ? null : await ping(host, port, true);
   }

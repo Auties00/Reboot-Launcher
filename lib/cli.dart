@@ -6,8 +6,10 @@ import 'package:args/args.dart';
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/model/game_type.dart';
+import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/injector.dart';
+import 'package:reboot_launcher/src/util/node.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
 import 'package:reboot_launcher/src/util/reboot.dart';
 import 'package:reboot_launcher/src/util/server_standalone.dart';
@@ -23,9 +25,10 @@ import 'package:http/http.dart' as http;
 // Needed because binaries can't be loaded in any other way
 const String _craniumDownload = "https://filebin.net/ybn0gme7dqjr4zup/cranium.dll";
 const String _consoleDownload = "https://filebin.net/ybn0gme7dqjr4zup/console.dll";
-const String _injectorDownload = "https://filebin.net/ybn0gme7dqjr4zup/injector.exe";
 
 Process? _gameProcess;
+Process? _eacProcess;
+Process? _launcherProcess;
 
 void main(List<String> args){
   handleCLI(args);
@@ -73,9 +76,11 @@ Future<String?> _getWindowsPath(String folderID) {
 }
 
 Future<void> handleCLI(List<String> args) async {
-  stdout.writeln("Reboot Launcher CLI Tool");
+  stdout.writeln("Reboot Launcher");
   stdout.writeln("Wrote by Auties00");
-  stdout.writeln("Version 3.11");
+  stdout.writeln("Version 3.13");
+
+  _killOld();
 
   var gameJson = await _getControllerJson("game");
   var serverJson = await _getControllerJson("server");
@@ -86,11 +91,11 @@ Future<void> handleCLI(List<String> args) async {
     ..addCommand("launch")
     ..addOption("version", defaultsTo: gameJson["version"])
     ..addOption("username")
-    ..addOption("server-type", allowed: ["embedded", "remote"], defaultsTo: serverJson["embedded"] ?? true ? "embedded" : "remote")
-    ..addOption("server-host", defaultsTo: serverJson["host"])
-    ..addOption("server-port", defaultsTo: serverJson["port"])
+    ..addOption("server-type", allowed: _getServerTypes(), defaultsTo: _getDefaultServerType(serverJson))
+    ..addOption("server-host")
+    ..addOption("server-port")
     ..addOption("dll", defaultsTo: settingsJson["reboot"] ?? (await loadBinary("reboot.dll", true)).path)
-    ..addOption("type", allowed: ["client", "server", "headless_server"], defaultsTo: _getDefaultType(gameJson))
+    ..addOption("type", allowed: _getTypes(), defaultsTo: _getDefaultType(gameJson))
     ..addFlag("update", defaultsTo: settingsJson["auto_update"] ?? true, negatable: true)
     ..addFlag("log", defaultsTo: false);
   var result = parser.parse(args);
@@ -101,9 +106,11 @@ Future<void> handleCLI(List<String> args) async {
     return;
   }
 
+  var dll = result["dll"];
   var type = _getType(result);
   var username = result["username"];
   username ??= gameJson["${type == GameType.client ? "game" : "server"}_username"];
+  var verbose = result["log"];
 
   var dummyVersion = _createVersion(gameJson["version"], result["version"], versions);
   await _updateDLLs();
@@ -123,31 +130,57 @@ Future<void> handleCLI(List<String> args) async {
     await patchExe(dummyVersion.executable!);
   }
 
-  var started = await _startServerIfNeeded(result);
+  var serverType = _getServerType(result);
+  var host = result["server-host"] ?? serverJson["${serverType.id}_host"];
+  var port = result["server-port"] ?? serverJson["${serverType.id}_port"];
+  var started = await _startServerIfNeeded(host, port, serverType);
   if(!started){
     stderr.writeln("Cannot start server!");
     return;
   }
 
-  await _startGameProcess(dummyVersion, result["dll"], type != GameType.client, result);
-  await _injectOrShowError("cranium.dll");
+  await _startGameProcess(username, type, verbose, dll, dummyVersion);
+}
+
+void _killOld() async {
+  var shell = Shell(
+      commandVerbose: false,
+      commentVerbose: false,
+      verbose: false
+  );
+  try {
+    await shell.run("taskkill /f /im FortniteLauncher.exe");
+    await shell.run("taskkill /f /im FortniteClient-Win64-Shipping_EAC.exe");
+  }catch(_){
+
+  }
+}
+
+Iterable<String> _getTypes() => GameType.values.map((entry) => entry.id);
+
+Iterable<String> _getServerTypes() => ServerType.values.map((entry) => entry.id);
+
+String _getDefaultServerType(Map<String, dynamic> json) {
+  var type = ServerType.values.elementAt(json["type"] ?? 0);
+  return type.id;
 }
 
 GameType _getType(ArgResults result) {
-  var type = result["type"];
-  switch(type){
-    case "client":
-      return GameType.client;
-
-    case "server":
-      return GameType.server;
-
-    case "headless_server":
-      return GameType.headlessServer;
-
-    default:
-      throw Exception("Unknown game type: $result. Use --type only with client, server or headless_server");
+  var type = GameType.of(result["type"]);
+  if(type == null){
+    throw Exception("Unknown game type: $result. Use --type only with ${_getTypes().join(", ")}");
   }
+
+  return type;
+}
+
+ServerType _getServerType(ArgResults result) {
+  var type = ServerType.of(result["server-type"]);
+  if(type == null){
+    throw Exception("Unknown server type: $result. Use --server-type only with ${_getServerTypes().join(", ")}");
+  }
+
+  return type;
 }
 
 String _getDefaultType(Map<String, dynamic> json){
@@ -183,16 +216,6 @@ Future<void> _updateDLLs() async {
 
     await craniumDll.writeAsBytes(response.bodyBytes);
   }
-
-  var injectorExe = await loadBinary("injector.exe", true);
-  if(!injectorExe.existsSync()){
-    var response = await http.get(Uri.parse(_injectorDownload));
-    if(response.statusCode != 200){
-      throw Exception("Cannot download injector");
-    }
-
-    await injectorExe.writeAsBytes(response.bodyBytes);
-  }
 }
 
 List<FortniteVersion> _getVersions(Map<String, dynamic> gameJson) {
@@ -201,26 +224,27 @@ List<FortniteVersion> _getVersions(Map<String, dynamic> gameJson) {
       .toList();
 }
 
-Future<void> _startGameProcess(FortniteVersion dummyVersion, String rebootDll, bool host, ArgResults result) async {
-  var gamePath = dummyVersion.executable?.path;
+Future<void> _startGameProcess(String? username, GameType type, bool verbose, String dll, FortniteVersion version) async {
+  var gamePath = version.executable?.path;
   if (gamePath == null) {
-    throw Exception("${dummyVersion.location
+    throw Exception("${version.location
         .path} no longer contains a Fortnite executable. Did you delete it?");
   }
 
-  var username = result["username"];
+  var hosting = type != GameType.client;
   if (username == null) {
-    username = "Reboot${host ? 'Host' : 'Player'}";
+    username = "Reboot${hosting ? 'Host' : 'Player'}";
     stdout.writeln("No username was specified, using $username by default. Use --username to specify one");
   }
 
-  var verbose = result["log"];
-  _gameProcess = await Process.start(gamePath, createRebootArgs(username, result["type"] == "headless_server"))
+  _gameProcess = await Process.start(gamePath, createRebootArgs(username, type == GameType.headlessServer))
     ..exitCode.then((_) => _onClose())
-    ..outLines.forEach((line) => _onGameOutput(line, rebootDll, host, verbose));
+    ..outLines.forEach((line) => _onGameOutput(line, dll, hosting, verbose));
+  await _injectOrShowError("cranium.dll");
 }
 
 void _onClose() {
+  _kill();
   stdout.writeln("The game was closed");
   exit(0);
 }
@@ -230,8 +254,8 @@ Future<void> _startEacProcess(FortniteVersion dummyVersion) async {
     return;
   }
 
-  var process = await Process.start(dummyVersion.eacExecutable!.path, []);
-  Win32Process(process.pid).suspend();
+  _eacProcess = await Process.start(dummyVersion.eacExecutable!.path, []);
+  Win32Process(_eacProcess!.pid).suspend();
 }
 
 Future<void> _startLauncherProcess(FortniteVersion dummyVersion) async {
@@ -239,32 +263,48 @@ Future<void> _startLauncherProcess(FortniteVersion dummyVersion) async {
     return;
   }
 
-  var process = await Process.start(dummyVersion.launcher!.path, []);
-  Win32Process(process.pid).suspend();
+  _launcherProcess = await Process.start(dummyVersion.launcher!.path, []);
+  Win32Process(_launcherProcess!.pid).suspend();
 }
 
-Future<bool> _startServerIfNeeded(ArgResults result) async {
+Future<bool> _startServerIfNeeded(String? host, String? port, ServerType type) async {
   stdout.writeln("Starting lawin server...");
-  if (!await isLawinPortFree()) {
-    stdout.writeln("A lawin server is already active");
-    return true;
-  }
+  switch(type){
+    case ServerType.local:
+      var result = await ping(host ?? "127.0.0.1", port ?? "3551");
+      if(result == null){
+        throw Exception("Local lawin server is not running");
+      }
 
-  if (result["server-type"] == "embedded") {
-    stdout.writeln("Starting an embedded server...");
-    return  await _changeEmbeddedServerState();
-  }
+      stdout.writeln("Detected local lawin server");
+      return true;
+    case ServerType.embedded:
+      stdout.writeln("Starting an embedded server...");
+      return await _changeEmbeddedServerState();
+    case ServerType.remote:
+      if(host == null){
+        throw Exception("Missing host for remote server");
+      }
 
-  var host = result["server-host"];
-  var port = result["server-port"];
-  stdout.writeln("Starting a reverse proxy to $host:$port");
-  return await _changeReverseProxyState(host, port) != null;
+      if(port == null){
+        throw Exception("Missing host for remote server");
+      }
+
+      stdout.writeln("Starting a reverse proxy to $host:$port");
+      return await _changeReverseProxyState(host, port) != null;
+  }
 }
 
 Future<bool> _changeEmbeddedServerState() async {
-  var nodeProcess = await Process.run("where", ["node"]);
-  if(nodeProcess.exitCode != 0) {
+  var node = await hasNode();
+  if(!node) {
     throw Exception("Missing node, cannot start embedded server");
+  }
+
+  var free = await isLawinPortFree();
+  if(!free){
+    stdout.writeln("Server is already running on port 3551");
+    return true;
   }
 
   if(!serverLocation.existsSync()) {
@@ -331,27 +371,33 @@ FortniteVersion _createVersion(String? versionName, String? versionPath, List<Fo
       "Specify a version using --version or open the launcher GUI and select it manually");
 }
 
+
 void _onGameOutput(String line, String rebootDll, bool host, bool verbose) {
   if(verbose) {
     stdout.writeln(line);
   }
 
   if (line.contains("FOnlineSubsystemGoogleCommon::Shutdown()")) {
+    _onClose();
     return;
   }
 
   if(line.contains("port 3551 failed: Connection refused")){
     stderr.writeln("Connection refused from lawin server");
+    _onClose();
     return;
   }
 
-  if(line.contains("HTTP 400 response from ")){
+  if(line.contains("HTTP 400 response from ") || line.contains("Unable to login to Fortnite servers")){
     stderr.writeln("Connection refused from lawin server");
+    _onClose();
     return;
   }
 
-  if(line.contains("Network failure when attempting to check platform restrictions")){
+  if(line.contains("Network failure when attempting to check platform restrictions") || line.contains("UOnlineAccountCommon::ForceLogout")){
     stderr.writeln("Expired token, please reopen the game");
+    _kill();
+    _onClose();
     return;
   }
 
@@ -363,6 +409,12 @@ void _onGameOutput(String line, String rebootDll, bool host, bool verbose) {
   if(line.contains("Region") && host){
     _injectOrShowError(rebootDll, false);
   }
+}
+
+void _kill() {
+  _gameProcess?.kill(ProcessSignal.sigabrt);
+  _eacProcess?.kill(ProcessSignal.sigabrt);
+  _launcherProcess?.kill(ProcessSignal.sigabrt);
 }
 
 Future<void> _injectOrShowError(String binary, [bool locate = true]) async {
@@ -377,18 +429,8 @@ Future<void> _injectOrShowError(String binary, [bool locate = true]) async {
       throw Exception("Cannot inject $dll: missing file");
     }
 
-    var success = await injectDll(_gameProcess!.pid, dll.path, true);
-    if (success) {
-      return;
-    }
-
-    _onInjectError(binary);
+    await injectDll(_gameProcess!.pid, dll.path);
   } catch (exception) {
-    _onInjectError(binary);
+    throw Exception("Cannot inject binary: $binary");
   }
-}
-
-void _onInjectError(String binary) {
-  stderr.writeln(injectLogFile.readAsStringSync());
-  throw Exception("Cannot inject binary: $binary");
 }

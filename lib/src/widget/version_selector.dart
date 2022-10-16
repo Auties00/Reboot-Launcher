@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart'
-    show showMenu, PopupMenuEntry, PopupMenuItem;
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
@@ -88,16 +86,20 @@ class _VersionSelectorState extends State<VersionSelector> {
   MenuFlyoutItem _createVersionItem(
       BuildContext context, FortniteVersion version) {
     return MenuFlyoutItem(
-        text: Listener(
-            onPointerDown: (event) async {
-              if (event.kind != PointerDeviceKind.mouse ||
-                  event.buttons != kSecondaryMouseButton) {
-                return;
-              }
+        text: SizedBox(
+            width: double.infinity,
+            child: Listener(
+                onPointerDown: (event) async {
+                  if (event.kind != PointerDeviceKind.mouse ||
+                      event.buttons != kSecondaryMouseButton) {
+                    return;
+                  }
 
-              await _openMenu(context, version, event.position);
-            },
-            child: SizedBox(width: double.infinity, child: Text(version.name))),
+                  await _openMenu(context, version, event.position);
+                },
+                child: Text(version.name)
+            )
+        ),
         trailing: const Expanded(child: SizedBox()),
         onPressed: () => _gameController.selectedVersion = version);
   }
@@ -131,14 +133,21 @@ class _VersionSelectorState extends State<VersionSelector> {
 
   Future<void> _openMenu(
       BuildContext context, FortniteVersion version, Offset offset) async {
-    var result = await showMenu(
-      context: context,
-      items: <PopupMenuEntry>[
-        const PopupMenuItem(value: 0, child: Text("Open in explorer")),
-        const PopupMenuItem(value: 1, child: Text("Delete"))
-      ],
-      position:
-          RelativeRect.fromLTRB(offset.dx, offset.dy, offset.dx, offset.dy),
+    var result = await showMenu<int?>(
+        context: context,
+        offset: offset,
+        builder: (context) => MenuFlyout(
+          items: [
+            MenuFlyoutItem(
+                text: const Text('Open in explorer'),
+                onPressed: () => Navigator.of(context).pop(0)
+            ),
+            MenuFlyoutItem(
+                text: const Text('Delete'),
+                onPressed: () => Navigator.of(context).pop(1)
+            ),
+          ],
+        )
     );
 
     switch (result) {

@@ -1,14 +1,40 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:reboot_launcher/src/util/node.dart';
 import 'package:reboot_launcher/src/util/server_standalone.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_proxy/shelf_proxy.dart';
 
-Future<HttpServer?> changeReverseProxyState(BuildContext context, String host, String port, HttpServer? server) async {
+Future<bool> checkLocalServer(BuildContext context, String host, String port, bool closeAutomatically) async {
+  host = host.trim();
+  if(host.isEmpty){
+    showSnackbar(
+        context, const Snackbar(content: Text("Missing host name")));
+    return false;
+  }
+
+  port = port.trim();
+  if(port.isEmpty){
+    showSnackbar(
+        context, const Snackbar(content: Text("Missing port", textAlign: TextAlign.center)));
+    return false;
+  }
+
+  if(int.tryParse(port) == null){
+    showSnackbar(
+        context, const Snackbar(content: Text("Invalid port, use only numbers", textAlign: TextAlign.center)));
+    return false;
+  }
+
+  return await _showCheck(context, host, port, false, closeAutomatically) != null;
+}
+
+
+Future<HttpServer?> changeReverseProxyState(BuildContext context, String host, String port, bool closeAutomatically, HttpServer? server) async {
   if(server != null){
     try{
       server.close(force: true);
@@ -40,7 +66,7 @@ Future<HttpServer?> changeReverseProxyState(BuildContext context, String host, S
   }
 
   try{
-    var uri = await _showReverseProxyCheck(context, host, port);
+    var uri = await _showCheck(context, host, port, true, closeAutomatically);
     if(uri == null){
       return null;
     }
@@ -52,8 +78,9 @@ Future<HttpServer?> changeReverseProxyState(BuildContext context, String host, S
   }
 }
 
-Future<Uri?> _showReverseProxyCheck(BuildContext context, String host, String port) async {
+Future<Uri?> _showCheck(BuildContext context, String host, String port, bool remote, bool closeAutomatically) async {
   var future = ping(host, port);
+  Uri? result;
   return await showDialog(
       context: context,
       builder: (context) => ContentDialog(
@@ -63,24 +90,38 @@ Future<Uri?> _showReverseProxyCheck(BuildContext context, String host, String po
               if(snapshot.hasError){
                 return SizedBox(
                     width: double.infinity,
-                    child: Text("Cannot ping remote server: ${snapshot.error}" , textAlign: TextAlign.center)
+                    child: Text("Cannot ping ${remote ? "remote" : "local"} server: ${snapshot.error}" , textAlign: TextAlign.center)
                 );
               }
 
               if(snapshot.connectionState == ConnectionState.done && !snapshot.hasData){
-                return const SizedBox(
+                return SizedBox(
                     width: double.infinity,
-                    child: Text("The remote server doesn't work correctly or the IP and/or the port are incorrect" , textAlign: TextAlign.center)
+                    child: Text(
+                        "The ${remote ? "remote" : "local"} server doesn't work correctly ${remote ? "or the IP and/or the port are incorrect" : ""}",
+                        textAlign: TextAlign.center
+                    )
                 );
               }
 
+              result = snapshot.data;
               if(snapshot.hasData){
-                Navigator.of(context).pop(snapshot.data);
+                if(remote || closeAutomatically) {
+                  Navigator.of(context).pop(result);
+                }
+
+                return const SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                        "The server works correctly",
+                        textAlign: TextAlign.center
+                    )
+                );
               }
 
-              return const InfoLabel(
-                  label: "Pinging remote lawin server...",
-                  child: SizedBox(
+              return InfoLabel(
+                  label: "Pinging ${remote ? "remote" : "local"} lawin server...",
+                  child: const SizedBox(
                       width: double.infinity,
                       child: ProgressBar()
                   )
@@ -91,7 +132,7 @@ Future<Uri?> _showReverseProxyCheck(BuildContext context, String host, String po
           SizedBox(
               width: double.infinity,
               child: Button(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(context).pop(result),
                 child: const Text('Close'),
               ))
         ]
@@ -148,39 +189,70 @@ Future<bool> changeEmbeddedServerState(BuildContext context, bool running) async
     return false;
   }
 
-  var nodeProcess = await Process.run("where", ["node"]);
-  if(nodeProcess.exitCode == 0) {
-    if(!(await serverLocation.exists()) && !(await _showServerDownloadInfo(context, false))){
+  var free = await isLawinPortFree();
+  if (!free) {
+    var shouldKill = await _showAlreadyBindPortWarning(context);
+    if (!shouldKill) {
       return false;
     }
 
-    var serverRunner = File("${serverLocation.path}/start.bat");
-    if (!(await serverRunner.exists())) {
-      _showEmbeddedError(context, serverRunner.path);
-      return false;
-    }
-
-    var nodeModules = Directory("${serverLocation.path}/node_modules");
-    if (!(await nodeModules.exists())) {
-      await Process.run("${serverLocation.path}/install_packages.bat", [],
-          workingDirectory: serverLocation.path);
-    }
-
-    await Process.start(serverRunner.path, [],  workingDirectory: serverLocation.path);
-    return true;
+    var releaseBat = await loadBinary("release.bat", false);
+    await Process.run(releaseBat.path, []);
   }
 
-  var portableServer = await loadBinary("LawinServer.exe", true);
-  if(!(await portableServer.exists()) && !(await _showServerDownloadInfo(context, true))){
+  var node = await hasNode();
+  var useLocalNode = false;
+  if(!node) {
+    useLocalNode = true;
+    if(!embeddedNode.existsSync()){
+      var result = await _showNodeDownloadInfo(context);
+      if(!result) {
+        return false;
+      }
+    }
+  }
+
+  if(!serverLocation.existsSync()) {
+    var result = await _showServerDownloadInfo(context);
+    if(!result){
+      return false;
+    }
+  }
+
+  var serverRunner = File("${serverLocation.path}/start.bat");
+  if (!serverRunner.existsSync()) {
+    _showEmbeddedError(context, "missing file ${serverRunner.path}");
     return false;
   }
 
-  await Process.start(portableServer.path, []);
-  return true;
+  var nodeModules = Directory("${serverLocation.path}/node_modules");
+  if (!nodeModules.existsSync()) {
+    await Process.run("${serverLocation.path}/install_packages.bat", [],
+        workingDirectory: serverLocation.path);
+  }
+
+  try {
+    var logFile = await loadBinary("server.txt", true);
+    if(logFile.existsSync()){
+      logFile.deleteSync();
+    }
+
+    var process = await Process.start(
+        !useLocalNode ? "node" : '"${embeddedNode.path}"',
+        ["index.js"],
+        workingDirectory: serverLocation.path
+    );
+    process.outLines.forEach((line) => logFile.writeAsString("$line\n", mode: FileMode.append));
+    process.errLines.forEach((line) => logFile.writeAsString("$line\n", mode: FileMode.append));
+    return true;
+  }catch(exception){
+    _showEmbeddedError(context, exception.toString());
+    return false;
+  }
 }
 
-Future<bool> _showServerDownloadInfo(BuildContext context, bool portable) async {
-  var nodeFuture = compute(downloadServer, portable);
+Future<bool> _showServerDownloadInfo(BuildContext context) async {
+  var nodeFuture = compute(downloadServer, true);
   var result = await showDialog<bool>(
       context: context,
       builder: (context) => ContentDialog(
@@ -202,9 +274,9 @@ Future<bool> _showServerDownloadInfo(BuildContext context, bool portable) async 
                 );
               }
 
-              return const InfoLabel(
+              return InfoLabel(
                   label: "Downloading lawin server...",
-                  child: SizedBox(
+                  child: const SizedBox(
                       width: double.infinity,
                       child: ProgressBar()
                   )
@@ -229,13 +301,17 @@ Future<bool> _showServerDownloadInfo(BuildContext context, bool portable) async 
   return result != null && result;
 }
 
-void _showEmbeddedError(BuildContext context, String path) {
+void _showEmbeddedError(BuildContext context, String error) {
   showDialog(
       context: context,
       builder: (context) => ContentDialog(
-        content: Text(
-            "Cannot start server, missing $path",
-            textAlign: TextAlign.center),
+        content: SizedBox(
+          width: double.infinity,
+          child: Text(
+              "Cannot start server: $error",
+              textAlign: TextAlign.center
+          )
+        ),
         actions: [
           SizedBox(
               width: double.infinity,
@@ -245,4 +321,74 @@ void _showEmbeddedError(BuildContext context, String path) {
               ))
         ],
       ));
+}
+
+Future<bool> _showNodeDownloadInfo(BuildContext context) async {
+  var nodeFuture = compute(downloadNode, true);
+  var result = await showDialog<bool>(
+      context: context,
+      builder: (context) => ContentDialog(
+        content: FutureBuilder(
+            future: nodeFuture,
+            builder: (context, snapshot) {
+              if(snapshot.hasError){
+                return SizedBox(
+                    width: double.infinity,
+                    child: Text("An error occurred while downloading: ${snapshot.error}",
+                        textAlign: TextAlign.center));
+              }
+
+              if(snapshot.hasData){
+                return const SizedBox(
+                    width: double.infinity,
+                    child: Text("The download was completed successfully!",
+                        textAlign: TextAlign.center)
+                );
+              }
+
+              return InfoLabel(
+                  label: "Downloading node...",
+                  child: const SizedBox(
+                      width: double.infinity,
+                      child: ProgressBar()
+                  )
+              );
+            }
+        ),
+        actions: [
+          FutureBuilder(
+              future: nodeFuture,
+              builder: (builder, snapshot) => SizedBox(
+                  width: double.infinity,
+                  child: Button(
+                    onPressed: () => Navigator.of(context).pop(snapshot.hasData && !snapshot.hasError),
+                    child: Text(!snapshot.hasData && !snapshot.hasError ? 'Stop' : 'Close'),
+                  )
+              )
+          )
+        ],
+      )
+  );
+
+  return result != null && result;
+}
+
+Future<bool> _showAlreadyBindPortWarning(BuildContext context) async {
+  return await showDialog<bool>(
+      context: context,
+      builder: (context) => ContentDialog(
+        content: const Text(
+            "Port 3551 is already in use, do you want to kill the associated process?",
+            textAlign: TextAlign.center),
+        actions: [
+          Button(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+              child: const Text('Kill'),
+              onPressed: () => Navigator.of(context).pop(true)),
+        ],
+      )) ??
+      false;
 }

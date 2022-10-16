@@ -85,7 +85,6 @@ class _AddServerVersionState extends State<AddServerVersion> {
                 style: const ContentDialogThemeData(
                     padding: EdgeInsets.only(left: 20, right: 20, top: 15.0, bottom: 5.0)
                 ),
-                constraints: const BoxConstraints(maxWidth: 368, maxHeight: 321),
                 content: _createDownloadVersionBody(),
                 actions: _createDownloadVersionOption(context))));
   }
@@ -233,6 +232,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
     switch (_status) {
       case DownloadStatus.none:
         return Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -242,6 +242,8 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
             VersionNameInput(controller: _nameController),
 
+            const SizedBox(height: 16.0),
+
             FileSelector(
                 label: "Destination",
                 placeholder: "Type the download destination",
@@ -250,6 +252,8 @@ class _AddServerVersionState extends State<AddServerVersion> {
                 validator: _checkDownloadDestination,
                 folder: true
             ),
+
+            const SizedBox(height: 8.0),
           ],
         );
       case DownloadStatus.downloading:
@@ -300,11 +304,11 @@ class _AddServerVersionState extends State<AddServerVersion> {
           ],
         );
       case DownloadStatus.extracting:
-        return const Padding(
-          padding: EdgeInsets.only(bottom: 16),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
           child: InfoLabel(
             label: "Extracting...",
-            child: SizedBox(width: double.infinity, child: ProgressBar())
+            child: const SizedBox(width: double.infinity, child: ProgressBar())
           ),
         );
       case DownloadStatus.done:

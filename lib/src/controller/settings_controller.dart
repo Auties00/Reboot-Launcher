@@ -19,22 +19,20 @@ class SettingsController extends GetxController {
 
   SettingsController() {
     _storage = GetStorage("settings");
+
     rebootDll = _createController("reboot", "reboot.dll");
     consoleDll = _createController("console", "console.dll");
     craniumDll = _createController("cranium", "cranium.dll");
     autoUpdate = RxBool(_storage.read("auto_update") ?? true);
+
     autoUpdate.listen((value) => _storage.write("auto_update", value));
   }
 
   TextEditingController _createController(String key, String name) {
-    var controller = TextEditingController(text: _storage.read(key) ?? "$safeBinariesDirectory\\$name");
-    controller.addListener(() {
-      if(controller.text.isEmpty || !File(controller.text).existsSync()) {
-        return;
-      }
+    loadBinary(name, true);
 
-      _storage.write(key, controller.text);
-    });
+    var controller = TextEditingController(text: _storage.read(key) ?? "$safeBinariesDirectory\\$name");
+    controller.addListener(() => _storage.write(key, controller.text));
 
     return controller;
   }

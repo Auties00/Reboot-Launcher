@@ -75,38 +75,41 @@ class _LauncherPageState extends State<LauncherPage> {
 
   @override
   Widget build(BuildContext context) {
-      return FutureBuilder(
-        future: _gameController.updater,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData && !snapshot.hasError) {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+      return Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: FutureBuilder(
+          future: _gameController.updater,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData && !snapshot.hasError) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      ProgressRing(),
+                      SizedBox(height: 16.0),
+                      Text("Updating Reboot DLL...")
+                    ],
+                  ),
+                ],
+              );
+            }
+
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    ProgressRing(),
-                    SizedBox(height: 16.0),
-                    Text("Updating Reboot DLL...")
-                  ],
-                ),
+                if(snapshot.hasError)
+                  _createUpdateError(snapshot),
+                UsernameBox(),
+                const VersionSelector(),
+                DeploymentSelector(),
+                const LaunchButton()
               ],
             );
           }
-
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if(snapshot.hasError)
-                _createUpdateError(snapshot),
-              UsernameBox(),
-              const VersionSelector(),
-              const DeploymentSelector(),
-              const LaunchButton()
-            ],
-          );
-        }
+        ),
       );
     }
 

@@ -10,6 +10,7 @@ class FileSelector extends StatefulWidget {
   final bool allowNavigator;
   final TextEditingController controller;
   final String? Function(String?) validator;
+  final AutovalidateMode? validatorMode;
   final String? extension;
   final bool folder;
 
@@ -21,6 +22,7 @@ class FileSelector extends StatefulWidget {
       required this.validator,
       required this.folder,
       this.extension,
+        this.validatorMode,
       this.allowNavigator = true,
       Key? key})
       : assert(folder || extension != null, "Missing extension for file selector"),
@@ -41,23 +43,20 @@ class _FileSelectorState extends State<FileSelector> {
           children: [
             Expanded(
                 child: TextFormBox(
-                    controller: widget.controller,
-                    placeholder: widget.placeholder,
-                    validator: widget.validator,
-                    hidePadding: true
+                  controller: widget.controller,
+                  placeholder: widget.placeholder,
+                  validator: widget.validator,
+                  autovalidateMode: widget.validatorMode ?? AutovalidateMode.onUserInteraction
                 )
             ),
             if (widget.allowNavigator) const SizedBox(width: 8.0),
             if (widget.allowNavigator)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 21.0),
-                child: Tooltip(
+              Tooltip(
                   message: "Select a ${widget.folder ? 'folder' : 'file'}",
                   child: Button(
                       onPressed: _onPressed,
                       child: const Icon(FluentIcons.open_folder_horizontal)
                   ),
-                ),
               )
           ],
         )
@@ -73,13 +72,13 @@ class _FileSelectorState extends State<FileSelector> {
     _selecting = true;
     if(widget.folder) {
       compute(openFolderPicker, widget.windowTitle)
-          .then((value) => widget.controller.text = value ?? "")
+          .then((value) => widget.controller.text = value ?? widget.controller.text)
           .then((_) => _selecting = false);
       return;
     }
 
     compute(openFilePicker, widget.extension!)
-        .then((value) => widget.controller.text = value ?? "")
+        .then((value) => widget.controller.text = value ?? widget.controller.text)
         .then((_) => _selecting = false);
   }
 }
