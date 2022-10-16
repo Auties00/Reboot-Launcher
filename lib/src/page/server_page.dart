@@ -1,11 +1,11 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
-import 'package:reboot_launcher/src/widget/host_input.dart';
-import 'package:reboot_launcher/src/widget/local_server_switch.dart';
-import 'package:reboot_launcher/src/widget/port_input.dart';
-import 'package:reboot_launcher/src/widget/server_button.dart';
-import 'package:reboot_launcher/src/widget/warning_info.dart';
+import 'package:reboot_launcher/src/widget/server/host_input.dart';
+import 'package:reboot_launcher/src/widget/server/server_type_selector.dart';
+import 'package:reboot_launcher/src/widget/server/port_input.dart';
+import 'package:reboot_launcher/src/widget/server/server_button.dart';
+import 'package:reboot_launcher/src/widget/shared/warning_info.dart';
 
 class ServerPage extends StatelessWidget {
   final ServerController _serverController = Get.find<ServerController>();
@@ -28,8 +28,8 @@ class ServerPage extends StatelessWidget {
               ),
             HostInput(),
             PortInput(),
-            LocalServerSwitch(),
-            ServerButton()
+            ServerTypeSelector(),
+            const ServerButton()
           ]
       )),
     );

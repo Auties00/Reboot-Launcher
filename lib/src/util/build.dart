@@ -5,8 +5,9 @@ import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/model/fortnite_build.dart';
-import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/version.dart' as parser;
+
+import 'os.dart';
 
 const _userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36";
@@ -80,13 +81,13 @@ Future<List<FortniteBuild>> _fetchManifests() async {
 }
 
 Future<Process> downloadManifestBuild(
-    String manifestUrl, String destination, Function(double) onProgress) async {
+    String manifestUrl, String destination, Function(double, String) onProgress) async {
   var buildExe = await loadBinary("build.exe", false);
   var process = await Process.start(buildExe.path, [manifestUrl, destination]);
 
   process.errLines
       .where((message) => message.contains("%"))
-      .forEach((message) => onProgress(double.parse(message.split("%")[0])));
+      .forEach((message) => onProgress(double.parse(message.split("%")[0]), message.substring(message.indexOf(" ") + 1)));
 
   return process;
 }

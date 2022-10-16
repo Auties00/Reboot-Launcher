@@ -32,26 +32,33 @@ Future<String?> openFilePicker(String extension) async {
   return result.files.first.path;
 }
 
-Future<List<Directory>> scanInstallations(String input) => Directory(input)
-    .list(recursive: true)
-    .handleError((_) {}, test: (e) => e is FileSystemException)
-    .where((element) => path.basename(element.path) == "FortniteClient-Win64-Shipping.exe")
-    .map((element) => findContainer(File(element.path)))
-    .where((element) => element != null)
-    .map((element) => element!)
-    .toList();
-
-Directory? findContainer(File file){
-  var last = file.parent;
-  for(var x = 0; x < 5; x++){
-    var name = path.basename(last.path);
-    if(name != "FortniteGame" || name == "Fortnite"){
-      last = last.parent;
-      continue;
-    }
-
-    return last.parent;
+Future<File> loadBinary(String binary, bool safe) async{
+  var safeBinary = File("$safeBinariesDirectory\\$binary");
+  if(await safeBinary.exists()){
+    return safeBinary;
   }
 
-  return null;
+  var internal = _locateInternalBinary(binary);
+  if(!safe){
+    return internal;
+  }
+
+  if(await internal.exists()){
+    await internal.copy(safeBinary.path);
+  }
+
+  return safeBinary;
 }
+
+File _locateInternalBinary(String binary){
+  return File("$internalBinariesDirectory\\$binary");
+}
+
+String get internalBinariesDirectory =>
+    "${File(Platform.resolvedExecutable).parent.path}\\data\\flutter_assets\\assets\\binaries";
+
+Directory get tempDirectory =>
+    Directory("${Platform.environment["Temp"]}");
+
+String get safeBinariesDirectory =>
+    "${Platform.environment["UserProfile"]}\\.reboot_launcher";

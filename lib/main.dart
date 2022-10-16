@@ -12,9 +12,10 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
-import 'package:reboot_launcher/src/util/binary.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:system_theme/system_theme.dart';
+
+final GlobalKey appKey = GlobalKey();
 
 void main(List<String> args) async {
   await Directory(safeBinariesDirectory)
@@ -55,8 +56,6 @@ class RebootApplication extends StatefulWidget {
 }
 
 class _RebootApplicationState extends State<RebootApplication> {
-  final SettingsController _settingsController = Get.find<SettingsController>();
-
   @override
   Widget build(BuildContext context) {
     final color = SystemTheme.accentColor.accent.toAccentColor();
@@ -67,7 +66,7 @@ class _RebootApplicationState extends State<RebootApplication> {
       color: color,
       darkTheme: _createTheme(Brightness.dark),
       theme: _createTheme(Brightness.light),
-      home: const HomePage(),
+      home: HomePage(key: appKey),
     );
   }
 

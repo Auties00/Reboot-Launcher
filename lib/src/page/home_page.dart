@@ -5,9 +5,11 @@ import 'package:reboot_launcher/src/page/settings_page.dart';
 import 'package:reboot_launcher/src/page/launcher_page.dart';
 import 'package:reboot_launcher/src/page/server_page.dart';
 import 'package:reboot_launcher/src/util/os.dart';
-import 'package:reboot_launcher/src/widget/window_border.dart';
-import 'package:reboot_launcher/src/widget/window_buttons.dart';
+import 'package:reboot_launcher/src/widget/os/window_border.dart';
+import 'package:reboot_launcher/src/widget/os/window_buttons.dart';
 import 'package:window_manager/window_manager.dart';
+
+import 'info_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -18,9 +20,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with WindowListener {
   static const double _headerSize = 48.0;
-  static const double _sectionSize = 97.0;
+  static const double _sectionSize = 94.0;
   static const int _headerButtonCount = 3;
-  static const int _sectionButtonCount = 3;
+  static const int _sectionButtonCount = 4;
 
   bool _focused = true;
   bool _shouldMaximize = false;
@@ -78,6 +80,12 @@ class _HomePageState extends State<HomePage> with WindowListener {
                     title: const Text("Settings"),
                     icon: const Icon(FluentIcons.settings),
                     body: SettingsPage()
+                ),
+
+                PaneItem(
+                    title: const Text("Info"),
+                    icon: const Icon(FluentIcons.info),
+                    body: const InfoPage()
                 )
               ]
           ),
@@ -104,8 +112,8 @@ class _HomePageState extends State<HomePage> with WindowListener {
   Padding _createGestureHandler() {
     return Padding(
         padding: const EdgeInsets.only(
-            left: _sectionSize * _headerButtonCount,
-            right: _headerSize * _sectionButtonCount,
+            left: _sectionSize * _sectionButtonCount,
+            right: _headerSize * _headerButtonCount,
         ),
         child: SizedBox(
           height: _headerSize,

@@ -1,11 +1,11 @@
-import 'dart:io';
-
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/widget/file_selector.dart';
-import 'package:reboot_launcher/src/widget/smart_switch.dart';
+import 'package:reboot_launcher/src/widget/shared/smart_switch.dart';
+
+import '../util/checks.dart';
+import '../widget/os/file_selector.dart';
 
 class SettingsPage extends StatelessWidget {
   final SettingsController _settingsController = Get.find<SettingsController>();
@@ -16,9 +16,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(12.0),
-      child: Stack(
-        children: [
-         Column(
+      child: Column(
            mainAxisAlignment: MainAxisAlignment.spaceBetween,
            crossAxisAlignment: CrossAxisAlignment.start,
            children: [
@@ -29,7 +27,7 @@ class SettingsPage extends StatelessWidget {
                  windowTitle: "Select a dll",
                  folder: false,
                  extension: "dll",
-                 validator: _checkDll,
+                 validator: checkDll,
                  validatorMode: AutovalidateMode.always
              ),
 
@@ -40,7 +38,7 @@ class SettingsPage extends StatelessWidget {
                  windowTitle: "Select a dll",
                  folder: false,
                  extension: "dll",
-                 validator: _checkDll,
+                 validator: checkDll,
                  validatorMode: AutovalidateMode.always
              ),
 
@@ -51,7 +49,7 @@ class SettingsPage extends StatelessWidget {
                  windowTitle: "Select a dll",
                  folder: false,
                  extension: "dll",
-                 validator: _checkDll,
+                 validator: checkDll,
                  validatorMode: AutovalidateMode.always
              ),
 
@@ -59,31 +57,8 @@ class SettingsPage extends StatelessWidget {
                  value: _settingsController.autoUpdate,
                  label: "Update DLLs"
              )
-           ],
-         ),
-
-          const Align(
-              alignment: Alignment.bottomRight,
-              child: Text("Version 3.13${kDebugMode ? '-DEBUG' : ''}")
-          )
-        ],
+           ]
       ),
     );
-  }
-
-  String? _checkDll(String? text) {
-    if (text == null || text.isEmpty) {
-      return "Empty dll path";
-    }
-
-    if (!File(text).existsSync()) {
-      return "This dll doesn't exist";
-    }
-
-    if (!text.endsWith(".dll")) {
-      return "This file is not a dll";
-    }
-
-    return null;
   }
 }

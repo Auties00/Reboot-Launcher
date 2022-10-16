@@ -7,12 +7,11 @@ import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/model/game_type.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
-import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/injector.dart';
-import 'package:reboot_launcher/src/util/node.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
 import 'package:reboot_launcher/src/util/reboot.dart';
-import 'package:reboot_launcher/src/util/server_standalone.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 import 'package:shelf_proxy/shelf_proxy.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
 import 'dart:ffi';
@@ -23,8 +22,8 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:http/http.dart' as http;
 
 // Needed because binaries can't be loaded in any other way
-const String _craniumDownload = "https://filebin.net/ybn0gme7dqjr4zup/cranium.dll";
-const String _consoleDownload = "https://filebin.net/ybn0gme7dqjr4zup/console.dll";
+const String _craniumDownload = "https://cdn.discordapp.com/attachments/1026121175878881290/1031230848323825675/cranium.dll";
+const String _consoleDownload = "https://cdn.discordapp.com/attachments/1026121175878881290/1031230848005046373/console.dll";
 
 Process? _gameProcess;
 Process? _eacProcess;
@@ -121,13 +120,12 @@ Future<void> handleCLI(List<String> args) async {
 
   stdout.writeln("Launching game(type: ${type.name})...");
   await _startLauncherProcess(dummyVersion);
-  await _startEacProcess(dummyVersion);
   if (result["type"] == "headless_server") {
     if(dummyVersion.executable == null){
       throw Exception("Missing game executable at: ${dummyVersion.location.path}");
     }
 
-    await patchExe(dummyVersion.executable!);
+    await patch(dummyVersion.executable!);
   }
 
   var serverType = _getServerType(result);
@@ -249,15 +247,6 @@ void _onClose() {
   exit(0);
 }
 
-Future<void> _startEacProcess(FortniteVersion dummyVersion) async {
-  if (dummyVersion.eacExecutable == null) {
-    return;
-  }
-
-  _eacProcess = await Process.start(dummyVersion.eacExecutable!.path, []);
-  Win32Process(_eacProcess!.pid).suspend();
-}
-
 Future<void> _startLauncherProcess(FortniteVersion dummyVersion) async {
   if (dummyVersion.launcher == null) {
     return;
@@ -296,33 +285,7 @@ Future<bool> _startServerIfNeeded(String? host, String? port, ServerType type) a
 }
 
 Future<bool> _changeEmbeddedServerState() async {
-  var node = await hasNode();
-  if(!node) {
-    throw Exception("Missing node, cannot start embedded server");
-  }
 
-  var free = await isLawinPortFree();
-  if(!free){
-    stdout.writeln("Server is already running on port 3551");
-    return true;
-  }
-
-  if(!serverLocation.existsSync()) {
-    await downloadServer(false);
-  }
-
-  var serverRunner = File("${serverLocation.path}/start.bat");
-  if (!(await serverRunner.exists())) {
-    return false;
-  }
-
-  var nodeModules = Directory("${serverLocation.path}/node_modules");
-  if (!(await nodeModules.exists())) {
-    await Process.run("${serverLocation.path}/install_packages.bat", [],
-        workingDirectory: serverLocation.path);
-  }
-
-  await Process.start(serverRunner.path, [],  workingDirectory: serverLocation.path);
   return true;
 }
 

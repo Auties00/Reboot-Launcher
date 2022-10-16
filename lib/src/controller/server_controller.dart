@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 
 import '../model/server_type.dart';
 
@@ -17,6 +17,7 @@ class ServerController extends GetxController {
   late final Rx<ServerType> type;
   late final RxBool warning;
   late RxBool started;
+  Process? embeddedServer;
   HttpServer? reverseProxy;
 
   ServerController() {
@@ -39,9 +40,7 @@ class ServerController extends GetxController {
         return;
       }
 
-      loadBinary("release.bat", false)
-          .then((value) => Process.run(value.path, []))
-          .then((value) => started(false));
+      stop();
     });
 
     host = TextEditingController(text: _readHost());
@@ -64,5 +63,70 @@ class ServerController extends GetxController {
 
   String _readPort() {
     return _storage.read("${type.value.id}_port") ?? _serverPort;
+  }
+
+  Future<ServerResult> start() async {
+    var result = await checkServerPreconditions(host.text, port.text, type.value);
+    if(result.type != ServerResultType.canStart){
+      return result;
+    }
+
+    try{
+      switch(type()){
+        case ServerType.embedded:
+          embeddedServer = await startEmbeddedServer();
+          break;
+        case ServerType.remote:
+          var uriResult = await result.uri!;
+          if(uriResult == null){
+            return ServerResult(
+                type: ServerResultType.cannotPingServer
+            );
+          }
+
+          reverseProxy = await startRemoteServer(uriResult);
+          break;
+        case ServerType.local:
+          break;
+      }
+    }catch(error, stackTrace){
+      return ServerResult(
+          error: error,
+          stackTrace: stackTrace,
+          type: ServerResultType.unknownError
+      );
+    }
+
+    var myself = await pingSelf();
+    if(myself == null){
+      return ServerResult(
+          type: ServerResultType.cannotPingServer
+      );
+    }
+
+    started(true);
+    return ServerResult(
+        type: ServerResultType.started
+    );
+  }
+
+  Future<bool> stop() async {
+    started(false);
+    try{
+      switch(type()){
+        case ServerType.embedded:
+          await freeLawinPort();
+          break;
+        case ServerType.remote:
+          await reverseProxy?.close(force: true);
+          break;
+        case ServerType.local:
+          break;
+      }
+      return true;
+    }catch(_){
+      started(true);
+      return false;
+    }
   }
 }

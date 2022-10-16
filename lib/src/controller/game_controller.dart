@@ -89,4 +89,8 @@ class GameController extends GetxController {
     _selectedVersion(version);
     _storage.write("version", version?.name);
   }
+
+  void rename(FortniteVersion version, String result) {
+    versions.update((val) => version.name = result);
+  }
 }

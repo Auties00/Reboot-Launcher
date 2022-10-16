@@ -7,16 +7,15 @@ import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/util/os.dart';
-import 'package:reboot_launcher/src/widget/host_checkbox.dart';
-import 'package:reboot_launcher/src/widget/launch_button.dart';
-import 'package:reboot_launcher/src/widget/username_box.dart';
-import 'package:reboot_launcher/src/widget/version_selector.dart';
+import 'package:reboot_launcher/src/widget/home/game_type_selector.dart';
+import 'package:reboot_launcher/src/widget/home/launch_button.dart';
+import 'package:reboot_launcher/src/widget/home/username_box.dart';
+import 'package:reboot_launcher/src/widget/home/version_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../controller/settings_controller.dart';
-import '../util/binary.dart';
 import '../util/reboot.dart';
-import '../widget/warning_info.dart';
+import '../widget/shared/warning_info.dart';
 
 class LauncherPage extends StatefulWidget {
   const LauncherPage(
@@ -59,6 +58,7 @@ class _LauncherPageState extends State<LauncherPage> {
     var errorFile = await loadBinary("error.txt", true);
     errorFile.writeAsString(
         "Error: $error\nStacktrace: $stackTrace", mode: FileMode.write);
+    throw Exception("Cannot update reboot.dll");
   }
 
   void _onCancelWarning() {
@@ -104,7 +104,7 @@ class _LauncherPageState extends State<LauncherPage> {
                   _createUpdateError(snapshot),
                 UsernameBox(),
                 const VersionSelector(),
-                DeploymentSelector(),
+                GameTypeSelector(),
                 const LaunchButton()
               ],
             );
@@ -115,11 +115,10 @@ class _LauncherPageState extends State<LauncherPage> {
 
   Widget _createUpdateError(AsyncSnapshot<Object?> snapshot) {
     return WarningInfo(
-      text: "Cannot update Reboot DLL",
-      icon: FluentIcons.info,
-      severity: InfoBarSeverity.warning,
-      onPressed: () => loadBinary("error.txt", true)
-                          .then((file) => launchUrl(file.uri))
+        text: "Cannot update Reboot DLL",
+        icon: FluentIcons.info,
+        severity: InfoBarSeverity.warning,
+        onPressed: () => loadBinary("error.txt", true).then((file) => launchUrl(file.uri))
     );
   }
 }

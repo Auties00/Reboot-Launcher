@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/model/game_type.dart';
-import 'package:reboot_launcher/src/util/binary.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:system_theme/system_theme.dart';
 
 class SettingsController extends GetxController {

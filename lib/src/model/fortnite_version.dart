@@ -30,10 +30,6 @@ class FortniteVersion {
     return findExecutable(location, "FortniteLauncher.exe");
   }
 
-  File? get eacExecutable {
-    return findExecutable(location, "FortniteClient-Win64-Shipping_EAC.exe");
-  }
-
   Map<String, dynamic> toJson() => {
         'name': name,
         'location': location.path,
