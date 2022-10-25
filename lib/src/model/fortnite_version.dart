@@ -5,12 +5,14 @@ import 'package:path/path.dart' as path;
 class FortniteVersion {
   String name;
   Directory location;
+  bool memoryFix;
 
   FortniteVersion.fromJson(json)
       : name = json["name"],
-        location = Directory(json["location"]);
+        location = Directory(json["location"]),
+        memoryFix = json["memory_fix"] ?? false;
 
-  FortniteVersion({required this.name, required this.location});
+  FortniteVersion({required this.name, required this.location, required this.memoryFix});
 
   static File? findExecutable(Directory directory, String name) {
     try{

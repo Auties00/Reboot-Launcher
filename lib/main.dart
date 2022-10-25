@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -12,6 +13,7 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
+import 'package:reboot_launcher/src/util/error.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:system_theme/system_theme.dart';
 
@@ -26,6 +28,7 @@ void main(List<String> args) async {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
+
   await SystemTheme.accentColor.load();
   await GetStorage.init("game");
   await GetStorage.init("server");
@@ -45,7 +48,10 @@ void main(List<String> args) async {
     appWindow.show();
   });
 
-  runApp(const RebootApplication());
+  runZonedGuarded(() =>
+      runApp(const RebootApplication()),
+      (error, stack) => onError(error, stack, false)
+  );
 }
 
 class RebootApplication extends StatefulWidget {

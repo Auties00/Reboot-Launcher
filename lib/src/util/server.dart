@@ -8,11 +8,13 @@ import 'package:reboot_launcher/src/util/os.dart';
 import 'package:http/http.dart' as http;
 import 'package:shelf_proxy/shelf_proxy.dart';
 import 'package:shelf/shelf_io.dart';
-import 'package:path/path.dart' as path;
 
-final serverLocation = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\lawin\\Lawin.exe");
+final serverLocation = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\lawin_new\\Lawin.exe");
+final serverConfig = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\lawin_new\\Config\\config.ini");
+final serverLogFile = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\server.txt");
+
 const String _serverUrl =
-    "https://cdn.discordapp.com/attachments/1026121175878881290/1031230792069820487/LawinServer.zip";
+    "https://cdn.discordapp.com/attachments/1031262639457828910/1034506676843327549/lawin.zip";
 
 Future<bool> downloadServer(ignored) async {
   var response = await http.get(Uri.parse(_serverUrl));
@@ -63,7 +65,7 @@ List<String> createRebootArgs(String username, bool headless) {
   return args;
 }
 
-Future<Uri?> pingSelf() async => ping("127.0.0.1", "3551");
+Future<Uri?> pingSelf(String port) async => ping("127.0.0.1", port);
 
 Future<Uri?> ping(String host, String port, [bool https=false]) async {
   var hostName = _getHostName(host);
@@ -72,14 +74,15 @@ Future<Uri?> ping(String host, String port, [bool https=false]) async {
     var uri = Uri(
         scheme: declaredScheme ?? (https ? "https" : "http"),
         host: hostName,
-        port: int.parse(port)
+        port: int.parse(port),
+        path: "unknown"
     );
     var client = HttpClient()
       ..connectionTimeout = const Duration(seconds: 5);
     var request = await client.getUrl(uri);
     var response = await request.close();
     var body = utf8.decode(await response.single);
-    return response.statusCode == 200 && body.contains("Welcome to LawinServer!") ? uri : null;
+    return body.contains("epicgames") || body.contains("lawinserver") ? uri : null;
   }catch(_){
     return https || declaredScheme != null ? null : await ping(host, port, true);
   }
@@ -89,7 +92,7 @@ String? _getHostName(String host) => host.replaceFirst("http://", "").replaceFir
 
 String? _getScheme(String host) => host.startsWith("http://") ? "http" : host.startsWith("https://") ? "https" : null;
 
-Future<ServerResult> checkServerPreconditions(String host, String port, ServerType type) async {
+Future<ServerResult> checkServerPreconditions(String host, String port, ServerType type, bool needsFreePort) async {
   host = host.trim();
   if(host.isEmpty){
     return ServerResult(
@@ -113,6 +116,13 @@ Future<ServerResult> checkServerPreconditions(String host, String port, ServerTy
   if(type == ServerType.embedded || type == ServerType.remote){
     var free = await isLawinPortFree();
     if (!free) {
+      if(!needsFreePort) {
+        return ServerResult(
+            uri: pingSelf(port),
+            type: ServerResultType.ignoreStart
+        );
+      }
+
       return ServerResult(
           type: ServerResultType.portTakenError
       );
@@ -131,21 +141,42 @@ Future<ServerResult> checkServerPreconditions(String host, String port, ServerTy
   );
 }
 
-Future<Process> startEmbeddedServer() async {
-  return await Process.start(serverLocation.path, [], workingDirectory: serverLocation.parent.path);
+Future<Process?> startEmbeddedServer() async {
+  await resetServerLog();
+  try {
+    var process = await Process.start(serverLocation.path, [], workingDirectory: serverLocation.parent.path);
+    process.outLines.forEach((line) => serverLogFile.writeAsString("$line\n", mode: FileMode.append));
+    process.errLines.forEach((line) => serverLogFile.writeAsString("$line\n", mode: FileMode.append));
+    return process;
+  } on ProcessException {
+    return null;
+  }
 }
 
 Future<HttpServer> startRemoteServer(Uri uri) async {
   return await serve(proxyHandler(uri), "127.0.0.1", 3551);
 }
 
+Future<void> resetServerLog() async {
+  try {
+    if(await serverLogFile.exists()) {
+      await serverLogFile.delete();
+    }
+
+    await serverLogFile.create();
+  }catch(_){
+    // Ignored
+  }
+}
+
 class ServerResult {
   final Future<Uri?>? uri;
+  final int? pid;
   final Object? error;
   final StackTrace? stackTrace;
   final ServerResultType type;
 
-  ServerResult({this.uri, this.error, this.stackTrace, required this.type});
+  ServerResult({this.uri, this.pid, this.error, this.stackTrace, required this.type});
 }
 
 enum ServerResultType {
@@ -156,7 +187,8 @@ enum ServerResultType {
   portTakenError,
   serverDownloadRequiredError,
   canStart,
+  ignoreStart,
   started,
   unknownError,
-  stopped
+  stopped,
 }

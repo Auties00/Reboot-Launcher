@@ -4,6 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/dialog/add_local_version.dart';
 import 'package:reboot_launcher/src/widget/shared/smart_check_box.dart';
@@ -119,7 +120,7 @@ class _VersionSelectorState extends State<VersionSelector> {
         context: context,
         offset: offset,
         builder: (context) => MenuFlyout(
-            items: ContextualOption.values
+            items: ContextualOption.getValues(version.memoryFix)
                 .map((entry) => _createOption(context, entry))
                 .toList()
         )
@@ -172,8 +173,26 @@ class _VersionSelectorState extends State<VersionSelector> {
         }
 
         break;
+      case ContextualOption.enableMemoryFix:
+        if(!mounted){
+          return;
+        }
 
-      case null:
+        version.memoryFix = true;
+        Navigator.of(context).pop();
+        showMessage("Enabled memory fix");
+        break;
+      case ContextualOption.disableMemoryFix:
+        if(!mounted){
+          return;
+        }
+
+        version.memoryFix = false;
+        Navigator.of(context).pop();
+        showMessage("Disabled memory fix");
+        break;
+
+      default:
         break;
     }
   }
@@ -280,11 +299,21 @@ class _VersionSelectorState extends State<VersionSelector> {
 enum ContextualOption {
   openExplorer,
   rename,
+  enableMemoryFix,
+  disableMemoryFix,
   delete;
+
+  static List<ContextualOption> getValues(bool memoryFix){
+    return memoryFix
+        ? [ContextualOption.openExplorer, ContextualOption.rename, ContextualOption.disableMemoryFix, ContextualOption.delete]
+        : [ContextualOption.openExplorer, ContextualOption.rename, ContextualOption.enableMemoryFix, ContextualOption.delete];
+  }
 
   String get name {
     return this == ContextualOption.openExplorer ? "Open in explorer"
         : this == ContextualOption.rename ? "Rename"
+        : this == ContextualOption.enableMemoryFix ? "Enable memory leak fix"
+        : this == ContextualOption.disableMemoryFix ? "Disable memory leak fix"
         : "Delete";
   }
 }

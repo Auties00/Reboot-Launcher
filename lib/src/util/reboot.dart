@@ -28,12 +28,12 @@ Future<int> downloadRebootDll(int? lastUpdateMs) async {
 
   var outputDir = await tempDirectory.createTemp("reboot");
   await extractFileToDisk(tempZip.path, outputDir.path);
-  
+
   var rebootDll = outputDir.listSync()
       .firstWhere((element) => path.extension(element.path) == ".dll");
   if (exists && sha1.convert(await oldRebootDll.readAsBytes()) == sha1.convert(await File(rebootDll.path).readAsBytes())) {
     outputDir.delete(recursive: true);
-    return lastUpdateMs ?? now.millisecondsSinceEpoch;
+    return now.millisecondsSinceEpoch;
   }
 
   await rebootDll.rename(oldRebootDll.path);

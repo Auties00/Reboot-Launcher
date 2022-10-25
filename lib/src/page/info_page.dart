@@ -1,8 +1,9 @@
+import 'dart:io';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-const String _discordLink = "https://discord.gg/NJU4QjxSMF";
 
 class InfoPage extends StatelessWidget {
   const InfoPage({Key? key}) : super(key: key);
@@ -42,8 +43,8 @@ class InfoPage extends StatelessWidget {
 
   Button _createDiscordButton() {
     return Button(
-        child: const Text("Join the discord"),
-        onPressed: () => launchUrl(Uri.parse(_discordLink)));
+        child: const Text("Open file directory"),
+        onPressed: () => launchUrl(Directory(safeBinariesDirectory).uri));
   }
 
   CircleAvatar _createAutiesAvatar() {
@@ -55,7 +56,7 @@ class InfoPage extends StatelessWidget {
   Align _createVersionInfo() {
     return const Align(
         alignment: Alignment.bottomRight,
-        child: Text("Version 4.0${kDebugMode ? '-DEBUG' : ''}")
+        child: Text("Version 4.4${kDebugMode ? '-DEBUG' : ''}")
     );
   }
 }

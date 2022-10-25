@@ -15,7 +15,8 @@ import 'package:reboot_launcher/src/widget/home/version_name_input.dart';
 
 import '../util/checks.dart';
 import '../widget/home/build_selector.dart';
-import '../widget/os/file_selector.dart';
+import '../widget/shared/file_selector.dart';
+import '../widget/shared/smart_check_box.dart';
 import 'dialog.dart';
 
 class AddServerVersion extends StatefulWidget {
@@ -30,6 +31,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   final BuildController _buildController = Get.find<BuildController>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _pathController = TextEditingController();
+  final CheckboxController _injectMemoryFixController = CheckboxController();
   late Future _future;
   DownloadStatus _status = DownloadStatus.none;
   String _timeLeft = "00:00:00";
@@ -97,7 +99,12 @@ class _AddServerVersionState extends State<AddServerVersion> {
         ];
 
       case DownloadStatus.error:
-        return [DialogButton(type: ButtonType.only)];
+        return [
+          DialogButton(
+            type: ButtonType.only,
+            onTap: () => Navigator.of(context).pop(),
+          )
+        ];
       default:
         return [
           DialogButton(
@@ -154,7 +161,9 @@ class _AddServerVersionState extends State<AddServerVersion> {
       _status = DownloadStatus.done;
       _gameController.addVersion(FortniteVersion(
           name: _nameController.text,
-          location: Directory(_pathController.text)));
+          location: Directory(_pathController.text),
+          memoryFix: _injectMemoryFixController.value
+      ));
     });
   }
 
@@ -230,7 +239,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
       padding: const EdgeInsets.only(bottom: 16),
       child: SizedBox(
           width: double.infinity,
-          child: Text("An error was occurred while downloading:$_error",
+          child: Text("An error occurred while downloading:$_error",
               textAlign: TextAlign.center)),
     );
   }
@@ -269,24 +278,27 @@ class _AddServerVersionState extends State<AddServerVersion> {
         const SizedBox(
           height: 8,
         ),
-        if(_manifestDownloadProcess != null)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "${_downloadProgress.round()}%",
-                style: FluentTheme.maybeOf(context)?.typography.body,
-              ),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "${_downloadProgress.round()}%",
+              style: FluentTheme.maybeOf(context)?.typography.body,
+            ),
+
+            if(_manifestDownloadProcess != null)
               Text(
                 "Time left: $_timeLeft",
                 style: FluentTheme.maybeOf(context)?.typography.body,
               ),
-            ],
-          ),
-        if(_manifestDownloadProcess != null)
-          const SizedBox(
-            height: 8,
-          ),
+          ],
+        ),
+
+        const SizedBox(
+          height: 8,
+        ),
+
         SizedBox(
             width: double.infinity,
             child: ProgressBar(value: _downloadProgress.toDouble())),
@@ -313,7 +325,13 @@ class _AddServerVersionState extends State<AddServerVersion> {
             windowTitle: "Select download destination",
             controller: _pathController,
             validator: checkDownloadDestination,
-            folder: true),
+            folder: true
+        ),
+        const SizedBox(height: 16.0),
+        SmartCheckBox(
+            controller: _injectMemoryFixController,
+            content: const Text("Inject memory leak fix")
+        ),
         const SizedBox(height: 8.0),
       ],
     );

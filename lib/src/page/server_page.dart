@@ -5,7 +5,6 @@ import 'package:reboot_launcher/src/widget/server/host_input.dart';
 import 'package:reboot_launcher/src/widget/server/server_type_selector.dart';
 import 'package:reboot_launcher/src/widget/server/port_input.dart';
 import 'package:reboot_launcher/src/widget/server/server_button.dart';
-import 'package:reboot_launcher/src/widget/shared/warning_info.dart';
 
 class ServerPage extends StatelessWidget {
   final ServerController _serverController = Get.find<ServerController>();
@@ -21,10 +20,13 @@ class ServerPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if(_serverController.warning.value)
-              WarningInfo(
-                  text: "The lawin server handles authentication and parties, not game hosting",
-                  icon: FluentIcons.accept,
-                  onPressed: () => _serverController.warning.value = false
+              SizedBox(
+                width: double.infinity,
+                child: InfoBar(
+                    title: const Text("The lawin server handles authentication and parties, not game hosting"),
+                    severity: InfoBarSeverity.info,
+                    onClose: () => _serverController.warning.value = false
+                ),
               ),
             HostInput(),
             PortInput(),

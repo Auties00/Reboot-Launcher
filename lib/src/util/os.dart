@@ -1,8 +1,5 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as path;
-
 const int appBarSize = 2;
 final RegExp _regex = RegExp(r'(?<=\(Build )(.*)(?=\))');
 
@@ -14,22 +11,6 @@ bool get isWin11 {
 
   var intBuild = int.tryParse(result);
   return intBuild != null && intBuild > 22000;
-}
-
-Future<String?> openFolderPicker(String title) async =>
-    await FilePicker.platform.getDirectoryPath(dialogTitle: title);
-
-Future<String?> openFilePicker(String extension) async {
-  var result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowMultiple: false,
-      allowedExtensions: [extension]
-  );
-  if(result == null || result.files.isEmpty){
-    return null;
-  }
-
-  return result.files.first.path;
 }
 
 Future<File> loadBinary(String binary, bool safe) async{

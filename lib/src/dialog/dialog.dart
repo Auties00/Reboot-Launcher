@@ -53,7 +53,7 @@ class FormDialog extends AbstractDialog {
   }
 
   DialogButton _createFormButton(DialogButton entry, BuildContext context) {
-    if (entry.type == ButtonType.secondary) {
+    if (entry.type != ButtonType.primary) {
       return entry;
     }
 
@@ -102,8 +102,9 @@ class InfoDialog extends AbstractDialog {
 
 class ProgressDialog extends AbstractDialog {
   final String text;
+  final Function()? onStop;
 
-  const ProgressDialog({required this.text, super.key});
+  const ProgressDialog({required this.text, this.onStop, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -118,8 +119,9 @@ class ProgressDialog extends AbstractDialog {
         ),
         buttons: [
           DialogButton(
-              text: "Close",
-              type: ButtonType.only
+            text: "Close",
+            type: ButtonType.only,
+            onTap: onStop
           )
         ]
     );

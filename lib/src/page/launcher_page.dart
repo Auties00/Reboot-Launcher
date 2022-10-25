@@ -11,11 +11,9 @@ import 'package:reboot_launcher/src/widget/home/game_type_selector.dart';
 import 'package:reboot_launcher/src/widget/home/launch_button.dart';
 import 'package:reboot_launcher/src/widget/home/username_box.dart';
 import 'package:reboot_launcher/src/widget/home/version_selector.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../controller/settings_controller.dart';
 import '../util/reboot.dart';
-import '../widget/shared/warning_info.dart';
 
 class LauncherPage extends StatefulWidget {
   const LauncherPage(
@@ -33,10 +31,9 @@ class _LauncherPageState extends State<LauncherPage> {
 
   @override
   void initState() {
-    if(_gameController.updater == null && _settingsController.autoUpdate.value){
+    if(_gameController.updater == null){
       _gameController.updater = compute(downloadRebootDll, _updateTime)
-        ..then((value) => _updateTime = value)
-        ..onError(_saveError);
+        ..then((value) => _updateTime = value);
       _buildController.cancelledDownload
           .listen((value) => value ? _onCancelWarning() : {});
     }
@@ -52,13 +49,6 @@ class _LauncherPageState extends State<LauncherPage> {
   set _updateTime(int? updateTime) {
     var storage = GetStorage("update");
     storage.write("last_update", updateTime);
-  }
-
-  Future<void> _saveError(Object? error, StackTrace stackTrace) async {
-    var errorFile = await loadBinary("error.txt", true);
-    errorFile.writeAsString(
-        "Error: $error\nStacktrace: $stackTrace", mode: FileMode.write);
-    throw Exception("Cannot update reboot.dll");
   }
 
   void _onCancelWarning() {
@@ -78,7 +68,7 @@ class _LauncherPageState extends State<LauncherPage> {
       return Padding(
         padding: const EdgeInsets.all(12.0),
         child: FutureBuilder(
-          future: _gameController.updater,
+          future: _gameController.updater ?? Future.value(true),
           builder: (context, snapshot) {
             if (!snapshot.hasData && !snapshot.hasError) {
               return Row(
@@ -114,11 +104,12 @@ class _LauncherPageState extends State<LauncherPage> {
     }
 
   Widget _createUpdateError(AsyncSnapshot<Object?> snapshot) {
-    return WarningInfo(
-        text: "Cannot update Reboot DLL",
-        icon: FluentIcons.info,
-        severity: InfoBarSeverity.warning,
-        onPressed: () => loadBinary("error.txt", true).then((file) => launchUrl(file.uri))
+    return const SizedBox(
+      width: double.infinity,
+      child: InfoBar(
+          title: Text("Cannot update dll"),
+          severity: InfoBarSeverity.warning
+      ),
     );
   }
 }

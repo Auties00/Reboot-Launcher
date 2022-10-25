@@ -52,7 +52,9 @@ class _DialogButtonState extends State<DialogButton> {
     );
   }
 
-  void _onDefaultSecondaryActionTap() => Navigator.of(context).pop(null);
+  void _onDefaultSecondaryActionTap() {
+    Navigator.of(context).pop(null);
+  }
 }
 
 enum ButtonType {

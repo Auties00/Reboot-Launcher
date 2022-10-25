@@ -14,49 +14,53 @@ import '../util/server.dart';
 extension ServerControllerDialog on ServerController {
   static Semaphore semaphore = Semaphore();
 
-  Future<bool> changeStateInteractive(bool ignorePrompts, [bool isRetry = false]) async {
-    try {
+  Future<bool> changeStateInteractive(bool onlyIfNeeded, [bool isRetry = false]) async {
+    try{
       semaphore.acquire();
       if (type() == ServerType.local) {
-        return _checkLocalServerInteractive(ignorePrompts);
+        return _checkLocalServerInteractive(onlyIfNeeded);
       }
 
       var oldStarted = started();
-      started(!started());
-      if (oldStarted) {
-        var result = await stop();
-        if (!result) {
-          started(true);
-          _showCannotStopError();
-          return true;
-        }
-
-        return false;
+      if(oldStarted && onlyIfNeeded){
+        return true;
       }
 
-      var result = await start();
-      var handled = await _handleResultType(result, ignorePrompts, isRetry);
-      if (!handled) {
-        started(false);
-        return false;
-      }
-
-      embeddedServer?.exitCode.then((value) {
-        if (!started()) {
-          return;
-        }
-
-        _showUnexpectedError();
-        started(false);
-      });
-
-      return handled;
+      started.value = !started.value;
+      return await _doStateChange(oldStarted, onlyIfNeeded, isRetry);
     }finally{
       semaphore.release();
     }
   }
 
-  Future<bool> _handleResultType(ServerResult result, bool ignorePrompts, bool isRetry) async {
+  Future<bool> _doStateChange(bool oldStarted, bool onlyIfNeeded, bool isRetry) async {
+    if (oldStarted) {
+      var result = await stop();
+      if (!result) {
+        started.value = true;
+        _showCannotStopError();
+        return true;
+      }
+
+      return false;
+    }
+
+    var result = await start(!onlyIfNeeded);
+    if(result.type == ServerResultType.ignoreStart) {
+      started.value = false;
+      return true;
+    }
+
+    var handled = await _handleResultType(oldStarted, onlyIfNeeded, isRetry, result);
+    if (!handled) {
+      started.value = false;
+      return false;
+    }
+
+    return handled;
+  }
+
+  Future<bool> _handleResultType(bool oldStarted, bool onlyIfNeeded, bool isRetry, ServerResult result) async {
     switch (result.type) {
       case ServerResultType.missingHostError:
         _showMissingHostError();
@@ -68,6 +72,10 @@ extension ServerControllerDialog on ServerController {
         _showIllegalPortError();
         return false;
       case ServerResultType.cannotPingServer:
+        if(!started() || result.pid != embeddedServer?.pid){
+          return false;
+        }
+
         _showPingErrorDialog();
         return false;
       case ServerResultType.portTakenError:
@@ -82,18 +90,18 @@ extension ServerControllerDialog on ServerController {
         }
 
         await freeLawinPort();
-        return changeStateInteractive(ignorePrompts, true);
+        return _doStateChange(oldStarted, onlyIfNeeded, true);
       case ServerResultType.serverDownloadRequiredError:
         if (isRetry) {
           return false;
         }
 
-        var result = await _downloadServerInteractive();
+        var result = await downloadServerInteractive(false);
         if (!result) {
           return false;
         }
 
-        return changeStateInteractive(ignorePrompts, true);
+        return _doStateChange(oldStarted, onlyIfNeeded, true);
       case ServerResultType.unknownError:
         showDialog(
             context: appKey.currentContext!,
@@ -106,6 +114,7 @@ extension ServerControllerDialog on ServerController {
                 )
         );
         return false;
+      case ServerResultType.ignoreStart:
       case ServerResultType.started:
         return true;
       case ServerResultType.canStart:
@@ -116,7 +125,7 @@ extension ServerControllerDialog on ServerController {
 
   Future<bool> _checkLocalServerInteractive(bool ignorePrompts) async {
     try {
-      var future = pingSelf();
+      var future = pingSelf(port.text);
       if(!ignorePrompts) {
         await showDialog(
             context: appKey.currentContext!,
@@ -136,22 +145,6 @@ extension ServerControllerDialog on ServerController {
     } catch (_) {
       return false;
     }
-  }
-
-  Future<bool> _downloadServerInteractive() async {
-    var download = compute(downloadServer, true);
-    return await showDialog<bool>(
-        context: appKey.currentContext!,
-        builder: (context) =>
-            FutureBuilderDialog(
-                future: download,
-                loadingMessage: "Downloading server...",
-                loadedBody: FutureBuilderDialog.ofMessage(
-                    "The server was downloaded successfully"),
-                errorMessageBuilder: (
-                    message) => "Cannot download server: $message"
-            )
-    ) ?? download.isCompleted();
   }
 
   Future<void> _showPortTakenError() async {
@@ -186,6 +179,10 @@ extension ServerControllerDialog on ServerController {
   }
 
   void _showPingErrorDialog() {
+    if(!started.value){
+      return;
+    }
+
     showDialog(
         context: appKey.currentContext!,
         builder: (context) =>
@@ -196,6 +193,10 @@ extension ServerControllerDialog on ServerController {
   }
 
   void _showCannotStopError() {
+    if(!started.value){
+      return;
+    }
+
     showDialog(
         context: appKey.currentContext!,
         builder: (context) =>
@@ -205,12 +206,12 @@ extension ServerControllerDialog on ServerController {
     );
   }
 
-  void _showUnexpectedError() {
+  void showUnexpectedError() {
     showDialog(
         context: appKey.currentContext!,
         builder: (context) =>
         const InfoDialog(
-            text: "The lawin terminated died unexpectedly"
+            text: "The lawin server died unexpectedly"
         )
     );
   }
@@ -226,4 +227,21 @@ extension ServerControllerDialog on ServerController {
   void _showMissingHostError() {
     showMessage("Missing the host name for lawin server");
   }
+}
+
+Future<bool> downloadServerInteractive(bool closeAutomatically) async {
+  var download = compute(downloadServer, true);
+  return await showDialog<bool>(
+      context: appKey.currentContext!,
+      builder: (context) =>
+          FutureBuilderDialog(
+              future: download,
+              loadingMessage: "Downloading server...",
+              loadedBody: FutureBuilderDialog.ofMessage(
+                  "The server was downloaded successfully"),
+              errorMessageBuilder: (
+                  message) => "Cannot download server: $message",
+              closeAutomatically: closeAutomatically
+          )
+  ) ?? download.isCompleted();
 }

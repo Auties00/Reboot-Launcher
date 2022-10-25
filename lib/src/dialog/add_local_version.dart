@@ -8,12 +8,14 @@ import 'package:reboot_launcher/src/dialog/dialog_button.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 
 import '../util/checks.dart';
-import '../widget/os/file_selector.dart';
+import '../widget/shared/file_selector.dart';
+import '../widget/shared/smart_check_box.dart';
 
 class AddLocalVersion extends StatelessWidget {
   final GameController _gameController = Get.find<GameController>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _gamePathController = TextEditingController();
+  final CheckboxController _injectMemoryFixController = CheckboxController();
 
   AddLocalVersion({Key? key})
       : super(key: key);
@@ -47,6 +49,15 @@ class AddLocalVersion extends StatelessWidget {
                 folder: true
             ),
 
+            const SizedBox(
+                height: 16.0
+            ),
+
+            SmartCheckBox(
+                controller: _injectMemoryFixController,
+                content: const Text("Inject memory leak fix")
+            ),
+
             const SizedBox(height: 8.0),
           ],
         ),
@@ -61,7 +72,9 @@ class AddLocalVersion extends StatelessWidget {
             onTap: () {
               _gameController.addVersion(FortniteVersion(
                   name: _nameController.text,
-                  location: Directory(_gamePathController.text)));
+                  location: Directory(_gamePathController.text),
+                  memoryFix: _injectMemoryFixController.value
+              ));
             },
           )
         ]

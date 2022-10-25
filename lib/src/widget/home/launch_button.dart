@@ -18,7 +18,6 @@ import 'package:reboot_launcher/src/util/injector.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
 import 'package:reboot_launcher/src/util/reboot.dart';
 import 'package:reboot_launcher/src/util/server.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
 import 'package:path/path.dart' as path;
 
@@ -55,10 +54,10 @@ class _LaunchButtonState extends State<LaunchButton> {
       child: SizedBox(
         width: double.infinity,
         child: Obx(() => Tooltip(
-          message: _gameController.started.value ? "Close the running Fortnite instance" : "Launch a new Fortnite instance",
+          message: _gameController.started() ? "Close the running Fortnite instance" : "Launch a new Fortnite instance",
           child: Button(
               onPressed: _onPressed,
-              child: Text(_gameController.started.value ? "Close" : "Launch")
+              child: Text(_gameController.started() ? "Close" : "Launch")
           ),
         )),
       ),
@@ -66,39 +65,36 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   void _onPressed() async {
+    if (_gameController.started()) {
+      _onStop();
+      return;
+    }
+
+    _gameController.started.value = true;
     if (_gameController.username.text.isEmpty) {
       showMessage("Missing in-game username");
-      _updateServerState(false);
+      _gameController.started.value = false;
       return;
     }
 
     if (_gameController.selectedVersionObs.value == null) {
       showMessage("No version is selected");
-      _updateServerState(false);
-      return;
-    }
-
-    if (_gameController.started.value) {
-      _onStop();
+      _gameController.started.value = false;
       return;
     }
 
     try {
-      _updateServerState(true);
       var version = _gameController.selectedVersionObs.value!;
-      var hosting = _gameController.type.value == GameType.headlessServer;
+      var gamePath = version.executable?.path;
+      if(gamePath == null){
+        _onError("${version.location.path} no longer contains a Fortnite executable. Did you delete it?", null);
+        _onStop();
+        return;
+      }
+
       if (version.launcher != null) {
         _gameController.launcherProcess = await Process.start(version.launcher!.path, []);
         Win32Process(_gameController.launcherProcess!.pid).suspend();
-      }
-
-      if(hosting){
-        await patch(version.executable!);
-      }
-
-      if(!mounted){
-        _onStop();
-        return;
       }
 
       var result = await _serverController.changeStateInteractive(true);
@@ -111,19 +107,16 @@ class _LaunchButtonState extends State<LaunchButton> {
         await _logFile!.delete();
       }
 
-      var gamePath = version.executable?.path;
-      if(gamePath == null){
-        _onError("${version.location.path} no longer contains a Fortnite executable. Did you delete it?", null);
-        _onStop();
-        return;
-      }
 
-      _gameController.gameProcess = await Process.start(gamePath, createRebootArgs(_gameController.username.text, hosting))
+      await patch(version.executable!);
+
+      var headlessHosting = _gameController.type() == GameType.headlessServer;
+      var arguments = createRebootArgs(_gameController.username.text, headlessHosting);
+      _gameController.gameProcess = await Process.start(gamePath, arguments)
         ..exitCode.then((_) => _onEnd())
-        ..outLines.forEach(_onGameOutput);
-      await _injectOrShowError(Injectable.cranium);
-
-      if(hosting){
+        ..outLines.forEach((line) => _onGameOutput(line, version.memoryFix))
+        ..errLines.forEach((line) => _onGameOutput(line, version.memoryFix));
+      if(headlessHosting){
         await _showServerLaunchingWarning();
       }
     } catch (exception, stacktrace) {
@@ -133,12 +126,15 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
   }
 
-  Future<void> _updateServerState(bool value) async {
-    if (_gameController.started.value == value) {
-      return;
+  Future<bool> patch(File file) async {
+    switch(_gameController.type()){
+      case GameType.client:
+        return await compute(patchMatchmaking, file);
+      case GameType.server:
+        return false;
+      case GameType.headlessServer:
+        return await compute(patchHeadless, file);
     }
-
-    _gameController.started(value);
   }
 
   void _onEnd() {
@@ -170,15 +166,12 @@ class _LaunchButtonState extends State<LaunchButton> {
 
     var result = await showDialog<bool>(
         context: context,
-        builder: (context) => InfoDialog.ofOnly(
-          text: "Launching headless reboot server...",
-          button: DialogButton(
-              type: ButtonType.only,
-              onTap: () {
-                Navigator.of(context).pop(false);
-                _onStop();
-              }
-          )
+        builder: (context) => ProgressDialog(
+          text: "Launching headless server...",
+          onStop: () {
+            Navigator.of(context).pop(false);
+            _onStop();
+          }
         )
     );
 
@@ -189,7 +182,11 @@ class _LaunchButtonState extends State<LaunchButton> {
     _onStop();
   }
 
-  void _onGameOutput(String line) {
+  void _onGameOutput(String line, bool memoryFix) {
+    if(kDebugMode){
+      print(line);
+    }
+
     if(_logFile != null){
       _logFile!.writeAsString("$line\n", mode: FileMode.append);
     }
@@ -220,12 +217,21 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    if(line.contains("Region")){
+    if(line.contains("Platform has ")){
+      _injectOrShowError(Injectable.cranium);
+      return;
+    }
+
+    if(line.contains("Login: Completing Sign-in")){
       if(_gameController.type.value == GameType.client){
         _injectOrShowError(Injectable.console);
       }else {
         _injectOrShowError(Injectable.reboot)
             .then((value) => _closeDialogIfOpen(true));
+      }
+
+      if(memoryFix){
+        _injectOrShowError(Injectable.memoryFix);
       }
     }
   }
@@ -242,7 +248,7 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   void _onStop() {
-    _updateServerState(false);
+    _gameController.started.value = false;
     _gameController.kill();
   }
 
@@ -253,7 +259,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     try {
-      var dllPath = _getDllPath(injectable);
+      var dllPath = await _getDllPath(injectable);
       if(!dllPath.existsSync()) {
         await _downloadMissingDll(injectable);
         if(!dllPath.existsSync()){
@@ -284,7 +290,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     });
   }
 
-  File _getDllPath(Injectable injectable){
+  Future<File> _getDllPath(Injectable injectable) async {
     switch(injectable){
       case Injectable.reboot:
         return File(_settingsController.rebootDll.text);
@@ -292,6 +298,8 @@ class _LaunchButtonState extends State<LaunchButton> {
         return File(_settingsController.consoleDll.text);
       case Injectable.cranium:
         return File(_settingsController.craniumDll.text);
+      case Injectable.memoryFix:
+        return await loadBinary("fix.dll", true);
     }
   }
 
@@ -308,5 +316,6 @@ class _LaunchButtonState extends State<LaunchButton> {
 enum Injectable {
   console,
   cranium,
-  reboot
+  reboot,
+  memoryFix
 }

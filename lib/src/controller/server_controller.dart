@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:reboot_launcher/src/dialog/server_dialogs.dart';
 import 'package:reboot_launcher/src/util/server.dart';
 
+import '../dialog/snackbar.dart';
 import '../model/server_type.dart';
 
 class ServerController extends GetxController {
@@ -17,6 +19,7 @@ class ServerController extends GetxController {
   late final Rx<ServerType> type;
   late final RxBool warning;
   late RxBool started;
+  late int embeddedServerCounter;
   Process? embeddedServer;
   HttpServer? reverseProxy;
 
@@ -36,7 +39,7 @@ class ServerController extends GetxController {
       if(value == ServerType.remote){
         reverseProxy?.close(force: true);
         reverseProxy = null;
-        started(false);
+        started.value = false;
         return;
       }
 
@@ -53,6 +56,8 @@ class ServerController extends GetxController {
     warning.listen((value) => _storage.write("lawin_value", value));
 
     started = RxBool(false);
+
+    embeddedServerCounter = 0;
   }
 
   String _readHost() {
@@ -65,8 +70,9 @@ class ServerController extends GetxController {
     return _storage.read("${type.value.id}_port") ?? _serverPort;
   }
 
-  Future<ServerResult> start() async {
-    var result = await checkServerPreconditions(host.text, port.text, type.value);
+  Future<ServerResult> start(bool needsFreePort) async {
+    var lastCounter = ++embeddedServerCounter;
+    var result = await checkServerPreconditions(host.text, port.text, type.value, needsFreePort);
     if(result.type != ServerResultType.canStart){
       return result;
     }
@@ -74,7 +80,16 @@ class ServerController extends GetxController {
     try{
       switch(type()){
         case ServerType.embedded:
-          embeddedServer = await startEmbeddedServer();
+          await _startEmbeddedServer();
+          embeddedServer?.exitCode.then((value) async {
+            if (!started() || lastCounter != embeddedServerCounter) {
+              return;
+            }
+
+            started.value = false;
+            await freeLawinPort();
+            showUnexpectedError();
+          });
           break;
         case ServerType.remote:
           var uriResult = await result.uri!;
@@ -97,21 +112,34 @@ class ServerController extends GetxController {
       );
     }
 
-    var myself = await pingSelf();
+    var myself = await pingSelf(port.text);
     if(myself == null){
       return ServerResult(
-          type: ServerResultType.cannotPingServer
+          type: ServerResultType.cannotPingServer,
+          pid: embeddedServer?.pid
       );
     }
 
-    started(true);
     return ServerResult(
         type: ServerResultType.started
     );
   }
 
+  Future<void> _startEmbeddedServer() async {
+    var result = await startEmbeddedServer();
+    if(result != null){
+      embeddedServer = result;
+      return;
+    }
+
+    showMessage("The server is corrupted, trying to fix it");
+    await serverLocation.parent.delete(recursive: true);
+    await downloadServerInteractive(true);
+    await _startEmbeddedServer();
+  }
+
   Future<bool> stop() async {
-    started(false);
+    started.value = false;
     try{
       switch(type()){
         case ServerType.embedded:
@@ -125,7 +153,7 @@ class ServerController extends GetxController {
       }
       return true;
     }catch(_){
-      started(true);
+      started.value = true;
       return false;
     }
   }

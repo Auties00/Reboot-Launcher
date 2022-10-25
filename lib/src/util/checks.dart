@@ -54,3 +54,11 @@ String? checkDll(String? text) {
 
   return null;
 }
+
+String? checkMatchmaking(String? text) {
+  if (text == null || text.isEmpty) {
+    return "Empty hostname";
+  }
+
+  return null;
+}

@@ -8,6 +8,8 @@ class SmartInput extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onTap;
   final bool readOnly;
+  final AutovalidateMode validatorMode;
+  final String? Function(String?)? validator;
 
   const SmartInput(
       {Key? key,
@@ -17,12 +19,14 @@ class SmartInput extends StatelessWidget {
         this.onTap,
         this.enabled = true,
         this.readOnly = false,
-        this.type = TextInputType.text})
+        this.type = TextInputType.text,
+        this.validatorMode = AutovalidateMode.disabled,
+        this.validator})
       : super(key: key);
   
   @override
   Widget build(BuildContext context) {
-    return TextBox(
+    return TextFormBox(
       enabled: enabled,
       controller: controller,
       header: label,
@@ -30,6 +34,8 @@ class SmartInput extends StatelessWidget {
       placeholder: placeholder,
       onTap: onTap,
       readOnly: readOnly,
+      autovalidateMode: validatorMode,
+      validator: validator
     );
   }
 }
