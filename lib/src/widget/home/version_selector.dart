@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/dialog/snackbar.dart';
+import 'package:reboot_launcher/src/dialog/dialog.dart';
+import 'package:reboot_launcher/src/dialog/dialog_button.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/dialog/add_local_version.dart';
 import 'package:reboot_launcher/src/widget/shared/smart_check_box.dart';
@@ -12,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../dialog/add_server_version.dart';
 import '../../util/checks.dart';
+import '../shared/file_selector.dart';
 
 class VersionSelector extends StatefulWidget {
   const VersionSelector({Key? key}) : super(key: key);
@@ -58,9 +61,7 @@ class _VersionSelectorState extends State<VersionSelector> {
   Widget _createSelector(BuildContext context) {
     return Tooltip(
       message: "The version of Fortnite to launch",
-      child: SizedBox(
-        width: double.infinity,
-        child: Obx(() => DropDownButton(
+      child: Obx(() => DropDownButton(
               leading: Text(_gameController.selectedVersionObs.value?.name ??
                   "Select a version"),
               items: _gameController.hasNoVersions
@@ -68,28 +69,26 @@ class _VersionSelectorState extends State<VersionSelector> {
                   : _gameController.versions.value
                   .map((version) => _createVersionItem(context, version))
                   .toList()))
-      ),
     );
   }
 
   MenuFlyoutItem _createVersionItem(
       BuildContext context, FortniteVersion version) {
     return MenuFlyoutItem(
-        text: SizedBox(
-            width: double.infinity,
-            child: Listener(
-                onPointerDown: (event) async {
-                  if (event.kind != PointerDeviceKind.mouse ||
-                      event.buttons != kSecondaryMouseButton) {
-                    return;
-                  }
+        text: Listener(
+          onPointerDown: (event) async {
+            if (event.kind != PointerDeviceKind.mouse ||
+                event.buttons != kSecondaryMouseButton) {
+              return;
+            }
 
-                  await _openMenu(context, version, event.position);
-                },
-                child: Text(version.name)
-            )
+            await _openMenu(context, version, event.position);
+          },
+          child: SizedBox(
+              width: double.infinity,
+              child: Text(version.name)
+          ),
         ),
-        trailing: const Expanded(child: SizedBox()),
         onPressed: () => _gameController.selectedVersion = version);
   }
 
@@ -120,7 +119,7 @@ class _VersionSelectorState extends State<VersionSelector> {
         context: context,
         offset: offset,
         builder: (context) => MenuFlyout(
-            items: ContextualOption.getValues(version.memoryFix)
+            items: ContextualOption.values
                 .map((entry) => _createOption(context, entry))
                 .toList()
         )
@@ -137,18 +136,13 @@ class _VersionSelectorState extends State<VersionSelector> {
             .onError((error, stackTrace) => _onExplorerError());
         break;
 
-      case ContextualOption.rename:
+      case ContextualOption.modify:
         if(!mounted){
           return;
         }
 
         Navigator.of(context).pop();
-        var result = await _openRenameDialog(context, version);
-        if(result == null){
-          return;
-        }
-
-        _gameController.rename(version, result);
+        await _openRenameDialog(context, version);
         break;
 
       case ContextualOption.delete:
@@ -172,24 +166,6 @@ class _VersionSelectorState extends State<VersionSelector> {
           version.location.delete(recursive: true);
         }
 
-        break;
-      case ContextualOption.enableMemoryFix:
-        if(!mounted){
-          return;
-        }
-
-        version.memoryFix = true;
-        Navigator.of(context).pop();
-        showMessage("Enabled memory fix");
-        break;
-      case ContextualOption.disableMemoryFix:
-        if(!mounted){
-          return;
-        }
-
-        version.memoryFix = false;
-        Navigator.of(context).pop();
-        showMessage("Disabled memory fix");
         break;
 
       default:
@@ -251,46 +227,57 @@ class _VersionSelectorState extends State<VersionSelector> {
   }
 
   Future<String?> _openRenameDialog(BuildContext context, FortniteVersion version) {
-    var controller = TextEditingController(text: version.name);
+    var nameController = TextEditingController(text: version.name);
+    var pathController = TextEditingController(text: version.location.path);
     return showDialog<String?>(
         context: context,
-        builder: (context) => Form(
-          child: Builder(
-            builder: (context) => ContentDialog(
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextFormBox(
-                          controller: controller,
-                          header: "Name",
-                          placeholder: "Type the new version name",
-                          autofocus: true,
-                          validator: (text) => checkVersion(text, _gameController.versions.value)
-                      ),
+        builder: (context) => FormDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormBox(
+                    controller: nameController,
+                    header: "Name",
+                    placeholder: "Type the new version name",
+                    autofocus: true,
+                    validator: (text) => checkVersion(text, _gameController.versions.value)
+                ),
 
-                      const SizedBox(height: 8.0),
-                    ],
-                  ),
-                  actions: [
-                    Button(
-                      onPressed: () => Navigator.of(context).pop(null),
-                      child: const Text('Close'),
-                    ),
-                    FilledButton(
-                        onPressed: () {
-                          if (!Form.of(context)!.validate()) {
-                            return;
-                          }
+                const SizedBox(
+                    height: 16.0
+                ),
 
-                          Navigator.of(context).pop(controller.text);
-                        },
-                        child: const Text('Save')
-                    )
-                  ]
+                FileSelector(
+                    label: "Location",
+                    placeholder: "Type the new game folder",
+                    windowTitle: "Select game folder",
+                    controller: pathController,
+                    validator: checkGameFolder,
+                    folder: true
+                ),
+
+                const SizedBox(height: 8.0),
+              ],
+            ),
+            buttons: [
+              DialogButton(
+                  type: ButtonType.secondary
+              ),
+
+              DialogButton(
+                text: "Save",
+                type: ButtonType.primary,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _gameController.updateVersion(version, (version) {
+                    version.name = nameController.text;
+                    version.location = Directory(pathController.text);
+                  });
+                },
               )
-          )
+            ]
         )
     );
   }
@@ -298,22 +285,12 @@ class _VersionSelectorState extends State<VersionSelector> {
 
 enum ContextualOption {
   openExplorer,
-  rename,
-  enableMemoryFix,
-  disableMemoryFix,
+  modify,
   delete;
-
-  static List<ContextualOption> getValues(bool memoryFix){
-    return memoryFix
-        ? [ContextualOption.openExplorer, ContextualOption.rename, ContextualOption.disableMemoryFix, ContextualOption.delete]
-        : [ContextualOption.openExplorer, ContextualOption.rename, ContextualOption.enableMemoryFix, ContextualOption.delete];
-  }
 
   String get name {
     return this == ContextualOption.openExplorer ? "Open in explorer"
-        : this == ContextualOption.rename ? "Rename"
-        : this == ContextualOption.enableMemoryFix ? "Enable memory leak fix"
-        : this == ContextualOption.disableMemoryFix ? "Disable memory leak fix"
+        : this == ContextualOption.modify ? "Modify"
         : "Delete";
   }
 }

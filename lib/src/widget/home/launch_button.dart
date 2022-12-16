@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:clipboard/clipboard.dart';
+import 'package:async/async.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -9,10 +9,10 @@ import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/dialog/dialog.dart';
-import 'package:reboot_launcher/src/dialog/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/game_dialogs.dart';
 import 'package:reboot_launcher/src/dialog/server_dialogs.dart';
 import 'package:reboot_launcher/src/model/game_type.dart';
+import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/injector.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
@@ -21,6 +21,7 @@ import 'package:reboot_launcher/src/util/server.dart';
 import 'package:win32_suspend_process/win32_suspend_process.dart';
 import 'package:path/path.dart' as path;
 
+import '../../../main.dart';
 import '../../controller/settings_controller.dart';
 import '../../dialog/snackbar.dart';
 
@@ -34,6 +35,15 @@ class LaunchButton extends StatefulWidget {
 }
 
 class _LaunchButtonState extends State<LaunchButton> {
+  final List<String> _errorStrings = [
+    "port 3551 failed: Connection refused",
+    "Unable to login to Fortnite servers",
+    "HTTP 400 response from ",
+    "Network failure when attempting to check platform restrictions",
+    "UOnlineAccountCommon::ForceLogout"
+  ];
+
+
   final GameController _gameController = Get.find<GameController>();
   final ServerController _serverController = Get.find<ServerController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
@@ -70,13 +80,13 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    _gameController.started.value = true;
-    if (_gameController.username.text.isEmpty) {
-      showMessage("Missing in-game username");
+    if (_gameController.username.text.isEmpty && _gameController.type() != GameType.client) {
+      showMessage("Missing username");
       _gameController.started.value = false;
       return;
     }
 
+    _gameController.started.value = true;
     if (_gameController.selectedVersionObs.value == null) {
       showMessage("No version is selected");
       _gameController.started.value = false;
@@ -87,7 +97,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       var version = _gameController.selectedVersionObs.value!;
       var gamePath = version.executable?.path;
       if(gamePath == null){
-        _onError("${version.location.path} no longer contains a Fortnite executable. Did you delete it?", null);
+        _onError("${version.location.path} no longer contains a Fortnite executable, did you delete or move it?", null);
         _onStop();
         return;
       }
@@ -97,8 +107,17 @@ class _LaunchButtonState extends State<LaunchButton> {
         Win32Process(_gameController.launcherProcess!.pid).suspend();
       }
 
-      var result = await _serverController.changeStateInteractive(true);
+      if (version.eacExecutable != null) {
+        _gameController.eacProcess = await Process.start(version.eacExecutable!.path, []);
+        Win32Process(_gameController.eacProcess!.pid).suspend();
+      }
+
+      var result = await _serverController.start(
+          required: true,
+          askPortKill: false,
+      );
       if(!result){
+        showMessage("Cannot launch the game as the backend didn't start up correctly");
         _onStop();
         return;
       }
@@ -107,15 +126,16 @@ class _LaunchButtonState extends State<LaunchButton> {
         await _logFile!.delete();
       }
 
-
-      await patch(version.executable!);
+      await compute(patchMatchmaking, version.executable!);
+      await compute(patchHeadless, version.executable!);
 
       var headlessHosting = _gameController.type() == GameType.headlessServer;
-      var arguments = createRebootArgs(_gameController.username.text, headlessHosting);
+      var arguments = createRebootArgs(_gameController.username.text, _gameController.type.value);
       _gameController.gameProcess = await Process.start(gamePath, arguments)
         ..exitCode.then((_) => _onEnd())
-        ..outLines.forEach((line) => _onGameOutput(line, version.memoryFix))
-        ..errLines.forEach((line) => _onGameOutput(line, version.memoryFix));
+        ..outLines.forEach((line) => _onGameOutput(line))
+        ..errLines.forEach((line) => _onGameOutput(line));
+      _injectOrShowError(Injectable.cranium);
       if(headlessHosting){
         await _showServerLaunchingWarning();
       }
@@ -123,17 +143,6 @@ class _LaunchButtonState extends State<LaunchButton> {
       _closeDialogIfOpen(false);
       _onError(exception, stacktrace);
       _onStop();
-    }
-  }
-
-  Future<bool> patch(File file) async {
-    switch(_gameController.type()){
-      case GameType.client:
-        return await compute(patchMatchmaking, file);
-      case GameType.server:
-        return false;
-      case GameType.headlessServer:
-        return await compute(patchHeadless, file);
     }
   }
 
@@ -147,25 +156,17 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   void _closeDialogIfOpen(bool success) {
-    if(!mounted){
-      return;
-    }
-
-    var route = ModalRoute.of(context);
+    var route = ModalRoute.of(appKey.currentContext!);
     if(route == null || route.isCurrent){
       return;
     }
 
-    Navigator.of(context).pop(success);
+    Navigator.of(appKey.currentContext!).pop(success);
   }
 
   Future<void> _showServerLaunchingWarning() async {
-    if(!mounted){
-      return;
-    }
-
     var result = await showDialog<bool>(
-        context: context,
+        context: appKey.currentContext!,
         builder: (context) => ProgressDialog(
           text: "Launching headless server...",
           onStop: () {
@@ -182,11 +183,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     _onStop();
   }
 
-  void _onGameOutput(String line, bool memoryFix) {
-    if(kDebugMode){
-      print(line);
-    }
-
+  void _onGameOutput(String line) {
     if(_logFile != null){
       _logFile!.writeAsString("$line\n", mode: FileMode.append);
     }
@@ -196,33 +193,18 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    if(line.contains("port 3551 failed: Connection refused") || line.contains("Unable to login to Fortnite servers")){
+    if(_errorStrings.any((element) => line.contains(element))){
+      if(_fail){
+        return;
+      }
+
       _fail = true;
       _closeDialogIfOpen(false);
-      showBrokenError();
+      _showTokenError();
       return;
     }
 
-    if(line.contains("HTTP 400 response from ")){
-      _fail = true;
-      _closeDialogIfOpen(false);
-      showUnsupportedHeadless();
-      return;
-    }
-
-    if(line.contains("Network failure when attempting to check platform restrictions") || line.contains("UOnlineAccountCommon::ForceLogout")){
-      _fail = true;
-      _closeDialogIfOpen(false);
-      showTokenError();
-      return;
-    }
-
-    if(line.contains("Platform has ")){
-      _injectOrShowError(Injectable.cranium);
-      return;
-    }
-
-    if(line.contains("Login: Completing Sign-in")){
+    if(line.contains("Region ")){
       if(_gameController.type.value == GameType.client){
         _injectOrShowError(Injectable.console);
       }else {
@@ -230,9 +212,19 @@ class _LaunchButtonState extends State<LaunchButton> {
             .then((value) => _closeDialogIfOpen(true));
       }
 
-      if(memoryFix){
-        _injectOrShowError(Injectable.memoryFix);
-      }
+      _injectOrShowError(Injectable.memoryFix);
+    }
+  }
+
+  Future<void> _showTokenError() async {
+    if(_serverController.type() == ServerType.embedded) {
+      showTokenErrorFixable();
+      await _serverController.start(
+        required: true,
+        askPortKill: false
+      );
+    } else {
+      showTokenErrorUnfixable();
     }
   }
 
@@ -271,7 +263,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       await injectDll(gameProcess.pid, dllPath.path);
     } catch (exception) {
       showSnackbar(
-          context,
+          appKey.currentContext!,
           Snackbar(
               content: Text("Cannot inject $injectable.dll: $exception", textAlign: TextAlign.center),
               extended: true
@@ -283,6 +275,10 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   void _onDllFail(File dllPath) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if(_fail){
+        return;
+      }
+
       _fail = true;
       _closeDialogIfOpen(false);
       showMissingDllError(path.basename(dllPath.path));
@@ -297,9 +293,9 @@ class _LaunchButtonState extends State<LaunchButton> {
       case Injectable.console:
         return File(_settingsController.consoleDll.text);
       case Injectable.cranium:
-        return File(_settingsController.craniumDll.text);
+        return File(_settingsController.authDll.text);
       case Injectable.memoryFix:
-        return await loadBinary("fix.dll", true);
+        return await loadBinary("leakv2.dll", true);
     }
   }
 

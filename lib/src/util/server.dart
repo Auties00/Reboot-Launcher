@@ -1,28 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:archive/archive_io.dart';
 import 'package:process_run/shell.dart';
+import 'package:reboot_launcher/src/model/game_type.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/util/os.dart';
-import 'package:http/http.dart' as http;
 import 'package:shelf_proxy/shelf_proxy.dart';
 import 'package:shelf/shelf_io.dart';
 
-final serverLocation = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\lawin_new\\Lawin.exe");
-final serverConfig = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\lawin_new\\Config\\config.ini");
 final serverLogFile = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\server.txt");
-
-const String _serverUrl =
-    "https://cdn.discordapp.com/attachments/1031262639457828910/1034506676843327549/lawin.zip";
-
-Future<bool> downloadServer(ignored) async {
-  var response = await http.get(Uri.parse(_serverUrl));
-  var tempZip = File("${Platform.environment["Temp"]}/lawin.zip");
-  await tempZip.writeAsBytes(response.bodyBytes);
-  await extractFileToDisk(tempZip.path, serverLocation.parent.path);
-  return true;
-}
 
 Future<bool> isLawinPortFree() async {
   try {
@@ -39,27 +25,41 @@ Future<bool> isLawinPortFree() async {
 
 Future<void> freeLawinPort() async {
   var releaseBat = await loadBinary("release.bat", false);
-  await Process.run(releaseBat.path, []);
+  var result = await Process.run(releaseBat.path, []);
+  if(!result.outText.contains("Access is denied")){
+    return;
+  }
+
+  await runElevated(releaseBat.path, "");
 }
 
-List<String> createRebootArgs(String username, bool headless) {
+List<String> createRebootArgs(String username, GameType type) {
   var args = [
-    "-skippatchcheck",
     "-epicapp=Fortnite",
     "-epicenv=Prod",
     "-epiclocale=en-us",
     "-epicportal",
-    "-noeac",
-    "-fromfl=be",
-    "-fltoken=7ce411021b27b4343a44fdg8",
-    "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ",
-    "-AUTH_LOGIN=$username@projectreboot.dev",
-    "-AUTH_PASSWORD=Rebooted",
-    "-AUTH_TYPE=epic"
+    "-skippatchcheck",
+    "-nobe",
+    "-fromfl=eac",
+    "-fltoken=3db3ba5dcbd2e16703f3978d",
+    "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ"
   ];
 
-  if(headless){
-    args.addAll(["-nullrhi", "-nosplash", "-nosound"]);
+  if(username.isNotEmpty){
+    args.addAll([
+      "-AUTH_LOGIN=${username.replaceAll(RegExp("[^A-Za-z0-9]"), "")}@projectreboot.dev",
+      "-AUTH_PASSWORD=Rebooted",
+      "-AUTH_TYPE=epic"
+    ]);
+  }
+
+  if(type == GameType.headlessServer){
+    args.addAll([
+      "-nullrhi",
+      "-nosplash",
+      "-nosound",
+    ]);
   }
 
   return args;
@@ -118,8 +118,7 @@ Future<ServerResult> checkServerPreconditions(String host, String port, ServerTy
     if (!free) {
       if(!needsFreePort) {
         return ServerResult(
-            uri: pingSelf(port),
-            type: ServerResultType.ignoreStart
+            type: ServerResultType.alreadyStarted
         );
       }
 
@@ -129,54 +128,22 @@ Future<ServerResult> checkServerPreconditions(String host, String port, ServerTy
     }
   }
 
-  if(type == ServerType.embedded && !serverLocation.existsSync()){
-    return ServerResult(
-        type: ServerResultType.serverDownloadRequiredError
-    );
-  }
-
   return ServerResult(
-      uri: ping(host, port),
       type: ServerResultType.canStart
   );
-}
-
-Future<Process?> startEmbeddedServer() async {
-  await resetServerLog();
-  try {
-    var process = await Process.start(serverLocation.path, [], workingDirectory: serverLocation.parent.path);
-    process.outLines.forEach((line) => serverLogFile.writeAsString("$line\n", mode: FileMode.append));
-    process.errLines.forEach((line) => serverLogFile.writeAsString("$line\n", mode: FileMode.append));
-    return process;
-  } on ProcessException {
-    return null;
-  }
 }
 
 Future<HttpServer> startRemoteServer(Uri uri) async {
   return await serve(proxyHandler(uri), "127.0.0.1", 3551);
 }
 
-Future<void> resetServerLog() async {
-  try {
-    if(await serverLogFile.exists()) {
-      await serverLogFile.delete();
-    }
-
-    await serverLogFile.create();
-  }catch(_){
-    // Ignored
-  }
-}
-
 class ServerResult {
-  final Future<Uri?>? uri;
   final int? pid;
   final Object? error;
   final StackTrace? stackTrace;
   final ServerResultType type;
 
-  ServerResult({this.uri, this.pid, this.error, this.stackTrace, required this.type});
+  ServerResult({this.pid, this.error, this.stackTrace, required this.type});
 }
 
 enum ServerResultType {
@@ -185,10 +152,8 @@ enum ServerResultType {
   illegalPortError,
   cannotPingServer,
   portTakenError,
-  serverDownloadRequiredError,
   canStart,
-  ignoreStart,
-  started,
+  alreadyStarted,
   unknownError,
   stopped,
 }

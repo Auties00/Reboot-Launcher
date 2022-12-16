@@ -1,5 +1,9 @@
 import 'dart:io';
 
+import 'package:win32/win32.dart';
+import 'package:ffi/ffi.dart';
+import 'dart:ffi';
+
 const int appBarSize = 2;
 final RegExp _regex = RegExp(r'(?<=\(Build )(.*)(?=\))');
 
@@ -31,6 +35,18 @@ Future<File> loadBinary(String binary, bool safe) async{
   return safeBinary;
 }
 
+Future<bool> runElevated(String executable, String args) async {
+  var shellInput = calloc<SHELLEXECUTEINFO>();
+  shellInput.ref.lpFile = executable.toNativeUtf16();
+  shellInput.ref.lpParameters = args.toNativeUtf16();
+  shellInput.ref.nShow = SW_SHOWDEFAULT;
+  shellInput.ref.fMask = 0x00000040;
+  shellInput.ref.lpVerb = "runas".toNativeUtf16();
+  shellInput.ref.cbSize = sizeOf<SHELLEXECUTEINFO>();
+  var shellResult = ShellExecuteEx(shellInput);
+  return shellResult == 1;
+}
+
 File _locateInternalBinary(String binary){
   return File("$internalBinariesDirectory\\$binary");
 }
@@ -43,3 +59,12 @@ Directory get tempDirectory =>
 
 String get safeBinariesDirectory =>
     "${Platform.environment["UserProfile"]}\\.reboot_launcher";
+
+File loadEmbedded(String file) {
+  var safeBinary = File("$safeBinariesDirectory\\backend\\cli\\$file");
+  if(safeBinary.existsSync()){
+    return safeBinary;
+  }
+
+  return File("${File(Platform.resolvedExecutable).parent.path}\\data\\flutter_assets\\assets\\$file");
+}

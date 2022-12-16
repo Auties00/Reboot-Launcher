@@ -3,10 +3,8 @@ import 'dart:io';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:reboot_launcher/src/dialog/server_dialogs.dart';
-import 'package:reboot_launcher/src/util/server.dart';
+import 'package:jaguar/jaguar.dart';
 
-import '../dialog/snackbar.dart';
 import '../model/server_type.dart';
 
 class ServerController extends GetxController {
@@ -19,9 +17,9 @@ class ServerController extends GetxController {
   late final Rx<ServerType> type;
   late final RxBool warning;
   late RxBool started;
-  late int embeddedServerCounter;
-  Process? embeddedServer;
-  HttpServer? reverseProxy;
+  Jaguar? embeddedServer;
+  Jaguar? embeddedMatchmaker;
+  HttpServer? remoteServer;
 
   ServerController() {
     _storage = GetStorage("server");
@@ -37,8 +35,8 @@ class ServerController extends GetxController {
       }
 
       if(value == ServerType.remote){
-        reverseProxy?.close(force: true);
-        reverseProxy = null;
+        remoteServer?.close(force: true);
+        remoteServer = null;
         started.value = false;
         return;
       }
@@ -56,8 +54,6 @@ class ServerController extends GetxController {
     warning.listen((value) => _storage.write("lawin_value", value));
 
     started = RxBool(false);
-
-    embeddedServerCounter = 0;
   }
 
   String _readHost() {
@@ -70,83 +66,16 @@ class ServerController extends GetxController {
     return _storage.read("${type.value.id}_port") ?? _serverPort;
   }
 
-  Future<ServerResult> start(bool needsFreePort) async {
-    var lastCounter = ++embeddedServerCounter;
-    var result = await checkServerPreconditions(host.text, port.text, type.value, needsFreePort);
-    if(result.type != ServerResultType.canStart){
-      return result;
-    }
-
-    try{
-      switch(type()){
-        case ServerType.embedded:
-          await _startEmbeddedServer();
-          embeddedServer?.exitCode.then((value) async {
-            if (!started() || lastCounter != embeddedServerCounter) {
-              return;
-            }
-
-            started.value = false;
-            await freeLawinPort();
-            showUnexpectedError();
-          });
-          break;
-        case ServerType.remote:
-          var uriResult = await result.uri!;
-          if(uriResult == null){
-            return ServerResult(
-                type: ServerResultType.cannotPingServer
-            );
-          }
-
-          reverseProxy = await startRemoteServer(uriResult);
-          break;
-        case ServerType.local:
-          break;
-      }
-    }catch(error, stackTrace){
-      return ServerResult(
-          error: error,
-          stackTrace: stackTrace,
-          type: ServerResultType.unknownError
-      );
-    }
-
-    var myself = await pingSelf(port.text);
-    if(myself == null){
-      return ServerResult(
-          type: ServerResultType.cannotPingServer,
-          pid: embeddedServer?.pid
-      );
-    }
-
-    return ServerResult(
-        type: ServerResultType.started
-    );
-  }
-
-  Future<void> _startEmbeddedServer() async {
-    var result = await startEmbeddedServer();
-    if(result != null){
-      embeddedServer = result;
-      return;
-    }
-
-    showMessage("The server is corrupted, trying to fix it");
-    await serverLocation.parent.delete(recursive: true);
-    await downloadServerInteractive(true);
-    await _startEmbeddedServer();
-  }
-
   Future<bool> stop() async {
     started.value = false;
     try{
       switch(type()){
         case ServerType.embedded:
-          await freeLawinPort();
+          await embeddedServer?.close();
+          await embeddedMatchmaker?.close();
           break;
         case ServerType.remote:
-          await reverseProxy?.close(force: true);
+          await remoteServer?.close(force: true);
           break;
         case ServerType.local:
           break;

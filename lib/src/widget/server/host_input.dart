@@ -12,10 +12,10 @@ class HostInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-        message: "The hostname of the lawin server",
+        message: "The hostname of the backend server",
         child: Obx(() => SmartInput(
           label: "Host",
-          placeholder: "Type the lawin server's hostname",
+          placeholder: "Type the backend server's hostname",
           controller: _serverController.host,
           enabled: _serverController.type.value == ServerType.remote
         ))

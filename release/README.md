@@ -40,19 +40,19 @@ Pretty much don't touch this except you really know what you are doing
 
 ### Host
 
-The host of the remote server to use for the lawin server. Only enabled if you are not using the embedded server.
+The host of the remote server to use for the backend server. Only enabled if you are not using the embedded server.
 
 ### Port
 
-The port of the remote server to use for the lawin server. Only enabled if you are not using the embedded server.
+The port of the remote server to use for the backend server. Only enabled if you are not using the embedded server.
 
 ### Embedded
 
-A switch to determine whether an embedded lawin server should be used or if you want to use a remote one
+A switch to determine whether an embedded backend server should be used or if you want to use a remote one
 
 ### Check address / Start or Stop server
 
-If the embedded switch is off, this button checks that the remote server actually works. If it's on, instead, it will start or stop the lawin server. If you click on the launch button in the launcher page, the server will automatically start if you are using the embedded server and if it's not already running. If the 3551 port is already in use on your pc, the launcher will tell you and provide an option to stop the associated process automatically.
+If the embedded switch is off, this button checks that the remote backend actually works. If it's on, instead, it will start or stop the lawin server. If you click on the launch button in the launcher page, the server will automatically start if you are using the embedded server and if it's not already running. If the 3551 port is already in use on your pc, the launcher will tell you and provide an option to stop the associated process automatically.
 
 # Info 
 

@@ -1,3 +1,4 @@
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart';
@@ -21,12 +22,20 @@ class GenericDialog extends AbstractDialog {
 
   @override
   Widget build(BuildContext context) {
-    return ContentDialog(
-        style:  ContentDialogThemeData(
-            padding: padding ?? const EdgeInsets.only(left: 20, right: 20, top: 15.0, bottom: 5.0)
+    return Stack(
+      children: [
+        MoveWindow(
+          child: const SizedBox.expand(),
         ),
-        content: header,
-        actions: buttons
+
+        ContentDialog(
+            style:  ContentDialogThemeData(
+                padding: padding ?? const EdgeInsets.only(left: 20, right: 20, top: 15.0, bottom: 5.0)
+            ),
+            content: header,
+            actions: buttons
+        ),
+      ],
     );
   }
 }
@@ -131,19 +140,21 @@ class ProgressDialog extends AbstractDialog {
 class FutureBuilderDialog extends AbstractDialog {
   final Future future;
   final String loadingMessage;
-  final Widget loadedBody;
+  final Widget successfulBody;
+  final Widget unsuccessfulBody;
   final Function(Object) errorMessageBuilder;
   final Function()? onError;
   final bool closeAutomatically;
 
   const FutureBuilderDialog(
       {super.key,
-      required this.future,
-      required this.loadingMessage,
-      required this.loadedBody,
-      required this.errorMessageBuilder,
-      this.onError,
-      this.closeAutomatically = false});
+        required this.future,
+        required this.loadingMessage,
+        required this.successfulBody,
+        required this.unsuccessfulBody,
+        required this.errorMessageBuilder,
+        this.onError,
+        this.closeAutomatically = false});
 
   static Container ofMessage(String message) {
     return Container(
@@ -170,31 +181,43 @@ class FutureBuilderDialog extends AbstractDialog {
   Widget _createBody(BuildContext context, AsyncSnapshot snapshot){
     if (snapshot.hasError) {
       onError?.call();
-      return ofMessage(snapshot.error.toString());
+      return ofMessage(errorMessageBuilder(snapshot.error!));
+    }
+
+    if(snapshot.connectionState == ConnectionState.done && (snapshot.data == null || (snapshot.data is bool && !snapshot.data))){
+      return unsuccessfulBody;
     }
 
     if (!snapshot.hasData) {
-      return InfoLabel(
-        label: loadingMessage,
-        child: Container(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            width: double.infinity,
-            child: const ProgressBar()),
-      );
+      return _createLoadingBody();
     }
 
     if(closeAutomatically){
-      Navigator.of(context).pop(true);
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => Navigator.of(context).pop(true));
+      return _createLoadingBody();
     }
 
-    return loadedBody;
+    return successfulBody;
+  }
+
+  InfoLabel _createLoadingBody() {
+    return InfoLabel(
+      label: loadingMessage,
+      child: Container(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          width: double.infinity,
+          child: const ProgressBar()),
+    );
   }
 
   DialogButton _createButton(BuildContext context, AsyncSnapshot snapshot){
     return DialogButton(
-      text: snapshot.hasData || snapshot.hasError ? "Close" : "Stop",
-      type: ButtonType.only,
-      onTap: () => Navigator.of(context).pop(!snapshot.hasError && snapshot.hasData)
+        text: snapshot.hasData
+            || snapshot.hasError
+            || (snapshot.connectionState == ConnectionState.done && snapshot.data == null) ? "Close" : "Stop",
+        type: ButtonType.only,
+        onTap: () => Navigator.of(context).pop(!snapshot.hasError && snapshot.hasData)
     );
   }
 }

@@ -7,7 +7,7 @@ import 'package:path/path.dart' as path;
 import 'package:reboot_launcher/src/util/os.dart';
 
 const _rebootUrl =
-    "https://nightly.link/Milxnor/Universal-Walking-Simulator/workflows/msbuild/master/Release.zip";
+    "https://nightly.link/Milxnor/Project-Reboot/workflows/msbuild/main/Release.zip";
 
 Future<DateTime?> _getLastUpdate(int? lastUpdateMs) async {
   return lastUpdateMs != null ? DateTime.fromMillisecondsSinceEpoch(lastUpdateMs) : null;
@@ -29,14 +29,18 @@ Future<int> downloadRebootDll(int? lastUpdateMs) async {
   var outputDir = await tempDirectory.createTemp("reboot");
   await extractFileToDisk(tempZip.path, outputDir.path);
 
-  var rebootDll = outputDir.listSync()
-      .firstWhere((element) => path.extension(element.path) == ".dll");
-  if (exists && sha1.convert(await oldRebootDll.readAsBytes()) == sha1.convert(await File(rebootDll.path).readAsBytes())) {
+  var rebootDll = File(
+      outputDir.listSync()
+          .firstWhere((element) => path.extension(element.path) == ".dll")
+          .path
+  );
+
+  if (exists && sha1.convert(await oldRebootDll.readAsBytes()) == sha1.convert(await rebootDll.readAsBytes())) {
     outputDir.delete(recursive: true);
     return now.millisecondsSinceEpoch;
   }
 
-  await rebootDll.rename(oldRebootDll.path);
+  await oldRebootDll.writeAsBytes(await rebootDll.readAsBytes());
   outputDir.delete(recursive: true);
   return now.millisecondsSinceEpoch;
 }

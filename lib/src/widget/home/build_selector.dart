@@ -37,9 +37,8 @@ class _BuildSelectorState extends State<BuildSelector> {
 
   ComboBoxItem<FortniteBuild> _createItem(FortniteBuild element) {
     return ComboBoxItem<FortniteBuild>(
-      value: element,
-      child: Text(
-          "${element.version} ${element.hasManifest ? '[Fortnite Manifest]' : '[Google Drive]'}"),
+        value: element,
+        child: Text(element.version.toString())
     );
   }
 }

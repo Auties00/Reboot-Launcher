@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bitsdojo_window_windows/bitsdojo_window_windows.dart'
     show WinDesktopWindow;
+import 'package:dart_vlc/dart_vlc.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -16,6 +17,7 @@ import 'package:reboot_launcher/src/page/home_page.dart';
 import 'package:reboot_launcher/src/util/error.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:system_theme/system_theme.dart';
+import 'package:window_manager/window_manager.dart';
 
 final GlobalKey appKey = GlobalKey();
 
@@ -28,6 +30,7 @@ void main(List<String> args) async {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
+  DartVLC.initialize();
 
   await SystemTheme.accentColor.load();
   await GetStorage.init("game");
@@ -39,11 +42,18 @@ void main(List<String> args) async {
   Get.put(BuildController());
   Get.put(SettingsController());
   doWhenWindowReady(() {
-    const size = Size(600, 365);
+    var controller = Get.find<SettingsController>();
+    var size = Size(controller.width, controller.height);
     var window = appWindow as WinDesktopWindow;
     window.setWindowCutOnMaximize(appBarSize * 2);
     appWindow.size = size;
-    appWindow.alignment = Alignment.center;
+    if(controller.offsetX != null && controller.offsetY != null){
+      appWindow.position = Offset(controller.offsetX!, controller.offsetY!);
+    }else {
+      appWindow.alignment = Alignment.center;
+    }
+
+    windowManager.setPreventClose(true);
     appWindow.title = "Reboot Launcher";
     appWindow.show();
   });

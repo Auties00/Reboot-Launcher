@@ -1,0 +1,1 @@
+sc query "MongoDB" | findstr /i "STATE"

@@ -13,10 +13,10 @@ class PortInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-        message: "The port of the lawin server",
+        message: "The port of the backend server",
         child: Obx(() => SmartInput(
             label: "Port",
-            placeholder: "Type the lawin server's port",
+            placeholder: "Type the backend server's port",
             controller: _serverController.port,
             enabled: _serverController.type.value != ServerType.embedded
         ))

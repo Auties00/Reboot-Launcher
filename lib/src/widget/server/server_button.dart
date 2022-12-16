@@ -23,7 +23,10 @@ class _ServerButtonState extends State<ServerButton> {
         child: Obx(() => Tooltip(
           message: _helpMessage,
               child: Button(
-                  onPressed: () async => _serverController.changeStateInteractive(false),
+                  onPressed: () async => _serverController.start(
+                      required: false,
+                      askPortKill: true
+                  ),
                   child: Text(_buttonText())),
             )),
       ),
@@ -46,18 +49,18 @@ class _ServerButtonState extends State<ServerButton> {
     switch(_serverController.type.value){
       case ServerType.embedded:
         if (_serverController.started.value) {
-          return "Stop the lawin server currently running";
+          return "Stop the backend server currently running";
         }
 
-        return "Start a new local lawin server";
+        return "Start a new local backend server";
       case ServerType.remote:
         if (_serverController.started.value) {
           return "Stop the reverse proxy currently running";
         }
 
-        return "Start a reverse proxy targeting the remote lawin server";
+        return "Start a reverse proxy targeting the remote backend server";
       case ServerType.local:
-        return "Check if a local lawin server is running";
+        return "Check if a local backend server is running";
     }
   }
 }

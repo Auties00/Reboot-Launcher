@@ -6,7 +6,7 @@ Future<void> showBrokenError() async {
   showDialog(
       context: appKey.currentContext!,
       builder: (context) => const InfoDialog(
-          text: "The lawin server is not working correctly"
+          text: "The backend server is not working correctly"
       )
   );
 }
@@ -20,20 +20,26 @@ Future<void> showMissingDllError(String name) async {
   );
 }
 
-Future<void> showTokenError() async {
+Future<void> showTokenErrorFixable() async {
   showDialog(
       context: appKey.currentContext!,
       builder: (context) => const InfoDialog(
-          text: "A token error occurred, restart the game and the lawin server, then try again"
+          text: "A token error occurred. "
+              "The backend server has been automatically restarted to fix the issue. "
+              "Relaunch your game to check if the issue has been automatically fixed. "
+              "Otherwise, open an issue on Discord."
       )
   );
 }
 
-Future<void> showUnsupportedHeadless() async {
+Future<void> showTokenErrorUnfixable() async {
   showDialog(
       context: appKey.currentContext!,
       builder: (context) => const InfoDialog(
-          text: "This version of Fortnite doesn't support headless hosting"
+          text: "A token error occurred. "
+              "This issue cannot be resolved automatically as the server isn't embedded."
+              "Please restart the server manually, then relaunch your game to check if the issue has been fixed. "
+              "Otherwise, open an issue on Discord."
       )
   );
 }

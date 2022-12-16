@@ -5,14 +5,12 @@ import 'package:path/path.dart' as path;
 class FortniteVersion {
   String name;
   Directory location;
-  bool memoryFix;
 
   FortniteVersion.fromJson(json)
       : name = json["name"],
-        location = Directory(json["location"]),
-        memoryFix = json["memory_fix"] ?? false;
+        location = Directory(json["location"]);
 
-  FortniteVersion({required this.name, required this.location, required this.memoryFix});
+  FortniteVersion({required this.name, required this.location});
 
   static File? findExecutable(Directory directory, String name) {
     try{
@@ -32,13 +30,17 @@ class FortniteVersion {
     return findExecutable(location, "FortniteLauncher.exe");
   }
 
+  File? get eacExecutable {
+    return findExecutable(location, "FortniteClient-Win64-Shipping_EAC.exe");
+  }
+
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'location': location.path,
-      };
+    'name': name,
+    'location': location.path
+  };
 
   @override
   String toString() {
-    return 'FortniteVersion{name: $name, location: $location}';
+    return 'FortniteVersion{name: $name, location: $location';
   }
 }

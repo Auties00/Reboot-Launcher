@@ -1,12 +1,15 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
+import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
+import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/dialog/dialog.dart';
 import 'package:reboot_launcher/src/dialog/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/snackbar.dart';
+import 'package:reboot_launcher/src/embedded/server.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
-import 'package:reboot_launcher/src/util/future.dart';
 import 'package:sync/semaphore.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../main.dart';
 import '../util/server.dart';
@@ -14,26 +17,31 @@ import '../util/server.dart';
 extension ServerControllerDialog on ServerController {
   static Semaphore semaphore = Semaphore();
 
-  Future<bool> changeStateInteractive(bool onlyIfNeeded, [bool isRetry = false]) async {
+  Future<bool> start({required bool required, required bool askPortKill, bool isRetry = false}) async {
     try{
       semaphore.acquire();
       if (type() == ServerType.local) {
-        return _checkLocalServerInteractive(onlyIfNeeded);
+        return _pingSelfInteractive(required);
       }
 
       var oldStarted = started();
-      if(oldStarted && onlyIfNeeded){
+      if(oldStarted && required){
         return true;
       }
 
       started.value = !started.value;
-      return await _doStateChange(oldStarted, onlyIfNeeded, isRetry);
+      var result = await _startInternal(oldStarted, required, askPortKill, isRetry);
+      if(!result){
+       return false;
+      }
+
+     return await _pingSelfInteractive(true);
     }finally{
       semaphore.release();
     }
   }
 
-  Future<bool> _doStateChange(bool oldStarted, bool onlyIfNeeded, bool isRetry) async {
+  Future<bool> _startInternal(bool oldStarted, bool required, bool askPortKill, bool isRetry) async {
     if (oldStarted) {
       var result = await stop();
       if (!result) {
@@ -45,13 +53,14 @@ extension ServerControllerDialog on ServerController {
       return false;
     }
 
-    var result = await start(!onlyIfNeeded);
-    if(result.type == ServerResultType.ignoreStart) {
+    var conditions = await checkServerPreconditions(host.text, port.text, type.value, !required);
+    var result = conditions.type == ServerResultType.canStart ? await _startServer(required) : conditions;
+    if(result.type == ServerResultType.alreadyStarted) {
       started.value = false;
       return true;
     }
 
-    var handled = await _handleResultType(oldStarted, onlyIfNeeded, isRetry, result);
+    var handled = await _handleResultType(oldStarted, required, isRetry, askPortKill, result);
     if (!handled) {
       started.value = false;
       return false;
@@ -60,7 +69,42 @@ extension ServerControllerDialog on ServerController {
     return handled;
   }
 
-  Future<bool> _handleResultType(bool oldStarted, bool onlyIfNeeded, bool isRetry, ServerResult result) async {
+  Future<ServerResult> _startServer(bool closeAutomatically) async {
+    try{
+      switch(type()){
+        case ServerType.embedded:
+          embeddedServer = await startEmbeddedServer(
+                  () => Get.find<SettingsController>().matchmakingIp.text,
+          );
+          embeddedMatchmaker = await startEmbeddedMatchmaker();
+          break;
+        case ServerType.remote:
+          var uriResult = await _pingRemoteInteractive(closeAutomatically);
+          if(uriResult == null){
+            return ServerResult(
+                type: ServerResultType.cannotPingServer
+            );
+          }
+
+          remoteServer = await startRemoteServer(uriResult);
+          break;
+        case ServerType.local:
+          break;
+      }
+    }catch(error, stackTrace){
+      return ServerResult(
+          error: error,
+          stackTrace: stackTrace,
+          type: ServerResultType.unknownError
+      );
+    }
+
+    return ServerResult(
+        type: ServerResultType.canStart
+    );
+  }
+
+  Future<bool> _handleResultType(bool oldStarted, bool onlyIfNeeded, bool isRetry, bool askPortKill, ServerResult result) async {
     switch (result.type) {
       case ServerResultType.missingHostError:
         _showMissingHostError();
@@ -72,11 +116,6 @@ extension ServerControllerDialog on ServerController {
         _showIllegalPortError();
         return false;
       case ServerResultType.cannotPingServer:
-        if(!started() || result.pid != embeddedServer?.pid){
-          return false;
-        }
-
-        _showPingErrorDialog();
         return false;
       case ServerResultType.portTakenError:
         if (isRetry) {
@@ -84,24 +123,15 @@ extension ServerControllerDialog on ServerController {
           return false;
         }
 
-        var result = await _showPortTakenDialog();
-        if (!result) {
-          return false;
+        if(askPortKill) {
+          var result = await _showPortTakenDialog();
+          if (!result) {
+            return false;
+          }
         }
 
         await freeLawinPort();
-        return _doStateChange(oldStarted, onlyIfNeeded, true);
-      case ServerResultType.serverDownloadRequiredError:
-        if (isRetry) {
-          return false;
-        }
-
-        var result = await downloadServerInteractive(false);
-        if (!result) {
-          return false;
-        }
-
-        return _doStateChange(oldStarted, onlyIfNeeded, true);
+        return _startInternal(oldStarted, onlyIfNeeded, askPortKill, true);
       case ServerResultType.unknownError:
         showDialog(
             context: appKey.currentContext!,
@@ -114,36 +144,64 @@ extension ServerControllerDialog on ServerController {
                 )
         );
         return false;
-      case ServerResultType.ignoreStart:
-      case ServerResultType.started:
-        return true;
+      case ServerResultType.alreadyStarted:
       case ServerResultType.canStart:
+        return true;
       case ServerResultType.stopped:
         return false;
     }
   }
 
-  Future<bool> _checkLocalServerInteractive(bool ignorePrompts) async {
+  Future<bool> _pingSelfInteractive(bool closeAutomatically) async {
     try {
-      var future = pingSelf(port.text);
-      if(!ignorePrompts) {
-        await showDialog(
-            context: appKey.currentContext!,
-            builder: (context) =>
-                FutureBuilderDialog(
-                    future: future,
-                    loadingMessage: "Pinging server...",
-                    loadedBody: FutureBuilderDialog.ofMessage(
-                        "The server at ${host.text}:${port
-                            .text} works correctly"),
-                    errorMessageBuilder: (
-                        exception) => "An error occurred while pining the server: $exception"
-                )
-        );
-      }
-      return await future != null;
+      return await showDialog<bool>(
+          context: appKey.currentContext!,
+          builder: (context) =>
+              FutureBuilderDialog(
+                  future: Future.wait([
+                    pingSelf(port.text),
+                    Future.delayed(const Duration(seconds: 1))
+                  ]),
+                  loadingMessage: "Pinging ${type().id} server...",
+                  successfulBody: FutureBuilderDialog.ofMessage(
+                      "The ${type().id} server works correctly"),
+                  unsuccessfulBody: FutureBuilderDialog.ofMessage(
+                      "The ${type().id} server doesn't work. Check the backend tab for misconfigurations and try again."),
+                  errorMessageBuilder: (
+                      exception) => "An error occurred while pining the ${type().id} server: $exception",
+                closeAutomatically: closeAutomatically
+              )
+      ) ?? false;
     } catch (_) {
       return false;
+    }
+  }
+
+  Future<Uri?> _pingRemoteInteractive(bool closeAutomatically) async {
+    try {
+      var mainFuture = ping(host.text, port.text);
+      var result = await showDialog<bool>(
+          context: appKey.currentContext!,
+          builder: (context) =>
+              FutureBuilderDialog(
+                  future: Future.wait([
+                    mainFuture,
+                    Future.delayed(const Duration(seconds: 1))
+                  ]),
+                  loadingMessage: "Pinging remote server...",
+                  successfulBody: FutureBuilderDialog.ofMessage(
+                      "The server at ${host.text}:${port
+                          .text} works correctly"),
+                  unsuccessfulBody: FutureBuilderDialog.ofMessage(
+                      "The server at ${host.text}:${port
+                          .text} doesn't work. Check the hostname and/or the port and try again."),
+                  errorMessageBuilder: (exception) => "An error occurred while pining the server: $exception",
+                  closeAutomatically: closeAutomatically
+              )
+      ) ?? false;
+      return result ? await mainFuture : null;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -178,20 +236,6 @@ extension ServerControllerDialog on ServerController {
     ) ?? false;
   }
 
-  void _showPingErrorDialog() {
-    if(!started.value){
-      return;
-    }
-
-    showDialog(
-        context: appKey.currentContext!,
-        builder: (context) =>
-        const InfoDialog(
-            text: "The lawin server is not working correctly. Check the configuration in the associated tab and try again."
-        )
-    );
-  }
-
   void _showCannotStopError() {
     if(!started.value){
       return;
@@ -201,47 +245,45 @@ extension ServerControllerDialog on ServerController {
         context: appKey.currentContext!,
         builder: (context) =>
         const InfoDialog(
-            text: "Cannot stop lawin server"
+            text: "Cannot stop backend server"
         )
     );
   }
 
-  void showUnexpectedError() {
+  void showUnexpectedServerError() {
     showDialog(
         context: appKey.currentContext!,
-        builder: (context) =>
-        const InfoDialog(
-            text: "The lawin server died unexpectedly"
+        builder: (context) => InfoDialog(
+            text: "The backend server died unexpectedly",
+          buttons: [
+            DialogButton(
+              text: "Close",
+              type: ButtonType.secondary,
+              onTap: () => Navigator.of(context).pop(),
+            ),
+
+            DialogButton(
+              text: "Open log",
+              type: ButtonType.primary,
+              onTap: () {
+                launchUrl(serverLogFile.uri);
+                Navigator.of(context).pop();
+              }
+            ),
+          ],
         )
     );
   }
 
   void _showIllegalPortError() {
-    showMessage("Illegal port for lawin server, use only numbers");
+    showMessage("Illegal port for backend server, use only numbers");
   }
 
   void _showMissingPortError() {
-    showMessage("Missing port for lawin server");
+    showMessage("Missing port for backend server");
   }
 
   void _showMissingHostError() {
-    showMessage("Missing the host name for lawin server");
+    showMessage("Missing the host name for backend server");
   }
-}
-
-Future<bool> downloadServerInteractive(bool closeAutomatically) async {
-  var download = compute(downloadServer, true);
-  return await showDialog<bool>(
-      context: appKey.currentContext!,
-      builder: (context) =>
-          FutureBuilderDialog(
-              future: download,
-              loadingMessage: "Downloading server...",
-              loadedBody: FutureBuilderDialog.ofMessage(
-                  "The server was downloaded successfully"),
-              errorMessageBuilder: (
-                  message) => "Cannot download server: $message",
-              closeAutomatically: closeAutomatically
-          )
-  ) ?? download.isCompleted();
 }

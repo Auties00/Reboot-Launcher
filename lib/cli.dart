@@ -12,6 +12,12 @@ import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
 import 'package:reboot_launcher/src/util/reboot.dart';
 
+late String? username;
+late GameType type;
+late bool verbose;
+late String dll;
+late FortniteVersion version;
+late bool autoRestart;
 
 void main(List<String> args){
   handleCLI(args);
@@ -20,7 +26,7 @@ void main(List<String> args){
 Future<void> handleCLI(List<String> args) async {
   stdout.writeln("Reboot Launcher");
   stdout.writeln("Wrote by Auties00");
-  stdout.writeln("Version 4.4");
+  stdout.writeln("Version 5.3");
 
   kill();
 
@@ -31,16 +37,17 @@ Future<void> handleCLI(List<String> args) async {
   var parser = ArgParser()
     ..addCommand("list")
     ..addCommand("launch")
-    ..addOption("version", defaultsTo: gameJson["version"])
+    ..addOption("version")
     ..addOption("username")
     ..addOption("server-type", allowed: getServerTypes(), defaultsTo: getDefaultServerType(serverJson))
     ..addOption("server-host")
     ..addOption("server-port")
+    ..addOption("matchmaking-address")
     ..addOption("dll", defaultsTo: settingsJson["reboot"] ?? (await loadBinary("reboot.dll", true)).path)
     ..addOption("type", allowed: getGameTypes(), defaultsTo: getDefaultGameType(gameJson))
     ..addFlag("update", defaultsTo: settingsJson["auto_update"] ?? true, negatable: true)
     ..addFlag("log", defaultsTo: false)
-    ..addFlag("memory-fix", defaultsTo: false, negatable: true);
+    ..addFlag("auto-restart", defaultsTo: false, negatable: true);
   var result = parser.parse(args);
   if (result.command?.name == "list") {
     stdout.writeln("Versions list: ");
@@ -49,45 +56,46 @@ Future<void> handleCLI(List<String> args) async {
     return;
   }
 
-  var dll = result["dll"];
-  var type = getGameType(result);
-  var username = result["username"];
-  username ??= gameJson["${type == GameType.client ? "game" : "server"}_username"];
-  var verbose = result["log"];
+  dll = result["dll"];
+  type = getGameType(result);
+  username = result["username"] ?? gameJson["${type == GameType.client ? "game" : "server"}_username"];
+  verbose = result["log"];
 
-  var dummyVersion = _createVersion(gameJson["version"], result["version"], result["memory-fix"], versions);
+  version = _createVersion(gameJson["version"], result["version"], versions);
   await downloadRequiredDLLs();
   if(result["update"]) {
     stdout.writeln("Updating reboot dll...");
-    await downloadRebootDll(0);
+    try {
+      await downloadRebootDll(0);
+    }catch(error){
+      stderr.writeln("Cannot update reboot dll: $error");
+    }
   }
 
   stdout.writeln("Launching game(type: ${type.name})...");
-  if(dummyVersion.executable == null){
-    throw Exception("Missing game executable at: ${dummyVersion.location.path}");
+  if(version.executable == null){
+    throw Exception("Missing game executable at: ${version.location.path}");
   }
 
-  if (result["type"] == "headless_server") {
-    await patchHeadless(dummyVersion.executable!);
-  }else if(result["type"] == "client"){
-    await patchMatchmaking(dummyVersion.executable!);
-  }
+  await patchHeadless(version.executable!);
+  await patchMatchmaking(version.executable!);
 
   var serverType = getServerType(result);
   var host = result["server-host"] ?? serverJson["${serverType.id}_host"];
   var port = result["server-port"] ?? serverJson["${serverType.id}_port"];
-  var started = await startServer(host, port, serverType);
+  var started = await startServer(host, port, serverType, result["matchmaking-address"]);
   if(!started){
     stderr.writeln("Cannot start server!");
     return;
   }
 
-  await startGame(username, type, verbose, dll, dummyVersion);
+  autoRestart = result["auto-restart"];
+  await startGame();
 }
 
-FortniteVersion _createVersion(String? versionName, String? versionPath, bool memoryFix, List<FortniteVersion> versions) {
+FortniteVersion _createVersion(String? versionName, String? versionPath, List<FortniteVersion> versions) {
   if (versionPath != null) {
-    return FortniteVersion(name: "dummy", location: Directory(versionPath), memoryFix: memoryFix);
+    return FortniteVersion(name: "dummy", location: Directory(versionPath));
   }
 
   if(versionName != null){

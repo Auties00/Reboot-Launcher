@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:async/async.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -90,7 +91,7 @@ class GameController extends GetxController {
     _storage.write("version", version?.name);
   }
 
-  void rename(FortniteVersion version, String result) {
-    versions.update((val) => version.name = result);
+  void updateVersion(FortniteVersion version, Function(FortniteVersion) function) {
+    versions.update((val) => function(version));
   }
 }

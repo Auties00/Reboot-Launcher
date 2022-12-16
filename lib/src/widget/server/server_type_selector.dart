@@ -11,7 +11,7 @@ class ServerTypeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: "Determines the type of lawin server to use",
+      message: "Determines the type of backend server to use",
       child: InfoLabel(
         label: "Type",
         child: SizedBox(
@@ -35,7 +35,10 @@ class ServerTypeSelector extends StatelessWidget {
                 child: Text(type.name)
             )
         ),
-        onPressed: () => _serverController.type(type)
+        onPressed: () async {
+          await _serverController.stop();
+          _serverController.type(type);
+        }
     );
   }
 

@@ -15,7 +15,6 @@ class AddLocalVersion extends StatelessWidget {
   final GameController _gameController = Get.find<GameController>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _gamePathController = TextEditingController();
-  final CheckboxController _injectMemoryFixController = CheckboxController();
 
   AddLocalVersion({Key? key})
       : super(key: key);
@@ -49,15 +48,6 @@ class AddLocalVersion extends StatelessWidget {
                 folder: true
             ),
 
-            const SizedBox(
-                height: 16.0
-            ),
-
-            SmartCheckBox(
-                controller: _injectMemoryFixController,
-                content: const Text("Inject memory leak fix")
-            ),
-
             const SizedBox(height: 8.0),
           ],
         ),
@@ -70,10 +60,10 @@ class AddLocalVersion extends StatelessWidget {
             text: "Save",
             type: ButtonType.primary,
             onTap: () {
+              Navigator.of(context).pop();
               _gameController.addVersion(FortniteVersion(
                   name: _nameController.text,
-                  location: Directory(_gamePathController.text),
-                  memoryFix: _injectMemoryFixController.value
+                  location: Directory(_gamePathController.text)
               ));
             },
           )
