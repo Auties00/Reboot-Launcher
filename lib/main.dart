@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bitsdojo_window_windows/bitsdojo_window_windows.dart'
     show WinDesktopWindow;
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -21,17 +20,10 @@ import 'package:window_manager/window_manager.dart';
 
 final GlobalKey appKey = GlobalKey();
 
-void main(List<String> args) async {
+void main() async {
   await Directory(safeBinariesDirectory)
       .create(recursive: true);
-  if(args.isNotEmpty){
-    handleCLI(args);
-    return;
-  }
-
   WidgetsFlutterBinding.ensureInitialized();
-  DartVLC.initialize();
-
   await SystemTheme.accentColor.load();
   await GetStorage.init("game");
   await GetStorage.init("server");

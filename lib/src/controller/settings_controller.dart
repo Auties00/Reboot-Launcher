@@ -1,7 +1,7 @@
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:reboot_launcher/src/model/tutorial_page.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'dart:ui';
 
@@ -13,11 +13,13 @@ class SettingsController extends GetxController {
   late final TextEditingController authDll;
   late final TextEditingController matchmakingIp;
   late final Rx<PaneDisplayMode> displayType;
+  late final RxBool doNotAskAgain;
+  late Rx<TutorialPage> tutorialPage;
   late double width;
   late double height;
   late double? offsetX;
   late double? offsetY;
-  Player? player;
+  late double scrollingDistance;
 
   SettingsController() {
     _storage = GetStorage("settings");
@@ -31,11 +33,18 @@ class SettingsController extends GetxController {
       _storage.write("ip", text);
     });
 
+    doNotAskAgain = RxBool(_storage.read("do_not_ask_again") ?? false);
+    doNotAskAgain.listen((value) => _storage.write("do_not_ask_again", value));
+
     width = _storage.read("width") ?? window.physicalSize.width;
     height = _storage.read("height") ?? window.physicalSize.height;
     offsetX = _storage.read("offset_x");
     offsetY = _storage.read("offset_y");
     displayType = Rx(PaneDisplayMode.top);
+
+    scrollingDistance = 0.0;
+
+    tutorialPage = Rx(TutorialPage.start);
   }
 
   TextEditingController _createController(String key, String name) {

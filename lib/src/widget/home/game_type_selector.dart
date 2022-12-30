@@ -35,7 +35,10 @@ class GameTypeSelector extends StatelessWidget {
                 child: Text(type.name)
             )
         ),
-        onPressed: () => _gameController.type(type)
+        onPressed: () {
+          _gameController.type(type);
+          _gameController.started.value = _gameController.currentGameInstance != null;
+        }
     );
   }
 }

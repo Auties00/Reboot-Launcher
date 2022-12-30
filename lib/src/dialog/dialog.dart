@@ -29,7 +29,7 @@ class GenericDialog extends AbstractDialog {
         ),
 
         ContentDialog(
-            style:  ContentDialogThemeData(
+            style: ContentDialogThemeData(
                 padding: padding ?? const EdgeInsets.only(left: 20, right: 20, top: 15.0, bottom: 5.0)
             ),
             content: header,

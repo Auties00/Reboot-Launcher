@@ -19,11 +19,7 @@ late String dll;
 late FortniteVersion version;
 late bool autoRestart;
 
-void main(List<String> args){
-  handleCLI(args);
-}
-
-Future<void> handleCLI(List<String> args) async {
+void main(List<String> args) async {
   stdout.writeln("Reboot Launcher");
   stdout.writeln("Wrote by Auties00");
   stdout.writeln("Version 5.3");

@@ -105,7 +105,7 @@ Jaguar _createServer(String Function() ipQuery) {
   server.getJson("/fortnite/api/game/v2/privacy/account/:accountId", getPrivacy);
   server.postJson("/fortnite/api/game/v2/privacy/account/:accountId", postPrivacy);
 
-  return _addLoggingCapabilities(server);
+  return server;
 }
 Jaguar _createMatchmaker(){
   var server = Jaguar(address: "127.0.0.1", port: 8080);

@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/dialog/snackbar.dart';
 
-import '../../util/selector.dart';
+import 'package:reboot_launcher/src/util/selector.dart';
 
 class FileSelector extends StatefulWidget {
   final String label;

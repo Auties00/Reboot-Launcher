@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -30,7 +32,8 @@ class _LauncherPageState extends State<LauncherPage> {
   void initState() {
     if(_gameController.updater == null){
       _gameController.updater = compute(downloadRebootDll, _updateTime)
-        ..then((value) => _updateTime = value);
+        ..then((value) => _updateTime = value)
+        ..then((value) => _gameController.updated = true);
       _buildController.cancelledDownload
           .listen((value) => value ? _onCancelWarning() : {});
     }
@@ -65,7 +68,7 @@ class _LauncherPageState extends State<LauncherPage> {
     return FutureBuilder(
         future: _gameController.updater ?? Future.value(true),
         builder: (context, snapshot) {
-          if (!snapshot.hasData && !snapshot.hasError) {
+          if (!_gameController.updated && !snapshot.hasData && !snapshot.hasError) {
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

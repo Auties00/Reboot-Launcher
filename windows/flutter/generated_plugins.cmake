@@ -4,7 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_windows
-  dart_vlc
   screen_retriever
   system_theme
   url_launcher_windows

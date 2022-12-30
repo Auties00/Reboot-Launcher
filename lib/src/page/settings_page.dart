@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/widget/shared/smart_switch.dart';
 
@@ -24,17 +25,16 @@ class SettingsPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Tooltip(
-            message: "The hostname of the server that hosts the multiplayer matches",
-            child: Obx(() => SmartInput(
-                label: "Matchmaking Host",
-                placeholder:
-                "Type the hostname of the server that hosts the multiplayer matches",
-                controller: _settingsController.matchmakingIp,
-                validatorMode: AutovalidateMode.always,
-                validator: checkMatchmaking,
-                enabled: _serverController.type() == ServerType.embedded
-            ))
-          ),
+              message:
+                  "The hostname of the server that hosts the multiplayer matches",
+              child: Obx(() => SmartInput(
+                  label: "Matchmaking Host",
+                  placeholder:
+                      "Type the hostname of the server that hosts the multiplayer matches",
+                  controller: _settingsController.matchmakingIp,
+                  validatorMode: AutovalidateMode.always,
+                  validator: checkMatchmaking,
+                  enabled: _serverController.type() == ServerType.embedded))),
           Tooltip(
             message: "The dll that is injected when a server is launched",
             child: FileSelector(
@@ -63,13 +63,25 @@ class SettingsPage extends StatelessWidget {
               message: "The dll that is injected to make the game work",
               child: FileSelector(
                   label: "Cranium DLL",
-                  placeholder: "Type the path to the dll used for authentication",
+                  placeholder:
+                      "Type the path to the dll used for authentication",
                   controller: _settingsController.authDll,
                   windowTitle: "Select a dll",
                   folder: false,
                   extension: "dll",
                   validator: checkDll,
-                  validatorMode: AutovalidateMode.always))
+                  validatorMode: AutovalidateMode.always)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Version Status"),
+              const SizedBox(height: 6.0),
+              Button(
+                  child: const Text("6.0${kDebugMode ? '-DEBUG' : '-RELEASE'}"),
+                  onPressed: () => showMessage("What a nice launcher")
+              )
+            ],
+          )
         ]);
   }
 }

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:ui';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart' hide WindowBorder;
@@ -18,6 +17,7 @@ import 'package:reboot_launcher/src/widget/os/window_buttons.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../controller/settings_controller.dart';
+import '../model/tutorial_page.dart';
 import 'info_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -31,7 +31,6 @@ class _HomePageState extends State<HomePage> with WindowListener {
   static const double _headerSize = 48.0;
   static const double _sectionSize = 100.0;
   static const double _defaultPadding = 12.0;
-  static const double _openMenuSize = 320.0;
   static const int _headerButtonCount = 3;
   static const int _sectionButtonCount = 4;
 
@@ -45,6 +44,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
   final Rxn<List<NavigationPaneItem>> _searchItems = Rxn();
   final RxBool _focused = RxBool(true);
   final RxInt _index = RxInt(0);
+  bool _navigated = false;
 
   bool _shouldMaximize = false;
 
@@ -125,7 +125,11 @@ class _HomePageState extends State<HomePage> with WindowListener {
           child: Obx(() => Stack(
               children: [
                 _createNavigationView(),
-                _createTitleBar(),
+                if(_settingsController.displayType() == PaneDisplayMode.top)
+                  Align(
+                      alignment: Alignment.topRight,
+                      child: WindowTitleBar(focused: _focused())
+                  ),
                 if(_settingsController.displayType() == PaneDisplayMode.top)
                   _createTopDisplayGestures(),
                 if(_focused() && isWin11)
@@ -161,49 +165,82 @@ class _HomePageState extends State<HomePage> with WindowListener {
       child: child
   );
 
-  NavigationView _createNavigationView() => NavigationView(
-      paneBodyBuilder: (body) => _createPage(body),
-      pane: NavigationPane(
-        size: const NavigationPaneSize(
-            topHeight: _headerSize
+  NavigationView _createNavigationView() {
+    return NavigationView(
+        paneBodyBuilder: (body) => _createPage(body),
+        pane: NavigationPane(
+          size: const NavigationPaneSize(
+              topHeight: _headerSize
+          ),
+          selected: _selectedIndex,
+          onChanged: _onIndexChanged,
+          displayMode: _settingsController.displayType(),
+          items: _createItems(),
+          indicator: const EndNavigationIndicator(),
+          footerItems: _createFooterItems(),
+          header: _settingsController.displayType() != PaneDisplayMode.open ? null : const SizedBox(height: _defaultPadding),
+          autoSuggestBox: _createAutoSuggestBox(),
+          autoSuggestBoxReplacement:  _settingsController.displayType() == PaneDisplayMode.top ? null : const Icon(FluentIcons.search),
         ),
-        selected: _selectedIndex,
-        onChanged: (index) {
-          _settingsController.player?.pause();
-          _index.value = index;
-        },
-        displayMode: _settingsController.displayType(),
-        indicator: const EndNavigationIndicator(),
-        items: _createItems(),
-        footerItems: _createFooterItems(),
-        header: _settingsController.displayType() != PaneDisplayMode.open ? null : const SizedBox(height: _defaultPadding),
-        autoSuggestBox: _settingsController.displayType() == PaneDisplayMode.top ? null : TextBox(
-            key: _searchKey,
-            controller: _searchController,
-            placeholder: 'Search',
-            focusNode: _searchFocusNode
-        ),
-        autoSuggestBoxReplacement:  _settingsController.displayType() == PaneDisplayMode.top ? null : const Icon(FluentIcons.search),
-      ),
-      onOpenSearch: () => _searchFocusNode.requestFocus(),
-      transitionBuilder: _settingsController.displayType() == PaneDisplayMode.top ? null : (child, animation) => child
-  );
+        onOpenSearch: () => _searchFocusNode.requestFocus(),
+        transitionBuilder: _settingsController.displayType() == PaneDisplayMode.top ? null : (child, animation) => child
+    );
+  }
 
-  RenderObjectWidget _createPage(Widget? body) => Padding(
-      padding: _createPagePadding(),
-      child: body
-  );
+  void _onIndexChanged(int index) {
+    _index.value = index;
+    _navigated = true;
+  }
 
-  EdgeInsets _createPagePadding() {
+  TextBox? _createAutoSuggestBox() {
     if (_settingsController.displayType() == PaneDisplayMode.top) {
-      return const EdgeInsets.all(_defaultPadding);
+      return null;
     }
 
-    return const EdgeInsets.only(
-        top: 32,
-        left: _defaultPadding,
-        right: _defaultPadding,
-        bottom: _defaultPadding
+    return TextBox(
+        key: _searchKey,
+        controller: _searchController,
+        placeholder: 'Search',
+        focusNode: _searchFocusNode
+    );
+  }
+
+  RenderObjectWidget _createPage(Widget? body) {
+    if(_settingsController.displayType() == PaneDisplayMode.top){
+      return Padding(
+        padding: const EdgeInsets.all(_defaultPadding),
+        child: body
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+                child: _createWindowGestures(
+                    child: Container(
+                        height: _headerSize,
+                        color: Colors.transparent
+                    )
+                )
+            ),
+
+            WindowTitleBar(focused: _focused())
+          ],
+        ),
+
+        Expanded(
+            child: Padding(
+                padding: const EdgeInsets.only(
+                    left: _defaultPadding,
+                    right: _defaultPadding,
+                    bottom: _defaultPadding
+                ),
+                child: body
+            )
+        )
+      ],
     );
   }
 
@@ -232,7 +269,8 @@ class _HomePageState extends State<HomePage> with WindowListener {
       PaneItem(
           title: const Text("Tutorial"),
           icon: const Icon(FluentIcons.info),
-          body: const InfoPage()
+          body: const InfoPage(),
+          onTap: _onTutorial
       )
   ];
 
@@ -259,9 +297,21 @@ class _HomePageState extends State<HomePage> with WindowListener {
       PaneItem(
           title: const Text("Tutorial"),
           icon: const Icon(FluentIcons.info),
-          body: const InfoPage()
+          body: const InfoPage(),
+          onTap: _onTutorial
       )
   ];
+
+  void _onTutorial() {
+    if(!_navigated){
+      setState(() {
+        _settingsController.tutorialPage.value = TutorialPage.start;
+        _settingsController.scrollingDistance = 0;
+      });
+    }
+
+    _navigated = false;
+  }
 
   bool _calculateSize() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -286,36 +336,6 @@ class _HomePageState extends State<HomePage> with WindowListener {
     });
 
     return true;
-  }
-
-  Widget _createTitleBar() => Align(
-    alignment: Alignment.topRight,
-    child: _createTitleBarContent(),
-  );
-
-  Widget _createTitleBarContent() {
-    if(_settingsController.displayType() == PaneDisplayMode.top) {
-      return WindowTitleBar(focused: _focused());
-    }
-
-    return Row(
-      children: [
-        SizedBox(
-            width: _settingsController.displayType() == PaneDisplayMode.open ? _openMenuSize : _headerSize,
-            height: _headerSize
-        ),
-
-        Expanded(
-            child: _createWindowGestures(
-                child: Container(
-                    height: _headerSize,
-                    color: Colors.transparent
-                )
-            )
-        ),
-        WindowTitleBar(focused: _focused())
-      ],
-    );
   }
 
   String get searchValue => _searchController.text;

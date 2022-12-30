@@ -1,6 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/dialog/dialog.dart';
@@ -159,7 +159,7 @@ extension ServerControllerDialog on ServerController {
           builder: (context) =>
               FutureBuilderDialog(
                   future: Future.wait([
-                    pingSelf(port.text),
+                    compute(pingSelf, port.text),
                     Future.delayed(const Duration(seconds: 1))
                   ]),
                   loadingMessage: "Pinging ${type().id} server...",

@@ -12,8 +12,8 @@ import 'package:reboot_launcher/src/dialog/add_local_version.dart';
 import 'package:reboot_launcher/src/widget/shared/smart_check_box.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../dialog/add_server_version.dart';
-import '../../util/checks.dart';
+import 'package:reboot_launcher/src/dialog/add_server_version.dart';
+import 'package:reboot_launcher/src/util/checks.dart';
 import '../shared/file_selector.dart';
 
 class VersionSelector extends StatefulWidget {
