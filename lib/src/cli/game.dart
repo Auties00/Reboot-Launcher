@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/cli.dart';
-import 'package:win32_suspend_process/win32_suspend_process.dart';
 
 import '../model/fortnite_version.dart';
 import '../model/game_type.dart';
 import '../util/injector.dart';
 import '../util/os.dart';
+import '../util/process.dart';
 import '../util/server.dart';
 
 final List<String> _errorStrings = [
@@ -41,7 +41,6 @@ Future<void> startGame() async {
   _gameProcess = await Process.start(gamePath, createRebootArgs(username!, type))
     ..exitCode.then((_) => _onClose())
     ..outLines.forEach((line) => _onGameOutput(line, dll, hosting, verbose));
-  _injectOrShowError("craniumv2.dll");
 }
 
 
@@ -51,7 +50,7 @@ Future<void> _startLauncherProcess(FortniteVersion dummyVersion) async {
   }
 
   _launcherProcess = await Process.start(dummyVersion.launcher!.path, []);
-  Win32Process(_launcherProcess!.pid).suspend();
+  suspend(_launcherProcess!.pid);
 }
 
 Future<void> _startEacProcess(FortniteVersion dummyVersion) async {
@@ -60,7 +59,7 @@ Future<void> _startEacProcess(FortniteVersion dummyVersion) async {
   }
 
   _eacProcess = await Process.start(dummyVersion.eacExecutable!.path, []);
-  Win32Process(_eacProcess!.pid).suspend();
+  suspend(_eacProcess!.pid);
 }
 
 void _onGameOutput(String line, String dll, bool hosting, bool verbose) {
@@ -85,18 +84,14 @@ void _onGameOutput(String line, String dll, bool hosting, bool verbose) {
   }
 
   if(line.contains("Region ")){
-    _injectRequiredDLLs(hosting, dll);
-  }
-}
+    if(hosting) {
+      _injectOrShowError(dll, false);
+    }else {
+      _injectOrShowError("console.dll");
+    }
 
-void _injectRequiredDLLs(bool host, String rebootDll) {
-   if(host) {
-    _injectOrShowError(rebootDll, false);
-  }else {
-    _injectOrShowError("console.dll");
+    _injectOrShowError("leakv2.dll");
   }
-
-  _injectOrShowError("leakv2.dll");
 }
 
 void _kill() {

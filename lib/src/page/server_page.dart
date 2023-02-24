@@ -18,12 +18,17 @@ class ServerPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if(_serverController.warning.value)
-            SizedBox(
-              width: double.infinity,
-              child: InfoBar(
-                  title: const Text("The backend server handles authentication and parties, not game hosting"),
-                  severity: InfoBarSeverity.info,
-                  onClose: () => _serverController.warning.value = false
+            GestureDetector(
+              onTap: () => _serverController.warning.value = false,
+              child: const MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: InfoBar(
+                      title: Text("The backend server handles authentication and parties, not game hosting"),
+                      severity: InfoBarSeverity.info
+                  ),
+                ),
               ),
             ),
           HostInput(),

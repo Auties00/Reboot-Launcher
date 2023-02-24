@@ -14,6 +14,14 @@ String? checkVersion(String? text, List<FortniteVersion> versions) {
   return null;
 }
 
+String? checkChangeVersion(String? text) {
+  if (text == null || text.isEmpty) {
+    return 'Empty version name';
+  }
+
+  return null;
+}
+
 String? checkGameFolder(text) {
   if (text == null || text.isEmpty) {
     return 'Empty game path';

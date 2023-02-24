@@ -18,7 +18,6 @@ import 'package:reboot_launcher/src/util/injector.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
 import 'package:reboot_launcher/src/util/reboot.dart';
 import 'package:reboot_launcher/src/util/server.dart';
-import 'package:win32_suspend_process/win32_suspend_process.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:reboot_launcher/src/../main.dart';
@@ -26,6 +25,8 @@ import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/model/game_instance.dart';
 
+import '../../page/home_page.dart';
+import '../../util/process.dart';
 import '../shared/smart_check_box.dart';
 
 class LaunchButton extends StatefulWidget {
@@ -39,6 +40,10 @@ class LaunchButton extends StatefulWidget {
 
 class _LaunchButtonState extends State<LaunchButton> {
   final String _shutdownLine = "FOnlineSubsystemGoogleCommon::Shutdown()";
+  final List<String> _corruptedBuildErrors = [
+    "when 0 bytes remain",
+    "Pak chunk signature verification failed!"
+  ];
   final List<String> _errorStrings = [
     "port 3551 failed: Connection refused",
     "Unable to login to Fortnite servers",
@@ -69,7 +74,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         child: Obx(() => Tooltip(
           message: _gameController.started() ? "Close the running Fortnite instance" : "Launch a new Fortnite instance",
           child: Button(
-              onPressed: _onPressed,
+              onPressed: () => _start(_gameController.type()),
               child: Text(_gameController.started() ? "Close" : "Launch")
           ),
         )),
@@ -77,9 +82,9 @@ class _LaunchButtonState extends State<LaunchButton> {
     );
   }
 
-  void _onPressed() async {
+  void _start(GameType type) async {
     if (_gameController.started()) {
-      _onStop(_gameController.type());
+      _onStop(type);
       return;
     }
 
@@ -87,7 +92,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     if (_gameController.username.text.isEmpty) {
       if(_serverController.type() != ServerType.local){
         showMessage("Missing username");
-        _onStop(_gameController.type());
+        _onStop(type);
         return;
       }
 
@@ -96,25 +101,31 @@ class _LaunchButtonState extends State<LaunchButton> {
 
     if (_gameController.selectedVersionObs.value == null) {
       showMessage("No version is selected");
-      _onStop(_gameController.type());
+      _onStop(type);
       return;
     }
-    
+
+    for (var element in Injectable.values) {
+      if(await _getDllPath(element, type) == null) {
+        return;
+      }
+    }
+
     try {
+      _fail = false;
       await _resetLogFile();
-      
+
       var version = _gameController.selectedVersionObs.value!;
       var gamePath = version.executable?.path;
       if(gamePath == null){
-        _onError("${version.location.path} no longer contains a Fortnite executable, did you delete it?", null);
-        _onStop(_gameController.type());
+        showMissingBuildError(version);
+        _onStop(type);
         return;
       }
-      
-      var result = await _serverController.start(required: true, askPortKill: false);
+
+      var result = _serverController.started() || await _serverController.toggle();
       if(!result){
-        showMessage("Cannot launch the game as the backend didn't start up correctly");
-        _onStop(_gameController.type());
+        _onStop(type);
         return;
       }
 
@@ -122,15 +133,15 @@ class _LaunchButtonState extends State<LaunchButton> {
       await compute(patchHeadless, version.executable!);
 
       await _startMatchMakingServer();
-      await _startGameProcesses(version, _gameController.type());
+      await _startGameProcesses(version, type);
 
-      if(_gameController.type() == GameType.headlessServer){
+      if(type == GameType.headlessServer){
         await _showServerLaunchingWarning();
       }
     } catch (exception, stacktrace) {
       _closeDialogIfOpen(false);
-      _onError(exception, stacktrace);
-      _onStop(_gameController.type());
+      showCorruptedBuildError(type != GameType.client, exception, stacktrace);
+      _onStop(type);
     }
   }
 
@@ -143,7 +154,7 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   Future<void> _startMatchMakingServer() async {
-    if(_gameController.type() != GameType.client || _settingsController.doNotAskAgain()){
+    if(_gameController.type() != GameType.client){
       return;
     }
 
@@ -158,55 +169,68 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    var controller = CheckboxController();
-    var result = await showDialog<bool>(
-        context: context,
-        builder: (context) => ContentDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(
-                  width: double.infinity,
-                  child: Text(
-                        "The matchmaking ip is set to the local machine, but no server is running. "
-                        "If you want to start a match for your friends or just test out Reboot, you need to start a server, either now from this prompt or later manually.",
-                    textAlign: TextAlign.start,
-                  )
-              ),
-
-              const SizedBox(height: 12.0),
-
-              SmartCheckBox(
-                  controller: controller,
-                  content: const Text("Don't ask again")
-              )
-            ],
-          ),
-          actions: [
-            Button(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Ignore'),
-            ),
-            FilledButton(
-              onPressed: ()  => Navigator.of(context).pop(true),
-              child: const Text('Start a server'),
-            )
-          ],
-        )
-    ) ?? false;
-    _settingsController.doNotAskAgain.value = controller.value;
-
-    if(!result){
+    var result = await _askToStartMatchMakingServer();
+    if(result != true){
       return;
     }
 
     var version = _gameController.selectedVersionObs.value!;
-    _startGameProcesses(
+    await _startGameProcesses(
         version,
         GameType.headlessServer
     );
+  }
+
+  Future<bool> _askToStartMatchMakingServer() async {
+    if(_settingsController.doNotAskAgain()) {
+      return _settingsController.automaticallyStartMatchmaker();
+    }
+
+    var controller = CheckboxController();
+    var result = await showDialog<bool>(
+        context: appKey.currentContext!,
+        builder: (context) =>
+            ContentDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        "The matchmaking ip is set to the local machine, but no server is running. "
+                            "If you want to start a match for your friends or just test out Reboot, you need to start a server, either now from this prompt or later manually.",
+                        textAlign: TextAlign.start,
+                      )
+                  ),
+
+                  const SizedBox(height: 12.0),
+
+                  SmartCheckBox(
+                      controller: controller,
+                      content: const Text("Don't ask again")
+                  )
+                ],
+              ),
+              actions: [
+                Button(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Ignore'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Start a server'),
+                )
+              ],
+            )
+    );
+    _settingsController.doNotAskAgain.value = controller.value;
+    if(result != null){
+      _settingsController.automaticallyStartMatchmaker.value = result;
+    }
+
+    return result ?? false;
   }
 
   Future<Process> _createGameProcess(String gamePath, GameType type) async {
@@ -219,20 +243,20 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   Future<void> _resetLogFile() async {
-     if(_logFile != null && await _logFile!.exists()){
+    if(_logFile != null && await _logFile!.exists()){
       await _logFile!.delete();
     }
   }
 
   Future<Process?> _createLauncherProcess(FortniteVersion version) async {
     var launcherFile = version.launcher;
-     if (launcherFile == null) {
-       return null;
-     }
-     
-     var launcherProcess = await Process.start(launcherFile.path, []);
-     Win32Process(launcherProcess.pid).suspend();
-     return launcherProcess;
+    if (launcherFile == null) {
+      return null;
+    }
+
+    var launcherProcess = await Process.start(launcherFile.path, []);
+    suspend(launcherProcess.pid);
+    return launcherProcess;
   }
 
   Future<Process?> _createEacProcess(FortniteVersion version) async {
@@ -242,7 +266,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     var eacProcess = await Process.start(eacFile.path, []);
-    Win32Process(eacProcess.pid).suspend();
+    suspend(eacProcess.pid);
     return eacProcess;
   }
 
@@ -268,8 +292,8 @@ class _LaunchButtonState extends State<LaunchButton> {
     var result = await showDialog<bool>(
         context: appKey.currentContext!,
         builder: (context) => ProgressDialog(
-          text: "Launching headless server...",
-          onStop: () =>_onEnd(_gameController.type())
+            text: "Launching headless server...",
+            onStop: () =>_onEnd(_gameController.type())
         )
     ) ?? false;
 
@@ -290,6 +314,17 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
+    if(_corruptedBuildErrors.any((element) => line.contains(element))){
+      if(_fail){
+        return;
+      }
+
+      _fail = true;
+      showCorruptedBuildError(type != GameType.client);
+      _onStop(type);
+      return;
+    }
+
     if(_errorStrings.any((element) => line.contains(element))){
       if(_fail){
         return;
@@ -297,7 +332,7 @@ class _LaunchButtonState extends State<LaunchButton> {
 
       _fail = true;
       _closeDialogIfOpen(false);
-      _showTokenError();
+      _showTokenError(type);
       return;
     }
 
@@ -310,30 +345,28 @@ class _LaunchButtonState extends State<LaunchButton> {
       }
 
       _injectOrShowError(Injectable.memoryFix, type);
+      _gameController.currentGameInstance?.tokenError = false;
     }
   }
 
-  Future<void> _showTokenError() async {
-    if(_serverController.type() == ServerType.embedded) {
-      showTokenErrorFixable();
-      await _serverController.start(
-        required: true,
-        askPortKill: false
-      );
-    } else {
+  Future<void> _showTokenError(GameType type) async {
+    if(_serverController.type() != ServerType.embedded) {
       showTokenErrorUnfixable();
+      _gameController.currentGameInstance?.tokenError = true;
+      return;
     }
-  }
 
-  Future<Object?> _onError(Object exception, StackTrace? stackTrace) async {
-    return showDialog(
-        context: context,
-        builder: (context) => ErrorDialog(
-          exception: exception,
-          stackTrace: stackTrace,
-          errorMessageBuilder: (exception) => "Cannot launch fortnite: $exception"
-        )
-    );
+    var tokenError = _gameController.currentGameInstance?.tokenError;
+    _gameController.currentGameInstance?.tokenError = true;
+    await _serverController.restart();
+    if (tokenError == true) {
+      showTokenErrorCouldNotFix();
+      return;
+    }
+
+    showTokenErrorFixable();
+    _onStop(type);
+    _start(type);
   }
 
   void _onStop(GameType type) {
@@ -351,13 +384,9 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     try {
-      var dllPath = await _getDllPath(injectable);
-      if(!dllPath.existsSync()) {
-        await _downloadMissingDll(injectable);
-        if(!dllPath.existsSync()){
-          _onDllFail(dllPath, type);
-          return;
-        }
+      var dllPath = await _getDllPath(injectable, type);
+      if(dllPath == null) {
+        return;
       }
 
       await injectDll(gameProcess.pid, dllPath.path);
@@ -365,6 +394,34 @@ class _LaunchButtonState extends State<LaunchButton> {
       showMessage("Cannot inject $injectable.dll: $exception");
       _onStop(type);
     }
+  }
+
+  Future<File?> _getDllPath(Injectable injectable, GameType type) async {
+    Future<File> getPath(Injectable injectable) async {
+      switch(injectable){
+        case Injectable.reboot:
+          return File(_settingsController.rebootDll.text);
+        case Injectable.console:
+          return File(_settingsController.consoleDll.text);
+        case Injectable.cranium:
+          return File(_settingsController.authDll.text);
+        case Injectable.memoryFix:
+          return await loadBinary("leakv2.dll", true);
+      }
+    }
+
+    var dllPath = await getPath(injectable);
+    if(dllPath.existsSync()) {
+      return dllPath;
+    }
+
+    await _downloadMissingDll(injectable);
+    if(dllPath.existsSync()) {
+      return dllPath;
+    }
+
+    _onDllFail(dllPath, type);
+    return null;
   }
 
   void _onDllFail(File dllPath, GameType type) {
@@ -380,26 +437,13 @@ class _LaunchButtonState extends State<LaunchButton> {
     });
   }
 
-  Future<File> _getDllPath(Injectable injectable) async {
-    switch(injectable){
-      case Injectable.reboot:
-        return File(_settingsController.rebootDll.text);
-      case Injectable.console:
-        return File(_settingsController.consoleDll.text);
-      case Injectable.cranium:
-        return File(_settingsController.authDll.text);
-      case Injectable.memoryFix:
-        return await loadBinary("leakv2.dll", true);
-    }
-  }
-
   Future<void> _downloadMissingDll(Injectable injectable) async {
     if(injectable != Injectable.reboot){
       await loadBinary("$injectable.dll", true);
       return;
     }
 
-    await downloadRebootDll(0);
+    await downloadRebootDll(rebootDownloadUrl, 0);
   }
 }
 

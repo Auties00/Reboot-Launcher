@@ -8,29 +8,40 @@ import 'package:reboot_launcher/src/util/os.dart';
 import 'package:shelf_proxy/shelf_proxy.dart';
 import 'package:shelf/shelf_io.dart';
 
+import 'package:http/http.dart' as http;
+
 final serverLogFile = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\server.txt");
 
 Future<bool> isLawinPortFree() async {
-  try {
-    var portBat = await loadBinary("port.bat", true);
-    var process = await Process.run(portBat.path, []);
-    return !process.outText.contains(" LISTENING ");
-  }catch(_){
-    return ServerSocket.bind("127.0.0.1", 3551)
-        .then((socket) => socket.close())
-        .then((_) => true)
-        .onError((error, _) => false);
-  }
+  return http.get(Uri.parse("http://127.0.0.1:3551/unknown"))
+      .timeout(const Duration(milliseconds: 500))
+      .then((value) => false)
+      .onError((error, stackTrace) => true);
+}
+
+Future<bool> isMatchmakerPortFree() async {
+  return HttpServer.bind("127.0.0.1", 8080)
+      .then((socket) => socket.close())
+      .then((_) => true)
+      .onError((error, _) => false);
 }
 
 Future<void> freeLawinPort() async {
-  var releaseBat = await loadBinary("release.bat", false);
+  var releaseBat = await loadBinary("kill_lawin_port.bat", false);
   var result = await Process.run(releaseBat.path, []);
-  if(!result.outText.contains("Access is denied")){
-    return;
+  if(result.exitCode == 1){
+    await runElevated(releaseBat.path, "");
+    await Future.delayed(const Duration(seconds: 1));
   }
+}
 
-  await runElevated(releaseBat.path, "");
+Future<void> freeMatchmakerPort() async {
+  var releaseBat = await loadBinary("kill_matchmaker_port.bat", false);
+  var result = await Process.run(releaseBat.path, []);
+  if(result.exitCode == 1){
+    await runElevated(releaseBat.path, "");
+    await Future.delayed(const Duration(seconds: 1));
+  }
 }
 
 List<String> createRebootArgs(String username, GameType type) {
@@ -92,7 +103,7 @@ String? _getHostName(String host) => host.replaceFirst("http://", "").replaceFir
 
 String? _getScheme(String host) => host.startsWith("http://") ? "http" : host.startsWith("https://") ? "https" : null;
 
-Future<ServerResult> checkServerPreconditions(String host, String port, ServerType type, bool needsFreePort) async {
+Future<ServerResult> checkServerPreconditions(String host, String port, ServerType type) async {
   host = host.trim();
   if(host.isEmpty){
     return ServerResult(
@@ -113,19 +124,16 @@ Future<ServerResult> checkServerPreconditions(String host, String port, ServerTy
     );
   }
 
-  if(type == ServerType.embedded || type == ServerType.remote){
-    var free = await isLawinPortFree();
-    if (!free) {
-      if(!needsFreePort) {
-        return ServerResult(
-            type: ServerResultType.alreadyStarted
-        );
-      }
+  if(type != ServerType.local && !(await isLawinPortFree())){
+    return ServerResult(
+        type: ServerResultType.backendPortTakenError
+    );
+  }
 
-      return ServerResult(
-          type: ServerResultType.portTakenError
-      );
-    }
+  if(type == ServerType.embedded && !(await isMatchmakerPortFree())){
+    return ServerResult(
+        type: ServerResultType.backendPortTakenError
+    );
   }
 
   return ServerResult(
@@ -151,7 +159,8 @@ enum ServerResultType {
   missingPortError,
   illegalPortError,
   cannotPingServer,
-  portTakenError,
+  backendPortTakenError,
+  matchmakerPortTakenError,
   canStart,
   alreadyStarted,
   unknownError,

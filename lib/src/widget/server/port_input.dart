@@ -18,7 +18,7 @@ class PortInput extends StatelessWidget {
             label: "Port",
             placeholder: "Type the backend server's port",
             controller: _serverController.port,
-            enabled: _serverController.type.value != ServerType.embedded
+            enabled: _serverController.type.value == ServerType.remote
         ))
     );
   }

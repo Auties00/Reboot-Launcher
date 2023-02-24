@@ -29,15 +29,7 @@ class ServerController extends GetxController {
       host.text = _readHost();
       port.text = _readPort();
       _storage.write("type", value.index);
-
       if(!started.value) {
-        return;
-      }
-
-      if(value == ServerType.remote){
-        remoteServer?.close(force: true);
-        remoteServer = null;
-        started.value = false;
         return;
       }
 
@@ -76,6 +68,7 @@ class ServerController extends GetxController {
           break;
         case ServerType.remote:
           await remoteServer?.close(force: true);
+          remoteServer = null;
           break;
         case ServerType.local:
           break;

@@ -62,7 +62,7 @@ void main(List<String> args) async {
   if(result["update"]) {
     stdout.writeln("Updating reboot dll...");
     try {
-      await downloadRebootDll(0);
+      await downloadRebootDll(rebootDownloadUrl, 0);
     }catch(error){
       stderr.writeln("Cannot update reboot dll: $error");
     }

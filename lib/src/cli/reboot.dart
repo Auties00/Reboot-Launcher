@@ -54,6 +54,6 @@ Future<void> downloadRequiredDLLs() async {
     var tempZip = File("${tempDirectory.path}/reboot_config.zip");
     await tempZip.writeAsBytes(response.bodyBytes);
 
-    await extractFileToDisk(tempZip.path, "$safeBinariesDirectory\\backend\\cli");
+    await extractFileToDisk(tempZip.path, "${safeBinariesDirectory.path}\\cli");
   }
 }

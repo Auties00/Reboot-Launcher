@@ -21,8 +21,7 @@ import 'package:window_manager/window_manager.dart';
 final GlobalKey appKey = GlobalKey();
 
 void main() async {
-  await Directory(safeBinariesDirectory)
-      .create(recursive: true);
+  await safeBinariesDirectory.create(recursive: true);
   WidgetsFlutterBinding.ensureInitialized();
   await SystemTheme.accentColor.load();
   await GetStorage.init("game");

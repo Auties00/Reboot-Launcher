@@ -51,12 +51,19 @@ Future<List<FortniteBuild>> fetchBuilds(ignored) async {
 
 Future<Process> downloadManifestBuild(
     String manifestUrl, String destination, Function(double, String) onProgress) async {
-  var buildExe = await loadBinary("build.exe", false);
+  var log = await loadBinary("download.txt", true);
+  await log.create();
+
+  var buildExe = await loadBinary("build.exe", true);
   var process = await Process.start(buildExe.path, [manifestUrl, destination]);
 
+  log.writeAsString("Starting download of: $manifestUrl\n", mode: FileMode.append);
   process.errLines
       .where((message) => message.contains("%"))
-      .forEach((message) => onProgress(double.parse(message.split("%")[0]), message.substring(message.indexOf(" ") + 1)));
+      .forEach((message) {
+    log.writeAsString("$message\n", mode: FileMode.append);
+    onProgress(double.parse(message.split("%")[0]), message.substring(message.indexOf(" ") + 1));
+  });
 
   return process;
 }
@@ -104,7 +111,7 @@ Future<void> downloadArchiveBuild(String archiveUrl, String destination,
     var shell = Shell(
         commandVerbose: false,
         commentVerbose: false,
-        workingDirectory: safeBinariesDirectory
+        workingDirectory: safeBinariesDirectory.path
     );
     await shell.run("./winrar.exe x \"${tempFile.path}\" *.* \"${output.path}\"");
   } finally {

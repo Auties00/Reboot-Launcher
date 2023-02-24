@@ -229,6 +229,16 @@ class ErrorDialog extends AbstractDialog {
 
   const ErrorDialog({super.key, required this.exception, required this.errorMessageBuilder, this.stackTrace});
 
+  static DialogButton createCopyErrorButton({required Object error, required StackTrace? stackTrace, required Function() onClick, ButtonType type = ButtonType.primary}) => DialogButton(
+    text: "Copy error",
+    type: type,
+    onTap: () async {
+      FlutterClipboard.controlC("An error occurred: $error\nStacktrace:\n $stackTrace");
+      showMessage("Copied error to clipboard");
+      onClick();
+    },
+  );
+
   @override
   Widget build(BuildContext context) {
     return InfoDialog(
@@ -239,14 +249,10 @@ class ErrorDialog extends AbstractDialog {
         ),
 
         if(stackTrace != null)
-          DialogButton(
-            text: "Copy error",
-            type: ButtonType.primary,
-            onTap: () async {
-              FlutterClipboard.controlC("An error occurred: $exception\nStacktrace:\n $stackTrace.toString");
-              Navigator.of(context).pop();
-              showMessage("Copied error to clipboard");
-            },
+          createCopyErrorButton(
+              error: exception,
+              stackTrace: stackTrace,
+              onClick: () => Navigator.pop(context)
           )
       ],
     );

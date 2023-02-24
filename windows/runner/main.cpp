@@ -1,6 +1,8 @@
 #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
 auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME | BDW_HIDE_ON_STARTUP);
 
+#include <cstdlib>
+
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
@@ -34,6 +36,7 @@ bool CheckOneInstance()
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  _putenv_s("OPENSSL_ia32cap", "~0x20000000");
   if(!CheckOneInstance()){
     return false;
   }

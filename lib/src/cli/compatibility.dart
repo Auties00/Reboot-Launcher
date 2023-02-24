@@ -13,7 +13,7 @@ Future<Map<String, dynamic>> getControllerJson(String name) async {
     throw Exception("Missing documents folder");
   }
 
-  var file = File("$folder/$name.gs");
+  var file = File("$folder\\$name.gs");
   if(!file.existsSync()){
     return HashMap();
   }

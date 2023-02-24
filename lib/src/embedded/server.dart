@@ -14,24 +14,11 @@ import "error.dart";
 import "lightswitch.dart";
 import 'matchmaking.dart';
 
-bool _loggingCapabilities = false;
-
 Future<Jaguar> startEmbeddedServer(String Function() ipQuery) async {
-  var server = _createServer(ipQuery);
-  await server.serve(logRequests: true);
-  return server;
-}
-
-Future<Jaguar> startEmbeddedMatchmaker() async {
-  var server = _createMatchmaker();
-  server.serve(logRequests: true);
-  return server;
-}
-
-Jaguar _createServer(String Function() ipQuery) {
-  var server = Jaguar(address: "127.0.0.1", port: 3551, errorWriter: EmbeddedErrorWriter());
+  var server = Jaguar(port: 3551, errorWriter: EmbeddedErrorWriter());
 
   // Version
+  server.getJson("unknown", (context) => Response(body: "lawinserver"));
   server.getJson("/fortnite/api/version", getVersion);
   server.getJson("/fortnite/api/v2/versioncheck/*", hasUpdate);
   server.getJson("/fortnite/api/v2/versioncheck*", hasUpdate);
@@ -105,23 +92,7 @@ Jaguar _createServer(String Function() ipQuery) {
   server.getJson("/fortnite/api/game/v2/privacy/account/:accountId", getPrivacy);
   server.postJson("/fortnite/api/game/v2/privacy/account/:accountId", postPrivacy);
 
-  return server;
-}
-Jaguar _createMatchmaker(){
-  var server = Jaguar(address: "127.0.0.1", port: 8080);
-  WebSocket? ws;
-  server.wsStream(
-      "/",
-      (_, input) => ws = input,
-      after: [(_) => queueMatchmaking(ws!)]
-  );
-  return _addLoggingCapabilities(server);
-}
-
-Jaguar _addLoggingCapabilities(Jaguar server) {
-  if(_loggingCapabilities){
-    return server;
-  }
+  await server.serve(logRequests: true);
 
   server.log.onRecord.listen((line) {
     stdout.writeln(line);
@@ -133,6 +104,17 @@ Jaguar _addLoggingCapabilities(Jaguar server) {
     serverLogFile.writeAsString("An error occurred at ${ctx.uri}: \n$exception\n$trace\n", mode: FileMode.append);
   });
 
-  _loggingCapabilities = true;
+  return server;
+}
+
+Future<Jaguar> startEmbeddedMatchmaker() async {
+  var server = Jaguar(port: 8080);
+  WebSocket? ws;
+  server.wsStream(
+      "/",
+          (_, input) => ws = input,
+      after: [(_) => queueMatchmaking(ws!)]
+  );
+  await server.serve(logRequests: true);
   return server;
 }

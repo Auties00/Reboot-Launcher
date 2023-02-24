@@ -68,7 +68,7 @@ class _FileSelectorState extends State<FileSelector> {
                   autovalidateMode: widget.validatorMode ?? AutovalidateMode.onUserInteraction
                 )
             ),
-            if (widget.allowNavigator) const SizedBox(width: 8.0),
+            if (widget.allowNavigator) const SizedBox(width: 16.0),
             if (widget.allowNavigator)
               Tooltip(
                   message: "Select a ${widget.folder ? 'folder' : 'file'}",

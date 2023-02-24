@@ -23,10 +23,7 @@ class _ServerButtonState extends State<ServerButton> {
         child: Obx(() => Tooltip(
           message: _helpMessage,
               child: Button(
-                  onPressed: () async => _serverController.start(
-                      required: false,
-                      askPortKill: true
-                  ),
+                  onPressed: () async => _serverController.toggle(),
                   child: Text(_buttonText())),
             )),
       ),

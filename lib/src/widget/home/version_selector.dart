@@ -60,42 +60,62 @@ class _VersionSelectorState extends State<VersionSelector> {
 
   Widget _createSelector(BuildContext context) {
     return Tooltip(
-      message: "The version of Fortnite to launch",
-      child: Obx(() => DropDownButton(
-              leading: Text(_gameController.selectedVersionObs.value?.name ??
-                  "Select a version"),
-              items: _gameController.hasNoVersions
-                  ? [_createDefaultVersionItem()]
-                  : _gameController.versions.value
-                  .map((version) => _createVersionItem(context, version))
-                  .toList()))
+        message: "The version of Fortnite to launch",
+        child: Obx(() => _createOptionsMenu(
+            version: _gameController.selectedVersionObs(),
+            close: false,
+            child: DropDownButton(
+                leading: Text(_gameController.selectedVersionObs.value?.name
+                    ?? "Select a version"),
+                items: _createSelectorItems(context)
+            )
+        ))
     );
   }
 
-  MenuFlyoutItem _createVersionItem(
-      BuildContext context, FortniteVersion version) {
-    return MenuFlyoutItem(
-        text: Listener(
-          onPointerDown: (event) async {
-            if (event.kind != PointerDeviceKind.mouse ||
-                event.buttons != kSecondaryMouseButton) {
-              return;
-            }
+  List<MenuFlyoutItem> _createSelectorItems(BuildContext context) {
+    return _gameController.hasNoVersions ? [_createDefaultVersionItem()]
+              : _gameController.versions.value
+              .map((version) => _createVersionItem(context, version))
+              .toList();
+  }
 
-            await _openMenu(context, version, event.position);
-          },
+  MenuFlyoutItem _createVersionItem(BuildContext context, FortniteVersion version) {
+    return MenuFlyoutItem(
+        text: _createOptionsMenu(
+          version: version,
+          close: true,
           child: SizedBox(
               width: double.infinity,
               child: Text(version.name)
           ),
         ),
-        onPressed: () => _gameController.selectedVersion = version);
+        onPressed: () => _gameController.selectedVersion = version
+    );
+  }
+
+  Widget _createOptionsMenu({required FortniteVersion? version, required bool close, required Widget child}) {
+    return Listener(
+      onPointerDown: (event) async {
+        if (event.kind != PointerDeviceKind.mouse ||
+            event.buttons != kSecondaryMouseButton) {
+          return;
+        }
+
+        if(version == null) {
+          return;
+        }
+
+        await _openMenu(context, version, event.position, close);
+      },
+      child: child
+    );
   }
 
   MenuFlyoutItem _createDefaultVersionItem() {
     return MenuFlyoutItem(
         text: const SizedBox(
-            width: double.infinity, child: Text("No versions available")),
+            width: double.infinity, child: Text("No versions available. Add it using the buttons on the right.")),
         trailing: const Expanded(child: SizedBox()),
         onPressed: () {});
   }
@@ -114,24 +134,25 @@ class _VersionSelectorState extends State<VersionSelector> {
   }
 
   Future<void> _openMenu(
-      BuildContext context, FortniteVersion version, Offset offset) async {
-    var result = await showMenu<ContextualOption>(
-        context: context,
-        offset: offset,
+      BuildContext context, FortniteVersion version, Offset offset, bool close) async {
+    var controller = FlyoutController();
+    var result = await controller.showFlyout(
         builder: (context) => MenuFlyout(
             items: ContextualOption.values
                 .map((entry) => _createOption(context, entry))
                 .toList()
         )
     );
-
     switch (result) {
       case ContextualOption.openExplorer:
         if(!mounted){
           return;
         }
 
-        Navigator.of(context).pop();
+        if(close) {
+          Navigator.of(context).pop();
+        }
+
         launchUrl(version.location.uri)
             .onError((error, stackTrace) => _onExplorerError());
         break;
@@ -141,7 +162,10 @@ class _VersionSelectorState extends State<VersionSelector> {
           return;
         }
 
-        Navigator.of(context).pop();
+        if(close) {
+          Navigator.of(context).pop();
+        }
+
         await _openRenameDialog(context, version);
         break;
 
@@ -155,7 +179,9 @@ class _VersionSelectorState extends State<VersionSelector> {
           return;
         }
 
-        Navigator.of(context).pop();
+        if(close) {
+          Navigator.of(context).pop();
+        }
 
         _gameController.removeVersion(version);
         if (_gameController.selectedVersionObs.value?.name == version.name || _gameController.hasNoVersions) {
@@ -242,7 +268,7 @@ class _VersionSelectorState extends State<VersionSelector> {
                     header: "Name",
                     placeholder: "Type the new version name",
                     autofocus: true,
-                    validator: (text) => checkVersion(text, _gameController.versions.value)
+                    validator: (text) => checkChangeVersion(text)
                 ),
 
                 const SizedBox(

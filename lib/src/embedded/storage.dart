@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:path/path.dart' as path;
 import 'dart:io';
 
 import 'package:jaguar/jaguar.dart';
@@ -11,23 +11,16 @@ import '../util/os.dart';
 
 final Directory _settings = Directory("${Platform.environment["UserProfile"]}\\.reboot_launcher\\backend\\settings");
 
-const String _engineName = "DefaultEngine.ini";
-final String _engineIni = loadEmbedded("config/$_engineName").readAsStringSync();
+List getStorageSettings(Context context) =>
+    loadEmbeddedDirectory("config")
+        .listSync()
+        .map((e) => File(e.path))
+        .map(_getStorageSetting)
+        .toList();
 
-const String _gameName = "DefaultGame.ini";
-final String _gameIni = loadEmbedded("config/$_gameName").readAsStringSync();
-
-const String _runtimeName = "DefaultRuntimeOptions.ini";
-final String _runtimeIni = loadEmbedded("config/$_runtimeName").readAsStringSync();
-
-List<Map<String, Object>> getStorageSettings(Context context) => [
-  _getStorageSetting(_engineName, _engineIni),
-  _getStorageSetting(_gameName, _gameIni),
-  _getStorageSetting(_runtimeName, _runtimeIni)
-];
-
-Map<String, Object> _getStorageSetting(String name, String source){
-  var bytes = utf8.encode(source);
+Map<String, Object> _getStorageSetting(File file){
+  var name = path.basename(file.path);
+  var bytes = file.readAsBytesSync();
   return {
     "uniqueFilename": name,
     "filename": name,
@@ -43,16 +36,8 @@ Map<String, Object> _getStorageSetting(String name, String source){
 }
 
 Response getStorageSetting(Context context) {
-  switch(context.pathParams.get("file")){
-    case _engineName:
-      return Response(body: _engineIni);
-    case _gameName:
-      return Response(body: _gameIni);
-    case _runtimeName:
-      return Response(body: _runtimeIni);
-    default:
-      return Response();
-  }
+  var file = loadEmbedded("config\\${context.pathParams.get("file")}");
+  return Response(body: file.readAsStringSync());
 }
 
 Response getStorageFile(Context context) {
@@ -107,5 +92,5 @@ File _getSettingsFile(Context context) {
     _settings.createSync(recursive: true);
   }
 
-  return File("${_settings.path}\\ClientSettings-${parseSeasonBuild(context)}.Sav");
+  return File("${_settings.path}\\ClientSettings.Sav");
 }

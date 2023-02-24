@@ -328,6 +328,6 @@ File _getProfileFile(Context context) {
     _profiles.createSync(recursive: true);
   }
 
-  return File("${_profiles.path}\\ClientProfile-${parseSeasonBuild(context)}.json");
+  return File("${_profiles.path}\\ClientProfile.json");
 }
 

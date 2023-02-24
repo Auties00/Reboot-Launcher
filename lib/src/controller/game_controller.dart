@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
@@ -20,7 +21,9 @@ class GameController extends GetxController {
   late final HashMap<GameType, GameInstance> gameInstancesMap;
   late final RxBool started;
   late bool updated;
-  Future? updater;
+  late bool error;
+  late bool failing;
+  StreamController<bool>? updater;
 
   GameController() {
     _storage = GetStorage("game");
@@ -52,6 +55,10 @@ class GameController extends GetxController {
     started = RxBool(false);
 
     updated = false;
+
+    error = false;
+
+    failing = false;
   }
 
   String _readUsername() {

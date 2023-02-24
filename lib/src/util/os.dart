@@ -4,6 +4,8 @@ import 'package:win32/win32.dart';
 import 'package:ffi/ffi.dart';
 import 'dart:ffi';
 
+import 'package:path/path.dart' as path;
+
 const int appBarSize = 2;
 final RegExp _regex = RegExp(r'(?<=\(Build )(.*)(?=\))');
 
@@ -18,7 +20,7 @@ bool get isWin11 {
 }
 
 Future<File> loadBinary(String binary, bool safe) async{
-  var safeBinary = File("$safeBinariesDirectory\\$binary");
+  var safeBinary = File("${safeBinariesDirectory.path}\\$binary");
   if(await safeBinary.exists()){
     return safeBinary;
   }
@@ -35,36 +37,77 @@ Future<File> loadBinary(String binary, bool safe) async{
   return safeBinary;
 }
 
+File _locateInternalBinary(String binary) =>
+    File("${internalAssetsDirectory.path}\\binaries\\$binary");
+
+Future<void> resetWinNat() async {
+  var binary = await loadBinary("winnat.bat", true);
+  await runElevated(binary.path, "");
+}
+
 Future<bool> runElevated(String executable, String args) async {
   var shellInput = calloc<SHELLEXECUTEINFO>();
   shellInput.ref.lpFile = executable.toNativeUtf16();
   shellInput.ref.lpParameters = args.toNativeUtf16();
-  shellInput.ref.nShow = SW_SHOWDEFAULT;
-  shellInput.ref.fMask = 0x00000040;
+  shellInput.ref.nShow = SW_HIDE;
+  shellInput.ref.fMask = ES_AWAYMODE_REQUIRED;
   shellInput.ref.lpVerb = "runas".toNativeUtf16();
   shellInput.ref.cbSize = sizeOf<SHELLEXECUTEINFO>();
   var shellResult = ShellExecuteEx(shellInput);
   return shellResult == 1;
 }
 
-File _locateInternalBinary(String binary){
-  return File("$internalBinariesDirectory\\$binary");
-}
-
-String get internalBinariesDirectory =>
-    "${File(Platform.resolvedExecutable).parent.path}\\data\\flutter_assets\\assets\\binaries";
+Directory get internalAssetsDirectory =>
+    Directory("${File(Platform.resolvedExecutable).parent.path}\\data\\flutter_assets\\assets");
 
 Directory get tempDirectory =>
     Directory("${Platform.environment["Temp"]}");
 
-String get safeBinariesDirectory =>
-    "${Platform.environment["UserProfile"]}\\.reboot_launcher";
+Directory get safeBinariesDirectory =>
+    Directory("${Platform.environment["UserProfile"]}\\.reboot_launcher");
+
+Directory get embeddedBackendDirectory =>
+    Directory("${safeBinariesDirectory.path}\\backend");
 
 File loadEmbedded(String file) {
-  var safeBinary = File("$safeBinariesDirectory\\backend\\cli\\$file");
+  var safeBinary = File("${embeddedBackendDirectory.path}\\$file");
   if(safeBinary.existsSync()){
     return safeBinary;
   }
 
-  return File("${File(Platform.resolvedExecutable).parent.path}\\data\\flutter_assets\\assets\\$file");
+  safeBinary.parent.createSync(recursive: true);
+  var internal = File("${internalAssetsDirectory.path}\\$file");
+  if(internal.existsSync()) {
+    internal.copySync(safeBinary.path);
+  }
+
+  return safeBinary;
+}
+
+Directory loadEmbeddedDirectory(String directory) {
+  var safeBinary = Directory("${embeddedBackendDirectory.path}\\$directory");
+  safeBinary.parent.createSync(recursive: true);
+  var internal = Directory("${internalAssetsDirectory.path}\\$directory");
+  _copyFolder(internal, safeBinary);
+  return safeBinary;
+}
+
+void _copyFolder(Directory dir1, Directory dir2) {
+  if(!dir1.existsSync()){
+    return;
+  }
+
+  if (!dir2.existsSync()) {
+    dir2.createSync(recursive: true);
+  }
+
+  dir1.listSync().forEach((element) {
+    var newPath = "${dir2.path}/${path.basename(element.path)}";
+    if (element is File) {
+      var newFile = File(newPath);
+      newFile.writeAsBytesSync(element.readAsBytesSync());
+    } else if (element is Directory) {
+      _copyFolder(element, Directory(newPath));
+    }
+  });
 }

@@ -8,6 +8,7 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/dialog/dialog.dart';
 import 'package:reboot_launcher/src/dialog/dialog_button.dart';
+import 'package:reboot_launcher/src/model/game_type.dart';
 import 'package:reboot_launcher/src/page/settings_page.dart';
 import 'package:reboot_launcher/src/page/launcher_page.dart';
 import 'package:reboot_launcher/src/page/server_page.dart';
@@ -17,6 +18,7 @@ import 'package:reboot_launcher/src/widget/os/window_buttons.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../controller/settings_controller.dart';
+import '../model/server_type.dart';
 import '../model/tutorial_page.dart';
 import 'info_page.dart';
 
@@ -32,7 +34,6 @@ class _HomePageState extends State<HomePage> with WindowListener {
   static const double _sectionSize = 100.0;
   static const double _defaultPadding = 12.0;
   static const int _headerButtonCount = 3;
-  static const int _sectionButtonCount = 4;
 
   final GameController _gameController = Get.find<GameController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
@@ -51,18 +52,34 @@ class _HomePageState extends State<HomePage> with WindowListener {
   @override
   void initState() {
     windowManager.addListener(this);
-    _searchController.addListener(() {
-      if (searchValue.isEmpty) {
-        _searchItems.value = null;
-        return;
-      }
-
-      _searchItems.value = _allItems.whereType<PaneItem>()
-          .where((item) => (item.title as Text).data!.toLowerCase().contains(searchValue.toLowerCase()))
-          .toList()
-          .cast<NavigationPaneItem>();
+    _searchController.addListener(_onSearch);
+    _onEasyMode();
+    _settingsController.advancedMode.listen((advanced) {
+      _onEasyMode();
+      _index.value = _index.value + (advanced ? 1 : -1);
     });
     super.initState();
+  }
+
+  void _onSearch() {
+    if (searchValue.isEmpty) {
+      _searchItems.value = null;
+      return;
+    }
+
+    _searchItems.value = _allItems.whereType<PaneItem>()
+        .where((item) => (item.title as Text).data!.toLowerCase().contains(searchValue.toLowerCase()))
+        .toList()
+        .cast<NavigationPaneItem>();
+  }
+
+  void _onEasyMode() {
+    if(_settingsController.advancedMode.value){
+      return;
+    }
+
+    _gameController.type.value = GameType.client;
+    _serverController.type.value = ServerType.embedded;
   }
 
   @override
@@ -119,29 +136,38 @@ class _HomePageState extends State<HomePage> with WindowListener {
   }
 
   @override
-  Widget build(BuildContext context) => NotificationListener<SizeChangedLayoutNotification>(
-      onNotification: (notification) => _calculateSize(),
-      child: SizeChangedLayoutNotifier(
-          child: Obx(() => Stack(
-              children: [
-                _createNavigationView(),
-                if(_settingsController.displayType() == PaneDisplayMode.top)
-                  Align(
-                      alignment: Alignment.topRight,
-                      child: WindowTitleBar(focused: _focused())
-                  ),
-                if(_settingsController.displayType() == PaneDisplayMode.top)
-                  _createTopDisplayGestures(),
-                if(_focused() && isWin11)
-                  const WindowBorder()
-              ])
-          )
-      )
-  );
+  Widget build(BuildContext context) {
+    return NotificationListener<SizeChangedLayoutNotification>(
+        onNotification: (notification) {
+          return _calculateSize();
+        },
+        child: SizeChangedLayoutNotifier(
+            child: Obx(_getViewStack)
+        )
+    );
+  }
 
-  Padding _createTopDisplayGestures() => Padding(
-      padding: const EdgeInsets.only(
-        left: _sectionSize * _sectionButtonCount,
+  Widget _getViewStack() {
+    var view = _createNavigationView();
+    return Stack(
+        children: [
+          view,
+          if(_settingsController.displayType() == PaneDisplayMode.top)
+            Align(
+                alignment: Alignment.topRight,
+                child: WindowTitleBar(focused: _focused())
+            ),
+          if(_settingsController.displayType() == PaneDisplayMode.top)
+            _createTopDisplayGestures(view.pane?.items.length ?? 0),
+          if(_focused() && isWin11)
+            const WindowBorder()
+        ]
+    );
+  }
+
+  Padding _createTopDisplayGestures(int size) => Padding(
+      padding: EdgeInsets.only(
+        left: _sectionSize * size,
         right: _headerSize * _headerButtonCount,
       ),
       child: SizedBox(
@@ -205,11 +231,11 @@ class _HomePageState extends State<HomePage> with WindowListener {
     );
   }
 
-  RenderObjectWidget _createPage(Widget? body) {
+  Widget _createPage(Widget? body) {
     if(_settingsController.displayType() == PaneDisplayMode.top){
       return Padding(
-        padding: const EdgeInsets.all(_defaultPadding),
-        child: body
+          padding: const EdgeInsets.all(_defaultPadding),
+          child: body
       );
     }
 
@@ -267,10 +293,9 @@ class _HomePageState extends State<HomePage> with WindowListener {
   List<NavigationPaneItem> _createFooterItems() => searchValue.isNotEmpty ? [] : [
     if(_settingsController.displayType() != PaneDisplayMode.top)
       PaneItem(
-          title: const Text("Tutorial"),
-          icon: const Icon(FluentIcons.info),
-          body: const InfoPage(),
-          onTap: _onTutorial
+          title: const Text("Settings"),
+          icon: const Icon(FluentIcons.settings),
+          body: SettingsPage()
       )
   ];
 
@@ -281,24 +306,25 @@ class _HomePageState extends State<HomePage> with WindowListener {
         body: const LauncherPage()
     ),
 
-    PaneItem(
-        title: const Text("Backend"),
-        icon: const Icon(FluentIcons.server_enviroment),
-        body: ServerPage()
-    ),
+    if(_settingsController.advancedMode.value)
+      PaneItem(
+          title: const Text("Backend"),
+          icon: const Icon(FluentIcons.server_enviroment),
+          body: ServerPage()
+      ),
 
     PaneItem(
-        title: const Text("Settings"),
-        icon: const Icon(FluentIcons.settings),
-        body: SettingsPage()
+        title: const Text("Tutorial"),
+        icon: const Icon(FluentIcons.info),
+        body: const InfoPage(),
+        onTap: _onTutorial
     ),
 
     if(_settingsController.displayType() == PaneDisplayMode.top)
       PaneItem(
-          title: const Text("Tutorial"),
-          icon: const Icon(FluentIcons.info),
-          body: const InfoPage(),
-          onTap: _onTutorial
+          title: const Text("Settings"),
+          icon: const Icon(FluentIcons.settings),
+          body: SettingsPage()
       )
   ];
 

@@ -14,27 +14,25 @@ class InfoPage extends StatefulWidget {
 
 class _InfoPageState extends State<InfoPage> {
   final List<String> _elseTitles = [
-    "Open the settings tab",
-    "Type the ip address of the host, including the port if it's not 7777\n    The complete address should follow the schema ip:port",
     "Open the home page",
+    "Type the ip address of the host, including the port if it's not 7777\n    The complete address should follow the schema ip:port",
     "Type your username if you haven't already",
     "Select the exact version that the host is using from the dropdown menu\n    If necessary, install it using the download button",
     "As you want to play, select client from the dropdown menu",
-    "Click launch to open the game",
+    "Click launch to open the game\n    If the game closes immediately, it means that the build you downloaded is corrupted\n    The same is valid if an Unreal Crash window opens\n    Download another and try again",
     "Once you are in game, click PLAY to enter in-game\n    If this doesn't work open the Fortnite console by clicking the button above tab\n    If nothing happens, make sure that your keyboard locale is set to English\n    Type 'open TYPE_THE_IP' without the quotes, for example: open 85.182.12.1"
   ];
   final List<String> _ownTitles = [
-    "Open the settings tab",
-    "Type 127.0.0.1 as the matchmaking host",
     "Open the home page",
+    "Type 127.0.0.1 as the matchmaking host\n    If you didn't know, 127.0.0.1 is the ip for your local machine",
     "Type your username if you haven't already",
-    "Select the version you want to host\n    If necessary, install it using the download button",
-    "As you want to host, select Headless Server from the dropdown menu\n    If the headless server doesn't work for your version, use the normal server instead",
-    "Click launch to start the server and wait until the Reboot GUI shows up",
+    "Select the version you want to host\n    If necessary, install it using the download button\n    Check the supported versions in #info in the Discord server\n    Fortnite 7.40 is the best one to use usually",
+    "As you want to host, select headless server from the dropdown menu\n    If the headless server doesn't work for your version, use the normal server instead\n    The difference between the two is that the first doesn't render a fortnite instance\n    Both will not allow you to play, only to host\n    You will see an infinite loading screen when using the normal server\n    If you want to also play continue reading",
+    "Click launch to start the server and wait until the Reboot GUI shows up\n    If the game closes immediately, it means that the build you downloaded is corrupted\n    The same is valid if an Unreal Crash window opens\n    Download another and try again",
     "To allow your friends to join your server, follow the instructions on playit.gg\n    If you are an advanced user, open port 7777 on your router\n    Finally, share your playit ip or public IPv4 address with your friends\n    If you just want to play by yourself, skip this step",
-    "When you want to start the game, click on the 'Start Bus Countdown' button",
-    "If you also want to play, start a client by selecting Client from the dropdown menu\n     Don't close or open again the launcher, use the same window",
-    "Click launch to open the game",
+    "When you want to start the game, click on the 'Start Bus Countdown' button\n    Before clicking that button, make all of your friends join\n    This is because joining mid-game isn't allowed",
+    "If you also want to play, start a client by selecting Client from the dropdown menu\n    Don't close or open again the launcher, use the same window\n    Remember to keep both the headless server(or server) and client open\n    If you want to close the client or server, simply switch between them using the menu\n    The launcher will remember what instances you have opened",
+    "Click launch to open the game\n    If the game closes immediately, it means that the build you downloaded is corrupted\n    The same is valid if an Unreal Crash window opens\n    Download another and try again",
     "Once you are in game, click PLAY to enter in-game\n    If this doesn't work open the Fortnite console by clicking the button above tab\n    If nothing happens, make sure that your keyboard locale is set to English\n    Type 'open TYPE_THE_IP' without the quotes, for example: open 85.182.12.1"
   ];
 
