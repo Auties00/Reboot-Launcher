@@ -1,19 +1,17 @@
 import 'dart:io';
 
 import 'package:process_run/shell.dart';
-import 'package:reboot_launcher/src/embedded/server.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_proxy/shelf_proxy.dart';
 
 import '../model/server_type.dart';
-import '../util/server.dart';
-import 'game.dart';
+import '../util/server.dart' as server;
 
-Future<bool> startServer(String? host, String? port, ServerType type, String? matchmakingIp) async {
+Future<bool> startServer(String? host, String? port, ServerType type) async {
   stdout.writeln("Starting backend server...");
   switch(type){
     case ServerType.local:
-      var result = await ping(host ?? "127.0.0.1", port ?? "3551");
+      var result = await server.ping(host ?? "127.0.0.1", port ?? "3551");
       if(result == null){
         throw Exception("Local backend server is not running");
       }
@@ -22,11 +20,8 @@ Future<bool> startServer(String? host, String? port, ServerType type, String? ma
       return true;
     case ServerType.embedded:
       stdout.writeln("Starting an embedded server...");
-      await startEmbeddedServer(
-              () => matchmakingIp ?? "127.0.0.1"
-      );
-      await startEmbeddedMatchmaker();
-      var result = await ping(host ?? "127.0.0.1", port ?? "3551");
+      await server.startServer();
+      var result = await server.ping(host ?? "127.0.0.1", port ?? "3551");
       if(result == null){
         throw Exception("Cannot start embedded server");
       }
@@ -62,7 +57,7 @@ Future<HttpServer?> _changeReverseProxyState(String host, String port) async {
   }
 
   try{
-    var uri = await ping(host, port);
+    var uri = await server.ping(host, port);
     if(uri == null){
       return null;
     }

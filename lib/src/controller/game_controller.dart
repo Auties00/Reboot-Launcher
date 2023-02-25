@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:async/async.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -14,12 +12,13 @@ import 'package:reboot_launcher/src/model/game_type.dart';
 class GameController extends GetxController {
   late final GetStorage _storage;
   late final TextEditingController username;
-  late final TextEditingController version;
+  late final TextEditingController customLaunchArgs;
   late final Rx<List<FortniteVersion>> versions;
   late final Rxn<FortniteVersion> _selectedVersion;
   late final Rx<GameType> type;
   late final HashMap<GameType, GameInstance> gameInstancesMap;
   late final RxBool started;
+  late final RxBool autostartGameServer;
   late bool updated;
   late bool error;
   late bool failing;
@@ -50,9 +49,15 @@ class GameController extends GetxController {
     username = TextEditingController(text: _readUsername());
     username.addListener(() => _storage.write("${type.value == GameType.client ? 'game' : 'host'}_username", username.text));
 
+    customLaunchArgs = TextEditingController(text: _storage.read("custom_launch_args" ?? ""));
+    customLaunchArgs.addListener(() => _storage.write("custom_launch_args", customLaunchArgs.text));
+
     gameInstancesMap= HashMap();
 
     started = RxBool(false);
+
+    autostartGameServer = RxBool(_storage.read("auto_start_game_server") ?? true);
+    autostartGameServer.listen((value) => _storage.write("auto_start_game_server", value));
 
     updated = false;
 
@@ -95,9 +100,9 @@ class GameController extends GetxController {
 
   bool get hasNoVersions => versions.value.isEmpty;
 
-  Rxn<FortniteVersion> get selectedVersionObs => _selectedVersion;
-
   GameInstance? get currentGameInstance => gameInstancesMap[type()];
+
+  FortniteVersion? get selectedVersion => _selectedVersion();
 
   set selectedVersion(FortniteVersion? version) {
     _selectedVersion(version);

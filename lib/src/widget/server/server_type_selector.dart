@@ -10,30 +10,19 @@ class ServerTypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: "Determines the type of backend server to use",
-      child: InfoLabel(
-        label: "Type",
-        child: SizedBox(
-            width: double.infinity,
-            child: Obx(() => DropDownButton(
-                leading: Text(_serverController.type.value.name),
-                items: ServerType.values
-                    .map((type) => _createItem(type))
-                    .toList()))
-        ),
-      ),
+    return DropDownButton(
+        leading: Text(_serverController.type.value.name),
+        items: ServerType.values
+            .map((type) => _createItem(type))
+            .toList()
     );
   }
 
   MenuFlyoutItem _createItem(ServerType type) {
     return MenuFlyoutItem(
-        text: SizedBox(
-            width: double.infinity,
-            child: Tooltip(
-                message: type.message,
-                child: Text(type.name)
-            )
+        text: Tooltip(
+            message: type.message,
+            child: Text(type.name)
         ),
         onPressed: () async {
           await _serverController.stop();

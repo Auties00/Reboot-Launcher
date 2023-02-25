@@ -25,9 +25,7 @@ import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/model/game_instance.dart';
 
-import '../../page/home_page.dart';
 import '../../util/process.dart';
-import '../shared/smart_check_box.dart';
 
 class LaunchButton extends StatefulWidget {
   const LaunchButton(
@@ -66,21 +64,24 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: AlignmentDirectional.bottomCenter,
-      child: SizedBox(
-        width: double.infinity,
-        child: Obx(() => Tooltip(
-          message: _gameController.started() ? "Close the running Fortnite instance" : "Launch a new Fortnite instance",
-          child: Button(
-              onPressed: () => _start(_gameController.type()),
-              child: Text(_gameController.started() ? "Close" : "Launch")
+  Widget build(BuildContext context) => Align(
+    alignment: AlignmentDirectional.bottomCenter,
+    child: SizedBox(
+      width: double.infinity,
+      child: Obx(() => SizedBox(
+        height: 48,
+        child: Button(
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+                _gameController.started() ? "Close fortnite" : "Launch fortnite"
+            ),
           ),
-        )),
-      ),
-    );
-  }
+          onPressed: () => _start(_gameController.type()),
+        ),
+      )),
+    ),
+  );
 
   void _start(GameType type) async {
     if (_gameController.started()) {
@@ -99,7 +100,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       showMessage("No username: expecting self sign in");
     }
 
-    if (_gameController.selectedVersionObs.value == null) {
+    if (_gameController.selectedVersion == null) {
       showMessage("No version is selected");
       _onStop(type);
       return;
@@ -115,7 +116,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       _fail = false;
       await _resetLogFile();
 
-      var version = _gameController.selectedVersionObs.value!;
+      var version = _gameController.selectedVersion!;
       var gamePath = version.executable?.path;
       if(gamePath == null){
         showMissingBuildError(version);
@@ -132,8 +133,8 @@ class _LaunchButtonState extends State<LaunchButton> {
       await compute(patchMatchmaking, version.executable!);
       await compute(patchHeadless, version.executable!);
 
-      await _startMatchMakingServer();
-      await _startGameProcesses(version, type);
+      var automaticallyStartedServer = await _startMatchMakingServer();
+      await _startGameProcesses(version, type, automaticallyStartedServer);
 
       if(type == GameType.headlessServer){
         await _showServerLaunchingWarning();
@@ -145,96 +146,40 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
   }
 
-  Future<void> _startGameProcesses(FortniteVersion version, GameType type) async {
+  Future<void> _startGameProcesses(FortniteVersion version, GameType type, bool hasChildServer) async {
     var launcherProcess = await _createLauncherProcess(version);
     var eacProcess = await _createEacProcess(version);
     var gameProcess = await _createGameProcess(version.executable!.path, type);
-    _gameController.gameInstancesMap[type] = GameInstance(gameProcess, launcherProcess, eacProcess);
+    _gameController.gameInstancesMap[type] = GameInstance(gameProcess, launcherProcess, eacProcess, hasChildServer);
     _injectOrShowError(Injectable.cranium, type);
   }
 
-  Future<void> _startMatchMakingServer() async {
+  Future<bool> _startMatchMakingServer() async {
     if(_gameController.type() != GameType.client){
-      return;
+      return false;
     }
 
     var matchmakingIp = _settingsController.matchmakingIp.text;
     if(!matchmakingIp.contains("127.0.0.1") && !matchmakingIp.contains("localhost")) {
-      return;
+      return false;
     }
 
-    var headlessServer = _gameController.gameInstancesMap[GameType.headlessServer] != null;
-    var server = _gameController.gameInstancesMap[GameType.server] != null;
-    if(headlessServer || server){
-      return;
+    if(!_gameController.autostartGameServer()){
+      return false;
     }
 
-    var result = await _askToStartMatchMakingServer();
-    if(result != true){
-      return;
-    }
-
-    var version = _gameController.selectedVersionObs.value!;
+    var version = _gameController.selectedVersion!;
     await _startGameProcesses(
         version,
-        GameType.headlessServer
+        GameType.headlessServer,
+        false
     );
-  }
-
-  Future<bool> _askToStartMatchMakingServer() async {
-    if(_settingsController.doNotAskAgain()) {
-      return _settingsController.automaticallyStartMatchmaker();
-    }
-
-    var controller = CheckboxController();
-    var result = await showDialog<bool>(
-        context: appKey.currentContext!,
-        builder: (context) =>
-            ContentDialog(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        "The matchmaking ip is set to the local machine, but no server is running. "
-                            "If you want to start a match for your friends or just test out Reboot, you need to start a server, either now from this prompt or later manually.",
-                        textAlign: TextAlign.start,
-                      )
-                  ),
-
-                  const SizedBox(height: 12.0),
-
-                  SmartCheckBox(
-                      controller: controller,
-                      content: const Text("Don't ask again")
-                  )
-                ],
-              ),
-              actions: [
-                Button(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Ignore'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Start a server'),
-                )
-              ],
-            )
-    );
-    _settingsController.doNotAskAgain.value = controller.value;
-    if(result != null){
-      _settingsController.automaticallyStartMatchmaker.value = result;
-    }
-
-    return result ?? false;
+    return true;
   }
 
   Future<Process> _createGameProcess(String gamePath, GameType type) async {
-    var gameProcess = await Process.start(gamePath, createRebootArgs(_gameController.username.text, type));
+    var gameArgs = createRebootArgs(_gameController.username.text, type, _gameController.customLaunchArgs.text);
+    var gameProcess = await Process.start(gamePath, gameArgs);
     gameProcess
       ..exitCode.then((_) => _onEnd(type))
       ..outLines.forEach((line) => _onGameOutput(line, type))
@@ -369,9 +314,21 @@ class _LaunchButtonState extends State<LaunchButton> {
     _start(type);
   }
 
-  void _onStop(GameType type) {
-    _gameController.gameInstancesMap[type]?.kill();
-    _gameController.gameInstancesMap.remove(type);
+  void _onStop(GameType? type) {
+    if(type == null){
+      return;
+    }
+
+    var value = _gameController.gameInstancesMap[type];
+    if(value != null){
+      if(value.hasChildServer){
+        _onStop(GameType.headlessServer);
+      }
+
+      value.kill();
+      _gameController.gameInstancesMap.remove(type);
+    }
+
     if(type == _gameController.type()) {
       _gameController.started.value = false;
     }

@@ -1,6 +1,5 @@
 
 import 'dart:async';
-import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
@@ -9,23 +8,18 @@ import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/dialog/dialog.dart';
 import 'package:reboot_launcher/src/model/reboot_download.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/widget/home/game_type_selector.dart';
 import 'package:reboot_launcher/src/widget/home/launch_button.dart';
-import 'package:reboot_launcher/src/widget/home/username_box.dart';
 import 'package:reboot_launcher/src/widget/home/version_selector.dart';
-import 'package:reboot_launcher/src/widget/shared/file_selector.dart';
+import 'package:reboot_launcher/src/widget/shared/setting_tile.dart';
 
 import '../dialog/dialog_button.dart';
-import '../model/server_type.dart';
 import '../util/checks.dart';
 import '../util/reboot.dart';
-import '../widget/shared/smart_input.dart';
-import 'home_page.dart';
 
 class LauncherPage extends StatefulWidget {
   const LauncherPage(
@@ -38,7 +32,6 @@ class LauncherPage extends StatefulWidget {
 
 class _LauncherPageState extends State<LauncherPage> {
   final GameController _gameController = Get.find<GameController>();
-  final ServerController _serverController = Get.find<ServerController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
   final BuildController _buildController = Get.find<BuildController>();
 
@@ -152,28 +145,98 @@ class _LauncherPageState extends State<LauncherPage> {
   );
 
   Widget get _homeScreen => Column(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      if(_gameController.error)
-        _updateError,
-      UsernameBox(),
-      Tooltip(
-          message:
-          "The hostname of the server that hosts the multiplayer matches",
-          child: Obx(() => SmartInput(
-              label: "Matchmaking Host",
-              placeholder:
-              "Type the hostname of the server that hosts the multiplayer matches",
-              controller: _settingsController.matchmakingIp,
-              validatorMode: AutovalidateMode.always,
+      AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _gameController.error ? _updateError : const SizedBox(),
+      ),
+      AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        child: SizedBox(height: _gameController.error ? 16.0 : 0.0),
+      ),
+      SettingTile(
+          title: "Username",
+          subtitle: "Enter the name that others will see once you are in-game",
+          content: TextFormBox(
+              placeholder: "username",
+              controller: _gameController.username,
               validator: checkMatchmaking,
-              enabled: _serverController.type() == ServerType.embedded)
+              autovalidateMode: AutovalidateMode.always
           )
       ),
-      const VersionSelector(),
-      if(_settingsController.advancedMode.value)
-        GameTypeSelector(),
+      const SizedBox(
+        height: 16.0,
+      ),
+      SettingTile(
+        title: "Matchmaking host",
+        subtitle: "Enter the IP address of the game server hosting the match",
+        content: TextFormBox(
+            placeholder: "ip:port",
+            controller: _settingsController.matchmakingIp,
+            validator: checkMatchmaking,
+            autovalidateMode: AutovalidateMode.always
+        ),
+        expandedContent: [
+          ListTile(
+            title: const Text(
+                "Automatically start a game server",
+              style: TextStyle(
+                  fontSize: 14
+              ),
+            ),
+            subtitle: const Text("Choose whether an headless server should be automatically started when matchmaking is on localhost"),
+            trailing: Obx(() => ToggleSwitch(
+                checked: _gameController.autostartGameServer(),
+                onChanged: (value) => _gameController.autostartGameServer.value = value
+            ))
+          ),
+        ],
+      ),
+      const SizedBox(
+        height: 16.0,
+      ),
+      SettingTile(
+        title: "Version",
+        subtitle: "Select the version of Fortnite you want to play with your friends",
+        content: const VersionSelector(),
+        expandedContent: [
+          ListTile(
+            title: const Text(
+                "Add a version from this PC's local storage",
+              style: TextStyle(
+                fontSize: 14
+              ),
+            ),
+            trailing: Button(
+              onPressed: () => VersionSelector.openAddDialog(context),
+              child: const Text("Add build "),
+            ),
+          ),
+
+          ListTile(
+            title: const Text(
+              "Download any version from the cloud",
+              style: TextStyle(
+                  fontSize: 14
+              ),
+            ),
+            trailing: Button(
+              onPressed: () => VersionSelector.openDownloadDialog(context),
+              child: const Text("Download"),
+            ),
+          ),
+        ]
+      ),
+      const SizedBox(
+        height: 16.0,
+      ),
+      SettingTile(
+          title: "Instance type",
+          subtitle: "Select the type of instance you want to launch",
+          content: GameTypeSelector()
+      ),
+      const Expanded(child: SizedBox()),
       const LaunchButton()
     ],
   );

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive_io.dart';
+import 'package:ini/ini.dart';
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/model/game_type.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
@@ -11,6 +13,41 @@ import 'package:shelf/shelf_io.dart';
 import 'package:http/http.dart' as http;
 
 final serverLogFile = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\server.txt");
+
+Future<void> writeMatchmakingIp(String text) async {
+  var file = File("${embeddedBackendDirectory.path}\\Config\\config.ini");
+  if(!file.existsSync()){
+    return;
+  }
+
+  var splitIndex = text.indexOf(":");
+  var ip = splitIndex != -1 ? text.substring(0, splitIndex) : text;
+  var port = splitIndex != -1 ? text.substring(splitIndex + 1) : "7777";
+  var config = Config.fromString(file.readAsStringSync());
+  config.set("GameServer", "ip", ip);
+  config.set("GameServer", "port", port);
+  file.writeAsStringSync(config.toString());
+}
+
+Future<void> startServer() async {
+  if(!embeddedBackendDirectory.existsSync()){
+    var serverZip = await loadBinary("server.zip", true);
+    await extractFileToDisk(serverZip.path, embeddedBackendDirectory.path);
+  }
+
+  var process = await Process.start(
+      "${embeddedBackendDirectory.path}\\lawinserver-win.exe",
+      [],
+      workingDirectory: embeddedBackendDirectory.path
+  );
+  process.outLines.forEach((element) => serverLogFile.writeAsStringSync("$element\n", mode: FileMode.append));
+  process.errLines.forEach((element) => serverLogFile.writeAsStringSync("$element\n", mode: FileMode.append));
+}
+
+Future<void> stopServer() async {
+  var releaseBat = await loadBinary("kill_both_ports.bat", false);
+  await Process.run(releaseBat.path, []);
+}
 
 Future<bool> isLawinPortFree() async {
   return http.get(Uri.parse("http://127.0.0.1:3551/unknown"))
@@ -44,7 +81,7 @@ Future<void> freeMatchmakerPort() async {
   }
 }
 
-List<String> createRebootArgs(String username, GameType type) {
+List<String> createRebootArgs(String username, GameType type, String additionalArgs) {
   var args = [
     "-epicapp=Fortnite",
     "-epicenv=Prod",
@@ -71,6 +108,10 @@ List<String> createRebootArgs(String username, GameType type) {
       "-nosplash",
       "-nosound",
     ]);
+  }
+
+  if(additionalArgs.isNotEmpty){
+    args.addAll(additionalArgs.split(" "));
   }
 
   return args;

@@ -19,7 +19,7 @@ enum ServerType {
   }
 
   String get name {
-    return this == ServerType.embedded ? "Embedded"
+    return this == ServerType.embedded ? "Embedded (Lawin)"
         : this == ServerType.remote ? "Remote"
         : "Local";
   }

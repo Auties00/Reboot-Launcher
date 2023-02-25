@@ -19,14 +19,8 @@ enum GameType {
   }
 
   String get name {
-    return this == GameType.client ? "Client"
-        : this == GameType.server ? "Server"
-        : "Headless Server";
-  }
-
-  String get message {
-    return this == GameType.client ? "A fortnite client will be launched to play multiplayer games"
-        : this == GameType.server ? "A fortnite client will be launched to host multiplayer games"
-        : "A fortnite client will be launched in the background to host multiplayer games";
+    return this == GameType.client ? "Game client"
+        : this == GameType.server ? "Game server"
+        : "Headless game server";
   }
 }

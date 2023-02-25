@@ -38,7 +38,7 @@ Future<void> startGame() async {
     stdout.writeln("No username was specified, using $username by default. Use --username to specify one");
   }
 
-  _gameProcess = await Process.start(gamePath, createRebootArgs(username!, type))
+  _gameProcess = await Process.start(gamePath, createRebootArgs(username!, type, ""))
     ..exitCode.then((_) => _onClose())
     ..outLines.forEach((line) => _onGameOutput(line, dll, hosting, verbose));
 }

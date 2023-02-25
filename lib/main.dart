@@ -77,8 +77,8 @@ class _RebootApplicationState extends State<RebootApplication> {
     );
   }
 
-  ThemeData _createTheme(Brightness brightness) {
-    return ThemeData(
+  FluentThemeData _createTheme(Brightness brightness) {
+    return FluentThemeData(
       brightness: brightness,
       accentColor: SystemTheme.accentColor.accent.toAccentColor(),
       visualDensity: VisualDensity.standard,

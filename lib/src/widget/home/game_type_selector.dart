@@ -12,33 +12,16 @@ class GameTypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: "The type of Fortnite instance to launch",
-      child: _createAdvancedSelector(),
-    );
+    return Obx(() => DropDownButton(
+        leading: Text(_gameController.type.value.name),
+        items: GameType.values
+            .map((type) => _createItem(type))
+            .toList()
+    ));
   }
 
-  Widget _createAdvancedSelector() => InfoLabel(
-      label: "Type",
-      child: SizedBox(
-          width: double.infinity,
-          child: Obx(() => DropDownButton(
-              leading: Text(_gameController.type.value.name),
-              items: GameType.values
-                  .map((type) => _createItem(type))
-                  .toList())
-          )
-      )
-  );
-
   MenuFlyoutItem _createItem(GameType type) => MenuFlyoutItem(
-      text: SizedBox(
-          width: double.infinity,
-          child: Tooltip(
-              message: type.message,
-              child: Text(type.name)
-          )
-      ),
+      text: Text(type.name),
       onPressed: () {
         _gameController.type(type);
         _gameController.started.value = _gameController.currentGameInstance != null;

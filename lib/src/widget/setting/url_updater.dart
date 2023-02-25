@@ -51,12 +51,10 @@ class _RebootUpdaterInputState extends State<RebootUpdaterInput> {
             const SizedBox(width: 16.0),
               Tooltip(
                   message: _settingsController.autoUpdate.value ? "Disable automatic updates" : "Enable automatic updates",
-                  child: Obx(() => Padding(
-                      padding: _valid() ? EdgeInsets.zero : const EdgeInsets.only(bottom: 21.0),
-                      child: Button(
-                          onPressed: () => _settingsController.autoUpdate.value = !_settingsController.autoUpdate.value,
-                          child: Icon(_settingsController.autoUpdate.value ? FluentIcons.disable_updates : FluentIcons.refresh)
-                      ))
+                  child: Obx(() => Button(
+                      onPressed: () => _settingsController.autoUpdate.value = !_settingsController.autoUpdate.value,
+                      child: Icon(_settingsController.autoUpdate.value ? FluentIcons.disable_updates : FluentIcons.refresh)
+                  )
                   )
               )
           ],

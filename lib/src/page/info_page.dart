@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../controller/settings_controller.dart';
-import '../model/tutorial_page.dart';
+import '../widget/shared/fluent_card.dart';
 
 class InfoPage extends StatefulWidget {
   const InfoPage({Key? key}) : super(key: key);
@@ -36,6 +36,7 @@ class _InfoPageState extends State<InfoPage> {
     "Once you are in game, click PLAY to enter in-game\n    If this doesn't work open the Fortnite console by clicking the button above tab\n    If nothing happens, make sure that your keyboard locale is set to English\n    Type 'open TYPE_THE_IP' without the quotes, for example: open 85.182.12.1"
   ];
 
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
   final SettingsController _settingsController = Get.find<SettingsController>();
   late final ScrollController _controller;
 
@@ -55,16 +56,51 @@ class _InfoPageState extends State<InfoPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    switch(_settingsController.tutorialPage()) {
-      case TutorialPage.start:
-        return _createHomeScreen();
-      case TutorialPage.someoneElse:
+  Widget build(BuildContext context) => Navigator(
+    key: _navigatorKey,
+    initialRoute: "home",
+    onGenerateRoute: (settings) {
+      var screen = _createScreen(settings.name);
+      return FluentPageRoute(
+          builder: (context) => screen,
+          settings: settings
+      );
+    },
+  );
+
+  Widget _createScreen(String? name) {
+    switch(name){
+      case "home":
+        return _homeScreen;
+      case "else":
         return _createInstructions(false);
-      case TutorialPage.yourOwn:
+      case "own":
         return _createInstructions(true);
+      default:
+        throw Exception("Unknown page: $name");
     }
   }
+
+  Widget get _homeScreen => Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _createCardWidget(
+            text: "Play on someone else's server",
+            description: "If one of your friends is hosting a game server, click here",
+            onClick: () => _navigatorKey.currentState?.pushNamed("else")
+        ),
+
+        const SizedBox(
+          width: 8.0,
+        ),
+
+        _createCardWidget(
+            text: "Host your own server",
+            description: "If you want to create your own server to invite your friends or to play around by yourself, click here",
+            onClick: () => _navigatorKey.currentState?.pushNamed("own")
+        )
+      ]
+  );
 
   SizedBox _createInstructions(bool own) {
     var titles = own ? _ownTitles : _elseTitles;
@@ -76,8 +112,7 @@ class _InfoPageState extends State<InfoPage> {
               padding: const EdgeInsets.only(
                   right: 20.0
               ),
-              child: Card(
-                  borderRadius: const BorderRadius.all(Radius.circular(12.0)),
+              child: FluentCard(
                   child: ListTile(
                       title: SelectableText("${index + 1}. ${titles[index]}"),
                       subtitle: Padding(
@@ -93,67 +128,42 @@ class _InfoPageState extends State<InfoPage> {
       );
   }
 
-  Widget _createHomeScreen() {
-    return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _createCardWidget(
-              text: "Play on someone else's server",
-              description: "If one of your friends is hosting a game server, click here",
-              onClick: () => setState(() => _settingsController.tutorialPage.value = TutorialPage.someoneElse)
-          ),
-
-          const SizedBox(
-            width: 8.0,
-          ),
-
-          _createCardWidget(
-              text: "Host your own server",
-              description: "If you want to create your own server to invite your friends or to play around by yourself, click here",
-              onClick: () => setState(() => _settingsController.tutorialPage.value = TutorialPage.yourOwn)
-          )
-        ]
-    );
-  }
-
-  Widget _createCardWidget({required String text, required String description, required Function() onClick}) {
-    return Expanded(
-        child: SizedBox(
+  Widget _createCardWidget({required String text, required String description, required Function() onClick}) => Expanded(
+      child: SizedBox(
           height: double.infinity,
           child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-                onTap: onClick,
-                child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            text,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                                fontSize: 20.0,
-                                fontWeight: FontWeight.bold
-                            ),
-                          ),
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                  onTap: onClick,
+                  child: FluentCard(
+                      child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                text,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
 
-                          const SizedBox(
-                            height: 8.0,
-                          ),
+                              const SizedBox(
+                                height: 8.0,
+                              ),
 
-                          Text(
-                              description,
-                              textAlign: TextAlign.center
-                          ),
-                        ],
+                              Text(
+                                  description,
+                                  textAlign: TextAlign.center
+                              ),
+                            ],
+                          )
                       )
-                    )
-                )
-            )
+                  )
+              )
           )
-        )
-    );
-  }
+      )
+  );
 }

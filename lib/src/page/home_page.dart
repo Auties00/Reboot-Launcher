@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:bitsdojo_window/bitsdojo_window.dart' hide WindowBorder;
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
@@ -19,7 +17,6 @@ import 'package:window_manager/window_manager.dart';
 
 import '../controller/settings_controller.dart';
 import '../model/server_type.dart';
-import '../model/tutorial_page.dart';
 import 'info_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -30,10 +27,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with WindowListener {
-  static const double _headerSize = 48.0;
-  static const double _sectionSize = 100.0;
   static const double _defaultPadding = 12.0;
-  static const int _headerButtonCount = 3;
 
   final GameController _gameController = Get.find<GameController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
@@ -46,18 +40,12 @@ class _HomePageState extends State<HomePage> with WindowListener {
   final RxBool _focused = RxBool(true);
   final RxInt _index = RxInt(0);
   bool _navigated = false;
-
   bool _shouldMaximize = false;
 
   @override
   void initState() {
     windowManager.addListener(this);
     _searchController.addListener(_onSearch);
-    _onEasyMode();
-    _settingsController.advancedMode.listen((advanced) {
-      _onEasyMode();
-      _index.value = _index.value + (advanced ? 1 : -1);
-    });
     super.initState();
   }
 
@@ -71,15 +59,6 @@ class _HomePageState extends State<HomePage> with WindowListener {
         .where((item) => (item.title as Text).data!.toLowerCase().contains(searchValue.toLowerCase()))
         .toList()
         .cast<NavigationPaneItem>();
-  }
-
-  void _onEasyMode() {
-    if(_settingsController.advancedMode.value){
-      return;
-    }
-
-    _gameController.type.value = GameType.client;
-    _serverController.type.value = ServerType.embedded;
   }
 
   @override
@@ -98,6 +77,12 @@ class _HomePageState extends State<HomePage> with WindowListener {
   @override
   void onWindowBlur() {
     _focused.value = false;
+  }
+
+  @override
+  void onWindowResized() {
+    _settingsController.saveWindowSize();
+    super.onWindowResized();
   }
 
   @override
@@ -131,52 +116,52 @@ class _HomePageState extends State<HomePage> with WindowListener {
             ),
           ],
         );
-      },
+      }
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    return NotificationListener<SizeChangedLayoutNotification>(
-        onNotification: (notification) {
-          return _calculateSize();
-        },
-        child: SizeChangedLayoutNotifier(
-            child: Obx(_getViewStack)
-        )
-    );
-  }
-
-  Widget _getViewStack() {
-    var view = _createNavigationView();
-    return Stack(
-        children: [
-          view,
-          if(_settingsController.displayType() == PaneDisplayMode.top)
-            Align(
-                alignment: Alignment.topRight,
-                child: WindowTitleBar(focused: _focused())
+  Widget build(BuildContext context) => Obx(() => Stack(
+      children: [
+        NavigationView(
+            paneBodyBuilder: (body) => Padding(
+                padding: const EdgeInsets.all(_defaultPadding),
+                child: body
             ),
-          if(_settingsController.displayType() == PaneDisplayMode.top)
-            _createTopDisplayGestures(view.pane?.items.length ?? 0),
-          if(_focused() && isWin11)
-            const WindowBorder()
-        ]
-    );
+            appBar: NavigationAppBar(
+                title: _draggableArea,
+                actions: WindowTitleBar(focused: _focused())
+            ),
+            pane: NavigationPane(
+              selected: _selectedIndex,
+              onChanged: _onIndexChanged,
+              displayMode: PaneDisplayMode.auto,
+              items: _items,
+              footerItems: _footerItems,
+              autoSuggestBox: _autoSuggestBox,
+              autoSuggestBoxReplacement: const Icon(FluentIcons.search),
+            ),
+            onOpenSearch: () => _searchFocusNode.requestFocus(),
+            transitionBuilder: (child, animation) => child
+        ),
+        if(_focused() && isWin11)
+          const WindowBorder()
+      ]
+  ));
+
+  void _onIndexChanged(int index) {
+    _index.value = index;
+    _navigated = true;
   }
 
-  Padding _createTopDisplayGestures(int size) => Padding(
-      padding: EdgeInsets.only(
-        left: _sectionSize * size,
-        right: _headerSize * _headerButtonCount,
-      ),
-      child: SizedBox(
-        height: _headerSize,
-        child: _createWindowGestures()
-      )
+  TextBox get _autoSuggestBox => TextBox(
+      key: _searchKey,
+      controller: _searchController,
+      placeholder: 'Search',
+      focusNode: _searchFocusNode
   );
 
-  GestureDetector _createWindowGestures({Widget? child}) => GestureDetector(
+  GestureDetector get _draggableArea => GestureDetector(
       onDoubleTap: () {
         if(!_shouldMaximize){
           return;
@@ -187,88 +172,8 @@ class _HomePageState extends State<HomePage> with WindowListener {
       },
       onDoubleTapDown: (details) => _shouldMaximize = true,
       onHorizontalDragStart: (event) => appWindow.startDragging(),
-      onVerticalDragStart: (event) => appWindow.startDragging(),
-      child: child
+      onVerticalDragStart: (event) => appWindow.startDragging()
   );
-
-  NavigationView _createNavigationView() {
-    return NavigationView(
-        paneBodyBuilder: (body) => _createPage(body),
-        pane: NavigationPane(
-          size: const NavigationPaneSize(
-              topHeight: _headerSize
-          ),
-          selected: _selectedIndex,
-          onChanged: _onIndexChanged,
-          displayMode: _settingsController.displayType(),
-          items: _createItems(),
-          indicator: const EndNavigationIndicator(),
-          footerItems: _createFooterItems(),
-          header: _settingsController.displayType() != PaneDisplayMode.open ? null : const SizedBox(height: _defaultPadding),
-          autoSuggestBox: _createAutoSuggestBox(),
-          autoSuggestBoxReplacement:  _settingsController.displayType() == PaneDisplayMode.top ? null : const Icon(FluentIcons.search),
-        ),
-        onOpenSearch: () => _searchFocusNode.requestFocus(),
-        transitionBuilder: _settingsController.displayType() == PaneDisplayMode.top ? null : (child, animation) => child
-    );
-  }
-
-  void _onIndexChanged(int index) {
-    _index.value = index;
-    _navigated = true;
-  }
-
-  TextBox? _createAutoSuggestBox() {
-    if (_settingsController.displayType() == PaneDisplayMode.top) {
-      return null;
-    }
-
-    return TextBox(
-        key: _searchKey,
-        controller: _searchController,
-        placeholder: 'Search',
-        focusNode: _searchFocusNode
-    );
-  }
-
-  Widget _createPage(Widget? body) {
-    if(_settingsController.displayType() == PaneDisplayMode.top){
-      return Padding(
-          padding: const EdgeInsets.all(_defaultPadding),
-          child: body
-      );
-    }
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-                child: _createWindowGestures(
-                    child: Container(
-                        height: _headerSize,
-                        color: Colors.transparent
-                    )
-                )
-            ),
-
-            WindowTitleBar(focused: _focused())
-          ],
-        ),
-
-        Expanded(
-            child: Padding(
-                padding: const EdgeInsets.only(
-                    left: _defaultPadding,
-                    right: _defaultPadding,
-                    bottom: _defaultPadding
-                ),
-                child: body
-            )
-        )
-      ],
-    );
-  }
 
   int? get _selectedIndex {
     var searchItems = _searchItems();
@@ -288,10 +193,9 @@ class _HomePageState extends State<HomePage> with WindowListener {
     return indexOnScreen;
   }
 
-  List<NavigationPaneItem> get _allItems => [..._createItems(), ..._createFooterItems()];
+  List<NavigationPaneItem> get _allItems => [..._items, ..._footerItems];
 
-  List<NavigationPaneItem> _createFooterItems() => searchValue.isNotEmpty ? [] : [
-    if(_settingsController.displayType() != PaneDisplayMode.top)
+  List<NavigationPaneItem> get _footerItems => searchValue.isNotEmpty ? [] : [
       PaneItem(
           title: const Text("Settings"),
           icon: const Icon(FluentIcons.settings),
@@ -299,19 +203,18 @@ class _HomePageState extends State<HomePage> with WindowListener {
       )
   ];
 
-  List<NavigationPaneItem> _createItems() => _searchItems() ?? [
+  List<NavigationPaneItem> get _items => _searchItems() ?? [
     PaneItem(
         title: const Text("Home"),
         icon: const Icon(FluentIcons.game),
         body: const LauncherPage()
     ),
 
-    if(_settingsController.advancedMode.value)
-      PaneItem(
-          title: const Text("Backend"),
-          icon: const Icon(FluentIcons.server_enviroment),
-          body: ServerPage()
-      ),
+    PaneItem(
+        title: const Text("Backend"),
+        icon: const Icon(FluentIcons.server_enviroment),
+        body: ServerPage()
+    ),
 
     PaneItem(
         title: const Text("Tutorial"),
@@ -319,49 +222,14 @@ class _HomePageState extends State<HomePage> with WindowListener {
         body: const InfoPage(),
         onTap: _onTutorial
     ),
-
-    if(_settingsController.displayType() == PaneDisplayMode.top)
-      PaneItem(
-          title: const Text("Settings"),
-          icon: const Icon(FluentIcons.settings),
-          body: SettingsPage()
-      )
   ];
 
   void _onTutorial() {
     if(!_navigated){
-      setState(() {
-        _settingsController.tutorialPage.value = TutorialPage.start;
-        _settingsController.scrollingDistance = 0;
-      });
+      setState(() => _settingsController.scrollingDistance = 0);
     }
 
     _navigated = false;
-  }
-
-  bool _calculateSize() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _settingsController.saveWindowSize();
-      var width = window.physicalSize.width;
-      PaneDisplayMode? newType;
-      if (width <= 1000) {
-        newType = PaneDisplayMode.top;
-      } else if (width >= 1500) {
-        newType = PaneDisplayMode.open;
-      } else if (width > 1000) {
-        newType = PaneDisplayMode.compact;
-      }
-
-      if(newType == null || newType == _settingsController.displayType()){
-        return;
-      }
-
-      _settingsController.displayType.value = newType;
-      _searchItems.value = null;
-      _searchController.text = "";
-    });
-
-    return true;
   }
 
   String get searchValue => _searchController.text;

@@ -40,7 +40,6 @@ class AddLocalVersion extends StatelessWidget {
             ),
 
             FileSelector(
-                label: "Location",
                 placeholder: "Type the game folder",
                 windowTitle: "Select game folder",
                 controller: _gamePathController,

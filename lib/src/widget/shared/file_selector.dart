@@ -9,7 +9,6 @@ import 'package:reboot_launcher/src/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/util/selector.dart';
 
 class FileSelector extends StatefulWidget {
-  final String label;
   final String placeholder;
   final String windowTitle;
   final bool allowNavigator;
@@ -20,8 +19,7 @@ class FileSelector extends StatefulWidget {
   final bool folder;
 
   const FileSelector(
-      {required this.label,
-        required this.placeholder,
+      {required this.placeholder,
         required this.windowTitle,
         required this.controller,
         required this.validator,
@@ -38,50 +36,32 @@ class FileSelector extends StatefulWidget {
 }
 
 class _FileSelectorState extends State<FileSelector> {
-  final RxBool _valid = RxBool(true);
-  late String? Function(String?) validator;
   bool _selecting = false;
 
   @override
-  void initState() {
-    validator = (value) {
-      var result = widget.validator(value);
-      WidgetsBinding.instance.addPostFrameCallback((_) => _valid.value = result == null);
-      return result;
-    };
-
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return InfoLabel(
-        label: widget.label,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-                child: TextFormBox(
-                  controller: widget.controller,
-                  placeholder: widget.placeholder,
-                  validator: validator,
-                  autovalidateMode: widget.validatorMode ?? AutovalidateMode.onUserInteraction
-                )
-            ),
-            if (widget.allowNavigator) const SizedBox(width: 16.0),
-            if (widget.allowNavigator)
-              Tooltip(
-                  message: "Select a ${widget.folder ? 'folder' : 'file'}",
-                  child: Obx(() => Padding(
-                      padding: _valid() ? EdgeInsets.zero : const EdgeInsets.only(bottom: 21.0),
-                      child: Button(
-                          onPressed: _onPressed,
-                          child: const Icon(FluentIcons.open_folder_horizontal)
-                      ))
-                  )
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+            child: TextFormBox(
+              controller: widget.controller,
+              placeholder: widget.placeholder,
+              validator: widget.validator,
+              autovalidateMode: widget.validatorMode ?? AutovalidateMode.onUserInteraction
+            )
+        ),
+        if (widget.allowNavigator)
+          const SizedBox(width: 16.0),
+        if (widget.allowNavigator)
+          Padding(
+              padding: const EdgeInsets.only(bottom: 21.0),
+              child: Button(
+                  onPressed: _onPressed,
+                  child: const Icon(FluentIcons.open_folder_horizontal)
               )
-          ],
-        )
+          )
+      ],
     );
   }
 

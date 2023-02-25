@@ -54,9 +54,6 @@ flutter:
     - assets/icons/
     - assets/binaries/
     - assets/images/
-    - assets/profiles/
-    - assets/responses/
-    - assets/config/
 
 msix_config:
   display_name: Reboot Launcher

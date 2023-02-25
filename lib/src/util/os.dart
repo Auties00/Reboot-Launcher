@@ -67,7 +67,7 @@ Directory get safeBinariesDirectory =>
     Directory("${Platform.environment["UserProfile"]}\\.reboot_launcher");
 
 Directory get embeddedBackendDirectory =>
-    Directory("${safeBinariesDirectory.path}\\backend");
+    Directory("${safeBinariesDirectory.path}\\backend-lawin");
 
 File loadEmbedded(String file) {
   var safeBinary = File("${embeddedBackendDirectory.path}\\$file");

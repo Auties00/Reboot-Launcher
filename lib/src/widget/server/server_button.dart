@@ -15,49 +15,32 @@ class _ServerButtonState extends State<ServerButton> {
   final ServerController _serverController = Get.find<ServerController>();
 
   @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: AlignmentDirectional.bottomCenter,
-      child: SizedBox(
-        width: double.infinity,
-        child: Obx(() => Tooltip(
-          message: _helpMessage,
-              child: Button(
-                  onPressed: () async => _serverController.toggle(),
-                  child: Text(_buttonText())),
-            )),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Align(
+    alignment: AlignmentDirectional.bottomCenter,
+    child: SizedBox(
+      width: double.infinity,
+      child: Obx(() => SizedBox(
+        height: 48,
+        child: Button(
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(_buttonText),
+          ),
+            onPressed: () => _serverController.toggle()
+        ),
+      )),
+    ),
+  );
 
-  String _buttonText() {
+  String get _buttonText {
     if(_serverController.type.value == ServerType.local){
-      return "Check";
+      return "Check backend";
     }
 
     if(_serverController.started.value){
-      return "Stop";
+      return "Stop backend";
     }
 
-    return "Start";
-  }
-
-  String get _helpMessage {
-    switch(_serverController.type.value){
-      case ServerType.embedded:
-        if (_serverController.started.value) {
-          return "Stop the backend server currently running";
-        }
-
-        return "Start a new local backend server";
-      case ServerType.remote:
-        if (_serverController.started.value) {
-          return "Stop the reverse proxy currently running";
-        }
-
-        return "Start a reverse proxy targeting the remote backend server";
-      case ServerType.local:
-        return "Check if a local backend server is running";
-    }
+    return "Start backend";
   }
 }

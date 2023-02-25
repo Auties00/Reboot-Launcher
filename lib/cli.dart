@@ -11,6 +11,7 @@ import 'package:reboot_launcher/src/model/game_type.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
 import 'package:reboot_launcher/src/util/reboot.dart';
+import 'package:reboot_launcher/src/util/server.dart' as server;
 
 late String? username;
 late GameType type;
@@ -79,12 +80,13 @@ void main(List<String> args) async {
   var serverType = getServerType(result);
   var host = result["server-host"] ?? serverJson["${serverType.id}_host"];
   var port = result["server-port"] ?? serverJson["${serverType.id}_port"];
-  var started = await startServer(host, port, serverType, result["matchmaking-address"]);
+  var started = await startServer(host, port, serverType);
   if(!started){
     stderr.writeln("Cannot start server!");
     return;
   }
 
+  server.writeMatchmakingIp(result["matchmaking-address"]);
   autoRestart = result["auto-restart"];
   await startGame();
 }

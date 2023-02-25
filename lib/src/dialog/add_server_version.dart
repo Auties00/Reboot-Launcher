@@ -273,7 +273,6 @@ class _AddServerVersionState extends State<AddServerVersion> {
         VersionNameInput(controller: _nameController),
         const SizedBox(height: 16.0),
         FileSelector(
-            label: "Destination",
             placeholder: "Type the download destination",
             windowTitle: "Select download destination",
             controller: _pathController,

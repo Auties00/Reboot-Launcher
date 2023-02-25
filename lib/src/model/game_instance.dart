@@ -1,12 +1,15 @@
 import 'dart:io';
 
+import 'game_type.dart';
+
 class GameInstance {
   final Process gameProcess;
   final Process? launcherProcess;
   final Process? eacProcess;
   bool tokenError;
+  bool hasChildServer;
 
-  GameInstance(this.gameProcess, this.launcherProcess, this.eacProcess)
+  GameInstance(this.gameProcess, this.launcherProcess, this.eacProcess, this.hasChildServer)
       : tokenError = false;
 
   void kill() {

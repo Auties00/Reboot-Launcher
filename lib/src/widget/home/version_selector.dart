@@ -19,6 +19,19 @@ import '../shared/file_selector.dart';
 class VersionSelector extends StatefulWidget {
   const VersionSelector({Key? key}) : super(key: key);
 
+  static void openDownloadDialog(BuildContext context) async {
+    await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => const AddServerVersion()
+    );
+  }
+
+  static void openAddDialog(BuildContext context) async {
+    await showDialog<bool>(
+        context: context,
+        builder: (context) => AddLocalVersion());
+  }
+
   @override
   State<VersionSelector> createState() => _VersionSelectorState();
 }
@@ -26,79 +39,44 @@ class VersionSelector extends StatefulWidget {
 class _VersionSelectorState extends State<VersionSelector> {
   final GameController _gameController = Get.find<GameController>();
   final CheckboxController _deleteFilesController = CheckboxController();
+  final FlyoutController _flyoutController = FlyoutController();
 
   @override
-  Widget build(BuildContext context) {
-    return InfoLabel(
-        label: "Version",
-        child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Row(
-              children: [
-                Expanded(child: _createSelector(context)),
-                const SizedBox(
-                  width: 16,
-                ),
-                Tooltip(
-                  message: "Add a local fortnite build to the versions list",
-                  child: Button(
-                      child: const Icon(FluentIcons.open_file),
-                      onPressed: () => _openAddLocalVersionDialog(context)),
-                ),
-                const SizedBox(
-                  width: 16,
-                ),
-                Tooltip(
-                  message: "Download a fortnite build from the archive",
-                  child: Button(
-                      child: const Icon(FluentIcons.download),
-                      onPressed: () => _openDownloadVersionDialog(context)),
-                ),
-              ],
-            )));
-  }
-
-  Widget _createSelector(BuildContext context) {
-    return Tooltip(
-        message: "The version of Fortnite to launch",
-        child: Obx(() => _createOptionsMenu(
-            version: _gameController.selectedVersionObs(),
-            close: false,
-            child: DropDownButton(
-                leading: Text(_gameController.selectedVersionObs.value?.name
-                    ?? "Select a version"),
-                items: _createSelectorItems(context)
-            )
-        ))
-    );
-  }
-
-  List<MenuFlyoutItem> _createSelectorItems(BuildContext context) {
-    return _gameController.hasNoVersions ? [_createDefaultVersionItem()]
-              : _gameController.versions.value
-              .map((version) => _createVersionItem(context, version))
-              .toList();
-  }
-
-  MenuFlyoutItem _createVersionItem(BuildContext context, FortniteVersion version) {
-    return MenuFlyoutItem(
-        text: _createOptionsMenu(
-          version: version,
-          close: true,
-          child: SizedBox(
-              width: double.infinity,
-              child: Text(version.name)
+  Widget build(BuildContext context) => Obx(() => _createOptionsMenu(
+        version: _gameController.selectedVersion,
+        close: false,
+        child: FlyoutTarget(
+          controller: _flyoutController,
+          child: DropDownButton(
+              leading: Text(_gameController.selectedVersion?.name ?? "Select a version"),
+              items: _createSelectorItems(context)
           ),
-        ),
-        onPressed: () => _gameController.selectedVersion = version
-    );
-  }
+        )
+    ));
 
-  Widget _createOptionsMenu({required FortniteVersion? version, required bool close, required Widget child}) {
-    return Listener(
+  List<MenuFlyoutItem> _createSelectorItems(BuildContext context) => _gameController.hasNoVersions ? [_createDefaultVersionItem()]
+      : _gameController.versions.value
+      .map((version) => _createVersionItem(context, version))
+      .toList();
+
+  MenuFlyoutItem _createDefaultVersionItem() => MenuFlyoutItem(
+      text: const SizedBox(
+          width: double.infinity, child: Text("No versions available. Add it using the buttons on the right.")),
+      trailing: const Expanded(child: SizedBox()),
+      onPressed: () {});
+
+  MenuFlyoutItem _createVersionItem(BuildContext context, FortniteVersion version) => MenuFlyoutItem(
+      text: _createOptionsMenu(
+        version: version,
+        close: true,
+        child: Text(version.name),
+      ),
+      onPressed: () => _gameController.selectedVersion = version
+  );
+
+  Widget _createOptionsMenu({required FortniteVersion? version, required bool close, required Widget child}) => Listener(
       onPointerDown: (event) async {
-        if (event.kind != PointerDeviceKind.mouse ||
-            event.buttons != kSecondaryMouseButton) {
+        if (event.kind != PointerDeviceKind.mouse || event.buttons != kSecondaryMouseButton) {
           return;
         }
 
@@ -106,43 +84,19 @@ class _VersionSelectorState extends State<VersionSelector> {
           return;
         }
 
-        await _openMenu(context, version, event.position, close);
+        var result = await _flyoutController.showFlyout<ContextualOption?>(
+            builder: (context) => MenuFlyout(
+                items: ContextualOption.values
+                    .map((entry) => _createOption(context, entry))
+                    .toList()
+            )
+        );
+        _handleResult(result, version, close);
       },
       child: child
-    );
-  }
+  );
 
-  MenuFlyoutItem _createDefaultVersionItem() {
-    return MenuFlyoutItem(
-        text: const SizedBox(
-            width: double.infinity, child: Text("No versions available. Add it using the buttons on the right.")),
-        trailing: const Expanded(child: SizedBox()),
-        onPressed: () {});
-  }
-
-  void _openDownloadVersionDialog(BuildContext context) async {
-    await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => const AddServerVersion()
-    );
-  }
-
-  void _openAddLocalVersionDialog(BuildContext context) async {
-    await showDialog<bool>(
-        context: context,
-        builder: (context) => AddLocalVersion());
-  }
-
-  Future<void> _openMenu(
-      BuildContext context, FortniteVersion version, Offset offset, bool close) async {
-    var controller = FlyoutController();
-    var result = await controller.showFlyout(
-        builder: (context) => MenuFlyout(
-            items: ContextualOption.values
-                .map((entry) => _createOption(context, entry))
-                .toList()
-        )
-    );
+  void _handleResult(ContextualOption? result, FortniteVersion version, bool close) async {
     switch (result) {
       case ContextualOption.openExplorer:
         if(!mounted){
@@ -156,7 +110,6 @@ class _VersionSelectorState extends State<VersionSelector> {
         launchUrl(version.location.uri)
             .onError((error, stackTrace) => _onExplorerError());
         break;
-
       case ContextualOption.modify:
         if(!mounted){
           return;
@@ -168,7 +121,6 @@ class _VersionSelectorState extends State<VersionSelector> {
 
         await _openRenameDialog(context, version);
         break;
-
       case ContextualOption.delete:
         if(!mounted){
           return;
@@ -184,8 +136,8 @@ class _VersionSelectorState extends State<VersionSelector> {
         }
 
         _gameController.removeVersion(version);
-        if (_gameController.selectedVersionObs.value?.name == version.name || _gameController.hasNoVersions) {
-          _gameController.selectedVersionObs.value = null;
+        if (_gameController.selectedVersion?.name == version.name || _gameController.hasNoVersions) {
+          _gameController.selectedVersion = null;
         }
 
         if (_deleteFilesController.value && await version.location.exists()) {
@@ -193,7 +145,6 @@ class _VersionSelectorState extends State<VersionSelector> {
         }
 
         break;
-
       default:
         break;
     }
@@ -276,7 +227,6 @@ class _VersionSelectorState extends State<VersionSelector> {
                 ),
 
                 FileSelector(
-                    label: "Location",
                     placeholder: "Type the new game folder",
                     windowTitle: "Select game folder",
                     controller: pathController,

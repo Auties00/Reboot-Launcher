@@ -6,14 +6,12 @@ import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/dialog/dialog.dart';
 import 'package:reboot_launcher/src/dialog/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/snackbar.dart';
-import 'package:reboot_launcher/src/embedded/server.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:sync/semaphore.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../main.dart';
-import '../page/home_page.dart';
 import '../util/server.dart';
 
 extension ServerControllerDialog on ServerController {
@@ -81,10 +79,7 @@ extension ServerControllerDialog on ServerController {
     try{
       switch(type()){
         case ServerType.embedded:
-          embeddedServer = await startEmbeddedServer(
-                  () => Get.find<SettingsController>().matchmakingIp.text,
-          );
-          embeddedMatchmaker = await startEmbeddedMatchmaker();
+          startServer();
           break;
         case ServerType.remote:
           var uriResult = await _pingRemoteInteractive();

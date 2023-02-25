@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:reboot_launcher/src/model/tutorial_page.dart';
+import 'package:ini/ini.dart';
 import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 import 'dart:ui';
 
 import '../util/reboot.dart';
@@ -15,12 +18,7 @@ class SettingsController extends GetxController {
   late final TextEditingController consoleDll;
   late final TextEditingController authDll;
   late final TextEditingController matchmakingIp;
-  late final Rx<PaneDisplayMode> displayType;
-  late final RxBool automaticallyStartMatchmaker;
-  late final RxBool doNotAskAgain;
-  late final RxBool advancedMode;
   late final RxBool autoUpdate;
-  late Rx<TutorialPage> tutorialPage;
   late double width;
   late double height;
   late double? offsetX;
@@ -43,29 +41,18 @@ class SettingsController extends GetxController {
     matchmakingIp.addListener(() async {
       var text = matchmakingIp.text;
       _storage.write("ip", text);
+      writeMatchmakingIp(text);
     });
 
-    automaticallyStartMatchmaker = RxBool(_storage.read("start_matchmaker_automatically") ?? false);
-    automaticallyStartMatchmaker.listen((value) => _storage.write("start_matchmaker_automatically", value));
-
-    doNotAskAgain = RxBool(_storage.read("do_not_ask_again") ?? false);
-    doNotAskAgain.listen((value) => _storage.write("do_not_ask_again", value));
-
-    width = _storage.read("width") ?? window.physicalSize.width;
-    height = _storage.read("height") ?? window.physicalSize.height;
+    width = _storage.read("width") ?? 912;
+    height = _storage.read("height") ?? 660;
     offsetX = _storage.read("offset_x");
     offsetY = _storage.read("offset_y");
 
-    advancedMode = RxBool(_storage.read("advanced") ?? false);
-    advancedMode.listen((value) async => _storage.write("advanced", value));
     autoUpdate = RxBool(_storage.read("auto_update") ?? false);
     autoUpdate.listen((value) async => _storage.write("auto_update", value));
 
-    displayType = Rx(PaneDisplayMode.top);
-
     scrollingDistance = 0.0;
-
-    tutorialPage = Rx(TutorialPage.start);
   }
 
   TextEditingController _createController(String key, String name) {

@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:jaguar/jaguar.dart';
 
 import '../model/server_type.dart';
+import '../util/server.dart';
 
 class ServerController extends GetxController {
   static const String _serverName = "127.0.0.1";
@@ -17,13 +18,14 @@ class ServerController extends GetxController {
   late final Rx<ServerType> type;
   late final RxBool warning;
   late RxBool started;
-  Jaguar? embeddedServer;
-  Jaguar? embeddedMatchmaker;
+  late RxBool loginAutomatically;
   HttpServer? remoteServer;
 
   ServerController() {
     _storage = GetStorage("server");
-
+    started = RxBool(false);
+    loginAutomatically = RxBool(_storage.read("login_automatically") ?? false);
+    loginAutomatically.listen((value) => _storage.write("login_automatically", value));
     type = Rx(ServerType.values.elementAt(_storage.read("type") ?? 0));
     type.listen((value) {
       host.text = _readHost();
@@ -35,17 +37,12 @@ class ServerController extends GetxController {
 
       stop();
     });
-
     host = TextEditingController(text: _readHost());
     host.addListener(() => _storage.write("${type.value.id}_host", host.text));
-
     port = TextEditingController(text: _readPort());
     port.addListener(() => _storage.write("${type.value.id}_port", port.text));
-
     warning = RxBool(_storage.read("lawin_value") ?? true);
     warning.listen((value) => _storage.write("lawin_value", value));
-
-    started = RxBool(false);
   }
 
   String _readHost() {
@@ -63,8 +60,7 @@ class ServerController extends GetxController {
     try{
       switch(type()){
         case ServerType.embedded:
-          await embeddedServer?.close();
-          await embeddedMatchmaker?.close();
+          stopServer();
           break;
         case ServerType.remote:
           await remoteServer?.close(force: true);
