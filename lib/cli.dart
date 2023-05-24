@@ -7,14 +7,12 @@ import 'package:reboot_launcher/src/cli/game.dart';
 import 'package:reboot_launcher/src/cli/reboot.dart';
 import 'package:reboot_launcher/src/cli/server.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
-import 'package:reboot_launcher/src/model/game_type.dart';
-import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/patcher.dart';
 import 'package:reboot_launcher/src/util/reboot.dart';
 import 'package:reboot_launcher/src/util/server.dart' as server;
 
 late String? username;
-late GameType type;
+late bool host;
 late bool verbose;
 late String dll;
 late FortniteVersion version;
@@ -40,10 +38,10 @@ void main(List<String> args) async {
     ..addOption("server-host")
     ..addOption("server-port")
     ..addOption("matchmaking-address")
-    ..addOption("dll", defaultsTo: settingsJson["reboot"] ?? (await loadBinary("reboot.dll", true)).path)
-    ..addOption("type", allowed: getGameTypes(), defaultsTo: getDefaultGameType(gameJson))
+    ..addOption("dll", defaultsTo: settingsJson["reboot"] ?? rebootDllFile)
     ..addFlag("update", defaultsTo: settingsJson["auto_update"] ?? true, negatable: true)
     ..addFlag("log", defaultsTo: false)
+    ..addFlag("host", defaultsTo: false)
     ..addFlag("auto-restart", defaultsTo: false, negatable: true);
   var result = parser.parse(args);
   if (result.command?.name == "list") {
@@ -54,8 +52,8 @@ void main(List<String> args) async {
   }
 
   dll = result["dll"];
-  type = getGameType(result);
-  username = result["username"] ?? gameJson["${type == GameType.client ? "game" : "server"}_username"];
+  host = result["host"];
+  username = result["username"] ?? gameJson["username"];
   verbose = result["log"];
 
   version = _createVersion(gameJson["version"], result["version"], versions);
@@ -69,7 +67,7 @@ void main(List<String> args) async {
     }
   }
 
-  stdout.writeln("Launching game(type: ${type.name})...");
+  stdout.writeln("Launching game...");
   if(version.executable == null){
     throw Exception("Missing game executable at: ${version.location.path}");
   }
@@ -78,9 +76,9 @@ void main(List<String> args) async {
   await patchMatchmaking(version.executable!);
 
   var serverType = getServerType(result);
-  var host = result["server-host"] ?? serverJson["${serverType.id}_host"];
-  var port = result["server-port"] ?? serverJson["${serverType.id}_port"];
-  var started = await startServer(host, port, serverType);
+  var serverHost = result["server-host"] ?? serverJson["${serverType.id}_host"];
+  var serverPort = result["server-port"] ?? serverJson["${serverType.id}_port"];
+  var started = await startServer(serverHost, serverPort, serverType);
   if(!started){
     stderr.writeln("Cannot start server!");
     return;

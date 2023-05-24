@@ -1,8 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
-import '../../main.dart';
-import '../page/home_page.dart';
-import '../dialog/dialog.dart';
+import '../../../main.dart';
+import '../ui/dialog/dialog.dart';
 
 void onError(Object? exception, StackTrace? stackTrace, bool framework) {
   if(exception == null){
@@ -13,7 +12,7 @@ void onError(Object? exception, StackTrace? stackTrace, bool framework) {
     return;
   }
 
-  showDialog(
+  WidgetsBinding.instance.addPostFrameCallback((timeStamp) => showDialog(
       context: appKey.currentContext!,
       builder: (context) =>
           ErrorDialog(
@@ -21,5 +20,5 @@ void onError(Object? exception, StackTrace? stackTrace, bool framework) {
               stackTrace: stackTrace,
               errorMessageBuilder: (exception) => framework ? "An error was thrown by Flutter: $exception" : "An uncaught error was thrown: $exception"
           )
-  );
+  ));
 }

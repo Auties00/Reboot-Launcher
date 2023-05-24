@@ -1,21 +1,23 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
-import 'package:archive/archive_io.dart';
 import 'package:ini/ini.dart';
 import 'package:process_run/shell.dart';
-import 'package:reboot_launcher/src/model/game_type.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
+import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:shelf_proxy/shelf_proxy.dart';
 import 'package:shelf/shelf_io.dart';
 
 import 'package:http/http.dart' as http;
 
-final serverLogFile = File("${Platform.environment["UserProfile"]}\\.reboot_launcher\\server.txt");
+final serverLogFile = File("${logsDirectory.path}\\server.log");
+final serverDirectory = Directory("${assetsDirectory.path}\\lawin");
+final serverExeFile = File("${serverDirectory.path}\\lawinserver-win.exe");
 
 Future<void> writeMatchmakingIp(String text) async {
-  var file = File("${embeddedBackendDirectory.path}\\Config\\config.ini");
+  var file = File("${assetsDirectory.path}\\lawin\\Config\\config.ini");
   if(!file.existsSync()){
     return;
   }
@@ -29,24 +31,25 @@ Future<void> writeMatchmakingIp(String text) async {
   file.writeAsStringSync(config.toString());
 }
 
-Future<void> startServer() async {
-  if(!embeddedBackendDirectory.existsSync()){
-    var serverZip = await loadBinary("server.zip", true);
-    await extractFileToDisk(serverZip.path, embeddedBackendDirectory.path);
-  }
-
+Future<void> startServer(bool detached) async {
   var process = await Process.start(
-      "${embeddedBackendDirectory.path}\\lawinserver-win.exe",
+      serverExeFile.path,
       [],
-      workingDirectory: embeddedBackendDirectory.path
+      workingDirectory: serverDirectory.path,
+      mode: detached ? ProcessStartMode.detached : ProcessStartMode.normal
   );
-  process.outLines.forEach((element) => serverLogFile.writeAsStringSync("$element\n", mode: FileMode.append));
-  process.errLines.forEach((element) => serverLogFile.writeAsStringSync("$element\n", mode: FileMode.append));
+  if(!detached) {
+    serverLogFile.createSync(recursive: true);
+    process.outLines.forEach((element) =>
+        serverLogFile.writeAsStringSync("$element\n", mode: FileMode.append));
+    process.errLines.forEach((element) =>
+        serverLogFile.writeAsStringSync("$element\n", mode: FileMode.append));
+  }
 }
 
 Future<void> stopServer() async {
-  var releaseBat = await loadBinary("kill_both_ports.bat", false);
-  await Process.run(releaseBat.path, []);
+  await freeLawinPort();
+  await freeMatchmakerPort();
 }
 
 Future<bool> isLawinPortFree() async {
@@ -64,24 +67,23 @@ Future<bool> isMatchmakerPortFree() async {
 }
 
 Future<void> freeLawinPort() async {
-  var releaseBat = await loadBinary("kill_lawin_port.bat", false);
-  var result = await Process.run(releaseBat.path, []);
-  if(result.exitCode == 1){
-    await runElevated(releaseBat.path, "");
-    await Future.delayed(const Duration(seconds: 1));
-  }
+  var releaseBat = File("${assetsDirectory.path}\\lawin\\kill_lawin.bat");
+  await Process.run(releaseBat.path, []);
 }
 
 Future<void> freeMatchmakerPort() async {
-  var releaseBat = await loadBinary("kill_matchmaker_port.bat", false);
-  var result = await Process.run(releaseBat.path, []);
-  if(result.exitCode == 1){
-    await runElevated(releaseBat.path, "");
-    await Future.delayed(const Duration(seconds: 1));
-  }
+  var releaseBat = File("${assetsDirectory.path}\\lawin\\kill_matchmaker.bat");
+  await Process.run(releaseBat.path, []);
 }
 
-List<String> createRebootArgs(String username, GameType type, String additionalArgs) {
+Future<void> resetWinNat() async {
+  var binary = File("${serverDirectory.path}\\winnat.bat");
+  await runElevated(binary.path, "");
+}
+
+List<String> createRebootArgs(String username, bool host, String additionalArgs) {
+  username = username.isEmpty ? kDefaultPlayerName : username;
+  username = host ? "$username${Random().nextInt(1000)}" : username;
   var args = [
     "-epicapp=Fortnite",
     "-epicenv=Prod",
@@ -91,18 +93,13 @@ List<String> createRebootArgs(String username, GameType type, String additionalA
     "-nobe",
     "-fromfl=eac",
     "-fltoken=3db3ba5dcbd2e16703f3978d",
-    "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ"
+    "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ",
+    "-AUTH_LOGIN=$username@projectreboot.dev",
+    "-AUTH_PASSWORD=Rebooted",
+    "-AUTH_TYPE=epic"
   ];
 
-  if(username.isNotEmpty){
-    args.addAll([
-      "-AUTH_LOGIN=${username.replaceAll(RegExp("[^A-Za-z0-9]"), "")}@projectreboot.dev",
-      "-AUTH_PASSWORD=Rebooted",
-      "-AUTH_TYPE=epic"
-    ]);
-  }
-
-  if(type == GameType.headlessServer){
+  if(host){
     args.addAll([
       "-nullrhi",
       "-nosplash",
@@ -205,5 +202,5 @@ enum ServerResultType {
   canStart,
   alreadyStarted,
   unknownError,
-  stopped,
+  stopped
 }

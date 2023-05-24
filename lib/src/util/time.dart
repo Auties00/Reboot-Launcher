@@ -1,5 +1,6 @@
-String toETA(int milliseconds){
-  var duration = Duration(milliseconds: milliseconds);
+String toETA(double milliseconds){
+  var roundedMilliseconds = milliseconds.toInt();
+  var duration = Duration(milliseconds: roundedMilliseconds);
   return "${duration.inHours.toString().padLeft(2, "0")}:"
       "${duration.inMinutes.remainder(60).toString().padLeft(2, "0")}:"
       "${duration.inSeconds.remainder(60).toString().padLeft(2, "0")}";

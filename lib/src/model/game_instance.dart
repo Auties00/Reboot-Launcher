@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'game_type.dart';
-
 class GameInstance {
   final Process gameProcess;
   final Process? launcherProcess;

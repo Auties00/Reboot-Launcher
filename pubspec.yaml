@@ -1,6 +1,6 @@
 name: reboot_launcher
 description: Launcher for project reboot
-version: "6.4.0"
+version: "7.0.0"
 
 publish_to: 'none'
 
@@ -40,6 +40,7 @@ dependencies:
   jaguar: ^3.1.3
   hex: ^0.2.0
   uuid: ^3.0.6
+  unrar_file: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -51,15 +52,22 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/builds/
+    - assets/dlls/
     - assets/icons/
-    - assets/binaries/
     - assets/images/
+    - assets/lawin/
+    - assets/lawin/CloudStorage/
+    - assets/lawin/Config/
+    - assets/lawin/profiles/
+    - assets/lawin/public/
+    - assets/lawin/responses/
 
 msix_config:
   display_name: Reboot Launcher
   publisher_display_name: Auties00
   identity_name: 31868Auties00.RebootLauncher
-  msix_version: 6.4.0.0
+  msix_version: 7.0.0.0
   publisher: CN=E6CD08C6-DECF-4034-A3EB-2D5FA2CA8029
   logo_path: ./assets/icons/reboot.ico
   architecture: x64

@@ -20,7 +20,7 @@ Future<bool> startServer(String? host, String? port, ServerType type) async {
       return true;
     case ServerType.embedded:
       stdout.writeln("Starting an embedded server...");
-      await server.startServer();
+      await server.startServer(false);
       var result = await server.ping(host ?? "127.0.0.1", port ?? "3551");
       if(result == null){
         throw Exception("Cannot start embedded server");

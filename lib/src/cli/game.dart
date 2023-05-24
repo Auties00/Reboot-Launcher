@@ -4,7 +4,6 @@ import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/cli.dart';
 
 import '../model/fortnite_version.dart';
-import '../model/game_type.dart';
 import '../util/injector.dart';
 import '../util/os.dart';
 import '../util/process.dart';
@@ -32,15 +31,14 @@ Future<void> startGame() async {
         .path} no longer contains a Fortnite executable, did you delete or move it?");
   }
 
-  var hosting = type != GameType.client;
   if (username == null) {
-    username = "Reboot${hosting ? 'Host' : 'Player'}";
+    username = "Reboot${host ? 'Host' : 'Player'}";
     stdout.writeln("No username was specified, using $username by default. Use --username to specify one");
   }
 
-  _gameProcess = await Process.start(gamePath, createRebootArgs(username!, type, ""))
+  _gameProcess = await Process.start(gamePath, createRebootArgs(username!, host, ""))
     ..exitCode.then((_) => _onClose())
-    ..outLines.forEach((line) => _onGameOutput(line, dll, hosting, verbose));
+    ..outLines.forEach((line) => _onGameOutput(line, dll, host, verbose));
 }
 
 
@@ -68,7 +66,7 @@ void _onGameOutput(String line, String dll, bool hosting, bool verbose) {
   }
 
   if(line.contains("Platform has ")){
-    _injectOrShowError("craniumv2.dll");
+    _injectOrShowError("cobalt.dll");
     return;
   }
 
@@ -90,7 +88,7 @@ void _onGameOutput(String line, String dll, bool hosting, bool verbose) {
       _injectOrShowError("console.dll");
     }
 
-    _injectOrShowError("leakv2.dll");
+    _injectOrShowError("memoryleak.dll");
   }
 }
 
@@ -107,7 +105,7 @@ Future<void> _injectOrShowError(String binary, [bool locate = true]) async {
 
   try {
     stdout.writeln("Injecting $binary...");
-    var dll = locate ? await loadBinary(binary, true) : File(binary);
+    var dll = locate ? File("${assetsDirectory.path}\\dlls\\$binary") : File(binary);
     if(!dll.existsSync()){
       throw Exception("Cannot inject $dll: missing file");
     }
