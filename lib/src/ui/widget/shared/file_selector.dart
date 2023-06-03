@@ -56,8 +56,7 @@ class _FileSelectorState extends State<FileSelector> {
       suffix: !widget.allowNavigator ? null : Button(
           onPressed: _onPressed,
           child: const Icon(FluentIcons.open_folder_horizontal)
-      ),
-      suffixMode: OverlayVisibilityMode.editing
+      )
   );
 
   void _onPressed() {
