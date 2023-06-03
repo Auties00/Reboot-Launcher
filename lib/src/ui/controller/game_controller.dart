@@ -23,6 +23,7 @@ class GameController extends GetxController {
   late final Rx<List<FortniteVersion>> versions;
   late final Rxn<FortniteVersion> _selectedVersion;
   late final RxBool started;
+  late final RxBool autoStartGameServer;
   GameInstance? instance;
   
   GameController() {
@@ -47,6 +48,8 @@ class GameController extends GetxController {
     customLaunchArgs = TextEditingController(text: _storage.read("custom_launch_args" ?? ""));
     customLaunchArgs.addListener(() => _storage.write("custom_launch_args", customLaunchArgs.text));
     started = RxBool(false);
+    autoStartGameServer = RxBool(_storage.read("auto_game_server") ?? true);
+    autoStartGameServer.listen((value) => _storage.write("auto_game_server", value));
   }
 
   FortniteVersion? getVersionByName(String name) {

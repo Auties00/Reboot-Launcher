@@ -1,5 +1,7 @@
 
 
+import 'dart:async';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' show Icons;
 import 'package:get/get.dart';
@@ -11,6 +13,7 @@ import 'package:reboot_launcher/src/ui/widget/home/version_selector.dart';
 import 'package:reboot_launcher/src/ui/widget/shared/setting_tile.dart';
 
 import '../../util/checks.dart';
+import '../../util/os.dart';
 
 class LauncherPage extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
@@ -66,6 +69,13 @@ class _GamePageState extends State<_GamePage> {
   final GameController _gameController = Get.find<GameController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
   late final RxBool _showPasswordTrailing = RxBool(_gameController.password.text.isNotEmpty);
+  final StreamController _matchmakingStream = StreamController();
+
+  @override
+  void initState() {
+    _settingsController.matchmakingIp.addListener(() => _matchmakingStream.add(null));
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) => Column(
@@ -89,58 +99,73 @@ class _GamePageState extends State<_GamePage> {
                   ),
                 ),
                 SettingTile(
-                  title: "Password",
-                  subtitle: "The password of your account, only used if the backend requires it",
-                  isChild: true,
-                  content: Obx(() => TextFormBox(
-                      placeholder: "Password",
-                      controller: _gameController.password,
-                      autovalidateMode: AutovalidateMode.always,
-                      obscureText: !_gameController.showPassword.value,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      onChanged: (text) => _showPasswordTrailing.value = text.isNotEmpty,
-                      suffix: Button(
-                        onPressed: () => _gameController.showPassword.value = !_gameController.showPassword.value,
-                        style: ButtonStyle(
-                            shape: ButtonState.all(const CircleBorder()),
-                            backgroundColor: ButtonState.all(Colors.transparent)
-                        ),
-                        child: Icon(
-                            _gameController.showPassword.value ? Icons.visibility_off : Icons.visibility,
-                            color: _showPasswordTrailing.value ? null : Colors.transparent
-                        ),
-                      )
-                  ))
+                    title: "Password",
+                    subtitle: "The password of your account, only used if the backend requires it",
+                    isChild: true,
+                    content: Obx(() => TextFormBox(
+                        placeholder: "Password",
+                        controller: _gameController.password,
+                        autovalidateMode: AutovalidateMode.always,
+                        obscureText: !_gameController.showPassword.value,
+                        enableSuggestions: false,
+                        autocorrect: false,
+                        onChanged: (text) => _showPasswordTrailing.value = text.isNotEmpty,
+                        suffix: Button(
+                          onPressed: () => _gameController.showPassword.value = !_gameController.showPassword.value,
+                          style: ButtonStyle(
+                              shape: ButtonState.all(const CircleBorder()),
+                              backgroundColor: ButtonState.all(Colors.transparent)
+                          ),
+                          child: Icon(
+                              _gameController.showPassword.value ? Icons.visibility_off : Icons.visibility,
+                              color: _showPasswordTrailing.value ? null : Colors.transparent
+                          ),
+                        )
+                    ))
                 )
               ],
             ),
             const SizedBox(
               height: 16.0,
             ),
-            SettingTile(
-              title: "Matchmaking host",
-              subtitle: "Enter the IP address of the game server hosting the match",
-              content: TextFormBox(
-                  placeholder: "IP:PORT",
-                  controller: _settingsController.matchmakingIp,
-                  validator: checkMatchmaking,
-                  autovalidateMode: AutovalidateMode.always
-              ),
-              expandedContent: [
-                SettingTile(
-                  title: "Browse available servers",
-                  subtitle: "Discover new game servers that fit your play-style",
-                  content: Button(
-                      onPressed: () {
-                        widget.navigatorKey.currentState?.pushNamed('browse');
-                        widget.nestedNavigation.value = true;
-                      },
-                      child: const Text("Browse")
-                  ),
-                  isChild: true
-                )
-              ]
+            StreamBuilder(
+                stream: _matchmakingStream.stream,
+                builder: (context, value) =>
+                    SettingTile(
+                        title: "Matchmaking host",
+                        subtitle: "Enter the IP address of the game server hosting the match",
+                        content: TextFormBox(
+                            placeholder: "IP:PORT",
+                            controller: _settingsController.matchmakingIp,
+                            validator: checkMatchmaking,
+                            autovalidateMode: AutovalidateMode.always
+                        ),
+                        expandedContentSpacing: isLocalHost(_settingsController.matchmakingIp.text) ? SettingTile.kDefaultSpacing : 0,
+                        expandedContent: [
+                          !isLocalHost(_settingsController.matchmakingIp.text) ? const SizedBox() : SettingTile(
+                              title: "Automatically start game server",
+                              subtitle: "This option is available when the matchmaker is set to localhost",
+                              contentWidth: null,
+                              content: Obx(() => ToggleSwitch(
+                                  checked: _gameController.autoStartGameServer(),
+                                  onChanged: (value) => _gameController.autoStartGameServer.value = value
+                              )),
+                              isChild: true
+                          ),
+                          SettingTile(
+                              title: "Browse available servers",
+                              subtitle: "Discover new game servers that fit your play-style",
+                              content: Button(
+                                  onPressed: () {
+                                    widget.navigatorKey.currentState?.pushNamed('browse');
+                                    widget.nestedNavigation.value = true;
+                                  },
+                                  child: const Text("Browse")
+                              ),
+                              isChild: true
+                          )
+                        ]
+                    )
             ),
             const SizedBox(
               height: 16.0,

@@ -178,6 +178,10 @@ class _LaunchButtonState extends State<LaunchButton> {
       return false;
     }
 
+    if(!_gameController.autoStartGameServer()){
+      return false;
+    }
+
     var version = _gameController.selectedVersion!;
     await _startGameProcesses(version, true, false);
     return true;
@@ -198,7 +202,12 @@ class _LaunchButtonState extends State<LaunchButton> {
       return kDefaultPlayerName;
     }
 
-    var username = _gameController.username.text.replaceAll(RegExp("[^A-Za-z0-9]"), "").trim();
+    var username = _gameController.username.text;
+    if(_gameController.password.text.isNotEmpty){
+      return username;
+    }
+
+    username = _gameController.username.text.replaceAll(RegExp("[^A-Za-z0-9]"), "").trim();
     if(username.isEmpty){
       return kDefaultPlayerName;
     }
