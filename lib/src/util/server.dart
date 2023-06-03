@@ -83,7 +83,7 @@ Future<void> resetWinNat() async {
 }
 
 List<String> createRebootArgs(String username, String password, bool host, String additionalArgs) {
-  if(password.isNotEmpty) {
+  if(password.isEmpty) {
     username = username.isEmpty ? kDefaultPlayerName : username;
     username = host ? "$username${Random().nextInt(1000)}" : username;
     username = '$username@projectreboot.dev';

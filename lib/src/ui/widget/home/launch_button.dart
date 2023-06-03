@@ -38,7 +38,6 @@ class LaunchButton extends StatefulWidget {
 }
 
 class _LaunchButtonState extends State<LaunchButton> {
-  static const String _kLoadingRoute = '/loading';
   final String _shutdownLine = "FOnlineSubsystemGoogleCommon::Shutdown()";
   final List<String> _corruptedBuildErrors = [
     "when 0 bytes remain",
@@ -175,7 +174,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     var matchmakingIp = _settingsController.matchmakingIp.text;
-    if(!matchmakingIp.contains("127.0.0.1") && !matchmakingIp.contains("localhost")) {
+    if(!isLocalHost(matchmakingIp)) {
       return false;
     }
 
