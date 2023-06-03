@@ -24,6 +24,7 @@ import 'package:reboot_launcher/src/../main.dart';
 import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/ui/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/model/game_instance.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../util/process.dart';
 
@@ -37,6 +38,7 @@ class LaunchButton extends StatefulWidget {
 }
 
 class _LaunchButtonState extends State<LaunchButton> {
+  static const String _kLoadingRoute = '/loading';
   final String _shutdownLine = "FOnlineSubsystemGoogleCommon::Shutdown()";
   final List<String> _corruptedBuildErrors = [
     "when 0 bytes remain",
@@ -50,6 +52,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     "UOnlineAccountCommon::ForceLogout"
   ];
 
+  final GlobalKey _headlessServerKey = GlobalKey();
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
   final ServerController _serverController = Get.find<ServerController>();
@@ -116,10 +119,8 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     try {
-      _fail = false;
       var version = _gameController.selectedVersion!;
-      var gamePath = version.executable?.path;
-      if(gamePath == null){
+      if(version.executable?.path == null){
         showMissingBuildError(version);
         _onStop(widget.host);
         return;
@@ -131,7 +132,6 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
 
-      await compute(patchMatchmaking, version.executable!);
       await compute(patchHeadless, version.executable!);
 
       var automaticallyStartedServer = await _startMatchMakingServer();
@@ -141,9 +141,9 @@ class _LaunchButtonState extends State<LaunchButton> {
         await _showServerLaunchingWarning();
       }
     } catch (exception, stacktrace) {
-      _closeDialogIfOpen(false);
-      showCorruptedBuildError(widget.host, exception, stacktrace);
+      _closeLaunchingWidget(false);
       _onStop(widget.host);
+      showCorruptedBuildError(widget.host, exception, stacktrace);
     }
   }
 
@@ -152,7 +152,8 @@ class _LaunchButtonState extends State<LaunchButton> {
     var launcherProcess = await _createLauncherProcess(version);
     var eacProcess = await _createEacProcess(version);
     var gameProcess = await _createGameProcess(version.executable!.path, host);
-    var instance = GameInstance(gameProcess, launcherProcess, eacProcess, hasChildServer);
+    var watchDogProcess = _createWatchdogProcess(gameProcess, launcherProcess, eacProcess);
+    var instance = GameInstance(gameProcess, launcherProcess, eacProcess, watchDogProcess, hasChildServer);
     if(host){
       _hostingController.instance = instance;
     }else{
@@ -160,6 +161,13 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
     _injectOrShowError(Injectable.sslBypass, host);
   }
+
+  int _createWatchdogProcess(Process? gameProcess, Process? launcherProcess, Process? eacProcess) => startBackgroundProcess(
+      '${assetsDirectory.path}\\browse\\watch.exe',
+      [_gameController.uuid, _getProcessPid(gameProcess), _getProcessPid(launcherProcess), _getProcessPid(eacProcess)]
+  );
+
+  String _getProcessPid(Process? process) => process?.pid.toString() ?? "-1";
 
   Future<bool> _startMatchMakingServer() async {
     if(widget.host){
@@ -226,33 +234,50 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    _closeDialogIfOpen(false);
+    _closeLaunchingWidget(false);
     _onStop(widget.host);
   }
 
-  void _closeDialogIfOpen(bool success) {
+  void _closeLaunchingWidget(bool success) {
+    var context = _headlessServerKey.currentContext;
+    if(context == null || !context.mounted){
+      return;
+    }
+
     var route = ModalRoute.of(appKey.currentContext!);
     if(route == null || route.isCurrent){
       return;
     }
 
-    Navigator.of(appKey.currentContext!).pop(success);
+    Navigator.of(context).pop(success);
   }
 
   Future<void> _showServerLaunchingWarning() async {
     var result = await showDialog<bool>(
         context: appKey.currentContext!,
         builder: (context) => ProgressDialog(
+            key: _headlessServerKey,
             text: "Launching headless server...",
-            onStop: () =>_onEnd()
+            onStop: () => Navigator.of(context).pop(false)
         )
     ) ?? false;
 
-    if(result){
+    if(!result){
+      _onStop(true);
       return;
     }
 
-    _onStop(widget.host);
+    if(!_hostingController.discoverable.value){
+      return;
+    }
+
+    var supabase = Supabase.instance.client;
+    await supabase.from('hosts').insert({
+      'id': _gameController.uuid,
+      'name': _hostingController.name.text,
+      'description': _hostingController.description.text,
+      'version': _gameController.selectedVersion?.name ?? 'unknown'
+    });
   }
 
   void _onGameOutput(String line, bool host) {
@@ -280,7 +305,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       }
 
       _fail = true;
-      _closeDialogIfOpen(false);
+      _closeLaunchingWidget(false);
       _showTokenError(host);
       return;
     }
@@ -290,7 +315,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         _injectOrShowError(Injectable.console, host);
       }else {
         _injectOrShowError(Injectable.reboot, host)
-            .then((value) => _closeDialogIfOpen(true));
+            .then((value) => _closeLaunchingWidget(true));
       }
 
       _injectOrShowError(Injectable.memoryFix, host);
@@ -340,6 +365,13 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     _setStarted(host, false);
+
+    if(host){
+      var supabase = Supabase.instance.client;
+      await supabase.from('hosts')
+          .delete()
+          .match({'id': _gameController.uuid});
+    }
   }
 
   Future<void> _injectOrShowError(Injectable injectable, bool hosting) async {
@@ -387,12 +419,8 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   void _onDllFail(File dllPath, bool hosting) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if(_fail){
-        return;
-      }
-
       _fail = true;
-      _closeDialogIfOpen(false);
+      _closeLaunchingWidget(false);
       showMissingDllError(path.basename(dllPath.path));
       _onStop(hosting);
     });

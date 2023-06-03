@@ -48,28 +48,16 @@ class _FileSelectorState extends State<FileSelector> {
     ) : _buildBody;
   }
 
-  Widget get _buildBody => Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      Expanded(
-          child: TextFormBox(
-              controller: widget.controller,
-              placeholder: widget.placeholder,
-              validator: widget.validator,
-              autovalidateMode: widget.validatorMode ?? AutovalidateMode.onUserInteraction
-          )
+  Widget get _buildBody => TextFormBox(
+      controller: widget.controller,
+      placeholder: widget.placeholder,
+      validator: widget.validator,
+      autovalidateMode: widget.validatorMode ?? AutovalidateMode.onUserInteraction,
+      suffix: !widget.allowNavigator ? null : Button(
+          onPressed: _onPressed,
+          child: const Icon(FluentIcons.open_folder_horizontal)
       ),
-      if (widget.allowNavigator)
-        const SizedBox(width: 16.0),
-      if (widget.allowNavigator)
-        Padding(
-            padding: const EdgeInsets.only(bottom: 21.0),
-            child: Button(
-                onPressed: _onPressed,
-                child: const Icon(FluentIcons.open_folder_horizontal)
-            )
-        )
-    ],
+      suffixMode: OverlayVisibilityMode.editing
   );
 
   void _onPressed() {

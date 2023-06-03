@@ -73,7 +73,6 @@ void main(List<String> args) async {
   }
 
   await patchHeadless(version.executable!);
-  await patchMatchmaking(version.executable!);
 
   var serverType = getServerType(result);
   var serverHost = result["server-host"] ?? serverJson["${serverType.id}_host"];

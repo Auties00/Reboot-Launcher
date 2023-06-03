@@ -70,3 +70,11 @@ String? checkMatchmaking(String? text) {
 
   return null;
 }
+
+String? checkUpdateUrl(String? text) {
+  if (text == null || text.isEmpty) {
+    return "Empty URL";
+  }
+
+  return null;
+}

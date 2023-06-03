@@ -3,6 +3,9 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../../../main.dart';
 import '../ui/dialog/dialog.dart';
 
+
+String? lastError;
+
 void onError(Object? exception, StackTrace? stackTrace, bool framework) {
   if(exception == null){
     return;
@@ -10,6 +13,16 @@ void onError(Object? exception, StackTrace? stackTrace, bool framework) {
 
   if(appKey.currentContext == null || appKey.currentState?.mounted == false){
     return;
+  }
+
+  if(lastError == exception.toString()){
+    return;
+  }
+
+  lastError = exception.toString();
+  var route = ModalRoute.of(appKey.currentContext!);
+  if(route != null && !route.isCurrent){
+    Navigator.of(appKey.currentContext!).pop(false);
   }
 
   WidgetsBinding.instance.addPostFrameCallback((timeStamp) => showDialog(

@@ -26,16 +26,24 @@ class SmartInput extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return TextFormBox(
+    if(label != null){
+      return InfoLabel(
+        label: label!,
+        child: _body
+      );
+    }
+
+    return _body;
+  }
+
+  TextFormBox get _body => TextFormBox(
       enabled: enabled,
       controller: controller,
-      header: label,
       keyboardType: type,
       placeholder: placeholder,
       onTap: onTap,
       readOnly: readOnly,
       autovalidateMode: validatorMode,
       validator: validator
-    );
-  }
+  );
 }

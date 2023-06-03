@@ -7,12 +7,14 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/model/game_instance.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../model/update_status.dart';
 
 const String kDefaultPlayerName = "Player";
 
 class GameController extends GetxController {
+  late final String uuid;
   late final GetStorage _storage;
   late final TextEditingController username;
   late final TextEditingController password;
@@ -21,7 +23,6 @@ class GameController extends GetxController {
   late final Rx<List<FortniteVersion>> versions;
   late final Rxn<FortniteVersion> _selectedVersion;
   late final RxBool started;
-  late final Rx<UpdateStatus> updateStatus;
   GameInstance? instance;
   
   GameController() {
@@ -35,6 +36,8 @@ class GameController extends GetxController {
     var decodedSelectedVersionName = _storage.read("version");
     var decodedSelectedVersion = decodedVersions.firstWhereOrNull(
         (element) => element.name == decodedSelectedVersionName);
+    uuid = _storage.read("uuid") ?? const Uuid().v4();
+    _storage.write("uuid", uuid);
     _selectedVersion = Rxn(decodedSelectedVersion);
     username = TextEditingController(text: _storage.read("username") ?? kDefaultPlayerName);
     username.addListener(() => _storage.write("username", username.text));
@@ -44,7 +47,6 @@ class GameController extends GetxController {
     customLaunchArgs = TextEditingController(text: _storage.read("custom_launch_args" ?? ""));
     customLaunchArgs.addListener(() => _storage.write("custom_launch_args", customLaunchArgs.text));
     started = RxBool(false);
-    updateStatus = Rx(UpdateStatus.waiting);
   }
 
   FortniteVersion? getVersionByName(String name) {
@@ -67,6 +69,9 @@ class GameController extends GetxController {
 
   void removeVersion(FortniteVersion version) {
     versions.update((val) => val?.remove(version));
+    if (selectedVersion?.name == version.name || hasNoVersions) {
+      selectedVersion = null;
+    }
   }
 
   Future<void> _saveVersions() async {
@@ -81,7 +86,7 @@ class GameController extends GetxController {
   FortniteVersion? get selectedVersion => _selectedVersion();
 
   set selectedVersion(FortniteVersion? version) {
-    _selectedVersion(version);
+    _selectedVersion.value = version;
     _storage.write("version", version?.name);
   }
 

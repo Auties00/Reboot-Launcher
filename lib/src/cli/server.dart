@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:process_run/shell.dart';
-import 'package:shelf/shelf_io.dart' as shelf_io;
-import 'package:shelf_proxy/shelf_proxy.dart';
 
 import '../model/server_type.dart';
 import '../util/server.dart' as server;
@@ -62,7 +60,7 @@ Future<HttpServer?> _changeReverseProxyState(String host, String port) async {
       return null;
     }
 
-    return await shelf_io.serve(proxyHandler(uri), "127.0.0.1", 3551);
+    return await server.startRemoteServer(uri);
   }catch(error){
     throw Exception("Cannot start reverse proxy");
   }

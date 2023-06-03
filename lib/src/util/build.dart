@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:archive/archive_io.dart';
 import 'package:html/parser.dart' show parse;
@@ -7,7 +9,6 @@ import 'package:reboot_launcher/src/model/fortnite_build.dart';
 import 'package:reboot_launcher/src/util/time.dart';
 import 'package:reboot_launcher/src/util/version.dart' as parser;
 import 'package:path/path.dart' as path;
-import 'package:unrar_file/unrar_file.dart';
 
 import 'os.dart';
 
@@ -44,21 +45,28 @@ Future<List<FortniteBuild>> fetchBuilds(ignored) async {
   return results;
 }
 
-Future<void> downloadArchiveBuild(String archiveUrl, Directory destination, Function(double, String) onProgress, Function() onRar) async {
-  var outputDir = await destination.createTemp("build");
+
+Future<void> downloadArchiveBuild(String archiveUrl, Directory destination, Function(double, String) onProgress, Function(double?, String?) onDecompress) async {
+  var outputDir = Directory("${destination.path}\\.build");
+  outputDir.createSync(recursive: true);
   try {
     destination.createSync(recursive: true);
     var fileName = archiveUrl.substring(archiveUrl.lastIndexOf("/") + 1);
     var extension = path.extension(fileName);
-    var tempFile = File("${outputDir.path}//$fileName");
-    var startTime = DateTime.now().millisecondsSinceEpoch;
+    var tempFile = File("${outputDir.path}\\$fileName");
+    if(tempFile.existsSync()) {
+      tempFile.deleteSync(recursive: true);
+    }
+
     var client = http.Client();
-    var response = await client.send(
-        http.Request("GET", Uri.parse(archiveUrl)));
+    var request = http.Request("GET", Uri.parse(archiveUrl));
+    request.headers['Connection'] = 'Keep-Alive';
+    var response = await client.send(request);
     if (response.statusCode != 200) {
       throw Exception("Erroneous status code: ${response.statusCode}");
     }
 
+    var startTime = DateTime.now().millisecondsSinceEpoch;
     var length = response.contentLength!;
     var received = 0;
     var sink = tempFile.openWrite();
@@ -69,17 +77,66 @@ Future<void> downloadArchiveBuild(String archiveUrl, Directory destination, Func
       onProgress((received / length) * 100, toETA(eta));
       return s;
     }).pipe(sink);
-    onRar();
-    if(extension.toLowerCase() == ".zip"){
-      await extractFileToDisk(tempFile.path, destination.path);
-    }else if(extension.toLowerCase() == ".rar") {
-      await UnrarFile.extract_rar(tempFile.path, destination.path);
-    } else {
-      throw Exception("Unknown file extension: $extension");
-    }
+
+    var receiverPort = ReceivePort();
+    var file = _CompressedFile(extension, tempFile.path, destination.path, receiverPort.sendPort);
+    Isolate.spawn<_CompressedFile>(_decompress, file);
+    var completer = Completer();
+    receiverPort.forEach((element) {
+      onDecompress(element.progress, element.eta);
+      if(element.progress != null && element.progress >= 100){
+        completer.complete(null);
+      }
+    });
+    await completer.future;
+    delete(outputDir);
   } catch(message) {
     throw Exception("Cannot download build: $message");
-  }finally {
-    outputDir.delete(recursive: true);
   }
+}
+
+// TODO: Progress report somehow
+Future<void> _decompress(_CompressedFile file) async {
+  try{
+    file.sendPort.send(_FileUpdate(null, null));
+    switch (file.extension.toLowerCase()) {
+      case '.zip':
+        var process = await Process.start(
+            'tar',
+            ['-xf', file.tempFile, '-C', file.destination],
+            mode: ProcessStartMode.inheritStdio
+        );
+        await process.exitCode;
+        break;
+      case '.rar':
+        var process = await Process.start(
+            '${assetsDirectory.path}\\builds\\winrar.exe',
+            ['x', file.tempFile, '*.*', file.destination],
+            mode: ProcessStartMode.inheritStdio
+        );
+        await process.exitCode;
+        break;
+      default:
+        break;
+    }
+    file.sendPort.send(_FileUpdate(100, null));
+  }catch(exception){
+    rethrow;
+  }
+}
+
+class _CompressedFile {
+  final String extension;
+  final String tempFile;
+  final String destination;
+  final SendPort sendPort;
+
+  _CompressedFile(this.extension, this.tempFile, this.destination, this.sendPort);
+}
+
+class _FileUpdate {
+  final double? progress;
+  final String? eta;
+
+  _FileUpdate(this.progress, this.eta);
 }

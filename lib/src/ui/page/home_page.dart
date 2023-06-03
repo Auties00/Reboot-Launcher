@@ -2,6 +2,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart' hide WindowBorder;
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
+import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/ui/page/launcher_page.dart';
 import 'package:reboot_launcher/src/ui/page/server_page.dart';
@@ -21,8 +22,9 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with WindowListener {
-  static const double _defaultPadding = 12.0;
+class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepAliveClientMixin {
+  static const double _kDefaultPadding = 12.0;
+  static const int _kPagesLength = 5;
 
   final SettingsController _settingsController = Get.find<SettingsController>();
 
@@ -32,8 +34,11 @@ class _HomePageState extends State<HomePage> with WindowListener {
   final Rxn<List<NavigationPaneItem>> _searchItems = Rxn();
   final RxBool _focused = RxBool(true);
   final RxInt _index = RxInt(0);
-  final RxBool _nestedNavigation = RxBool(false);
-  final GlobalKey<NavigatorState> _settingsNavigatorKey = GlobalKey();
+  final List<GlobalKey<NavigatorState>> _navigators = List.generate(_kPagesLength, (index) => GlobalKey());
+  final List<RxBool> _navigationStatus = List.generate(_kPagesLength, (index) => RxBool(false));
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -85,38 +90,45 @@ class _HomePageState extends State<HomePage> with WindowListener {
   }
 
   @override
-  Widget build(BuildContext context) => Obx(() => Stack(
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Stack(
       children: [
-        NavigationView(
-            paneBodyBuilder: (body) => Padding(
-                padding: const EdgeInsets.all(_defaultPadding),
-                child: body
-            ),
-            appBar: NavigationAppBar(
-                title: _draggableArea,
-                actions: WindowTitleBar(focused: _focused()),
-                leading: _backButton
-            ),
-            pane: NavigationPane(
-              selected: _selectedIndex,
-              onChanged: _onIndexChanged,
-              displayMode: PaneDisplayMode.auto,
-              items: _items,
-              footerItems: _footerItems,
-              autoSuggestBox: _autoSuggestBox,
-              autoSuggestBoxReplacement: const Icon(FluentIcons.search),
-            ),
-            onOpenSearch: () => _searchFocusNode.requestFocus(),
-            transitionBuilder: (child, animation) => child
+        LayoutBuilder(
+            builder: (context, specs) => Obx(() => NavigationView(
+                paneBodyBuilder: (pane, body) => Padding(
+                    padding: const EdgeInsets.all(_kDefaultPadding),
+                    child: body
+                ),
+                appBar: NavigationAppBar(
+                    title: _draggableArea,
+                    actions: WindowTitleBar(focused: _focused()),
+                    leading: _backButton
+                ),
+                pane: NavigationPane(
+                  key: appKey,
+                  selected: _selectedIndex,
+                  onChanged: _onIndexChanged,
+                  displayMode: specs.biggest.width <= 1536 ? PaneDisplayMode.compact : PaneDisplayMode.open,
+                  items: _items,
+                  footerItems: _footerItems,
+                  autoSuggestBox: _autoSuggestBox,
+                  autoSuggestBoxReplacement: const Icon(FluentIcons.search),
+                ),
+                onOpenSearch: () => _searchFocusNode.requestFocus(),
+                transitionBuilder: (child, animation) => child
+            ))
         ),
-        if(_focused() && isWin11)
-          const WindowBorder()
+        Obx(() => isWin11 && _focused.value ? const WindowBorder() : const SizedBox())
       ]
-  ));
+  );
+  }
 
   Widget get _backButton => Obx(() {
-    // ignore: unused_local_variable
-    var ignored = _nestedNavigation.value;
+    for(var entry in _navigationStatus){
+      entry.value;
+    }
+
     return PaneItem(
       icon: const Icon(FluentIcons.back, size: 14.0),
       body: const SizedBox.shrink(),
@@ -128,15 +140,20 @@ class _HomePageState extends State<HomePage> with WindowListener {
     );
   });
 
-  void Function()? _onBack() {
-    var navigator = _settingsNavigatorKey.currentState;
+  Function()? _onBack() {
+    var navigator = _navigators[_index.value].currentState;
     if(navigator == null || !navigator.mounted || !navigator.canPop()){
+      return null;
+    }
+
+    var status = _navigationStatus[_index.value];
+    if(!status.value){
       return null;
     }
 
     return () async {
       Navigator.pop(navigator.context);
-      _nestedNavigation.value = false;
+      status.value = false;
     };
   }
 
@@ -187,25 +204,25 @@ class _HomePageState extends State<HomePage> with WindowListener {
     PaneItem(
         title: const Text("Play"),
         icon: const Icon(FluentIcons.game),
-        body: const LauncherPage()
+        body: LauncherPage(_navigators[0], _navigationStatus[0])
     ),
 
     PaneItem(
         title: const Text("Host"),
         icon: const Icon(FluentIcons.server_processes),
-        body: const HostingPage()
+        body: HostingPage(_navigators[1], _navigationStatus[1])
     ),
 
     PaneItem(
         title: const Text("Backend"),
         icon: const Icon(FluentIcons.user_window),
-        body: ServerPage()
+        body: ServerPage(_navigators[2], _navigationStatus[2])
     ),
 
     PaneItem(
         title: const Text("Tutorial"),
         icon: const Icon(FluentIcons.info),
-        body: InfoPage(_settingsNavigatorKey, _nestedNavigation)
+        body: InfoPage(_navigators[3], _navigationStatus[3])
     ),
   ];
 

@@ -36,7 +36,8 @@ Future<void> startServer(bool detached) async {
       serverExeFile.path,
       [],
       workingDirectory: serverDirectory.path,
-      mode: detached ? ProcessStartMode.detached : ProcessStartMode.normal
+      mode: detached ? ProcessStartMode.detached : ProcessStartMode.normal,
+      runInShell: detached
   );
   if(!detached) {
     serverLogFile.createSync(recursive: true);
@@ -156,7 +157,14 @@ Future<ServerResult> checkServerPreconditions(String host, String port, ServerTy
     );
   }
 
-  if(int.tryParse(port) == null){
+  var portNumber = int.tryParse(port);
+  if(portNumber == null){
+    return ServerResult(
+        type: ServerResultType.illegalPortError
+    );
+  }
+
+  if(isLocalHost(host) && portNumber == 3551 && type == ServerType.remote){
     return ServerResult(
         type: ServerResultType.illegalPortError
     );
@@ -179,9 +187,7 @@ Future<ServerResult> checkServerPreconditions(String host, String port, ServerTy
   );
 }
 
-Future<HttpServer> startRemoteServer(Uri uri) async {
-  return await serve(proxyHandler(uri), "127.0.0.1", 3551);
-}
+Future<HttpServer> startRemoteServer(Uri uri) async => await serve(proxyHandler(uri), "127.0.0.1", 3551);
 
 class ServerResult {
   final int? pid;

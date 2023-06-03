@@ -1,35 +1,70 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/ui/controller/hosting_controller.dart';
+import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/ui/widget/home/launch_button.dart';
 import 'package:reboot_launcher/src/ui/widget/home/version_selector.dart';
 import 'package:reboot_launcher/src/ui/widget/shared/setting_tile.dart';
 
+import '../../model/update_status.dart';
+import '../../util/reboot.dart';
+import '../controller/update_controller.dart';
+import 'browse_page.dart';
+
 
 class HostingPage extends StatefulWidget {
-  const HostingPage(
-      {Key? key})
-      : super(key: key);
+  final GlobalKey<NavigatorState> navigatorKey;
+  final RxBool nestedNavigation;
+  const HostingPage(this.navigatorKey, this.nestedNavigation, {Key? key}) : super(key: key);
 
   @override
   State<HostingPage> createState() => _HostingPageState();
 }
 
-class _HostingPageState extends State<HostingPage> {
+class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClientMixin {
   final HostingController _hostingController = Get.find<HostingController>();
+  final SettingsController _settingsController = Get.find<SettingsController>();
 
   @override
-  Widget build(BuildContext context) => Column(
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Obx(() => !_settingsController.autoUpdate() || _hostingController.updateStatus().isDone() ? _body : _updateScreen);
+  }
+
+  Widget get _body => Navigator(
+    key: widget.navigatorKey,
+    initialRoute: "home",
+    onGenerateRoute: (settings) {
+      var screen = _createScreen(settings.name);
+      return FluentPageRoute(
+          builder: (context) => screen,
+          settings: settings
+      );
+    },
+  );
+
+  Widget _createScreen(String? name) {
+    switch(name){
+      case "home":
+        return _homeScreen;
+      case "browse":
+        return const BrowsePage();
+      default:
+        throw Exception("Unknown page: $name");
+    }
+  }
+
+  Widget get _homeScreen => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.max,
     children: [
-      const SizedBox(
+      Obx(() => SizedBox(
         width: double.infinity,
-        child: InfoBar(
-            title: Text("A window will pop up after the game server is started to modify its in-game settings"),
-            severity: InfoBarSeverity.info
-        ),
-      ),
+        child: _hostingController.updateStatus.value == UpdateStatus.error ? _updateError :_rebootGuiInfo,
+      )),
       const SizedBox(
           height: 16.0
       ),
@@ -48,12 +83,12 @@ class _HostingPageState extends State<HostingPage> {
               )
           ),
           SettingTile(
-              title: "Category",
-              subtitle: "The category of your game server",
+              title: "Description",
+              subtitle: "The description of your game server",
               isChild: true,
               content: TextFormBox(
-                  placeholder: "Category",
-                  controller: _hostingController.category
+                  placeholder: "Description",
+                  controller: _hostingController.description
               )
           ),
           SettingTile(
@@ -96,10 +131,55 @@ class _HostingPageState extends State<HostingPage> {
             )
           ]
       ),
+      const SizedBox(
+        height: 16.0,
+      ),
+      SettingTile(
+          title: "Browse available servers",
+          subtitle: "See a list of other game servers that are being hosted",
+          content: Button(
+              onPressed: () {
+                widget.navigatorKey.currentState?.pushNamed('browse');
+                widget.nestedNavigation.value = true;
+              },
+              child: const Text("Browse")
+          )
+      ),
       const Expanded(child: SizedBox()),
       const LaunchButton(
-        host: true
+          host: true
       )
     ],
+  );
+
+  InfoBar get _rebootGuiInfo => const InfoBar(
+      title: Text("A window will pop up after the game server is started to modify its in-game settings"),
+      severity: InfoBarSeverity.info
+  );
+
+
+  Widget get _updateScreen => const Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ProgressRing(),
+          SizedBox(height: 16.0),
+          Text("Updating Reboot DLL...")
+        ],
+      ),
+    ],
+  );
+
+  Widget get _updateError => MouseRegion(
+    cursor: SystemMouseCursors.click,
+    child: GestureDetector(
+      onTap: _hostingController.startUpdater,
+      child: const InfoBar(
+          title: Text("The reboot dll couldn't be downloaded: click here to try again"),
+          severity: InfoBarSeverity.info
+      ),
+    ),
   );
 }

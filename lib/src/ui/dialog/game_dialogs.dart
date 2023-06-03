@@ -5,15 +5,13 @@ import '../../../main.dart';
 import 'dialog.dart';
 
 const String _unsupportedServerError = "The build you are currently using is not supported by Reboot. "
-    "This means that you cannot currently host this version of the game. "
-    "For a list of supported versions, check #info in the Discord server. "
     "If you are unsure which version works best, use build 7.40. "
     "If you are a passionate programmer you can add support by opening a PR on Github. ";
 
-const String _corruptedBuildError = "The build you are currently using is corrupted. "
-    "This means that some critical files are missing for the game to launch. "
-    "Download the build again from the launcher or, if it's not available there, from another source. "
-    "Occasionally some files might get corrupted if there isn't enough space on your drive.";
+const String _corruptedBuildError = "An unknown error happened while launching Fortnite. "
+    "Some critical could be missing in your installation. "
+    "Download the build again from the launcher, not locally, or from a different source. "
+    "Alternatively, something could have gone wrong in the launcher. ";
 
 Future<void> showBrokenError() async {
   showDialog(
@@ -82,7 +80,7 @@ Future<void> showCorruptedBuildError(bool server, [Object? error, StackTrace? st
       builder: (context) => ErrorDialog(
           exception: error,
           stackTrace: stackTrace,
-          errorMessageBuilder: (exception) => _corruptedBuildError
+          errorMessageBuilder: (exception) => "${_corruptedBuildError}Error message: $exception"
       )
   );
 }

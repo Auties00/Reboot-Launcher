@@ -32,16 +32,16 @@ class _AddServerVersionState extends State<AddServerVersion> {
   final BuildController _buildController = Get.find<BuildController>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _pathController = TextEditingController();
+  final Rx<DownloadStatus> _status = Rx(DownloadStatus.form);
+  final GlobalKey<FormState> _formKey = GlobalKey();
+  final Rxn<String> _timeLeft = Rxn();
+  final Rxn<double> _downloadProgress = Rxn();
 
   late DiskSpace _diskSpace;
   late Future _fetchFuture;
   late Future _diskFuture;
 
-  DownloadStatus _status = DownloadStatus.form;
-  String _timeLeft = "00:00:00";
-  double _downloadProgress = 0;
   CancelableOperation? _manifestDownloadProcess;
-  CancelableOperation? _driveDownloadOperation;
   Object? _error;
   StackTrace? _stackTrace;
 
@@ -54,7 +54,6 @@ class _AddServerVersionState extends State<AddServerVersion> {
     _diskSpace = DiskSpace();
     _diskFuture = _diskSpace.scan()
         .then((_) => _updateFormDefaults());
-    _buildController.addOnBuildChangedListener(() => _updateFormDefaults());
     super.initState();
   }
 
@@ -62,57 +61,74 @@ class _AddServerVersionState extends State<AddServerVersion> {
   void dispose() {
     _pathController.dispose();
     _nameController.dispose();
-    _buildController.removeOnBuildChangedListener();
-    _onDisposed();
+    _cancelDownload();
     super.dispose();
   }
 
-  void _onDisposed() {
-    if (_status != DownloadStatus.downloading) {
+  void _cancelDownload() {
+    if (_status.value != DownloadStatus.extracting && _status.value != DownloadStatus.extracting) {
       return;
     }
 
-    if (_manifestDownloadProcess != null) {
-      _manifestDownloadProcess?.cancel();
-      _buildController.cancelledDownload(true);
+    if (_manifestDownloadProcess == null) {
       return;
     }
 
-    if (_driveDownloadOperation == null) {
-      return;
-    }
-
-    _driveDownloadOperation!.cancel();
-    _buildController.cancelledDownload(true);
+    Process.run('${assetsDirectory.path}\\builds\\stop.bat', []);
+    _manifestDownloadProcess?.cancel();
   }
 
   @override
-  Widget build(BuildContext context) {
-    switch(_status){
-      case DownloadStatus.form:
-        return _createFormDialog();
-      case DownloadStatus.downloading:
-        return GenericDialog(
-            header: _createDownloadBody(),
-            buttons: _createCloseButton()
-        );
-      case DownloadStatus.extracting:
-        return GenericDialog(
-            header: _createExtractingBody(),
-            buttons: _createCloseButton()
-        );
-      case DownloadStatus.error:
-        return ErrorDialog(
-            exception: _error ?? Exception("unknown error"),
-            stackTrace: _stackTrace,
-            errorMessageBuilder: (exception) => "Cannot download version: $exception"
-        );
-      case DownloadStatus.done:
-        return const InfoDialog(
-          text: "The download was completed successfully!",
-        );
-    }
-  }
+  Widget build(BuildContext context) => Form(
+    key: _formKey,
+    child: Obx(() {
+      switch(_status.value){
+        case DownloadStatus.form:
+          return FutureBuilder(
+              future: Future.wait([_fetchFuture, _diskFuture]),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  WidgetsBinding.instance
+                      .addPostFrameCallback((_) =>
+                      _onDownloadError(snapshot.error, snapshot.stackTrace));
+                }
+
+                if (!snapshot.hasData) {
+                  return ProgressDialog(
+                      text: "Fetching builds and disks...",
+                      onStop: () => Navigator.of(context).pop()
+                  );
+                }
+
+                return FormDialog(
+                    content: _createFormBody(),
+                    buttons: _createFormButtons()
+                );
+              }
+          );
+        case DownloadStatus.downloading:
+          return GenericDialog(
+              header: _createDownloadBody(),
+              buttons: _createCloseButton()
+          );
+        case DownloadStatus.extracting:
+          return GenericDialog(
+              header: _createExtractingBody(),
+              buttons: _createCloseButton()
+          );
+        case DownloadStatus.error:
+          return ErrorDialog(
+              exception: _error ?? Exception("unknown error"),
+              stackTrace: _stackTrace,
+              errorMessageBuilder: (exception) => "Cannot download version: $exception"
+          );
+        case DownloadStatus.done:
+          return const InfoDialog(
+            text: "The download was completed successfully!",
+          );
+      }
+    })
+  );
 
   List<DialogButton> _createFormButtons() {
     return [
@@ -127,22 +143,24 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
   void _startDownload(BuildContext context) async {
     try {
-      setState(() => _status = DownloadStatus.downloading);
+      var build = _buildController.selectedBuildRx.value;
+      if(build == null){
+        return;
+      }
+
+       _status.value = DownloadStatus.downloading;
       var future = downloadArchiveBuild(
-          _buildController.selectedBuild.link,
+          build.link,
           Directory(_pathController.text),
-          _onDownloadProgress,
-          _onUnrar
+          (progress, eta) => _onDownloadProgress(progress, eta, false),
+          (progress, eta) => _onDownloadProgress(progress, eta, true),
       );
       future.then((value) => _onDownloadComplete());
+      future.onError((error, stackTrace) => _onDownloadError(error, stackTrace));
       _manifestDownloadProcess = CancelableOperation.fromFuture(future);
     } catch (exception, stackTrace) {
       _onDownloadError(exception, stackTrace);
     }
-  }
-
-  void _onUnrar() {
-    setState(() => _status = DownloadStatus.extracting);
   }
 
   Future<void> _onDownloadComplete() async {
@@ -150,38 +168,31 @@ class _AddServerVersionState extends State<AddServerVersion> {
       return;
     }
 
-    setState(() {
-      _status = DownloadStatus.done;
-      _gameController.addVersion(FortniteVersion(
-          name: _nameController.text,
-          location: Directory(_pathController.text)
-      ));
-    });
+    _status.value = DownloadStatus.done;
+    _gameController.addVersion(FortniteVersion(
+        name: _nameController.text,
+        location: Directory(_pathController.text)
+    ));
   }
 
   void _onDownloadError(Object? error, StackTrace? stackTrace) {
-    print("Error");
     if (!mounted) {
       return;
     }
 
-    setState(() {
-      _status = DownloadStatus.error;
-      _error = error;
-      _stackTrace = stackTrace;
-    });
+    _status.value = DownloadStatus.error;
+    _error = error;
+    _stackTrace = stackTrace;
   }
 
-  void _onDownloadProgress(double progress, String timeLeft) {
+  void _onDownloadProgress(double? progress, String? timeLeft, bool extracting) {
     if (!mounted) {
       return;
     }
 
-    setState(() {
-      _status = DownloadStatus.downloading;
-      _timeLeft = timeLeft;
-      _downloadProgress = progress;
-    });
+    _status.value = extracting ? DownloadStatus.extracting : DownloadStatus.downloading;
+    _timeLeft.value = timeLeft;
+    _downloadProgress.value = progress;
   }
 
   Widget _createDownloadBody() => Column(
@@ -204,14 +215,15 @@ class _AddServerVersionState extends State<AddServerVersion> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            "${_downloadProgress.round()}%",
+            "${(_downloadProgress.value ?? 0).round()}%",
             style: FluentTheme.maybeOf(context)?.typography.body,
           ),
 
-          Text(
-            "Time left: $_timeLeft",
-            style: FluentTheme.maybeOf(context)?.typography.body,
-          )
+          if(_timeLeft.value != null)
+            Text(
+              "Time left: ${_timeLeft.value}",
+              style: FluentTheme.maybeOf(context)?.typography.body,
+            )
         ],
       ),
 
@@ -221,7 +233,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
       SizedBox(
           width: double.infinity,
-          child: ProgressBar(value: _downloadProgress.toDouble())
+          child: ProgressBar(value: (_downloadProgress.value ?? 0).toDouble())
       ),
 
       const SizedBox(
@@ -257,39 +269,27 @@ class _AddServerVersionState extends State<AddServerVersion> {
     ],
   );
 
-  Widget _createFormDialog() {
-    return FutureBuilder(
-        future: Future.wait([_fetchFuture, _diskFuture]),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            WidgetsBinding.instance
-                .addPostFrameCallback((_) =>
-                _onDownloadError(snapshot.error, snapshot.stackTrace));
-          }
-
-          if (!snapshot.hasData) {
-            return ProgressDialog(
-                text: "Fetching builds and disks...",
-                onStop: () => Navigator.of(context).pop()
-            );
-          }
-
-          return FormDialog(
-              content: _createFormBody(),
-              buttons: _createFormButtons()
-          );
-        }
-    );
-  }
-
   Widget _createFormBody() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const BuildSelector(),
-        const SizedBox(height: 20.0),
-        VersionNameInput(controller: _nameController),
+        BuildSelector(
+          onSelected: _updateFormDefaults
+        ),
+
+        const SizedBox(
+            height: 16.0
+        ),
+
+        VersionNameInput(
+            controller: _nameController
+        ),
+
+        const SizedBox(
+            height: 16.0
+        ),
+
         FileSelector(
             label: "Path",
             placeholder: "Type the download destination",
@@ -298,6 +298,10 @@ class _AddServerVersionState extends State<AddServerVersion> {
             validator: checkDownloadDestination,
             folder: true
         ),
+
+        const SizedBox(
+            height: 16.0
+        )
       ],
     );
   }
@@ -319,9 +323,15 @@ class _AddServerVersionState extends State<AddServerVersion> {
     await _fetchFuture;
     var bestDisk = _diskSpace.disks
         .reduce((first, second) => first.availableSpace > second.availableSpace ? first : second);
+    var build = _buildController.selectedBuildRx.value;
+    if(build== null){
+      return;
+    }
+
     _pathController.text = "${bestDisk.devicePath}\\FortniteBuilds\\Fortnite "
-        "${_buildController.selectedBuild.version.toString()}";
-    _nameController.text = _buildController.selectedBuild.version.toString();
+        "${build.version}";
+    _nameController.text = build.version.toString();
+    _formKey.currentState?.validate();
   }
 }
 

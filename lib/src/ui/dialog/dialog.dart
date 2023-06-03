@@ -70,7 +70,7 @@ class FormDialog extends AbstractDialog {
         text: entry.text,
         type: entry.type,
         onTap: () {
-          if(!Form.of(context)!.validate()) {
+          if(!Form.of(context).validate()) {
             return;
           }
 

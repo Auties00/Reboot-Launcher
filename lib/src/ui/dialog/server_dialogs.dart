@@ -125,22 +125,12 @@ extension ServerControllerDialog on ServerController {
           return false;
         }
 
-        var result = await _showPortTakenDialog(3551);
-        if (!result) {
-          return false;
-        }
-
         await freeLawinPort();
         await stop();
         return _toggle(newResultType);
       case ServerResultType.matchmakerPortTakenError:
         if (lastResultType == ServerResultType.matchmakerPortTakenError) {
           _showPortTakenError(8080);
-          return false;
-        }
-
-        var result = await _showPortTakenDialog(8080);
-        if (!result) {
           return false;
         }
 
@@ -203,14 +193,13 @@ extension ServerControllerDialog on ServerController {
 
   Future<Uri?> _pingRemoteInteractive() async {
     try {
-      var mainFuture = ping(host.text, port.text).then((value) => value != null);
-      var future = _waitFutureOrTime(mainFuture);
-      var result = await showDialog<bool>(
+      var future = ping(host.text, port.text);
+      await showDialog<bool>(
           context: appKey.currentContext!,
           builder: (context) =>
               FutureBuilderDialog(
                   future: future,
-                  closeAutomatically: false,
+                  closeAutomatically: true,
                   loadingMessage: "Pinging remote server...",
                   successfulBody: FutureBuilderDialog.ofMessage(
                       "The server at ${host.text}:${port
@@ -220,8 +209,8 @@ extension ServerControllerDialog on ServerController {
                           .text} doesn't work. Check the hostname and/or the port and try again."),
                   errorMessageBuilder: (exception) => "An error occurred while pining the server: $exception"
               )
-      ) ?? false;
-      return result ? await future : null;
+      );
+      return await future;
     } catch (_) {
       return null;
     }
@@ -234,27 +223,6 @@ extension ServerControllerDialog on ServerController {
           text: "Port $port is already in use and the associating process cannot be killed. Kill it manually and try again.",
         )
     );
-  }
-
-  Future<bool> _showPortTakenDialog(int port) async {
-    return await showDialog<bool>(
-        context: appKey.currentContext!,
-        builder: (context) =>
-            InfoDialog(
-              text: "Port $port is already in use, do you want to kill the associated process?",
-              buttons: [
-                DialogButton(
-                  type: ButtonType.secondary,
-                  onTap: () => Navigator.of(context).pop(false),
-                ),
-                DialogButton(
-                  text: "Kill",
-                  type: ButtonType.primary,
-                  onTap: () => Navigator.of(context).pop(true),
-                ),
-              ],
-            )
-    ) ?? false;
   }
 
   void _showCannotStopError() {
@@ -298,7 +266,7 @@ extension ServerControllerDialog on ServerController {
       )
   );
 
-  void _showIllegalPortError() => showMessage("Illegal port for backend server, use only numbers");
+  void _showIllegalPortError() => showMessage("Invalid port for backend server");
 
   void _showMissingPortError() => showMessage("Missing port for backend server");
 

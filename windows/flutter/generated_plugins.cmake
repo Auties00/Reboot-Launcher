@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links
   bitsdojo_window_windows
   screen_retriever
   system_theme

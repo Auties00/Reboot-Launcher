@@ -3,20 +3,31 @@ import 'package:get/get.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/util/server.dart';
 import 'package:reboot_launcher/src/ui/controller/server_controller.dart';
-import 'package:reboot_launcher/src/ui/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/ui/widget/server/server_type_selector.dart';
 import 'package:reboot_launcher/src/ui/widget/server/server_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../widget/shared/setting_tile.dart';
 
-class ServerPage extends StatelessWidget {
+class ServerPage extends StatefulWidget {
+  final GlobalKey<NavigatorState> navigatorKey;
+  final RxBool nestedNavigation;
+
+  const ServerPage(this.navigatorKey, this.nestedNavigation, {Key? key}) : super(key: key);
+
+  @override
+  State<ServerPage> createState() => _ServerPageState();
+}
+
+class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMixin {
   final ServerController _serverController = Get.find<ServerController>();
 
-  ServerPage({Key? key}) : super(key: key);
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Obx(() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

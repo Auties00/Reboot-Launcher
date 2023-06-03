@@ -15,7 +15,7 @@ class InfoPage extends StatefulWidget {
   State<InfoPage> createState() => _InfoPageState();
 }
 
-class _InfoPageState extends State<InfoPage> {
+class _InfoPageState extends State<InfoPage> with AutomaticKeepAliveClientMixin {
   final List<String> _elseTitles = [
     "Open the home page",
     "Type the ip address of the host, including the port if it's not 7777\n    The complete address should follow the schema ip:port",
@@ -41,6 +41,9 @@ class _InfoPageState extends State<InfoPage> {
 
   final SettingsController _settingsController = Get.find<SettingsController>();
   late final ScrollController _controller;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -71,8 +74,6 @@ class _InfoPageState extends State<InfoPage> {
   );
 
   Widget _createScreen(String? name) {
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => widget.nestedNavigation.value = name != "home");
     switch(name){
       case "home":
         return _homeScreen;
@@ -91,7 +92,10 @@ class _InfoPageState extends State<InfoPage> {
         _createCardWidget(
             text: "Play on someone else's server",
             description: "If one of your friends is hosting a game server, click here",
-            onClick: () => widget.navigatorKey.currentState?.pushNamed("else")
+            onClick: () {
+              widget.navigatorKey.currentState?.pushNamed("else");
+              widget.nestedNavigation.value = true;
+            }
         ),
 
         const SizedBox(
@@ -101,7 +105,10 @@ class _InfoPageState extends State<InfoPage> {
         _createCardWidget(
             text: "Host your own server",
             description: "If you want to create your own server to invite your friends or to play around by yourself, click here",
-            onClick: () => widget.navigatorKey.currentState?.pushNamed("own")
+            onClick: () {
+              widget.navigatorKey.currentState?.pushNamed("own");
+              widget.nestedNavigation.value = true;
+            }
         )
       ]
   );

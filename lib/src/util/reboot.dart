@@ -12,8 +12,8 @@ final File rebootDllFile = File("${assetsDirectory.path}\\dlls\\reboot.dll");
 
 Future<int> downloadRebootDll(String url, int? lastUpdateMs) async {
     Directory? outputDir;
+    var now = DateTime.now();
     try {
-        var now = DateTime.now();
         var lastUpdate = await _getLastUpdate(lastUpdateMs);
         var exists = await rebootDllFile.exists();
         if (lastUpdate != null && now.difference(lastUpdate).inHours <= 24 && exists) {
@@ -32,6 +32,12 @@ Future<int> downloadRebootDll(String url, int? lastUpdateMs) async {
 
         return now.millisecondsSinceEpoch;
     }catch(message) {
+        if(url == rebootDownloadUrl){
+            var asset = File('${assetsDirectory.path}\\dlls\\reboot.dll');
+            await rebootDllFile.writeAsBytes(asset.readAsBytesSync());
+            return now.millisecondsSinceEpoch;
+        }
+
         throw Exception("Cannot download reboot.zip, invalid zip: $message");
     }finally{
         if(outputDir != null) {

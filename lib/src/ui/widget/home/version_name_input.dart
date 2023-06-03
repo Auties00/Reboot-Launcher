@@ -9,15 +9,16 @@ class VersionNameInput extends StatelessWidget {
   VersionNameInput({Key? key, required this.controller}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return TextFormBox(
-      header: "Name",
-      placeholder: "Type the version's name",
-      controller: controller,
-      autofocus: true,
-      validator: _validate,
-    );
-  }
+  Widget build(BuildContext context) => InfoLabel(
+    label: "Name",
+    child: TextFormBox(
+        controller: controller,
+        placeholder: "Type the version's name",
+        autofocus: true,
+        validator: _validate,
+        autovalidateMode: AutovalidateMode.onUserInteraction
+    ),
+  );
 
   String? _validate(String? text) {
     if (text == null || text.isEmpty) {

@@ -4,8 +4,9 @@ import 'package:reboot_launcher/src/ui/controller/build_controller.dart';
 import 'package:reboot_launcher/src/model/fortnite_build.dart';
 
 class BuildSelector extends StatefulWidget {
+  final Function() onSelected;
 
-  const BuildSelector({Key? key}) : super(key: key);
+  const BuildSelector({Key? key, required this.onSelected}) : super(key: key);
 
   @override
   State<BuildSelector> createState() => _BuildSelectorState();
@@ -18,14 +19,20 @@ class _BuildSelectorState extends State<BuildSelector> {
   Widget build(BuildContext context) {
     return InfoLabel(
         label: "Build",
-        child: ComboBox<FortniteBuild>(
+        child: Obx(() => ComboBox<FortniteBuild>(
             placeholder: const Text('Select a fortnite build'),
             isExpanded: true,
             items: _createItems(),
-            value: _buildController.selectedBuild,
-            onChanged: (value) =>
-            value == null ? {} : setState(() => _buildController.selectedBuild = value)
-        )
+            value: _buildController.selectedBuildRx.value,
+            onChanged: (value) {
+              if(value == null){
+                return;
+              }
+
+              _buildController.selectedBuildRx.value = value;
+              widget.onSelected();
+            }
+        ))
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
+import 'package:reboot_launcher/src/ui/widget/home/version_name_input.dart';
 
 import '../../util/checks.dart';
 import '../widget/shared/file_selector.dart';
@@ -38,12 +39,12 @@ class AddLocalVersion extends StatelessWidget {
                 height: 16.0
             ),
 
-            TextFormBox(
-                controller: _nameController,
-                header: "Name",
-                placeholder: "Type the version's name",
-                autofocus: true,
-                validator: (text) => checkVersion(text, _gameController.versions.value)
+            VersionNameInput(
+                controller: _nameController
+            ),
+
+            const SizedBox(
+                height: 16.0
             ),
 
             FileSelector(
@@ -53,6 +54,10 @@ class AddLocalVersion extends StatelessWidget {
                 controller: _gamePathController,
                 validator: checkGameFolder,
                 folder: true
+            ),
+
+            const SizedBox(
+                height: 16.0
             )
           ],
         ),

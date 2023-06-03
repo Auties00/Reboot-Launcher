@@ -1,90 +1,76 @@
 
-import 'dart:async';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' show Icons;
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/ui/controller/build_controller.dart';
 import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
 import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/ui/page/browse_page.dart';
 import 'package:reboot_launcher/src/ui/widget/home/launch_button.dart';
 import 'package:reboot_launcher/src/ui/widget/home/version_selector.dart';
 import 'package:reboot_launcher/src/ui/widget/shared/setting_tile.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../model/update_status.dart';
 import '../../util/checks.dart';
-import '../../util/reboot.dart';
-import '../controller/update_controller.dart';
 
 class LauncherPage extends StatefulWidget {
-  const LauncherPage(
-      {Key? key})
-      : super(key: key);
+  final GlobalKey<NavigatorState> navigatorKey;
+  final RxBool nestedNavigation;
+  const LauncherPage(this.navigatorKey, this.nestedNavigation, {Key? key}) : super(key: key);
 
   @override
   State<LauncherPage> createState() => _LauncherPageState();
 }
 
-class _LauncherPageState extends State<LauncherPage> {
+class _LauncherPageState extends State<LauncherPage> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Navigator(
+      key: widget.navigatorKey,
+      initialRoute: "home",
+      onGenerateRoute: (settings) {
+        var screen = _createScreen(settings.name);
+        return FluentPageRoute(
+            builder: (context) => screen,
+            settings: settings
+        );
+      },
+    );
+  }
+
+  Widget _createScreen(String? name) {
+    switch(name){
+      case "home":
+        return _GamePage(widget.navigatorKey, widget.nestedNavigation);
+      case "browse":
+        return const BrowsePage();
+      default:
+        throw Exception("Unknown page: $name");
+    }
+  }
+}
+
+class _GamePage extends StatefulWidget {
+  final GlobalKey<NavigatorState> navigatorKey;
+  final RxBool nestedNavigation;
+  const _GamePage(this.navigatorKey, this.nestedNavigation, {Key? key}) : super(key: key);
+
+  @override
+  State<_GamePage> createState() => _GamePageState();
+}
+
+class _GamePageState extends State<_GamePage> {
   final GameController _gameController = Get.find<GameController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
-  final BuildController _buildController = Get.find<BuildController>();
   late final RxBool _showPasswordTrailing = RxBool(_gameController.password.text.isNotEmpty);
 
   @override
-  void initState() {
-    if(_gameController.updateStatus() == UpdateStatus.waiting) {
-      _startUpdater();
-      _setupBuildWarning();
-    }
-
-    super.initState();
-  }
-
-  void _setupBuildWarning() {
-    void onCancelWarning() => WidgetsBinding.instance.addPostFrameCallback((_) {
-      if(!mounted) {
-        return;
-      }
-
-      showSnackbar(context, const Snackbar(content: Text("Download cancelled")));
-      _buildController.cancelledDownload(false);
-    });
-    _buildController.cancelledDownload.listen((value) => value ? onCancelWarning() : {});
-  }
-
-  Future<void> _startUpdater() async {
-    if(!_settingsController.autoUpdate()){
-      _gameController.updateStatus.value = UpdateStatus.success;
-      return;
-    }
-
-    _gameController.updateStatus.value = UpdateStatus.started;
-    try {
-      updateTime = await downloadRebootDll(_settingsController.updateUrl.text, updateTime);
-      _gameController.updateStatus.value = UpdateStatus.success;
-    }catch(_) {
-      _gameController.updateStatus.value = UpdateStatus.error;
-      rethrow;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => Obx(() => !_settingsController.autoUpdate() || _gameController.updateStatus().isDone() ? _homePage : _updateScreen);
-
-  Widget get _homePage => Column(
+  Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.max,
     children: [
-      AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _gameController.updateStatus() == UpdateStatus.error ? _updateError : const SizedBox(),
-      ),
-      AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        child: SizedBox(height: _gameController.updateStatus() == UpdateStatus.error ? 16.0 : 0.0),
-      ),
       SettingTile(
         title: "Credentials",
         subtitle: "Your in-game login credentials",
@@ -144,7 +130,10 @@ class _LauncherPageState extends State<LauncherPage> {
             title: "Browse available servers",
             subtitle: "Discover new game servers that fit your play-style",
             content: Button(
-                onPressed: () => launchUrl(Uri.parse("https://google.com/search?q=One+Day+This+Will+Be+Ready")),
+                onPressed: () {
+                  widget.navigatorKey.currentState?.pushNamed('browse');
+                  widget.nestedNavigation.value = true;
+                },
                 child: const Text("Browse")
             ),
             isChild: true
@@ -184,33 +173,5 @@ class _LauncherPageState extends State<LauncherPage> {
         host: false
       )
     ],
-  );
-
-  Widget get _updateScreen => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          ProgressRing(),
-          SizedBox(height: 16.0),
-          Text("Updating Reboot DLL...")
-        ],
-      ),
-    ],
-  );
-
-  Widget get _updateError => MouseRegion(
-    cursor: SystemMouseCursors.click,
-    child: GestureDetector(
-      onTap: () => _startUpdater(),
-      child: const SizedBox(
-          width: double.infinity,
-          child: InfoBar(
-              title: Text("The reboot dll couldn't be downloaded: click here to try again"),
-              severity: InfoBarSeverity.info
-          )
-      ),
-    ),
   );
 }

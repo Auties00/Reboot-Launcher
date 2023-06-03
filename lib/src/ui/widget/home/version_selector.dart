@@ -10,6 +10,7 @@ import 'package:reboot_launcher/src/ui/dialog/dialog_button.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/ui/dialog/add_local_version.dart';
 import 'package:reboot_launcher/src/ui/widget/shared/smart_check_box.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:reboot_launcher/src/ui/dialog/add_server_version.dart';
@@ -135,12 +136,8 @@ class _VersionSelectorState extends State<VersionSelector> {
         }
 
         _gameController.removeVersion(version);
-        if (_gameController.selectedVersion?.name == version.name || _gameController.hasNoVersions) {
-          _gameController.selectedVersion = null;
-        }
-
         if (_deleteFilesController.value && await version.location.exists()) {
-          version.location.delete(recursive: true);
+          delete(version.location);
         }
 
         break;
@@ -213,12 +210,14 @@ class _VersionSelectorState extends State<VersionSelector> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextFormBox(
-                    controller: nameController,
-                    header: "Name",
-                    placeholder: "Type the new version name",
-                    autofocus: true,
-                    validator: (text) => checkChangeVersion(text)
+                InfoLabel(
+                  label: "Name",
+                  child: TextFormBox(
+                      controller: nameController,
+                      placeholder: "Type the new version name",
+                      autofocus: true,
+                      validator: (text) => checkChangeVersion(text)
+                  )
                 ),
 
                 const SizedBox(
@@ -228,6 +227,7 @@ class _VersionSelectorState extends State<VersionSelector> {
                 FileSelector(
                     placeholder: "Type the new game folder",
                     windowTitle: "Select game folder",
+                    label: "Path",
                     controller: pathController,
                     validator: checkGameFolder,
                     folder: true
