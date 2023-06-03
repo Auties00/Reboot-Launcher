@@ -42,6 +42,7 @@ dependencies:
   uuid: ^3.0.6
   supabase_flutter: ^1.10.0
   supabase: ^1.9.1
+  fluentui_system_icons: ^1.1.202
 
 dev_dependencies:
   flutter_test:

@@ -33,8 +33,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return ListView(
         children: [
           SettingTile(
             title: "File settings",

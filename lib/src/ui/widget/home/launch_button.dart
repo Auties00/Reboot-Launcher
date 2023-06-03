@@ -185,7 +185,7 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   Future<Process> _createGameProcess(String gamePath, bool host) async {
-    var gameArgs = createRebootArgs(_safeUsername, host, _gameController.customLaunchArgs.text);
+    var gameArgs = createRebootArgs(_safeUsername, _gameController.password.text, host, _gameController.customLaunchArgs.text);
     var gameProcess = await Process.start(gamePath, gameArgs);
     gameProcess
       ..exitCode.then((_) => _onEnd())

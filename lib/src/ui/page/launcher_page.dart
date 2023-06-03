@@ -69,108 +69,115 @@ class _GamePageState extends State<_GamePage> {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      SettingTile(
-        title: "Credentials",
-        subtitle: "Your in-game login credentials",
-        expandedContentSpacing: 0,
-        expandedContent: [
-          SettingTile(
-            title: "Username",
-            subtitle: "The username that other players will see when you are in game",
-            isChild: true,
-            content: TextFormBox(
-                placeholder: "Username",
-                controller: _gameController.username,
-                autovalidateMode: AutovalidateMode.always
-            ),
-          ),
-          SettingTile(
-            title: "Password",
-            subtitle: "The password of your account, only used if the backend requires it",
-            isChild: true,
-            content: Obx(() => TextFormBox(
-                placeholder: "Password",
-                controller: _gameController.password,
-                autovalidateMode: AutovalidateMode.always,
-                obscureText: !_gameController.showPassword.value,
-                enableSuggestions: false,
-                autocorrect: false,
-                onChanged: (text) => _showPasswordTrailing.value = text.isNotEmpty,
-                suffix: Button(
-                  onPressed: () => _gameController.showPassword.value = !_gameController.showPassword.value,
-                  style: ButtonStyle(
-                      shape: ButtonState.all(const CircleBorder()),
-                      backgroundColor: ButtonState.all(Colors.transparent)
+      Expanded(
+        child: ListView(
+          children: [
+            SettingTile(
+              title: "Credentials",
+              subtitle: "Your in-game login credentials",
+              expandedContentSpacing: 0,
+              expandedContent: [
+                SettingTile(
+                  title: "Username",
+                  subtitle: "The username that other players will see when you are in game",
+                  isChild: true,
+                  content: TextFormBox(
+                      placeholder: "Username",
+                      controller: _gameController.username,
+                      autovalidateMode: AutovalidateMode.always
                   ),
-                  child: Icon(
-                      _gameController.showPassword.value ? Icons.visibility_off : Icons.visibility,
-                      color: _showPasswordTrailing.value ? null : Colors.transparent
-                  ),
+                ),
+                SettingTile(
+                  title: "Password",
+                  subtitle: "The password of your account, only used if the backend requires it",
+                  isChild: true,
+                  content: Obx(() => TextFormBox(
+                      placeholder: "Password",
+                      controller: _gameController.password,
+                      autovalidateMode: AutovalidateMode.always,
+                      obscureText: !_gameController.showPassword.value,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      onChanged: (text) => _showPasswordTrailing.value = text.isNotEmpty,
+                      suffix: Button(
+                        onPressed: () => _gameController.showPassword.value = !_gameController.showPassword.value,
+                        style: ButtonStyle(
+                            shape: ButtonState.all(const CircleBorder()),
+                            backgroundColor: ButtonState.all(Colors.transparent)
+                        ),
+                        child: Icon(
+                            _gameController.showPassword.value ? Icons.visibility_off : Icons.visibility,
+                            color: _showPasswordTrailing.value ? null : Colors.transparent
+                        ),
+                      )
+                  ))
                 )
-            ))
-          )
-        ],
-      ),
-      const SizedBox(
-        height: 16.0,
-      ),
-      SettingTile(
-        title: "Matchmaking host",
-        subtitle: "Enter the IP address of the game server hosting the match",
-        content: TextFormBox(
-            placeholder: "IP:PORT",
-            controller: _settingsController.matchmakingIp,
-            validator: checkMatchmaking,
-            autovalidateMode: AutovalidateMode.always
-        ),
-        expandedContent: [
-          SettingTile(
-            title: "Browse available servers",
-            subtitle: "Discover new game servers that fit your play-style",
-            content: Button(
-                onPressed: () {
-                  widget.navigatorKey.currentState?.pushNamed('browse');
-                  widget.nestedNavigation.value = true;
-                },
-                child: const Text("Browse")
+              ],
             ),
-            isChild: true
-          )
-        ]
-      ),
-      const SizedBox(
-        height: 16.0,
-      ),
-      SettingTile(
-          title: "Version",
-          subtitle: "Select the version of Fortnite you want to play",
-          content: const VersionSelector(),
-          expandedContent: [
-            SettingTile(
-                title: "Add a version from this PC's local storage",
-                subtitle: "Versions coming from your local disk are not guaranteed to work",
-                content: Button(
-                  onPressed: () => VersionSelector.openAddDialog(context),
-                  child: const Text("Add build"),
-                ),
-                isChild: true
+            const SizedBox(
+              height: 16.0,
             ),
             SettingTile(
-                title: "Download any version from the cloud",
-                subtitle: "A curated list of supported versions by Project Reboot",
-                content: Button(
-                  onPressed: () => VersionSelector.openDownloadDialog(context),
-                  child: const Text("Download"),
-                ),
-                isChild: true
+              title: "Matchmaking host",
+              subtitle: "Enter the IP address of the game server hosting the match",
+              content: TextFormBox(
+                  placeholder: "IP:PORT",
+                  controller: _settingsController.matchmakingIp,
+                  validator: checkMatchmaking,
+                  autovalidateMode: AutovalidateMode.always
+              ),
+              expandedContent: [
+                SettingTile(
+                  title: "Browse available servers",
+                  subtitle: "Discover new game servers that fit your play-style",
+                  content: Button(
+                      onPressed: () {
+                        widget.navigatorKey.currentState?.pushNamed('browse');
+                        widget.nestedNavigation.value = true;
+                      },
+                      child: const Text("Browse")
+                  ),
+                  isChild: true
+                )
+              ]
+            ),
+            const SizedBox(
+              height: 16.0,
+            ),
+            SettingTile(
+                title: "Version",
+                subtitle: "Select the version of Fortnite you want to play",
+                content: const VersionSelector(),
+                expandedContent: [
+                  SettingTile(
+                      title: "Add a version from this PC's local storage",
+                      subtitle: "Versions coming from your local disk are not guaranteed to work",
+                      content: Button(
+                        onPressed: () => VersionSelector.openAddDialog(context),
+                        child: const Text("Add build"),
+                      ),
+                      isChild: true
+                  ),
+                  SettingTile(
+                      title: "Download any version from the cloud",
+                      subtitle: "A curated list of supported versions by Project Reboot",
+                      content: Button(
+                        onPressed: () => VersionSelector.openDownloadDialog(context),
+                        child: const Text("Download"),
+                      ),
+                      isChild: true
+                  )
+                ]
             )
-          ]
+          ],
+        ),
       ),
-      const Expanded(child: SizedBox()),
+      const SizedBox(
+        height: 8.0,
+      ),
       const LaunchButton(
-        host: false
+          host: false
       )
     ],
   );

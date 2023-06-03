@@ -82,9 +82,13 @@ Future<void> resetWinNat() async {
   await runElevated(binary.path, "");
 }
 
-List<String> createRebootArgs(String username, bool host, String additionalArgs) {
-  username = username.isEmpty ? kDefaultPlayerName : username;
-  username = host ? "$username${Random().nextInt(1000)}" : username;
+List<String> createRebootArgs(String username, String password, bool host, String additionalArgs) {
+  if(password.isNotEmpty) {
+    username = username.isEmpty ? kDefaultPlayerName : username;
+    username = host ? "$username${Random().nextInt(1000)}" : username;
+    username = '$username@projectreboot.dev';
+  }
+  password = password.isNotEmpty ? password : "Rebooted";
   var args = [
     "-epicapp=Fortnite",
     "-epicenv=Prod",
@@ -95,8 +99,8 @@ List<String> createRebootArgs(String username, bool host, String additionalArgs)
     "-fromfl=eac",
     "-fltoken=3db3ba5dcbd2e16703f3978d",
     "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ",
-    "-AUTH_LOGIN=$username@projectreboot.dev",
-    "-AUTH_PASSWORD=Rebooted",
+    "-AUTH_LOGIN=$username",
+    "-AUTH_PASSWORD=${password.isNotEmpty ? password : "Rebooted"}",
     "-AUTH_TYPE=epic"
   ];
 

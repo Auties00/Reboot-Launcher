@@ -43,7 +43,6 @@ void main() async {
     Get.put(SettingsController());
     Get.put(HostingController());
     doWhenWindowReady(() {
-      appWindow.minSize = const Size(kDefaultWindowWidth, kDefaultWindowHeight);
       var controller = Get.find<SettingsController>();
       var size = Size(controller.width, controller.height);
       var window = appWindow as WinDesktopWindow;

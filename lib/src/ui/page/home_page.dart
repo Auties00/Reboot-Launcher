@@ -103,6 +103,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
                 appBar: NavigationAppBar(
                     title: _draggableArea,
                     actions: WindowTitleBar(focused: _focused()),
+                    automaticallyImplyLeading: false,
                     leading: _backButton
                 ),
                 pane: NavigationPane(
@@ -119,7 +120,8 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
                 transitionBuilder: (child, animation) => child
             ))
         ),
-        Obx(() => isWin11 && _focused.value ? const WindowBorder() : const SizedBox())
+        if(isWin11)
+          Obx(() => _focused.value ? const WindowBorder() : const SizedBox())
       ]
   );
   }
@@ -129,13 +131,15 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
       entry.value;
     }
 
+    var onBack = _onBack();
     return PaneItem(
+      enabled: onBack != null,
       icon: const Icon(FluentIcons.back, size: 14.0),
       body: const SizedBox.shrink(),
     ).build(
         context,
         false,
-        _onBack(),
+        onBack,
         displayMode: PaneDisplayMode.compact
     );
   });
@@ -157,7 +161,10 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     };
   }
 
-  void _onIndexChanged(int index) => _index.value = index;
+  void _onIndexChanged(int index) {
+    _navigationStatus[_index()].value = false;
+    _index.value = index;
+  }
 
   TextBox get _autoSuggestBox => TextBox(
       key: _searchKey,
