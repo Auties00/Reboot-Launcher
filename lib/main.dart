@@ -80,7 +80,7 @@ class _RebootApplicationState extends State<RebootApplication> {
   @override
   Widget build(BuildContext context) => FluentApp(
       title: "Reboot Launcher",
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       color: SystemTheme.accentColor.accent.toAccentColor(),
       darkTheme: _createTheme(Brightness.dark),
