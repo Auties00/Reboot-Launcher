@@ -147,13 +147,7 @@ class _GamePageState extends State<_GamePage> {
                               title: "Automatically start game server",
                               subtitle: "This option is available when the matchmaker is set to localhost",
                               contentWidth: null,
-                              content: Obx(() => !isLocalHost(_settingsController.matchmakingIp.text) || _gameController.password.text.isNotEmpty ?  Container(
-                                foregroundDecoration: const BoxDecoration(
-                                  color: Colors.grey,
-                                  backgroundBlendMode: BlendMode.saturation,
-                                ),
-                                child: _autoGameServerSwitch,
-                              ) : _autoGameServerSwitch),
+                              content: !isLocalHost(_settingsController.matchmakingIp.text) || _gameController.password.text.isNotEmpty ?  _disabledAutoGameServerSwitch : _autoGameServerSwitch,
                               isChild: true
                           ),
                           SettingTile(
@@ -211,8 +205,16 @@ class _GamePageState extends State<_GamePage> {
     ],
   );
 
-  ToggleSwitch get _autoGameServerSwitch => ToggleSwitch(
-      checked: isLocalHost(_settingsController.matchmakingIp.text) && _gameController.password.text.isEmpty && _gameController.autoStartGameServer(),
+  Widget get _disabledAutoGameServerSwitch => Container(
+    foregroundDecoration: const BoxDecoration(
+      color: Colors.grey,
+      backgroundBlendMode: BlendMode.saturation,
+    ),
+    child: _autoGameServerSwitch,
+  );
+
+  Widget get _autoGameServerSwitch => Obx(() => ToggleSwitch(
+      checked: _gameController.autoStartGameServer() && isLocalHost(_settingsController.matchmakingIp.text) && _gameController.password.text.isEmpty,
       onChanged: (value) {
         if(!isLocalHost(_settingsController.matchmakingIp.text)){
           showMessage("This option isn't available when the matchmaker isn't set to 127.0.0.1");
@@ -226,5 +228,5 @@ class _GamePageState extends State<_GamePage> {
 
         _gameController.autoStartGameServer.value = value;
       }
-  );
+  ));
 }
