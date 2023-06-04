@@ -7,6 +7,7 @@ import 'package:flutter/material.dart' show Icons;
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
 import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/ui/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/ui/page/browse_page.dart';
 import 'package:reboot_launcher/src/ui/widget/home/launch_button.dart';
 import 'package:reboot_launcher/src/ui/widget/home/version_selector.dart';
@@ -73,6 +74,7 @@ class _GamePageState extends State<_GamePage> {
 
   @override
   void initState() {
+    _gameController.password.addListener(() => _matchmakingStream.add(null));
     _settingsController.matchmakingIp.addListener(() => _matchmakingStream.add(null));
     super.initState();
   }
@@ -140,16 +142,18 @@ class _GamePageState extends State<_GamePage> {
                             validator: checkMatchmaking,
                             autovalidateMode: AutovalidateMode.always
                         ),
-                        expandedContentSpacing: isLocalHost(_settingsController.matchmakingIp.text) ? SettingTile.kDefaultSpacing : 0,
                         expandedContent: [
-                          !isLocalHost(_settingsController.matchmakingIp.text) ? const SizedBox() : SettingTile(
+                          SettingTile(
                               title: "Automatically start game server",
                               subtitle: "This option is available when the matchmaker is set to localhost",
                               contentWidth: null,
-                              content: Obx(() => ToggleSwitch(
-                                  checked: _gameController.autoStartGameServer(),
-                                  onChanged: (value) => _gameController.autoStartGameServer.value = value
-                              )),
+                              content: Obx(() => !isLocalHost(_settingsController.matchmakingIp.text) || _gameController.password.text.isNotEmpty ?  Container(
+                                foregroundDecoration: const BoxDecoration(
+                                  color: Colors.grey,
+                                  backgroundBlendMode: BlendMode.saturation,
+                                ),
+                                child: _autoGameServerSwitch,
+                              ) : _autoGameServerSwitch),
                               isChild: true
                           ),
                           SettingTile(
@@ -205,5 +209,22 @@ class _GamePageState extends State<_GamePage> {
           host: false
       )
     ],
+  );
+
+  ToggleSwitch get _autoGameServerSwitch => ToggleSwitch(
+      checked: isLocalHost(_settingsController.matchmakingIp.text) && _gameController.password.text.isEmpty && _gameController.autoStartGameServer(),
+      onChanged: (value) {
+        if(!isLocalHost(_settingsController.matchmakingIp.text)){
+          showMessage("This option isn't available when the matchmaker isn't set to 127.0.0.1");
+          return;
+        }
+
+        if(_gameController.password.text.isNotEmpty){
+          showMessage("This option isn't available when the password isn't empty(LawinV2)");
+          return;
+        }
+
+        _gameController.autoStartGameServer.value = value;
+      }
   );
 }
