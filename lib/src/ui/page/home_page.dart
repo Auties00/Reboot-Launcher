@@ -9,6 +9,7 @@ import 'package:reboot_launcher/src/ui/page/server_page.dart';
 import 'package:reboot_launcher/src/ui/page/settings_page.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../controller/game_controller.dart';
 import '../controller/settings_controller.dart';
 import '../widget/os/window_border.dart';
 import '../widget/os/window_buttons.dart';
@@ -25,17 +26,15 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepAliveClientMixin {
   static const double _kDefaultPadding = 12.0;
   static const int _kPagesLength = 5;
-
+  
   final SettingsController _settingsController = Get.find<SettingsController>();
-
   final GlobalKey _searchKey = GlobalKey();
   final FocusNode _searchFocusNode = FocusNode();
   final TextEditingController _searchController = TextEditingController();
   final Rxn<List<NavigationPaneItem>> _searchItems = Rxn();
   final RxBool _focused = RxBool(true);
-  final RxInt _index = RxInt(0);
   final List<GlobalKey<NavigatorState>> _navigators = List.generate(_kPagesLength, (index) => GlobalKey());
-  final List<RxBool> _navigationStatus = List.generate(_kPagesLength, (index) => RxBool(false));
+  final List<RxInt> _navigationStatus = List.generate(_kPagesLength, (index) => RxInt(0));
 
   @override
   bool get wantKeepAlive => true;
@@ -145,25 +144,25 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   });
 
   Function()? _onBack() {
-    var navigator = _navigators[_index.value].currentState;
+    var navigator = _navigators[_settingsController.index.value].currentState;
     if(navigator == null || !navigator.mounted || !navigator.canPop()){
       return null;
     }
 
-    var status = _navigationStatus[_index.value];
-    if(!status.value){
+    var status = _navigationStatus[_settingsController.index.value];
+    if(status.value <= 0){
       return null;
     }
 
     return () async {
       Navigator.pop(navigator.context);
-      status.value = false;
+      status.value -= 1;
     };
   }
 
   void _onIndexChanged(int index) {
-    _navigationStatus[_index()].value = false;
-    _index.value = index;
+    _navigationStatus[_settingsController.index()].value = 0;
+    _settingsController.index.value = index;
   }
 
   TextBox get _autoSuggestBox => TextBox(
@@ -182,14 +181,14 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   int? get _selectedIndex {
     var searchItems = _searchItems();
     if (searchItems == null) {
-      return _index();
+      return _settingsController.index();
     }
 
-    if(_index() >= _allItems.length){
+    if(_settingsController.index() >= _allItems.length){
       return null;
     }
 
-    var indexOnScreen = searchItems.indexOf(_allItems[_index()]);
+    var indexOnScreen = searchItems.indexOf(_allItems[_settingsController.index()]);
     if (indexOnScreen.isNegative) {
       return null;
     }
@@ -209,27 +208,26 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
 
   List<NavigationPaneItem> get _items => _searchItems() ?? [
     PaneItem(
+        title: const Text("Tutorial"),
+        icon: const Icon(FluentIcons.info),
+        body: InfoPage(_navigators[0], _navigationStatus[0])
+    ),
+    PaneItem(
         title: const Text("Play"),
         icon: const Icon(FluentIcons.game),
-        body: LauncherPage(_navigators[0], _navigationStatus[0])
+        body: LauncherPage(_navigators[1], _navigationStatus[1])
     ),
 
     PaneItem(
         title: const Text("Host"),
         icon: const Icon(FluentIcons.server_processes),
-        body: HostingPage(_navigators[1], _navigationStatus[1])
+        body: HostingPage(_navigators[2], _navigationStatus[2])
     ),
 
     PaneItem(
         title: const Text("Backend"),
         icon: const Icon(FluentIcons.user_window),
-        body: ServerPage(_navigators[2], _navigationStatus[2])
-    ),
-
-    PaneItem(
-        title: const Text("Tutorial"),
-        icon: const Icon(FluentIcons.info),
-        body: InfoPage(_navigators[3], _navigationStatus[3])
+        body: ServerPage(_navigators[3], _navigationStatus[3])
     ),
   ];
 

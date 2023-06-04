@@ -7,11 +7,13 @@ import 'package:reboot_launcher/src/ui/widget/server/server_type_selector.dart';
 import 'package:reboot_launcher/src/ui/widget/server/server_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../widget/shared/setting_tile.dart';
+import '../dialog/dialog.dart';
+import '../dialog/dialog_button.dart';
+import '../widget/home/setting_tile.dart';
 
 class ServerPage extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
-  final RxBool nestedNavigation;
+  final RxInt nestedNavigation;
 
   const ServerPage(this.navigatorKey, this.nestedNavigation, {Key? key}) : super(key: key);
 
@@ -95,13 +97,43 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
                         child: const Text("Open")
                     )
                 ),
+                const SizedBox(
+                  height: 16.0,
+                ),
+                SettingTile(
+                    title: "Reset Backend",
+                    subtitle: "Resets the launcher's backend to its default settings",
+                    content: Button(
+                      onPressed: () => showDialog(
+                          context: context,
+                          builder: (context) => InfoDialog(
+                            text: "Do you want to reset the backend? This action is irreversible",
+                            buttons: [
+                              DialogButton(
+                                type: ButtonType.secondary,
+                                text: "Close",
+                              ),
+                              DialogButton(
+                                type: ButtonType.primary,
+                                text: "Reset",
+                                onTap: () {
+                                  _serverController.reset();
+                                  Navigator.of(context).pop();
+                                },
+                              )
+                            ],
+                          )
+                      ),
+                      child: const Text("Reset"),
+                    )
+                ),
               ]
           ),
         ),
         const SizedBox(
           height: 8.0,
         ),
-        ServerButton()
+        const ServerButton()
       ],
     ));
   }

@@ -30,8 +30,11 @@ import '../../../util/process.dart';
 
 class LaunchButton extends StatefulWidget {
   final bool host;
+  final String? startLabel;
+  final String? stopLabel;
+  final bool Function()? check;
 
-  const LaunchButton({Key? key, required this.host}) : super(key: key);
+  const LaunchButton({Key? key, required this.host, this.startLabel, this.stopLabel, this.check}) : super(key: key);
 
   @override
   State<LaunchButton> createState() => _LaunchButtonState();
@@ -70,9 +73,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         child: Button(
           child: Align(
             alignment: Alignment.center,
-            child: Text(
-                _hasStarted ? _stopMessage : _startMessage
-            ),
+            child: Text(_hasStarted ? _stopMessage : _startMessage)
           ),
           onPressed: () => _executor = _start()
         ),
@@ -84,11 +85,15 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   void _setStarted(bool hosting, bool started) => hosting ? _hostingController.started.value = started : _gameController.started.value = started;
 
-  String get _startMessage => widget.host ? "Start hosting" : "Launch fortnite";
+  String get _startMessage => widget.startLabel ?? (widget.host ? "Start hosting" : "Launch fortnite");
 
-  String get _stopMessage => widget.host ? "Stop hosting" : "Close fortnite";
+  String get _stopMessage => widget.stopLabel ?? (widget.host ? "Stop hosting" : "Close fortnite");
 
   Future<void> _start() async {
+    if(widget.check != null && !widget.check!()){
+      return;
+    }
+
     if (_hasStarted) {
       _onStop(widget.host);
       return;
@@ -132,6 +137,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       }
 
       await compute(patchHeadless, version.executable!);
+      // Is this needed? await compute(patchMatchmaking, version.executable!);
 
       var automaticallyStartedServer = await _startMatchMakingServer();
       await _startGameProcesses(version, widget.host, automaticallyStartedServer);
@@ -179,6 +185,10 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     if(!_gameController.autoStartGameServer()){
+      return false;
+    }
+
+    if(_hostingController.started()){
       return false;
     }
 

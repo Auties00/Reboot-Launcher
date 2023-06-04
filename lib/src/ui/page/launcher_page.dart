@@ -11,14 +11,14 @@ import 'package:reboot_launcher/src/ui/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/ui/page/browse_page.dart';
 import 'package:reboot_launcher/src/ui/widget/home/launch_button.dart';
 import 'package:reboot_launcher/src/ui/widget/home/version_selector.dart';
-import 'package:reboot_launcher/src/ui/widget/shared/setting_tile.dart';
+import 'package:reboot_launcher/src/ui/widget/home/setting_tile.dart';
 
 import '../../util/checks.dart';
 import '../../util/os.dart';
 
 class LauncherPage extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
-  final RxBool nestedNavigation;
+  final RxInt nestedNavigation;
   const LauncherPage(this.navigatorKey, this.nestedNavigation, {Key? key}) : super(key: key);
 
   @override
@@ -59,7 +59,7 @@ class _LauncherPageState extends State<LauncherPage> with AutomaticKeepAliveClie
 
 class _GamePage extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
-  final RxBool nestedNavigation;
+  final RxInt nestedNavigation;
   const _GamePage(this.navigatorKey, this.nestedNavigation, {Key? key}) : super(key: key);
 
   @override
@@ -156,7 +156,7 @@ class _GamePageState extends State<_GamePage> {
                               content: Button(
                                   onPressed: () {
                                     widget.navigatorKey.currentState?.pushNamed('browse');
-                                    widget.nestedNavigation.value = true;
+                                    widget.nestedNavigation.value += 1;
                                   },
                                   child: const Text("Browse")
                               ),

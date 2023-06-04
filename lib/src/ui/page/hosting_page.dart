@@ -4,14 +4,14 @@ import 'package:reboot_launcher/src/ui/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/ui/widget/home/launch_button.dart';
 import 'package:reboot_launcher/src/ui/widget/home/version_selector.dart';
-import 'package:reboot_launcher/src/ui/widget/shared/setting_tile.dart';
+import 'package:reboot_launcher/src/ui/widget/home/setting_tile.dart';
 
 import '../../model/update_status.dart';
 import 'browse_page.dart';
 
 class HostingPage extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
-  final RxBool nestedNavigation;
+  final RxInt nestedNavigation;
   const HostingPage(this.navigatorKey, this.nestedNavigation, {Key? key}) : super(key: key);
 
   @override
@@ -71,7 +71,7 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
 
 class _HostPage extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
-  final RxBool nestedNavigation;
+  final RxInt nestedNavigation;
   const _HostPage(this.navigatorKey, this.nestedNavigation, {Key? key}) : super(key: key);
 
   @override
@@ -171,7 +171,7 @@ class _HostPageState extends State<_HostPage> with AutomaticKeepAliveClientMixin
                   content: Button(
                       onPressed: () {
                         widget.navigatorKey.currentState?.pushNamed('browse');
-                        widget.nestedNavigation.value = true;
+                        widget.nestedNavigation.value += 1;
                       },
                       child: const Text("Browse")
                   )

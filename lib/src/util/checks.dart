@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'dart:io';
+
+import 'package:reboot_launcher/src/util/server.dart';
 
 import '../model/fortnite_version.dart';
 
@@ -66,6 +69,11 @@ String? checkDll(String? text) {
 String? checkMatchmaking(String? text) {
   if (text == null || text.isEmpty) {
     return "Empty hostname";
+  }
+
+  var ipParts = text.split(":");
+  if(ipParts.length > 2){
+    return "Wrong format, expected ip:port";
   }
 
   return null;

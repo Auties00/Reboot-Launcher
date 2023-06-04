@@ -21,6 +21,8 @@ class SettingsController extends GetxController {
   late final TextEditingController authDll;
   late final TextEditingController matchmakingIp;
   late final RxBool autoUpdate;
+  late final RxBool firstRun;
+  late final RxInt index;
   late double width;
   late double height;
   late double? offsetX;
@@ -45,8 +47,11 @@ class SettingsController extends GetxController {
     offsetX = _storage.read("offset_x");
     offsetY = _storage.read("offset_y");
     autoUpdate = RxBool(_storage.read("auto_update") ?? _kDefaultAutoUpdate);
-    autoUpdate.listen((value) async => _storage.write("auto_update", value));
+    autoUpdate.listen((value) => _storage.write("auto_update", value));
     scrollingDistance = 0.0;
+    firstRun = RxBool(_storage.read("fr") ?? true);
+    firstRun.listen((value) => _storage.write("fr", value));
+    index = RxInt(firstRun() ? 0 : 1);
   }
 
   TextEditingController _createController(String key, String name) {

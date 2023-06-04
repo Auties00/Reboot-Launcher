@@ -12,11 +12,10 @@ import '../../util/checks.dart';
 import '../../util/os.dart';
 import '../../util/selector.dart';
 import '../dialog/dialog.dart';
-import '../widget/shared/setting_tile.dart';
+import '../widget/home/setting_tile.dart';
 
 class SettingsPage extends StatefulWidget {
-
-  SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({Key? key}) : super(key: key);
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -139,7 +138,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
           ),
           SettingTile(
               title: "Version status",
-              subtitle: "Current version: 8.0",
+              subtitle: "Current version: 8.1",
               content: Button(
                 onPressed: () => launchUrl(installationDirectory.uri),
                 child: const Text("Show Files"),
