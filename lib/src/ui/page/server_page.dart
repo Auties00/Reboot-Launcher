@@ -1,15 +1,15 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
-import 'package:reboot_launcher/src/util/server.dart';
 import 'package:reboot_launcher/src/ui/controller/server_controller.dart';
-import 'package:reboot_launcher/src/ui/widget/server/server_type_selector.dart';
 import 'package:reboot_launcher/src/ui/widget/server/server_button.dart';
+import 'package:reboot_launcher/src/ui/widget/server/server_type_selector.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../dialog/dialog.dart';
-import '../dialog/dialog_button.dart';
-import '../widget/home/setting_tile.dart';
+import 'package:reboot_launcher/src/ui/dialog/dialog.dart';
+import 'package:reboot_launcher/src/ui/dialog/dialog_button.dart';
+import 'package:reboot_launcher/src/ui/widget/home/setting_tile.dart';
 
 class ServerPage extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
@@ -43,7 +43,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
                   ),
                 ),
                 const SizedBox(
-                  height: 16.0,
+                  height: 8.0,
                 ),
                 SettingTile(
                     title: "Host",
@@ -55,7 +55,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
                     )
                 ),
                 const SizedBox(
-                  height: 16.0,
+                  height: 8.0,
                 ),
                 SettingTile(
                     title: "Port",
@@ -67,7 +67,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
                     )
                 ),
                 const SizedBox(
-                  height: 16.0,
+                  height: 8.0,
                 ),
                 SettingTile(
                   title: "Type",
@@ -75,7 +75,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
                   content: ServerTypeSelector()
                 ),
                 const SizedBox(
-                  height: 16.0,
+                  height: 8.0,
                 ),
                 SettingTile(
                     title: "Detached",
@@ -87,7 +87,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
                     ))
                 ),
                 const SizedBox(
-                  height: 16.0,
+                  height: 8.0,
                 ),
                 SettingTile(
                     title: "Server files",
@@ -98,7 +98,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
                     )
                 ),
                 const SizedBox(
-                  height: 16.0,
+                  height: 8.0,
                 ),
                 SettingTile(
                     title: "Reset Backend",

@@ -1,5 +1,4 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:reboot_launcher/src/ui/widget/shared/fluent_card.dart';
 
 class SettingTile extends StatefulWidget {
   static const double kDefaultContentWidth = 200.0;
@@ -42,19 +41,17 @@ class _SettingTileState extends State<SettingTile> {
       return _contentCard;
     }
 
-    return Mica(
-      elevation: 1,
-      child: Expander(
-          initiallyExpanded: true,
-          contentBackgroundColor: FluentTheme.of(context).menuColor,
-          headerShape: (open) => const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(4.0)),
-          ),
-          header: _header,
-          headerHeight: widget.expandedContentHeaderHeight,
-          trailing: _trailing,
-          content: _content
-      ),
+    return Expander(
+        initiallyExpanded: true,
+        headerShape: (open) => const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(4.0)),
+        ),
+        header: SizedBox(
+          height: widget.expandedContentHeaderHeight,
+          child: _header
+        ),
+        trailing: _trailing,
+        content: _content
     );
   }
 
@@ -90,8 +87,9 @@ class _SettingTileState extends State<SettingTile> {
       );
     }
 
-    return FluentCard(
-      child: _contentCardBody,
+    return Card(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(4.0)),
+        child: _contentCardBody
     );
   }
 

@@ -1,8 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
+import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/ui/controller/server_controller.dart';
 import 'package:reboot_launcher/src/ui/dialog/server_dialogs.dart';
-import 'package:reboot_launcher/src/model/server_type.dart';
 
 class ServerButton extends StatefulWidget {
   const ServerButton({Key? key}) : super(key: key);

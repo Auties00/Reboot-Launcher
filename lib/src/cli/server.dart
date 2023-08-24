@@ -1,9 +1,8 @@
 import 'dart:io';
 
 import 'package:process_run/shell.dart';
-
-import '../model/server_type.dart';
-import '../util/server.dart' as server;
+import 'package:reboot_launcher/src/model/server_type.dart';
+import 'package:reboot_launcher/src/util/server.dart' as server;
 
 Future<bool> startServer(String? host, String? port, ServerType type) async {
   stdout.writeln("Starting backend server...");

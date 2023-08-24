@@ -2,12 +2,11 @@ import 'dart:io';
 
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/cli.dart';
-
-import '../model/fortnite_version.dart';
-import '../util/injector.dart';
-import '../util/os.dart';
-import '../util/process.dart';
-import '../util/server.dart';
+import 'package:reboot_launcher/src/model/fortnite_version.dart';
+import 'package:reboot_launcher/src/util/injector.dart';
+import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/util/process.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 
 final List<String> _errorStrings = [
   "port 3551 failed: Connection refused",
@@ -25,10 +24,9 @@ Future<void> startGame() async {
   await _startLauncherProcess(version);
   await _startEacProcess(version);
 
-  var gamePath = version.executable?.path;
-  if (gamePath == null) {
-    throw Exception("${version.location
-        .path} no longer contains a Fortnite executable, did you delete or move it?");
+  var executable = await version.executable;
+  if (executable == null) {
+    throw Exception("${version.location.path} no longer contains a Fortnite executable, did you delete or move it?");
   }
 
   if (username == null) {
@@ -36,7 +34,7 @@ Future<void> startGame() async {
     stdout.writeln("No username was specified, using $username by default. Use --username to specify one");
   }
 
-  _gameProcess = await Process.start(gamePath, createRebootArgs(username!, "", host, ""))
+  _gameProcess = await Process.start(executable.path, createRebootArgs(username!, "", host, ""))
     ..exitCode.then((_) => _onClose())
     ..outLines.forEach((line) => _onGameOutput(line, dll, host, verbose));
 }

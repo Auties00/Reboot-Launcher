@@ -2,15 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:http/http.dart' as http;
 import 'package:ini/ini.dart';
 import 'package:process_run/shell.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
 import 'package:reboot_launcher/src/util/os.dart';
-import 'package:shelf_proxy/shelf_proxy.dart';
 import 'package:shelf/shelf_io.dart';
-
-import 'package:http/http.dart' as http;
+import 'package:shelf_proxy/shelf_proxy.dart';
 
 final serverLogFile = File("${logsDirectory.path}\\server.log");
 final serverDirectory = Directory("${assetsDirectory.path}\\lawin");

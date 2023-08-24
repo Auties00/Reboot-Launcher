@@ -2,13 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:archive/archive_io.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
 import 'package:reboot_launcher/src/model/fortnite_build.dart';
 import 'package:reboot_launcher/src/util/time.dart';
 import 'package:reboot_launcher/src/util/version.dart' as parser;
-import 'package:path/path.dart' as path;
 
 import 'os.dart';
 

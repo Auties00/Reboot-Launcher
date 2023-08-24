@@ -1,6 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
-import '../../../main.dart';
+import 'package:reboot_launcher/main.dart';
 
 void showMessage(String text){
   showSnackbar(

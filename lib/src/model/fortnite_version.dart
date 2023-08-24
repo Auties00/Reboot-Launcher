@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
+import 'package:reboot_launcher/src/util/patcher.dart';
 
 class FortniteVersion {
   String name;
@@ -22,8 +24,22 @@ class FortniteVersion {
     }
   }
 
-  File? get executable {
-    return findExecutable(location, "FortniteClient-Win64-Shipping.exe");
+  Future<File?> get executable async {
+    var result = findExecutable(location, "FortniteClient-Win64-Shipping-Reboot.exe");
+    if(result != null) {
+      return result;
+    }
+
+    var original = findExecutable(location, "FortniteClient-Win64-Shipping.exe");
+    if(original == null) {
+      return null;
+    }
+
+    await Future.wait([
+      compute(patchMatchmaking, original),
+      compute(patchHeadless, original)
+    ]);
+    return original;
   }
 
   File? get launcher {

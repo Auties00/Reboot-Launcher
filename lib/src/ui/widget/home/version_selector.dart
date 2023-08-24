@@ -4,18 +4,18 @@ import 'dart:io';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
+import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
+import 'package:reboot_launcher/src/ui/dialog/add_local_version.dart';
+import 'package:reboot_launcher/src/ui/dialog/add_server_version.dart';
 import 'package:reboot_launcher/src/ui/dialog/dialog.dart';
 import 'package:reboot_launcher/src/ui/dialog/dialog_button.dart';
-import 'package:reboot_launcher/src/model/fortnite_version.dart';
-import 'package:reboot_launcher/src/ui/dialog/add_local_version.dart';
 import 'package:reboot_launcher/src/ui/widget/shared/smart_check_box.dart';
+import 'package:reboot_launcher/src/util/checks.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:reboot_launcher/src/ui/dialog/add_server_version.dart';
-import 'package:reboot_launcher/src/util/checks.dart';
-import '../shared/file_selector.dart';
+import 'package:reboot_launcher/src/ui/widget/shared/file_selector.dart';
 
 class VersionSelector extends StatefulWidget {
   const VersionSelector({Key? key}) : super(key: key);

@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 import 'package:reboot_launcher/src/ui/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/ui/widget/home/launch_button.dart';
-import 'package:reboot_launcher/src/ui/widget/home/version_selector.dart';
 import 'package:reboot_launcher/src/ui/widget/home/setting_tile.dart';
+import 'package:reboot_launcher/src/ui/widget/home/version_selector.dart';
 
-import '../../model/update_status.dart';
+import 'package:reboot_launcher/src/model/update_status.dart';
 import 'browse_page.dart';
 
 class HostingPage extends StatefulWidget {
@@ -38,7 +38,7 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ProgressRing(),
-          SizedBox(height: 16.0),
+          SizedBox(height: 8.0),
           Text("Updating Reboot DLL...")
         ],
       ),
@@ -97,7 +97,7 @@ class _HostPageState extends State<_HostPage> with AutomaticKeepAliveClientMixin
                 child: _hostingController.updateStatus.value == UpdateStatus.error ? _updateError : _rebootGuiInfo,
               )),
               const SizedBox(
-                  height: 16.0
+                  height: 8.0
               ),
               SettingTile(
                 title: "Game Server",
@@ -135,7 +135,7 @@ class _HostPageState extends State<_HostPage> with AutomaticKeepAliveClientMixin
                 ],
               ),
               const SizedBox(
-                height: 16.0,
+                height: 8.0,
               ),
               SettingTile(
                   title: "Version",
@@ -163,7 +163,7 @@ class _HostPageState extends State<_HostPage> with AutomaticKeepAliveClientMixin
                   ]
               ),
               const SizedBox(
-                height: 16.0,
+                height: 8.0,
               ),
               SettingTile(
                   title: "Browse available servers",

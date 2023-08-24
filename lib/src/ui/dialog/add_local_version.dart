@@ -6,9 +6,8 @@ import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
 import 'package:reboot_launcher/src/ui/widget/home/version_name_input.dart';
 
-import '../../util/checks.dart';
-import '../widget/shared/file_selector.dart';
-import '../widget/shared/smart_check_box.dart';
+import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/ui/widget/shared/file_selector.dart';
 import 'dialog.dart';
 import 'dialog_button.dart';
 

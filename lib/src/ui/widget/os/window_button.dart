@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:window_manager/window_manager.dart';
 
-import './mouse_state_builder.dart';
-import '../icons/icons.dart';
-import '../app_window.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' show Platform;
+import 'icons.dart';
+import 'mouse_state_builder.dart';
 
 typedef WindowButtonIconBuilder = Widget Function(
     WindowButtonContext buttonContext);
@@ -16,6 +14,7 @@ class WindowButtonContext {
   MouseState mouseState;
   Color? backgroundColor;
   Color iconColor;
+
   WindowButtonContext(
       {required this.context,
       required this.mouseState,
@@ -30,6 +29,7 @@ class WindowButtonColors {
   late Color iconNormal;
   late Color iconMouseOver;
   late Color iconMouseDown;
+
   WindowButtonColors(
       {Color? normal,
       Color? mouseOver,
@@ -48,11 +48,11 @@ class WindowButtonColors {
 
 final _defaultButtonColors = WindowButtonColors(
     normal: Colors.transparent,
-    iconNormal: Color(0xFF805306),
-    mouseOver: Color(0xFF404040),
-    mouseDown: Color(0xFF202020),
-    iconMouseOver: Color(0xFFFFFFFF),
-    iconMouseDown: Color(0xFFF0F0F0));
+    iconNormal: const Color(0xFF805306),
+    mouseOver: const Color(0xFF404040),
+    mouseDown: const Color(0xFF202020),
+    iconMouseOver: const Color(0xFFFFFFFF),
+    iconMouseDown: const Color(0xFFF0F0F0));
 
 class WindowButton extends StatelessWidget {
   final WindowButtonBuilder? builder;
@@ -88,51 +88,35 @@ class WindowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) {
-      return Container();
-    } else {
-      // Don't show button on macOS
-      if (Platform.isMacOS) {
-        return Container();
-      }
-    }
-    final buttonSize = appWindow.titleBarButtonSize;
     return MouseStateBuilder(
-      builder: (context, mouseState) {
-        WindowButtonContext buttonContext = WindowButtonContext(
-            mouseState: mouseState,
-            context: context,
-            backgroundColor: getBackgroundColor(mouseState),
-            iconColor: getIconColor(mouseState));
+        builder: (context, mouseState) {
+          WindowButtonContext buttonContext = WindowButtonContext(
+              mouseState: mouseState,
+              context: context,
+              backgroundColor: getBackgroundColor(mouseState),
+              iconColor: getIconColor(mouseState));
 
-        var icon = (this.iconBuilder != null)
-            ? this.iconBuilder!(buttonContext)
-            : Container();
-        double borderSize = appWindow.borderSize;
-        double defaultPadding =
-            (appWindow.titleBarHeight - borderSize) / 3 - (borderSize / 2);
-        // Used when buttonContext.backgroundColor is null, allowing the AnimatedContainer to fade-out smoothly.
-        var fadeOutColor =
-            getBackgroundColor(MouseState()..isMouseOver = true).withOpacity(0);
-        var padding = this.padding ?? EdgeInsets.zero;
-        var animationMs =
-            mouseState.isMouseOver ? (animate ? 100 : 0) : (animate ? 200 : 0);
-        Widget iconWithPadding = Padding(padding: padding, child: icon);
-        iconWithPadding = AnimatedContainer(
-            curve: Curves.easeOut,
-            duration: Duration(milliseconds: animationMs),
-            color: buttonContext.backgroundColor ?? fadeOutColor,
-            child: iconWithPadding);
-        var button = (this.builder != null)
-            ? this.builder!(buttonContext, icon)
-            : iconWithPadding;
-        return SizedBox(
-            width: 48, height: 48, child: button);
-      },
-      onPressed: () {
-        if (this.onPressed != null) this.onPressed!();
-      },
-    );
+          var icon =
+              (iconBuilder != null) ? iconBuilder!(buttonContext) : Container();
+          var fadeOutColor =
+              getBackgroundColor(MouseState()..isMouseOver = true)
+                  .withOpacity(0);
+          var padding = this.padding ?? EdgeInsets.zero;
+          var animationMs = mouseState.isMouseOver
+              ? (animate ? 100 : 0)
+              : (animate ? 200 : 0);
+          Widget iconWithPadding = Padding(padding: padding, child: icon);
+          iconWithPadding = AnimatedContainer(
+              curve: Curves.easeOut,
+              duration: Duration(milliseconds: animationMs),
+              color: buttonContext.backgroundColor ?? fadeOutColor,
+              child: iconWithPadding);
+          var button = (builder != null)
+              ? builder!(buttonContext, icon)
+              : iconWithPadding;
+          return SizedBox.square(dimension: 45, child: button);
+        },
+        onPressed: onPressed);
   }
 }
 
@@ -148,7 +132,7 @@ class MinimizeWindowButton extends WindowButton {
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 MinimizeIcon(color: buttonContext.iconColor),
-            onPressed: onPressed ?? () => appWindow.minimize());
+            onPressed: onPressed ?? () => windowManager.minimize());
 }
 
 class MaximizeWindowButton extends WindowButton {
@@ -163,7 +147,10 @@ class MaximizeWindowButton extends WindowButton {
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 MaximizeIcon(color: buttonContext.iconColor),
-            onPressed: onPressed ?? () => appWindow.maximizeOrRestore());
+            onPressed: onPressed ??
+                () async => await windowManager.isMaximized()
+                    ? await windowManager.restore()
+                    : await windowManager.maximize());
 }
 
 class RestoreWindowButton extends WindowButton {
@@ -178,14 +165,17 @@ class RestoreWindowButton extends WindowButton {
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 RestoreIcon(color: buttonContext.iconColor),
-            onPressed: onPressed ?? () => appWindow.maximizeOrRestore());
+            onPressed: onPressed ??
+                () async => await windowManager.isMaximized()
+                    ? await windowManager.restore()
+                    : await windowManager.maximize());
 }
 
 final _defaultCloseButtonColors = WindowButtonColors(
-    mouseOver: Color(0xFFD32F2F),
-    mouseDown: Color(0xFFB71C1C),
-    iconNormal: Color(0xFF805306),
-    iconMouseOver: Color(0xFFFFFFFF));
+    mouseOver: const Color(0xFFD32F2F),
+    mouseDown: const Color(0xFFB71C1C),
+    iconNormal: const Color(0xFF805306),
+    iconMouseOver: const Color(0xFFFFFFFF));
 
 class CloseWindowButton extends WindowButton {
   CloseWindowButton(
@@ -199,5 +189,5 @@ class CloseWindowButton extends WindowButton {
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 CloseIcon(color: buttonContext.iconColor),
-            onPressed: onPressed ?? () => appWindow.close());
+            onPressed: onPressed ?? () => windowManager.close());
 }

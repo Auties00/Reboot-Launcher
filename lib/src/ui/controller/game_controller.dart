@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
 
 import 'package:fluent_ui/fluent_ui.dart';
@@ -9,7 +8,6 @@ import 'package:reboot_launcher/src/model/fortnite_version.dart';
 import 'package:reboot_launcher/src/model/game_instance.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../model/update_status.dart';
 
 const String kDefaultPlayerName = "Player";
 

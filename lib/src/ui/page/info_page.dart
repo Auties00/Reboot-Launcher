@@ -1,20 +1,16 @@
 import 'dart:async';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/ui/dialog/snackbar.dart';
 import 'package:reboot_launcher/src/ui/widget/home/launch_button.dart';
 import 'package:reboot_launcher/src/ui/widget/home/setting_tile.dart';
 import 'package:reboot_launcher/src/util/checks.dart';
-import 'package:reboot_launcher/src/util/server.dart';
 
-import '../../util/os.dart';
-import '../controller/game_controller.dart';
-import '../controller/settings_controller.dart';
-import '../dialog/dialog.dart';
-import '../dialog/dialog_button.dart';
-import '../widget/home/version_selector.dart';
+import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
+import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/ui/widget/home/version_selector.dart';
 
 class InfoPage extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
@@ -219,7 +215,7 @@ class _PlayPageState extends State<_PlayPage> {
                   ],
                 ),
                 const SizedBox(
-                  height: 16.0,
+                  height: 8.0,
                 ),
                 SettingTile(
                   title: '2. Download Fortnite',
@@ -255,7 +251,7 @@ class _PlayPageState extends State<_PlayPage> {
                   ],
                 ),
                 const SizedBox(
-                  height: 16.0,
+                  height: 8.0,
                 ),
                 StreamBuilder(
                   stream: _remoteGameServerStream.stream,

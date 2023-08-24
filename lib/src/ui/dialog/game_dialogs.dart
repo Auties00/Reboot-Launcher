@@ -1,7 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
 
-import '../../../main.dart';
+import 'package:reboot_launcher/main.dart';
 import 'dialog.dart';
 
 const String _unsupportedServerError = "The build you are currently using is not supported by Reboot. "

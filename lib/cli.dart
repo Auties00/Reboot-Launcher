@@ -68,11 +68,10 @@ void main(List<String> args) async {
   }
 
   stdout.writeln("Launching game...");
-  if(version.executable == null){
+  var executable = await version.executable;
+  if(executable == null){
     throw Exception("Missing game executable at: ${version.location.path}");
   }
-
-  await patchHeadless(version.executable!);
 
   var serverType = getServerType(result);
   var serverHost = result["server-host"] ?? serverJson["${serverType.id}_host"];

@@ -1,9 +1,6 @@
-import 'dart:async';
 import 'dart:io';
 
-import 'package:reboot_launcher/src/util/server.dart';
-
-import '../model/fortnite_version.dart';
+import 'package:reboot_launcher/src/model/fortnite_version.dart';
 
 String? checkVersion(String? text, List<FortniteVersion> versions) {
   if (text == null || text.isEmpty) {

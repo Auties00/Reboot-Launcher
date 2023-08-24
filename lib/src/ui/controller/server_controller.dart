@@ -4,8 +4,8 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
-import '../../model/server_type.dart';
-import '../../util/server.dart';
+import 'package:reboot_launcher/src/model/server_type.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 
 class ServerController extends GetxController {
   static const String _kDefaultServerHost = "127.0.0.1";

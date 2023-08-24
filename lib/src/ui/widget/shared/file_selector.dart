@@ -1,11 +1,6 @@
-import 'dart:async';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:reboot_launcher/src/ui/dialog/snackbar.dart';
-
 import 'package:reboot_launcher/src/util/selector.dart';
 
 class FileSelector extends StatefulWidget {

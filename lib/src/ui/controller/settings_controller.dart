@@ -1,3 +1,4 @@
+import 'dart:ui';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
@@ -5,9 +6,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/server.dart';
-import 'dart:ui';
 
-import '../../util/reboot.dart';
+import 'package:reboot_launcher/src/util/reboot.dart';
 
 class SettingsController extends GetxController {
   static const String _kDefaultIp = "127.0.0.1";
@@ -49,9 +49,9 @@ class SettingsController extends GetxController {
     autoUpdate = RxBool(_storage.read("auto_update") ?? _kDefaultAutoUpdate);
     autoUpdate.listen((value) => _storage.write("auto_update", value));
     scrollingDistance = 0.0;
-    firstRun = RxBool(_storage.read("fr") ?? true);
-    firstRun.listen((value) => _storage.write("fr", value));
-    index = RxInt(firstRun() ? 0 : 1);
+    firstRun = RxBool(_storage.read("first_run") ?? true);
+    firstRun.listen((value) => _storage.write("first_run", value));
+    index = RxInt(firstRun() ? 3 : 0);
   }
 
   TextEditingController _createController(String key, String name) {

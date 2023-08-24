@@ -1,32 +1,29 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as path;
 import 'package:process_run/shell.dart';
+import 'package:reboot_launcher/src/../main.dart';
+import 'package:reboot_launcher/src/model/fortnite_version.dart';
+import 'package:reboot_launcher/src/model/game_instance.dart';
+import 'package:reboot_launcher/src/model/server_type.dart';
 import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
 import 'package:reboot_launcher/src/ui/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/ui/controller/server_controller.dart';
+import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/ui/dialog/dialog.dart';
 import 'package:reboot_launcher/src/ui/dialog/game_dialogs.dart';
 import 'package:reboot_launcher/src/ui/dialog/server_dialogs.dart';
-import 'package:reboot_launcher/src/model/fortnite_version.dart';
-import 'package:reboot_launcher/src/model/server_type.dart';
-import 'package:reboot_launcher/src/util/os.dart';
-import 'package:reboot_launcher/src/util/injector.dart';
-import 'package:reboot_launcher/src/util/patcher.dart';
-import 'package:reboot_launcher/src/util/server.dart';
-import 'package:path/path.dart' as path;
-
-import 'package:reboot_launcher/src/../main.dart';
-import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/ui/dialog/snackbar.dart';
-import 'package:reboot_launcher/src/model/game_instance.dart';
+import 'package:reboot_launcher/src/util/injector.dart';
+import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../util/process.dart';
+import 'package:reboot_launcher/src/util/process.dart';
 
 class LaunchButton extends StatefulWidget {
   final bool host;
@@ -124,7 +121,8 @@ class _LaunchButtonState extends State<LaunchButton> {
 
     try {
       var version = _gameController.selectedVersion!;
-      if(version.executable?.path == null){
+      var executable = await version.executable;
+      if(executable == null){
         showMissingBuildError(version);
         _onStop(widget.host);
         return;
@@ -135,9 +133,6 @@ class _LaunchButtonState extends State<LaunchButton> {
         _onStop(widget.host);
         return;
       }
-
-      await compute(patchHeadless, version.executable!);
-      // Is this needed? await compute(patchMatchmaking, version.executable!);
 
       var automaticallyStartedServer = await _startMatchMakingServer();
       await _startGameProcesses(version, widget.host, automaticallyStartedServer);
@@ -156,7 +151,14 @@ class _LaunchButtonState extends State<LaunchButton> {
     _setStarted(host, true);
     var launcherProcess = await _createLauncherProcess(version);
     var eacProcess = await _createEacProcess(version);
-    var gameProcess = await _createGameProcess(version.executable!.path, host);
+    var executable = await version.executable;
+    if(executable == null){
+      showMissingBuildError(version);
+      _onStop(widget.host);
+      return;
+    }
+
+    var gameProcess = await _createGameProcess(executable.path, host);
     var watchDogProcess = _createWatchdogProcess(gameProcess, launcherProcess, eacProcess);
     var instance = GameInstance(gameProcess, launcherProcess, eacProcess, watchDogProcess, hasChildServer);
     if(host){

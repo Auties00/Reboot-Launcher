@@ -1,18 +1,16 @@
-import 'package:bitsdojo_window/bitsdojo_window.dart' hide WindowBorder;
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:reboot_launcher/main.dart';
-import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/ui/page/launcher_page.dart';
 import 'package:reboot_launcher/src/ui/page/server_page.dart';
 import 'package:reboot_launcher/src/ui/page/settings_page.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:reboot_launcher/src/ui/widget/shared/profile_widget.dart';
 
-import '../controller/game_controller.dart';
-import '../controller/settings_controller.dart';
-import '../widget/os/window_border.dart';
-import '../widget/os/window_buttons.dart';
+import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/ui/widget/os/window_border.dart';
+import 'package:reboot_launcher/src/ui/widget/os/window_title_bar.dart';
+import 'package:window_manager/window_manager.dart';
 import 'hosting_page.dart';
 import 'info_page.dart';
 
@@ -25,8 +23,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepAliveClientMixin {
   static const double _kDefaultPadding = 12.0;
-  static const int _kPagesLength = 5;
-  
+  static const int _kPagesLength = 6;
+
   final SettingsController _settingsController = Get.find<SettingsController>();
   final GlobalKey _searchKey = GlobalKey();
   final FocusNode _searchFocusNode = FocusNode();
@@ -41,6 +39,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
 
   @override
   void initState() {
+    windowManager.show();
     windowManager.addListener(this);
     _searchController.addListener(_onSearch);
     super.initState();
@@ -52,7 +51,8 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
       return;
     }
 
-    _searchItems.value = _allItems.whereType<PaneItem>()
+    _searchItems.value = _allItems
+        .whereType<PaneItem>()
         .where((item) => (item.title as Text).data!.toLowerCase().contains(searchValue.toLowerCase()))
         .toList()
         .cast<NavigationPaneItem>();
@@ -84,73 +84,88 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
 
   @override
   void onWindowMoved() {
-    _settingsController.saveWindowOffset(appWindow.position);
+    windowManager.getPosition()
+        .then((value) => _settingsController.saveWindowOffset(value));
     super.onWindowMoved();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Stack(
-      children: [
-        LayoutBuilder(
-            builder: (context, specs) => Obx(() => NavigationView(
-                paneBodyBuilder: (pane, body) => Padding(
-                    padding: const EdgeInsets.all(_kDefaultPadding),
-                    child: body
+    return Stack(children: [
+      LayoutBuilder(
+          builder: (context, specs) => Obx(() => NavigationPaneTheme(
+                data: NavigationPaneThemeData(
+                    backgroundColor: FluentTheme.of(context).micaBackgroundColor.withOpacity(0.9),
                 ),
-                appBar: NavigationAppBar(
-                    title: _draggableArea,
-                    actions: WindowTitleBar(focused: _focused()),
-                    automaticallyImplyLeading: false,
-                    leading: _backButton
-                ),
-                pane: NavigationPane(
-                  key: appKey,
-                  selected: _selectedIndex,
-                  onChanged: _onIndexChanged,
-                  displayMode: specs.biggest.width <= 1536 ? PaneDisplayMode.compact : PaneDisplayMode.open,
-                  items: _items,
-                  footerItems: _footerItems,
-                  autoSuggestBox: _autoSuggestBox,
-                  autoSuggestBoxReplacement: const Icon(FluentIcons.search),
-                ),
-                onOpenSearch: () => _searchFocusNode.requestFocus(),
-                transitionBuilder: (child, animation) => child
-            ))
-        ),
-        if(isWin11)
-          Obx(() => _focused.value ? const WindowBorder() : const SizedBox())
-      ]
-  );
+                child: NavigationView(
+                    paneBodyBuilder: (pane, body) => Padding(
+                        padding: const EdgeInsets.all(_kDefaultPadding),
+                        child: body
+                    ),
+                    appBar: NavigationAppBar(
+                        height: 32,
+                        title: _draggableArea,
+                        actions: WindowTitleBar(focused: _focused()),
+                        automaticallyImplyLeading: false,
+                        leading: _backButton
+                    ),
+                    pane: NavigationPane(
+                      key: appKey,
+                      selected: _selectedIndex,
+                      onChanged: _onIndexChanged,
+                      menuButton: const SizedBox(),
+                      displayMode: PaneDisplayMode.open,
+                      items: _items,
+                      header: ProfileWidget(),
+                      footerItems: _footerItems,
+                      autoSuggestBox: _autoSuggestBox,
+                      autoSuggestBoxReplacement: const Icon(FluentIcons.search),
+                    ),
+                    contentShape: const RoundedRectangleBorder(),
+                    onOpenSearch: () => _searchFocusNode.requestFocus(),
+                    transitionBuilder: (child, animation) => child),
+              )
+          )
+      ),
+      if (isWin11)
+        Obx(() => _focused.value ? const WindowBorder() : const SizedBox())
+    ]);
   }
 
+  GestureDetector get _draggableArea => GestureDetector(
+      onDoubleTap: () async => await windowManager.isMaximized() ? await windowManager.restore() : await windowManager.maximize(),
+      onHorizontalDragStart: (event) => windowManager.startDragging(),
+      onVerticalDragStart: (event) => windowManager.startDragging()
+  );
+
   Widget get _backButton => Obx(() {
-    for(var entry in _navigationStatus){
+    for (var entry in _navigationStatus) {
       entry.value;
     }
 
     var onBack = _onBack();
-    return PaneItem(
-      enabled: onBack != null,
-      icon: const Icon(FluentIcons.back, size: 14.0),
-      body: const SizedBox.shrink(),
-    ).build(
-        context,
-        false,
-        onBack,
-        displayMode: PaneDisplayMode.compact
+    return Padding(
+        padding: const EdgeInsets.only(top: 8.0),
+        child: Button(
+            onPressed: onBack,
+            style: ButtonStyle(
+                backgroundColor: ButtonState.all(Colors.transparent),
+                border: ButtonState.all(BorderSide(color: Colors.transparent))
+            ),
+            child: const Icon(FluentIcons.back, size: 13.0)
+        )
     );
   });
 
   Function()? _onBack() {
     var navigator = _navigators[_settingsController.index.value].currentState;
-    if(navigator == null || !navigator.mounted || !navigator.canPop()){
+    if (navigator == null || !navigator.mounted || !navigator.canPop()) {
       return null;
     }
 
     var status = _navigationStatus[_settingsController.index.value];
-    if(status.value <= 0){
+    if (status.value <= 0) {
       return null;
     }
 
@@ -165,17 +180,15 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     _settingsController.index.value = index;
   }
 
-  TextBox get _autoSuggestBox => TextBox(
-      key: _searchKey,
-      controller: _searchController,
-      placeholder: 'Search',
-      focusNode: _searchFocusNode
-  );
-
-  GestureDetector get _draggableArea => GestureDetector(
-      onDoubleTap: () => appWindow.maximizeOrRestore(),
-      onHorizontalDragStart: (event) => appWindow.startDragging(),
-      onVerticalDragStart: (event) => appWindow.startDragging()
+  Widget get _autoSuggestBox => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    child: TextBox(
+        key: _searchKey,
+        controller: _searchController,
+        placeholder: 'Find a setting',
+        focusNode: _searchFocusNode,
+        autofocus: true
+    ),
   );
 
   int? get _selectedIndex {
@@ -184,11 +197,12 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
       return _settingsController.index();
     }
 
-    if(_settingsController.index() >= _allItems.length){
+    if (_settingsController.index() >= _allItems.length) {
       return null;
     }
 
-    var indexOnScreen = searchItems.indexOf(_allItems[_settingsController.index()]);
+    var indexOnScreen =
+        searchItems.indexOf(_allItems[_settingsController.index()]);
     if (indexOnScreen.isNegative) {
       return null;
     }
@@ -199,36 +213,75 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   List<NavigationPaneItem> get _allItems => [..._items, ..._footerItems];
 
   List<NavigationPaneItem> get _footerItems => searchValue.isNotEmpty ? [] : [
-      PaneItem(
-          title: const Text("Settings"),
-          icon: const Icon(FluentIcons.settings),
-          body: SettingsPage()
-      )
+    PaneItem(
+        title: const Text("Downloads"),
+        icon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: SizedBox.square(
+                dimension: 24,
+                child: Image.asset("assets/images/download.png")
+            )
+        ),
+        body: const SettingsPage()
+    ),
+    PaneItem(
+        title: const Text("Settings"),
+        icon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: SizedBox.square(
+                dimension: 24,
+                child: Image.asset("assets/images/settings.png")
+            )
+        ),
+        body: const SettingsPage()
+    )
   ];
 
   List<NavigationPaneItem> get _items => _searchItems() ?? [
     PaneItem(
-        title: const Text("Tutorial"),
-        icon: const Icon(FluentIcons.info),
-        body: InfoPage(_navigators[0], _navigationStatus[0])
-    ),
-    PaneItem(
         title: const Text("Play"),
-        icon: const Icon(FluentIcons.game),
-        body: LauncherPage(_navigators[1], _navigationStatus[1])
+        icon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: SizedBox.square(
+                dimension: 24,
+                child: Image.asset("assets/images/play.png")
+            )
+        ),
+        body: LauncherPage(_navigators[0], _navigationStatus[0])
     ),
-
     PaneItem(
         title: const Text("Host"),
-        icon: const Icon(FluentIcons.server_processes),
-        body: HostingPage(_navigators[2], _navigationStatus[2])
+        icon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: SizedBox.square(
+                dimension: 24,
+                child: Image.asset("assets/images/host.png")
+            )
+        ),
+        body: HostingPage(_navigators[1], _navigationStatus[1])
     ),
-
     PaneItem(
-        title: const Text("Backend"),
-        icon: const Icon(FluentIcons.user_window),
-        body: ServerPage(_navigators[3], _navigationStatus[3])
+        title: const Text("Authenticator"),
+        icon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: SizedBox.square(
+                dimension: 24,
+                child: Image.asset("assets/images/cloud.png")
+            )
+        ),
+        body: ServerPage(_navigators[2], _navigationStatus[2])
     ),
+    PaneItem(
+        title: const Text("Tutorial"),
+        icon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: SizedBox.square(
+              dimension: 24,
+              child: Image.asset("assets/images/info.png")
+          )
+        ),
+        body: InfoPage(_navigators[3], _navigationStatus[3])
+    )
   ];
 
   String get searchValue => _searchController.text;

@@ -2,8 +2,8 @@
 
 import 'dart:ffi';
 
-import 'package:win32/win32.dart';
 import 'package:ffi/ffi.dart';
+import 'package:win32/win32.dart';
 
 final _kernel32 = DynamicLibrary.open('kernel32.dll');
 final _CreateRemoteThread = _kernel32.lookupFunction<

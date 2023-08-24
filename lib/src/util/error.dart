@@ -1,7 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
-import '../../../main.dart';
-import '../ui/dialog/dialog.dart';
+import 'package:reboot_launcher/main.dart';
+import 'package:reboot_launcher/src/ui/dialog/dialog.dart';
 
 
 String? lastError;

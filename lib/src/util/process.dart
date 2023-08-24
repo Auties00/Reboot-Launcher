@@ -1,6 +1,5 @@
 import 'dart:ffi';
 
-import 'package:win32/src/kernel32.dart';
 import 'package:win32/win32.dart';
 
 final _ntdll = DynamicLibrary.open('ntdll.dll');

@@ -1,7 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/ui/controller/server_controller.dart';
 import 'package:reboot_launcher/src/model/server_type.dart';
+import 'package:reboot_launcher/src/ui/controller/server_controller.dart';
 
 class ServerTypeSelector extends StatelessWidget {
   final ServerController _serverController = Get.find<ServerController>();

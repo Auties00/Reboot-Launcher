@@ -4,6 +4,8 @@
 
 #include "resource.h"
 
+#include <dwmapi.h>
+
 namespace {
 
 constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
@@ -108,7 +110,7 @@ bool Win32Window::CreateAndShow(const std::wstring& title,
   Destroy();
 
   const wchar_t* window_class =
-      WindowClassRegistrar::GetInstance()->GetWindowClass();
+  WindowClassRegistrar::GetInstance()->GetWindowClass();
 
   const POINT target_point = {static_cast<LONG>(origin.x),
                               static_cast<LONG>(origin.y)};
@@ -117,10 +119,18 @@ bool Win32Window::CreateAndShow(const std::wstring& title,
   double scale_factor = dpi / 96.0;
 
   HWND window = CreateWindow(
-      window_class, title.c_str(), WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-      Scale(origin.x, scale_factor), Scale(origin.y, scale_factor),
-      Scale(size.width, scale_factor), Scale(size.height, scale_factor),
-      nullptr, nullptr, GetModuleHandle(nullptr), this);
+      window_class,
+      title.c_str(),
+      WS_OVERLAPPED & ~WS_VISIBLE,
+      Scale(origin.x, scale_factor),
+      Scale(origin.y, scale_factor),
+      Scale(size.width, scale_factor),
+      Scale(size.height, scale_factor),
+      nullptr,
+      nullptr,
+      GetModuleHandle(nullptr),
+      this
+  );
 
   if (!window) {
     return false;

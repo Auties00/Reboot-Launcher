@@ -1,10 +1,9 @@
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
-import 'package:reboot_launcher/src/util/server.dart';
-
-import '../util/os.dart';
 import 'package:http/http.dart' as http;
+import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/util/server.dart';
 
 const String _baseDownload = "https://cdn.discordapp.com/attachments/1095351875961901057/1110968021373169674/cobalt.dll";
 const String _consoleDownload = "https://cdn.discordapp.com/attachments/1095351875961901057/1110968095033524234/console.dll";

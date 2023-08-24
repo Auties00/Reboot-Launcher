@@ -6,26 +6,29 @@ typedef MouseStateBuilderCB = Widget Function(
 class MouseState {
   bool isMouseOver = false;
   bool isMouseDown = false;
+
   MouseState();
+
   @override
   String toString() {
-    return "isMouseDown: ${this.isMouseDown} - isMouseOver: ${this.isMouseOver}";
+    return "isMouseDown: $isMouseDown - isMouseOver: $isMouseOver";
   }
 }
-
-T? _ambiguate<T>(T? value) => value;
 
 class MouseStateBuilder extends StatefulWidget {
   final MouseStateBuilderCB builder;
   final VoidCallback? onPressed;
-  MouseStateBuilder({Key? key, required this.builder, this.onPressed})
+
+  const MouseStateBuilder({Key? key, required this.builder, this.onPressed})
       : super(key: key);
+
   @override
-  _MouseStateBuilderState createState() => _MouseStateBuilderState();
+  State<MouseStateBuilder> createState() => _MouseStateBuilderState();
 }
 
 class _MouseStateBuilderState extends State<MouseStateBuilder> {
   late MouseState _mouseState;
+
   _MouseStateBuilderState() {
     _mouseState = MouseState();
   }
@@ -59,7 +62,7 @@ class _MouseStateBuilderState extends State<MouseStateBuilder> {
                 _mouseState.isMouseDown = false;
                 _mouseState.isMouseOver = false;
               });
-              _ambiguate(WidgetsBinding.instance)!.addPostFrameCallback((_) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (widget.onPressed != null) {
                   widget.onPressed!();
                 }

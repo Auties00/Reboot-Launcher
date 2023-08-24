@@ -1,14 +1,12 @@
 import 'package:fluent_ui/fluent_ui.dart';
-
 import 'package:reboot_launcher/src/model/server_type.dart';
-import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/ui/dialog/snackbar.dart';
 import 'package:sync/semaphore.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../main.dart';
-import '../../util/server.dart';
-import '../controller/server_controller.dart';
+import 'package:reboot_launcher/main.dart';
+import 'package:reboot_launcher/src/util/server.dart';
+import 'package:reboot_launcher/src/ui/controller/server_controller.dart';
 import 'dialog.dart';
 import 'dialog_button.dart';
 

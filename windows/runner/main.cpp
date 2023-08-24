@@ -1,5 +1,5 @@
 #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
-auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME | BDW_HIDE_ON_STARTUP);
+auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME);
 
 #include <cstdlib>
 
@@ -15,19 +15,20 @@ auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME | BDW_HIDE_ON_STARTUP);
 #include <stdio.h>
 #include <fcntl.h>
 
-bool CheckOneInstance()
-{
-    HANDLE m_hStartEvent = CreateEventW( NULL, FALSE, FALSE, L"reboot_launcher");
-    if(m_hStartEvent == NULL)
-    {
-        CloseHandle( m_hStartEvent );
+bool CheckOneInstance(){
+    HANDLE hMutex = CreateMutexW(NULL, TRUE, L"RebootLauncherMutex");
+    if (hMutex == NULL) {
         return false;
     }
 
-    if (GetLastError() == ERROR_ALREADY_EXISTS)
-    {
-        CloseHandle( m_hStartEvent );
-        m_hStartEvent = NULL;
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        HWND hwndExisting = FindWindowW(NULL, L"Reboot Launcher");
+        if (hwndExisting != NULL) {
+            ShowWindow(hwndExisting, SW_RESTORE);
+            SetForegroundWindow(hwndExisting);
+        }
+
+        CloseHandle(hMutex);
         return false;
     }
 
@@ -58,7 +59,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.CreateAndShow(L"reboot_launcher", origin, size)) {
+  if (!window.CreateAndShow(L"Reboot Launcher", origin, size)) {
     return EXIT_FAILURE;
   }
 

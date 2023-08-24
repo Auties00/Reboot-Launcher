@@ -1,5 +1,4 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
 import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
@@ -7,12 +6,10 @@ import 'package:reboot_launcher/src/ui/dialog/dialog_button.dart';
 import 'package:reboot_launcher/src/ui/widget/shared/file_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-
-import '../../util/checks.dart';
-import '../../util/os.dart';
-import '../../util/selector.dart';
-import '../dialog/dialog.dart';
-import '../widget/home/setting_tile.dart';
+import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/ui/dialog/dialog.dart';
+import 'package:reboot_launcher/src/ui/widget/home/setting_tile.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -56,7 +53,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
             ],
           ),
           const SizedBox(
-            height: 16.0,
+            height: 8.0,
           ),
           SettingTile(
               title: "Automatic updates",
@@ -82,7 +79,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
               ]
           ),
           const SizedBox(
-            height: 16.0,
+            height: 8.0,
           ),
           SettingTile(
               title: "Custom launch arguments",
@@ -93,7 +90,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
               )
           ),
           const SizedBox(
-            height: 16.0,
+            height: 8.0,
           ),
           SettingTile(
               title: "Create a bug report",
@@ -104,7 +101,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
               )
           ),
           const SizedBox(
-            height: 16.0,
+            height: 8.0,
           ),
           SettingTile(
               title: "Reset settings",
@@ -134,7 +131,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
               )
           ),
           const SizedBox(
-            height: 16.0,
+            height: 8.0,
           ),
           SettingTile(
               title: "Version status",

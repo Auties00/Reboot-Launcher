@@ -1,4 +1,3 @@
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:system_theme/system_theme.dart';
@@ -10,18 +9,19 @@ class WindowBorder extends StatelessWidget {
   Widget build(BuildContext context) {
     return IgnorePointer(
         child: Padding(
-          padding: EdgeInsets.only(
-              top: 1 / appWindow.scaleFactor
+          padding: const EdgeInsets.only(
+              top: 1
           ),
           child: Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                  color: SystemTheme.accentColor.accent,
-                  width: appBarSize.toDouble()
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: SystemTheme.accentColor.accent,
+                      width: appBarSize.toDouble()
+                  )
               )
-          )
           ),
-    ));
+        )
+    );
   }
 }

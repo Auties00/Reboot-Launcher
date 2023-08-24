@@ -6,17 +6,16 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/model/fortnite_version.dart';
-import 'package:reboot_launcher/src/util/error.dart';
-import 'package:reboot_launcher/src/util/os.dart';
-import 'package:reboot_launcher/src/util/build.dart';
 import 'package:reboot_launcher/src/ui/controller/game_controller.dart';
+import 'package:reboot_launcher/src/util/build.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 
-import '../../util/checks.dart';
-import '../controller/build_controller.dart';
-import '../widget/home/build_selector.dart';
-import '../widget/home/version_name_input.dart';
-import '../widget/shared/file_selector.dart';
+import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/ui/controller/build_controller.dart';
+import 'package:reboot_launcher/src/ui/widget/home/build_selector.dart';
+import 'package:reboot_launcher/src/ui/widget/home/version_name_input.dart';
+import 'package:reboot_launcher/src/ui/widget/shared/file_selector.dart';
 import 'dialog.dart';
 import 'dialog_button.dart';
 

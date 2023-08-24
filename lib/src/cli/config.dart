@@ -1,9 +1,8 @@
 import 'dart:convert';
 
 import 'package:args/args.dart';
-
-import '../model/fortnite_version.dart';
-import '../model/server_type.dart';
+import 'package:reboot_launcher/src/model/fortnite_version.dart';
+import 'package:reboot_launcher/src/model/server_type.dart';
 
 Iterable<String> getServerTypes() => ServerType.values.map((entry) => entry.id);
 

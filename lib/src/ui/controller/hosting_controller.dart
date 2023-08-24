@@ -4,9 +4,9 @@ import 'package:get_storage/get_storage.dart';
 import 'package:reboot_launcher/src/ui/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/ui/controller/update_controller.dart';
 
-import '../../model/game_instance.dart';
-import '../../model/update_status.dart';
-import '../../util/reboot.dart';
+import 'package:reboot_launcher/src/model/game_instance.dart';
+import 'package:reboot_launcher/src/model/update_status.dart';
+import 'package:reboot_launcher/src/util/reboot.dart';
 
 
 const String kDefaultServerName = "Reboot Game Server";
