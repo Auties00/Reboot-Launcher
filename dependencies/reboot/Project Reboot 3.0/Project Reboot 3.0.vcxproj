@@ -1,0 +1,499 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{69618184-b9db-4982-b4fe-f83e9bdd0555}</ProjectGuid>
+    <RootNamespace>ProjectReboot30</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;PROJECTREBOOT30_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>../vendor</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>../vendor</AdditionalLibraryDirectories>
+      <AdditionalDependencies>MinHook/minhook.x64.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;PROJECTREBOOT30_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>../vendor</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <StringPooling>WOah!</StringPooling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>../vendor</AdditionalLibraryDirectories>
+      <AdditionalDependencies>MinHook/minhook.x64.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;PROJECTREBOOT30_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>../vendor</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>../vendor</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Oleaut32.lib;Onecore.lib;MinHook/minhook.x64.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;PROJECTREBOOT30_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>../vendor</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <StringPooling>
+      </StringPooling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>../vendor</AdditionalLibraryDirectories>
+      <AdditionalDependencies>curl/libcurl.lib;curl/zlib.lib;Oleaut32.lib;Onecore.lib;MinHook/minhook.x64.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\vendor\ImGui\imgui.cpp" />
+    <ClCompile Include="..\vendor\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="..\vendor\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="..\vendor\ImGui\imgui_impl_dx9.cpp" />
+    <ClCompile Include="..\vendor\ImGui\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\vendor\ImGui\imgui_stdlib.cpp" />
+    <ClCompile Include="..\vendor\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="..\vendor\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="AbilitySystemComponent_Abilities.cpp" />
+    <ClCompile Include="Actor.cpp" />
+    <ClCompile Include="ActorComponent.cpp" />
+    <ClCompile Include="addresses.cpp" />
+    <ClCompile Include="AthenaMarkerComponent.cpp" />
+    <ClCompile Include="BP_IslandScripting.cpp" />
+    <ClCompile Include="BuildingActor.cpp" />
+    <ClCompile Include="BuildingContainer.cpp" />
+    <ClCompile Include="BuildingFoundation.cpp" />
+    <ClCompile Include="BuildingGameplayActorSpawnMachine.cpp" />
+    <ClCompile Include="BuildingSMActor.cpp" />
+    <ClCompile Include="BuildingStructuralSupportSystem.cpp" />
+    <ClCompile Include="BuildingTrap.cpp" />
+    <ClCompile Include="BuildingWeapons.cpp" />
+    <ClCompile Include="calendar.h" />
+    <ClCompile Include="CheatManager.cpp" />
+    <ClCompile Include="Class.cpp" />
+    <ClCompile Include="commands.cpp" />
+    <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="DataChannel.cpp" />
+    <ClCompile Include="DataTableFunctionLibrary.cpp" />
+    <ClCompile Include="extra.cpp" />
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="EngineTypes.cpp" />
+    <ClCompile Include="finder.cpp" />
+    <ClCompile Include="FortAthenaCreativePortal.cpp" />
+    <ClCompile Include="FortAthenaMapInfo.cpp" />
+    <ClCompile Include="FortAthenaMutator_Barrier.cpp" />
+    <ClCompile Include="FortAthenaMutator_Disco.cpp" />
+    <ClCompile Include="FortAthenaMutator_GiveItemsAtGamePhaseStep.cpp" />
+    <ClCompile Include="FortAthenaSupplyDrop.cpp" />
+    <ClCompile Include="FortAthenaVehicle.cpp" />
+    <ClCompile Include="FortAthenaVehicleSpawner.cpp" />
+    <ClCompile Include="FortDecoItemDefinition.cpp" />
+    <ClCompile Include="FortGadgetItemDefinition.cpp" />
+    <ClCompile Include="FortGameMode.cpp" />
+    <ClCompile Include="FortGameModeAthena.cpp" />
+    <ClCompile Include="FortGameModeZone.cpp" />
+    <ClCompile Include="FortGameplayAbilityAthena_PeriodicItemGrant.cpp" />
+    <ClCompile Include="FortGameSessionDedicatedAthena.cpp" />
+    <ClCompile Include="FortGameStateAthena.cpp" />
+    <ClCompile Include="FortInventory.cpp" />
+    <ClCompile Include="FortInventory.h" />
+    <ClCompile Include="FortInventoryInterface.cpp" />
+    <ClCompile Include="FortItem.cpp" />
+    <ClCompile Include="FortItemDefinition.cpp" />
+    <ClCompile Include="FortKismetLibrary.cpp" />
+    <ClCompile Include="FortLootLevel.cpp" />
+    <ClCompile Include="FortLootPackage.cpp" />
+    <ClCompile Include="FortMinigame.cpp" />
+    <ClCompile Include="FortOctopusVehicle.cpp" />
+    <ClCompile Include="FortPawn.cpp" />
+    <ClCompile Include="FortPickup.cpp" />
+    <ClCompile Include="FortPlayerController.cpp" />
+    <ClCompile Include="FortPlayerControllerAthena.cpp" />
+    <ClCompile Include="FortPlayerPawn.cpp" />
+    <ClCompile Include="FortPlayerPawnAthena.cpp" />
+    <ClCompile Include="FortPlayerState.cpp" />
+    <ClCompile Include="FortPlayerStateAthena.cpp" />
+    <ClCompile Include="FortPlaysetItemDefinition.cpp" />
+    <ClCompile Include="FortSafeZoneIndicator.cpp" />
+    <ClCompile Include="FortWeapon.cpp" />
+    <ClCompile Include="FortWeaponItemDefinition.cpp" />
+    <ClCompile Include="FortWeaponRangedMountedCannon.cpp" />
+    <ClCompile Include="GameMode.cpp" />
+    <ClCompile Include="GameModeBase.cpp" />
+    <ClCompile Include="GameplayStatics.cpp" />
+    <ClCompile Include="GameState.cpp" />
+    <ClCompile Include="GenericPlatformMath.cpp" />
+    <ClCompile Include="inc.cpp" />
+    <ClCompile Include="InventoryManagementLibrary.cpp" />
+    <ClCompile Include="KismetMathLibrary.cpp" />
+    <ClCompile Include="KismetStringLibrary.cpp" />
+    <ClCompile Include="KismetSystemLibrary.cpp" />
+    <ClCompile Include="KismetTextLibrary.cpp" />
+    <ClCompile Include="Level.cpp" />
+    <ClCompile Include="LevelActor.cpp" />
+    <ClCompile Include="NameTypes.cpp" />
+    <ClCompile Include="NetConnection.cpp" />
+    <ClCompile Include="NetConnection.h" />
+    <ClCompile Include="NetDriver.cpp" />
+    <ClCompile Include="NetworkObjectList.cpp" />
+    <ClCompile Include="Object.cpp" />
+    <ClCompile Include="objectviewer.cpp" />
+    <ClCompile Include="PlayerController.cpp" />
+    <ClCompile Include="PlayerState.cpp" />
+    <ClCompile Include="reboot.cpp" />
+    <ClCompile Include="SavePackage.cpp" />
+    <ClCompile Include="ScriptDisassembler.cpp" />
+    <ClCompile Include="UnrealMath.cpp" />
+    <ClCompile Include="UnrealNames.cpp" />
+    <ClCompile Include="UObjectGlobals.cpp" />
+    <ClCompile Include="World.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AbilitySystemComponent.h" />
+    <ClInclude Include="Actor.h" />
+    <ClInclude Include="ActorChannel.h" />
+    <ClInclude Include="ActorComponent.h" />
+    <ClInclude Include="addresses.h" />
+    <ClInclude Include="ai.h" />
+    <ClInclude Include="AndOrNot.h" />
+    <ClInclude Include="anticheat.h" />
+    <ClInclude Include="Array.h" />
+    <ClInclude Include="AssertionMacros.h" />
+    <ClInclude Include="AssetPtr.h" />
+    <ClInclude Include="AthenaBarrierFlag.h" />
+    <ClInclude Include="AthenaBarrierObjective.h" />
+    <ClInclude Include="AthenaBigBaseWall.h" />
+    <ClInclude Include="AthenaMarkerComponent.h" />
+    <ClInclude Include="AthenaPlayerMatchReport.h" />
+    <ClInclude Include="AthenaResurrectionComponent.h" />
+    <ClInclude Include="AttributeSet.h" />
+    <ClInclude Include="BGA.h" />
+    <ClInclude Include="BinaryHeap.h" />
+    <ClInclude Include="BitArray.h" />
+    <ClInclude Include="bots.h" />
+    <ClInclude Include="BP_IslandScripting.h" />
+    <ClInclude Include="BuildingActor.h" />
+    <ClInclude Include="BuildingContainer.h" />
+    <ClInclude Include="BuildingFoundation.h" />
+    <ClInclude Include="BuildingGameplayActor.h" />
+    <ClInclude Include="BuildingGameplayActorSpawnMachine.h" />
+    <ClInclude Include="BuildingItemWeaponUpgradeActor.h" />
+    <ClInclude Include="BuildingRift.h" />
+    <ClInclude Include="BuildingSMActor.h" />
+    <ClInclude Include="BuildingStructuralSupportSystem.h" />
+    <ClInclude Include="BuildingTrap.h" />
+    <ClInclude Include="Channel.h" />
+    <ClInclude Include="CheatManager.h" />
+    <ClInclude Include="Class.h" />
+    <ClInclude Include="commands.h" />
+    <ClInclude Include="ContainerAllocationPolicies.h" />
+    <ClInclude Include="Controller.h" />
+    <ClInclude Include="builder.h" />
+    <ClInclude Include="CurveTable.h" />
+    <ClInclude Include="DataTable.h" />
+    <ClInclude Include="DataTableFunctionLibrary.h" />
+    <ClInclude Include="Decay.h" />
+    <ClInclude Include="Delegate.h" />
+    <ClInclude Include="DelegateBase.h" />
+    <ClInclude Include="DelegateCombinations.h" />
+    <ClInclude Include="DelegateInstanceInterface.h" />
+    <ClInclude Include="die.h" />
+    <ClInclude Include="discord.h" />
+    <ClInclude Include="EnableIf.h" />
+    <ClInclude Include="Engine.h" />
+    <ClInclude Include="EngineTypes.h" />
+    <ClInclude Include="EnvQuery.h" />
+    <ClInclude Include="EnvQueryTypes.h" />
+    <ClInclude Include="events.h" />
+    <ClInclude Include="finder.h" />
+    <ClInclude Include="FortAbilitySet.h" />
+    <ClInclude Include="FortAIEncounterInfo.h" />
+    <ClInclude Include="FortAthenaAIBotCharacterCustomization.h" />
+    <ClInclude Include="FortAthenaAIBotCustomizationData.h" />
+    <ClInclude Include="FortAthenaCreativePortal.h" />
+    <ClInclude Include="FortAthenaMapInfo.h" />
+    <ClInclude Include="FortAthenaMutator.h" />
+    <ClInclude Include="FortAthenaMutator_Barrier.h" />
+    <ClInclude Include="FortAthenaMutator_Bots.h" />
+    <ClInclude Include="FortAthenaMutator_Disco.h" />
+    <ClInclude Include="FortAthenaMutator_GG.h" />
+    <ClInclude Include="FortAthenaMutator_GiveItemsAtGamePhaseStep.h" />
+    <ClInclude Include="FortAthenaMutator_Heist.h" />
+    <ClInclude Include="FortAthenaMutator_InventoryOverride.h" />
+    <ClInclude Include="FortAthenaMutator_InventoryOverride_Bucket.h" />
+    <ClInclude Include="FortAthenaMutator_ItemDropOnDeath.h" />
+    <ClInclude Include="FortAthenaMutator_LoadoutSwap.h" />
+    <ClInclude Include="FortAthenaMutator_TDM.h" />
+    <ClInclude Include="FortAthenaNpcPatrollingComponent.h" />
+    <ClInclude Include="FortAthenaPatrolPath.h" />
+    <ClInclude Include="FortAthenaSKPushCannon.h" />
+    <ClInclude Include="FortAthenaSupplyDrop.h" />
+    <ClInclude Include="FortAthenaVehicle.h" />
+    <ClInclude Include="FortAthenaVehicleSpawner.h" />
+    <ClInclude Include="FortBotNameSettings.h" />
+    <ClInclude Include="FortDagwoodVehicle.h" />
+    <ClInclude Include="FortDecoItemDefinition.h" />
+    <ClInclude Include="FortGadgetItemDefinition.h" />
+    <ClInclude Include="FortGameMode.h" />
+    <ClInclude Include="FortGameModeAthena.h" />
+    <ClInclude Include="FortGameModePickup.h" />
+    <ClInclude Include="FortGameModePvPBase.h" />
+    <ClInclude Include="FortGameModeZone.h" />
+    <ClInclude Include="FortGameplayAbilityAthena_PeriodicItemGrant.h" />
+    <ClInclude Include="FortGameSessionDedicatedAthena.h" />
+    <ClInclude Include="FortGameStateAthena.h" />
+    <ClInclude Include="FortInventoryInterface.h" />
+    <ClInclude Include="FortItem.h" />
+    <ClInclude Include="FortItemDefinition.h" />
+    <ClInclude Include="FortKismetLibrary.h" />
+    <ClInclude Include="FortLootLevel.h" />
+    <ClInclude Include="FortLootPackage.h" />
+    <ClInclude Include="FortMinigame.h" />
+    <ClInclude Include="FortMountedCannon.h" />
+    <ClInclude Include="FortOctopusVehicle.h" />
+    <ClInclude Include="FortPawn.h" />
+    <ClInclude Include="FortPickup.h" />
+    <ClInclude Include="FortPlayerController.h" />
+    <ClInclude Include="FortPlayerControllerAthena.h" />
+    <ClInclude Include="FortPlayerPawn.h" />
+    <ClInclude Include="FortPlayerPawnAthena.h" />
+    <ClInclude Include="FortPlayerState.h" />
+    <ClInclude Include="FortPlayerStateAthena.h" />
+    <ClInclude Include="FortPlaylist.h" />
+    <ClInclude Include="FortPlaylistAthena.h" />
+    <ClInclude Include="FortPlaysetItemDefinition.h" />
+    <ClInclude Include="FortQuickBars.h" />
+    <ClInclude Include="FortResourceItemDefinition.h" />
+    <ClInclude Include="FortSafeZoneIndicator.h" />
+    <ClInclude Include="FortVehicleItemDefinition.h" />
+    <ClInclude Include="FortVolume.h" />
+    <ClInclude Include="FortWeapon.h" />
+    <ClInclude Include="FortWeaponItemDefinition.h" />
+    <ClInclude Include="BuildingWeapons.h" />
+    <ClInclude Include="FortWeaponMeleeItemDefinition.h" />
+    <ClInclude Include="FortWeaponRangedMountedCannon.h" />
+    <ClInclude Include="FortWorldItemDefinition.h" />
+    <ClInclude Include="Function.h" />
+    <ClInclude Include="GameInstance.h" />
+    <ClInclude Include="GameMode.h" />
+    <ClInclude Include="GameModeBase.h" />
+    <ClInclude Include="GameplayAbilitySpec.h" />
+    <ClInclude Include="GameplayAbilityTypes.h" />
+    <ClInclude Include="GameplayStatics.h" />
+    <ClInclude Include="GameplayTagContainer.h" />
+    <ClInclude Include="GameSession.h" />
+    <ClInclude Include="GameState.h" />
+    <ClInclude Include="GenericPlatformMath.h" />
+    <ClInclude Include="GenericPlatformMisc.h" />
+    <ClInclude Include="GenericPlatformTime.h" />
+    <ClInclude Include="globals.h" />
+    <ClInclude Include="gui.h" />
+    <ClInclude Include="hooking.h" />
+    <ClInclude Include="IdentityFunctor.h" />
+    <ClInclude Include="inc.h" />
+    <ClInclude Include="Interface.h" />
+    <ClInclude Include="IntroSort.h" />
+    <ClInclude Include="InventoryManagementLibrary.h" />
+    <ClInclude Include="Invoke.h" />
+    <ClInclude Include="IsArithmetic.h" />
+    <ClInclude Include="IsEnum.h" />
+    <ClInclude Include="IsPODType.h" />
+    <ClInclude Include="IsPointer.h" />
+    <ClInclude Include="IsTriviallyCopyConstructible.h" />
+    <ClInclude Include="KismetMathLibrary.h" />
+    <ClInclude Include="KismetStringLibrary.h" />
+    <ClInclude Include="KismetSystemLibrary.h" />
+    <ClInclude Include="KismetTextLibrary.h" />
+    <ClInclude Include="LatentActionManager.h" />
+    <ClInclude Include="Level.h" />
+    <ClInclude Include="LevelStreaming.h" />
+    <ClInclude Include="LevelStreamingDynamic.h" />
+    <ClInclude Include="log.h" />
+    <ClInclude Include="Map.h" />
+    <ClInclude Include="MegaStormManager.h" />
+    <ClInclude Include="MemoryOps.h" />
+    <ClInclude Include="moderation.h" />
+    <ClInclude Include="NameTypes.h" />
+    <ClInclude Include="NetDriver.h" />
+    <ClInclude Include="NetSerialization.h" />
+    <ClInclude Include="NetworkGuid.h" />
+    <ClInclude Include="NumericLimits.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="ObjectMacros.h" />
+    <ClInclude Include="objectviewer.h" />
+    <ClInclude Include="OnlineReplStructs.h" />
+    <ClInclude Include="OutputDevice.h" />
+    <ClInclude Include="Package.h" />
+    <ClInclude Include="Pawn.h" />
+    <ClInclude Include="PersistentObjectPtr.h" />
+    <ClInclude Include="Player.h" />
+    <ClInclude Include="PlayerController.h" />
+    <ClInclude Include="PlayerState.h" />
+    <ClInclude Include="PointerIsConvertibleFromTo.h" />
+    <ClInclude Include="Quat.h" />
+    <ClInclude Include="RandomStream.h" />
+    <ClInclude Include="reboot.h" />
+    <ClInclude Include="RemoveCV.h" />
+    <ClInclude Include="RemoveReference.h" />
+    <ClInclude Include="ReversePredicate.h" />
+    <ClInclude Include="Rotator.h" />
+    <ClInclude Include="ScriptDelegates.h" />
+    <ClInclude Include="ScriptDisassembler.h" />
+    <ClInclude Include="ScriptInterface.h" />
+    <ClInclude Include="Set.h" />
+    <ClInclude Include="SharedPointer.h" />
+    <ClInclude Include="SharedPointerInternals.h" />
+    <ClInclude Include="SoftObjectPath.h" />
+    <ClInclude Include="SoftObjectPtr.h" />
+    <ClInclude Include="Sort.h" />
+    <ClInclude Include="Sorting.h" />
+    <ClInclude Include="SparseArray.h" />
+    <ClInclude Include="Stack.h" />
+    <ClInclude Include="StringAssetReference.h" />
+    <ClInclude Include="Text.h" />
+    <ClInclude Include="TimerManager.h" />
+    <ClInclude Include="Transform.h" />
+    <ClInclude Include="Tuple.h" />
+    <ClInclude Include="TypeCompatibleBytes.h" />
+    <ClInclude Include="TypeWrapper.h" />
+    <ClInclude Include="UnrealMathUtility.h" />
+    <ClInclude Include="UnrealString.h" />
+    <ClInclude Include="UnrealTemplate.h" />
+    <ClInclude Include="UnrealTypeTraits.h" />
+    <ClInclude Include="UObjectArray.h" />
+    <ClInclude Include="UObjectGlobals.h" />
+    <ClInclude Include="Vector.h" />
+    <ClInclude Include="Vector2D.h" />
+    <ClInclude Include="vehicles.h" />
+    <ClInclude Include="vendingmachine.h" />
+    <ClInclude Include="WeakObjectPtr.h" />
+    <ClInclude Include="WeakObjectPtrTemplates.h" />
+    <ClInclude Include="World.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DelegateSignatureImpl.inl" />
+    <None Include="ExpressionParserTypes.inl" />
+    <None Include="UnrealEngine.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

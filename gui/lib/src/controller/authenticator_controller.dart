@@ -1,0 +1,24 @@
+import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/server_controller.dart';
+
+class AuthenticatorController extends ServerController {
+  AuthenticatorController() : super();
+
+  @override
+  String get controllerName => "authenticator";
+
+  @override
+  String get storageName => "reboot_authenticator";
+
+  @override
+  String get defaultHost => kDefaultAuthenticatorHost;
+
+  @override
+  String get defaultPort => kDefaultAuthenticatorPort;
+
+  @override
+  Future<bool> get isPortFree => isAuthenticatorPortFree();
+
+  @override
+  Future<bool> freePort() => freeAuthenticatorPort();
+}

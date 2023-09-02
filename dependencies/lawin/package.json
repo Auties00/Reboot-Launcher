@@ -1,0 +1,48 @@
+{
+  "name": "lawinserver",
+  "version": "1.0.0",
+  "bin": "./index.js",
+  "description": "A fortnite backend which supports both BR and STW for every single fortnite build.",
+  "main": "index.js",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "express": "^4.17.2",
+    "ini": "^2.0.0",
+    "path": "^0.12.7",
+    "pkg": "^5.8.0",
+    "uuid": "^8.3.2",
+    "ws": "^8.5.0",
+    "xml-parser": "^1.2.1",
+    "xmlbuilder": "^15.1.1"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lawin0129/LawinServer.git"
+  },
+  "keywords": [
+    "fortnite",
+    "backend",
+    "node",
+    "server"
+  ],
+  "pkg": {
+    "assets": [
+      "./CloudStorage/**/*",
+      "./Config/**/*",
+      "./profiles/**/*",
+      "./public/**/*",
+      "./responses/**/*"
+    ],
+    "outputPath": "dist"
+  },
+  "author": "Lawin0129",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Lawin0129/LawinServer/issues"
+  },
+  "homepage": "https://github.com/Lawin0129/LawinServer#readme"
+}

@@ -1,0 +1,9 @@
+script_template: "custom-inno-setup-script.iss"
+app_id: 31868Auties00.RebootLauncher
+publisher_name: Auties00
+publisher_url: https://github.com/Auties00
+display_name: Reboot Launcher
+install_dir_name: Reboot Launcher
+create_desktop_icon: true
+locales:
+  - en

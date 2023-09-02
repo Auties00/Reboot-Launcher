@@ -1,0 +1,20 @@
+name: reboot_cli
+description: Command Line Interface for Project Reboot
+version: "1.0.0"
+
+publish_to: 'none'
+
+environment:
+  sdk: ">=2.19.0 <=3.3.3"
+
+dependencies:
+  reboot_common:
+    path: ./../common
+  args: ^2.3.1
+  process_run: ^0.13.1
+
+dependency_overrides:
+  xml: ^6.3.0
+
+dev_dependencies:
+  flutter_lints: ^2.0.1
