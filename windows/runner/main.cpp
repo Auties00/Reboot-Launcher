@@ -5,6 +5,7 @@ auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME);
 
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include "app_links/app_links_plugin_c_api.h"
 #include <windows.h>
 
 #include "flutter_window.h"
@@ -35,11 +36,52 @@ bool CheckOneInstance(){
     return true;
 }
 
+constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
+
+bool SendAppLinkToInstance(const std::wstring& title) {
+  // Find our exact window
+  HWND hwnd = ::FindWindow(kWindowClassName, title.c_str());
+
+  if (hwnd) {
+    // Dispatch new link to current window
+    SendAppLink(hwnd);
+
+    // (Optional) Restore our window to front in same state
+    WINDOWPLACEMENT place = { sizeof(WINDOWPLACEMENT) };
+    GetWindowPlacement(hwnd, &place);
+
+    switch(place.showCmd) {
+      case SW_SHOWMAXIMIZED:
+          ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+          break;
+      case SW_SHOWMINIMIZED:
+          ShowWindow(hwnd, SW_RESTORE);
+          break;
+      default:
+          ShowWindow(hwnd, SW_NORMAL);
+          break;
+    }
+
+    SetWindowPos(0, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+    SetForegroundWindow(hwnd);
+    // END Restore
+
+    // Window has been found, don't create another one.
+    return true;
+  }
+
+  return false;
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
   _putenv_s("OPENSSL_ia32cap", "~0x20000000");
+  if(SendAppLinkToInstance(L"Reboot Launcher")) {
+    return EXIT_SUCCESS;
+  }
+
   if(!CheckOneInstance()){
-    return false;
+    return EXIT_SUCCESS;
   }
 
   // Attach to console when present (e.g., 'flutter run') or create a

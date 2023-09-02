@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:reboot_launcher/src/model/fortnite_version.dart';
+import 'package:reboot_common/common.dart';
 
 String? checkVersion(String? text, List<FortniteVersion> versions) {
   if (text == null || text.isEmpty) {
@@ -32,7 +32,7 @@ String? checkGameFolder(text) {
     return "Directory doesn't exist";
   }
 
-  if (FortniteVersion.findExecutable(directory, "FortniteClient-Win64-Shipping.exe") == null) {
+  if (FortniteVersionExtension.findExecutable(directory, "FortniteClient-Win64-Shipping.exe") == null) {
     return "Invalid game path";
   }
 
