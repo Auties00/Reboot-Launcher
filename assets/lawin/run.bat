@@ -1,2 +1,0 @@
-lawinserver-win.exe
-pause
