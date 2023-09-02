@@ -1,0 +1,81 @@
+name: reboot_launcher
+description: Graphical User Interface for Project Reboot
+version: "1.0.0"
+
+publish_to: 'none'
+
+environment:
+  sdk: ">=2.19.0 <=3.3.3"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  reboot_common:
+    path: ./../common
+  fluent_ui: ^4.7.3
+  bitsdojo_window_windows: ^0.1.5
+  system_theme: ^2.0.0
+  file_picker: ^5.2.0+1
+  url_launcher: ^6.1.5
+  archive: ^3.3.1
+  crypto: ^3.0.2
+  async: ^2.8.2
+  get: ^4.6.5
+  get_storage: ^2.0.3
+  window_manager: ^0.2.7
+  win32: 3.0.0
+  clipboard: ^0.1.3
+  universal_disk_space: ^0.2.3
+  uuid: ^3.0.6
+  supabase_flutter: ^1.10.0
+  skeletons: ^0.0.3
+  bcrypt: ^1.1.3
+  upnp2: ^3.0.10
+  dart_ipify: ^1.1.1
+  path: ^1.8.3
+  pointycastle: ^3.7.3
+  sync: ^0.3.0
+  process_run: ^0.13.1
+  auto_animated_list: ^1.0.4
+  flutter_acrylic: ^1.1.3
+  app_links: ^3.4.3
+  url_protocol: ^1.0.0
+
+dependency_overrides:
+  xml: ^6.3.0
+  http: ^0.13.5
+  win32: ^3.0.0
+  ffi: ^2.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.1
+  msix: ^3.6.3
+  flutter_distributor: ^0.3.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/misc/
+    - assets/dlls/
+    - assets/icons/
+    - assets/images/
+    - assets/lawin/
+    - assets/lawin/CloudStorage/
+    - assets/lawin/Config/
+    - assets/lawin/profiles/
+    - assets/lawin/public/
+    - assets/lawin/responses/
+
+msix_config:
+  display_name: Reboot Launcher
+  publisher_display_name: Auties00
+  identity_name: 31868Auties00.RebootLauncher
+  msix_version: 8.1.0.0
+  publisher: CN=E6CD08C6-DECF-4034-A3EB-2D5FA2CA8029
+  logo_path: ./assets/icons/reboot.ico
+  architecture: x64
+  capabilities: "internetClient"
