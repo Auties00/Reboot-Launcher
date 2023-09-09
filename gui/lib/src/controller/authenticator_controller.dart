@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 
@@ -10,7 +8,7 @@ class AuthenticatorController extends ServerController {
   String get controllerName => "authenticator";
 
   @override
-  String get storageName => "reboot_authenticator";
+  String get storageName => "authenticator";
 
   @override
   String get defaultHost => kDefaultAuthenticatorHost;

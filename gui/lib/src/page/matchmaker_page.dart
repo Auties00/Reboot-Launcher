@@ -3,14 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
-import 'package:reboot_launcher/src/widget/server/type_selector.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
-
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
+import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 import 'package:reboot_launcher/src/widget/server/start_button.dart';
+import 'package:reboot_launcher/src/widget/server/type_selector.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MatchmakerPage extends StatefulWidget {
   const MatchmakerPage({Key? key}) : super(key: key);
@@ -71,7 +69,8 @@ class _MatchmakerPageState extends State<MatchmakerPage> with AutomaticKeepAlive
                             isChild: true,
                             content: TextFormBox(
                                 placeholder: "Address",
-                                controller: _matchmakerController.gameServerAddress
+                                controller: _matchmakerController.gameServerAddress,
+                                focusNode: _matchmakerController.gameServerAddressFocusNode
                             )
                         ),
                       if(_matchmakerController.type.value == ServerType.embedded)
@@ -80,9 +79,19 @@ class _MatchmakerPageState extends State<MatchmakerPage> with AutomaticKeepAlive
                           subtitle: "Whether the embedded matchmaker should be started as a separate process, useful for debugging",
                           contentWidth: null,
                           isChild: true,
-                          content: Obx(() => ToggleSwitch(
-                              checked: _matchmakerController.detached.value,
-                              onChanged: (value) => _matchmakerController.detached.value = value
+                          content: Obx(() => Row(
+                            children: [
+                              Text(
+                                  _matchmakerController.detached.value ? "On" : "Off"
+                              ),
+                              const SizedBox(
+                                width: 16.0
+                              ),
+                              ToggleSwitch(
+                                  checked: _matchmakerController.detached.value,
+                                  onChanged: (value) => _matchmakerController.detached.value = value
+                              ),
+                            ],
                           )),
                         )
                     ]

@@ -1,7 +1,6 @@
 import 'dart:collection';
 
 import 'package:fluent_ui/fluent_ui.dart';
-
 import 'package:reboot_launcher/src/page/home_page.dart';
 import 'package:sync/semaphore.dart';
 
@@ -18,7 +17,7 @@ void restoreMessage(int lastIndex) {
   Overlay.of(pageKey.currentContext!).insert(overlay);
 }
 
-void showInfoBar(String text, {InfoBarSeverity severity = InfoBarSeverity.info, bool loading = false, Duration? duration = snackbarShortDuration, Widget? action}) {
+void showInfoBar(dynamic text, {InfoBarSeverity severity = InfoBarSeverity.info, bool loading = false, Duration? duration = snackbarShortDuration, Widget? action}) {
   try {
     _semaphore.acquire();
     var index = pageIndex.value;
@@ -29,12 +28,25 @@ void showInfoBar(String text, {InfoBarSeverity severity = InfoBarSeverity.info, 
           width: double.infinity,
           child: Mica(
             child: InfoBar(
-                title: Text(text),
-                isLong: action == null,
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if(text is Widget)
+                      text,
+                    if(text is String)
+                      Text(text),
+                    if(action != null)
+                      action
+                  ],
+                ),
+                isLong: false,
                 isIconVisible: true,
-                content: action ?? SizedBox(
+                content: SizedBox(
                     width: double.infinity,
-                    child: loading ? const ProgressBar() : const SizedBox()
+                    child: loading ? const Padding(
+                      padding: EdgeInsets.only(top: 8.0, bottom: 2.0),
+                      child: ProgressBar(),
+                    ) : const SizedBox()
                 ),
                 severity: severity
             ),

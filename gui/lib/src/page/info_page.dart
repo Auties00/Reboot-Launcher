@@ -1,8 +1,9 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
-
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/util/tutorial.dart';
+import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 
 class InfoPage extends StatefulWidget {
   const InfoPage({Key? key}) : super(key: key);
@@ -118,6 +119,33 @@ class _InfoPageState extends State<InfoPage> with AutomaticKeepAliveClientMixin 
                 title: 'Where can I report bugs or ask for new features?',
                 subtitle: 'Go to the "Settings" tab and click on report bug. '
                     'Please make sure to be as specific as possible when filing a report as it\'s crucial to make it as easy to fix/implement',
+                titleStyle: FluentTheme
+                    .of(context)
+                    .typography
+                    .title,
+                contentWidth: null,
+              ),
+              const SizedBox(
+                height: 8.0,
+              ),
+              SettingTile(
+                title: 'How can I make my game server accessible for other players?',
+                subtitle: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                          text: 'Follow ',
+                          style: FluentTheme.of(context).typography.body
+                      ),
+                      TextSpan(
+                          text: 'this tutorial',
+                          mouseCursor: SystemMouseCursors.click,
+                          style: FluentTheme.of(context).typography.body?.copyWith(color: FluentTheme.of(context).accentColor),
+                          recognizer: TapGestureRecognizer()..onTap = openPortTutorial
+                      )
+                    ]
+                  )
+                ),
                 titleStyle: FluentTheme
                     .of(context)
                     .typography

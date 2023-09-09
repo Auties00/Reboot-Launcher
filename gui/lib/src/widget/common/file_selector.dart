@@ -63,13 +63,19 @@ class _FileSelectorState extends State<FileSelector> {
     _selecting = true;
     if(widget.folder) {
       compute(openFolderPicker, widget.windowTitle)
-          .then((value) => widget.controller.text = value ?? widget.controller.text)
+          .then(_updateText)
           .then((_) => _selecting = false);
       return;
     }
 
     compute(openFilePicker, widget.extension!)
-        .then((value) => widget.controller.text = value ?? widget.controller.text)
+        .then(_updateText)
         .then((_) => _selecting = false);
+  }
+
+  void _updateText(String? value) {
+    var text = value ?? widget.controller.text;
+    widget.controller.text = value ?? widget.controller.text;
+    widget.controller.selection = TextSelection.collapsed(offset: text.length);
   }
 }

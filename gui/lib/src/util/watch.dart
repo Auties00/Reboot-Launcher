@@ -28,7 +28,7 @@ extension GameInstanceWatcher on GameInstance {
     observerPid = await startBackgroundProcess(
         executable: _executable,
         args: [
-          _gameController.uuid,
+          _hostingController.uuid,
           gamePid.toString(),
           launcherPid?.toString() ?? "-1",
           eacPid?.toString() ?? "-1",
@@ -50,6 +50,6 @@ extension GameInstanceWatcher on GameInstance {
     _hostingController.instance.value?.kill();
     await _supabase.from('hosts')
         .delete()
-        .match({'id': _gameController.uuid});
+        .match({'id': _hostingController.uuid});
   }
 }

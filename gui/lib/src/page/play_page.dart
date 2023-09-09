@@ -5,8 +5,8 @@ import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
-import 'package:reboot_launcher/src/widget/game/start_button.dart';
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
+import 'package:reboot_launcher/src/widget/game/start_button.dart';
 import 'package:reboot_launcher/src/widget/version/version_selector.dart';
 
 
@@ -71,10 +71,26 @@ class _PlayPageState extends State<PlayPage> {
                   SettingTile(
                       title: "Game Server",
                       subtitle: "Helpful shortcuts to find the server where you want to play",
+                      content: IgnorePointer(
+                        child: Button(
+                            style: ButtonStyle(
+                                backgroundColor: ButtonState.all(FluentTheme.of(context).resources.controlFillColorDefault)
+                            ),
+                            onPressed: () {},
+                            child: Obx(() {
+                              var address = _matchmakerController.gameServerAddress.text;
+                              var owner = _matchmakerController.gameServerOwner.value;
+                              return Text(
+                                isLocalHost(address) ? "Your server" : owner != null ? "$owner's server" : address,
+                                textAlign: TextAlign.start
+                            );
+                            })
+                        ),
+                      ),
                       expandedContent: [
                         SettingTile(
                             title: "Host a server",
-                            subtitle: "Do you want to play with your friends? Host a server for them!",
+                            subtitle: "Do you want to create a game server for yourself or your friends? Host one!",
                             content: Button(
                                 onPressed: () => pageIndex.value = 1,
                                 child: const Text("Host")
@@ -82,11 +98,23 @@ class _PlayPageState extends State<PlayPage> {
                             isChild: true
                         ),
                         SettingTile(
-                            title: "Join a server",
-                            subtitle: "Find a server where you can play on the launcher's server browser",
+                            title: "Join a Reboot server",
+                            subtitle: "Find a discoverable server hosted on the Reboot Launcher in the server browser",
                             content: Button(
                                 onPressed: () => pageIndex.value = 2,
                                 child: const Text("Browse")
+                            ),
+                            isChild: true
+                        ),
+                        SettingTile(
+                            title: "Join a custom server",
+                            subtitle: "Type the address of any server, whether it was hosted on the Reboot Launcher or not",
+                            content: Button(
+                                onPressed: () {
+                                  pageIndex.value = 4;
+                                  WidgetsBinding.instance.addPostFrameCallback((_) => _matchmakerController.gameServerAddressFocusNode.requestFocus());
+                                },
+                                child: const Text("Join")
                             ),
                             isChild: true
                         )

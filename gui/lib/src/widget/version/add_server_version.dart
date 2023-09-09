@@ -5,15 +5,15 @@ import 'dart:isolate';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/build_controller.dart';
+import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/widget/common/file_selector.dart';
 import 'package:reboot_launcher/src/widget/version/version_build_selector.dart';
 import 'package:reboot_launcher/src/widget/version/version_name_input.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 
-import 'package:reboot_launcher/src/util/checks.dart';
-import 'package:reboot_launcher/src/controller/build_controller.dart';
-import 'package:reboot_launcher/src/widget/common/file_selector.dart';
 import '../../dialog/abstract/dialog.dart';
 import '../../dialog/abstract/dialog_button.dart';
 
@@ -334,8 +334,12 @@ class _AddServerVersionState extends State<AddServerVersion> {
       return;
     }
 
-    _pathController.text = "${bestDisk.devicePath}\\FortniteBuilds\\${build.version}";
-    _nameController.text = build.version.toString();
+    var pathText = "${bestDisk.devicePath}\\FortniteBuilds\\${build.version}";
+    _pathController.text = pathText;
+    _pathController.selection = TextSelection.collapsed(offset: pathText.length);
+    var buildName = build.version.toString();
+    _nameController.text = buildName;
+    _nameController.selection = TextSelection.collapsed(offset: buildName.length);
     _formKey.currentState?.validate();
   }
 }

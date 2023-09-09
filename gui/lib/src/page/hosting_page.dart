@@ -1,18 +1,19 @@
 import 'package:clipboard/clipboard.dart';
 import 'package:dart_ipify/dart_ipify.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/material.dart' show Icons;
 import 'package:get/get.dart';
 import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/update_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
-import 'package:flutter/material.dart' show Icons;
-
-import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/widget/game/start_button.dart';
 import 'package:reboot_launcher/src/widget/version/version_selector.dart';
+import 'package:sync/semaphore.dart';
 
 class HostingPage extends StatefulWidget {
   const HostingPage({Key? key}) : super(key: key);
@@ -24,7 +25,7 @@ class HostingPage extends StatefulWidget {
 class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClientMixin {
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
-  final UpdateController _updateController = Get.find<UpdateController>();
+  final Semaphore _semaphore = Semaphore();
   late final RxBool _showPasswordTrailing = RxBool(_hostingController.password.text.isNotEmpty);
 
   @override
@@ -48,7 +49,8 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
                       isChild: true,
                       content: TextFormBox(
                           placeholder: "Name",
-                          controller: _hostingController.name
+                          controller: _hostingController.name,
+                          onChanged: (_) => _updateServer()
                       )
                   ),
                   SettingTile(
@@ -56,8 +58,9 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
                       subtitle: "The description of your game server",
                       isChild: true,
                       content: TextFormBox(
-                          placeholder: "Description",
-                          controller: _hostingController.description
+                        placeholder: "Description",
+                        controller: _hostingController.description,
+                          onChanged: (_) => _updateServer()
                       )
                   ),
                   SettingTile(
@@ -71,7 +74,10 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
                           obscureText: !_hostingController.showPassword.value,
                           enableSuggestions: false,
                           autocorrect: false,
-                          onChanged: (text) => _showPasswordTrailing.value = text.isNotEmpty,
+                          onChanged: (text) {
+                            _showPasswordTrailing.value = text.isNotEmpty;
+                            _updateServer();
+                          },
                           suffix: Button(
                             onPressed: () => _hostingController.showPassword.value = !_hostingController.showPassword.value,
                             style: ButtonStyle(
@@ -90,9 +96,22 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
                       subtitle: "Make your server available to other players on the server browser",
                       isChild: true,
                       contentWidth: null,
-                      content: Obx(() => ToggleSwitch(
-                          checked: _hostingController.discoverable(),
-                          onChanged: (value) => _hostingController.discoverable.value = value
+                      content: Obx(() => Row(
+                        children: [
+                          Text(
+                              _hostingController.discoverable.value ? "On" : "Off"
+                          ),
+                          const SizedBox(
+                              width: 16.0
+                          ),
+                          ToggleSwitch(
+                              checked: _hostingController.discoverable(),
+                              onChanged: (value) async {
+                                _hostingController.discoverable.value = value;
+                                await _updateServer();
+                              }
+                          ),
+                        ],
                       ))
                   )
                 ],
@@ -138,7 +157,7 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
                       isChild: true,
                       content: Button(
                         onPressed: () async {
-                          FlutterClipboard.controlC("$kCustomUrlSchema://${_gameController.uuid}");
+                          FlutterClipboard.controlC("$kCustomUrlSchema://${_hostingController.uuid}");
                           showInfoBar(
                               "Copied your link to the clipboard",
                               severity: InfoBarSeverity.success
@@ -177,6 +196,35 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
                         )
                     )
                   ],
+              ),
+              const SizedBox(
+                height: 8.0,
+              ),
+              SettingTile(
+                  title: "Reset game server",
+                  subtitle: "Resets the game server's settings to their default values",
+                  content: Button(
+                    onPressed: () => showAppDialog(
+                        builder: (context) => InfoDialog(
+                          text: "Do you want to reset all the setting in this tab to their default values? This action is irreversible",
+                          buttons: [
+                            DialogButton(
+                              type: ButtonType.secondary,
+                              text: "Close",
+                            ),
+                            DialogButton(
+                              type: ButtonType.primary,
+                              text: "Reset",
+                              onTap: () {
+                                _hostingController.reset();
+                                Navigator.of(context).pop();
+                              },
+                            )
+                          ],
+                        )
+                    ),
+                    child: const Text("Reset"),
+                  )
               )
             ],
           ),
@@ -189,5 +237,27 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
         )
       ],
     );
+  }
+
+  Future<void> _updateServer() async {
+    if(!_hostingController.published()) {
+      return;
+    }
+
+    try {
+      _semaphore.acquire();
+      _hostingController.publishServer(
+          _gameController.username.text,
+          _hostingController.instance.value!.versionName
+      );
+    } catch(error) {
+      showInfoBar(
+          "An error occurred while updating the game server: $error",
+          severity: InfoBarSeverity.success,
+          duration: snackbarLongDuration
+      );
+    } finally {
+      _semaphore.release();
+    }
   }
 }

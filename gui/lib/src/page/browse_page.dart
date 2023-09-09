@@ -4,14 +4,11 @@ import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
-
-import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 import 'package:skeletons/skeletons.dart';
-
-import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 
 class BrowsePage extends StatefulWidget {
   const BrowsePage({Key? key}) : super(key: key);
@@ -21,7 +18,7 @@ class BrowsePage extends StatefulWidget {
 }
 
 class _BrowsePageState extends State<BrowsePage> with AutomaticKeepAliveClientMixin {
-  final GameController _gameController = Get.find<GameController>();
+  final HostingController _hostingController = Get.find<HostingController>();
   final MatchmakerController _matchmakerController = Get.find<MatchmakerController>();
   final TextEditingController _filterController = TextEditingController();
   final StreamController<String> _filterControllerStream = StreamController();
@@ -33,7 +30,10 @@ class _BrowsePageState extends State<BrowsePage> with AutomaticKeepAliveClientMi
       future: Future.delayed(const Duration(seconds: 1)), // Fake delay to show loading
       builder: (context, futureSnapshot) => Obx(() {
         var ready = futureSnapshot.connectionState == ConnectionState.done;
-        var data = _gameController.servers.value;
+        var data = _hostingController.servers
+            .value
+            ?.where((entry) => entry["discoverable"] ?? false)
+            .toSet();
         if(ready && data?.isEmpty == true) {
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -108,7 +108,7 @@ class _BrowsePageState extends State<BrowsePage> with AutomaticKeepAliveClientMi
                               title: "${_formatName(entry)} • ${entry["author"]}",
                               subtitle: "${_formatDescription(entry)} • ${_formatVersion(entry)}",
                               content: Button(
-                                onPressed: () => _matchmakerController.joinServer(entry),
+                                onPressed: () => _matchmakerController.joinServer(_hostingController.uuid, entry),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -146,7 +146,7 @@ class _BrowsePageState extends State<BrowsePage> with AutomaticKeepAliveClientMi
   }
 
   bool _isValidItem(Map<String, dynamic> entry, String? filter) =>
-      (entry["discoverable"] ?? false) && (filter == null || _filterServer(entry, filter));
+      filter == null || _filterServer(entry, filter);
 
   bool _filterServer(Map<String, dynamic> element, String filter) {
     String? id = element["id"];

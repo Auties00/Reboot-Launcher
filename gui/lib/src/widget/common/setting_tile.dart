@@ -8,7 +8,7 @@ class SettingTile extends StatefulWidget {
 
   final String? title;
   final TextStyle? titleStyle;
-  final String? subtitle;
+  final dynamic subtitle;
   final TextStyle? subtitleStyle;
   final Widget? content;
   final double? contentWidth;
@@ -27,10 +27,9 @@ class SettingTile extends StatefulWidget {
         this.expandedContentHeaderHeight = kDefaultHeaderHeight,
         this.expandedContent,
         this.isChild = false})
-      : assert(
-  (title == null && subtitle == null) ||
-      (title != null && subtitle != null),
-  "Title and subtitle can only be null together"),
+      : assert((title == null && subtitle == null) || (title != null && subtitle != null), "title and subtitle can only be null together"),
+        assert(subtitle == null || subtitle is String || subtitle is Widget, "subtitle can only be null, String or Widget"),
+        assert(subtitle is! Widget || subtitleStyle == null, "subtitleStyle must be null if subtitle is a widget"),
         super(key: key);
 
   @override
@@ -112,7 +111,7 @@ class _SettingTileState extends State<SettingTile> {
     ),
   );
 
-  Widget get _subtitle => Text(
+  Widget get _subtitle => widget.subtitle is Widget ? widget.subtitle : Text(
       widget.subtitle!,
       style: widget.subtitleStyle ?? FluentTheme.of(context).typography.body
   );

@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+
 import 'package:bcrypt/bcrypt.dart';
 import 'package:pointycastle/export.dart';
-import 'dart:convert';
 
 const int _ivLength = 16;
 const int _keyLength = 32;

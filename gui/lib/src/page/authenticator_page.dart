@@ -3,14 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
+import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 import 'package:reboot_launcher/src/widget/server/start_button.dart';
 import 'package:reboot_launcher/src/widget/server/type_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
-
-import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
-import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 
 class AuthenticatorPage extends StatefulWidget {
   const AuthenticatorPage({Key? key}) : super(key: key);
@@ -70,9 +68,19 @@ class _AuthenticatorPageState extends State<AuthenticatorPage> with AutomaticKee
                           subtitle: "Whether the embedded authenticator should be started as a separate process, useful for debugging",
                           contentWidth: null,
                           isChild: true,
-                          content: Obx(() => ToggleSwitch(
-                              checked: _authenticatorController.detached(),
-                              onChanged: (value) => _authenticatorController.detached.value = value
+                          content: Obx(() => Row(
+                            children: [
+                              Text(
+                                  _authenticatorController.detached.value ? "On" : "Off"
+                              ),
+                              const SizedBox(
+                                  width: 16.0
+                              ),
+                              ToggleSwitch(
+                                  checked: _authenticatorController.detached(),
+                                  onChanged: (value) => _authenticatorController.detached.value = value
+                              ),
+                            ],
                           ))
                       ),
                   ],

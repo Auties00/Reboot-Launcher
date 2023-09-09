@@ -1,20 +1,21 @@
 import 'dart:async';
 
 import 'package:clipboard/clipboard.dart';
+import 'package:dart_ipify/dart_ipify.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' show Icons;
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/get.dart';
+import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
-
-import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
 import 'package:reboot_launcher/src/util/cryptography.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 extension ServerControllerDialog on ServerController {
   Future<bool> restartInteractive() async {
@@ -165,7 +166,22 @@ extension ServerControllerDialog on ServerController {
 }
 
 extension MatchmakerControllerExtension on MatchmakerController {
-  Future<void> joinServer(Map<String, dynamic> entry) async {
+  void joinLocalHost() {
+    gameServerAddress.text = kDefaultGameServerHost;
+    gameServerOwner.value = null;
+  }
+
+  Future<void> joinServer(String uuid, Map<String, dynamic> entry) async {
+    var id = entry["id"];
+    if(uuid == id) {
+      showInfoBar(
+          "You can't join your own server",
+          duration: snackbarLongDuration,
+          severity: InfoBarSeverity.error
+      );
+      return;
+    }
+
     var hashedPassword = entry["password"];
     var hasPassword = hashedPassword != null;
     var embedded = type.value == ServerType.embedded;
@@ -275,6 +291,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
   void _onSuccess(bool embedded, String decryptedIp, String author) {
     if(embedded) {
       gameServerAddress.text = decryptedIp;
+      gameServerOwner.value = author;
       pageIndex.value = 0;
     }else {
       FlutterClipboard.controlC(decryptedIp);
@@ -284,5 +301,45 @@ extension MatchmakerControllerExtension on MatchmakerController {
         duration: snackbarLongDuration,
         severity: InfoBarSeverity.success
     ));
+  }
+}
+
+extension HostingControllerExtension on HostingController {
+  Future<void> publishServer(String author, String version) async {
+    var passwordText = password.text;
+    var hasPassword = passwordText.isNotEmpty;
+    var ip = await Ipify.ipv4();
+    if(hasPassword) {
+      ip = aes256Encrypt(ip, passwordText);
+    }
+
+    var supabase = Supabase.instance.client;
+    var hosts = supabase.from('hosts');
+    var payload = {
+      'name': name.text,
+      'description': description.text,
+      'author': author,
+      'ip': ip,
+      'version': version,
+      'password': hasPassword ? hashPassword(passwordText) : null,
+      'timestamp': DateTime.now().toIso8601String(),
+      'discoverable': discoverable.value
+    };
+    if(published()) {
+      await hosts.update(payload).eq("id", uuid);
+    }else {
+      payload["id"] = uuid;
+      await hosts.insert(payload);
+    }
+
+    published.value = true;
+  }
+
+  Future<void> discardServer() async {
+    var supabase = Supabase.instance.client;
+    await supabase.from('hosts')
+        .delete()
+        .match({'id': uuid});
+    published.value = false;
   }
 }

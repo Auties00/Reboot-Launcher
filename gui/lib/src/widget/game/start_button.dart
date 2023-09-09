@@ -1,25 +1,26 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:async/async.dart';
 import 'package:dart_ipify/dart_ipify.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as path;
 import 'package:process_run/shell.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/game.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
-import 'package:reboot_launcher/src/util/cryptography.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
+import 'package:reboot_launcher/src/util/tutorial.dart';
 import 'package:reboot_launcher/src/util/watch.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class LaunchButton extends StatefulWidget {
   final bool host;
@@ -131,7 +132,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     var eacProcess = await _createEacProcess(version);
     var executable = await version.executable;
     var gameProcess = await _createGameProcess(executable!.path, host);
-    var instance = GameInstance(gameProcess, launcherProcess, eacProcess, host, linkedHosting);
+    var instance = GameInstance(version.name, gameProcess, launcherProcess, eacProcess, host, linkedHosting);
     instance.startObserver();
     if(host){
       _removeHostEntry();
@@ -149,8 +150,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       return false;
     }
 
-    // var matchmakingIp = _settingsController.matchmakingIp.text;
-    var matchmakingIp = "127.0.0.1";
+    var matchmakingIp = _matchmakerController.gameServerAddress.text;
     if(!isLocalHost(matchmakingIp)) {
       return false;
     }
@@ -241,8 +241,9 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
+    var theme = FluentTheme.of(context);
     showInfoBar(
-        "Waiting for the game server to become available...",
+        "Waiting for the game server to boot up...",
         loading: true,
         duration: null
     );
@@ -253,54 +254,84 @@ class _LaunchButtonState extends State<LaunchButton> {
     );
     if(!localPingResult) {
       showInfoBar(
-          "The headless server was started successfully, but the game server isn't available",
+          "The headless server was started successfully, but the game server didn't boot",
           severity: InfoBarSeverity.error,
           duration: snackbarLongDuration
       );
       return;
     }
 
-    showInfoBar(
-        "Checking if the game server is accessible...",
-        loading: true,
-        duration: null
-    );
-    var publicIp = await Ipify.ipv4();
-    var result = await pingGameServer("$publicIp:$gameServerPort");
-    if(!result) {
+    _matchmakerController.joinLocalHost();
+    var accessible = await _checkAccessible(theme, gameServerPort);
+    if(!accessible) {
       showInfoBar(
-          "The game server was started successfully, but nobody outside your network can join",
+          "The game server was started successfully, but other players can't join",
           severity: InfoBarSeverity.warning,
-          duration: null,
-          action: Button(
-              onPressed: () => launchUrl(Uri.parse("https://github.com/Auties00/reboot_launcher/documentation/PortForwarding.md")),
-              child: Text("Open port $gameServerPort")
-          )
+          duration: snackbarLongDuration
       );
       return;
     }
 
-    if(_hostingController.discoverable.value){
-      var password = _hostingController.password.text;
-      var hasPassword = password.isNotEmpty;
-      var ip = await Ipify.ipv4();
-      if(hasPassword) {
-        ip = aes256Encrypt(ip, password);
-      }
+    await _hostingController.publishServer(
+        _gameController.username.text,
+        _hostingController.instance.value!.versionName,
+    );
+    showInfoBar(
+        "The game server was started successfully",
+        severity: InfoBarSeverity.success,
+        duration: snackbarLongDuration
+    );
+  }
 
-      var supabase = Supabase.instance.client;
-      await supabase.from('hosts').insert({
-        'id': _gameController.uuid,
-        'name': _hostingController.name.text,
-        'description': _hostingController.description.text,
-        'author': _gameController.username.text,
-        'ip': ip,
-        'version': _gameController.selectedVersion?.name,
-        'password': hasPassword ? hashPassword(password) : null,
-        'timestamp': DateTime.now().toIso8601String(),
-        'discoverable': _hostingController.discoverable.value
-      });
+  Future<bool> _checkAccessible(FluentThemeData theme, String gameServerPort) async {
+    showInfoBar(
+        "Checking if other players can join the game server...",
+        loading: true,
+        duration: null
+    );
+    var publicIp = await Ipify.ipv4();
+    var externalResult = await pingGameServer("$publicIp:$gameServerPort");
+    if(externalResult) {
+      return true;
     }
+
+    var future = CancelableOperation.fromFuture(pingGameServer(
+        "$publicIp:$gameServerPort",
+        timeout: const Duration(days: 365)
+    ));
+    showInfoBar(
+        Text.rich(
+            TextSpan(
+                children: [
+                  const TextSpan(
+                      text: "Other players can't join the game server currently: please follow "
+                  ),
+                  TextSpan(
+                      text: "this tutorial",
+                      mouseCursor: SystemMouseCursors.click,
+                      style: TextStyle(
+                          color: theme.accentColor.dark
+                      ),
+                      recognizer: TapGestureRecognizer()..onTap = openPortTutorial
+                  ),
+                  const TextSpan(
+                      text: " to fix this problem"
+                  ),
+                ]
+            )
+        ),
+        action: Button(
+          onPressed: () {
+            future.cancel();
+            removeMessage(1);
+          },
+          child: const Text("Ignore"),
+        ),
+        severity: InfoBarSeverity.warning,
+        duration: null,
+        loading: true
+    );
+    return await future.valueOrCancellation() ?? false;
   }
 
   void _onGameOutput(String line, bool host) {
@@ -387,7 +418,7 @@ class _LaunchButtonState extends State<LaunchButton> {
   Future<void> _removeHostEntry() async {
     await _supabase.from('hosts')
         .delete()
-        .match({'id': _gameController.uuid});
+        .match({'id': _hostingController.uuid});
   }
 
   Future<void> _injectOrShowError(Injectable injectable, bool hosting) async {

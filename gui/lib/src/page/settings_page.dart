@@ -2,19 +2,16 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
-import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
-import 'package:reboot_launcher/src/widget/common/file_selector.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import 'package:reboot_launcher/src/util/checks.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/widget/common/file_selector.dart';
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -24,10 +21,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClientMixin {
-  final BuildController _buildController = Get.find<BuildController>();
   final GameController _gameController  = Get.find<GameController>();
-  final HostingController _hostingController = Get.find<HostingController>();
-  final AuthenticatorController _authenticatorController = Get.find<AuthenticatorController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
   final UpdateController _updateController = Get.find<UpdateController>();
 
@@ -108,6 +102,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                           text: Text(entry.text),
                           onPressed: () {
                             _updateController.timer.value = entry;
+                            removeMessage(6);
                             _updateController.update(true);
                           }
                       )).toList()
@@ -148,7 +143,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                   content: Button(
                     onPressed: () => showAppDialog(
                         builder: (context) => InfoDialog(
-                          text: "Do you want to reset all the launcher's settings to their default values? This action is irreversible",
+                          text: "Do you want to reset all the setting in this tab to their default values? This action is irreversible",
                           buttons: [
                             DialogButton(
                               type: ButtonType.secondary,
@@ -158,12 +153,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                               type: ButtonType.primary,
                               text: "Reset",
                               onTap: () {
-                                _buildController.reset();
-                                _gameController.reset();
-                                _hostingController.reset();
-                                _authenticatorController.reset();
                                 _settingsController.reset();
-                                _updateController.reset();
                                 Navigator.of(context).pop();
                               },
                             )

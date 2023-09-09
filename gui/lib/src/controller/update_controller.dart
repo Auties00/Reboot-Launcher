@@ -12,7 +12,7 @@ class UpdateController {
   late final TextEditingController url;
 
   UpdateController() {
-    _storage = GetStorage("reboot_update");
+    _storage = GetStorage("update");
     timestamp = RxnInt(_storage.read("ts"));
     timestamp.listen((value) => _storage.write("ts", value));
     var timerIndex = _storage.read("timer");

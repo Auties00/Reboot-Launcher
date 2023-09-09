@@ -1,7 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
-
-import 'package:reboot_launcher/src/page/home_page.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/page/home_page.dart';
 
 
 String? lastError;

@@ -15,7 +15,7 @@ dependencies:
   archive: ^3.3.7
   ini: ^2.1.0
   shelf_proxy: ^1.0.2
-  process_run: ^0.13.1
+  sync: ^0.3.0
 
 dev_dependencies:
   flutter_lints: ^2.0.1

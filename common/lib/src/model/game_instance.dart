@@ -2,6 +2,7 @@ import 'dart:io';
 
 
 class GameInstance {
+  final String versionName;
   final int gamePid;
   final int? launcherPid;
   final int? eacPid;
@@ -10,11 +11,11 @@ class GameInstance {
   bool tokenError;
   bool linkedHosting;
 
-  GameInstance(this.gamePid, this.launcherPid, this.eacPid, this.hosting, this.linkedHosting)
+  GameInstance(this.versionName, this.gamePid, this.launcherPid, this.eacPid, this.hosting, this.linkedHosting)
       : tokenError = false,
         assert(!linkedHosting || !hosting, "Only a game instance can have a linked hosting server");
 
-  GameInstance._fromJson(this.gamePid, this.launcherPid, this.eacPid, this.observerPid,
+  GameInstance._fromJson(this.versionName, this.gamePid, this.launcherPid, this.eacPid, this.observerPid,
       this.hosting, this.tokenError, this.linkedHosting);
 
   static GameInstance? fromJson(Map<String, dynamic>? json) {
@@ -27,13 +28,14 @@ class GameInstance {
       return null;
     }
 
+    var version = json["versionName"];
     var launcherPid = json["launcher"];
     var eacPid = json["eac"];
     var observerPid = json["observer"];
     var hosting = json["hosting"];
     var tokenError = json["tokenError"];
     var linkedHosting = json["linkedHosting"];
-    return GameInstance._fromJson(gamePid, launcherPid, eacPid, observerPid, hosting, tokenError, linkedHosting);
+    return GameInstance._fromJson(version, gamePid, launcherPid, eacPid, observerPid, hosting, tokenError, linkedHosting);
   }
 
   void kill() {
@@ -50,6 +52,7 @@ class GameInstance {
   }
 
   Map<String, dynamic> toJson() => {
+    'versionName': versionName,
     'game': gamePid,
     'launcher': launcherPid,
     'eac': eacPid,

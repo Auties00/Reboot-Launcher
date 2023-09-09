@@ -6,15 +6,14 @@ import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/widget/version/add_local_version.dart';
-import 'package:reboot_launcher/src/widget/version/add_server_version.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/util/checks.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import 'package:reboot_launcher/src/widget/common/file_selector.dart';
+import 'package:reboot_launcher/src/widget/version/add_local_version.dart';
+import 'package:reboot_launcher/src/widget/version/add_server_version.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class VersionSelector extends StatefulWidget {
   const VersionSelector({Key? key}) : super(key: key);

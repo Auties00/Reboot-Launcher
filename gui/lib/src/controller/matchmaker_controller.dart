@@ -1,24 +1,43 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 
 class MatchmakerController extends ServerController {
   late final TextEditingController gameServerAddress;
+  late final FocusNode gameServerAddressFocusNode;
+  late final RxnString gameServerOwner;
 
   MatchmakerController() : super() {
     gameServerAddress = TextEditingController(text: storage.read("game_server_address") ?? kDefaultMatchmakerHost);
-    writeMatchmakingIp(gameServerAddress.text);
+    var lastValue = gameServerAddress.text;
+    writeMatchmakingIp(lastValue);
     gameServerAddress.addListener(() {
-      storage.write("game_server_address", gameServerAddress.text);
-      writeMatchmakingIp(gameServerAddress.text);
+      var newValue = gameServerAddress.text;
+      if(newValue.trim().toLowerCase() == lastValue.trim().toLowerCase()) {
+        return;
+      }
+
+      lastValue = newValue;
+      gameServerAddress.selection = TextSelection.collapsed(offset: newValue.length);
+      storage.write("game_server_address", newValue);
+      writeMatchmakingIp(newValue);
     });
+    watchMatchmakingIp().listen((event) {
+      if(event != null && gameServerAddress.text != event) {
+        gameServerAddress.text = event;
+      }
+    });
+    gameServerAddressFocusNode = FocusNode();
+    gameServerOwner = RxnString(storage.read("game_server_owner"));
+    gameServerOwner.listen((value) => storage.write("game_server_owner", value));
   }
 
   @override
   String get controllerName => "matchmaker";
 
   @override
-  String get storageName => "reboot_matchmaker";
+  String get storageName => "matchmaker";
 
   @override
   String get defaultHost => kDefaultMatchmakerHost;

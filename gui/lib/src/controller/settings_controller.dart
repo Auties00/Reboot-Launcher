@@ -1,8 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:reboot_launcher/main.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/main.dart';
 
 class SettingsController extends GetxController {
   late final GetStorage _storage;
@@ -19,7 +19,7 @@ class SettingsController extends GetxController {
   late double scrollingDistance;
 
   SettingsController() {
-    _storage = GetStorage("reboot_settings");
+    _storage = GetStorage("settings");
     gameServerDll = _createController("game_server", "reboot.dll");
     unrealEngineConsoleDll = _createController("unreal_engine_console", "console.dll");
     authenticatorDll = _createController("authenticator", "cobalt.dll");
@@ -54,6 +54,7 @@ class SettingsController extends GetxController {
     gameServerDll.text = _controllerDefaultPath("reboot.dll");
     unrealEngineConsoleDll.text = _controllerDefaultPath("console.dll");
     authenticatorDll.text = _controllerDefaultPath("cobalt.dll");
+    gameServerPort.text = kDefaultGameServerPort;
     firstRun.value = true;
   }
 

@@ -4,18 +4,17 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' show MaterialPage;
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/page/browse_page.dart';
+import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/page/authenticator_page.dart';
+import 'package:reboot_launcher/src/page/browse_page.dart';
+import 'package:reboot_launcher/src/page/hosting_page.dart';
+import 'package:reboot_launcher/src/page/info_page.dart';
 import 'package:reboot_launcher/src/page/matchmaker_page.dart';
 import 'package:reboot_launcher/src/page/play_page.dart';
 import 'package:reboot_launcher/src/page/settings_page.dart';
 import 'package:reboot_launcher/src/widget/home/pane.dart';
 import 'package:reboot_launcher/src/widget/home/profile.dart';
-
-import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/widget/os/title_bar.dart';
-import 'package:reboot_launcher/src/page/hosting_page.dart';
-import 'package:reboot_launcher/src/page/info_page.dart';
 import 'package:window_manager/window_manager.dart';
 
 GlobalKey appKey = GlobalKey();
@@ -48,6 +47,13 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   void initState() {
     windowManager.addListener(this);
     _searchController.addListener(_onSearch);
+    var lastValue = pageIndex.value;
+    pageIndex.listen((value) {
+      if(value != lastValue) {
+        _pagesStack.add(lastValue);
+        lastValue = value;
+      }
+    });
     super.initState();
   }
 
@@ -116,10 +122,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
             pane: NavigationPane(
               key: appKey,
               selected: pageIndex.value,
-              onChanged: (index) {
-                _pagesStack.add(pageIndex.value);
-                pageIndex.value = index;
-              },
+              onChanged: (index) => pageIndex.value = index,
               menuButton: const SizedBox(),
               displayMode: PaneDisplayMode.open,
               items: _items,

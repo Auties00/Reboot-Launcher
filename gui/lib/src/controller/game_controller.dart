@@ -2,16 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
-import 'package:supabase/src/supabase_stream_builder.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
 class GameController extends GetxController {
-  late final String uuid;
   late final GetStorage _storage;
   late final TextEditingController username;
   late final TextEditingController password;
@@ -20,52 +15,38 @@ class GameController extends GetxController {
   late final Rxn<FortniteVersion> _selectedVersion;
   late final RxBool started;
   late final RxBool autoStartGameServer;
-  late final Rxn<Set<Map<String, dynamic>>> servers;
   late final Rxn<GameInstance> instance;
   
   GameController() {
-    _storage = GetStorage("reboot_game");
-    Iterable decodedVersionsJson = jsonDecode(_storage.read("versions") ?? "[]");
+    _storage = GetStorage("game");
+    Iterable decodedVersionsJson = jsonDecode(
+        _storage.read("versions") ?? "[]");
     var decodedVersions = decodedVersionsJson
         .map((entry) => FortniteVersion.fromJson(entry))
         .toList();
     versions = Rx(decodedVersions);
     versions.listen((data) => _saveVersions());
     var decodedSelectedVersionName = _storage.read("version");
-    var decodedSelectedVersion = decodedVersions.firstWhereOrNull((element) => element.name == decodedSelectedVersionName);
-    uuid = _storage.read("uuid") ?? const Uuid().v4();
-    _storage.write("uuid", uuid);
+    var decodedSelectedVersion = decodedVersions.firstWhereOrNull((
+        element) => element.name == decodedSelectedVersionName);
     _selectedVersion = Rxn(decodedSelectedVersion);
-    username = TextEditingController(text: _storage.read("username") ?? kDefaultPlayerName);
+    username = TextEditingController(
+        text: _storage.read("username") ?? kDefaultPlayerName);
     username.addListener(() => _storage.write("username", username.text));
     password = TextEditingController(text: _storage.read("password") ?? "");
     password.addListener(() => _storage.write("password", password.text));
-    customLaunchArgs = TextEditingController(text: _storage.read("custom_launch_args") ?? "");
-    customLaunchArgs.addListener(() => _storage.write("custom_launch_args", customLaunchArgs.text));
+    customLaunchArgs =
+        TextEditingController(text: _storage.read("custom_launch_args") ?? "");
+    customLaunchArgs.addListener(() =>
+        _storage.write("custom_launch_args", customLaunchArgs.text));
     started = RxBool(false);
     autoStartGameServer = RxBool(_storage.read("auto_game_server") ?? true);
-    autoStartGameServer.listen((value) => _storage.write("auto_game_server", value));
-    var supabase = Supabase.instance.client;
-    servers = Rxn();
-    supabase.from('hosts')
-        .stream(primaryKey: ['id'])
-        .map((event) => _parseValidServers(event))
-        .listen((event) {
-          if(servers.value == null) {
-            servers.value = event;
-          }else {
-            servers.value?.addAll(event);
-          }
-        });
+    autoStartGameServer.listen((value) =>
+        _storage.write("auto_game_server", value));
     var serializedInstance = _storage.read("instance");
     instance = Rxn(serializedInstance != null ? GameInstance.fromJson(jsonDecode(serializedInstance)) : null);
     instance.listen((_) => saveInstance());
   }
-
-  Set<Map<String, dynamic>> _parseValidServers(SupabaseStreamEvent event) => event.where((element) => _isValidServer(element)).toSet();
-
-  bool _isValidServer(Map<String, dynamic> element) =>
-      (kDebugMode || element["id"] != uuid) && element["ip"] != null;
 
   Future<void> saveInstance() =>
       _storage.write("instance", jsonEncode(instance.value?.toJson()));
@@ -122,13 +103,5 @@ class GameController extends GetxController {
 
   void updateVersion(FortniteVersion version, Function(FortniteVersion) function) {
     versions.update((val) => function(version));
-  }
-
-  Map<String, dynamic>? findServerById(String uuid) {
-    try {
-      return servers.value?.firstWhere((element) => element["id"] == uuid);
-    } on StateError catch(_) {
-      return null;
-    }
   }
 }

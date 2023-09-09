@@ -18,6 +18,7 @@ import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
+import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/watch.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:system_theme/system_theme.dart';
@@ -41,6 +42,7 @@ void main() async {
     var urlError = await _initUrlHandler();
     var windowError = await _initWindow();
     var observerError = _initObservers();
+    _checkGameServer();
     runApp(const RebootApplication());
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _handleErrors([urlError, storageError, windowError, observerError]));
   },
@@ -51,6 +53,32 @@ void main() async {
 }
 
 void _handleErrors(List<Object?> errors) => errors.where((element) => element != null).forEach((element) => onError(element, null, false));
+
+Future<void> _checkGameServer() async {
+  try {
+    var matchmakerController = Get.find<MatchmakerController>();
+    var address = matchmakerController.gameServerAddress.text;
+    if(isLocalHost(address)) {
+      return;
+    }
+
+    var result = await pingGameServer(address);
+    if(result) {
+      return;
+    }
+
+    var oldOwner = matchmakerController.gameServerOwner.value;
+    matchmakerController.joinLocalHost();
+    WidgetsBinding.instance.addPostFrameCallback((_) => showInfoBar(
+        "$oldOwner's server is no longer available",
+        severity: InfoBarSeverity.warning,
+        duration: snackbarLongDuration
+    ));
+  }catch(_) {
+    // Intended behaviour
+    // Just ignore the error
+  }
+}
 
 Future<Object?> _initUrlHandler() async {
   try {
@@ -69,12 +97,12 @@ Future<Object?> _initUrlHandler() async {
 }
 
 void _joinServer(Uri uri) {
-  var gameController = Get.find<GameController>();
+  var hostingController = Get.find<HostingController>();
   var matchmakerController = Get.find<MatchmakerController>();
   var uuid = _parseCustomUrl(uri);
-  var server = gameController.findServerById(uuid);
+  var server = hostingController.findServerById(uuid);
   if(server != null) {
-    matchmakerController.joinServer(server);
+    matchmakerController.joinServer(hostingController.uuid, server);
   }else {
     showInfoBar(
         "No server found: invalid or expired link",
@@ -133,12 +161,12 @@ Object? _initObservers() {
 
 Future<Object?> _initStorage() async {
   try {
-    await GetStorage("reboot_game", settingsDirectory.path).initStorage;
-    await GetStorage("reboot_authenticator", settingsDirectory.path).initStorage;
-    await GetStorage("reboot_matchmaker", settingsDirectory.path).initStorage;
-    await GetStorage("reboot_update", settingsDirectory.path).initStorage;
-    await GetStorage("reboot_settings", settingsDirectory.path).initStorage;
-    await GetStorage("reboot_hosting", settingsDirectory.path).initStorage;
+    await GetStorage("game", settingsDirectory.path).initStorage;
+    await GetStorage("authenticator", settingsDirectory.path).initStorage;
+    await GetStorage("matchmaker", settingsDirectory.path).initStorage;
+    await GetStorage("update", settingsDirectory.path).initStorage;
+    await GetStorage("settings", settingsDirectory.path).initStorage;
+    await GetStorage("hosting", settingsDirectory.path).initStorage;
     Get.put(GameController());
     Get.put(AuthenticatorController());
     Get.put(MatchmakerController());
