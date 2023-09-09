@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
+import 'package:supabase/src/supabase_stream_builder.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -47,7 +49,7 @@ class GameController extends GetxController {
     servers = Rxn();
     supabase.from('hosts')
         .stream(primaryKey: ['id'])
-        .map((event) => event.where((element) => element["ip"] != null).toSet())
+        .map((event) => _parseValidServers(event))
         .listen((event) {
           if(servers.value == null) {
             servers.value = event;
@@ -57,8 +59,16 @@ class GameController extends GetxController {
         });
     var serializedInstance = _storage.read("instance");
     instance = Rxn(serializedInstance != null ? GameInstance.fromJson(jsonDecode(serializedInstance)) : null);
-    instance.listen((value) => _storage.write("instance", jsonEncode(value?.toJson())));
+    instance.listen((_) => saveInstance());
   }
+
+  Set<Map<String, dynamic>> _parseValidServers(SupabaseStreamEvent event) => event.where((element) => _isValidServer(element)).toSet();
+
+  bool _isValidServer(Map<String, dynamic> element) =>
+      (kDebugMode || element["id"] != uuid) && element["ip"] != null;
+
+  Future<void> saveInstance() =>
+      _storage.write("instance", jsonEncode(instance.value?.toJson()));
 
   void reset() {
     username.text = kDefaultPlayerName;
@@ -116,7 +126,6 @@ class GameController extends GetxController {
 
   Map<String, dynamic>? findServerById(String uuid) {
     try {
-      print(uuid);
       return servers.value?.firstWhere((element) => element["id"] == uuid);
     } on StateError catch(_) {
       return null;

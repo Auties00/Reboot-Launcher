@@ -1,4 +1,5 @@
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
@@ -7,8 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 
-import 'package:reboot_launcher/src/dialog/dialog.dart';
-import 'package:reboot_launcher/src/dialog/dialog_button.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/widget/server/start_button.dart';
 
 class MatchmakerPage extends StatefulWidget {
@@ -46,8 +47,7 @@ class _MatchmakerPageState extends State<MatchmakerPage> with AutomaticKeepAlive
                             isChild: true,
                             content: TextFormBox(
                                 placeholder: "Host",
-                                controller: _matchmakerController.host,
-                                readOnly: _matchmakerController.type.value != ServerType.remote
+                                controller: _matchmakerController.host
                             )
                         ),
                       if(_matchmakerController.type.value != ServerType.embedded)
@@ -58,7 +58,10 @@ class _MatchmakerPageState extends State<MatchmakerPage> with AutomaticKeepAlive
                             content: TextFormBox(
                                 placeholder: "Port",
                                 controller: _matchmakerController.port,
-                                readOnly: _matchmakerController.type.value != ServerType.remote
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly
+                                ]
                             )
                         ),
                       if(_matchmakerController.type.value == ServerType.embedded)
@@ -91,7 +94,7 @@ class _MatchmakerPageState extends State<MatchmakerPage> with AutomaticKeepAlive
                     title: "Installation directory",
                     subtitle: "Opens the folder where the embedded matchmaker is located",
                     content: Button(
-                        onPressed: () => launchUrl(authenticatorDirectory.uri),
+                        onPressed: () => launchUrl(matchmakerDirectory.uri),
                         child: const Text("Show Files")
                     )
                 ),
@@ -102,7 +105,7 @@ class _MatchmakerPageState extends State<MatchmakerPage> with AutomaticKeepAlive
                     title: "Reset matchmaker",
                     subtitle: "Resets the authenticator's settings to their default values",
                     content: Button(
-                      onPressed: () => showDialog(
+                      onPressed: () => showAppDialog(
                           builder: (context) => InfoDialog(
                             text: "Do you want to reset all the setting in this tab to their default values? This action is irreversible",
                             buttons: [

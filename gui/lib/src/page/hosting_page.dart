@@ -1,12 +1,12 @@
 import 'package:clipboard/clipboard.dart';
 import 'package:dart_ipify/dart_ipify.dart';
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
-import 'package:reboot_launcher/src/dialog/message.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 import 'package:flutter/material.dart' show Icons;
 
@@ -38,17 +38,6 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
         Expanded(
           child: ListView(
             children: [
-              Obx(() => Column(
-                children: _updateController.status.value != UpdateStatus.error ? [] : [
-                  SizedBox(
-                      width: double.infinity,
-                      child:  _updateError
-                  ),
-                  const SizedBox(
-                      height: 8.0
-                  ),
-                ],
-              )),
               SettingTile(
                 title: "Game Server",
                 subtitle: "Provide basic information about your server",
@@ -150,7 +139,7 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
                       content: Button(
                         onPressed: () async {
                           FlutterClipboard.controlC("$kCustomUrlSchema://${_gameController.uuid}");
-                          showMessage(
+                          showInfoBar(
                               "Copied your link to the clipboard",
                               severity: InfoBarSeverity.success
                           );
@@ -165,19 +154,19 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
                         content: Button(
                           onPressed: () async {
                             try {
-                              showMessage(
+                              showInfoBar(
                                   "Obtaining your public IP...",
                                   loading: true,
                                   duration: null
                               );
                               var ip = await Ipify.ipv4();
                               FlutterClipboard.controlC(ip);
-                              showMessage(
+                              showInfoBar(
                                   "Copied your IP to the clipboard",
                                   severity: InfoBarSeverity.success
                               );
                             }catch(error) {
-                              showMessage(
+                              showInfoBar(
                                   "An error occurred while obtaining your public IP: $error",
                                   severity: InfoBarSeverity.error,
                                 duration: snackbarLongDuration
@@ -201,15 +190,4 @@ class _HostingPageState extends State<HostingPage> with AutomaticKeepAliveClient
       ],
     );
   }
-
-  Widget get _updateError => MouseRegion(
-    cursor: SystemMouseCursors.click,
-    child: GestureDetector(
-      onTap: _updateController.update,
-      child: const InfoBar(
-          title: Text("The reboot dll couldn't be downloaded: click here to try again"),
-          severity: InfoBarSeverity.info
-      ),
-    ),
-  );
 }

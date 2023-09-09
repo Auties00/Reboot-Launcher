@@ -111,7 +111,7 @@ Future<void> _extract(Completer<dynamic> stopped, String extension, File tempFil
       break;
     case '.rar':
       process = await Process.start(
-          '${assetsDirectory.path}\\misc\\winrar.exe',
+          '${assetsDirectory.path}\\build\\winrar.exe',
           ['x', tempFile.path, '*.*', options.destination.path],
           mode: ProcessStartMode.inheritStdio
       );

@@ -1,10 +1,9 @@
 import 'package:auto_animated_list/auto_animated_list.dart';
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:skeletons/skeletons.dart';
 
 class SettingTile extends StatefulWidget {
   static const double kDefaultContentWidth = 200.0;
-  static const double kDefaultSpacing = 8.0;
   static const double kDefaultHeaderHeight = 72;
 
   final String? title;
@@ -15,7 +14,6 @@ class SettingTile extends StatefulWidget {
   final double? contentWidth;
   final List<Widget>? expandedContent;
   final double expandedContentHeaderHeight;
-  final double expandedContentSpacing;
   final bool isChild;
 
   const SettingTile(
@@ -27,7 +25,6 @@ class SettingTile extends StatefulWidget {
         this.content,
         this.contentWidth = kDefaultContentWidth,
         this.expandedContentHeaderHeight = kDefaultHeaderHeight,
-        this.expandedContentSpacing = kDefaultSpacing,
         this.expandedContent,
         this.isChild = false})
       : assert(
@@ -63,7 +60,7 @@ class _SettingTileState extends State<SettingTile> {
 
   Widget get _expandedContent {
     var expandedContents = widget.expandedContent!;
-    var separatedContents = List.generate(expandedContents.length * 2, (index) => index % 2 == 0 ? expandedContents[index ~/ 2] : SizedBox(height: widget.expandedContentSpacing));
+    var separatedContents = List.generate(expandedContents.length, (index) => expandedContents[index]);
     return AutoAnimatedList<Widget>(
         scrollDirection: Axis.vertical,
         shrinkWrap: true,
@@ -103,7 +100,7 @@ class _SettingTileState extends State<SettingTile> {
   Widget get _title => Text(
     widget.title!,
     style:
-    widget.titleStyle ?? FluentTheme.of(context).typography.subtitle,
+    widget.titleStyle ?? FluentTheme.of(context).typography.subtitle
   );
 
   Widget get _skeletonTitle => const SkeletonLine(

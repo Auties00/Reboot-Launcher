@@ -1,9 +1,9 @@
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/interactive/profile.dart';
+import 'package:reboot_launcher/src/dialog/implementation/profile.dart';
 
 class ProfileWidget extends StatefulWidget {
   const ProfileWidget({Key? key}) : super(key: key);

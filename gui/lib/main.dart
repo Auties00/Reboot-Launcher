@@ -1,26 +1,28 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
-import 'package:reboot_launcher/src/dialog/message.dart';
-import 'package:reboot_launcher/src/interactive/error.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/dialog/implementation/error.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/interactive/server.dart';
+import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/home_page.dart';
 import 'package:reboot_launcher/src/util/watch.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:system_theme/system_theme.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:url_protocol/url_protocol.dart';
+import 'package:window_manager/window_manager.dart';
 
 const double kDefaultWindowWidth = 1536;
 const double kDefaultWindowHeight = 1024;
@@ -56,28 +58,29 @@ Future<Object?> _initUrlHandler() async {
     var appLinks = AppLinks();
     var initialUrl = await appLinks.getInitialAppLink();
     if(initialUrl != null) {
-
+      _joinServer(initialUrl);
     }
-    
-    var gameController = Get.find<GameController>();
-    var matchmakerController = Get.find<MatchmakerController>();
-    appLinks.uriLinkStream.listen((uri) {
-      var uuid = _parseCustomUrl(uri);
-      var server = gameController.findServerById(uuid);
-      if(server != null) {
-        matchmakerController.joinServer(server);
-        return;
-      }
 
-      showMessage(
-          "No server found: invalid or expired link",
-          duration: snackbarLongDuration,
-          severity: InfoBarSeverity.error
-      );
-    });
+    appLinks.uriLinkStream.listen(_joinServer);
     return null;
   }catch(error) {
     return error;
+  }
+}
+
+void _joinServer(Uri uri) {
+  var gameController = Get.find<GameController>();
+  var matchmakerController = Get.find<MatchmakerController>();
+  var uuid = _parseCustomUrl(uri);
+  var server = gameController.findServerById(uuid);
+  if(server != null) {
+    matchmakerController.joinServer(server);
+  }else {
+    showInfoBar(
+        "No server found: invalid or expired link",
+        duration: snackbarLongDuration,
+        severity: InfoBarSeverity.error
+    );
   }
 }
 
@@ -86,14 +89,26 @@ String _parseCustomUrl(Uri uri) => uri.host;
 Future<Object?> _initWindow() async {
   try {
     await windowManager.ensureInitialized();
+    await Window.initialize();
     var settingsController = Get.find<SettingsController>();
     var size = Size(settingsController.width, settingsController.height);
-    await windowManager.setSize(size);
-    if(settingsController.offsetX != null && settingsController.offsetY != null){
-      await windowManager.setPosition(Offset(settingsController.offsetX!, settingsController.offsetY!));
+    appWindow.size = size;
+    var offsetX = settingsController.offsetX;
+    var offsetY = settingsController.offsetY;
+    if(offsetX != null && offsetY != null){
+      appWindow.position = Offset(
+          offsetX,
+          offsetY
+      );
     }else {
-      await windowManager.setAlignment(Alignment.center);
+      appWindow.alignment = Alignment.center;
     }
+
+    await Window.setEffect(
+      effect: WindowEffect.acrylic,
+      color: Colors.transparent,
+      dark: true
+    );
     return null;
   }catch(error) {
     return error;
@@ -105,9 +120,11 @@ Object? _initObservers() {
     var gameController = Get.find<GameController>();
     var gameInstance = gameController.instance.value;
     gameInstance?.startObserver();
+    gameController.saveInstance();
     var hostingController = Get.find<HostingController>();
     var hostingInstance = hostingController.instance.value;
     hostingInstance?.startObserver();
+    hostingController.saveInstance();
     return null;
   }catch(error) {
     return error;
@@ -133,7 +150,6 @@ Future<Object?> _initStorage() async {
     updateController.update();
     return null;
   }catch(error) {
-    print(error);
     return error;
   }
 }

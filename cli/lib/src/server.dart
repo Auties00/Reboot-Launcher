@@ -7,7 +7,7 @@ Future<bool> startServerCli(String? host, String? port, ServerType type) async {
   stdout.writeln("Starting backend server...");
   switch(type){
     case ServerType.local:
-      var result = await server.ping(host ?? kDefaultAuthenticatorHost, port ?? kDefaultAuthenticatorPort);
+      var result = await pingAuthenticator(host ?? kDefaultAuthenticatorHost, port ?? kDefaultAuthenticatorPort);
       if(result == null){
         throw Exception("Local backend server is not running");
       }
@@ -17,7 +17,7 @@ Future<bool> startServerCli(String? host, String? port, ServerType type) async {
     case ServerType.embedded:
       stdout.writeln("Starting an embedded server...");
       await server.startEmbeddedAuthenticator(false);
-      var result = await server.ping(host ?? kDefaultAuthenticatorHost, port ?? kDefaultAuthenticatorPort);
+      var result = await pingAuthenticator(host ?? kDefaultAuthenticatorHost, port ?? kDefaultAuthenticatorPort);
       if(result == null){
         throw Exception("Cannot start embedded server");
       }
@@ -53,7 +53,7 @@ Future<HttpServer?> _changeReverseProxyState(String host, String port) async {
   }
 
   try{
-    var uri = await server.ping(host, port);
+    var uri = await pingAuthenticator(host, port);
     if(uri == null){
       return null;
     }

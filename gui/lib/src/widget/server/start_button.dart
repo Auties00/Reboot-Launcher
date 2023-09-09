@@ -1,10 +1,10 @@
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
-import 'package:reboot_launcher/src/interactive/server.dart';
+import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 
 class ServerButton extends StatefulWidget {
   final bool authenticator;
@@ -25,10 +25,10 @@ class _ServerButtonState extends State<ServerButton> {
       child: Obx(() => SizedBox(
         height: 48,
         child: Button(
-          child: Align(
-            alignment: Alignment.center,
-            child: Text(_buttonText),
-          ),
+            child: Align(
+              alignment: Alignment.center,
+              child: Text(_buttonText),
+            ),
             onPressed: () => _controller.toggleInteractive()
         ),
       )),

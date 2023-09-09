@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/widget/version/add_local_version.dart';
 import 'package:reboot_launcher/src/widget/version/add_server_version.dart';
-import 'package:reboot_launcher/src/dialog/dialog.dart';
-import 'package:reboot_launcher/src/dialog/dialog_button.dart';
-import 'package:reboot_launcher/src/dialog/message.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/util/checks.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -19,11 +19,11 @@ import 'package:reboot_launcher/src/widget/common/file_selector.dart';
 class VersionSelector extends StatefulWidget {
   const VersionSelector({Key? key}) : super(key: key);
 
-  static Future<void> openDownloadDialog() => showDialog<bool>(
+  static Future<void> openDownloadDialog() => showAppDialog<bool>(
     builder: (context) => const AddServerVersion(),
   );
 
-  static Future<void> openAddDialog() => showDialog<bool>(
+  static Future<void> openAddDialog() => showAppDialog<bool>(
     builder: (context) => const AddLocalVersion(),
   );
 
@@ -78,9 +78,9 @@ class _VersionSelectorState extends State<VersionSelector> {
           return;
         }
 
-        var result = await _flyoutController.showFlyout<ContextualOption?>(
+        var result = await _flyoutController.showFlyout<_ContextualOption?>(
             builder: (context) => MenuFlyout(
-                items: ContextualOption.values
+                items: _ContextualOption.values
                     .map((entry) => _createOption(context, entry))
                     .toList()
             )
@@ -90,9 +90,9 @@ class _VersionSelectorState extends State<VersionSelector> {
       child: child
   );
 
-  void _handleResult(ContextualOption? result, FortniteVersion version, bool close) async {
+  void _handleResult(_ContextualOption? result, FortniteVersion version, bool close) async {
     switch (result) {
-      case ContextualOption.openExplorer:
+      case _ContextualOption.openExplorer:
         if(!mounted){
           return;
         }
@@ -104,7 +104,7 @@ class _VersionSelectorState extends State<VersionSelector> {
         launchUrl(version.location.uri)
             .onError((error, stackTrace) => _onExplorerError());
         break;
-      case ContextualOption.modify:
+      case _ContextualOption.modify:
         if(!mounted){
           return;
         }
@@ -115,7 +115,7 @@ class _VersionSelectorState extends State<VersionSelector> {
 
         await _openRenameDialog(context, version);
         break;
-      case ContextualOption.delete:
+      case _ContextualOption.delete:
         if(!mounted){
           return;
         }
@@ -140,7 +140,7 @@ class _VersionSelectorState extends State<VersionSelector> {
     }
   }
 
-  MenuFlyoutItem _createOption(BuildContext context, ContextualOption entry) {
+  MenuFlyoutItem _createOption(BuildContext context, _ContextualOption entry) {
     return MenuFlyoutItem(
         text: Text(entry.name),
         onPressed: () => Navigator.of(context).pop(entry)
@@ -148,12 +148,12 @@ class _VersionSelectorState extends State<VersionSelector> {
   }
 
   bool _onExplorerError() {
-    showMessage("This version doesn't exist on the local machine");
+    showInfoBar("This version doesn't exist on the local machine");
     return false;
   }
 
   Future<bool?> _openDeleteDialog(BuildContext context, FortniteVersion version) {
-    return showDialog<bool>(
+    return showAppDialog<bool>(
         builder: (context) => ContentDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -190,7 +190,7 @@ class _VersionSelectorState extends State<VersionSelector> {
   Future<String?> _openRenameDialog(BuildContext context, FortniteVersion version) {
     var nameController = TextEditingController(text: version.name);
     var pathController = TextEditingController(text: version.location.path);
-    return showDialog<String?>(
+    return showAppDialog<String?>(
         builder: (context) => FormDialog(
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -245,14 +245,16 @@ class _VersionSelectorState extends State<VersionSelector> {
   }
 }
 
-enum ContextualOption {
+enum _ContextualOption {
   openExplorer,
   modify,
-  delete;
+  delete
+}
 
+extension _ContextualOptionExtension on _ContextualOption {
   String get name {
-    return this == ContextualOption.openExplorer ? "Open in explorer"
-        : this == ContextualOption.modify ? "Modify"
+    return this == _ContextualOption.openExplorer ? "Open in explorer"
+        : this == _ContextualOption.modify ? "Modify"
         : "Delete";
   }
 }

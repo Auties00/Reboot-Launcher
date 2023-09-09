@@ -7,6 +7,12 @@ class ServerResult {
 }
 
 enum ServerResultType {
+  starting,
+  startSuccess,
+  startError,
+  stopping,
+  stopSuccess,
+  stopError,
   missingHostError,
   missingPortError,
   illegalPortError,
@@ -15,9 +21,7 @@ enum ServerResultType {
   freePortError,
   pingingRemote,
   pingingLocal,
-  pingError,
-  startSuccess,
-  startError;
+  pingError;
 
   bool get isError => name.contains("Error");
 }

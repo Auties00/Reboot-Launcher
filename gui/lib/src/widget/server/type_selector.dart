@@ -1,4 +1,4 @@
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/src/model/server_type.dart';
 import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
@@ -35,7 +35,7 @@ class _ServerTypeSelectorState extends State<ServerTypeSelector> {
             child: Text(type.label)
         ),
         onPressed: () async {
-          await _controller.stop();
+          _controller.stop();
           _controller.type.value = type;
         }
     );

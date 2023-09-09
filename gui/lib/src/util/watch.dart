@@ -9,11 +9,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final SupabaseClient _supabase = Supabase.instance.client;
 final GameController _gameController = Get.find<GameController>();
 final HostingController _hostingController = Get.find<HostingController>();
+final File _executable = File("${assetsDirectory.path}\\misc\\watch.exe");
 
 extension GameInstanceWatcher on GameInstance {
   Future<void> startObserver() async {
-    if(watchPid != null) {
-      Process.killPid(watchPid!, ProcessSignal.sigabrt);
+    if(observerPid != null) {
+      Process.killPid(observerPid!, ProcessSignal.sigabrt);
     }
 
     watchProcess(gamePid).then((value) async {
@@ -24,9 +25,15 @@ extension GameInstanceWatcher on GameInstance {
       _onGameStopped();
     });
 
-    watchPid = startBackgroundProcess(
-        '${assetsDirectory.path}\\misc\\watch.exe',
-        [_gameController.uuid, gamePid.toString(), launcherPid?.toString() ?? "-1", eacPid?.toString() ?? "-1", hosting.toString()]
+    observerPid = await startBackgroundProcess(
+        executable: _executable,
+        args: [
+          _gameController.uuid,
+          gamePid.toString(),
+          launcherPid?.toString() ?? "-1",
+          eacPid?.toString() ?? "-1",
+          hosting.toString()
+        ]
     );
   }
 

@@ -1,7 +1,8 @@
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 
 class UpdateController {
   late final GetStorage _storage;
@@ -22,18 +23,44 @@ class UpdateController {
     status = Rx(UpdateStatus.waiting);
   }
 
-  Future<void> update() async {
+  Future<void> update([bool force = false]) async {
     if(timer.value == UpdateTimer.never) {
       status.value = UpdateStatus.success;
       return;
     }
 
+    showInfoBar(
+        "Downloading reboot dll...",
+        loading: true,
+        duration: null
+    );
     try {
-      timestamp.value = await downloadRebootDll(url.text, timestamp.value);
+      timestamp.value = await downloadRebootDll(
+          url.text,
+          timestamp.value,
+          hours: timer.value.hours,
+          force: force
+      );
       status.value = UpdateStatus.success;
-    }catch(_) {
+      showInfoBar(
+          "The reboot dll was downloaded successfully",
+          severity: InfoBarSeverity.success,
+          duration: snackbarShortDuration
+      );
+    }catch(message) {
+      var error = message.toString();
+      error = error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
+      error = error.toLowerCase();
       status.value = UpdateStatus.error;
-      rethrow;
+      showInfoBar(
+          "An error occurred while downloading the reboot dll: $error",
+          duration: snackbarLongDuration,
+          severity: InfoBarSeverity.error,
+          action: Button(
+            onPressed: () => update(true),
+            child: const Text("Retry"),
+          )
+      );
     }
   }
 
@@ -43,5 +70,20 @@ class UpdateController {
     url.text = rebootDownloadUrl;
     status.value = UpdateStatus.waiting;
     update();
+  }
+}
+
+extension _UpdateTimerExtension on UpdateTimer {
+  int get hours {
+    switch(this) {
+      case UpdateTimer.never:
+        return -1;
+      case UpdateTimer.hour:
+        return 1;
+      case UpdateTimer.day:
+        return 24;
+      case UpdateTimer.week:
+        return 24 * 7;
+    }
   }
 }

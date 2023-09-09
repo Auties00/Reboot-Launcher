@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
@@ -8,8 +8,8 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/util/checks.dart';
 import 'package:reboot_launcher/src/widget/common/file_selector.dart';
 import 'package:reboot_launcher/src/widget/version/version_name_input.dart';
-import 'package:reboot_launcher/src/dialog/dialog.dart';
-import 'package:reboot_launcher/src/dialog/dialog_button.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:path/path.dart' as path;
 
 class AddLocalVersion extends StatefulWidget {

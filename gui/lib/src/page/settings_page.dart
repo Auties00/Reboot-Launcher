@@ -1,4 +1,5 @@
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
@@ -7,12 +8,12 @@ import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
-import 'package:reboot_launcher/src/dialog/dialog_button.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/widget/common/file_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:reboot_launcher/src/util/checks.dart';
-import 'package:reboot_launcher/src/dialog/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -45,12 +46,12 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
               _createFileSetting(
                   title: "Unreal engine console",
                   description: "This file is injected to unlock the Unreal Engine Console",
-                  controller: _settingsController.consoleDll
+                  controller: _settingsController.unrealEngineConsoleDll
               ),
               _createFileSetting(
                   title: "Authentication patcher",
                   description: "This file is injected to redirect all HTTP requests to the launcher's authenticator",
-                  controller: _settingsController.authDll
+                  controller: _settingsController.authenticatorDll
               ),
               SettingTile(
                   title: "Custom launch arguments",
@@ -67,13 +68,26 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
             height: 8.0,
           ),
           SettingTile(
-            title: "Server settings",
+            title: "Game server settings",
             subtitle: "This section contains settings related to the game server implementation",
             expandedContent: [
               _createFileSetting(
-                  title: "Game server",
+                  title: "Implementation",
                   description: "This file is injected to create a game server & host matches",
-                  controller: _settingsController.rebootDll
+                  controller: _settingsController.gameServerDll
+              ),
+              SettingTile(
+                  title: "Port",
+                  subtitle: "The port used by the game server dll",
+                  content: TextFormBox(
+                      placeholder: "Port",
+                      controller: _settingsController.gameServerPort,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly
+                      ]
+                  ),
+                  isChild: true
               ),
               SettingTile(
                   title: "Update mirror",
@@ -92,7 +106,10 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                       leading: Text(_updateController.timer.value.text),
                       items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
                           text: Text(entry.text),
-                          onPressed: () => _updateController.timer.value = entry
+                          onPressed: () {
+                            _updateController.timer.value = entry;
+                            _updateController.update(true);
+                          }
                       )).toList()
                   )),
                   isChild: true
@@ -129,7 +146,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                   subtitle: "Resets the launcher's settings to their default values",
                   isChild: true,
                   content: Button(
-                    onPressed: () => showDialog(
+                    onPressed: () => showAppDialog(
                         builder: (context) => InfoDialog(
                           text: "Do you want to reset all the launcher's settings to their default values? This action is irreversible",
                           buttons: [

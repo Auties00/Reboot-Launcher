@@ -1,4 +1,4 @@
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 
 class RebootPaneItem extends PaneItem {
   RebootPaneItem({required super.title, required super.icon, required super.body});

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
@@ -15,7 +15,7 @@ abstract class ServerController extends GetxController {
   late final Semaphore semaphore;
   late RxBool started;
   late RxBool detached;
-  Process? embeddedServer;
+  int? embeddedServerPid;
   HttpServer? localServer;
   HttpServer? remoteServer;
 
@@ -52,11 +52,16 @@ abstract class ServerController extends GetxController {
 
   String get defaultPort;
 
+  Future<Uri?> pingServer(String host, String port);
+  
   Future<bool> get isPortFree;
 
   Future<bool> get isPortTaken async => !(await isPortFree);
 
   Future<bool> freePort();
+
+  @protected
+  Future<int> startEmbeddedInternal();
 
   void reset() async {
     type.value = ServerType.values.elementAt(0);
@@ -80,22 +85,31 @@ abstract class ServerController extends GetxController {
       storage.read("${type.value.name}_port") ?? defaultPort;
 
   Stream<ServerResult> start() async* {
+    if(started.value) {
+      return;
+    }
+
+    yield ServerResult(ServerResultType.starting);
+    started.value = true;
     try {
       var host = this.host.text.trim();
       if (host.isEmpty) {
         yield ServerResult(ServerResultType.missingHostError);
+        started.value = false;
         return;
       }
 
       var port = this.port.text.trim();
       if (port.isEmpty) {
         yield ServerResult(ServerResultType.missingPortError);
+        started.value = false;
         return;
       }
 
       var portNumber = int.tryParse(port);
       if (portNumber == null) {
         yield ServerResult(ServerResultType.illegalPortError);
+        started.value = false;
         return;
       }
 
@@ -104,18 +118,20 @@ abstract class ServerController extends GetxController {
         var result = await freePort();
         yield ServerResult(result ? ServerResultType.freePortSuccess : ServerResultType.freePortError);
         if(!result) {
+          started.value = false;
           return;
         }
       }
       switch(type()){
         case ServerType.embedded:
-          embeddedServer = await startEmbeddedAuthenticator(detached());
+          embeddedServerPid = await startEmbeddedInternal();
           break;
         case ServerType.remote:
           yield ServerResult(ServerResultType.pingingRemote);
-          var uriResult = await ping(host, port);
+          var uriResult = await pingServer(host, port);
           if(uriResult == null) {
             yield ServerResult(ServerResultType.pingError);
+            started.value = false;
             return;
           }
 
@@ -130,29 +146,35 @@ abstract class ServerController extends GetxController {
       }
 
       yield ServerResult(ServerResultType.pingingLocal);
-      var uriResult = await pingSelf(defaultPort);
+      var uriResult = await pingServer(defaultHost, defaultPort);
       if(uriResult == null) {
         yield ServerResult(ServerResultType.pingError);
+        started.value = false;
         return;
       }
 
       yield ServerResult(ServerResultType.startSuccess);
-      started.value = true;
     }catch(error, stackTrace) {
       yield ServerResult(
           ServerResultType.startError,
           error: error,
           stackTrace: stackTrace
       );
+      started.value = false;
     }
   }
 
-  Future<bool> stop() async {
+  Stream<ServerResult> stop() async* {
+    if(!started.value) {
+      return;
+    }
+
+    yield ServerResult(ServerResultType.stopping);
     started.value = false;
     try{
       switch(type()){
         case ServerType.embedded:
-          freePort();
+          Process.killPid(embeddedServerPid!, ProcessSignal.sigabrt);
           break;
         case ServerType.remote:
           await remoteServer?.close(force: true);
@@ -163,17 +185,21 @@ abstract class ServerController extends GetxController {
           localServer = null;
           break;
       }
-      return true;
-    }catch(_){
+      yield ServerResult(ServerResultType.stopSuccess);
+    }catch(error, stackTrace){
+      yield ServerResult(
+          ServerResultType.stopError,
+          error: error,
+          stackTrace: stackTrace
+      );
       started.value = true;
-      return false;
     }
   }
 
   Stream<ServerResult> restart() async* {
     await resetWinNat();
     if(started()) {
-      await stop();
+      yield* stop();
     }
 
     yield* start();
@@ -181,7 +207,7 @@ abstract class ServerController extends GetxController {
 
   Stream<ServerResult> toggle() async* {
     if(started()) {
-      await stop();
+      yield* stop();
     }else {
       yield* start();
     }

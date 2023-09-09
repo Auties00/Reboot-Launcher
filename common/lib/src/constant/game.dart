@@ -1,4 +1,5 @@
 const String kDefaultPlayerName = "Player";
+const String kDefaultGameServerPort = "7777";
 const String shutdownLine = "FOnlineSubsystemGoogleCommon::Shutdown()";
 const List<String> corruptedBuildErrors = [
   "when 0 bytes remain",

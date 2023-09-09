@@ -17,6 +17,6 @@ Future<bool> isPortFree(int port) async {
 }
 
 Future<void> resetWinNat() async {
-  var binary = File("${authenticatorDirectory.path}\\winnat.bat");
+  var binary = File("${assetsDirectory.path}\\misc\\winnat.bat");
   await runElevatedProcess(binary.path, "");
 }

@@ -1,5 +1,5 @@
+import 'package:bitsdojo_window/bitsdojo_window.dart' show appWindow;
 import 'package:flutter/material.dart';
-import 'package:window_manager/window_manager.dart';
 
 import 'icons.dart';
 import 'mouse.dart';
@@ -132,7 +132,7 @@ class MinimizeWindowButton extends WindowButton {
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 MinimizeIcon(color: buttonContext.iconColor),
-            onPressed: onPressed ?? () => windowManager.minimize());
+            onPressed: onPressed ?? () => appWindow.minimize());
 }
 
 class MaximizeWindowButton extends WindowButton {
@@ -148,27 +148,7 @@ class MaximizeWindowButton extends WindowButton {
             iconBuilder: (buttonContext) =>
                 MaximizeIcon(color: buttonContext.iconColor),
             onPressed: onPressed ??
-                () async => await windowManager.isMaximized()
-                    ? await windowManager.restore()
-                    : await windowManager.maximize());
-}
-
-class RestoreWindowButton extends WindowButton {
-  RestoreWindowButton(
-      {Key? key,
-      WindowButtonColors? colors,
-      VoidCallback? onPressed,
-      bool? animate})
-      : super(
-            key: key,
-            colors: colors,
-            animate: animate ?? false,
-            iconBuilder: (buttonContext) =>
-                RestoreIcon(color: buttonContext.iconColor),
-            onPressed: onPressed ??
-                () async => await windowManager.isMaximized()
-                    ? await windowManager.restore()
-                    : await windowManager.maximize());
+                    () => appWindow.maximizeOrRestore());
 }
 
 final _defaultCloseButtonColors = WindowButtonColors(
@@ -189,5 +169,5 @@ class CloseWindowButton extends WindowButton {
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 CloseIcon(color: buttonContext.iconColor),
-            onPressed: onPressed ?? () => windowManager.close());
+            onPressed: onPressed ?? () => appWindow.close());
 }

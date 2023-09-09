@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'dart:ffi';
+import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
@@ -96,31 +97,58 @@ Future<bool> runElevatedProcess(String executable, String args) async {
 }
 
 
-int startBackgroundProcess(String executable, List<String> args) {
-  var executablePath = TEXT('$executable ${args.map((entry) => '"$entry"').join(" ")}');
+void _startBackgroundProcess(_BackgroundProcessParameters params) {
+  var args = params.args;
+  var concatenatedArgs = args == null ? "" : " ${args.map((entry) => '"$entry"').join(" ")}";
+  var executablePath = TEXT("${params.executable.path}$concatenatedArgs");
   var startupInfo = calloc<STARTUPINFO>();
   var processInfo = calloc<PROCESS_INFORMATION>();
+  var windowFlag = params.window ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW;
   var success = CreateProcess(
       nullptr,
       executablePath,
       nullptr,
       nullptr,
       FALSE,
-      CREATE_NO_WINDOW,
+      NORMAL_PRIORITY_CLASS | windowFlag | CREATE_NEW_PROCESS_GROUP,
       nullptr,
-      nullptr,
+      TEXT(params.executable.parent.path),
       startupInfo,
       processInfo
   );
   if (success == 0) {
     var error = GetLastError();
-    throw Exception("Cannot start process: $error");
+    params.port.send("Cannot start process: $error");
+    return;
   }
 
   var pid = processInfo.ref.dwProcessId;
   free(startupInfo);
   free(processInfo);
-  return pid;
+  params.port.send(pid);
+}
+
+class _BackgroundProcessParameters {
+  File executable;
+  List<String>? args;
+  bool window;
+  SendPort port;
+
+  _BackgroundProcessParameters(this.executable, this.args, this.window, this.port);
+}
+
+Future<int> startBackgroundProcess({required File executable, List<String>? args, bool window = false}) async {
+  var completer = Completer<int>();
+  var port = ReceivePort();
+  port.listen((message) => message is int ? completer.complete(message) : completer.completeError(message));
+  var isolate = await Isolate.spawn(
+      _startBackgroundProcess,
+      _BackgroundProcessParameters(executable, args, window, port.sendPort),
+      errorsAreFatal: true
+  );
+  var result = await completer.future;
+  isolate.kill(priority: Isolate.immediate);
+  return result;
 }
 
 int _NtResumeProcess(int hWnd) {
@@ -165,12 +193,14 @@ Future<bool> watchProcess(int pid) async {
   });
   var errorPort = ReceivePort();
   errorPort.listen((_) => completer.complete(false));
-  await Isolate.spawn(
+  var isolate = await Isolate.spawn(
       _watchProcess,
       pid,
       onExit: exitPort.sendPort,
       onError: errorPort.sendPort,
       errorsAreFatal: true
   );
-  return completer.future;
+  var result = await completer.future;
+  isolate.kill(priority: Isolate.immediate);
+  return result;
 }

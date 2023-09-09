@@ -1,9 +1,10 @@
 import 'dart:convert';
 
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/util/watch.dart';
 
 const String kDefaultServerName = "Reboot Game Server";
 const String kDefaultDescription = "Just another server";
@@ -32,8 +33,10 @@ class HostingController extends GetxController {
     showPassword = RxBool(false);
     var serializedInstance = _storage.read("instance");
     instance = Rxn(serializedInstance != null ? GameInstance.fromJson(jsonDecode(serializedInstance)) : null);
-    instance.listen((value) => _storage.write("instance", jsonEncode(value?.toJson())));
+    instance.listen((_) => saveInstance());
   }
+
+  Future<void> saveInstance() => _storage.write("instance", jsonEncode(instance.value?.toJson()));
 
   void reset() {
     name.text = kDefaultServerName;

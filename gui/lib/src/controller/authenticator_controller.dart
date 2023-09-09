@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 
@@ -21,4 +23,10 @@ class AuthenticatorController extends ServerController {
 
   @override
   Future<bool> freePort() => freeAuthenticatorPort();
+
+  @override
+  Future<int> startEmbeddedInternal() => startEmbeddedAuthenticator(detached.value);
+
+  @override
+  Future<Uri?> pingServer(String host, String port) => pingAuthenticator(host, port);
 }

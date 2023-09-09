@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
@@ -14,8 +14,8 @@ import 'package:universal_disk_space/universal_disk_space.dart';
 import 'package:reboot_launcher/src/util/checks.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/widget/common/file_selector.dart';
-import '../../dialog/dialog.dart';
-import '../../dialog/dialog_button.dart';
+import '../../dialog/abstract/dialog.dart';
+import '../../dialog/abstract/dialog_button.dart';
 
 class AddServerVersion extends StatefulWidget {
   const AddServerVersion({Key? key}) : super(key: key);
@@ -63,7 +63,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   }
 
   void _cancelDownload() {
-    Process.run('${assetsDirectory.path}\\misc\\stop.bat', []);
+    Process.run('${assetsDirectory.path}\\build\\stop.bat', []);
     _downloadPort?.send("kill");
   }
 
@@ -152,18 +152,19 @@ class _AddServerVersionState extends State<AddServerVersion> {
       var errorPort = ReceivePort();
       errorPort.listen((message) => _onDownloadError(message, null));
       var exitPort = ReceivePort();
-      exitPort.listen((message) {
-        if(_status.value != DownloadStatus.error) {
-          _onDownloadComplete();
-        }
-      });
-      await Isolate.spawn(
+      var isolate = await Isolate.spawn(
           downloadArchiveBuild,
           options,
           onError: errorPort.sendPort,
           onExit: exitPort.sendPort,
           errorsAreFatal: true
       );
+      exitPort.listen((message) {
+        isolate.kill(priority: Isolate.immediate);
+        if(_status.value != DownloadStatus.error) {
+          _onDownloadComplete();
+        }
+      });
     } catch (exception, stackTrace) {
       _onDownloadError(exception, stackTrace);
     }

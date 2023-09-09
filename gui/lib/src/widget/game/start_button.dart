@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dart_ipify/dart_ipify.dart';
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as path;
 import 'package:process_run/shell.dart';
@@ -10,35 +10,37 @@ import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
+import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/interactive/game.dart';
-import 'package:reboot_launcher/src/interactive/server.dart';
-import 'package:reboot_launcher/src/dialog/message.dart';
+import 'package:reboot_launcher/src/dialog/implementation/game.dart';
+import 'package:reboot_launcher/src/dialog/implementation/server.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/util/cryptography.dart';
+import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/watch.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LaunchButton extends StatefulWidget {
   final bool host;
   final String? startLabel;
   final String? stopLabel;
-  final bool Function()? onTap;
 
-  const LaunchButton({Key? key, required this.host, this.startLabel, this.stopLabel, this.onTap}) : super(key: key);
+  const LaunchButton({Key? key, required this.host, this.startLabel, this.stopLabel}) : super(key: key);
 
   @override
   State<LaunchButton> createState() => _LaunchButtonState();
 }
 
 class _LaunchButtonState extends State<LaunchButton> {
+  final SupabaseClient _supabase = Supabase.instance.client;
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
   final AuthenticatorController _authenticatorController = Get.find<AuthenticatorController>();
+  final MatchmakerController _matchmakerController = Get.find<MatchmakerController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
   final File _logFile = File("${logsDirectory.path}\\game.log");
-  Completer<bool> _completer = Completer();
   bool _fail = false;
-  Future? _executor;
 
   @override
   Widget build(BuildContext context) => Align(
@@ -48,11 +50,11 @@ class _LaunchButtonState extends State<LaunchButton> {
       child: Obx(() => SizedBox(
         height: 48,
         child: Button(
+          onPressed: _start,
           child: Align(
             alignment: Alignment.center,
             child: Text(_hasStarted ? _stopMessage : _startMessage)
-          ),
-          onPressed: () => _executor = _start()
+          )
         ),
       )),
     ),
@@ -67,18 +69,16 @@ class _LaunchButtonState extends State<LaunchButton> {
   String get _stopMessage => widget.stopLabel ?? (widget.host ? "Stop hosting" : "Close fortnite");
 
   Future<void> _start() async {
-    if(widget.onTap != null && !widget.onTap!()){
-      return;
-    }
-
     if (_hasStarted) {
-      _onStop(widget.host);
+      _onStop(widget.host, false);
+      removeMessage(widget.host ? 1 : 0);
       return;
     }
 
+    _fail = false;
     if(_gameController.selectedVersion == null){
-      showMessage("Select a Fortnite version before continuing");
-      _onStop(widget.host);
+      showInfoBar("Select a Fortnite version before continuing");
+      _onStop(widget.host, false);
       return;
     }
 
@@ -94,24 +94,33 @@ class _LaunchButtonState extends State<LaunchButton> {
       var executable = await version.executable;
       if(executable == null){
         showMissingBuildError(version);
-        _onStop(widget.host);
+        _onStop(widget.host, false);
         return;
       }
 
-      var result = _authenticatorController.started() || await _authenticatorController.toggleInteractive(false);
-      if(!result){
-        _onStop(widget.host);
+      var authenticatorResult = _authenticatorController.started() || await _authenticatorController.toggleInteractive(false);
+      if(!authenticatorResult){
+        _onStop(widget.host, false);
+        return;
+      }
+
+      var matchmakerResult = _matchmakerController.started() || await _matchmakerController.toggleInteractive(false);
+      if(!matchmakerResult){
+        _onStop(widget.host, false);
         return;
       }
 
       var automaticallyStartedServer = await _startMatchMakingServer();
       await _startGameProcesses(version, widget.host, automaticallyStartedServer);
       if(widget.host){
-        await _showServerLaunchingWarning();
+        showInfoBar(
+            "Launching the headless server...",
+            loading: true,
+            duration: null
+        );
       }
     } catch (exception, stacktrace) {
-      _closeLaunchingWidget(false);
-      _onStop(widget.host);
+      _onStop(widget.host, false);
       showCorruptedBuildError(widget.host, exception, stacktrace);
     }
   }
@@ -121,19 +130,16 @@ class _LaunchButtonState extends State<LaunchButton> {
     var launcherProcess = await _createLauncherProcess(version);
     var eacProcess = await _createEacProcess(version);
     var executable = await version.executable;
-    if(executable == null){
-      showMissingBuildError(version);
-      _onStop(widget.host);
-      return;
-    }
-
-    var gameProcess = await _createGameProcess(executable.path, host);
+    var gameProcess = await _createGameProcess(executable!.path, host);
     var instance = GameInstance(gameProcess, launcherProcess, eacProcess, host, linkedHosting);
     instance.startObserver();
     if(host){
+      _removeHostEntry();
       _hostingController.instance.value = instance;
+      _hostingController.saveInstance();
     }else{
       _gameController.instance.value = instance;
+      _gameController.saveInstance();
     }
     _injectOrShowError(Injectable.sslBypass, host);
   }
@@ -219,62 +225,89 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    _closeLaunchingWidget(false);
-    _onStop(widget.host);
+    _onStop(widget.host, false);
   }
 
-  void _closeLaunchingWidget(bool success) {
-    showMessage(
-        success ? "The headless server was started successfully" : "An error occurred while starting the headless server",
-        severity: success ? InfoBarSeverity.success : InfoBarSeverity.error
-    );
-    if(!_completer.isCompleted) {
-      _completer.complete(success);
+  void _closeLaunchingWidget(bool host, bool message) async {
+    if(!message) {
+      return;
     }
-  }
 
-  Future<void> _showServerLaunchingWarning() async {
-    showMessage(
-        "Launching headless server...",
+    if(_fail) {
+      showInfoBar(
+          "An error occurred while starting the headless server",
+          severity: InfoBarSeverity.error
+      );
+      return;
+    }
+
+    showInfoBar(
+        "Waiting for the game server to become available...",
         loading: true,
         duration: null
     );
-    var result = await _completer.future;
-    if(!result){
-      _onStop(true);
+    var gameServerPort = _settingsController.gameServerPort.text;
+    var localPingResult = await pingGameServer(
+        "localhost:$gameServerPort",
+        timeout: const Duration(minutes: 1)
+    );
+    if(!localPingResult) {
+      showInfoBar(
+          "The headless server was started successfully, but the game server isn't available",
+          severity: InfoBarSeverity.error,
+          duration: snackbarLongDuration
+      );
       return;
     }
 
-    if(!_hostingController.discoverable.value){
+    showInfoBar(
+        "Checking if the game server is accessible...",
+        loading: true,
+        duration: null
+    );
+    var publicIp = await Ipify.ipv4();
+    var result = await pingGameServer("$publicIp:$gameServerPort");
+    if(!result) {
+      showInfoBar(
+          "The game server was started successfully, but nobody outside your network can join",
+          severity: InfoBarSeverity.warning,
+          duration: null,
+          action: Button(
+              onPressed: () => launchUrl(Uri.parse("https://github.com/Auties00/reboot_launcher/documentation/PortForwarding.md")),
+              child: Text("Open port $gameServerPort")
+          )
+      );
       return;
     }
 
-    var password = _hostingController.password.text;
-    var hasPassword = password.isNotEmpty;
-    var ip = await Ipify.ipv4();
-    if(hasPassword) {
-      ip = aes256Encrypt(ip, password);
-    }
+    if(_hostingController.discoverable.value){
+      var password = _hostingController.password.text;
+      var hasPassword = password.isNotEmpty;
+      var ip = await Ipify.ipv4();
+      if(hasPassword) {
+        ip = aes256Encrypt(ip, password);
+      }
 
-    var supabase = Supabase.instance.client;
-    await supabase.from('hosts').insert({
-      'id': _gameController.uuid,
-      'name': _hostingController.name.text,
-      'description': _hostingController.description.text,
-      'author': _gameController.username.text,
-      'ip': ip,
-      'version': _gameController.selectedVersion?.name,
-      'password': hasPassword ? hashPassword(password) : null,
-      'timestamp': DateTime.now().toIso8601String(),
-      'discoverable': _hostingController.discoverable.value
-    });
+      var supabase = Supabase.instance.client;
+      await supabase.from('hosts').insert({
+        'id': _gameController.uuid,
+        'name': _hostingController.name.text,
+        'description': _hostingController.description.text,
+        'author': _gameController.username.text,
+        'ip': ip,
+        'version': _gameController.selectedVersion?.name,
+        'password': hasPassword ? hashPassword(password) : null,
+        'timestamp': DateTime.now().toIso8601String(),
+        'discoverable': _hostingController.discoverable.value
+      });
+    }
   }
 
   void _onGameOutput(String line, bool host) {
     _logFile.createSync(recursive: true);
     _logFile.writeAsString("$line\n", mode: FileMode.append);
     if (line.contains(shutdownLine)) {
-      _onStop(host);
+      _onStop(host, false);
       return;
     }
 
@@ -285,7 +318,7 @@ class _LaunchButtonState extends State<LaunchButton> {
 
       _fail = true;
       showCorruptedBuildError(host);
-      _onStop(host);
+      _onStop(host, false);
       return;
     }
 
@@ -294,8 +327,6 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
 
-      _fail = true;
-      _closeLaunchingWidget(false);
       _showTokenError(host);
       return;
     }
@@ -305,7 +336,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         _injectOrShowError(Injectable.console, host);
       }else {
         _injectOrShowError(Injectable.reboot, host)
-            .then((value) => _closeLaunchingWidget(true));
+            .then((value) => _closeLaunchingWidget(host, true));
       }
 
       _injectOrShowError(Injectable.memoryFix, host);
@@ -315,6 +346,7 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   Future<void> _showTokenError(bool host) async {
+    _fail = true;
     var instance = host ? _hostingController.instance.value : _gameController.instance.value;
     if(_authenticatorController.type() != ServerType.embedded) {
       showTokenErrorUnfixable();
@@ -324,19 +356,15 @@ class _LaunchButtonState extends State<LaunchButton> {
 
     await _authenticatorController.restartInteractive();
     showTokenErrorFixable();
-    _onStop(host);
+    _onStop(host, false);
     _start();
   }
 
-  void _onStop(bool host) async {
-    if(_executor != null){
-      await _executor;
-    }
-
+  void _onStop(bool host, bool showMessage) async {
     var instance = host ? _hostingController.instance.value : _gameController.instance.value;
     if(instance != null){
       if(instance.linkedHosting){
-        _onStop(true);
+        _onStop(true, showMessage);
       }
 
       instance.kill();
@@ -350,13 +378,16 @@ class _LaunchButtonState extends State<LaunchButton> {
     _setStarted(host, false);
 
     if(host){
-      var supabase = Supabase.instance.client;
-      await supabase.from('hosts')
-          .delete()
-          .match({'id': _gameController.uuid});
+      await _removeHostEntry();
     }
 
-    _completer = Completer();
+    _closeLaunchingWidget(host, showMessage);
+  }
+
+  Future<void> _removeHostEntry() async {
+    await _supabase.from('hosts')
+        .delete()
+        .match({'id': _gameController.uuid});
   }
 
   Future<void> _injectOrShowError(Injectable injectable, bool hosting) async {
@@ -374,8 +405,8 @@ class _LaunchButtonState extends State<LaunchButton> {
 
       await injectDll(gameProcess, dllPath.path);
     } catch (exception) {
-      showMessage("Cannot inject $injectable.dll: $exception");
-      _onStop(hosting);
+      showInfoBar("Cannot inject $injectable.dll: $exception");
+      _onStop(hosting, false);
     }
   }
 
@@ -383,11 +414,11 @@ class _LaunchButtonState extends State<LaunchButton> {
     Future<File> getPath(Injectable injectable) async {
       switch(injectable){
         case Injectable.reboot:
-          return File(_settingsController.rebootDll.text);
+          return File(_settingsController.gameServerDll.text);
         case Injectable.console:
-          return File(_settingsController.consoleDll.text);
+          return File(_settingsController.unrealEngineConsoleDll.text);
         case Injectable.sslBypass:
-          return File(_settingsController.authDll.text);
+          return File(_settingsController.authenticatorDll.text);
         case Injectable.memoryFix:
           return File("${assetsDirectory.path}\\dlls\\memoryleak.dll");
       }
@@ -405,9 +436,8 @@ class _LaunchButtonState extends State<LaunchButton> {
   void _onDllFail(File dllPath, bool hosting) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fail = true;
-      _closeLaunchingWidget(false);
       showMissingDllError(path.basename(dllPath.path));
-      _onStop(hosting);
+      _onStop(hosting, false);
     });
   }
 }

@@ -49,13 +49,13 @@ List<String> createRebootArgs(String username, String password, bool host, Strin
 }
 
 
-Future<int> downloadRebootDll(String url, int? lastUpdateMs) async {
+Future<int> downloadRebootDll(String url, int? lastUpdateMs, {int hours = 24, bool force = false}) async {
     Directory? outputDir;
     var now = DateTime.now();
     try {
         var lastUpdate = await _getLastUpdate(lastUpdateMs);
         var exists = await rebootDllFile.exists();
-        if (lastUpdate != null && now.difference(lastUpdate).inHours <= 24 && exists) {
+        if (!force && lastUpdate != null && now.difference(lastUpdate).inHours <= hours && exists) {
             return lastUpdateMs!;
         }
 
@@ -70,15 +70,7 @@ Future<int> downloadRebootDll(String url, int? lastUpdateMs) async {
         }
 
         return now.millisecondsSinceEpoch;
-    }catch(message) {
-        if(url == rebootDownloadUrl){
-            var asset = File('${assetsDirectory.path}\\dlls\\reboot.dll');
-            await rebootDllFile.writeAsBytes(asset.readAsBytesSync());
-            return now.millisecondsSinceEpoch;
-        }
-
-        throw Exception("Cannot download reboot.zip, invalid zip: $message");
-    }finally{
+    } finally{
         if(outputDir != null) {
             delete(outputDir);
         }

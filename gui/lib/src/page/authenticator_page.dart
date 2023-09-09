@@ -1,4 +1,5 @@
-import 'package:fluent_ui/fluent_ui.dart' hide showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
@@ -8,8 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 
-import 'package:reboot_launcher/src/dialog/dialog.dart';
-import 'package:reboot_launcher/src/dialog/dialog_button.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 
 class AuthenticatorPage extends StatefulWidget {
   const AuthenticatorPage({Key? key}) : super(key: key);
@@ -46,8 +47,7 @@ class _AuthenticatorPageState extends State<AuthenticatorPage> with AutomaticKee
                           isChild: true,
                           content: TextFormBox(
                               placeholder: "Host",
-                              controller: _authenticatorController.host,
-                              readOnly: !_isRemote
+                              controller: _authenticatorController.host
                           )
                       ),
                     if(_authenticatorController.type.value != ServerType.embedded)
@@ -58,7 +58,10 @@ class _AuthenticatorPageState extends State<AuthenticatorPage> with AutomaticKee
                           content: TextFormBox(
                               placeholder: "Port",
                               controller: _authenticatorController.port,
-                              readOnly: !_isRemote
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly
+                              ]
                           )
                       ),
                     if(_authenticatorController.type.value == ServerType.embedded)
@@ -92,7 +95,7 @@ class _AuthenticatorPageState extends State<AuthenticatorPage> with AutomaticKee
                     title: "Reset authenticator",
                     subtitle: "Resets the authenticator's settings to their default values",
                     content: Button(
-                      onPressed: () => showDialog(
+                      onPressed: () => showAppDialog(
                           builder: (context) => InfoDialog(
                             text: "Do you want to reset all the setting in this tab to their default values? This action is irreversible",
                             buttons: [

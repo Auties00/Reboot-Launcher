@@ -7,7 +7,7 @@ import 'package:reboot_common/common.dart';
 
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
-import 'package:reboot_launcher/src/interactive/server.dart';
+import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 import 'package:skeletons/skeletons.dart';
 
