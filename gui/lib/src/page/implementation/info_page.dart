@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-import 'package:markdown_widget/widget/markdown.dart';
+import 'package:markdown_widget/config/markdown_generator.dart';
 import 'package:reboot_launcher/src/controller/info_controller.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_setting.dart';
@@ -10,7 +10,6 @@ import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 import 'package:http/http.dart' as http;
-import 'package:skeletons/skeletons.dart';
 
 class InfoPage extends RebootPage {
   const InfoPage({Key? key}) : super(key: key);
@@ -77,44 +76,50 @@ class _InfoPageState extends RebootPageState<InfoPage> {
       future: _fetchFuture,
       builder: (context, linksSnapshot) {
         var linksData = linksSnapshot.data;
-        return ListView.builder(
-            itemBuilder: (context, index) {
-              if (index % 2 == 0) {
-                return const SizedBox(
-                    height: 16.0
-                );
-              }
+        if(linksData == null) {
+          return const Center(
+            child: ProgressRing()
+          );
+        }
 
-              return Card(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(4.0)),
-                  child: _buildBody(linksData, index)
-              );
-            },
-            itemCount: linksData == null ? null : linksData.length * 2
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                    maxWidth: 1000
+                ),
+                child: ListView.separated(
+                    shrinkWrap: true,
+                    separatorBuilder: (context, index) => const SizedBox(
+                        height: 16.0
+                    ),
+                    itemBuilder: (context, index) => Card(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4.0)),
+                        child: _buildBody(linksData, index)
+                    ),
+                    itemCount: linksData.length
+                ),
+              ),
+            )
+          ],
         );
       }
     );
   }
 
-  Widget _buildBody(List<String>? linksData, int index) {
-    if (linksData == null) {
-      return SkeletonLine(
-        style: SkeletonLineStyle(
-            height: _height
-        ),
-      );
-    }
-
-    return FutureBuilder(
-        future: _readLink(linksData[index ~/ 2]),
-        builder: (context, linkDataSnapshot) => SizedBox(
-          height: _height,
-          child: MarkdownWidget(
-              data: linkDataSnapshot.data ?? ""
-          ),
-        )
-    );
-  }
+  Widget _buildBody(List<String> linksData, int index) => FutureBuilder(
+      future: _readLink(linksData[index]),
+      builder: (context, linkDataSnapshot) {
+        var markdownGenerator = MarkdownGenerator();
+        var result = markdownGenerator.buildWidgets(linkDataSnapshot.data ?? "");
+        return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: result
+        );
+      }
+  );
 
   @override
   List<SettingTile> get settings => [];

@@ -22,6 +22,7 @@ import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/implementation/home_page.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/util/watch.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -136,11 +137,14 @@ void _initWindow() => doWhenWindowReady(() async {
     appWindow.alignment = Alignment.center;
   }
 
-  await Window.setEffect(
-      effect: WindowEffect.acrylic,
-      color: Colors.transparent,
-      dark: SchedulerBinding.instance.platformDispatcher.platformBrightness.isDark
-  );
+  if(isWin11) {
+    await Window.setEffect(
+        effect: WindowEffect.acrylic,
+        color: Colors.transparent,
+        dark: SchedulerBinding.instance.platformDispatcher.platformBrightness.isDark
+    );
+  }
+
   appWindow.show();
 });
 
