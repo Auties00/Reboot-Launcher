@@ -53,6 +53,11 @@ class _InfoPageState extends RebootPageState<InfoPage> {
   Future<List<String>> _initQuery() async {
     var response = await http.get(Uri.parse("https://api.github.com/repos/Auties00/reboot_launcher/contents/documentation/$currentLocale"));
     List<String> results = jsonDecode(response.body)
+        .sort((first, second) {
+            var firstIndex = int.parse(first["name"][0]);
+            var secondIndex = int.parse(second["name"][0]);
+            return firstIndex > secondIndex ? 1 : firstIndex == secondIndex ? 0 : -1;
+        })
         .map<String>((entry) => entry["download_url"] as String)
         .toList();
     return _infoController.links = results;
