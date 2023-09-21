@@ -2,9 +2,7 @@ import 'dart:convert';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:markdown_widget/widget/markdown.dart';
-import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/info_controller.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_setting.dart';
@@ -13,7 +11,6 @@ import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 import 'package:http/http.dart' as http;
 import 'package:skeletons/skeletons.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class InfoPage extends RebootPage {
   const InfoPage({Key? key}) : super(key: key);
@@ -52,15 +49,14 @@ class _InfoPageState extends RebootPageState<InfoPage> {
 
   Future<List<String>> _initQuery() async {
     var response = await http.get(Uri.parse("https://api.github.com/repos/Auties00/reboot_launcher/contents/documentation/$currentLocale"));
-    List<String> results = jsonDecode(response.body)
-        .sort((first, second) {
-            var firstIndex = int.parse(first["name"][0]);
-            var secondIndex = int.parse(second["name"][0]);
-            return firstIndex > secondIndex ? 1 : firstIndex == secondIndex ? 0 : -1;
-        })
-        .map<String>((entry) => entry["download_url"] as String)
-        .toList();
-    return _infoController.links = results;
+    List results = jsonDecode(response.body);
+    results.sort((first, second) {
+      var firstIndex = int.parse(first["name"][0]);
+      var secondIndex = int.parse(second["name"][0]);
+      return firstIndex > secondIndex ? 1 : firstIndex == secondIndex ? 0 : -1;
+    });
+    List<String> parsed = results.map<String>((entry) => entry["download_url"] as String).toList();
+    return _infoController.links = parsed;
   }
 
   Future<String> _readLink(String url) async {
