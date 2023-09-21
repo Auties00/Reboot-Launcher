@@ -1,6 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 class VersionNameInput extends StatelessWidget {
   final GameController _gameController = Get.find<GameController>();
@@ -10,25 +12,13 @@ class VersionNameInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InfoLabel(
-    label: "Name",
+    label: translations.versionName,
     child: TextFormBox(
         controller: controller,
-        placeholder: "Type the version's name",
+        placeholder: translations.versionNameLabel,
         autofocus: true,
-        validator: _validate,
+        validator: (version) => checkVersion(version, _gameController.versions.value),
         autovalidateMode: AutovalidateMode.onUserInteraction
     ),
   );
-
-  String? _validate(String? text) {
-    if (text == null || text.isEmpty) {
-      return 'Empty version name';
-    }
-
-    if (_gameController.versions.value.any((element) => element.name == text)) {
-      return 'This version already exists';
-    }
-
-    return null;
-  }
 }

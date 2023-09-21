@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 class DialogButton extends StatefulWidget {
   final String? text;
@@ -41,7 +42,7 @@ class _DialogButtonState extends State<DialogButton> {
   Widget get _secondaryButton {
     return Button(
       onPressed: widget.onTap ?? _onDefaultSecondaryActionTap,
-      child: Text(widget.text ?? "Close"),
+      child: Text(widget.text ?? translations.defaultDialogSecondaryAction),
     );
   }
 

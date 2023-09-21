@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
 
@@ -10,29 +13,37 @@ class SettingsController extends GetxController {
   late final TextEditingController gameServerDll;
   late final TextEditingController unrealEngineConsoleDll;
   late final TextEditingController authenticatorDll;
+  late final TextEditingController memoryLeakDll;
   late final TextEditingController gameServerPort;
   late final RxBool firstRun;
+  late final RxString language;
+  late final Rx<ThemeMode> themeMode;
   late double width;
   late double height;
   late double? offsetX;
   late double? offsetY;
-  late double scrollingDistance;
 
   SettingsController() {
     _storage = GetStorage("settings");
     gameServerDll = _createController("game_server", "reboot.dll");
     unrealEngineConsoleDll = _createController("unreal_engine_console", "console.dll");
     authenticatorDll = _createController("authenticator", "cobalt.dll");
+    memoryLeakDll = _createController("memory_leak", "memoryleak.dll");
     gameServerPort = TextEditingController(text: _storage.read("game_server_port") ?? kDefaultGameServerPort);
     gameServerPort.addListener(() => _storage.write("game_server_port", gameServerPort.text));
     width = _storage.read("width") ?? kDefaultWindowWidth;
     height = _storage.read("height") ?? kDefaultWindowHeight;
     offsetX = _storage.read("offset_x");
     offsetY = _storage.read("offset_y");
-    scrollingDistance = 0.0;
     firstRun = RxBool(_storage.read("first_run") ?? true);
     firstRun.listen((value) => _storage.write("first_run", value));
+    themeMode = Rx(ThemeMode.values.elementAt(_storage.read("theme") ?? 0));
+    themeMode.listen((value) => _storage.write("theme", value.index));
+    language = RxString(_storage.read("language") ?? _defaultLocale);
+    language.listen((value) => _storage.write("language", value));
   }
+
+  String get _defaultLocale => Intl.getCurrentLocale().split("_")[0];
 
   TextEditingController _createController(String key, String name) {
     var controller = TextEditingController(text: _storage.read(key) ?? _controllerDefaultPath(name));
@@ -46,8 +57,10 @@ class SettingsController extends GetxController {
   }
 
   void saveWindowOffset(Offset position) {
-    _storage.write("offset_x", position.dx);
-    _storage.write("offset_y", position.dy);
+    offsetX = position.dx;
+    offsetY = position.dy;
+    _storage.write("offset_x", offsetX);
+    _storage.write("offset_y", offsetY);
   }
 
   void reset(){

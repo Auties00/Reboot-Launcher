@@ -13,10 +13,9 @@ final File rebootDllFile = File("${assetsDirectory.path}\\dlls\\reboot.dll");
 
 List<String> createRebootArgs(String username, String password, bool host, String additionalArgs) {
     if(password.isEmpty) {
-        username = username.isEmpty ? kDefaultPlayerName : username;
-        username = host ? "$username${Random().nextInt(1000)}" : username;
-        username = '$username@projectreboot.dev';
+        username = '${_parseUsername(username, host)}@projectreboot.dev';
     }
+
     password = password.isNotEmpty ? password : "Rebooted";
     var args = [
         "-epicapp=Fortnite",
@@ -46,6 +45,23 @@ List<String> createRebootArgs(String username, String password, bool host, Strin
     }
 
     return args;
+}
+
+String _parseUsername(String username, bool host) {
+    if(host) {
+        return "Player${Random().nextInt(1000)}";
+    }
+
+    if (username.isEmpty) {
+        return kDefaultPlayerName;
+    }
+
+    username = username.replaceAll(RegExp("[^A-Za-z0-9]"), "").trim();
+    if(username.isEmpty){
+        return kDefaultPlayerName;
+    }
+
+    return username;
 }
 
 

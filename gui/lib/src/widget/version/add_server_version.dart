@@ -8,14 +8,15 @@ import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/common/file_selector.dart';
 import 'package:reboot_launcher/src/widget/version/version_build_selector.dart';
 import 'package:reboot_launcher/src/widget/version/version_name_input.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
-
-import '../../dialog/abstract/dialog.dart';
-import '../../dialog/abstract/dialog_button.dart';
+import 'package:windows_taskbar/windows_taskbar.dart';
 
 class AddServerVersion extends StatefulWidget {
   const AddServerVersion({Key? key}) : super(key: key);
@@ -32,7 +33,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   final Rx<DownloadStatus> _status = Rx(DownloadStatus.form);
   final GlobalKey<FormState> _formKey = GlobalKey();
   final RxnInt _timeLeft = RxnInt();
-  final Rxn<double> _downloadProgress = Rxn();
+  final Rxn<double> _progress = Rxn();
 
   late DiskSpace _diskSpace;
   late Future _fetchFuture;
@@ -82,7 +83,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
                   if (!snapshot.hasData) {
                     return ProgressDialog(
-                        text: "Fetching builds and disks...",
+                        text: translations.fetchingBuilds,
                         onStop: () => Navigator.of(context).pop()
                     );
                   }
@@ -94,24 +95,20 @@ class _AddServerVersionState extends State<AddServerVersion> {
                 }
             );
           case DownloadStatus.downloading:
-            return GenericDialog(
-                header: _downloadBody,
-                buttons: _stopButton
-            );
           case DownloadStatus.extracting:
             return GenericDialog(
-                header: _extractingBody,
+                header: _progressBody,
                 buttons: _stopButton
             );
           case DownloadStatus.error:
             return ErrorDialog(
-                exception: _error ?? Exception("unknown error"),
+                exception: _error ?? Exception(translations.unknownError),
                 stackTrace: _stackTrace,
-                errorMessageBuilder: (exception) => "Cannot download version: $exception"
+                errorMessageBuilder: (exception) => translations.downloadVersionError(exception.toString())
             );
           case DownloadStatus.done:
-            return const InfoDialog(
-              text: "The download was completed successfully!",
+            return InfoDialog(
+              text: translations.downloadedVersion
             );
         }
       })
@@ -120,7 +117,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   List<DialogButton> get _formButtons => [
     DialogButton(type: ButtonType.secondary),
     DialogButton(
-      text: "Download",
+      text: translations.download,
       type: ButtonType.primary,
       onTap: () => _startDownload(context),
     )
@@ -137,11 +134,11 @@ class _AddServerVersionState extends State<AddServerVersion> {
       var communicationPort = ReceivePort();
       communicationPort.listen((message) {
         if(message is ArchiveDownloadProgress) {
-          _onDownloadProgress(message.progress, message.minutesLeft, message.extracting);
+          _onProgress(message.progress, message.minutesLeft, message.extracting);
         }else if(message is SendPort) {
           _downloadPort = message;
         }else {
-          _onDownloadError("Unexpected message: $message", null);
+          _onDownloadError(message, null);
         }
       });
       var options = ArchiveDownloadOptions(
@@ -151,20 +148,12 @@ class _AddServerVersionState extends State<AddServerVersion> {
       );
       var errorPort = ReceivePort();
       errorPort.listen((message) => _onDownloadError(message, null));
-      var exitPort = ReceivePort();
-      var isolate = await Isolate.spawn(
+      await Isolate.spawn(
           downloadArchiveBuild,
           options,
           onError: errorPort.sendPort,
-          onExit: exitPort.sendPort,
           errorsAreFatal: true
       );
-      exitPort.listen((message) {
-        isolate.kill(priority: Isolate.immediate);
-        if(_status.value != DownloadStatus.error) {
-          _onDownloadComplete();
-        }
-      });
     } catch (exception, stackTrace) {
       _onDownloadError(exception, stackTrace);
     }
@@ -176,6 +165,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
     }
 
     _status.value = DownloadStatus.done;
+    WindowsTaskbar.setProgressMode(TaskbarProgressMode.noProgress);
     WidgetsBinding.instance.addPostFrameCallback((_) => _gameController.addVersion(FortniteVersion(
         name: _nameController.text,
         location: Directory(_pathController.text)
@@ -188,21 +178,31 @@ class _AddServerVersionState extends State<AddServerVersion> {
     }
 
     _status.value = DownloadStatus.error;
+    WindowsTaskbar.setProgressMode(TaskbarProgressMode.noProgress);
     _error = error;
     _stackTrace = stackTrace;
   }
 
-  void _onDownloadProgress(double progress, int timeLeft, bool extracting) {
+  void _onProgress(double progress, int? timeLeft, bool extracting) {
     if (!mounted) {
       return;
     }
 
+    if(progress >= 100 && extracting) {
+      _onDownloadComplete();
+      return;
+    }
+
     _status.value = extracting ? DownloadStatus.extracting : DownloadStatus.downloading;
+    if(progress >= 0) {
+      WindowsTaskbar.setProgress(progress.round(), 100);
+    }
+
     _timeLeft.value = timeLeft;
-    _downloadProgress.value = progress;
+    _progress.value = progress;
   }
 
-  Widget get _downloadBody {
+  Widget get _progressBody {
     var timeLeft = _timeLeft.value;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -210,7 +210,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            "Downloading...",
+            _status.value == DownloadStatus.downloading ? translations.downloading : translations.extracting,
             style: FluentTheme.maybeOf(context)?.typography.body,
             textAlign: TextAlign.start,
           ),
@@ -224,13 +224,13 @@ class _AddServerVersionState extends State<AddServerVersion> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "${(_downloadProgress.value ?? 0).round()}%",
+              translations.buildProgress((_progress.value ?? 0).round()),
               style: FluentTheme.maybeOf(context)?.typography.body,
             ),
 
             if(timeLeft != null)
               Text(
-                "Time left: ${timeLeft == 0 ? "less than a minute" : "about $timeLeft minute${timeLeft > 1 ? 's' : ''}"}",
+                translations.timeLeft(timeLeft),
                 style: FluentTheme.maybeOf(context)?.typography.body,
               )
           ],
@@ -242,7 +242,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
 
         SizedBox(
             width: double.infinity,
-            child: ProgressBar(value: (_downloadProgress.value ?? 0).toDouble())
+            child: ProgressBar(value: (_progress.value ?? 0).toDouble())
         ),
 
         const SizedBox(
@@ -251,33 +251,6 @@ class _AddServerVersionState extends State<AddServerVersion> {
       ],
     );
   }
-
-  Widget get _extractingBody => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          "Extracting...",
-          style: FluentTheme.maybeOf(context)?.typography.body,
-          textAlign: TextAlign.start,
-        ),
-      ),
-
-      const SizedBox(
-        height: 8.0,
-      ),
-
-      const SizedBox(
-          width: double.infinity,
-          child: ProgressBar()
-      ),
-
-      const SizedBox(
-        height: 8.0,
-      )
-    ],
-  );
 
   Widget get _formBody => Column(
     mainAxisSize: MainAxisSize.min,
@@ -300,9 +273,9 @@ class _AddServerVersionState extends State<AddServerVersion> {
       ),
 
       FileSelector(
-          label: "Installation directory",
-          placeholder: "Type the installation directory",
-          windowTitle: "Select installation directory",
+          label: translations.buildInstallationDirectory,
+          placeholder: translations.buildInstallationDirectoryPlaceholder,
+          windowTitle: translations.buildInstallationDirectoryWindowTitle,
           controller: _pathController,
           validator: checkDownloadDestination,
           folder: true

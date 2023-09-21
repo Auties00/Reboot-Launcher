@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 class UpdateController {
   late final GetStorage _storage;
@@ -30,7 +31,7 @@ class UpdateController {
     }
 
     showInfoBar(
-        "Downloading reboot dll...",
+        translations.updatingRebootDll,
         loading: true,
         duration: null
     );
@@ -43,7 +44,7 @@ class UpdateController {
       );
       status.value = UpdateStatus.success;
       showInfoBar(
-          "The reboot dll was downloaded successfully",
+          translations.updatedRebootDll,
           severity: InfoBarSeverity.success,
           duration: snackbarShortDuration
       );
@@ -53,12 +54,12 @@ class UpdateController {
       error = error.toLowerCase();
       status.value = UpdateStatus.error;
       showInfoBar(
-          "An error occurred while downloading the reboot dll: $error",
+          translations.updateRebootDllError(error.toString()),
           duration: snackbarLongDuration,
           severity: InfoBarSeverity.error,
           action: Button(
             onPressed: () => update(true),
-            child: const Text("Retry"),
+            child: Text(translations.updateRebootDllErrorAction),
           )
       );
     }

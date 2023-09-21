@@ -8,6 +8,7 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/common/file_selector.dart';
 import 'package:reboot_launcher/src/widget/version/version_name_input.dart';
 
@@ -46,10 +47,10 @@ class _AddLocalVersionState extends State<AddLocalVersion> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(
+            SizedBox(
               width: double.infinity,
               child: InfoBar(
-                  title: Text("Local builds are not guaranteed to work"),
+                  title: Text(translations.localBuildsWarning),
                   severity: InfoBarSeverity.info
               ),
             ),
@@ -67,9 +68,9 @@ class _AddLocalVersionState extends State<AddLocalVersion> {
             ),
 
             FileSelector(
-                label: "Game folder",
-                placeholder: "Type the game folder",
-                windowTitle: "Select game folder",
+                label: translations.gameFolderTitle,
+                placeholder: translations.gameFolderPlaceholder,
+                windowTitle: translations.gameFolderPlaceWindowTitle,
                 controller: _gamePathController,
                 validator: checkGameFolder,
                 folder: true
@@ -86,7 +87,7 @@ class _AddLocalVersionState extends State<AddLocalVersion> {
           ),
 
           DialogButton(
-            text: "Save",
+            text: translations.saveLocalVersion,
             type: ButtonType.primary,
             onTap: () {
               Navigator.of(context).pop();

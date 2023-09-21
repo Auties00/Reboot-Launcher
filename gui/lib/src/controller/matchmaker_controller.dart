@@ -2,6 +2,8 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
+import 'package:reboot_launcher/src/page/abstract/page_type.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 class MatchmakerController extends ServerController {
   late final TextEditingController gameServerAddress;
@@ -34,7 +36,7 @@ class MatchmakerController extends ServerController {
   }
 
   @override
-  String get controllerName => "matchmaker";
+  String get controllerName => translations.matchmakerName.toLowerCase();
 
   @override
   String get storageName => "matchmaker";
@@ -50,6 +52,9 @@ class MatchmakerController extends ServerController {
 
   @override
   Future<bool> freePort() => freeMatchmakerPort();
+
+  @override
+  RebootPageType get pageType => RebootPageType.matchmaker;
 
   @override
   Future<int> startEmbeddedInternal() => startEmbeddedMatchmaker(detached.value);

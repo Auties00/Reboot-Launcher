@@ -5,6 +5,7 @@ export 'package:reboot_common/src/constant/os.dart';
 export 'package:reboot_common/src/constant/supabase.dart';
 
 
+export 'package:reboot_common/src/model/archive.dart';
 export 'package:reboot_common/src/model/fortnite_build.dart';
 export 'package:reboot_common/src/model/fortnite_version.dart';
 export 'package:reboot_common/src/model/game_instance.dart';

@@ -39,21 +39,28 @@ class SettingTile extends StatefulWidget {
 class _SettingTileState extends State<SettingTile> {
   @override
   Widget build(BuildContext context) {
-    if (widget.expandedContent == null || widget.expandedContent?.isEmpty == true) {
-      return _contentCard;
-    }
+    return ConstrainedBox(
+        constraints: const BoxConstraints(
+            maxWidth: 1000
+        ),
+        child: () {
+          if (widget.expandedContent == null || widget.expandedContent?.isEmpty == true) {
+            return _contentCard;
+          }
 
-    return Expander(
-        initiallyExpanded: true,
-        headerShape: (open) => const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(4.0)),
-        ),
-        header: SizedBox(
-            height: widget.expandedContentHeaderHeight,
-            child: _buildTile(false)
-        ),
-        trailing: _trailing,
-        content: _expandedContent
+          return Expander(
+              initiallyExpanded: true,
+              headerShape: (open) => const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(4.0)),
+              ),
+              header: SizedBox(
+                  height: widget.expandedContentHeaderHeight,
+                  child: _buildTile(false)
+              ),
+              trailing: _trailing,
+              content: _expandedContent
+          );
+        }()
     );
   }
 

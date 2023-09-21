@@ -2,7 +2,8 @@ import 'package:clipboard/clipboard.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:fluent_ui/fluent_ui.dart' as fluent show showDialog;
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
-import 'package:reboot_launcher/src/page/home_page.dart';
+import 'package:reboot_launcher/src/page/pages.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 import 'dialog_button.dart';
 
@@ -92,17 +93,15 @@ class InfoDialog extends AbstractDialog {
             width: double.infinity,
             child: Text(text, textAlign: TextAlign.center)
         ),
-        buttons: buttons ?? [_createDefaultButton()],
+        buttons: buttons ?? [_defaultCloseButton],
         padding: const EdgeInsets.only(left: 20, right: 20, top: 15.0, bottom: 15.0)
     );
   }
 
-  DialogButton _createDefaultButton() {
-    return DialogButton(
-            text: "Close",
-            type: ButtonType.only
-        );
-  }
+  DialogButton get _defaultCloseButton =>DialogButton(
+      text: translations.defaultDialogSecondaryAction,
+      type: ButtonType.only
+  );
 }
 
 class ProgressDialog extends AbstractDialog {
@@ -124,7 +123,7 @@ class ProgressDialog extends AbstractDialog {
         ),
         buttons: [
           DialogButton(
-            text: "Close",
+            text: translations.defaultDialogSecondaryAction,
             type: ButtonType.only,
             onTap: onStop
           )
@@ -211,7 +210,7 @@ class FutureBuilderDialog extends AbstractDialog {
     return DialogButton(
         text: snapshot.hasData
             || snapshot.hasError
-            || (snapshot.connectionState == ConnectionState.done && snapshot.data == null) ? "Close" : "Stop",
+            || (snapshot.connectionState == ConnectionState.done && snapshot.data == null) ? translations.defaultDialogSecondaryAction : translations.stopLoadingDialogAction,
         type: ButtonType.only,
         onTap: () => Navigator.of(context).pop(!snapshot.hasError && snapshot.hasData)
     );
@@ -226,11 +225,11 @@ class ErrorDialog extends AbstractDialog {
   const ErrorDialog({Key? key, required this.exception, required this.errorMessageBuilder, this.stackTrace})  : super(key: key);
 
   static DialogButton createCopyErrorButton({required Object error, required StackTrace? stackTrace, required Function() onClick, ButtonType type = ButtonType.primary}) => DialogButton(
-    text: "Copy error",
+    text: translations.copyErrorDialogTitle,
     type: type,
     onTap: () async {
-      FlutterClipboard.controlC("An error occurred: $error\nStacktrace:\n $stackTrace");
-      showInfoBar("Copied error to clipboard");
+      FlutterClipboard.controlC("$error\n$stackTrace");
+      showInfoBar(translations.copyErrorDialogSuccess);
       onClick();
     },
   );

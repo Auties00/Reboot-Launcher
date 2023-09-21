@@ -5,6 +5,8 @@ import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
+import 'package:reboot_launcher/src/page/abstract/page_type.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 class ServerButton extends StatefulWidget {
   final bool authenticator;
@@ -29,7 +31,7 @@ class _ServerButtonState extends State<ServerButton> {
               alignment: Alignment.center,
               child: Text(_buttonText),
             ),
-            onPressed: () => _controller.toggleInteractive()
+            onPressed: () => _controller.toggleInteractive(widget.authenticator ? RebootPageType.authenticator : RebootPageType.matchmaker)
         ),
       )),
     ),
@@ -37,13 +39,13 @@ class _ServerButtonState extends State<ServerButton> {
 
   String get _buttonText {
     if(_controller.type.value == ServerType.local){
-      return "Check ${_controller.controllerName}";
+      return translations.checkServer(_controller.controllerName);
     }
 
     if(_controller.started.value){
-      return "Stop ${_controller.controllerName}";
+      return translations.stopServer(_controller.controllerName);
     }
 
-    return "Start ${_controller.controllerName}";
+    return translations.startServer(_controller.controllerName);
   }
 }

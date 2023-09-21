@@ -1,6 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/util/picker.dart';
 
 class FileSelector extends StatefulWidget {
@@ -56,7 +55,6 @@ class _FileSelectorState extends State<FileSelector> {
 
   void _onPressed() {
     if(_selecting){
-      showInfoBar("Folder selector is already opened");
       return;
     }
 

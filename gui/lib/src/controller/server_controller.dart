@@ -5,6 +5,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:sync/semaphore.dart';
 
 abstract class ServerController extends GetxController {
@@ -15,6 +16,7 @@ abstract class ServerController extends GetxController {
   late final Semaphore semaphore;
   late RxBool started;
   late RxBool detached;
+  StreamSubscription? worker;
   int? embeddedServerPid;
   HttpServer? localServer;
   HttpServer? remoteServer;
@@ -57,6 +59,8 @@ abstract class ServerController extends GetxController {
   Future<bool> get isPortFree;
 
   Future<bool> get isPortTaken async => !(await isPortFree);
+
+  RebootPageType get pageType;
 
   Future<bool> freePort();
 
@@ -194,15 +198,6 @@ abstract class ServerController extends GetxController {
       );
       started.value = true;
     }
-  }
-
-  Stream<ServerResult> restart() async* {
-    await resetWinNat();
-    if(started()) {
-      yield* stop();
-    }
-
-    yield* start();
   }
 
   Stream<ServerResult> toggle() async* {

@@ -4,11 +4,9 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
-
-const String kDefaultServerName = "Reboot Game Server";
-const String kDefaultDescription = "Just another server";
 
 class HostingController extends GetxController {
   late final GetStorage _storage;
@@ -27,9 +25,9 @@ class HostingController extends GetxController {
     _storage = GetStorage("hosting");
     uuid = _storage.read("uuid") ?? const Uuid().v4();
     _storage.write("uuid", uuid);
-    name = TextEditingController(text: _storage.read("name") ?? kDefaultServerName);
+    name = TextEditingController(text: _storage.read("name"));
     name.addListener(() => _storage.write("name", name.text));
-    description = TextEditingController(text: _storage.read("description") ?? kDefaultDescription);
+    description = TextEditingController(text: _storage.read("description"));
     description.addListener(() => _storage.write("description", description.text));
     password = TextEditingController(text: _storage.read("password") ?? "");
     password.addListener(() => _storage.write("password", password.text));
@@ -46,25 +44,16 @@ class HostingController extends GetxController {
     supabase.from('hosts')
         .stream(primaryKey: ['id'])
         .map((event) => _parseValidServers(event))
-        .listen((event) {
-      if(servers.value == null) {
-        servers.value = event;
-      }else {
-        servers.value?.addAll(event);
-      }
-    });
+        .listen((event) => servers.value = event);
   }
 
-  Set<Map<String, dynamic>> _parseValidServers(event) => event.where((element) => _isValidServer(element)).toSet();
-
-  bool _isValidServer(Map<String, dynamic> element) =>
-      element["id"] != uuid && element["ip"] != null;
+  Set<Map<String, dynamic>> _parseValidServers(event) => event.where((element) => element["ip"] != null).toSet();
 
   Future<void> saveInstance() => _storage.write("instance", jsonEncode(instance.value?.toJson()));
 
   void reset() {
-    name.text = kDefaultServerName;
-    description.text = kDefaultDescription;
+    name.text = "";
+    description.text = "";
     showPassword.value = false;
     discoverable.value = false;
     started.value = false;

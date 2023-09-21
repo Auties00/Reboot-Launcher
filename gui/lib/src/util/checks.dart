@@ -1,14 +1,15 @@
 import 'dart:io';
 
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 String? checkVersion(String? text, List<FortniteVersion> versions) {
   if (text == null || text.isEmpty) {
-    return 'Empty version name';
+    return translations.emptyVersionName;
   }
 
   if (versions.any((element) => element.name == text)) {
-    return 'This version already exists';
+    return translations.versionAlreadyExists;
   }
 
   return null;
@@ -16,7 +17,7 @@ String? checkVersion(String? text, List<FortniteVersion> versions) {
 
 String? checkChangeVersion(String? text) {
   if (text == null || text.isEmpty) {
-    return 'Empty version name';
+    return translations.emptyVersionName;
   }
 
   return null;
@@ -24,16 +25,16 @@ String? checkChangeVersion(String? text) {
 
 String? checkGameFolder(text) {
   if (text == null || text.isEmpty) {
-    return 'Empty game path';
+    return translations.emptyGamePath;
   }
 
   var directory = Directory(text);
   if (!directory.existsSync()) {
-    return "Directory doesn't exist";
+    return translations.directoryDoesNotExist;
   }
 
   if (FortniteVersionExtension.findExecutable(directory, "FortniteClient-Win64-Shipping.exe") == null) {
-    return "Invalid game path";
+    return translations.missingShippingExe;
   }
 
   return null;
@@ -41,7 +42,7 @@ String? checkGameFolder(text) {
 
 String? checkDownloadDestination(text) {
   if (text == null || text.isEmpty) {
-    return 'Invalid download path';
+    return translations.invalidDownloadPath;
   }
 
   return null;
@@ -49,15 +50,15 @@ String? checkDownloadDestination(text) {
 
 String? checkDll(String? text) {
   if (text == null || text.isEmpty) {
-    return "Empty dll path";
+    return translations.invalidDllPath;
   }
 
   if (!File(text).existsSync()) {
-    return "This dll doesn't exist";
+    return translations.dllDoesNotExist;
   }
 
   if (!text.endsWith(".dll")) {
-    return "This file is not a dll";
+    return translations.invalidDllExtension;
   }
 
   return null;
@@ -65,12 +66,12 @@ String? checkDll(String? text) {
 
 String? checkMatchmaking(String? text) {
   if (text == null || text.isEmpty) {
-    return "Empty hostname";
+    return translations.emptyHostname;
   }
 
   var ipParts = text.split(":");
   if(ipParts.length > 2){
-    return "Wrong format, expected ip:port";
+    return translations.hostnameFormat;
   }
 
   return null;
@@ -78,7 +79,7 @@ String? checkMatchmaking(String? text) {
 
 String? checkUpdateUrl(String? text) {
   if (text == null || text.isEmpty) {
-    return "Empty URL";
+    return translations.emptyURL;
   }
 
   return null;

@@ -14,7 +14,6 @@ class GameController extends GetxController {
   late final Rx<List<FortniteVersion>> versions;
   late final Rxn<FortniteVersion> _selectedVersion;
   late final RxBool started;
-  late final RxBool autoStartGameServer;
   late final Rxn<GameInstance> instance;
   
   GameController() {
@@ -40,9 +39,6 @@ class GameController extends GetxController {
     customLaunchArgs.addListener(() =>
         _storage.write("custom_launch_args", customLaunchArgs.text));
     started = RxBool(false);
-    autoStartGameServer = RxBool(_storage.read("auto_game_server") ?? true);
-    autoStartGameServer.listen((value) =>
-        _storage.write("auto_game_server", value));
     var serializedInstance = _storage.read("instance");
     instance = Rxn(serializedInstance != null ? GameInstance.fromJson(jsonDecode(serializedInstance)) : null);
     instance.listen((_) => saveInstance());
@@ -56,7 +52,6 @@ class GameController extends GetxController {
     password.text = "";
     customLaunchArgs.text = "";
     versions.value = [];
-    autoStartGameServer.value = true;
     instance.value = null;
   }
 

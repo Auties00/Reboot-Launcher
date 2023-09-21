@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
+import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
@@ -17,42 +19,44 @@ import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
-import 'package:reboot_launcher/src/page/home_page.dart';
+import 'package:reboot_launcher/src/page/implementation/home_page.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/util/watch.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:url_protocol/url_protocol.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 
 const double kDefaultWindowWidth = 1536;
 const double kDefaultWindowHeight = 1024;
 const String kCustomUrlSchema = "reboot";
 
-void main() async {
-  runZonedGuarded(() async {
-    await installationDirectory.create(recursive: true);
-    await Supabase.initialize(
-        url: supabaseUrl,
-        anonKey: supabaseAnonKey
-    );
-    WidgetsFlutterBinding.ensureInitialized();
-    await SystemTheme.accentColor.load();
-    var storageError = await _initStorage();
-    var urlError = await _initUrlHandler();
-    var windowError = await _initWindow();
-    var observerError = _initObservers();
-    _checkGameServer();
-    runApp(const RebootApplication());
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _handleErrors([urlError, storageError, windowError, observerError]));
-  },
-  (error, stack) => onError(error, stack, false),
-  zoneSpecification: ZoneSpecification(
-      handleUncaughtError: (self, parent, zone, error, stacktrace) => onError(error, stacktrace, false)
-  ));
-}
+void main() => runZonedGuarded(() async {
+  await installationDirectory.create(recursive: true);
+  await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey
+  );
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemTheme.accentColor.load();
+  _initWindow();
+  var storageError = await _initStorage();
+  var urlError = await _initUrlHandler();
+  var observerError = _initObservers();
+  _checkGameServer();
+  runApp(const RebootApplication());
+  WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _handleErrors([urlError, storageError, observerError]));
+},
+        (error, stack) => onError(error, stack, false),
+    zoneSpecification: ZoneSpecification(
+        handleUncaughtError: (self, parent, zone, error, stacktrace) => onError(error, stacktrace, false)
+    ));
 
-void _handleErrors(List<Object?> errors) => errors.where((element) => element != null).forEach((element) => onError(element, null, false));
+void _handleErrors(List<Object?> errors) {
+  errors.where((element) => element != null).forEach((element) => onError(element!, null, false));
+}
 
 Future<void> _checkGameServer() async {
   try {
@@ -70,7 +74,7 @@ Future<void> _checkGameServer() async {
     var oldOwner = matchmakerController.gameServerOwner.value;
     matchmakerController.joinLocalHost();
     WidgetsBinding.instance.addPostFrameCallback((_) => showInfoBar(
-        "$oldOwner's server is no longer available",
+        oldOwner == null ? translations.serverNoLongerAvailableUnnamed : translations.serverNoLongerAvailable(oldOwner),
         severity: InfoBarSeverity.warning,
         duration: snackbarLongDuration
     ));
@@ -105,7 +109,7 @@ void _joinServer(Uri uri) {
     matchmakerController.joinServer(hostingController.uuid, server);
   }else {
     showInfoBar(
-        "No server found: invalid or expired link",
+        translations.noServerFound,
         duration: snackbarLongDuration,
         severity: InfoBarSeverity.error
     );
@@ -114,34 +118,30 @@ void _joinServer(Uri uri) {
 
 String _parseCustomUrl(Uri uri) => uri.host;
 
-Future<Object?> _initWindow() async {
-  try {
-    await windowManager.ensureInitialized();
-    await Window.initialize();
-    var settingsController = Get.find<SettingsController>();
-    var size = Size(settingsController.width, settingsController.height);
-    appWindow.size = size;
-    var offsetX = settingsController.offsetX;
-    var offsetY = settingsController.offsetY;
-    if(offsetX != null && offsetY != null){
-      appWindow.position = Offset(
-          offsetX,
-          offsetY
-      );
-    }else {
-      appWindow.alignment = Alignment.center;
-    }
+void _initWindow() => doWhenWindowReady(() async {
+  await windowManager.ensureInitialized();
+  await Window.initialize();
+  var settingsController = Get.find<SettingsController>();
+  var size = Size(settingsController.width, settingsController.height);
+  appWindow.size = size;
+  var offsetX = settingsController.offsetX;
+  var offsetY = settingsController.offsetY;
+  if(offsetX != null && offsetY != null){
+    appWindow.position = Offset(
+        offsetX,
+        offsetY
+    );
+  }else {
+    appWindow.alignment = Alignment.center;
+  }
 
-    await Window.setEffect(
+  await Window.setEffect(
       effect: WindowEffect.acrylic,
       color: Colors.transparent,
-      dark: true
-    );
-    return null;
-  }catch(error) {
-    return error;
-  }
-}
+      dark: SchedulerBinding.instance.platformDispatcher.platformBrightness.isDark
+  );
+  appWindow.show();
+});
 
 Object? _initObservers() {
   try {
@@ -190,16 +190,23 @@ class RebootApplication extends StatefulWidget {
 }
 
 class _RebootApplicationState extends State<RebootApplication> {
+  final SettingsController _settingsController = Get.find<SettingsController>();
+
   @override
-  Widget build(BuildContext context) => FluentApp(
-      title: "Reboot Launcher",
-      themeMode: ThemeMode.system,
+  Widget build(BuildContext context) => Obx(() => FluentApp(
+      locale: Locale(_settingsController.language.value),
+      localizationsDelegates: const [
+        ...AppLocalizations.localizationsDelegates,
+        LocaleNamesLocalizationsDelegate()
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      themeMode: _settingsController.themeMode.value,
       debugShowCheckedModeBanner: false,
       color: SystemTheme.accentColor.accent.toAccentColor(),
       darkTheme: _createTheme(Brightness.dark),
       theme: _createTheme(Brightness.light),
       home: const HomePage()
-  );
+  ));
 
   FluentThemeData _createTheme(Brightness brightness) => FluentThemeData(
       brightness: brightness,

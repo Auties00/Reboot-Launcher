@@ -4,15 +4,10 @@ typedef MouseStateBuilderCB = Widget Function(
     BuildContext context, MouseState mouseState);
 
 class MouseState {
-  bool isMouseOver = false;
-  bool isMouseDown = false;
+  bool isMouseOver;
+  bool isMouseDown;
 
-  MouseState();
-
-  @override
-  String toString() {
-    return "isMouseDown: $isMouseDown - isMouseOver: $isMouseOver";
-  }
+  MouseState() : isMouseOver = false, isMouseDown = false;
 }
 
 class MouseStateBuilder extends StatefulWidget {

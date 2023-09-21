@@ -10,6 +10,7 @@ import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/common/file_selector.dart';
 import 'package:reboot_launcher/src/widget/version/add_local_version.dart';
 import 'package:reboot_launcher/src/widget/version/add_server_version.dart';
@@ -42,7 +43,7 @@ class _VersionSelectorState extends State<VersionSelector> {
       child: FlyoutTarget(
         controller: _flyoutController,
         child: DropDownButton(
-            leading: Text(_gameController.selectedVersion?.name ?? "Select a version"),
+            leading: Text(_gameController.selectedVersion?.name ?? translations.selectVersion),
             items: _createSelectorItems(context)
         ),
       )
@@ -54,7 +55,7 @@ class _VersionSelectorState extends State<VersionSelector> {
       .toList();
 
   MenuFlyoutItem _createDefaultVersionItem() => MenuFlyoutItem(
-      text: const Text("Please create or download a version"),
+      text: Text(translations.noVersions),
       onPressed: () {}
   );
 
@@ -147,7 +148,7 @@ class _VersionSelectorState extends State<VersionSelector> {
   }
 
   bool _onExplorerError() {
-    showInfoBar("This version doesn't exist on the local machine");
+    showInfoBar(translations.missingVersion);
     return false;
   }
 
@@ -159,27 +160,28 @@ class _VersionSelectorState extends State<VersionSelector> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(
+              SizedBox(
                   width: double.infinity,
-                  child: Text("Are you sure you want to delete this version?")),
+                  child: Text(translations.deleteVersionDialogTitle)
+              ),
 
               const SizedBox(height: 12.0),
 
               Obx(() => Checkbox(
                   checked: _deleteFilesController.value,
                   onChanged: (bool? value) => _deleteFilesController.value = value ?? false,
-                  content: const Text("Delete version files from disk")
+                  content: Text(translations.deleteVersionFromDiskOption)
               ))
             ],
           ),
           actions: [
             Button(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Keep'),
+              child: Text(translations.deleteVersionCancel),
             ),
-            FilledButton(
+            Button(
               onPressed: ()  => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
+              child: Text(translations.deleteVersionConfirm),
             )
           ],
         )
@@ -197,10 +199,10 @@ class _VersionSelectorState extends State<VersionSelector> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 InfoLabel(
-                    label: "Name",
+                    label: translations.versionName,
                     child: TextFormBox(
                         controller: nameController,
-                        placeholder: "Type the new version name",
+                        placeholder: translations.newVersionNameLabel,
                         autofocus: true,
                         validator: (text) => checkChangeVersion(text)
                     )
@@ -211,9 +213,9 @@ class _VersionSelectorState extends State<VersionSelector> {
                 ),
 
                 FileSelector(
-                    placeholder: "Type the new game folder",
-                    windowTitle: "Select game folder",
-                    label: "Path",
+                    placeholder: translations.newVersionNameLabel,
+                    windowTitle: translations.gameFolderPlaceWindowTitle,
+                    label: translations.gameFolderLabel,
                     controller: pathController,
                     validator: checkGameFolder,
                     folder: true
@@ -228,7 +230,7 @@ class _VersionSelectorState extends State<VersionSelector> {
               ),
 
               DialogButton(
-                text: "Save",
+                text: translations.newVersionNameConfirm,
                 type: ButtonType.primary,
                 onTap: () {
                   Navigator.of(context).pop();
@@ -252,8 +254,8 @@ enum _ContextualOption {
 
 extension _ContextualOptionExtension on _ContextualOption {
   String get name {
-    return this == _ContextualOption.openExplorer ? "Open in explorer"
-        : this == _ContextualOption.modify ? "Modify"
-        : "Delete";
+    return this == _ContextualOption.openExplorer ? translations.openInExplorer
+        : this == _ContextualOption.modify ? translations.modify
+        : translations.delete;
   }
 }

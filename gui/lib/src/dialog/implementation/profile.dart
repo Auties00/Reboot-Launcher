@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 final GameController _gameController = Get.find<GameController>();
 
@@ -20,9 +21,9 @@ Future<bool> showProfileForm(BuildContext context) async{
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               InfoLabel(
-                  label: "Username/Email",
+                  label: translations.usernameOrEmail,
                   child: TextFormBox(
-                    placeholder: "Type your username or email",
+                    placeholder: translations.usernameOrEmailPlaceholder,
                     controller: _gameController.username,
                     autovalidateMode: AutovalidateMode.always,
                     enableSuggestions: true,
@@ -32,9 +33,9 @@ Future<bool> showProfileForm(BuildContext context) async{
               ),
               const SizedBox(height: 16.0),
               InfoLabel(
-                  label: "Password",
+                  label: translations.password,
                   child: TextFormBox(
-                      placeholder: "Type your password, if you have one",
+                      placeholder: translations.passwordPlaceholder,
                       controller: _gameController.password,
                       autovalidateMode: AutovalidateMode.always,
                       obscureText: !showPassword.value,
@@ -59,16 +60,14 @@ Future<bool> showProfileForm(BuildContext context) async{
           ),
           buttons: [
             DialogButton(
-                text: "Cancel",
+                text: translations.cancelProfileChanges,
                 type: ButtonType.secondary
             ),
 
             DialogButton(
-                text: "Save",
+                text: translations.saveProfileChanges,
                 type: ButtonType.primary,
-                onTap: () {
-                  Navigator.of(context).pop(true);
-                }
+                onTap: () => Navigator.of(context).pop(true)
             )
           ]
       ))

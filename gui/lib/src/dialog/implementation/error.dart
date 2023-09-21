@@ -1,12 +1,14 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
-import 'package:reboot_launcher/src/page/home_page.dart';
+import 'package:reboot_launcher/src/page/pages.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 
 String? lastError;
 
-void onError(Object? exception, StackTrace? stackTrace, bool framework) {
-  if(exception == null){
+void onError(Object exception, StackTrace? stackTrace, bool framework) {
+  if(!kDebugMode) {
     return;
   }
 
@@ -29,7 +31,7 @@ void onError(Object? exception, StackTrace? stackTrace, bool framework) {
           ErrorDialog(
               exception: exception,
               stackTrace: stackTrace,
-              errorMessageBuilder: (exception) => framework ? "An error was thrown by Flutter: $exception" : "An uncaught error was thrown: $exception"
+              errorMessageBuilder: (exception) => translations.uncaughtErrorMessage(exception.toString())
           )
   ));
 }

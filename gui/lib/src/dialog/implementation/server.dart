@@ -12,29 +12,27 @@ import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
-import 'package:reboot_launcher/src/page/home_page.dart';
+import 'package:reboot_launcher/src/page/abstract/page_type.dart';
+import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/cryptography.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 extension ServerControllerDialog on ServerController {
-  Future<bool> restartInteractive() async {
-    var stream = restart();
-    return await _handleStream(stream, false);
-  }
-
-  Future<bool> toggleInteractive([bool showSuccessMessage = true]) async {
+  Future<bool> toggleInteractive(RebootPageType caller, [bool showSuccessMessage = true]) async {
     var stream = toggle();
-    return await _handleStream(stream, showSuccessMessage);
+    return await _handleStream(caller, stream, showSuccessMessage);
   }
 
-  Future<bool> _handleStream(Stream<ServerResult> stream, bool showSuccessMessage) async {
+  Future<bool> _handleStream(RebootPageType caller, Stream<ServerResult> stream, bool showSuccessMessage) async {
     var completer = Completer<bool>();
-    stream.listen((event) {
+    worker = stream.listen((event) {
       switch (event.type) {
         case ServerResultType.starting:
           showInfoBar(
-              "Starting the $controllerName...",
+              translations.startingServer(controllerName),
+              pageType: caller,
               severity: InfoBarSeverity.info,
               loading: true,
               duration: null
@@ -43,7 +41,8 @@ extension ServerControllerDialog on ServerController {
         case ServerResultType.startSuccess:
           if(showSuccessMessage) {
             showInfoBar(
-                "The $controllerName was started successfully",
+                translations.startedServer(controllerName),
+                pageType: caller,
                 severity: InfoBarSeverity.success
             );
           }
@@ -51,14 +50,17 @@ extension ServerControllerDialog on ServerController {
           break;
         case ServerResultType.startError:
           showInfoBar(
-              "An error occurred while starting the $controllerName: ${event.error ?? "unknown error"}",
+              translations.startServerError(
+                  event.error ?? translations.unknownError, controllerName),
+              pageType: caller,
               severity: InfoBarSeverity.error,
               duration: snackbarLongDuration
           );
           break;
         case ServerResultType.stopping:
           showInfoBar(
-              "Stopping the $controllerName...",
+              translations.stoppingServer,
+              pageType: caller,
               severity: InfoBarSeverity.info,
               loading: true,
               duration: null
@@ -67,7 +69,8 @@ extension ServerControllerDialog on ServerController {
         case ServerResultType.stopSuccess:
           if(showSuccessMessage) {
             showInfoBar(
-                "The $controllerName was stopped successfully",
+                translations.stoppedServer(controllerName),
+                pageType: caller,
                 severity: InfoBarSeverity.success
             );
           }
@@ -75,46 +78,54 @@ extension ServerControllerDialog on ServerController {
           break;
         case ServerResultType.stopError:
           showInfoBar(
-              "An error occurred while stopping the $controllerName: ${event.error ?? "unknown error"}",
+              translations.stopServerError(
+                  event.error ?? translations.unknownError, controllerName),
+              pageType: caller,
               severity: InfoBarSeverity.error,
               duration: snackbarLongDuration
           );
           break;
         case ServerResultType.missingHostError:
           showInfoBar(
-              "Missing hostname in $controllerName configuration",
+              translations.missingHostNameError(controllerName),
+              pageType: caller,
               severity: InfoBarSeverity.error
           );
           break;
         case ServerResultType.missingPortError:
           showInfoBar(
-              "Missing port in $controllerName configuration",
+              translations.missingPortError(controllerName),
+              pageType: caller,
               severity: InfoBarSeverity.error
           );
           break;
         case ServerResultType.illegalPortError:
           showInfoBar(
-              "Invalid port in $controllerName configuration",
+              translations.illegalPortError(controllerName),
+              pageType: caller,
               severity: InfoBarSeverity.error
           );
           break;
         case ServerResultType.freeingPort:
           showInfoBar(
-              "Freeing port $defaultPort...",
+              translations.freeingPort(defaultPort),
+              pageType: caller,
               loading: true,
               duration: null
           );
           break;
         case ServerResultType.freePortSuccess:
           showInfoBar(
-              "Port $defaultPort was freed successfully",
+              translations.freedPort(defaultPort),
+              pageType: caller,
               severity: InfoBarSeverity.success,
               duration: snackbarShortDuration
           );
           break;
         case ServerResultType.freePortError:
           showInfoBar(
-              "An error occurred while freeing port $defaultPort: ${event.error ?? "unknown error"}",
+              translations.freePortError(event.error ?? translations.unknownError, controllerName),
+              pageType: caller,
               severity: InfoBarSeverity.error,
               duration: snackbarLongDuration
           );
@@ -122,7 +133,8 @@ extension ServerControllerDialog on ServerController {
         case ServerResultType.pingingRemote:
           if(started.value) {
             showInfoBar(
-                "Pinging the remote $controllerName...",
+                translations.pingingRemoteServer(controllerName),
+                pageType: caller,
                 severity: InfoBarSeverity.info,
                 loading: true,
                 duration: null
@@ -132,7 +144,8 @@ extension ServerControllerDialog on ServerController {
         case ServerResultType.pingingLocal:
           if(started.value) {
             showInfoBar(
-                "Pinging the ${type().name} $controllerName...",
+                translations.pingingLocalServer(controllerName, type().name),
+                pageType: caller,
                 severity: InfoBarSeverity.info,
                 loading: true,
                 duration: null
@@ -141,7 +154,8 @@ extension ServerControllerDialog on ServerController {
           break;
         case ServerResultType.pingError:
           showInfoBar(
-              "Cannot ping ${type().name} $controllerName",
+              translations.pingError(controllerName, type().name),
+              pageType: caller,
               severity: InfoBarSeverity.error
           );
           break;
@@ -175,7 +189,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
     var id = entry["id"];
     if(uuid == id) {
       showInfoBar(
-          "You can't join your own server",
+          translations.joinSelfServer,
           duration: snackbarLongDuration,
           severity: InfoBarSeverity.error
       );
@@ -204,7 +218,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
 
     if(!checkPassword(confirmPassword, hashedPassword)) {
       showInfoBar(
-          "Wrong password: please try again",
+          translations.wrongServerPassword,
           duration: snackbarLongDuration,
           severity: InfoBarSeverity.error
       );
@@ -227,7 +241,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
     }
 
     showInfoBar(
-        "This server isn't online right now: please try again later",
+        translations.offlineServer,
         duration: snackbarLongDuration,
         severity: InfoBarSeverity.error
     );
@@ -246,9 +260,9 @@ extension MatchmakerControllerExtension on MatchmakerController {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 InfoLabel(
-                    label: "Password",
+                    label: translations.serverPassword,
                     child: Obx(() => TextFormBox(
-                        placeholder: "Type the server's password",
+                        placeholder: translations.serverPasswordPlaceholder,
                         controller: confirmPasswordController,
                         autovalidateMode: AutovalidateMode.always,
                         obscureText: !showPassword.value,
@@ -274,12 +288,12 @@ extension MatchmakerControllerExtension on MatchmakerController {
             ),
             buttons: [
               DialogButton(
-                  text: "Cancel",
+                  text: translations.serverPasswordCancel,
                   type: ButtonType.secondary
               ),
 
               DialogButton(
-                  text: "Confirm",
+                  text: translations.serverPasswordConfirm,
                   type: ButtonType.primary,
                   onTap: () => Navigator.of(context).pop(confirmPasswordController.text)
               )
@@ -297,7 +311,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
       FlutterClipboard.controlC(decryptedIp);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => showInfoBar(
-        embedded ? "You joined $author's server successfully!" : "Copied IP to the clipboard",
+        embedded ? translations.joinedServer(author) : translations.copiedIp,
         duration: snackbarLongDuration,
         severity: InfoBarSeverity.success
     ));

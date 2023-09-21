@@ -1,5 +1,5 @@
 #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
-auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME);
+auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME | BDW_HIDE_ON_STARTUP);
 
 #include <cstdlib>
 
@@ -16,13 +16,9 @@ auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME);
 #include <stdio.h>
 #include <fcntl.h>
 
-bool CheckOneInstance(){
+bool IsAlreadyOpen(){
     HANDLE hMutex = CreateMutexW(NULL, TRUE, L"RebootLauncherMutex");
-    if (hMutex == NULL) {
-        return false;
-    }
-
-    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+    if (hMutex == NULL && GetLastError() == ERROR_ALREADY_EXISTS) {
         HWND hwndExisting = FindWindowW(NULL, L"Reboot Launcher");
         if (hwndExisting != NULL) {
             ShowWindow(hwndExisting, SW_RESTORE);
@@ -30,10 +26,10 @@ bool CheckOneInstance(){
         }
 
         CloseHandle(hMutex);
-        return false;
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
@@ -75,12 +71,11 @@ bool SendAppLinkToInstance(const std::wstring& title) {
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
-  _putenv_s("OPENSSL_ia32cap", "~0x20000000");
   if(SendAppLinkToInstance(L"Reboot Launcher")) {
     return EXIT_SUCCESS;
   }
 
-  if(!CheckOneInstance()){
+  if(!IsDebuggerPresent() && IsAlreadyOpen()){
     return EXIT_SUCCESS;
   }
 

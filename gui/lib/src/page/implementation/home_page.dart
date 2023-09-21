@@ -1,28 +1,20 @@
 import 'dart:collection';
+import 'dart:ui';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' show MaterialPage;
 import 'package:get/get.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/page/authenticator_page.dart';
-import 'package:reboot_launcher/src/page/browse_page.dart';
-import 'package:reboot_launcher/src/page/hosting_page.dart';
-import 'package:reboot_launcher/src/page/info_page.dart';
-import 'package:reboot_launcher/src/page/matchmaker_page.dart';
-import 'package:reboot_launcher/src/page/play_page.dart';
-import 'package:reboot_launcher/src/page/settings_page.dart';
-import 'package:reboot_launcher/src/widget/home/pane.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/page/abstract/page.dart';
+import 'package:reboot_launcher/src/page/abstract/page_setting.dart';
+import 'package:reboot_launcher/src/page/pages.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
 import 'package:reboot_launcher/src/widget/home/profile.dart';
 import 'package:reboot_launcher/src/widget/os/title_bar.dart';
 import 'package:window_manager/window_manager.dart';
-
-GlobalKey appKey = GlobalKey();
-const int pagesLength = 7;
-final RxInt pageIndex = RxInt(0);
-final Queue<int> _pagesStack = Queue();
-final List<GlobalKey> _pageKeys = List.generate(pagesLength, (index) => GlobalKey());
-GlobalKey get pageKey => _pageKeys[pageIndex.value];
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -39,6 +31,8 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   final FocusNode _searchFocusNode = FocusNode();
   final TextEditingController _searchController = TextEditingController();
   final RxBool _focused = RxBool(true);
+  final Queue<int> _pagesStack = Queue();
+  bool _hitBack = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -46,19 +40,24 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   @override
   void initState() {
     windowManager.addListener(this);
-    _searchController.addListener(_onSearch);
     var lastValue = pageIndex.value;
     pageIndex.listen((value) {
-      if(value != lastValue) {
-        _pagesStack.add(lastValue);
-        lastValue = value;
+      if(_hitBack) {
+        _hitBack = false;
+        return;
       }
+
+      if(value == lastValue) {
+        return;
+      }
+
+      _pagesStack.add(lastValue);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        restoreMessage(value, lastValue);
+        lastValue = value;
+      });
     });
     super.initState();
-  }
-
-  void _onSearch() {
-    // TODO: Implement
   }
 
   @override
@@ -82,18 +81,32 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   @override
   void onWindowResized() {
     _settingsController.saveWindowSize(appWindow.size);
+    _focused.value = true;
   }
 
   @override
   void onWindowMoved() {
     _settingsController.saveWindowOffset(appWindow.position);
+    _focused.value = true;
+  }
+
+  @override
+  void onWindowEnterFullScreen() {
+    _focused.value = true;
+  }
+
+  @override
+  void onWindowLeaveFullScreen() {
+    _focused.value = true;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    windowManager.show();
-    return Obx(() => NavigationPaneTheme(
+    return Obx(() {
+      _settingsController.language.value;
+      loadTranslations(context);
+      return NavigationPaneTheme(
         data: NavigationPaneThemeData(
           backgroundColor: FluentTheme.of(context).micaBackgroundColor.withOpacity(0.93),
         ),
@@ -128,13 +141,18 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
               items: _items,
               header: const ProfileWidget(),
               autoSuggestBox: _autoSuggestBox,
-              autoSuggestBoxReplacement: const Icon(FluentIcons.search),
+              indicator: const StickyNavigationIndicator(
+                duration: Duration(milliseconds: 500),
+                curve: Curves.easeOut,
+                  indicatorSize: 3.25
+              )
             ),
             contentShape: const RoundedRectangleBorder(),
             onOpenSearch: () => _searchFocusNode.requestFocus(),
             transitionBuilder: (child, animation) => child
         )
-    ));
+    );
+    });
   }
 
   Widget get _backButton => Obx(() {
@@ -145,7 +163,10 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
           backgroundColor: ButtonState.all(Colors.transparent),
           border: ButtonState.all(const BorderSide(color: Colors.transparent))
       ),
-      onPressed: _pagesStack.isEmpty ? null : () => pageIndex.value = _pagesStack.removeLast(),
+      onPressed: _pagesStack.isEmpty ? null : () {
+        _hitBack = true;
+        pageIndex.value = _pagesStack.removeLast();
+      },
       child: const Icon(FluentIcons.back, size: 12.0),
     );
   });
@@ -157,89 +178,89 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   );
 
   Widget get _autoSuggestBox => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-    child: TextBox(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: AutoSuggestBox<PageSetting>(
         key: _searchKey,
         controller: _searchController,
-        placeholder: 'Find a setting',
+        placeholder: translations.find,
         focusNode: _searchFocusNode,
-        autofocus: true,
-        suffix: Button(
-            onPressed: null,
-            style: ButtonStyle(
-                backgroundColor: ButtonState.all(Colors.transparent),
-                border: ButtonState.all(const BorderSide(color: Colors.transparent))
+        selectionHeightStyle: BoxHeightStyle.max,
+        itemBuilder: (context, item) => Wrap(
+          children: [
+            ListTile(
+                onPressed: () {
+                  pageIndex.value = item.value.pageIndex;
+                  _searchController.clear();
+                  _searchFocusNode.unfocus();
+                },
+                leading: item.child,
+                title: Text(
+                    item.value.name,
+                    overflow: TextOverflow.clip,
+                    maxLines: 1
+                ),
+                subtitle: item.value.description.isNotEmpty ? Text(
+                    item.value.description,
+                    overflow: TextOverflow.clip,
+                    maxLines: 1
+                ) : null
             ),
-            child: Transform.flip(
-              flipX: true,
-              child: Icon(
-                  FluentIcons.search,
-                  size: 12.0,
-                  color: FluentTheme.of(context).resources.textFillColorPrimary
+          ],
+        ),
+        items: _suggestedItems,
+        autofocus: true,
+        trailingIcon: IgnorePointer(
+            child: IconButton(
+              onPressed: () {},
+              icon: Transform.flip(
+                  flipX: true,
+                  child: const Icon(FluentIcons.search)
               ),
             )
-        )
-    ),
+        ),
+      )
   );
 
-  List<NavigationPaneItem> get _items => [
-    RebootPaneItem(
-        title: const Text("Play"),
-        icon: SizedBox.square(
-            dimension: 24,
-            child: Image.asset("assets/images/play.png")
+  List<AutoSuggestBoxItem<PageSetting>> get _suggestedItems => pages.mapMany((page) {
+    var icon = SizedBox.square(
+        dimension: 24,
+        child: Image.asset(page.iconAsset)
+    );
+    var outerResults = <AutoSuggestBoxItem<PageSetting>>[];
+    outerResults.add(AutoSuggestBoxItem(
+        value: PageSetting(
+            name: page.name,
+            description: "",
+            pageIndex: page.index
         ),
-        body: const PlayPage()
-    ),
-    RebootPaneItem(
-        title: const Text("Host"),
-        icon: SizedBox.square(
-            dimension: 24,
-            child: Image.asset("assets/images/host.png")
-        ),
-        body: const HostingPage()
-    ),
-    RebootPaneItem(
-        title: const Text("Server Browser"),
-        icon: SizedBox.square(
-            dimension: 24,
-            child: Image.asset("assets/images/browse.png")
-        ),
-        body: const BrowsePage()
-    ),
-    RebootPaneItem(
-        title: const Text("Authenticator"),
-        icon: SizedBox.square(
-            dimension: 24,
-            child: Image.asset("assets/images/auth.png")
-        ),
-        body: const AuthenticatorPage()
-    ),
-    RebootPaneItem(
-        title: const Text("Matchmaker"),
-        icon: SizedBox.square(
-            dimension: 24,
-            child: Image.asset("assets/images/matchmaker.png")
-        ),
-        body: const MatchmakerPage()
-    ),
-    RebootPaneItem(
-        title: const Text("Info"),
-        icon: SizedBox.square(
-            dimension: 24,
-            child: Image.asset("assets/images/info.png")
-        ),
-        body: const InfoPage()
-    ),
-    RebootPaneItem(
-        title: const Text("Settings"),
-        icon: SizedBox.square(
-            dimension: 24,
-            child: Image.asset("assets/images/settings.png")
-        ),
-        body: const SettingsPage()
-    ),
-  ];
+        label: page.name,
+        child: icon
+    ));
+    outerResults.addAll(page.settings.mapMany((setting) {
+      var results = <AutoSuggestBoxItem<PageSetting>>[];
+      results.add(AutoSuggestBoxItem(
+          value: setting.withPageIndex(page.index),
+          label: setting.toString(),
+          child: icon
+      ));
+      setting.children?.forEach((childSetting) => results.add(AutoSuggestBoxItem(
+          value: childSetting.withPageIndex(page.index),
+          label: childSetting.toString(),
+          child: icon
+      )));
+      return results;
+    }).toList());
+    return outerResults;
+  }).toList();
 
-  String get searchValue => _searchController.text;
+  List<NavigationPaneItem> get _items => pages.map((page) => _createItem(page)).toList();
+
+  NavigationPaneItem _createItem(RebootPage page) => PaneItem(
+      title: Text(page.name),
+      icon: SizedBox.square(
+          dimension: 24,
+          child: Image.asset(page.iconAsset)
+      ),
+      body: page
+  );
 }
