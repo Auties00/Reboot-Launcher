@@ -1,15 +1,4 @@
-# Port Forwarding
-
-
-## What is Port Forwarding?
-
-Port forwarding is a networking technique used to allow external devices or applications to communicate with a specific device or service within a private local network.
-
-## Why Port Forwarding is Necessary
-
-We need to open the port where the game server is running to make sure that other players can connect to your game server.
-
-## Instructions
+# How can I make my server accessible to other players?
 
 ### 1. Set a static IP
 
