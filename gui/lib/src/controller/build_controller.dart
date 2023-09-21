@@ -16,9 +16,4 @@ class BuildController extends GetxController {
     }
     selectedBuild.value = builds[0];
   }
-
-  void reset(){
-    _builds = null;
-    selectedBuild.value = null;
-  }
 }

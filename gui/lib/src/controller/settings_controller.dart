@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 
 class SettingsController extends GetxController {
   late final GetStorage _storage;
@@ -39,11 +40,9 @@ class SettingsController extends GetxController {
     firstRun.listen((value) => _storage.write("first_run", value));
     themeMode = Rx(ThemeMode.values.elementAt(_storage.read("theme") ?? 0));
     themeMode.listen((value) => _storage.write("theme", value.index));
-    language = RxString(_storage.read("language") ?? _defaultLocale);
+    language = RxString(_storage.read("language") ?? currentLocale);
     language.listen((value) => _storage.write("language", value));
   }
-
-  String get _defaultLocale => Intl.getCurrentLocale().split("_")[0];
 
   TextEditingController _createController(String key, String name) {
     var controller = TextEditingController(text: _storage.read(key) ?? _controllerDefaultPath(name));

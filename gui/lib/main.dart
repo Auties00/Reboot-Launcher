@@ -9,6 +9,7 @@ import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/info_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
@@ -173,6 +174,7 @@ Future<Object?> _initStorage() async {
     Get.put(BuildController());
     Get.put(SettingsController());
     Get.put(HostingController());
+    Get.put(InfoController());
     var updateController = UpdateController();
     Get.put(updateController);
     updateController.update();
