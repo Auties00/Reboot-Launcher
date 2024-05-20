@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:intl/intl.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/util/translations.dart';

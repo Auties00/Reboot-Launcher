@@ -1,3 +1,7 @@
+#define public Dependency_Path_NetCoreCheck "..\..\dependencies\InnoDependencyInstaller\"
+
+#include "..\..\dependencies\InnoDependencyInstaller\CodeDependencies.iss"
+
 [Setup]
 AppId={{APP_ID}}
 AppVersion={{APP_VERSION}}
@@ -25,7 +29,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "launchAtStartup"; Description: "{cm:AutoStartProgram,{{DISPLAY_NAME}}}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "reboot_launcher-8.1.0+8.1.0-windows-setup_exe\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{{SOURCE_DIR}}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Run]
 Filename: "{app}\\{{EXECUTABLE_NAME}}"; Description: "{cm:LaunchProgram,{{DISPLAY_NAME}}}"; Flags: runascurrentuser nowait postinstall skipifsilent
@@ -34,3 +38,10 @@ Filename: "{app}\\{{EXECUTABLE_NAME}}"; Description: "{cm:LaunchProgram,{{DISPLA
 Name: "{autoprograms}\{{DISPLAY_NAME}}"; Filename: "{app}\{{EXECUTABLE_NAME}}"
 Name: "{autodesktop}\{{DISPLAY_NAME}}"; Filename: "{app}\{{EXECUTABLE_NAME}}"; Tasks: desktopicon
 Name: "{userstartup}\{{DISPLAY_NAME}}"; Filename: "{app}\{{EXECUTABLE_NAME}}"; WorkingDir: "{app}"; Tasks: launchAtStartup
+
+[Code]
+function InitializeSetup: Boolean;
+begin
+    Dependency_AddVC2015To2022
+Result := True;
+end;

@@ -17,36 +17,36 @@ class UpdateController {
     timestamp = RxnInt(_storage.read("ts"));
     timestamp.listen((value) => _storage.write("ts", value));
     var timerIndex = _storage.read("timer");
-    timer = Rx(timerIndex == null ? UpdateTimer.never : UpdateTimer.values.elementAt(timerIndex));
+    timer = Rx(timerIndex == null ? UpdateTimer.hour : UpdateTimer.values.elementAt(timerIndex));
     timer.listen((value) => _storage.write("timer", value.index));
-    url = TextEditingController(text: _storage.read("update_url") ?? rebootDownloadUrl);
+    url = TextEditingController(text: _storage.read("update_url") ?? kRebootDownloadUrl);
     url.addListener(() => _storage.write("update_url", url.text));
     status = Rx(UpdateStatus.waiting);
   }
 
   Future<void> update([bool force = false]) async {
-    if(timer.value == UpdateTimer.never) {
-      status.value = UpdateStatus.success;
-      return;
-    }
-
-    showInfoBar(
-        translations.updatingRebootDll,
-        loading: true,
-        duration: null
-    );
     try {
-      timestamp.value = await downloadRebootDll(
-          url.text,
+      final needsUpdate = await hasRebootDllUpdate(
           timestamp.value,
           hours: timer.value.hours,
           force: force
       );
+      if(!needsUpdate) {
+        status.value = UpdateStatus.success;
+        return;
+      }
+
+      showInfoBar(
+          translations.downloadingDll("reboot"),
+          loading: true,
+          duration: null
+      );
+      timestamp.value = await downloadRebootDll(url.text);
       status.value = UpdateStatus.success;
       showInfoBar(
-          translations.updatedRebootDll,
+          translations.downloadDllSuccess("reboot"),
           severity: InfoBarSeverity.success,
-          duration: snackbarShortDuration
+          duration: infoBarShortDuration
       );
     }catch(message) {
       var error = message.toString();
@@ -54,12 +54,12 @@ class UpdateController {
       error = error.toLowerCase();
       status.value = UpdateStatus.error;
       showInfoBar(
-          translations.updateRebootDllError(error.toString()),
-          duration: snackbarLongDuration,
+          translations.downloadDllError(error.toString()),
+          duration: infoBarLongDuration,
           severity: InfoBarSeverity.error,
           action: Button(
             onPressed: () => update(true),
-            child: Text(translations.updateRebootDllErrorAction),
+            child: Text(translations.downloadDllRetry),
           )
       );
     }
@@ -68,7 +68,7 @@ class UpdateController {
   void reset() {
     timestamp.value = null;
     timer.value = UpdateTimer.never;
-    url.text = rebootDownloadUrl;
+    url.text = kRebootDownloadUrl;
     status.value = UpdateStatus.waiting;
     update();
   }

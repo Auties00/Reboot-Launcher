@@ -1,0 +1,1 @@
+flutter_distributor package --platform windows --target exe

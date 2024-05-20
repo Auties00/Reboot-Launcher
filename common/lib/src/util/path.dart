@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:reboot_common/common.dart';
 import 'package:path/path.dart' as path;
+import 'package:reboot_common/common.dart';
 
 Directory get installationDirectory =>
     File(Platform.resolvedExecutable).parent;

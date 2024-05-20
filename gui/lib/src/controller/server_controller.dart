@@ -17,7 +17,6 @@ abstract class ServerController extends GetxController {
   late RxBool started;
   late RxBool detached;
   StreamSubscription? worker;
-  int? embeddedServerPid;
   HttpServer? localServer;
   HttpServer? remoteServer;
 
@@ -93,8 +92,16 @@ abstract class ServerController extends GetxController {
       return;
     }
 
-    yield ServerResult(ServerResultType.starting);
-    started.value = true;
+    if(type() != ServerType.local) {
+      started.value = true;
+      yield ServerResult(ServerResultType.starting);
+    }else {
+      started.value = false;
+      if(port != defaultPort) {
+        yield ServerResult(ServerResultType.starting);
+      }
+    }
+
     try {
       var host = this.host.text.trim();
       if (host.isEmpty) {
@@ -117,7 +124,7 @@ abstract class ServerController extends GetxController {
         return;
       }
 
-      if (type() != ServerType.local && await isPortTaken) {
+      if ((type() != ServerType.local || port != defaultPort) && await isPortTaken) {
         yield ServerResult(ServerResultType.freeingPort);
         var result = await freePort();
         yield ServerResult(result ? ServerResultType.freePortSuccess : ServerResultType.freePortError);
@@ -126,9 +133,15 @@ abstract class ServerController extends GetxController {
           return;
         }
       }
+
       switch(type()){
         case ServerType.embedded:
-          embeddedServerPid = await startEmbeddedInternal();
+          final pid = await startEmbeddedInternal();
+          watchProcess(pid).then((value) {
+            if(started()) {
+              started.value = false;
+            }
+          });
           break;
         case ServerType.remote:
           yield ServerResult(ServerResultType.pingingRemote);
@@ -143,7 +156,7 @@ abstract class ServerController extends GetxController {
           break;
         case ServerType.local:
           if(port != defaultPort) {
-            localServer = await startRemoteAuthenticatorProxy(Uri.parse("http://$defaultHost:$defaultPort"));
+            localServer = await startRemoteAuthenticatorProxy(Uri.parse("http://$defaultHost:$port"));
           }
 
           break;
@@ -153,6 +166,8 @@ abstract class ServerController extends GetxController {
       var uriResult = await pingServer(defaultHost, defaultPort);
       if(uriResult == null) {
         yield ServerResult(ServerResultType.pingError);
+        remoteServer?.close(force: true);
+        localServer?.close(force: true);
         started.value = false;
         return;
       }
@@ -164,6 +179,8 @@ abstract class ServerController extends GetxController {
           error: error,
           stackTrace: stackTrace
       );
+      remoteServer?.close(force: true);
+      localServer?.close(force: true);
       started.value = false;
     }
   }
@@ -178,7 +195,7 @@ abstract class ServerController extends GetxController {
     try{
       switch(type()){
         case ServerType.embedded:
-          Process.killPid(embeddedServerPid!, ProcessSignal.sigabrt);
+          killProcessByPort(int.parse(defaultPort));
           break;
         case ServerType.remote:
           await remoteServer?.close(force: true);

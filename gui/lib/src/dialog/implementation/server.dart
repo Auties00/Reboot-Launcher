@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:clipboard/clipboard.dart';
 import 'package:dart_ipify/dart_ipify.dart';
-import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/material.dart' show Icons;
+import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
@@ -12,27 +12,22 @@ import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
-import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/cryptography.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sync/semaphore.dart';
 
 extension ServerControllerDialog on ServerController {
-  Future<bool> toggleInteractive(RebootPageType caller, [bool showSuccessMessage = true]) async {
+  Future<bool> toggleInteractive([bool showSuccessMessage = true]) async {
     var stream = toggle();
-    return await _handleStream(caller, stream, showSuccessMessage);
-  }
-
-  Future<bool> _handleStream(RebootPageType caller, Stream<ServerResult> stream, bool showSuccessMessage) async {
     var completer = Completer<bool>();
     worker = stream.listen((event) {
       switch (event.type) {
         case ServerResultType.starting:
           showInfoBar(
               translations.startingServer(controllerName),
-              pageType: caller,
               severity: InfoBarSeverity.info,
               loading: true,
               duration: null
@@ -41,8 +36,7 @@ extension ServerControllerDialog on ServerController {
         case ServerResultType.startSuccess:
           if(showSuccessMessage) {
             showInfoBar(
-                translations.startedServer(controllerName),
-                pageType: caller,
+                type.value == ServerType.local ? translations.checkedServer(controllerName) : translations.startedServer(controllerName),
                 severity: InfoBarSeverity.success
             );
           }
@@ -50,17 +44,14 @@ extension ServerControllerDialog on ServerController {
           break;
         case ServerResultType.startError:
           showInfoBar(
-              translations.startServerError(
-                  event.error ?? translations.unknownError, controllerName),
-              pageType: caller,
+              type.value == ServerType.local ? translations.localServerError(event.error ?? translations.unknownError, controllerName) : translations.startServerError(event.error ?? translations.unknownError, controllerName),
               severity: InfoBarSeverity.error,
-              duration: snackbarLongDuration
+              duration: infoBarLongDuration
           );
           break;
         case ServerResultType.stopping:
           showInfoBar(
               translations.stoppingServer,
-              pageType: caller,
               severity: InfoBarSeverity.info,
               loading: true,
               duration: null
@@ -70,7 +61,6 @@ extension ServerControllerDialog on ServerController {
           if(showSuccessMessage) {
             showInfoBar(
                 translations.stoppedServer(controllerName),
-                pageType: caller,
                 severity: InfoBarSeverity.success
             );
           }
@@ -80,36 +70,31 @@ extension ServerControllerDialog on ServerController {
           showInfoBar(
               translations.stopServerError(
                   event.error ?? translations.unknownError, controllerName),
-              pageType: caller,
               severity: InfoBarSeverity.error,
-              duration: snackbarLongDuration
+              duration: infoBarLongDuration
           );
           break;
         case ServerResultType.missingHostError:
           showInfoBar(
               translations.missingHostNameError(controllerName),
-              pageType: caller,
               severity: InfoBarSeverity.error
           );
           break;
         case ServerResultType.missingPortError:
           showInfoBar(
               translations.missingPortError(controllerName),
-              pageType: caller,
               severity: InfoBarSeverity.error
           );
           break;
         case ServerResultType.illegalPortError:
           showInfoBar(
               translations.illegalPortError(controllerName),
-              pageType: caller,
               severity: InfoBarSeverity.error
           );
           break;
         case ServerResultType.freeingPort:
           showInfoBar(
               translations.freeingPort(defaultPort),
-              pageType: caller,
               loading: true,
               duration: null
           );
@@ -117,24 +102,21 @@ extension ServerControllerDialog on ServerController {
         case ServerResultType.freePortSuccess:
           showInfoBar(
               translations.freedPort(defaultPort),
-              pageType: caller,
               severity: InfoBarSeverity.success,
-              duration: snackbarShortDuration
+              duration: infoBarShortDuration
           );
           break;
         case ServerResultType.freePortError:
           showInfoBar(
               translations.freePortError(event.error ?? translations.unknownError, controllerName),
-              pageType: caller,
               severity: InfoBarSeverity.error,
-              duration: snackbarLongDuration
+              duration: infoBarLongDuration
           );
           break;
         case ServerResultType.pingingRemote:
           if(started.value) {
             showInfoBar(
                 translations.pingingRemoteServer(controllerName),
-                pageType: caller,
                 severity: InfoBarSeverity.info,
                 loading: true,
                 duration: null
@@ -142,20 +124,16 @@ extension ServerControllerDialog on ServerController {
           }
           break;
         case ServerResultType.pingingLocal:
-          if(started.value) {
-            showInfoBar(
-                translations.pingingLocalServer(controllerName, type().name),
-                pageType: caller,
-                severity: InfoBarSeverity.info,
-                loading: true,
-                duration: null
-            );
-          }
+          showInfoBar(
+              translations.pingingLocalServer(controllerName, type().name),
+              severity: InfoBarSeverity.info,
+              loading: true,
+              duration: null
+          );
           break;
         case ServerResultType.pingError:
           showInfoBar(
               translations.pingError(controllerName, type().name),
-              pageType: caller,
               severity: InfoBarSeverity.error
           );
           break;
@@ -166,18 +144,11 @@ extension ServerControllerDialog on ServerController {
       }
     });
 
-    var result = await completer.future;
-    if(result && type() == ServerType.embedded) {
-      watchProcess(embeddedServerPid!).then((value) {
-        if(started()) {
-          started.value = false;
-        }
-      });
-    }
-
-    return result;
+    return await completer.future;
   }
 }
+
+final Semaphore _publishingSemaphore = Semaphore();
 
 extension MatchmakerControllerExtension on MatchmakerController {
   void joinLocalHost() {
@@ -190,7 +161,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
     if(uuid == id) {
       showInfoBar(
           translations.joinSelfServer,
-          duration: snackbarLongDuration,
+          duration: infoBarLongDuration,
           severity: InfoBarSeverity.error
       );
       return;
@@ -219,7 +190,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
     if(!checkPassword(confirmPassword, hashedPassword)) {
       showInfoBar(
           translations.wrongServerPassword,
-          duration: snackbarLongDuration,
+          duration: infoBarLongDuration,
           severity: InfoBarSeverity.error
       );
       return;
@@ -242,16 +213,16 @@ extension MatchmakerControllerExtension on MatchmakerController {
 
     showInfoBar(
         translations.offlineServer,
-        duration: snackbarLongDuration,
+        duration: infoBarLongDuration,
         severity: InfoBarSeverity.error
     );
     return false;
   }
 
   Future<String?> _askForPassword() async {
-    var confirmPasswordController = TextEditingController();
-    var showPassword = RxBool(false);
-    var showPasswordTrailing = RxBool(false);
+    final confirmPasswordController = TextEditingController();
+    final showPassword = RxBool(false);
+    final showPasswordTrailing = RxBool(false);
     return await showAppDialog<String?>(
         builder: (context) => FormDialog(
             content: Column(
@@ -270,15 +241,14 @@ extension MatchmakerControllerExtension on MatchmakerController {
                         autofocus: true,
                         autocorrect: false,
                         onChanged: (text) => showPasswordTrailing.value = text.isNotEmpty,
-                        suffix: Button(
-                          onPressed: () => showPasswordTrailing.value = !showPasswordTrailing.value,
+                        suffix: !showPasswordTrailing.value ? null : Button(
+                          onPressed: () => showPassword.value = !showPassword.value,
                           style: ButtonStyle(
                               shape: ButtonState.all(const CircleBorder()),
                               backgroundColor: ButtonState.all(Colors.transparent)
                           ),
                           child: Icon(
-                              showPassword.value ? Icons.visibility_off : Icons.visibility,
-                              color: showPassword.value ? null : Colors.transparent
+                              showPassword.value ? FluentIcons.eye_off_24_regular : FluentIcons.eye_24_regular
                           ),
                         )
                     ))
@@ -312,7 +282,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => showInfoBar(
         embedded ? translations.joinedServer(author) : translations.copiedIp,
-        duration: snackbarLongDuration,
+        duration: infoBarLongDuration,
         severity: InfoBarSeverity.success
     ));
   }
@@ -320,40 +290,62 @@ extension MatchmakerControllerExtension on MatchmakerController {
 
 extension HostingControllerExtension on HostingController {
   Future<void> publishServer(String author, String version) async {
-    var passwordText = password.text;
-    var hasPassword = passwordText.isNotEmpty;
-    var ip = await Ipify.ipv4();
-    if(hasPassword) {
-      ip = aes256Encrypt(ip, passwordText);
-    }
+    try {
+      _publishingSemaphore.acquire();
+      if(published.value) {
+        return;
+      }
 
-    var supabase = Supabase.instance.client;
-    var hosts = supabase.from('hosts');
-    var payload = {
-      'name': name.text,
-      'description': description.text,
-      'author': author,
-      'ip': ip,
-      'version': version,
-      'password': hasPassword ? hashPassword(passwordText) : null,
-      'timestamp': DateTime.now().toIso8601String(),
-      'discoverable': discoverable.value
-    };
-    if(published()) {
-      await hosts.update(payload).eq("id", uuid);
-    }else {
-      payload["id"] = uuid;
-      await hosts.insert(payload);
-    }
+      final passwordText = password.text;
+      final hasPassword = passwordText.isNotEmpty;
+      var ip = await Ipify.ipv4();
+      if(hasPassword) {
+        ip = aes256Encrypt(ip, passwordText);
+      }
 
-    published.value = true;
+      var supabase = Supabase.instance.client;
+      var hosts = supabase.from("hosting");
+      var payload = {
+        'name': name.text,
+        'description': description.text,
+        'author': author,
+        'ip': ip,
+        'version': version,
+        'password': hasPassword ? hashPassword(passwordText) : null,
+        'timestamp': DateTime.now().toIso8601String(),
+        'discoverable': discoverable.value
+      };
+      if(published()) {
+        await hosts.update(payload).eq("id", uuid);
+      }else {
+        payload["id"] = uuid;
+        await hosts.insert(payload);
+      }
+
+      published.value = true;
+    }catch(error) {
+      published.value = false;
+    }finally {
+      _publishingSemaphore.release();
+    }
   }
 
   Future<void> discardServer() async {
-    var supabase = Supabase.instance.client;
-    await supabase.from('hosts')
-        .delete()
-        .match({'id': uuid});
-    published.value = false;
+    try {
+      _publishingSemaphore.acquire();
+      if(!published.value) {
+        return;
+      }
+
+      final supabase = Supabase.instance.client;
+      await supabase.from("hosting")
+          .delete()
+          .match({'id': uuid});
+      published.value = false;
+    }catch(_) {
+      published.value = true;
+    }finally {
+      _publishingSemaphore.release();
+    }
   }
 }

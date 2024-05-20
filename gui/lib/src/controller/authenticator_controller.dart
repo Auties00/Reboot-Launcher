@@ -16,7 +16,7 @@ class AuthenticatorController extends ServerController {
   String get defaultHost => kDefaultAuthenticatorHost;
 
   @override
-  String get defaultPort => kDefaultAuthenticatorPort;
+  String get defaultPort => kDefaultAuthenticatorPort.toString();
 
   @override
   Future<bool> get isPortFree => isAuthenticatorPortFree();

@@ -1,39 +1,38 @@
 import 'dart:collection';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:sync/semaphore.dart';
 
+const infoBarLongDuration = Duration(seconds: 4);
+const infoBarShortDuration = Duration(seconds: 2);
+
 Semaphore _semaphore = Semaphore();
-HashMap<int, OverlayEntry?> _overlays = HashMap();
+HashMap<int, _OverlayEntry> _overlays = HashMap();
 
 void restoreMessage(int pageIndex, int lastIndex) {
   removeMessageByPage(lastIndex);
-  var overlay = _overlays[pageIndex];
-  if(overlay == null) {
+  final entry = _overlays[pageIndex];
+  if(entry == null) {
     return;
   }
 
-  Overlay.of(pageKey.currentContext!).insert(overlay);
+  Overlay.of(pageKey.currentContext!).insert(entry.overlay);
 }
 
 OverlayEntry showInfoBar(dynamic text,
-    {RebootPageType? pageType,
-      InfoBarSeverity severity = InfoBarSeverity.info,
+    {InfoBarSeverity severity = InfoBarSeverity.info,
       bool loading = false,
-      Duration? duration = snackbarShortDuration,
+      Duration? duration = infoBarShortDuration,
+      void Function()? onDismissed,
       Widget? action}) {
   try {
     _semaphore.acquire();
-    var index = pageType?.index ?? pageIndex.value;
-    removeMessageByPage(index);
-    var overlay = OverlayEntry(
+    removeMessageByPage(pageIndex.value);
+    final overlay = OverlayEntry(
         builder: (context) => Padding(
           padding: EdgeInsets.only(
-              right: 12.0,
-              left: 12.0,
-              bottom: pagesWithButtonIndexes.contains(index) ? 72.0 : 16.0
+              bottom: hasPageButton ? 72.0 : 16.0
           ),
           child: Align(
             alignment: AlignmentDirectional.bottomCenter,
@@ -71,19 +70,22 @@ OverlayEntry showInfoBar(dynamic text,
           ),
         )
     );
-    if(index == pageIndex.value) {
-      Overlay.of(pageKey.currentContext!).insert(overlay);
-    }
-    _overlays[index] = overlay;
+    Overlay.of(pageKey.currentContext!).insert(overlay);
+    _overlays[pageIndex.value] = _OverlayEntry(
+        overlay: overlay,
+        onDismissed: onDismissed
+    );
     if(duration != null) {
       Future.delayed(duration).then((_) {
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-          if(_overlays[index] == overlay) {
+          final currentOverlay = _overlays[pageIndex.value];
+          if(currentOverlay == overlay) {
             if(overlay.mounted) {
               overlay.remove();
             }
 
-            _overlays[index] = null;
+            _overlays.remove(pageIndex.value);
+            currentOverlay?.onDismissed?.call();
           }
         });
       });
@@ -95,20 +97,23 @@ OverlayEntry showInfoBar(dynamic text,
 }
 
 void removeMessageByPage(int index) {
-  var lastOverlay = _overlays[index];
+  final lastOverlay = _overlays[index];
   if(lastOverlay != null) {
-    removeMessageByOverlay(lastOverlay);
-    _overlays[index] = null;
+    try {
+      lastOverlay.overlay.remove();
+    }catch(_) {
+      // Do not use .isMounted
+      // This is intended behaviour
+    }finally {
+      _overlays.remove(index);
+      lastOverlay.onDismissed?.call();
+    }
   }
 }
 
-void removeMessageByOverlay(OverlayEntry? overlay) {
-  try {
-    if(overlay != null) {
-      overlay.remove();
-    }
-  }catch(_) {
-    // Do not use .isMounted
-    // This is intended behaviour
-  }
+class _OverlayEntry {
+  final OverlayEntry overlay;
+  final void Function()? onDismissed;
+
+  _OverlayEntry({required this.overlay, required this.onDismissed});
 }

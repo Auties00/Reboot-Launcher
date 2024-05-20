@@ -6,30 +6,27 @@ import 'package:shelf_proxy/shelf_proxy.dart';
 
 final authenticatorDirectory = Directory("${assetsDirectory.path}\\authenticator");
 final authenticatorStartExecutable = File("${authenticatorDirectory.path}\\lawinserver.exe");
-final authenticatorKillExecutable = File("${authenticatorDirectory.path}\\kill.bat");
 
 Future<int> startEmbeddedAuthenticator(bool detached) async => startBackgroundProcess(
     executable: authenticatorStartExecutable,
     window: detached
 );
 
-Future<HttpServer> startRemoteAuthenticatorProxy(Uri uri) async => await serve(proxyHandler(uri), kDefaultAuthenticatorHost, int.parse(kDefaultAuthenticatorPort));
+Future<HttpServer> startRemoteAuthenticatorProxy(Uri uri) async {
+  print("CALLED: $uri");
+  return await serve(proxyHandler(uri), kDefaultAuthenticatorHost, kDefaultAuthenticatorPort);
+}
 
-Future<bool> isAuthenticatorPortFree() async => isPortFree(int.parse(kDefaultAuthenticatorPort));
+Future<bool> isAuthenticatorPortFree() async => await pingAuthenticator(kDefaultAuthenticatorHost, kDefaultAuthenticatorPort.toString()) == null;
 
 Future<bool> freeAuthenticatorPort() async {
-  await Process.run(authenticatorKillExecutable.path, []);
-  var standardResult = await isAuthenticatorPortFree();
+  await killProcessByPort(kDefaultAuthenticatorPort);
+  final standardResult = await isAuthenticatorPortFree();
   if(standardResult) {
     return true;
   }
 
-  var elevatedResult = await runElevatedProcess(authenticatorKillExecutable.path, "");
-  if(!elevatedResult) {
-    return false;
-  }
-
-  return await isAuthenticatorPortFree();
+  return false;
 }
 
 Future<Uri?> pingAuthenticator(String host, String port, [bool https=false]) async {
@@ -48,7 +45,7 @@ Future<Uri?> pingAuthenticator(String host, String port, [bool https=false]) asy
     var response = await request.close();
     return response.statusCode == 200 || response.statusCode == 404 ? uri : null;
   }catch(_){
-    return https || declaredScheme != null ? null : await pingAuthenticator(host, port, true);
+    return https || declaredScheme != null || isLocalHost(host) ? null : await pingAuthenticator(host, port, true);
   }
 }
 

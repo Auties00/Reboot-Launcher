@@ -1,11 +1,11 @@
 name: reboot_launcher
 description: Graphical User Interface for Project Reboot
-version: "1.0.0"
+version: "9.0.2"
 
 publish_to: 'none'
 
 environment:
-  sdk: ">=2.19.0 <=3.3.3"
+  sdk: ">=3.0.0 <=3.3.4"
 
 dependencies:
   flutter:
@@ -14,38 +14,36 @@ dependencies:
   reboot_common:
     path: ./../common
   flutter_acrylic:
-    git:
-      url: https://github.com/Auties00/flutter_acrylic.git
-  fluent_ui: ^4.7.3
+    path: ./dependencies/flutter_acrylic
+  fluent_ui: ^4.8.7
+  fluentui_system_icons: ^1.1.238
   bitsdojo_window: ^0.1.5
   system_theme: ^2.0.0
-  file_picker: ^5.2.0+1
+  file_picker: ^8.0.3
   url_launcher: ^6.1.5
   archive: ^3.3.1
   crypto: ^3.0.2
   async: ^2.8.2
   get: ^4.6.5
   get_storage: ^2.0.3
-  window_manager: ^0.2.7
-  win32: 3.0.0
+  window_manager: ^0.3.8
   clipboard: ^0.1.3
   universal_disk_space: ^0.2.3
   uuid: ^3.0.6
-  supabase_flutter: ^1.10.0
+  supabase_flutter: ^2.5.2
   skeletons: ^0.0.3
   bcrypt: ^1.1.3
   dart_ipify: ^1.1.1
   path: ^1.8.3
   pointycastle: ^3.7.3
   sync: ^0.3.0
-  process_run: ^0.13.1
+  process_run: ^0.14.2
   auto_animated_list: ^1.0.4
-  app_links: ^3.4.3
+  app_links: ^6.0.2
   url_protocol: ^1.0.0
   intl: any
   windows_taskbar: ^1.1.2
   flutter_localized_locales: ^2.0.5
-  markdown_widget: ^2.2.0
 
 dependency_overrides:
   xml: ^6.3.0
@@ -57,9 +55,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^2.0.1
+  flutter_lints: ^4.0.0
   msix: ^3.6.3
-  flutter_distributor: ^0.3.4
+  flutter_distributor: ^0.4.0
 
 flutter:
   uses-material-design: true
@@ -82,7 +80,7 @@ msix_config:
   display_name: Reboot Launcher
   publisher_display_name: Auties00
   identity_name: 31868Auties00.RebootLauncher
-  msix_version: 8.1.0.0
+  msix_version: 9.0.0.1
   publisher: CN=E6CD08C6-DECF-4034-A3EB-2D5FA2CA8029
   logo_path: ./assets/icons/reboot.ico
   architecture: x64

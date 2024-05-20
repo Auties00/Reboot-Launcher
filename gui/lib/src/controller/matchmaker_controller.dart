@@ -45,7 +45,7 @@ class MatchmakerController extends ServerController {
   String get defaultHost => kDefaultMatchmakerHost;
 
   @override
-  String get defaultPort => kDefaultMatchmakerPort;
+  String get defaultPort => kDefaultMatchmakerPort.toString();
 
   @override
   Future<bool> get isPortFree => isMatchmakerPortFree();

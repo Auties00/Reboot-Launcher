@@ -39,13 +39,8 @@ class GameController extends GetxController {
     customLaunchArgs.addListener(() =>
         _storage.write("custom_launch_args", customLaunchArgs.text));
     started = RxBool(false);
-    var serializedInstance = _storage.read("instance");
-    instance = Rxn(serializedInstance != null ? GameInstance.fromJson(jsonDecode(serializedInstance)) : null);
-    instance.listen((_) => saveInstance());
+    instance = Rxn();
   }
-
-  Future<void> saveInstance() =>
-      _storage.write("instance", jsonEncode(instance.value?.toJson()));
 
   void reset() {
     username.text = kDefaultPlayerName;

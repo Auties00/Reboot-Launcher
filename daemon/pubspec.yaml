@@ -1,0 +1,15 @@
+name: reboot_watch
+version: "1.0.0"
+
+publish_to: 'none'
+
+environment:
+  sdk: ">=2.19.0 <=3.3.4"
+
+dependencies:
+  supabase: ^1.9.1
+  reboot_common:
+    path: ./../common
+
+dev_dependencies:
+  flutter_lints: ^2.0.1

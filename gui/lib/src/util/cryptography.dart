@@ -10,7 +10,13 @@ const int _keyLength = 32;
 
 String hashPassword(String plaintext) => BCrypt.hashpw(plaintext, BCrypt.gensalt());
 
-bool checkPassword(String password, String hashedText) => BCrypt.checkpw(password, hashedText);
+bool checkPassword(String password, String hashedText) {
+  try {
+    return BCrypt.checkpw(password, hashedText);
+  }catch(error) {
+    return false;
+  }
+}
 
 String aes256Encrypt(String plainText, String password) {
   final random = Random.secure();

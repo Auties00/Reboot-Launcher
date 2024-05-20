@@ -1,21 +1,20 @@
 import 'package:clipboard/clipboard.dart';
 import 'package:dart_ipify/dart_ipify.dart';
-import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/material.dart' show Icons;
+import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
 import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/data.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
-import 'package:reboot_launcher/src/page/abstract/page_setting.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
-import 'package:reboot_launcher/src/widget/game/start_button.dart';
-import 'package:reboot_launcher/src/widget/version/version_selector_tile.dart';
-import 'package:sync/semaphore.dart';
+import 'package:reboot_launcher/src/widget/game_start_button.dart';
+import 'package:reboot_launcher/src/widget/setting_tile.dart';
+import 'package:reboot_launcher/src/widget/version_selector_tile.dart';
 
 class HostPage extends RebootPage {
   const HostPage({Key? key}) : super(key: key);
@@ -30,64 +29,15 @@ class HostPage extends RebootPage {
   RebootPageType get type => RebootPageType.host;
 
   @override
-  bool get hasButton => true;
+  bool hasButton(String? pageName) => pageName == null;
 
   @override
   RebootPageState<HostPage> createState() => _HostingPageState();
-
-  @override
-  List<PageSetting> get settings => [
-    PageSetting(
-      name: translations.hostGameServerName,
-      description: translations.hostGameServerDescription,
-      children: [
-        PageSetting(
-            name: translations.hostGameServerNameName,
-            description: translations.hostGameServerNameDescription
-        ),
-        PageSetting(
-            name: translations.hostGameServerDescriptionName,
-            description: translations.hostGameServerDescriptionDescription
-        ),
-        PageSetting(
-            name: translations.hostGameServerPasswordName,
-            description: translations.hostGameServerDescriptionDescription
-        ),
-        PageSetting(
-            name: translations.hostGameServerDiscoverableName,
-            description: translations.hostGameServerDiscoverableDescription
-        )
-      ],
-    ),
-    versionSelectorRebootSetting,
-    PageSetting(
-      name: translations.hostShareName,
-      description: translations.hostShareDescription,
-      children: [
-        PageSetting(
-            name: translations.hostShareLinkName,
-            description: translations.hostShareLinkDescription,
-            content: translations.hostShareLinkContent
-        ),
-        PageSetting(
-            name: translations.hostShareIpName,
-            description: translations.hostShareIpDescription,
-            content: translations.hostShareIpContent
-        )
-      ],
-    ),
-    PageSetting(
-        name: translations.hostResetName,
-        description: translations.hostResetDescription,
-        content: translations.hostResetContent
-    )
-  ];
 }
 
 class _HostingPageState extends RebootPageState<HostPage> {
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
-  final Semaphore _semaphore = Semaphore();
 
   late final RxBool _showPasswordTrailing = RxBool(_hostingController.password.text.isNotEmpty);
 
@@ -110,16 +60,20 @@ class _HostingPageState extends RebootPageState<HostPage> {
   );
 
   @override
-  List<SettingTile> get settings => [
+  List<Widget> get settings => [
     _gameServer,
-    versionSelectorSettingTile,
+    versionSelectSettingTile,
+    _headless,
     _share,
     _resetDefaults
   ];
 
   SettingTile get _resetDefaults => SettingTile(
-      title: translations.hostResetName,
-      subtitle: translations.hostResetDescription,
+      icon: Icon(
+          FluentIcons.arrow_reset_24_regular
+      ),
+      title: Text(translations.hostResetName),
+      subtitle: Text(translations.hostResetDescription),
       content: Button(
         onPressed: () => showResetDialog(_hostingController.reset),
         child: Text(translations.hostResetContent),
@@ -127,13 +81,18 @@ class _HostingPageState extends RebootPageState<HostPage> {
   );
 
   SettingTile get _gameServer => SettingTile(
-      title: translations.hostGameServerName,
-      subtitle: translations.hostGameServerDescription,
-      expandedContent: [
+      icon: Icon(
+          FluentIcons.info_24_regular
+      ),
+      title: Text(translations.hostGameServerName),
+      subtitle: Text(translations.hostGameServerDescription),
+      children: [
         SettingTile(
-            title: translations.hostGameServerNameName,
-            subtitle: translations.hostGameServerNameDescription,
-            isChild: true,
+            icon: Icon(
+                FluentIcons.textbox_24_regular
+            ),
+            title: Text(translations.hostGameServerNameName),
+            subtitle: Text(translations.hostGameServerNameDescription),
             content: TextFormBox(
                 placeholder: translations.hostGameServerNameName,
                 controller: _hostingController.name,
@@ -141,9 +100,11 @@ class _HostingPageState extends RebootPageState<HostPage> {
             )
         ),
         SettingTile(
-            title: translations.hostGameServerDescriptionName,
-            subtitle: translations.hostGameServerDescriptionDescription,
-            isChild: true,
+            icon: Icon(
+                FluentIcons.text_description_24_regular
+            ),
+            title: Text(translations.hostGameServerDescriptionName),
+            subtitle: Text(translations.hostGameServerDescriptionDescription),
             content: TextFormBox(
                 placeholder: translations.hostGameServerDescriptionName,
                 controller: _hostingController.description,
@@ -151,9 +112,11 @@ class _HostingPageState extends RebootPageState<HostPage> {
             )
         ),
         SettingTile(
-            title: translations.hostGameServerPasswordName,
-            subtitle: translations.hostGameServerDescriptionDescription,
-            isChild: true,
+            icon: Icon(
+                FluentIcons.password_24_regular
+            ),
+            title: Text(translations.hostGameServerPasswordName),
+            subtitle: Text(translations.hostGameServerDescriptionDescription),
             content: Obx(() => TextFormBox(
                 placeholder: translations.hostGameServerPasswordName,
                 controller: _hostingController.password,
@@ -172,16 +135,18 @@ class _HostingPageState extends RebootPageState<HostPage> {
                       backgroundColor: ButtonState.all(Colors.transparent)
                   ),
                   child: Icon(
-                      _hostingController.showPassword.value ? Icons.visibility_off : Icons.visibility,
+                      _hostingController.showPassword.value ? FluentIcons.eye_off_24_filled : FluentIcons.eye_24_filled,
                       color: _showPasswordTrailing.value ? null : Colors.transparent
                   ),
                 )
             ))
         ),
         SettingTile(
-            title: translations.hostGameServerDiscoverableName,
-            subtitle: translations.hostGameServerDiscoverableDescription,
-            isChild: true,
+            icon: Icon(
+                FluentIcons.eye_24_regular
+            ),
+            title: Text(translations.hostGameServerDiscoverableName),
+            subtitle: Text(translations.hostGameServerDiscoverableDescription),
             contentWidth: null,
             content: Obx(() => Row(
               children: [
@@ -204,14 +169,43 @@ class _HostingPageState extends RebootPageState<HostPage> {
       ]
   );
 
+  Widget get _headless => Obx(() => SettingTile(
+    icon: Icon(
+        FluentIcons.window_console_20_regular
+    ),
+    title: Text(translations.hostHeadlessName),
+    subtitle: Text(translations.hostHeadlessDescription),
+    contentWidth: null,
+    content: Row(
+      children: [
+        Text(
+            _hostingController.headless.value ? translations.on : translations.off
+        ),
+        const SizedBox(
+            width: 16.0
+        ),
+        ToggleSwitch(
+            checked: _hostingController.headless.value,
+            onChanged: (value) => _hostingController.headless.value = value
+        ),
+      ],
+    ),
+  ),
+  );
+
   SettingTile get _share => SettingTile(
-    title: translations.hostShareName,
-    subtitle: translations.hostShareDescription,
-    expandedContent: [
+    icon: Icon(
+        FluentIcons.link_24_regular
+    ),
+    title: Text(translations.hostShareName),
+    subtitle: Text(translations.hostShareDescription),
+    children: [
       SettingTile(
-          title: translations.hostShareLinkName,
-          subtitle: translations.hostShareLinkDescription,
-          isChild: true,
+          icon: Icon(
+              FluentIcons.link_24_regular
+          ),
+          title: Text(translations.hostShareLinkName),
+          subtitle: Text(translations.hostShareLinkDescription),
           content: Button(
             onPressed: () async {
               FlutterClipboard.controlC("$kCustomUrlSchema://${_hostingController.uuid}");
@@ -221,9 +215,11 @@ class _HostingPageState extends RebootPageState<HostPage> {
           )
       ),
       SettingTile(
-          title: translations.hostShareIpName,
-          subtitle: translations.hostShareIpDescription,
-          isChild: true,
+          icon: Icon(
+              FluentIcons.globe_24_regular
+          ),
+          title: Text(translations.hostShareIpName),
+          subtitle: Text(translations.hostShareIpDescription),
           content: Button(
             onPressed: () async {
               try {
@@ -247,15 +243,12 @@ class _HostingPageState extends RebootPageState<HostPage> {
     }
 
     try {
-      _semaphore.acquire();
       _hostingController.publishServer(
           _gameController.username.text,
           _hostingController.instance.value!.versionName
       );
     } catch(error) {
       _showCannotUpdateGameServer(error);
-    } finally {
-      _semaphore.release();
     }
   }
 
@@ -278,12 +271,12 @@ class _HostingPageState extends RebootPageState<HostPage> {
   void _showCannotCopyIp(Object error) => showInfoBar(
       translations.hostShareIpMessageError(error.toString()),
       severity: InfoBarSeverity.error,
-      duration: snackbarLongDuration
+      duration: infoBarLongDuration
   );
 
   void _showCannotUpdateGameServer(Object error) => showInfoBar(
       translations.cannotUpdateGameServer(error.toString()),
       severity: InfoBarSeverity.success,
-      duration: snackbarLongDuration
+      duration: infoBarLongDuration
   );
 }

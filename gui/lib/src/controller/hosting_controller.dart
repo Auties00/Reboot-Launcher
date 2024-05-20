@@ -1,10 +1,7 @@
-import 'dart:convert';
-
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,8 +13,10 @@ class HostingController extends GetxController {
   late final TextEditingController password;
   late final RxBool showPassword;
   late final RxBool discoverable;
+  late final RxBool headless;
   late final RxBool started;
   late final RxBool published;
+  late final RxBool automaticServer;
   late final Rxn<GameInstance> instance;
   late final Rxn<Set<Map<String, dynamic>>> servers;
 
@@ -33,23 +32,26 @@ class HostingController extends GetxController {
     password.addListener(() => _storage.write("password", password.text));
     discoverable = RxBool(_storage.read("discoverable") ?? true);
     discoverable.listen((value) => _storage.write("discoverable", value));
+    headless = RxBool(_storage.read("headless") ?? true);
+    headless.listen((value) => _storage.write("headless", value));
     started = RxBool(false);
     published = RxBool(false);
     showPassword = RxBool(false);
-    var serializedInstance = _storage.read("instance");
-    instance = Rxn(serializedInstance != null ? GameInstance.fromJson(jsonDecode(serializedInstance)) : null);
-    instance.listen((_) => saveInstance());
-    var supabase = Supabase.instance.client;
+    instance = Rxn();
+    automaticServer = RxBool(_storage.read("auto") ?? true);
+    automaticServer.listen((value) => _storage.write("auto", value));
+    final supabase = Supabase.instance.client;
     servers = Rxn();
-    supabase.from('hosts')
+    supabase.from("hosting")
         .stream(primaryKey: ['id'])
         .map((event) => _parseValidServers(event))
-        .listen((event) => servers.value = event);
+        .listen((event) {
+          servers.value = event;
+          published.value = event.any((element) => element["id"] == uuid);
+        });
   }
 
   Set<Map<String, dynamic>> _parseValidServers(event) => event.where((element) => element["ip"] != null).toSet();
-
-  Future<void> saveInstance() => _storage.write("instance", jsonEncode(instance.value?.toJson()));
 
   void reset() {
     name.text = "";

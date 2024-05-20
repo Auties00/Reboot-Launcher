@@ -121,7 +121,7 @@ bool Win32Window::CreateAndShow(const std::wstring &title,
     HWND window = CreateWindow(
             window_class,
             title.c_str(),
-            WS_OVERLAPPEDWINDOW,
+            WS_OVERLAPPED | WS_BORDER | WS_THICKFRAME,
             Scale(origin.x, scale_factor),
             Scale(origin.y, scale_factor),
             Scale(size.width, scale_factor),

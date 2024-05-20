@@ -5,56 +5,76 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
+import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_launcher/src/controller/info_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
-import 'package:reboot_launcher/src/controller/update_controller.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
-import 'package:reboot_launcher/src/dialog/implementation/error.dart';
+import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
+import 'package:reboot_launcher/src/controller/info_controller.dart';
+import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/controller/update_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/dialog/implementation/error.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/implementation/home_page.dart';
+import 'package:reboot_launcher/src/util/daemon.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:reboot_launcher/src/util/watch.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:url_protocol/url_protocol.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 
 const double kDefaultWindowWidth = 1536;
 const double kDefaultWindowHeight = 1024;
-const String kCustomUrlSchema = "reboot";
+const String kCustomUrlSchema = "Reboot";
 
-void main() => runZonedGuarded(() async {
-  await installationDirectory.create(recursive: true);
-  await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey
-  );
-  WidgetsFlutterBinding.ensureInitialized();
-  await SystemTheme.accentColor.load();
-  _initWindow();
-  var storageError = await _initStorage();
-  var urlError = await _initUrlHandler();
-  var observerError = _initObservers();
-  _checkGameServer();
-  runApp(const RebootApplication());
-  WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _handleErrors([urlError, storageError, observerError]));
-},
-        (error, stack) => onError(error, stack, false),
+void main() => runZonedGuarded(
+    () async {
+      final errors = <Object>[];
+      try {
+        await installationDirectory.create(recursive: true);
+        await Supabase.initialize(
+            url: supabaseUrl,
+            anonKey: supabaseAnonKey
+        );
+        WidgetsFlutterBinding.ensureInitialized();
+        await SystemTheme.accentColor.load();
+        _initWindow();
+        final storageError = await _initStorage();
+        if(storageError != null) {
+          errors.add(storageError);
+        }
+
+        final urlError = await _initUrlHandler();
+        if(urlError != null) {
+          errors.add(urlError);
+        }
+
+        final observerError = _initObservers();
+        if(observerError != null) {
+          errors.add(observerError);
+        }
+
+        _checkGameServer();
+      }catch(uncaughtError) {
+        errors.add(uncaughtError);
+      } finally{
+        runApp(const RebootApplication());
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _handleErrors(errors));
+      }
+    },
+    (error, stack) => onError(error, stack, false),
     zoneSpecification: ZoneSpecification(
-        handleUncaughtError: (self, parent, zone, error, stacktrace) => onError(error, stacktrace, false)
-    ));
+       handleUncaughtError: (self, parent, zone, error, stacktrace) => onError(error, stacktrace, false)
+    )
+);
 
 void _handleErrors(List<Object?> errors) {
   errors.where((element) => element != null).forEach((element) => onError(element!, null, false));
@@ -78,7 +98,7 @@ Future<void> _checkGameServer() async {
     WidgetsBinding.instance.addPostFrameCallback((_) => showInfoBar(
         oldOwner == null ? translations.serverNoLongerAvailableUnnamed : translations.serverNoLongerAvailable(oldOwner),
         severity: InfoBarSeverity.warning,
-        duration: snackbarLongDuration
+        duration: infoBarLongDuration
     ));
   }catch(_) {
     // Intended behaviour
@@ -90,7 +110,7 @@ Future<Object?> _initUrlHandler() async {
   try {
     registerProtocolHandler(kCustomUrlSchema, arguments: ['%s']);
     var appLinks = AppLinks();
-    var initialUrl = await appLinks.getInitialAppLink();
+    var initialUrl = await appLinks.getInitialLink();
     if(initialUrl != null) {
       _joinServer(initialUrl);
     }
@@ -112,7 +132,7 @@ void _joinServer(Uri uri) {
   }else {
     showInfoBar(
         translations.noServerFound,
-        duration: snackbarLongDuration,
+        duration: infoBarLongDuration,
         severity: InfoBarSeverity.error
     );
   }
@@ -153,11 +173,9 @@ Object? _initObservers() {
     var gameController = Get.find<GameController>();
     var gameInstance = gameController.instance.value;
     gameInstance?.startObserver();
-    gameController.saveInstance();
     var hostingController = Get.find<HostingController>();
     var hostingInstance = hostingController.instance.value;
     hostingInstance?.startObserver();
-    hostingController.saveInstance();
     return null;
   }catch(error) {
     return error;
@@ -179,9 +197,7 @@ Future<Object?> _initStorage() async {
     Get.put(SettingsController());
     Get.put(HostingController());
     Get.put(InfoController());
-    var updateController = UpdateController();
-    Get.put(updateController);
-    updateController.update();
+    Get.put(UpdateController());
     return null;
   }catch(error) {
     return error;

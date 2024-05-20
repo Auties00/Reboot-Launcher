@@ -1,21 +1,23 @@
-import 'package:fluent_ui/fluent_ui.dart';
+import 'package:fluent_ui/fluent_ui.dart' as fluentUi show FluentIcons;
+import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/data.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
-import 'package:reboot_launcher/src/page/abstract/page_setting.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/util/checks.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:reboot_launcher/src/widget/common/file_selector.dart';
-import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
-import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
+import 'package:reboot_launcher/src/widget/file_selector.dart';
+import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends RebootPage {
@@ -31,91 +33,15 @@ class SettingsPage extends RebootPage {
   RebootPageType get type => RebootPageType.settings;
 
   @override
-  bool get hasButton => false;
+  bool hasButton(String? pageName) => false;
 
   @override
   RebootPageState<SettingsPage> createState() => _SettingsPageState();
-
-  @override
-  List<PageSetting> get settings => [
-    PageSetting(
-      name: translations.settingsClientName,
-      description: translations.settingsClientDescription,
-      children: [
-        PageSetting(
-            name: translations.settingsClientConsoleName,
-            description: translations.settingsClientConsoleDescription
-        ),
-        PageSetting(
-            name: translations.settingsClientAuthName,
-            description: translations.settingsClientAuthDescription
-        ),
-        PageSetting(
-            name: translations.settingsClientMemoryName,
-            description: translations.settingsClientMemoryDescription
-        ),
-        PageSetting(
-            name: translations.settingsClientArgsName,
-            description: translations.settingsClientArgsDescription
-        ),
-      ],
-    ),
-    PageSetting(
-      name: translations.settingsServerName,
-      description: translations.settingsServerSubtitle,
-      children: [
-        PageSetting(
-            name: translations.settingsServerFileName,
-            description: translations.settingsServerFileDescription
-        ),
-        PageSetting(
-            name: translations.settingsServerPortName,
-            description: translations.settingsServerPortDescription
-        ),
-        PageSetting(
-            name: translations.settingsServerMirrorName,
-            description: translations.settingsServerMirrorDescription
-        ),
-        PageSetting(
-            name: translations.settingsServerTimerName,
-            description: translations.settingsServerTimerSubtitle
-        ),
-      ],
-    ),
-    PageSetting(
-      name: translations.settingsUtilsName,
-      description: translations.settingsUtilsSubtitle,
-      children: [
-        PageSetting(
-            name: translations.settingsUtilsThemeName,
-            description: translations.settingsUtilsThemeDescription,
-        ),
-        PageSetting(
-          name: translations.settingsUtilsLanguageName,
-          description: translations.settingsUtilsLanguageDescription,
-        ),
-        PageSetting(
-            name: translations.settingsUtilsInstallationDirectoryName,
-            description: translations.settingsUtilsInstallationDirectorySubtitle,
-            content: translations.settingsUtilsInstallationDirectoryContent
-        ),
-        PageSetting(
-            name: translations.settingsUtilsBugReportName,
-            description: translations.settingsUtilsBugReportSubtitle,
-            content: translations.settingsUtilsBugReportContent
-        ),
-        PageSetting(
-            name: translations.settingsUtilsResetDefaultsName,
-            description: translations.settingsUtilsResetDefaultsSubtitle,
-            content: translations.settingsUtilsResetDefaultsContent
-        )
-      ],
-    )
-  ];
 }
 
 class _SettingsPageState extends RebootPageState<SettingsPage> {
   final GameController _gameController  = Get.find<GameController>();
+  final HostingController _hostingController = Get.find<HostingController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
   final UpdateController _updateController = Get.find<UpdateController>();
 
@@ -126,13 +52,29 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
   List<Widget> get settings => [
     _clientSettings,
     _gameServerSettings,
-    _launcherUtilities
+    _launcherSettings,
+    _installationDirectory
   ];
 
+  SettingTile get _installationDirectory => SettingTile(
+      icon: Icon(
+          FluentIcons.folder_24_regular
+      ),
+      title: Text(translations.settingsUtilsInstallationDirectoryName),
+      subtitle: Text(translations.settingsUtilsInstallationDirectorySubtitle),
+      content: Button(
+        onPressed: () => launchUrl(installationDirectory.uri),
+        child: Text(translations.settingsUtilsInstallationDirectoryContent),
+      )
+  );
+
   SettingTile get _clientSettings => SettingTile(
-    title: translations.settingsClientName,
-    subtitle: translations.settingsClientDescription,
-    expandedContent: [
+    icon: Icon(
+        FluentIcons.desktop_24_regular
+    ),
+    title: Text(translations.settingsClientName),
+    subtitle: Text(translations.settingsClientDescription),
+    children: [
       _createFileSetting(
           title: translations.settingsClientConsoleName,
           description: translations.settingsClientConsoleDescription,
@@ -149,9 +91,11 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
           controller: _settingsController.memoryLeakDll
       ),
       SettingTile(
-          title: translations.settingsClientArgsName,
-          subtitle: translations.settingsClientArgsDescription,
-          isChild: true,
+          icon: Icon(
+              FluentIcons.text_box_settings_24_regular
+          ),
+          title: Text(translations.settingsClientArgsName),
+          subtitle: Text(translations.settingsClientArgsDescription),
           content: TextFormBox(
             placeholder: translations.settingsClientArgsPlaceholder,
             controller: _gameController.customLaunchArgs,
@@ -161,17 +105,23 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
   );
 
   SettingTile get _gameServerSettings => SettingTile(
-    title: translations.settingsServerName,
-    subtitle: translations.settingsServerSubtitle,
-    expandedContent: [
+    icon: Icon(
+        FluentIcons.server_24_regular
+    ),
+    title: Text(translations.settingsServerName),
+    subtitle: Text(translations.settingsServerSubtitle),
+    children: [
       _createFileSetting(
           title: translations.settingsServerFileName,
           description: translations.settingsServerFileDescription,
           controller: _settingsController.gameServerDll
       ),
       SettingTile(
-          title: translations.settingsServerPortName,
-          subtitle: translations.settingsServerPortDescription,
+          icon: Icon(
+              fluentUi.FluentIcons.number_field
+          ),
+          title: Text(translations.settingsServerPortName),
+          subtitle: Text(translations.settingsServerPortDescription),
           content: TextFormBox(
               placeholder:  translations.settingsServerPortName,
               controller: _settingsController.gameServerPort,
@@ -179,22 +129,26 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly
               ]
-          ),
-          isChild: true
+          )
       ),
       SettingTile(
-          title: translations.settingsServerMirrorName,
-          subtitle: translations.settingsServerMirrorDescription,
+          icon: Icon(
+              FluentIcons.globe_24_regular
+          ),
+          title: Text(translations.settingsServerMirrorName),
+          subtitle: Text(translations.settingsServerMirrorDescription),
           content: TextFormBox(
               placeholder:  translations.settingsServerMirrorPlaceholder,
               controller: _updateController.url,
               validator: checkUpdateUrl
-          ),
-          isChild: true
+          )       
       ),
       SettingTile(
-          title: translations.settingsServerTimerName,
-          subtitle: translations.settingsServerTimerSubtitle,
+          icon: Icon(
+              FluentIcons.timer_24_regular
+          ),
+          title: Text(translations.settingsServerTimerName),
+          subtitle: Text(translations.settingsServerTimerSubtitle),
           content: Obx(() => DropDownButton(
               leading: Text(_updateController.timer.value.text),
               items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
@@ -205,20 +159,46 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
                     _updateController.update(true);
                   }
               )).toList()
-          )),
-          isChild: true
+          ))       
       ),
+      SettingTile(
+        icon: Icon(
+            FluentIcons.developer_board_24_regular
+        ),
+        title: Text(translations.playAutomaticServerName),
+        subtitle: Text(translations.playAutomaticServerDescription),
+        contentWidth: null,
+        content: Obx(() => Row(
+          children: [
+            Text(
+                _hostingController.automaticServer.value ? translations.on : translations.off
+            ),
+            const SizedBox(
+                width: 16.0
+            ),
+            ToggleSwitch(
+                checked: _hostingController.automaticServer.value,
+                onChanged: (value) => _hostingController.automaticServer.value = value
+            ),
+          ],
+        )),
+      )
     ],
   );
 
-  SettingTile get _launcherUtilities => SettingTile(
-    title: translations.settingsUtilsName,
-    subtitle: translations.settingsUtilsSubtitle,
-    expandedContent: [
+  SettingTile get _launcherSettings => SettingTile(
+    icon: Icon(
+        FluentIcons.play_24_regular
+    ),
+    title: Text(translations.settingsUtilsName),
+    subtitle: Text(translations.settingsUtilsSubtitle),
+    children: [
       SettingTile(
-          title: translations.settingsUtilsLanguageName,
-          subtitle: translations.settingsUtilsLanguageDescription,
-          isChild: true,
+          icon: Icon(
+              FluentIcons.local_language_24_regular
+          ),
+          title: Text(translations.settingsUtilsLanguageName),
+          subtitle: Text(translations.settingsUtilsLanguageDescription),
           content: Obx(() => DropDownButton(
               leading: Text(_getLocaleName(_settingsController.language.value)),
               items: AppLocalizations.supportedLocales.map((locale) => MenuFlyoutItem(
@@ -228,9 +208,11 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
           ))
       ),
       SettingTile(
-          title: translations.settingsUtilsThemeName,
-          subtitle: translations.settingsUtilsThemeDescription,
-          isChild: true,
+          icon: Icon(
+              FluentIcons.dark_theme_24_regular
+          ),
+          title: Text(translations.settingsUtilsThemeName),
+          subtitle: Text(translations.settingsUtilsThemeDescription),
           content: Obx(() => DropDownButton(
               leading: Text(_settingsController.themeMode.value.title),
               items: ThemeMode.values.map((themeMode) => MenuFlyoutItem(
@@ -240,27 +222,11 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
           ))
       ),
       SettingTile(
-          title: translations.settingsUtilsInstallationDirectoryName,
-          subtitle: translations.settingsUtilsInstallationDirectorySubtitle,
-          isChild: true,
-          content: Button(
-            onPressed: () => launchUrl(installationDirectory.uri),
-            child: Text(translations.settingsUtilsInstallationDirectoryContent),
-          )
-      ),
-      SettingTile(
-          title: translations.settingsUtilsBugReportName,
-          subtitle: translations.settingsUtilsBugReportSubtitle,
-          isChild: true,
-          content: Button(
-            onPressed: () => launchUrl(Uri.parse("https://github.com/Auties00/reboot_launcher/issues")),
-            child: Text(translations.settingsUtilsBugReportContent),
-          )
-      ),
-      SettingTile(
-          title: translations.settingsUtilsResetDefaultsName,
-          subtitle: translations.settingsUtilsResetDefaultsSubtitle,
-          isChild: true,
+          icon: Icon(
+              FluentIcons.arrow_reset_24_regular
+          ),
+          title: Text(translations.settingsUtilsResetDefaultsName),
+          subtitle: Text(translations.settingsUtilsResetDefaultsSubtitle),
           content: Button(
             onPressed: () => showResetDialog(_settingsController.reset),
             child: Text(translations.settingsUtilsResetDefaultsContent),
@@ -278,9 +244,12 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
     return locale;
   }
 
-  Widget _createFileSetting({required String title, required String description, required TextEditingController controller}) => SettingTile(
-      title: title,
-      subtitle: description,
+  SettingTile _createFileSetting({required String title, required String description, required TextEditingController controller}) => SettingTile(
+      icon: Icon(
+        FluentIcons.document_24_regular
+      ),
+      title: Text(title),
+      subtitle: Text(description),
       content: FileSelector(
           placeholder: translations.selectPathPlaceholder,
           windowTitle: translations.selectPathWindowTitle,
@@ -288,8 +257,7 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
           validator: checkDll,
           extension: "dll",
           folder: false
-      ),
-      isChild: true
+      )
   );
 }
 

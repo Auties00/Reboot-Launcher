@@ -1,16 +1,16 @@
-import 'package:fluent_ui/fluent_ui.dart';
+import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
-import 'package:reboot_launcher/src/page/abstract/page_setting.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:reboot_launcher/src/widget/common/setting_tile.dart';
-import 'package:reboot_launcher/src/widget/game/start_button.dart';
-import 'package:reboot_launcher/src/widget/version/version_selector_tile.dart';
+import 'package:reboot_launcher/src/widget/game_start_button.dart';
+import 'package:reboot_launcher/src/widget/setting_tile.dart';
+import 'package:reboot_launcher/src/widget/version_selector_tile.dart';
 
 
 class PlayPage extends RebootPage {
@@ -20,7 +20,7 @@ class PlayPage extends RebootPage {
   RebootPageState<PlayPage> createState() => _PlayPageState();
 
   @override
-  bool get hasButton => true;
+  bool hasButton(String? pageName) => pageName == null;
 
   @override
   String get name => translations.playName;
@@ -30,33 +30,6 @@ class PlayPage extends RebootPage {
 
   @override
   RebootPageType get type => RebootPageType.play;
-
-  @override
-  List<PageSetting> get settings => [
-    versionSelectorRebootSetting,
-    PageSetting(
-        name: translations.playGameServerName,
-        description: translations.playGameServerDescription,
-        content: translations.playGameServerContentLocal,
-        children: [
-          PageSetting(
-              name: translations.playGameServerHostName,
-              description: translations.playGameServerHostDescription,
-              content: translations.playGameServerHostName
-          ),
-          PageSetting(
-              name: translations.playGameServerBrowserName,
-              description: translations.playGameServerBrowserDescription,
-              content: translations.playGameServerBrowserName
-          ),
-          PageSetting(
-              name: translations.playGameServerCustomName,
-              description: translations.playGameServerCustomDescription,
-              content: translations.playGameServerCustomContent
-          )
-        ]
-    )
-  ];
 }
 
 class _PlayPageState extends RebootPageState<PlayPage> {
@@ -84,60 +57,39 @@ class _PlayPageState extends RebootPageState<PlayPage> {
 
   @override
   List<SettingTile> get settings => [
-    versionSelectorSettingTile,
-    _gameServerSelector
+    versionSelectSettingTile,
+    _hostSettingTile,
+    _browseServerTile,
+    _matchmakerTile
   ];
 
-  SettingTile get _gameServerSelector => SettingTile(
-      title: translations.playGameServerName,
-      subtitle: translations.playGameServerDescription,
-      content: IgnorePointer(
-        child: Button(
-            style: ButtonStyle(
-                backgroundColor: ButtonState.all(FluentTheme.of(context).resources.controlFillColorDefault)
-            ),
-            onPressed: () {},
-            child: Obx(() {
-              var address = _matchmakerController.gameServerAddress.text;
-              var owner = _matchmakerController.gameServerOwner.value;
-              return Text(
-                  isLocalHost(address) ? translations.playGameServerContentLocal : owner != null ? translations.playGameServerContentBrowser(owner) : address,
-                  textAlign: TextAlign.start
-              );
-            })
-        ),
-      ),
-      expandedContent: [
-        SettingTile(
-            title: translations.playGameServerHostName,
-            subtitle: translations.playGameServerHostDescription,
-            content: Button(
-                onPressed: () => pageIndex.value = RebootPageType.host.index,
-                child: Text(translations.playGameServerHostName)
-            ),
-            isChild: true
-        ),
-        SettingTile(
-            title: translations.playGameServerBrowserName,
-            subtitle: translations.playGameServerBrowserDescription,
-            content: Button(
-                onPressed: () => pageIndex.value = RebootPageType.browser.index,
-                child: Text(translations.playGameServerBrowserName)
-            ),
-            isChild: true
-        ),
-        SettingTile(
-            title: translations.playGameServerCustomName,
-            subtitle: translations.playGameServerCustomDescription,
-            content: Button(
-                onPressed: () {
-                  pageIndex.value = RebootPageType.matchmaker.index;
-                  WidgetsBinding.instance.addPostFrameCallback((_) => _matchmakerController.gameServerAddressFocusNode.requestFocus());
-                },
-                child: Text(translations.playGameServerCustomContent)
-            ),
-            isChild: true
-        )
-      ]
+  SettingTile get _matchmakerTile => SettingTile(
+    onPressed: () {
+      pageIndex.value = RebootPageType.matchmaker.index;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _matchmakerController.gameServerAddressFocusNode.requestFocus());
+    },
+    icon: Icon(
+        FluentIcons.globe_24_regular
+    ),
+    title: Text(translations.playGameServerCustomName),
+    subtitle: Text(translations.playGameServerCustomDescription),
+  );
+
+  SettingTile get _browseServerTile => SettingTile(
+    onPressed: () => pageIndex.value = RebootPageType.browser.index,
+    icon: Icon(
+        FluentIcons.search_24_regular
+    ),
+    title: Text(translations.playGameServerBrowserName),
+    subtitle: Text(translations.playGameServerBrowserDescription)
+  );
+
+  SettingTile get _hostSettingTile => SettingTile(
+    onPressed: () => pageIndex.value = RebootPageType.host.index,
+    icon: Icon(
+        FluentIcons.desktop_24_regular
+    ),
+    title: Text(translations.playGameServerHostName),
+    subtitle: Text(translations.playGameServerHostDescription),
   );
 }

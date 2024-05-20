@@ -2,24 +2,62 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
-import 'package:dio/dio.dart';
+
+const String kStopBuildDownloadSignal = "kill";
 
 final Dio _dio = Dio();
-final String _manifestSourceUrl = "https://raw.githubusercontent.com/simplyblk/Fortnitebuilds/main/README.md";
+final String _archiveSourceUrl = "https://raw.githubusercontent.com/simplyblk/Fortnitebuilds/main/README.md";
 final RegExp _rarProgressRegex = RegExp("^((100)|(\\d{1,2}(.\\d*)?))%\$");
+const String _manifestSourceUrl = "https://manifest.fnbuilds.services";
+const int _maxDownloadErrors = 30;
 
 Future<List<FortniteBuild>> fetchBuilds(ignored) async {
-  var response = await _dio.get<String>(
-      _manifestSourceUrl,
+  final results = await Future.wait([_fetchManifestBuilds(), _fetchArchiveBuilds()]);
+  final data =  <FortniteBuild>[];
+  for(final result in results) {
+    data.addAll(result);
+  }
+
+  return data;
+}
+
+Future<List<FortniteBuild>> _fetchManifestBuilds() async {
+  try {
+    final response = await _dio.get<String>("$_manifestSourceUrl/versions.json");
+    final body = response.data;
+    return jsonDecode(body!).map((version) {
+      final nameParts = version.split("-");
+      if(nameParts.length < 2) {
+        return null;
+      }
+
+      final name = nameParts[1];
+      return FortniteBuild(
+          identifier: name,
+          version: "Fortnite ${name}",
+          link: "$_manifestSourceUrl/$name/$name.manifest",
+          source: FortniteBuildSource.manifest
+      );
+    }).whereType<FortniteBuild>().toList();
+  }catch(_) {
+    return [];
+  }
+}
+
+Future<List<FortniteBuild>> _fetchArchiveBuilds() async {
+  final response = await _dio.get<String>(
+      _archiveSourceUrl,
       options: Options(
           responseType: ResponseType.plain
       )
   );
   if (response.statusCode != 200) {
-    throw Exception("Erroneous status code: ${response.statusCode}");
+    return [];
   }
 
   var results = <FortniteBuild>[];
@@ -40,63 +78,154 @@ Future<List<FortniteBuild>> fetchBuilds(ignored) async {
 
     var version = parts.first.trim();
     version = version.substring(0, version.indexOf("-"));
-    results.add(FortniteBuild(version: "Fortnite $version", link: link));
+    results.add(FortniteBuild(
+        identifier: version,
+        version: "Fortnite $version",
+        link: link,
+        source: FortniteBuildSource.archive
+    ));
   }
 
   return results;
 }
 
 
-Future<void> downloadArchiveBuild(ArchiveDownloadOptions options) async {
-  var stopped = _setupLifecycle(options);
-  var outputDir = Directory("${options.destination.path}\\.build");
-  outputDir.createSync(recursive: true);
-  options.destination.createSync(recursive: true);
-  var fileName = options.archiveUrl.substring(options.archiveUrl.lastIndexOf("/") + 1);
-  var extension = path.extension(fileName);
-  var tempFile = File("${outputDir.path}\\$fileName");
-  if(tempFile.existsSync()) {
-    tempFile.deleteSync(recursive: true);
-  }
+Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
+  try {
+    final stopped = _setupLifecycle(options);
+    switch(options.build.source) {
+      case FortniteBuildSource.archive:
+        final outputDir = Directory("${options.destination.path}\\.build");
+        await outputDir.create(recursive: true);
+        final fileName = options.build.link.substring(options.build.link.lastIndexOf("/") + 1);
+        final extension = path.extension(fileName);
+        final tempFile = File("${outputDir.path}\\$fileName");
+        if(await tempFile.exists()) {
+          await tempFile.delete(recursive: true);
+        }
 
-  var startTime = DateTime.now().millisecondsSinceEpoch;
-  var response = _downloadFile(options, tempFile, startTime);
-  await Future.any([stopped.future, response]);
-  if(!stopped.isCompleted) {
-    var awaitedResponse = await response;
-    if (!awaitedResponse.statusCode.toString().startsWith("20")) {
-      throw Exception("Erroneous status code: ${awaitedResponse.statusCode}");
+        final startTime = DateTime.now().millisecondsSinceEpoch;
+        final response = _downloadArchive(options, tempFile, startTime);
+        await Future.any([stopped.future, response]);
+        if(!stopped.isCompleted) {
+          var awaitedResponse = await response;
+          if (!awaitedResponse.statusCode.toString().startsWith("20")) {
+            options.port.send("Erroneous status code: ${awaitedResponse.statusCode}");
+            return;
+          }
+
+          await _extractArchive(stopped, extension, tempFile, options);
+        }
+
+        delete(outputDir);
+        break;
+      case FortniteBuildSource.manifest:
+        final response = await _dio.get<String>(options.build.link);
+        final manifest = FortniteBuildManifestFile.fromJson(jsonDecode(response.data!));
+
+        final totalBytes = manifest.size;
+        final outputDir = options.destination;
+        await outputDir.create(recursive: true);
+
+        final startTime = DateTime.now().millisecondsSinceEpoch;
+        final codec = GZipCodec();
+        var completedBytes = 0;
+        var lastPercentage = 0.0;
+
+        final writers = manifest.chunks.map((chunkedFile) async {
+          final outputFile = File('${outputDir.path}/${chunkedFile.file}');
+          if(outputFile.existsSync()) {
+            if(outputFile.lengthSync() != chunkedFile.fileSize) {
+              await outputFile.delete();
+            } else {
+              completedBytes += chunkedFile.fileSize;
+              final percentage = completedBytes * 100 / totalBytes;
+              if(percentage - lastPercentage > 0.1) {
+                _onProgress(
+                    startTime,
+                    DateTime.now().millisecondsSinceEpoch,
+                    percentage,
+                    false,
+                    options
+                );
+              }
+              return;
+            }
+          }
+
+          await outputFile.parent.create(recursive: true);
+          for(final chunkId in chunkedFile.chunksIds) {
+            final response = await _dio.get<Uint8List>(
+              "$_manifestSourceUrl/${options.build.identifier}/$chunkId.chunk",
+              options: Options(
+                  responseType: ResponseType.bytes,
+                  headers: {
+                    "Accept-Encoding": "gzip"
+                  }
+              ),
+            );
+            var responseBody = response.data;
+            if(responseBody == null) {
+              continue;
+            }
+
+            final decodedBody = codec.decode(responseBody);
+            await outputFile.writeAsBytes(
+                decodedBody,
+                mode: FileMode.append,
+                flush: true
+            );
+            completedBytes += decodedBody.length;
+
+            final percentage = completedBytes * 100 / totalBytes;
+            if(percentage - lastPercentage > 0.1) {
+              _onProgress(
+                  startTime,
+                  DateTime.now().millisecondsSinceEpoch,
+                  percentage,
+                  false,
+                  options
+              );
+            }
+          }
+        });
+        await Future.any([stopped.future, Future.wait(writers)]);
+        options.port.send(FortniteBuildDownloadProgress(100, 0, true));
+        break;
+    }
+  }catch(error, stackTrace) {
+    options.port.send("$error\n$stackTrace");
+  }
+}
+
+Future<Response> _downloadArchive(FortniteBuildDownloadOptions options, File tempFile, int startTime, [int? byteStart = null, int errorsCount = 0]) async {
+  var received = byteStart ?? 0;
+  try {
+    return await _dio.download(
+        options.build.link,
+        tempFile.path,
+        onReceiveProgress: (data, length) {
+          received = data;
+          final percentage = (received / length) * 100;
+          _onProgress(startTime, DateTime.now().millisecondsSinceEpoch, percentage, false, options);
+        },
+        deleteOnError: false,
+        options: Options(
+            headers: byteStart == null ? null : {
+              "Range": "bytes=${byteStart}-"
+            }
+        )
+    );
+  }catch(error) {
+    if(errorsCount >= _maxDownloadErrors) {
+      throw error;
     }
 
-    await _extract(stopped, extension, tempFile, options);
+    return await _downloadArchive(options, tempFile, startTime, received, errorsCount + 1);
   }
-
-  delete(outputDir);
 }
 
-Future<Response> _downloadFile(ArchiveDownloadOptions options, File tempFile, int startTime, [int? byteStart = null]) {
-  var received = byteStart ?? 0;
-  return _dio.download(
-      options.archiveUrl,
-      tempFile.path,
-      onReceiveProgress: (data, length) {
-        received = data;
-        var now = DateTime.now();
-        var progress = (received / length) * 100;
-        var msLeft = startTime + (now.millisecondsSinceEpoch - startTime) * length / received - now.millisecondsSinceEpoch;
-        var minutesLeft = (msLeft / 1000 / 60).round();
-        options.port.send(ArchiveDownloadProgress(progress, minutesLeft, false));
-      },
-      deleteOnError: false,
-      options: Options(
-          headers: byteStart == null ? null : {
-            "Range": "bytes=${byteStart}-"
-          }
-      )
-  ).catchError((error) => _downloadFile(options, tempFile, startTime, received));
-}
-
-Future<void> _extract(Completer<dynamic> stopped, String extension, File tempFile, ArchiveDownloadOptions options) async {
+Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File tempFile, FortniteBuildDownloadOptions options) async {
   var startTime = DateTime.now().millisecondsSinceEpoch;
   Process? process;
   switch (extension.toLowerCase()) {
@@ -106,25 +235,20 @@ Future<void> _extract(Completer<dynamic> stopped, String extension, File tempFil
           ["a", "-bsp1", '-o"${options.destination.path}"', tempFile.path]
       );
       process.stdout.listen((bytes) {
-        var now = DateTime.now().millisecondsSinceEpoch;
-        var data = utf8.decode(bytes);
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final data = utf8.decode(bytes);
         if(data == "Everything is Ok") {
-          options.port.send(ArchiveDownloadProgress(100, 0, true));
+          options.port.send(FortniteBuildDownloadProgress(100, 0, true));
           return;
         }
 
-        var element = data.trim().split(" ")[0];
+        final element = data.trim().split(" ")[0];
         if(!element.endsWith("%")) {
           return;
         }
 
-        var percentage = int.parse(element.substring(0, element.length - 1));
-        if(percentage == 0) {
-          options.port.send(ArchiveDownloadProgress(percentage.toDouble(), null, true));
-          return;
-        }
-
-        _onProgress(startTime, now, percentage, options);
+        final percentage = int.parse(element.substring(0, element.length - 1)).toDouble();
+        _onProgress(startTime, now, percentage, true, options);
       });
       break;
     case ".rar":
@@ -133,34 +257,29 @@ Future<void> _extract(Completer<dynamic> stopped, String extension, File tempFil
           ["x", "-o+", tempFile.path, "*.*", options.destination.path]
       );
       process.stdout.listen((event) {
-        var now = DateTime.now().millisecondsSinceEpoch;
-        var data = utf8.decode(event);
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final data = utf8.decode(event);
         data.replaceAll("\r", "")
             .replaceAll("\b", "")
             .trim()
             .split("\n")
             .forEach((entry) {
-                if(entry == "All OK") {
-                  options.port.send(ArchiveDownloadProgress(100, 0, true));
-                  return;
-                }
+          if(entry == "All OK") {
+            options.port.send(FortniteBuildDownloadProgress(100, 0, true));
+            return;
+          }
 
-                var element = _rarProgressRegex.firstMatch(entry)?.group(1);
-                if(element == null) {
-                  return;
-                }
+          final element = _rarProgressRegex.firstMatch(entry)?.group(1);
+          if(element == null) {
+            return;
+          }
 
-                var percentage = int.parse(element);
-                if(percentage == 0) {
-                  options.port.send(ArchiveDownloadProgress(percentage.toDouble(), null, true));
-                  return;
-                }
-
-                _onProgress(startTime, now, percentage, options);
-            });
+          final percentage = int.parse(element).toDouble();
+          _onProgress(startTime, now, percentage, true, options);
+        });
       });
       process.stderr.listen((event) {
-        var data = utf8.decode(event);
+        final data = utf8.decode(event);
         options.port.send(data);
       });
       break;
@@ -171,17 +290,22 @@ Future<void> _extract(Completer<dynamic> stopped, String extension, File tempFil
   await Future.any([stopped.future, process.exitCode]);
 }
 
-void _onProgress(int startTime, int now, int percentage, ArchiveDownloadOptions options) {
-    var msLeft = startTime + (now - startTime) * 100 / percentage - now;
-  var minutesLeft = (msLeft / 1000 / 60).round();
-  options.port.send(ArchiveDownloadProgress(percentage.toDouble(), minutesLeft, true));
+void _onProgress(int startTime, int now, double percentage, bool extracting, FortniteBuildDownloadOptions options) {
+  if(percentage == 0) {
+    options.port.send(FortniteBuildDownloadProgress(percentage, null, extracting));
+    return;
+  }
+
+  final msLeft = startTime + (now - startTime) * 100 / percentage - now;
+  final minutesLeft = (msLeft / 1000 / 60).round();
+  options.port.send(FortniteBuildDownloadProgress(percentage, minutesLeft, extracting));
 }
 
-Completer<dynamic> _setupLifecycle(ArchiveDownloadOptions options) {
+Completer<dynamic> _setupLifecycle(FortniteBuildDownloadOptions options) {
   var stopped = Completer();
   var lifecyclePort = ReceivePort();
   lifecyclePort.listen((message) {
-    if(message == "kill") {
+    if(message == kStopBuildDownloadSignal && !stopped.isCompleted) {
       stopped.complete();
     }
   });

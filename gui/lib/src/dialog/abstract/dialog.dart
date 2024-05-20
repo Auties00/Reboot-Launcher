@@ -1,17 +1,27 @@
 import 'package:clipboard/clipboard.dart';
-import 'package:fluent_ui/fluent_ui.dart';
 import 'package:fluent_ui/fluent_ui.dart' as fluent show showDialog;
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 
 import 'dialog_button.dart';
 
-Future<T?> showAppDialog<T extends Object?>({required WidgetBuilder builder}) => fluent.showDialog(
-    context: appKey.currentContext!,
-    useRootNavigator: false,
-    builder: builder
-);
+bool inDialog = false;
+
+Future<T?> showAppDialog<T extends Object?>({required WidgetBuilder builder}) async {
+  inDialog = true;
+  pagesController.add(null);
+  try {
+    return await fluent.showDialog(
+        context: appKey.currentContext!,
+        useRootNavigator: false,
+        builder: builder
+    );
+  }finally {
+    inDialog = false;
+  }
+}
 
 abstract class AbstractDialog extends StatelessWidget {
   const AbstractDialog({Key? key}) : super(key: key);

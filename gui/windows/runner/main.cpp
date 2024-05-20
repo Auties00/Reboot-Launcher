@@ -17,7 +17,7 @@ auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME | BDW_HIDE_ON_STARTUP);
 #include <fcntl.h>
 
 bool IsAlreadyOpen(){
-    HANDLE hMutex = CreateMutexW(NULL, TRUE, L"RebootLauncherMutex");
+    HANDLE hMutex = CreateMutexW(NULL, TRUE, L"RebootLauncherNewMutex");
     if (hMutex == NULL && GetLastError() == ERROR_ALREADY_EXISTS) {
         HWND hwndExisting = FindWindowW(NULL, L"Reboot Launcher");
         if (hwndExisting != NULL) {

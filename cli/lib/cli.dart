@@ -5,7 +5,6 @@ import 'package:reboot_cli/src/game.dart';
 import 'package:reboot_cli/src/reboot.dart';
 import 'package:reboot_cli/src/server.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_common/src/model/fortnite_version.dart';
 import 'package:reboot_common/src/util/matchmaker.dart' as matchmaker;
 
 late String? username;
@@ -46,7 +45,7 @@ void main(List<String> args) async {
   if(result["update"]) {
     stdout.writeln("Updating reboot dll...");
     try {
-      await downloadRebootDll(rebootDownloadUrl, 0);
+      await downloadRebootDll(kRebootDownloadUrl);
     }catch(error){
       stderr.writeln("Cannot update reboot dll: $error");
     }

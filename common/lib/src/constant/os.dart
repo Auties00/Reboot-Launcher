@@ -1,1 +1,0 @@
-const int appBarWidth = 2;

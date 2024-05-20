@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:ini/ini.dart';
-
 import 'package:reboot_common/common.dart';
 import 'package:sync/semaphore.dart';
 
@@ -75,21 +74,16 @@ Future<void> writeMatchmakingIp(String text) async {
   await matchmakerConfigFile.writeAsString(config.toString(), flush: true);
 }
 
-Future<bool> isMatchmakerPortFree() async => isPortFree(int.parse(kDefaultMatchmakerPort));
+Future<bool> isMatchmakerPortFree() async => await pingMatchmaker(kDefaultMatchmakerHost, kDefaultMatchmakerPort.toString()) == null;
 
 Future<bool> freeMatchmakerPort() async {
-  await Process.run(matchmakerKillExecutable.path, []);
-  var standardResult = await isMatchmakerPortFree();
+  await killProcessByPort(kDefaultMatchmakerPort);
+  final standardResult = await isMatchmakerPortFree();
   if(standardResult) {
     return true;
   }
 
-  var elevatedResult = await runElevatedProcess(matchmakerKillExecutable.path, "");
-  if(!elevatedResult) {
-    return false;
-  }
-
-  return await isMatchmakerPortFree();
+  return false;
 }
 
 Future<Uri?> pingMatchmaker(String host, String port, [bool wss=false]) async {
@@ -124,7 +118,7 @@ Future<Uri?> pingMatchmaker(String host, String port, [bool wss=false]) async {
     await socket.close();
     return result ? uri : null;
   }catch(_){
-    return wss || declaredScheme != null ? null : await pingMatchmaker(host, port, true);
+    return wss || declaredScheme != null || isLocalHost(host) ? null : await pingMatchmaker(host, port, true);
   }
 }
 

@@ -4,9 +4,12 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
+
+import '../constant/game.dart';
 
 final _ntdll = DynamicLibrary.open('ntdll.dll');
 final _kernel32 = DynamicLibrary.open('kernel32.dll');
@@ -84,23 +87,23 @@ Future<void> injectDll(int pid, String dll) async {
   }
 }
 
-Future<bool> runElevatedProcess(String executable, String args) async {
-  var shellInput = calloc<SHELLEXECUTEINFO>();
+bool runElevatedProcess(String executable, String args) {
+  final shellInput = calloc<SHELLEXECUTEINFO>();
   shellInput.ref.lpFile = executable.toNativeUtf16();
   shellInput.ref.lpParameters = args.toNativeUtf16();
   shellInput.ref.nShow = SW_HIDE;
   shellInput.ref.fMask = ES_AWAYMODE_REQUIRED;
   shellInput.ref.lpVerb = "runas".toNativeUtf16();
   shellInput.ref.cbSize = sizeOf<SHELLEXECUTEINFO>();
-  var shellResult = ShellExecuteEx(shellInput);
-  return shellResult == 1;
+  final result = ShellExecuteEx(shellInput) == 1;
+  free(shellInput);
+  return result;
 }
-
 
 void _startBackgroundProcess(_BackgroundProcessParameters params) {
   var args = params.args;
   var concatenatedArgs = args == null ? "" : " ${args.map((entry) => '"$entry"').join(" ")}";
-  var executablePath = TEXT("${params.executable.path}$concatenatedArgs");
+  var executablePath = TEXT('cmd.exe /k "${params.executable.path}"$concatenatedArgs');
   var startupInfo = calloc<STARTUPINFO>();
   var processInfo = calloc<PROCESS_INFORMATION>();
   var windowFlag = params.window ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW;
@@ -203,4 +206,57 @@ Future<bool> watchProcess(int pid) async {
   var result = await completer.future;
   isolate.kill(priority: Isolate.immediate);
   return result;
+}
+
+List<String> createRebootArgs(String username, String password, bool host, bool headless, String additionalArgs) {
+  if(password.isEmpty) {
+    username = '${_parseUsername(username, host)}@projectreboot.dev';
+  }
+
+  password = password.isNotEmpty ? password : "Rebooted";
+  var args = [
+    "-epicapp=Fortnite",
+    "-epicenv=Prod",
+    "-epiclocale=en-us",
+    "-epicportal",
+    "-skippatchcheck",
+    "-nobe",
+    "-fromfl=eac",
+    "-fltoken=3db3ba5dcbd2e16703f3978d",
+    "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ",
+    "-AUTH_LOGIN=$username",
+    "-AUTH_PASSWORD=${password.isNotEmpty ? password : "Rebooted"}",
+    "-AUTH_TYPE=epic"
+  ];
+
+  if(host && headless){
+    args.addAll([
+      "-nullrhi",
+      "-nosplash",
+      "-nosound",
+    ]);
+  }
+
+  if(additionalArgs.isNotEmpty){
+    args.addAll(additionalArgs.split(" "));
+  }
+
+  return args;
+}
+
+String _parseUsername(String username, bool host) {
+  if(host) {
+    return "Player${Random().nextInt(1000)}";
+  }
+
+  if (username.isEmpty) {
+    return kDefaultPlayerName;
+  }
+
+  username = username.replaceAll(RegExp("[^A-Za-z0-9]"), "").trim();
+  if(username.isEmpty){
+    return kDefaultPlayerName;
+  }
+
+  return username;
 }

@@ -1,10 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:process_run/process_run.dart';
-import 'package:reboot_common/common.dart';
-
 import 'package:reboot_cli/cli.dart';
+import 'package:reboot_common/common.dart';
 
 Process? _gameProcess;
 Process? _launcherProcess;
@@ -24,7 +22,7 @@ Future<void> startGame() async {
     stdout.writeln("No username was specified, using $username by default. Use --username to specify one");
   }
 
-  _gameProcess = await Process.start(executable.path, createRebootArgs(username!, "", host, ""))
+  _gameProcess = await Process.start(executable.path, createRebootArgs(username!, "", host, host, ""))
     ..exitCode.then((_) => _onClose())
     ..outLines.forEach((line) => _onGameOutput(line, dll, host, verbose));
   _injectOrShowError("cobalt.dll");
@@ -54,12 +52,12 @@ void _onGameOutput(String line, String dll, bool hosting, bool verbose) {
     stdout.writeln(line);
   }
 
-  if (line.contains(shutdownLine)) {
+  if (line.contains(kShutdownLine)) {
     _onClose();
     return;
   }
 
-  if(cannotConnectErrors.any((element) => line.contains(element))){
+  if(kCannotConnectErrors.any((element) => line.contains(element))){
     stderr.writeln("The backend doesn't work! Token expired");
     _onClose();
     return;
