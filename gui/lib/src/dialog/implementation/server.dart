@@ -24,6 +24,7 @@ extension ServerControllerDialog on ServerController {
     var stream = toggle();
     var completer = Completer<bool>();
     worker = stream.listen((event) {
+      print(event.type);
       switch (event.type) {
         case ServerResultType.starting:
           showInfoBar(

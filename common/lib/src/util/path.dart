@@ -72,7 +72,7 @@ extension FortniteVersionExtension on FortniteVersion {
     return output;
   }
 
-  File? get launcher => findExecutable(location, "FortniteLauncher.exe");
+  File? get launcherExecutable => findExecutable(location, "FortniteLauncher.exe");
 
   File? get eacExecutable => findExecutable(location, "FortniteClient-Win64-Shipping_EAC.exe");
 

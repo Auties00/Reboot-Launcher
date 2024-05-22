@@ -5,18 +5,35 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
 
 const String kStopBuildDownloadSignal = "kill";
 
-final Dio _dio = Dio();
+final Dio _dio = _buildDioInstance();
+Dio _buildDioInstance() {
+  final dio = Dio();
+  final httpClientAdapter = dio.httpClientAdapter as IOHttpClientAdapter;
+  httpClientAdapter.createHttpClient = () {
+    final client = HttpClient();
+    client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    return client;
+  };
+  return dio;
+}
+
 final String _archiveSourceUrl = "https://raw.githubusercontent.com/simplyblk/Fortnitebuilds/main/README.md";
 final RegExp _rarProgressRegex = RegExp("^((100)|(\\d{1,2}(.\\d*)?))%\$");
 const String _manifestSourceUrl = "https://manifest.fnbuilds.services";
 const int _maxDownloadErrors = 30;
 
 Future<List<FortniteBuild>> fetchBuilds(ignored) async {
+  (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () =>
+  HttpClient()
+    ..badCertificateCallback =
+        (X509Certificate cert, String host, int port) => true;
+
   final results = await Future.wait([_fetchManifestBuilds(), _fetchArchiveBuilds()]);
   final data =  <FortniteBuild>[];
   for(final result in results) {
@@ -108,12 +125,6 @@ Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
         final response = _downloadArchive(options, tempFile, startTime);
         await Future.any([stopped.future, response]);
         if(!stopped.isCompleted) {
-          var awaitedResponse = await response;
-          if (!awaitedResponse.statusCode.toString().startsWith("20")) {
-            options.port.send("Erroneous status code: ${awaitedResponse.statusCode}");
-            return;
-          }
-
           await _extractArchive(stopped, extension, tempFile, options);
         }
 
@@ -211,9 +222,23 @@ Future<Response> _downloadArchive(FortniteBuildDownloadOptions options, File tem
         },
         deleteOnError: false,
         options: Options(
-            headers: byteStart == null ? null : {
-              "Range": "bytes=${byteStart}-"
+          validateStatus: (statusCode) {
+            if(statusCode == 200) {
+              return true;
             }
+
+            if(statusCode == 403 || statusCode == 503) {
+              throw Exception("The connection was denied: your firewall might be blocking the download");
+            }
+
+            throw Exception("The build downloader is not available right now");
+          },
+          headers: byteStart == null || byteStart <= 0 ? {
+            "Cookie": "_c_t_c=1"
+          } :  {
+            "Cookie": "_c_t_c=1",
+            "Range": "bytes=${byteStart}-"
+          },
         )
     );
   }catch(error) {
@@ -226,17 +251,28 @@ Future<Response> _downloadArchive(FortniteBuildDownloadOptions options, File tem
 }
 
 Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File tempFile, FortniteBuildDownloadOptions options) async {
-  var startTime = DateTime.now().millisecondsSinceEpoch;
-  Process? process;
+  final startTime = DateTime.now().millisecondsSinceEpoch;
+  Win32Process? process;
   switch (extension.toLowerCase()) {
     case ".zip":
-      process = await Process.start(
-          "${assetsDirectory.path}\\build\\7zip.exe",
-          ["a", "-bsp1", '-o"${options.destination.path}"', tempFile.path]
+      final sevenZip = File("${assetsDirectory.path}\\build\\7zip.exe");
+      if(!sevenZip.existsSync()) {
+        throw "Corrupted installation: missing 7zip.exe";
+      }
+
+      process = await startProcess(
+        executable: sevenZip,
+        args: [
+          "x",
+          "-bsp1",
+          '-o"${options.destination.path}"',
+          "-y",
+          '"${tempFile.path}"'
+        ],
       );
-      process.stdout.listen((bytes) {
+      process.stdOutput.listen((data) {
+        print(data);
         final now = DateTime.now().millisecondsSinceEpoch;
-        final data = utf8.decode(bytes);
         if(data == "Everything is Ok") {
           options.port.send(FortniteBuildDownloadProgress(100, 0, true));
           return;
@@ -252,42 +288,45 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
       });
       break;
     case ".rar":
-      process = await Process.start(
-          "${assetsDirectory.path}\\build\\winrar.exe",
-          ["x", "-o+", tempFile.path, "*.*", options.destination.path]
+      final winrar = File("${assetsDirectory.path}\\build\\winrar.exe");
+      if(!winrar.existsSync()) {
+        throw "Corrupted installation: missing winrar.exe";
+      }
+
+      process = await startProcess(
+          executable: winrar,
+          args: [
+            "x",
+            "-o+",
+            tempFile.path,
+            "*.*",
+            options.destination.path
+          ]
       );
-      process.stdout.listen((event) {
+      process.stdOutput.listen((data) {
+        print(data);
         final now = DateTime.now().millisecondsSinceEpoch;
-        final data = utf8.decode(event);
-        data.replaceAll("\r", "")
-            .replaceAll("\b", "")
-            .trim()
-            .split("\n")
-            .forEach((entry) {
-          if(entry == "All OK") {
-            options.port.send(FortniteBuildDownloadProgress(100, 0, true));
-            return;
-          }
+        data.replaceAll("\r", "").replaceAll("\b", "").trim();
+        if(data == "All OK") {
+          options.port.send(FortniteBuildDownloadProgress(100, 0, true));
+          return;
+        }
 
-          final element = _rarProgressRegex.firstMatch(entry)?.group(1);
-          if(element == null) {
-            return;
-          }
+        final element = _rarProgressRegex.firstMatch(data)?.group(1);
+        if(element == null) {
+          return;
+        }
 
-          final percentage = int.parse(element).toDouble();
-          _onProgress(startTime, now, percentage, true, options);
-        });
+        final percentage = int.parse(element).toDouble();
+        _onProgress(startTime, now, percentage, true, options);
       });
-      process.stderr.listen((event) {
-        final data = utf8.decode(event);
-        options.port.send(data);
-      });
+      process.errorOutput.listen((data) => options.port.send(data));
       break;
     default:
       throw ArgumentError("Unexpected file extension: $extension}");
   }
 
-  await Future.any([stopped.future, process.exitCode]);
+  await Future.any([stopped.future, watchProcess(process.pid)]);
 }
 
 void _onProgress(int startTime, int now, double percentage, bool extracting, FortniteBuildDownloadOptions options) {

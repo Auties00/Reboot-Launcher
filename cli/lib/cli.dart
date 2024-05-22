@@ -57,9 +57,24 @@ void main(List<String> args) async {
     throw Exception("Missing game executable at: ${version.location.path}");
   }
 
+  final serverHost = result["server-host"]?.trim();
+  if(serverHost?.isEmpty == true){
+    throw Exception("Missing host name");
+  }
+
+  final serverPort = result["server-port"]?.trim();
+  if(serverPort?.isEmpty == true){
+    throw Exception("Missing port");
+  }
+
+  final serverPortNumber = serverPort == null ? null : int.tryParse(serverPort);
+  if(serverPort != null && serverPortNumber == null){
+    throw Exception("Invalid port, use only numbers");
+  }
+
   var started = await startServerCli(
-      result["server-host"],
-      result["server-port"],
+      serverHost,
+      serverPortNumber,
       ServerType.values.firstWhere((element) => element.name == result["server-type"])
   );
   if(!started){

@@ -16,7 +16,7 @@ class AuthenticatorController extends ServerController {
   String get defaultHost => kDefaultAuthenticatorHost;
 
   @override
-  String get defaultPort => kDefaultAuthenticatorPort.toString();
+  int get defaultPort => kDefaultAuthenticatorPort;
 
   @override
   Future<bool> get isPortFree => isAuthenticatorPortFree();
@@ -28,8 +28,8 @@ class AuthenticatorController extends ServerController {
   RebootPageType get pageType => RebootPageType.authenticator;
 
   @override
-  Future<int> startEmbeddedInternal() => startEmbeddedAuthenticator(detached.value);
+  Future<Win32Process> startEmbeddedInternal() => startEmbeddedAuthenticator(detached.value);
 
   @override
-  Future<Uri?> pingServer(String host, String port) => pingAuthenticator(host, port);
+  Future<Uri?> pingServer(String host, int port) => pingAuthenticator(host, port);
 }

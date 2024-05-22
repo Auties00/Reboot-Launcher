@@ -51,9 +51,9 @@ abstract class ServerController extends GetxController {
 
   String get defaultHost;
 
-  String get defaultPort;
+  int get defaultPort;
 
-  Future<Uri?> pingServer(String host, String port);
+  Future<Uri?> pingServer(String host, int port);
   
   Future<bool> get isPortFree;
 
@@ -64,17 +64,17 @@ abstract class ServerController extends GetxController {
   Future<bool> freePort();
 
   @protected
-  Future<int> startEmbeddedInternal();
+  Future<Win32Process> startEmbeddedInternal();
 
   void reset() async {
     type.value = ServerType.values.elementAt(0);
-    for (var type in ServerType.values) {
+    for (final type in ServerType.values) {
       storage.write("${type.name}_host", null);
       storage.write("${type.name}_port", null);
     }
 
     host.text = type.value != ServerType.remote ? defaultHost : "";
-    port.text = defaultPort;
+    port.text = defaultPort.toString();
     detached.value = false;
   }
 
@@ -85,48 +85,48 @@ abstract class ServerController extends GetxController {
   }
 
   String _readPort() =>
-      storage.read("${type.value.name}_port") ?? defaultPort;
+      storage.read("${type.value.name}_port") ?? defaultPort.toString();
 
   Stream<ServerResult> start() async* {
-    if(started.value) {
-      return;
-    }
-
-    if(type() != ServerType.local) {
-      started.value = true;
-      yield ServerResult(ServerResultType.starting);
-    }else {
-      started.value = false;
-      if(port != defaultPort) {
-        yield ServerResult(ServerResultType.starting);
-      }
-    }
-
     try {
-      var host = this.host.text.trim();
-      if (host.isEmpty) {
+      if(started.value) {
+        return;
+      }
+
+      final hostData = this.host.text.trim();
+      final portData = this.port.text.trim();
+      if(type() != ServerType.local) {
+        started.value = true;
+        yield ServerResult(ServerResultType.starting);
+      }else {
+        started.value = false;
+        if(portData != defaultPort) {
+          yield ServerResult(ServerResultType.starting);
+        }
+      }
+
+      if (hostData.isEmpty) {
         yield ServerResult(ServerResultType.missingHostError);
         started.value = false;
         return;
       }
 
-      var port = this.port.text.trim();
-      if (port.isEmpty) {
+      if (portData.isEmpty) {
         yield ServerResult(ServerResultType.missingPortError);
         started.value = false;
         return;
       }
 
-      var portNumber = int.tryParse(port);
+      final portNumber = int.tryParse(portData);
       if (portNumber == null) {
         yield ServerResult(ServerResultType.illegalPortError);
         started.value = false;
         return;
       }
 
-      if ((type() != ServerType.local || port != defaultPort) && await isPortTaken) {
+      if ((type() != ServerType.local || portData != defaultPort) && await isPortTaken) {
         yield ServerResult(ServerResultType.freeingPort);
-        var result = await freePort();
+        final result = await freePort();
         yield ServerResult(result ? ServerResultType.freePortSuccess : ServerResultType.freePortError);
         if(!result) {
           started.value = false;
@@ -136,8 +136,15 @@ abstract class ServerController extends GetxController {
 
       switch(type()){
         case ServerType.embedded:
-          final pid = await startEmbeddedInternal();
-          watchProcess(pid).then((value) {
+          final process = await startEmbeddedInternal();
+          final processPid = process.pid;
+          if(processPid == null) {
+            yield ServerResult(ServerResultType.startError);
+            started.value = false;
+            return;
+          }
+
+          watchProcess(processPid).then((value) {
             if(started()) {
               started.value = false;
             }
@@ -145,7 +152,7 @@ abstract class ServerController extends GetxController {
           break;
         case ServerType.remote:
           yield ServerResult(ServerResultType.pingingRemote);
-          var uriResult = await pingServer(host, port);
+          final uriResult = await pingServer(hostData, portNumber);
           if(uriResult == null) {
             yield ServerResult(ServerResultType.pingError);
             started.value = false;
@@ -155,7 +162,7 @@ abstract class ServerController extends GetxController {
           remoteServer = await startRemoteAuthenticatorProxy(uriResult);
           break;
         case ServerType.local:
-          if(port != defaultPort) {
+          if(portData != defaultPort) {
             localServer = await startRemoteAuthenticatorProxy(Uri.parse("http://$defaultHost:$port"));
           }
 
@@ -163,7 +170,7 @@ abstract class ServerController extends GetxController {
       }
 
       yield ServerResult(ServerResultType.pingingLocal);
-      var uriResult = await pingServer(defaultHost, defaultPort);
+      final uriResult = await pingServer(defaultHost, defaultPort);
       if(uriResult == null) {
         yield ServerResult(ServerResultType.pingError);
         remoteServer?.close(force: true);
@@ -195,7 +202,7 @@ abstract class ServerController extends GetxController {
     try{
       switch(type()){
         case ServerType.embedded:
-          killProcessByPort(int.parse(defaultPort));
+          killProcessByPort(defaultPort);
           break;
         case ServerType.remote:
           await remoteServer?.close(force: true);

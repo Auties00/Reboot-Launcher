@@ -51,11 +51,11 @@ class _LaunchButtonState extends State<LaunchButton> {
       child: Obx(() => SizedBox(
         height: 48,
         child: Button(
-          onPressed: () => _operation = CancelableOperation.fromFuture(_start()),
-          child: Align(
-            alignment: Alignment.center,
-            child: Text(_hasStarted ? _stopMessage : _startMessage)
-          )
+            onPressed: () => _operation = CancelableOperation.fromFuture(_start()),
+            child: Align(
+                alignment: Alignment.center,
+                child: Text(_hasStarted ? _stopMessage : _startMessage)
+            )
         ),
       )),
     ),
@@ -72,11 +72,11 @@ class _LaunchButtonState extends State<LaunchButton> {
   Future<void> _start() async {
     if (_hasStarted) {
       _onStop(
-        reason: _StopReason.normal
+          reason: _StopReason.normal
       );
       return;
     }
-    
+
     if(_operation != null) {
       return;
     }
@@ -149,7 +149,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     if(_hostingController.started()){
       return null;
     }
-    
+
     if(!_hostingController.automaticServer()) {
       return null;
     }
@@ -160,10 +160,12 @@ class _LaunchButtonState extends State<LaunchButton> {
   }
 
   Future<GameInstance?> _startGameProcesses(FortniteVersion version, bool host, GameInstance? linkedHosting) async {
-    final launcherProcess = await _createLauncherProcess(version);
-    final eacProcess = await _createEacProcess(version);
+    final launcherProcess = await _createPausedProcess(version.launcherExecutable);
+    print("Created launcher process");
+    final eacProcess = await _createPausedProcess(version.eacExecutable);
+    print("Created eac process");
     final executable = await version.executable;
-    final gameProcess = await _createGameProcess(executable!.path, host);
+    final gameProcess = await _createGameProcess(executable!, host);
     if(gameProcess == null) {
       return null;
     }
@@ -187,7 +189,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     return instance;
   }
 
-  Future<int?> _createGameProcess(String gamePath, bool host) async {
+  Future<int?> _createGameProcess(File executable, bool host) async {
     if(!_hasStarted) {
       return null;
     }
@@ -199,38 +201,32 @@ class _LaunchButtonState extends State<LaunchButton> {
         _hostingController.headless.value,
         _gameController.customLaunchArgs.text
     );
-    final gameProcess = await Process.start(
-        gamePath,
-        gameArgs
+    final gameProcess = await startProcess(
+        executable: executable,
+        args: gameArgs,
+        window: false
     );
-    gameProcess
-      ..exitCode.then((_) => _onStop(reason: _StopReason.exitCode))
-      ..outLines.forEach((line) => _onGameOutput(line, host, false))
-      ..errLines.forEach((line) => _onGameOutput(line, host, true));
+    gameProcess.stdOutput.listen((line) => _onGameOutput(line, host, false));
+    gameProcess.errorOutput.listen((line) => _onGameOutput(line, host, true));
+    watchProcess(gameProcess.pid).then((_) => _onStop(reason: _StopReason.exitCode));
     return gameProcess.pid;
   }
 
-  Future<int?> _createLauncherProcess(FortniteVersion version) async {
-    final launcherFile = version.launcher;
-    if (launcherFile == null) {
+  Future<int?> _createPausedProcess(File? file) async {
+    if (file == null) {
       return null;
     }
 
-    final launcherProcess = await Process.start(launcherFile.path, []);
-    final pid = launcherProcess.pid;
+    final process = await startProcess(
+        executable: file,
+        args: [],
+        window: false,
+      output: false
+    );
+    print("Started process: ${process.pid}");
+    final pid = process.pid;
     suspend(pid);
-    return pid;
-  }
-
-  Future<int?> _createEacProcess(FortniteVersion version) async {
-    final eacFile = version.eacExecutable;
-    if (eacFile == null) {
-      return null;
-    }
-
-    final eacProcess = await Process.start(eacFile.path, []);
-    final pid = eacProcess.pid;
-    suspend(pid);
+    print("Suspended");
     return pid;
   }
 
@@ -473,7 +469,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         return _settingsController.memoryLeakDll.text;
     }
   }
-  
+
   Future<File?> _getDllFileOrStop(_Injectable injectable, bool host) async {
     final path = _getDllPath(injectable);
     final file = File(path);

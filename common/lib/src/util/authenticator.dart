@@ -7,17 +7,15 @@ import 'package:shelf_proxy/shelf_proxy.dart';
 final authenticatorDirectory = Directory("${assetsDirectory.path}\\authenticator");
 final authenticatorStartExecutable = File("${authenticatorDirectory.path}\\lawinserver.exe");
 
-Future<int> startEmbeddedAuthenticator(bool detached) async => startBackgroundProcess(
+Future<Win32Process> startEmbeddedAuthenticator(bool detached) async => startProcess(
     executable: authenticatorStartExecutable,
-    window: detached
+    window: detached,
+    
 );
 
-Future<HttpServer> startRemoteAuthenticatorProxy(Uri uri) async {
-  print("CALLED: $uri");
-  return await serve(proxyHandler(uri), kDefaultAuthenticatorHost, kDefaultAuthenticatorPort);
-}
+Future<HttpServer> startRemoteAuthenticatorProxy(Uri uri) async => await serve(proxyHandler(uri), kDefaultAuthenticatorHost, kDefaultAuthenticatorPort);
 
-Future<bool> isAuthenticatorPortFree() async => await pingAuthenticator(kDefaultAuthenticatorHost, kDefaultAuthenticatorPort.toString()) == null;
+Future<bool> isAuthenticatorPortFree() async => await pingAuthenticator(kDefaultAuthenticatorHost, kDefaultAuthenticatorPort) == null;
 
 Future<bool> freeAuthenticatorPort() async {
   await killProcessByPort(kDefaultAuthenticatorPort);
@@ -29,14 +27,14 @@ Future<bool> freeAuthenticatorPort() async {
   return false;
 }
 
-Future<Uri?> pingAuthenticator(String host, String port, [bool https=false]) async {
+Future<Uri?> pingAuthenticator(String host, int port, [bool https=false]) async {
   var hostName = _getHostName(host);
   var declaredScheme = _getScheme(host);
   try{
     var uri = Uri(
         scheme: declaredScheme ?? (https ? "https" : "http"),
         host: hostName,
-        port: int.parse(port),
+        port: port,
         path: "unknown"
     );
     var client = HttpClient()

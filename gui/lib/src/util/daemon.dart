@@ -28,7 +28,7 @@ extension GameInstanceWatcher on GameInstance {
       }
     });
 
-    observerPid = await startBackgroundProcess(
+    final process = await startProcess(
         executable: _executable,
         args: [
           hostingController.uuid,
@@ -36,8 +36,10 @@ extension GameInstanceWatcher on GameInstance {
           launcherPid?.toString() ?? "-1",
           eacPid?.toString() ?? "-1",
           hosting.toString()
-        ]
+        ],
+        
     );
+    observerPid = process.pid;
   }
 
   bool get _nestedHosting {

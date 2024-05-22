@@ -45,7 +45,7 @@ class MatchmakerController extends ServerController {
   String get defaultHost => kDefaultMatchmakerHost;
 
   @override
-  String get defaultPort => kDefaultMatchmakerPort.toString();
+  int get defaultPort => kDefaultMatchmakerPort;
 
   @override
   Future<bool> get isPortFree => isMatchmakerPortFree();
@@ -57,8 +57,8 @@ class MatchmakerController extends ServerController {
   RebootPageType get pageType => RebootPageType.matchmaker;
 
   @override
-  Future<int> startEmbeddedInternal() => startEmbeddedMatchmaker(detached.value);
+  Future<Win32Process> startEmbeddedInternal() => startEmbeddedMatchmaker(detached.value);
 
   @override
-  Future<Uri?> pingServer(String host, String port) => pingMatchmaker(host, port);
+  Future<Uri?> pingServer(String host, int port) => pingMatchmaker(host, port);
 }

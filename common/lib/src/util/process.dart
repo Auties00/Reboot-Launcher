@@ -1,12 +1,14 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
 import 'package:ffi/ffi.dart';
+import 'package:reboot_common/src/model/process.dart';
 import 'package:win32/win32.dart';
 
 import '../constant/game.dart';
@@ -30,15 +32,16 @@ final _CreateRemoteThread = _kernel32.lookupFunction<
         Pointer lpParameter,
         int dwCreationFlags,
         Pointer<Uint32> lpThreadId)>('CreateRemoteThread');
+const chunkSize = 1024;
 
 Future<void> injectDll(int pid, String dll) async {
-  var process = OpenProcess(
+  final process = OpenProcess(
       0x43A,
       0,
       pid
   );
 
-  var processAddress = GetProcAddress(
+  final processAddress = GetProcAddress(
       GetModuleHandle("KERNEL32".toNativeUtf16()),
       "LoadLibraryA".toNativeUtf8()
   );
@@ -47,7 +50,7 @@ Future<void> injectDll(int pid, String dll) async {
     throw Exception("Cannot get process address for pid $pid");
   }
 
-  var dllAddress = VirtualAllocEx(
+  final dllAddress = VirtualAllocEx(
       process,
       nullptr,
       dll.length + 1,
@@ -55,7 +58,7 @@ Future<void> injectDll(int pid, String dll) async {
       0x4
   );
 
-  var writeMemoryResult = WriteProcessMemory(
+  final writeMemoryResult = WriteProcessMemory(
       process,
       dllAddress,
       dll.toNativeUtf8(),
@@ -67,7 +70,7 @@ Future<void> injectDll(int pid, String dll) async {
     throw Exception("Memory write failed");
   }
 
-  var createThreadResult = _CreateRemoteThread(
+  final createThreadResult = _CreateRemoteThread(
       process,
       nullptr,
       0,
@@ -81,90 +84,152 @@ Future<void> injectDll(int pid, String dll) async {
     throw Exception("Thread creation failed");
   }
 
-  var closeResult = CloseHandle(process);
+  final closeResult = CloseHandle(process);
   if(closeResult != 1){
     throw Exception("Cannot close handle");
   }
 }
 
-bool runElevatedProcess(String executable, String args) {
-  final shellInput = calloc<SHELLEXECUTEINFO>();
-  shellInput.ref.lpFile = executable.toNativeUtf16();
-  shellInput.ref.lpParameters = args.toNativeUtf16();
-  shellInput.ref.nShow = SW_HIDE;
-  shellInput.ref.fMask = ES_AWAYMODE_REQUIRED;
-  shellInput.ref.lpVerb = "runas".toNativeUtf16();
-  shellInput.ref.cbSize = sizeOf<SHELLEXECUTEINFO>();
-  final result = ShellExecuteEx(shellInput) == 1;
-  free(shellInput);
-  return result;
-}
-
-void _startBackgroundProcess(_BackgroundProcessParameters params) {
-  var args = params.args;
-  var concatenatedArgs = args == null ? "" : " ${args.map((entry) => '"$entry"').join(" ")}";
-  var executablePath = TEXT('cmd.exe /k "${params.executable.path}"$concatenatedArgs');
-  var startupInfo = calloc<STARTUPINFO>();
-  var processInfo = calloc<PROCESS_INFORMATION>();
-  var windowFlag = params.window ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW;
-  var success = CreateProcess(
-      nullptr,
-      executablePath,
-      nullptr,
-      nullptr,
-      FALSE,
-      NORMAL_PRIORITY_CLASS | windowFlag | CREATE_NEW_PROCESS_GROUP,
-      nullptr,
-      TEXT(params.executable.parent.path),
-      startupInfo,
-      processInfo
-  );
-  if (success == 0) {
-    var error = GetLastError();
-    params.port.send("Cannot start process: $error");
+void _startProcess(_ProcessParameters params) {
+  final args = params.args;
+  final port = params.port;
+  final concatenatedArgs = args == null ? "" : " ${args.join(" ")}";
+  final command = params.window ? 'cmd.exe /k ""${params.executable.path}"$concatenatedArgs"' : '"${params.executable.path}"$concatenatedArgs';
+  print(command);
+  final processInfo = calloc<PROCESS_INFORMATION>();
+  final lpStartupInfo = calloc<STARTUPINFO>();
+  lpStartupInfo.ref.cb = sizeOf<STARTUPINFO>();
+  lpStartupInfo.ref.dwFlags |= STARTF_USESTDHANDLES;
+  final securityAttributes = calloc<SECURITY_ATTRIBUTES>();
+  securityAttributes.ref.nLength = sizeOf<SECURITY_ATTRIBUTES>();
+  securityAttributes.ref.bInheritHandle = TRUE;
+  final hStdOutRead = calloc<HANDLE>();
+  final hStdOutWrite = calloc<HANDLE>();
+  final hStdErrRead = calloc<HANDLE>();
+  final hStdErrWrite = calloc<HANDLE>();
+  if (CreatePipe(hStdOutRead, hStdOutWrite, securityAttributes, 0) == 0 || CreatePipe(hStdErrRead, hStdErrWrite, securityAttributes, 0) == 0) {
+    final error = GetLastError();
+    port.send("Cannot create process pipe: $error");
+    return;
+  }
+  
+  if(SetHandleInformation(hStdOutRead.value, HANDLE_FLAG_INHERIT, 0) == 0 || SetHandleInformation(hStdErrRead.value, HANDLE_FLAG_INHERIT, 0) == 0) {
+    final error = GetLastError();
+    port.send("Cannot set process pipe information: $error");
     return;
   }
 
-  var pid = processInfo.ref.dwProcessId;
-  free(startupInfo);
+  lpStartupInfo.ref.hStdOutput = hStdOutWrite.value;
+  lpStartupInfo.ref.hStdError = hStdErrWrite.value;
+  final success = CreateProcess(
+      nullptr,
+      TEXT(command),
+      nullptr,
+      nullptr,
+      TRUE,
+      NORMAL_PRIORITY_CLASS | (params.window ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW) | CREATE_NEW_PROCESS_GROUP,
+      nullptr,
+      TEXT(params.executable.parent.path),
+      lpStartupInfo,
+      processInfo
+  );
+  if (success == 0) {
+    final error = GetLastError();
+    port.send("Cannot start process: $error");
+    return;
+  }
+  
+  CloseHandle(processInfo.ref.hProcess);
+  CloseHandle(processInfo.ref.hThread);
+  CloseHandle(hStdOutWrite.value);
+  CloseHandle(hStdErrWrite.value);
+  final pid = processInfo.ref.dwProcessId;
+  free(lpStartupInfo);
   free(processInfo);
-  params.port.send(pid);
+  port.send(PrimitiveWin32Process(
+      pid: pid,
+      stdOutputHandle: hStdOutRead.value,
+      errorOutputHandle: hStdErrRead.value
+  ));
 }
 
-class _BackgroundProcessParameters {
+class _PipeReaderParams {
+  final int handle;
+  final SendPort port;
+
+  _PipeReaderParams(this.handle, this.port);
+}
+
+void _pipeToStreamChannelled(_PipeReaderParams params) {
+  final buf = calloc<Uint8>(chunkSize);
+  while(true) {
+    final bytesReadPtr = calloc<Uint32>();
+    final success = ReadFile(params.handle, buf, chunkSize, bytesReadPtr, nullptr);
+    if (success == FALSE) {
+      break;
+    }
+
+    final bytesRead = bytesReadPtr.value;
+    if (bytesRead == 0) {
+      break;
+    }
+
+    final lines = utf8.decode(buf.asTypedList(bytesRead)).split('\n');
+    for(final line in lines) {
+      params.port.send(line);
+    }
+  }
+
+  CloseHandle(params.handle);
+  free(buf);
+  Isolate.current.kill();
+}
+
+Stream<String> _pipeToStream(int pipeHandle) {
+  final port = ReceivePort();
+  Isolate.spawn(
+      _pipeToStreamChannelled,
+      _PipeReaderParams(pipeHandle, port.sendPort)
+  );
+  return port.map((event) => event as String);
+}
+
+class _ProcessParameters {
   File executable;
   List<String>? args;
   bool window;
   SendPort port;
 
-  _BackgroundProcessParameters(this.executable, this.args, this.window, this.port);
+  _ProcessParameters(this.executable, this.args, this.window, this.port);
 }
 
-Future<int> startBackgroundProcess({required File executable, List<String>? args, bool window = false}) async {
-  var completer = Completer<int>();
-  var port = ReceivePort();
-  port.listen((message) => message is int ? completer.complete(message) : completer.completeError(message));
-  var isolate = await Isolate.spawn(
-      _startBackgroundProcess,
-      _BackgroundProcessParameters(executable, args, window, port.sendPort),
+Future<Win32Process> startProcess({required File executable, List<String>? args, bool output = true, bool window = false}) async {
+  final completer = Completer<Win32Process>();
+  final port = ReceivePort();
+  port.listen((message) {
+    if(message is PrimitiveWin32Process) {
+      completer.complete(Win32Process(
+          pid: message.pid,
+          stdOutput: _pipeToStream(message.stdOutputHandle),
+          errorOutput: _pipeToStream(message.errorOutputHandle)
+      ));
+    } else {
+      completer.completeError(message);
+    }
+  });
+  Isolate.spawn(
+      _startProcess,
+      _ProcessParameters(executable, args, window, port.sendPort),
       errorsAreFatal: true
   );
-  var result = await completer.future;
-  isolate.kill(priority: Isolate.immediate);
-  return result;
+  return await completer.future;
 }
 
-int _NtResumeProcess(int hWnd) {
-  final function = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
-      int Function(int hWnd)>('NtResumeProcess');
-  return function(hWnd);
-}
+final _NtResumeProcess = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
+    int Function(int hWnd)>('NtResumeProcess');
 
-int _NtSuspendProcess(int hWnd) {
-  final function = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
-      int Function(int hWnd)>('NtSuspendProcess');
-  return function(hWnd);
-}
+final _NtSuspendProcess = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
+    int Function(int hWnd)>('NtSuspendProcess');
 
 bool suspend(int pid) {
   final processHandle = OpenProcess(PROCESS_SUSPEND_RESUME, FALSE, pid);
@@ -214,7 +279,7 @@ List<String> createRebootArgs(String username, String password, bool host, bool 
   }
 
   password = password.isNotEmpty ? password : "Rebooted";
-  var args = [
+  final args = [
     "-epicapp=Fortnite",
     "-epicenv=Prod",
     "-epiclocale=en-us",

@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_common/src/util/authenticator.dart' as server;
 
-Future<bool> startServerCli(String? host, String? port, ServerType type) async {
+Future<bool> startServerCli(String? host, int? port, ServerType type) async {
   stdout.writeln("Starting backend server...");
   switch(type){
     case ServerType.local:
-      var result = await pingAuthenticator(host ?? kDefaultAuthenticatorHost, port ?? kDefaultAuthenticatorPort.toString());
+      var result = await pingAuthenticator(host ?? kDefaultAuthenticatorHost, port ?? kDefaultAuthenticatorPort);
       if(result == null){
         throw Exception("Local backend server is not running");
       }
@@ -17,7 +17,7 @@ Future<bool> startServerCli(String? host, String? port, ServerType type) async {
     case ServerType.embedded:
       stdout.writeln("Starting an embedded server...");
       await server.startEmbeddedAuthenticator(false);
-      var result = await pingAuthenticator(host ?? kDefaultAuthenticatorHost, port ?? kDefaultAuthenticatorPort.toString());
+      var result = await pingAuthenticator(host ?? kDefaultAuthenticatorHost, port ?? kDefaultAuthenticatorPort);
       if(result == null){
         throw Exception("Cannot start embedded server");
       }
@@ -37,21 +37,7 @@ Future<bool> startServerCli(String? host, String? port, ServerType type) async {
   }
 }
 
-Future<HttpServer?> _changeReverseProxyState(String host, String port) async {
-  host = host.trim();
-  if(host.isEmpty){
-    throw Exception("Missing host name");
-  }
-
-  port = port.trim();
-  if(port.isEmpty){
-    throw Exception("Missing port");
-  }
-
-  if(int.tryParse(port) == null){
-    throw Exception("Invalid port, use only numbers");
-  }
-
+Future<HttpServer?> _changeReverseProxyState(String host, int port) async {
   try{
     var uri = await pingAuthenticator(host, port);
     if(uri == null){

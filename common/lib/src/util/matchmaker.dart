@@ -13,9 +13,10 @@ String? _lastIp;
 String? _lastPort;
 Semaphore _semaphore = Semaphore();
 
-Future<int> startEmbeddedMatchmaker(bool detached) async => startBackgroundProcess(
+Future<Win32Process> startEmbeddedMatchmaker(bool detached) async => startProcess(
     executable: matchmakerStartExecutable,
-    window: detached
+    window: detached,
+    
 );
 
 Stream<String?> watchMatchmakingIp() async* {
@@ -74,7 +75,7 @@ Future<void> writeMatchmakingIp(String text) async {
   await matchmakerConfigFile.writeAsString(config.toString(), flush: true);
 }
 
-Future<bool> isMatchmakerPortFree() async => await pingMatchmaker(kDefaultMatchmakerHost, kDefaultMatchmakerPort.toString()) == null;
+Future<bool> isMatchmakerPortFree() async => await pingMatchmaker(kDefaultMatchmakerHost, kDefaultMatchmakerPort) == null;
 
 Future<bool> freeMatchmakerPort() async {
   await killProcessByPort(kDefaultMatchmakerPort);
@@ -86,14 +87,14 @@ Future<bool> freeMatchmakerPort() async {
   return false;
 }
 
-Future<Uri?> pingMatchmaker(String host, String port, [bool wss=false]) async {
+Future<Uri?> pingMatchmaker(String host, int port, [bool wss=false]) async {
   var hostName = _getHostName(host);
   var declaredScheme = _getScheme(host);
   try{
     var uri = Uri(
         scheme: declaredScheme ?? (wss ? "wss" : "ws"),
         host: hostName,
-        port: int.parse(port)
+        port: port
     );
     var completer = Completer<bool>();
     var socket = await WebSocket.connect(uri.toString());

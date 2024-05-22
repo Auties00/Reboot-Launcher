@@ -30,7 +30,7 @@ class HostingController extends GetxController {
     description.addListener(() => _storage.write("description", description.text));
     password = TextEditingController(text: _storage.read("password") ?? "");
     password.addListener(() => _storage.write("password", password.text));
-    discoverable = RxBool(_storage.read("discoverable") ?? true);
+    discoverable = RxBool(_storage.read("discoverable") ?? false);
     discoverable.listen((value) => _storage.write("discoverable", value));
     headless = RxBool(_storage.read("headless") ?? true);
     headless.listen((value) => _storage.write("headless", value));

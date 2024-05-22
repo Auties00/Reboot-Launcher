@@ -11,7 +11,7 @@ import 'package:reboot_launcher/src/util/translations.dart';
 final UpdateController _updateController = Get.find<UpdateController>();
 Future<void> downloadCriticalDllInteractive(String filePath) async {
   try {
-    final fileName = path.basename(filePath);
+    final fileName = path.basename(filePath).toLowerCase();
     if (fileName == "reboot.dll") {
       _updateController.update(true);
       return;
