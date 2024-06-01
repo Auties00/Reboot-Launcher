@@ -52,7 +52,7 @@ void main(List<String> args) async {
   }
 
   stdout.writeln("Launching game...");
-  var executable = await version.executable;
+  var executable = version.gameExecutable;
   if(executable == null){
     throw Exception("Missing game executable at: ${version.location.path}");
   }

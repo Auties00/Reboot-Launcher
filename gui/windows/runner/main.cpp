@@ -23,10 +23,13 @@ bool IsAlreadyOpen(){
         if (hwndExisting != NULL) {
             ShowWindow(hwndExisting, SW_RESTORE);
             SetForegroundWindow(hwndExisting);
+            CloseHandle(hMutex);
+            return true;
+        } else {
+            ReleaseMutex(hMutex);
+            CloseHandle(hMutex);
+            return false;
         }
-
-        CloseHandle(hMutex);
-        return true;
     }
 
     return false;
@@ -75,7 +78,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     return EXIT_SUCCESS;
   }
 
-  if(!IsDebuggerPresent() && IsAlreadyOpen()){
+  if(IsAlreadyOpen()) {
     return EXIT_SUCCESS;
   }
 

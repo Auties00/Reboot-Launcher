@@ -25,8 +25,11 @@ Dio _buildDioInstance() {
 
 final String _archiveSourceUrl = "https://raw.githubusercontent.com/simplyblk/Fortnitebuilds/main/README.md";
 final RegExp _rarProgressRegex = RegExp("^((100)|(\\d{1,2}(.\\d*)?))%\$");
-const String _manifestSourceUrl = "https://manifest.fnbuilds.services";
-const int _maxDownloadErrors = 30;
+const String _manifestSourceUrl = "http://manifest.simplyblk.xyz";
+const String _deniedConnectionError = "The connection was denied: your firewall might be blocking the download";
+const String _unavailableError = "The build downloader is not available right now";
+const String _genericError = "The build downloader is not working correctly";
+const int _maxErrors = 100;
 
 Future<List<FortniteBuild>> fetchBuilds(ignored) async {
   (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () =>
@@ -35,7 +38,7 @@ Future<List<FortniteBuild>> fetchBuilds(ignored) async {
         (X509Certificate cert, String host, int port) => true;
 
   final results = await Future.wait([_fetchManifestBuilds(), _fetchArchiveBuilds()]);
-  final data =  <FortniteBuild>[];
+  final data = <FortniteBuild>[];
   for(final result in results) {
     data.addAll(result);
   }
@@ -45,7 +48,15 @@ Future<List<FortniteBuild>> fetchBuilds(ignored) async {
 
 Future<List<FortniteBuild>> _fetchManifestBuilds() async {
   try {
-    final response = await _dio.get<String>("$_manifestSourceUrl/versions.json");
+    final response = await _dio.get<String>(
+        "$_manifestSourceUrl/versions.json",
+        options: Options(
+            headers: {
+              "Accept-Encoding": "*",
+              "Cookie": "_c_t_c=1"
+            }
+        )
+    );
     final body = response.data;
     return jsonDecode(body!).map((version) {
       final nameParts = version.split("-");
@@ -131,7 +142,14 @@ Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
         delete(outputDir);
         break;
       case FortniteBuildSource.manifest:
-        final response = await _dio.get<String>(options.build.link);
+        final response = await _dio.get<String>(
+            options.build.link,
+          options: Options(
+            headers: {
+              "Cookie": "_c_t_c=1"
+            }
+          )
+        );
         final manifest = FortniteBuildManifestFile.fromJson(jsonDecode(response.data!));
 
         final totalBytes = manifest.size;
@@ -171,7 +189,8 @@ Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
               options: Options(
                   responseType: ResponseType.bytes,
                   headers: {
-                    "Accept-Encoding": "gzip"
+                    "Accept-Encoding": "gzip",
+                    "Cookie": "_c_t_c=1"
                   }
               ),
             );
@@ -201,24 +220,23 @@ Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
           }
         });
         await Future.any([stopped.future, Future.wait(writers)]);
-        options.port.send(FortniteBuildDownloadProgress(100, 0, true));
         break;
     }
-  }catch(error, stackTrace) {
-    options.port.send("$error\n$stackTrace");
+  }catch(error) {
+    _onError(error, options);
   }
 }
 
-Future<Response> _downloadArchive(FortniteBuildDownloadOptions options, File tempFile, int startTime, [int? byteStart = null, int errorsCount = 0]) async {
+Future<void> _downloadArchive(FortniteBuildDownloadOptions options, File tempFile, int startTime, [int? byteStart = null, int errorsCount = 0]) async {
   var received = byteStart ?? 0;
   try {
-    return await _dio.download(
+    await _dio.download(
         options.build.link,
         tempFile.path,
         onReceiveProgress: (data, length) {
           received = data;
           final percentage = (received / length) * 100;
-          _onProgress(startTime, DateTime.now().millisecondsSinceEpoch, percentage, false, options);
+          _onProgress(startTime, percentage < 1 ? null : DateTime.now().millisecondsSinceEpoch, percentage, false, options);
         },
         deleteOnError: false,
         options: Options(
@@ -228,10 +246,14 @@ Future<Response> _downloadArchive(FortniteBuildDownloadOptions options, File tem
             }
 
             if(statusCode == 403 || statusCode == 503) {
-              throw Exception("The connection was denied: your firewall might be blocking the download");
+              throw _deniedConnectionError;
             }
 
-            throw Exception("The build downloader is not available right now");
+            if(statusCode == 404) {
+              throw _unavailableError;
+            }
+
+            throw _genericError;
           },
           headers: byteStart == null || byteStart <= 0 ? {
             "Cookie": "_c_t_c=1"
@@ -242,17 +264,18 @@ Future<Response> _downloadArchive(FortniteBuildDownloadOptions options, File tem
         )
     );
   }catch(error) {
-    if(errorsCount >= _maxDownloadErrors) {
-      throw error;
+    if(errorsCount > _maxErrors || error.toString().contains(_deniedConnectionError) || error.toString().contains(_unavailableError)) {
+      _onError(error, options);
+      return;
     }
 
-    return await _downloadArchive(options, tempFile, startTime, received, errorsCount + 1);
+    await _downloadArchive(options, tempFile, startTime, received, errorsCount + 1);
   }
 }
 
 Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File tempFile, FortniteBuildDownloadOptions options) async {
   final startTime = DateTime.now().millisecondsSinceEpoch;
-  Win32Process? process;
+  Process? process;
   switch (extension.toLowerCase()) {
     case ".zip":
       final sevenZip = File("${assetsDirectory.path}\\build\\7zip.exe");
@@ -271,10 +294,10 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
         ],
       );
       process.stdOutput.listen((data) {
-        print(data);
         final now = DateTime.now().millisecondsSinceEpoch;
-        if(data == "Everything is Ok") {
-          options.port.send(FortniteBuildDownloadProgress(100, 0, true));
+        if(data.toLowerCase().contains("everything is ok")) {
+          _onProgress(startTime, now, 100, true, options);
+          process?.kill(ProcessSignal.sigabrt);
           return;
         }
 
@@ -285,6 +308,11 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
 
         final percentage = int.parse(element.substring(0, element.length - 1)).toDouble();
         _onProgress(startTime, now, percentage, true, options);
+      });
+      process.stdError.listen((data) {
+        if(!data.isBlank) {
+          _onError(data, options);
+        }
       });
       break;
     case ".rar":
@@ -298,17 +326,17 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
           args: [
             "x",
             "-o+",
-            tempFile.path,
+            '"${tempFile.path}"',
             "*.*",
-            options.destination.path
+            '"${options.destination.path}"'
           ]
       );
       process.stdOutput.listen((data) {
-        print(data);
         final now = DateTime.now().millisecondsSinceEpoch;
-        data.replaceAll("\r", "").replaceAll("\b", "").trim();
+        data = data.replaceAll("\r", "").replaceAll("\b", "").trim();
         if(data == "All OK") {
-          options.port.send(FortniteBuildDownloadProgress(100, 0, true));
+          _onProgress(startTime, now, 100, true, options);
+          process?.kill(ProcessSignal.sigabrt);
           return;
         }
 
@@ -320,7 +348,11 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
         final percentage = int.parse(element).toDouble();
         _onProgress(startTime, now, percentage, true, options);
       });
-      process.errorOutput.listen((data) => options.port.send(data));
+      process.stdError.listen((data) {
+        if(!data.isBlank) {
+          _onError(data, options);
+        }
+      });
       break;
     default:
       throw ArgumentError("Unexpected file extension: $extension}");
@@ -329,16 +361,30 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
   await Future.any([stopped.future, watchProcess(process.pid)]);
 }
 
-void _onProgress(int startTime, int now, double percentage, bool extracting, FortniteBuildDownloadOptions options) {
+void _onProgress(int startTime, int? now, double percentage, bool extracting, FortniteBuildDownloadOptions options) {
   if(percentage == 0) {
-    options.port.send(FortniteBuildDownloadProgress(percentage, null, extracting));
+    options.port.send(FortniteBuildDownloadProgress(
+        progress: percentage,
+        extracting: extracting
+    ));
     return;
   }
 
-  final msLeft = startTime + (now - startTime) * 100 / percentage - now;
-  final minutesLeft = (msLeft / 1000 / 60).round();
-  options.port.send(FortniteBuildDownloadProgress(percentage, minutesLeft, extracting));
+  final msLeft = now == null ? null : startTime + (now - startTime) * 100 / percentage - now;
+  final minutesLeft = msLeft == null ? null : (msLeft / 1000 / 60).round();
+  options.port.send(FortniteBuildDownloadProgress(
+      progress: percentage,
+      extracting: extracting,
+      minutesLeft: minutesLeft
+  ));
 }
+
+void _onError(Object? error, FortniteBuildDownloadOptions options) {
+  if(error != null) {
+    options.port.send(error.toString());
+  }
+}
+
 
 Completer<dynamic> _setupLifecycle(FortniteBuildDownloadOptions options) {
   var stopped = Completer();

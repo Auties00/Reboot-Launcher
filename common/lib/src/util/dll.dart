@@ -8,7 +8,7 @@ import 'package:reboot_common/common.dart';
 bool _watcher = false;
 final File rebootDllFile = File("${assetsDirectory.path}\\dlls\\reboot.dll");
 const String kRebootDownloadUrl =
-    "https://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/Release.zip";
+    "http://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/Release.zip";
 
 Future<bool> hasRebootDllUpdate(int? lastUpdateMs, {int hours = 24, bool force = false}) async {
     final lastUpdate = await _getLastUpdate(lastUpdateMs);
@@ -18,7 +18,7 @@ Future<bool> hasRebootDllUpdate(int? lastUpdateMs, {int hours = 24, bool force =
 }
 
 Future<void> downloadCriticalDll(String name, String outputPath) async {
-    final response = await http.get(Uri.parse("https://github.com/Auties00/reboot_launcher/tree/master/gui/assets/dlls/$name"));
+    final response = await http.get(Uri.parse("https://github.com/Auties00/reboot_launcher/raw/master/gui/assets/dlls/$name"));
     if(response.statusCode != 200) {
         throw Exception("Cannot download $name: status code ${response.statusCode}");
     }
@@ -64,7 +64,6 @@ Stream<String> watchDlls() async* {
 
     _watcher = true;
     await for(final event in rebootDllFile.parent.watch(events: FileSystemEvent.delete | FileSystemEvent.move)) {
-        print(event);
         if (event.path.endsWith(".dll")) {
             yield event.path;
         }

@@ -38,10 +38,6 @@ class _VersionSelectorState extends State<VersionSelector> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-    if(_gameController.hasNoVersions) {
-      return const SizedBox();
-    }
-
     return _createOptionsMenu(
       version: _gameController.selectedVersion,
       close: false,
@@ -55,9 +51,20 @@ class _VersionSelectorState extends State<VersionSelector> {
   );
   });
 
-  List<MenuFlyoutItem> _createSelectorItems(BuildContext context) => _gameController.versions.value
+  List<MenuFlyoutItem> _createSelectorItems(BuildContext context) {
+    final items = _gameController.versions.value
       .map((version) => _createVersionItem(context, version))
       .toList();
+    items.add(MenuFlyoutItem(
+        text: Text(translations.addLocalBuildContent),
+        onPressed: VersionSelector.openAddDialog
+    ));
+    items.add(MenuFlyoutItem(
+        text: Text(translations.downloadBuildContent),
+        onPressed: VersionSelector.openDownloadDialog
+    ));
+    return items;
+  }
 
   MenuFlyoutItem _createVersionItem(BuildContext context, FortniteVersion version) => MenuFlyoutItem(
       text: _createOptionsMenu(

@@ -31,27 +31,36 @@ Future<bool> _patch(File file, Uint8List original, Uint8List patched) async {
 
     var read = await file.readAsBytes();
     var length = await file.length();
-    var offset = 0;
-    var counter = 0;
-    while(offset < length){
-      if(read[offset] == original[counter]){
-        counter++;
-      }else {
-        counter = 0;
-      }
-
-      offset++;
-      if(counter == original.length){
-        for(var index = 0; index < patched.length; index++){
-          read[offset - counter + index] = patched[index];
+    var readOffset = 0;
+    var patchOffset = -1;
+    var patchCount = 0;
+    while(readOffset < length){
+      if(read[readOffset] == original[patchCount]){
+        if(patchOffset == -1) {
+          patchOffset = readOffset;
         }
 
-        await file.writeAsBytes(read, mode: FileMode.write);
-        return true;
+        if(++patchCount == original.length) {
+          break;
+        }
+      }else {
+        patchOffset = -1;
       }
+
+      readOffset++;
     }
 
-    return false;
+    print("Offset: $patchOffset");
+    if(patchOffset == -1) {
+      return false;
+    }
+
+    for(var i = 0; i < patched.length; i++) {
+      read[patchOffset + i] = patched[i];
+    }
+
+    await file.writeAsBytes(read, flush: true);
+    return true;
   }catch(_){
     return false;
   }

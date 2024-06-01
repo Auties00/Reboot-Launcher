@@ -2,19 +2,27 @@ import 'package:clipboard/clipboard.dart';
 import 'package:dart_ipify/dart_ipify.dart';
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
+import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/controller/update_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/data.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:reboot_launcher/src/widget/file_setting_tile.dart';
 import 'package:reboot_launcher/src/widget/game_start_button.dart';
 import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:reboot_launcher/src/widget/version_selector_tile.dart';
+import 'package:fluent_ui/fluent_ui.dart' as fluentUi show FluentIcons;
+
+import '../../util/checks.dart';
 
 class HostPage extends RebootPage {
   const HostPage({Key? key}) : super(key: key);
@@ -38,6 +46,8 @@ class HostPage extends RebootPage {
 class _HostingPageState extends RebootPageState<HostPage> {
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
+  final UpdateController _updateController = Get.find<UpdateController>();
+  final SettingsController _settingsController = Get.find<SettingsController>();
 
   late final RxBool _showPasswordTrailing = RxBool(_hostingController.password.text.isNotEmpty);
 
@@ -61,9 +71,9 @@ class _HostingPageState extends RebootPageState<HostPage> {
 
   @override
   List<Widget> get settings => [
-    _gameServer,
+    _information,
+    _configuration,
     versionSelectSettingTile,
-    _headless,
     _share,
     _resetDefaults
   ];
@@ -80,7 +90,7 @@ class _HostingPageState extends RebootPageState<HostPage> {
       )
   );
 
-  SettingTile get _gameServer => SettingTile(
+  SettingTile get _information => SettingTile(
       icon: Icon(
           FluentIcons.info_24_regular
       ),
@@ -169,28 +179,108 @@ class _HostingPageState extends RebootPageState<HostPage> {
       ]
   );
 
-  Widget get _headless => Obx(() => SettingTile(
+  SettingTile get _configuration => SettingTile(
     icon: Icon(
-        FluentIcons.window_console_20_regular
+        FluentIcons.archive_settings_24_regular
     ),
-    title: Text(translations.hostHeadlessName),
-    subtitle: Text(translations.hostHeadlessDescription),
-    contentWidth: null,
-    content: Row(
-      children: [
-        Text(
-            _hostingController.headless.value ? translations.on : translations.off
+    title: Text(translations.settingsServerName),
+    subtitle: Text(translations.settingsServerSubtitle),
+    children: [
+      createFileSetting(
+          title: translations.settingsServerFileName,
+          description: translations.settingsServerFileDescription,
+          controller: _settingsController.gameServerDll
+      ),
+      SettingTile(
+          icon: Icon(
+              fluentUi.FluentIcons.number_field
+          ),
+          title: Text(translations.settingsServerPortName),
+          subtitle: Text(translations.settingsServerPortDescription),
+          content: TextFormBox(
+              placeholder:  translations.settingsServerPortName,
+              controller: _settingsController.gameServerPort,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly
+              ]
+          )
+      ),
+      SettingTile(
+          icon: Icon(
+              FluentIcons.globe_24_regular
+          ),
+          title: Text(translations.settingsServerMirrorName),
+          subtitle: Text(translations.settingsServerMirrorDescription),
+          content: TextFormBox(
+              placeholder:  translations.settingsServerMirrorPlaceholder,
+              controller: _updateController.url,
+              validator: checkUpdateUrl
+          )
+      ),
+      SettingTile(
+          icon: Icon(
+              FluentIcons.timer_24_regular
+          ),
+          title: Text(translations.settingsServerTimerName),
+          subtitle: Text(translations.settingsServerTimerSubtitle),
+          content: Obx(() => DropDownButton(
+              leading: Text(_updateController.timer.value.text),
+              items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
+                  text: Text(entry.text),
+                  onPressed: () {
+                    _updateController.timer.value = entry;
+                    _updateController.infoBarEntry?.close();
+                    _updateController.update(true);
+                  }
+              )).toList()
+          ))
+      ),
+      Obx(() => SettingTile(
+        icon: Icon(
+            FluentIcons.window_console_20_regular
         ),
-        const SizedBox(
-            width: 16.0
+        title: Text(translations.hostHeadlessName),
+        subtitle: Text(translations.hostHeadlessDescription),
+        contentWidth: null,
+        content: Row(
+          children: [
+            Text(
+                _hostingController.headless.value ? translations.on : translations.off
+            ),
+            const SizedBox(
+                width: 16.0
+            ),
+            ToggleSwitch(
+                checked: _hostingController.headless.value,
+                onChanged: (value) => _hostingController.headless.value = value
+            ),
+          ],
         ),
-        ToggleSwitch(
-            checked: _hostingController.headless.value,
-            onChanged: (value) => _hostingController.headless.value = value
+      )),
+      Obx(() => SettingTile(
+        icon: Icon(
+            FluentIcons.desktop_edit_24_regular
         ),
-      ],
-    ),
-  ),
+        title: Text(translations.hostVirtualDesktopName),
+        subtitle: Text(translations.hostVirtualDesktopDescription),
+        contentWidth: null,
+        content: Row(
+          children: [
+            Text(
+                _hostingController.virtualDesktop.value ? translations.on : translations.off
+            ),
+            const SizedBox(
+                width: 16.0
+            ),
+            ToggleSwitch(
+                checked: _hostingController.virtualDesktop.value,
+                onChanged: (value) => _hostingController.virtualDesktop.value = value
+            ),
+          ],
+        ),
+      )),
+    ],
   );
 
   SettingTile get _share => SettingTile(
@@ -222,12 +312,15 @@ class _HostingPageState extends RebootPageState<HostPage> {
           subtitle: Text(translations.hostShareIpDescription),
           content: Button(
             onPressed: () async {
+              InfoBarEntry? entry;
               try {
-                _showCopyingIp();
-                var ip = await Ipify.ipv4();
+                entry = _showCopyingIp();
+                final ip = await Ipify.ipv4();
+                entry.close();
                 FlutterClipboard.controlC(ip);
                _showCopiedIp();
               }catch(error) {
+                entry?.close();
                 _showCannotCopyIp(error);
               }
             },
@@ -257,7 +350,7 @@ class _HostingPageState extends RebootPageState<HostPage> {
       severity: InfoBarSeverity.success
   );
 
-  void _showCopyingIp() => showInfoBar(
+  InfoBarEntry _showCopyingIp() => showInfoBar(
       translations.hostShareIpMessageLoading,
       loading: true,
       duration: null
@@ -279,4 +372,14 @@ class _HostingPageState extends RebootPageState<HostPage> {
       severity: InfoBarSeverity.success,
       duration: infoBarLongDuration
   );
+}
+
+extension _UpdateTimerExtension on UpdateTimer {
+  String get text {
+    if (this == UpdateTimer.never) {
+      return translations.updateGameServerDllNever;
+    }
+
+    return translations.updateGameServerDllEvery(name);
+  }
 }

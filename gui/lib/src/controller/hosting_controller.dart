@@ -14,9 +14,9 @@ class HostingController extends GetxController {
   late final RxBool showPassword;
   late final RxBool discoverable;
   late final RxBool headless;
+  late final RxBool virtualDesktop;
   late final RxBool started;
   late final RxBool published;
-  late final RxBool automaticServer;
   late final Rxn<GameInstance> instance;
   late final Rxn<Set<Map<String, dynamic>>> servers;
 
@@ -34,12 +34,12 @@ class HostingController extends GetxController {
     discoverable.listen((value) => _storage.write("discoverable", value));
     headless = RxBool(_storage.read("headless") ?? true);
     headless.listen((value) => _storage.write("headless", value));
+    virtualDesktop = RxBool(_storage.read("virtual_desktop") ?? true);
+    virtualDesktop.listen((value) => _storage.write("virtual_desktop", value));
     started = RxBool(false);
     published = RxBool(false);
     showPassword = RxBool(false);
     instance = Rxn();
-    automaticServer = RxBool(_storage.read("auto") ?? true);
-    automaticServer.listen((value) => _storage.write("auto", value));
     final supabase = Supabase.instance.client;
     servers = Rxn();
     supabase.from("hosting")
@@ -60,6 +60,8 @@ class HostingController extends GetxController {
     discoverable.value = false;
     started.value = false;
     instance.value = null;
+    headless.value = true;
+    virtualDesktop.value = true;
   }
 
   Map<String, dynamic>? findServerById(String uuid) {

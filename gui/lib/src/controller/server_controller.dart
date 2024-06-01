@@ -15,7 +15,6 @@ abstract class ServerController extends GetxController {
   late final Rx<ServerType> type;
   late final Semaphore semaphore;
   late RxBool started;
-  late RxBool detached;
   StreamSubscription? worker;
   HttpServer? localServer;
   HttpServer? remoteServer;
@@ -40,8 +39,6 @@ abstract class ServerController extends GetxController {
     port = TextEditingController(text: _readPort());
     port.addListener(() =>
         storage.write("${type.value.name}_port", port.text));
-    detached = RxBool(storage.read("detached") ?? false);
-    detached.listen((value) => storage.write("detached", value));
     semaphore = Semaphore();
   }
 
@@ -64,7 +61,7 @@ abstract class ServerController extends GetxController {
   Future<bool> freePort();
 
   @protected
-  Future<Win32Process> startEmbeddedInternal();
+  Future<Process> startEmbeddedInternal();
 
   void reset() async {
     type.value = ServerType.values.elementAt(0);
@@ -100,7 +97,7 @@ abstract class ServerController extends GetxController {
         yield ServerResult(ServerResultType.starting);
       }else {
         started.value = false;
-        if(portData != defaultPort) {
+        if(portData != defaultPort.toString()) {
           yield ServerResult(ServerResultType.starting);
         }
       }
@@ -124,7 +121,7 @@ abstract class ServerController extends GetxController {
         return;
       }
 
-      if ((type() != ServerType.local || portData != defaultPort) && await isPortTaken) {
+      if ((type() != ServerType.local || portData != defaultPort.toString()) && await isPortTaken) {
         yield ServerResult(ServerResultType.freeingPort);
         final result = await freePort();
         yield ServerResult(result ? ServerResultType.freePortSuccess : ServerResultType.freePortError);
@@ -138,12 +135,6 @@ abstract class ServerController extends GetxController {
         case ServerType.embedded:
           final process = await startEmbeddedInternal();
           final processPid = process.pid;
-          if(processPid == null) {
-            yield ServerResult(ServerResultType.startError);
-            started.value = false;
-            return;
-          }
-
           watchProcess(processPid).then((value) {
             if(started()) {
               started.value = false;
@@ -159,11 +150,11 @@ abstract class ServerController extends GetxController {
             return;
           }
 
-          remoteServer = await startRemoteAuthenticatorProxy(uriResult);
+          remoteServer = await startRemoteBackendProxy(uriResult);
           break;
         case ServerType.local:
-          if(portData != defaultPort) {
-            localServer = await startRemoteAuthenticatorProxy(Uri.parse("http://$defaultHost:$port"));
+          if(portData != defaultPort.toString()) {
+            localServer = await startRemoteBackendProxy(Uri.parse("http://$defaultHost:$portData"));
           }
 
           break;

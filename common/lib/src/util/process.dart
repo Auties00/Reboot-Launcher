@@ -6,12 +6,12 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
+import 'package:path/path.dart' as path;
 
 import 'package:ffi/ffi.dart';
-import 'package:reboot_common/src/model/process.dart';
+import 'package:reboot_common/common.dart';
+import 'package:sync/semaphore.dart';
 import 'package:win32/win32.dart';
-
-import '../constant/game.dart';
 
 final _ntdll = DynamicLibrary.open('ntdll.dll');
 final _kernel32 = DynamicLibrary.open('kernel32.dll');
@@ -90,139 +90,53 @@ Future<void> injectDll(int pid, String dll) async {
   }
 }
 
-void _startProcess(_ProcessParameters params) {
-  final args = params.args;
-  final port = params.port;
-  final concatenatedArgs = args == null ? "" : " ${args.join(" ")}";
-  final command = params.window ? 'cmd.exe /k ""${params.executable.path}"$concatenatedArgs"' : '"${params.executable.path}"$concatenatedArgs';
-  print(command);
-  final processInfo = calloc<PROCESS_INFORMATION>();
-  final lpStartupInfo = calloc<STARTUPINFO>();
-  lpStartupInfo.ref.cb = sizeOf<STARTUPINFO>();
-  lpStartupInfo.ref.dwFlags |= STARTF_USESTDHANDLES;
-  final securityAttributes = calloc<SECURITY_ATTRIBUTES>();
-  securityAttributes.ref.nLength = sizeOf<SECURITY_ATTRIBUTES>();
-  securityAttributes.ref.bInheritHandle = TRUE;
-  final hStdOutRead = calloc<HANDLE>();
-  final hStdOutWrite = calloc<HANDLE>();
-  final hStdErrRead = calloc<HANDLE>();
-  final hStdErrWrite = calloc<HANDLE>();
-  if (CreatePipe(hStdOutRead, hStdOutWrite, securityAttributes, 0) == 0 || CreatePipe(hStdErrRead, hStdErrWrite, securityAttributes, 0) == 0) {
-    final error = GetLastError();
-    port.send("Cannot create process pipe: $error");
-    return;
-  }
-  
-  if(SetHandleInformation(hStdOutRead.value, HANDLE_FLAG_INHERIT, 0) == 0 || SetHandleInformation(hStdErrRead.value, HANDLE_FLAG_INHERIT, 0) == 0) {
-    final error = GetLastError();
-    port.send("Cannot set process pipe information: $error");
-    return;
+Future<Process> startProcess({required File executable, List<String>? args, bool wrapProcess = true, bool window = false, String? name}) async {
+  final argsOrEmpty = args ?? [];
+  if(wrapProcess) {
+    final tempScriptDirectory = await tempDirectory.createTemp("reboot_launcher_process");
+    final tempScriptFile = File("${tempScriptDirectory.path}/process.bat");
+    final command = window ? 'cmd.exe /k ""${executable.path}" ${argsOrEmpty.join(" ")}"' : '"${executable.path}" ${argsOrEmpty.join(" ")}';
+    await tempScriptFile.writeAsString(command, flush: true);
+    final process = await Process.start(
+        tempScriptFile.path,
+        [],
+        workingDirectory: executable.parent.path,
+        mode: window ? ProcessStartMode.detachedWithStdio : ProcessStartMode.normal,
+        runInShell: window
+    );
+    return _withLogger(name, executable, process, window);
   }
 
-  lpStartupInfo.ref.hStdOutput = hStdOutWrite.value;
-  lpStartupInfo.ref.hStdError = hStdErrWrite.value;
-  final success = CreateProcess(
-      nullptr,
-      TEXT(command),
-      nullptr,
-      nullptr,
-      TRUE,
-      NORMAL_PRIORITY_CLASS | (params.window ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW) | CREATE_NEW_PROCESS_GROUP,
-      nullptr,
-      TEXT(params.executable.parent.path),
-      lpStartupInfo,
-      processInfo
+  final process = await Process.start(
+      executable.path,
+      args ?? [],
+      workingDirectory: executable.parent.path,
+      mode: window ? ProcessStartMode.detachedWithStdio : ProcessStartMode.normal,
+      runInShell: window
   );
-  if (success == 0) {
-    final error = GetLastError();
-    port.send("Cannot start process: $error");
-    return;
-  }
-  
-  CloseHandle(processInfo.ref.hProcess);
-  CloseHandle(processInfo.ref.hThread);
-  CloseHandle(hStdOutWrite.value);
-  CloseHandle(hStdErrWrite.value);
-  final pid = processInfo.ref.dwProcessId;
-  free(lpStartupInfo);
-  free(processInfo);
-  port.send(PrimitiveWin32Process(
-      pid: pid,
-      stdOutputHandle: hStdOutRead.value,
-      errorOutputHandle: hStdErrRead.value
-  ));
+  return _withLogger(name, executable, process, window);
 }
 
-class _PipeReaderParams {
-  final int handle;
-  final SendPort port;
-
-  _PipeReaderParams(this.handle, this.port);
-}
-
-void _pipeToStreamChannelled(_PipeReaderParams params) {
-  final buf = calloc<Uint8>(chunkSize);
-  while(true) {
-    final bytesReadPtr = calloc<Uint32>();
-    final success = ReadFile(params.handle, buf, chunkSize, bytesReadPtr, nullptr);
-    if (success == FALSE) {
-      break;
-    }
-
-    final bytesRead = bytesReadPtr.value;
-    if (bytesRead == 0) {
-      break;
-    }
-
-    final lines = utf8.decode(buf.asTypedList(bytesRead)).split('\n');
-    for(final line in lines) {
-      params.port.send(line);
-    }
+_ExtendedProcess _withLogger(String? name, File executable, Process process, bool window) {
+  final extendedProcess = _ExtendedProcess(process, true);
+  final loggingFile = File("${logsDirectory.path}\\${name ?? path.basenameWithoutExtension(executable.path)}-${DateTime.now().millisecondsSinceEpoch}.log");
+  loggingFile.parent.createSync(recursive: true);
+  if(loggingFile.existsSync()) {
+    loggingFile.deleteSync();
   }
 
-  CloseHandle(params.handle);
-  free(buf);
-  Isolate.current.kill();
-}
-
-Stream<String> _pipeToStream(int pipeHandle) {
-  final port = ReceivePort();
-  Isolate.spawn(
-      _pipeToStreamChannelled,
-      _PipeReaderParams(pipeHandle, port.sendPort)
-  );
-  return port.map((event) => event as String);
-}
-
-class _ProcessParameters {
-  File executable;
-  List<String>? args;
-  bool window;
-  SendPort port;
-
-  _ProcessParameters(this.executable, this.args, this.window, this.port);
-}
-
-Future<Win32Process> startProcess({required File executable, List<String>? args, bool output = true, bool window = false}) async {
-  final completer = Completer<Win32Process>();
-  final port = ReceivePort();
-  port.listen((message) {
-    if(message is PrimitiveWin32Process) {
-      completer.complete(Win32Process(
-          pid: message.pid,
-          stdOutput: _pipeToStream(message.stdOutputHandle),
-          errorOutput: _pipeToStream(message.errorOutputHandle)
-      ));
-    } else {
-      completer.completeError(message);
-    }
-  });
-  Isolate.spawn(
-      _startProcess,
-      _ProcessParameters(executable, args, window, port.sendPort),
-      errorsAreFatal: true
-  );
-  return await completer.future;
+  final semaphore = Semaphore(1);
+  void logEvent(String event) async {
+      await semaphore.acquire();
+      await loggingFile.writeAsString("$event\n", mode: FileMode.append, flush: true);
+      semaphore.release();
+  }
+  extendedProcess.stdOutput.listen(logEvent);
+  extendedProcess.stdError.listen(logEvent);
+  if(!window) {
+    extendedProcess.exitCode.then((value) => logEvent("Process terminated with exit code: $value\n"));
+  }
+  return extendedProcess;
 }
 
 final _NtResumeProcess = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
@@ -247,8 +161,11 @@ bool resume(int pid) {
 
 void _watchProcess(int pid) {
   final processHandle = OpenProcess(SYNCHRONIZE, FALSE, pid);
-  WaitForSingleObject(processHandle, INFINITE);
-  CloseHandle(processHandle);
+  try {
+    WaitForSingleObject(processHandle, INFINITE);
+  }finally {
+    CloseHandle(processHandle);
+  }
 }
 
 Future<bool> watchProcess(int pid) async {
@@ -261,16 +178,14 @@ Future<bool> watchProcess(int pid) async {
   });
   var errorPort = ReceivePort();
   errorPort.listen((_) => completer.complete(false));
-  var isolate = await Isolate.spawn(
+  await Isolate.spawn(
       _watchProcess,
       pid,
       onExit: exitPort.sendPort,
       onError: errorPort.sendPort,
       errorsAreFatal: true
   );
-  var result = await completer.future;
-  isolate.kill(priority: Isolate.immediate);
-  return result;
+  return await completer.future;
 }
 
 List<String> createRebootArgs(String username, String password, bool host, bool headless, String additionalArgs) {
@@ -324,4 +239,53 @@ String _parseUsername(String username, bool host) {
   }
 
   return username;
+}
+
+class _ExtendedProcess extends Process {
+  final Process _delegate;
+  final Stream<List<int>>? _stdout;
+  final Stream<List<int>>? _stderr;
+  _ExtendedProcess(Process delegate, bool attached) :
+        _delegate = delegate,
+        _stdout = attached ? delegate.stdout.asBroadcastStream() : null,
+        _stderr = attached ? delegate.stderr.asBroadcastStream() : null;
+
+
+  @override
+  Future<int> get exitCode => _delegate.exitCode;
+
+  @override
+  bool kill([ProcessSignal signal = ProcessSignal.sigterm]) => _delegate.kill(signal);
+
+  @override
+  int get pid => _delegate.pid;
+
+  @override
+  IOSink get stdin => _delegate.stdin;
+
+  @override
+  Stream<List<int>> get stdout {
+    final out = _stdout;
+    if(out == null) {
+      throw StateError("Output is not attached");
+    }
+
+    return out;
+  }
+
+  @override
+  Stream<List<int>> get stderr {
+    final err = _stderr;
+    if(err == null) {
+      throw StateError("Output is not attached");
+    }
+
+    return err;
+  }
+}
+
+extension ProcessExtension on Process {
+  Stream<String> get stdOutput => this.stdout.expand((event) => utf8.decode(event).split("\n"));
+
+  Stream<String> get stdError => this.stderr.expand((event) => utf8.decode(event).split("\n"));
 }

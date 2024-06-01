@@ -38,7 +38,7 @@ class _MatchmakerPageState extends RebootPageState<MatchmakerPage> {
 
   @override
   Widget? get button => const ServerButton(
-      authenticator: false
+      backend: false
   );
 
   @override
@@ -47,39 +47,9 @@ class _MatchmakerPageState extends RebootPageState<MatchmakerPage> {
     _hostName,
     _port,
     _gameServerAddress,
-    _detached,
     _installationDirectory,
     _resetDefaults
   ];
-
-  Widget get _detached => Obx(() {
-    if(_matchmakerController.type.value != ServerType.embedded) {
-      return const SizedBox.shrink();
-    }
-
-    return SettingTile(
-      icon: Icon(
-          FluentIcons.developer_board_24_regular
-      ),
-      title: Text(translations.matchmakerConfigurationDetachedName),
-      subtitle: Text(translations.matchmakerConfigurationDetachedDescription),
-      contentWidth: null,
-      content: Row(
-        children: [
-          Text(
-              _matchmakerController.detached.value ? translations.on : translations.off
-          ),
-          const SizedBox(
-              width: 16.0
-          ),
-          ToggleSwitch(
-              checked: _matchmakerController.detached.value,
-              onChanged: (value) => _matchmakerController.detached.value = value
-          ),
-        ],
-      ),
-    );
-  });
 
   Widget get _gameServerAddress => Obx(() {
     if(_matchmakerController.type.value != ServerType.embedded) {
@@ -123,7 +93,7 @@ class _MatchmakerPageState extends RebootPageState<MatchmakerPage> {
   });
 
   Widget get _hostName => Obx(() {
-    if(_matchmakerController.type.value == ServerType.remote) {
+    if(_matchmakerController.type.value != ServerType.remote) {
       return const SizedBox.shrink();
     }
 
@@ -147,7 +117,7 @@ class _MatchmakerPageState extends RebootPageState<MatchmakerPage> {
       title: Text(translations.matchmakerTypeName),
       subtitle: Text(translations.matchmakerTypeDescription),
       content: const ServerTypeSelector(
-          authenticator: false
+          backend: false
       )
   );
 

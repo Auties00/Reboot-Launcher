@@ -6,7 +6,6 @@ class GameInstance {
   final int gamePid;
   final int? launcherPid;
   final int? eacPid;
-  int? observerPid;
   bool hosting;
   bool launched;
   bool tokenError;
@@ -29,9 +28,18 @@ class GameInstance {
     if(eacPid != null) {
       Process.killPid(eacPid!, ProcessSignal.sigabrt);
     }
-    if(observerPid != null) {
-      Process.killPid(observerPid!, ProcessSignal.sigabrt);
+  }
+
+  bool get nestedHosting {
+    GameInstance? child = this;
+    while(child != null) {
+      if(child.hosting) {
+        return true;
+      }
+
+      child = child.child;
     }
-    child?.kill();
+
+    return false;
   }
 }

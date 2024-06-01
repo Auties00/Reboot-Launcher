@@ -6,22 +6,26 @@ import 'package:reboot_common/common.dart';
 const Duration _timeout = Duration(seconds: 2);
 
 Future<bool> _pingGameServer(String hostname, int port) async {
-  var socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-  var dataToSend = utf8.encode(DateTime.now().toIso8601String());
-  socket.send(dataToSend, InternetAddress(hostname), port);
-  await for (var event in socket) {
-    switch(event) {
-      case RawSocketEvent.read:
-        return true;
-      case RawSocketEvent.readClosed:
-      case RawSocketEvent.closed:
-        return false;
-      case RawSocketEvent.write:
-        break;
+  RawDatagramSocket? socket;
+  try {
+    socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+    final dataToSend = utf8.encode(DateTime.now().toIso8601String());
+    socket.send(dataToSend, InternetAddress(hostname), port);
+    await for (var event in socket) {
+      switch(event) {
+        case RawSocketEvent.read:
+        case RawSocketEvent.write:
+          return true;
+        case RawSocketEvent.readClosed:
+        case RawSocketEvent.closed:
+          return false;
+      }
     }
-  }
 
-  return false;
+    return false;
+  }finally {
+    socket?.close();
+  }
 }
 
 Future<bool> get _timeoutFuture => Future.delayed(_timeout).then((value) => false);

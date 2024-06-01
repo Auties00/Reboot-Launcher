@@ -52,8 +52,10 @@ extension FortniteVersionExtension on FortniteVersion {
     }
   }
 
-  Future<File?> get executable async {
-    var result = findExecutable(location, "FortniteClient-Win64-Shipping-Reboot.exe");
+  File? get gameExecutable => findExecutable(location, "FortniteClient-Win64-Shipping.exe");
+
+  Future<File?> get headlessGameExecutable async {
+    var result = findExecutable(location, "FortniteClient-Win64-Shipping-Headless.exe");
     if(result != null) {
       return result;
     }
@@ -63,12 +65,9 @@ extension FortniteVersionExtension on FortniteVersion {
       return null;
     }
 
-    var output = File("${original.parent.path}\\FortniteClient-Win64-Shipping-Reboot.exe");
+    var output = File("${original.parent.path}\\FortniteClient-Win64-Shipping-Headless.exe");
     await original.copy(output.path);
-    await Future.wait([
-      Isolate.run(() => patchMatchmaking(output)),
-      Isolate.run(() => patchHeadless(output)),
-    ]);
+    await Isolate.run(() => patchHeadless(output));
     return output;
   }
 

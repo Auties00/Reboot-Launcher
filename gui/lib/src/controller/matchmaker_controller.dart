@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:reboot_common/common.dart';
@@ -57,7 +59,7 @@ class MatchmakerController extends ServerController {
   RebootPageType get pageType => RebootPageType.matchmaker;
 
   @override
-  Future<Win32Process> startEmbeddedInternal() => startEmbeddedMatchmaker(detached.value);
+  Future<Process> startEmbeddedInternal() => startEmbeddedMatchmaker();
 
   @override
   Future<Uri?> pingServer(String host, int port) => pingMatchmaker(host, port);

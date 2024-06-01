@@ -2,7 +2,7 @@ enum RebootPageType {
   play,
   host,
   browser,
-  authenticator,
+  backend,
   matchmaker,
   info,
   settings

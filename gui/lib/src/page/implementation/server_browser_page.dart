@@ -87,14 +87,8 @@ class _BrowsePageState extends RebootPageState<BrowsePage> {
   );
 
   Widget _buildPopulatedListBody(Set<Map<String, dynamic>> items) => ListView.builder(
-      itemCount: items.length * 2,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        if(index % 2 != 0) {
-          return const SizedBox(
-              height: 8.0
-          );
-        }
-
         var entry = items.elementAt(index ~/ 2);
         var hasPassword = entry["password"] != null;
         return SettingTile(

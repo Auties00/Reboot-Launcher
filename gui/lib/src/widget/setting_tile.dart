@@ -3,7 +3,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:skeletons/skeletons.dart';
 
-class SettingTile extends StatefulWidget {
+class SettingTile extends StatelessWidget {
   static const double kDefaultContentWidth = 200.0;
   static const double kDefaultHeaderHeight = 72;
 
@@ -24,12 +24,7 @@ class SettingTile extends StatefulWidget {
     this.contentWidth = kDefaultContentWidth,
     this.children
   });
-
-  @override
-  State<SettingTile> createState() => _SettingTileState();
-}
-
-class _SettingTileState extends State<SettingTile> {
+  
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -37,7 +32,7 @@ class _SettingTileState extends State<SettingTile> {
           bottom: 4.0
       ),
       child: HoverButton(
-        onPressed: _buildOnPressed(),
+        onPressed: _buildOnPressed(context),
         builder: (context, states) => Container(
             height: 80,
             width: double.infinity,
@@ -61,13 +56,13 @@ class _SettingTileState extends State<SettingTile> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      widget.icon,
+                      icon,
                       const SizedBox(width: 16.0),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          widget.title == null ? _skeletonTitle : widget.title!,
-                          widget.subtitle == null ? _skeletonSubtitle : widget.subtitle!,
+                          title == null ? _skeletonTitle : title!,
+                          subtitle == null ? _skeletonSubtitle : subtitle!,
                         ],
                       ),
                       const Spacer(),
@@ -81,12 +76,12 @@ class _SettingTileState extends State<SettingTile> {
     );
   }
 
-  void Function()? _buildOnPressed() {
-    if(widget.onPressed != null) {
-      return widget.onPressed;
+  void Function()? _buildOnPressed(BuildContext context) {
+    if(onPressed != null) {
+      return onPressed;
     }
 
-    final children = widget.children;
+    final children = this.children;
     if (children == null) {
       return null;
     }
@@ -96,7 +91,7 @@ class _SettingTileState extends State<SettingTile> {
           transitionDuration: Duration.zero,
           reverseTransitionDuration: Duration.zero,
           settings: RouteSettings(
-              name: widget.title?.data
+              name: title?.data
           ),
           pageBuilder: (context, incoming, outgoing) => ListView.builder(
               itemCount: children.length,
@@ -108,15 +103,15 @@ class _SettingTileState extends State<SettingTile> {
   }
 
   Widget get _trailing {
-    final hasContent = widget.content != null;
-    final hasChildren = widget.children?.isNotEmpty == true;
-    final hasListener = widget.onPressed != null;
+    final hasContent = content != null;
+    final hasChildren = children?.isNotEmpty == true;
+    final hasListener = onPressed != null;
     if(hasContent && hasChildren) {
       return Row(
         children: [
           SizedBox(
-              width: widget.contentWidth,
-              child: widget.content
+              width: contentWidth,
+              child: content
           ),
           const SizedBox(width: 16.0),
           Icon(
@@ -128,8 +123,8 @@ class _SettingTileState extends State<SettingTile> {
 
     if (hasContent) {
       return SizedBox(
-          width: widget.contentWidth,
-          child: widget.content
+          width: contentWidth,
+          child: content
       );
     }
 

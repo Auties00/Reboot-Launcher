@@ -1,6 +1,6 @@
 name: reboot_launcher
 description: Graphical User Interface for Project Reboot
-version: "9.0.2"
+version: "9.0.7"
 
 publish_to: 'none'
 
@@ -63,16 +63,15 @@ flutter:
   uses-material-design: true
   generate: true
   assets:
-    - assets/misc/
     - assets/dlls/
     - assets/icons/
     - assets/images/
-    - assets/authenticator/
-    - assets/authenticator/CloudStorage/
-    - assets/authenticator/Config/
-    - assets/authenticator/profiles/
-    - assets/authenticator/public/
-    - assets/authenticator/responses/
+    - assets/backend/
+    - assets/backend/CloudStorage/
+    - assets/backend/Config/
+    - assets/backend/profiles/
+    - assets/backend/public/
+    - assets/backend/responses/
     - assets/matchmaker/
     - assets/build/
 
@@ -80,7 +79,7 @@ msix_config:
   display_name: Reboot Launcher
   publisher_display_name: Auties00
   identity_name: 31868Auties00.RebootLauncher
-  msix_version: 9.0.0.1
+  msix_version: 9.0.0.7
   publisher: CN=E6CD08C6-DECF-4034-A3EB-2D5FA2CA8029
   logo_path: ./assets/icons/reboot.ico
   architecture: x64

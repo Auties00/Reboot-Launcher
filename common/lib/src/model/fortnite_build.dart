@@ -20,7 +20,11 @@ class FortniteBuildDownloadProgress {
   final int? minutesLeft;
   final bool extracting;
 
-  FortniteBuildDownloadProgress(this.progress, this.minutesLeft, this.extracting);
+  FortniteBuildDownloadProgress({
+    required this.progress,
+    required this.extracting,
+    this.minutesLeft,
+  });
 }
 
 class FortniteBuildDownloadOptions {

@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/widget/title_bar_buttons.dart';
 import 'package:system_theme/system_theme.dart';

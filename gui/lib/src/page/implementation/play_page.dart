@@ -1,13 +1,19 @@
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
+import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
+import 'package:reboot_launcher/src/util/keyboard.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:reboot_launcher/src/widget/file_setting_tile.dart';
 import 'package:reboot_launcher/src/widget/game_start_button.dart';
 import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:reboot_launcher/src/widget/version_selector_tile.dart';
@@ -34,20 +40,9 @@ class PlayPage extends RebootPage {
 
 class _PlayPageState extends RebootPageState<PlayPage> {
   final MatchmakerController _matchmakerController = Get.find<MatchmakerController>();
-  final HostingController _hostingController = Get.find<HostingController>();
-  late final RxBool _selfServer;
-
-  @override
-  void initState() {
-    _selfServer = RxBool(_isLocalPlay);
-    _matchmakerController.gameServerAddress.addListener(() => _selfServer.value = _isLocalPlay);
-    _hostingController.started.listen((_) => _selfServer.value = _isLocalPlay);
-    super.initState();
-  }
-
-  bool get _isLocalPlay => isLocalHost(_matchmakerController.gameServerAddress.text)
-      && !_hostingController.started.value;
-
+  final SettingsController _settingsController = Get.find<SettingsController>();
+  final GameController _gameController = Get.find<GameController>();
+  
   @override
   Widget? get button => LaunchButton(
       startLabel: translations.launchFortnite,
@@ -57,11 +52,59 @@ class _PlayPageState extends RebootPageState<PlayPage> {
 
   @override
   List<SettingTile> get settings => [
+    _clientSettings,
     versionSelectSettingTile,
-    _hostSettingTile,
-    _browseServerTile,
-    _matchmakerTile
+    _multiplayer
   ];
+
+  SettingTile get _multiplayer => SettingTile(
+    icon: Icon(
+        FluentIcons.people_24_regular
+    ),
+    title: Text(translations.playGameServerName),
+    subtitle: Text(translations.playGameServerDescription),
+    children: [
+      _hostSettingTile,
+      _browseServerTile,
+      _matchmakerTile,
+    ],
+  );
+
+  SettingTile get _clientSettings => SettingTile(
+    icon: Icon(
+        FluentIcons.archive_settings_24_regular
+    ),
+    title: Text(translations.settingsClientName),
+    subtitle: Text(translations.settingsClientDescription),
+    children: [
+      createFileSetting(
+          title: translations.settingsClientConsoleName,
+          description: translations.settingsClientConsoleDescription,
+          controller: _settingsController.unrealEngineConsoleDll
+      ),
+      createFileSetting(
+          title: translations.settingsClientAuthName,
+          description: translations.settingsClientAuthDescription,
+          controller: _settingsController.backendDll
+      ),
+      createFileSetting(
+          title: translations.settingsClientMemoryName,
+          description: translations.settingsClientMemoryDescription,
+          controller: _settingsController.memoryLeakDll
+      ),
+      SettingTile(
+          icon: Icon(
+              FluentIcons.options_24_regular
+          ),
+          title: Text(translations.settingsClientArgsName),
+          subtitle: Text(translations.settingsClientArgsDescription),
+          content: TextFormBox(
+            placeholder: translations.settingsClientArgsPlaceholder,
+            controller: _gameController.customLaunchArgs,
+          )
+      )
+    ],
+  );
 
   SettingTile get _matchmakerTile => SettingTile(
     onPressed: () {

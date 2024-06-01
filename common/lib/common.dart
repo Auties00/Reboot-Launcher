@@ -1,4 +1,4 @@
-export 'package:reboot_common/src/constant/authenticator.dart';
+export 'package:reboot_common/src/constant/backend.dart';
 export 'package:reboot_common/src/constant/game.dart';
 export 'package:reboot_common/src/constant/matchmaker.dart';
 export 'package:reboot_common/src/constant/supabase.dart';
@@ -9,8 +9,7 @@ export 'package:reboot_common/src/model/server_result.dart';
 export 'package:reboot_common/src/model/server_type.dart';
 export 'package:reboot_common/src/model/update_status.dart';
 export 'package:reboot_common/src/model/update_timer.dart';
-export 'package:reboot_common/src/model/process.dart';
-export 'package:reboot_common/src/util/authenticator.dart';
+export 'package:reboot_common/src/util/backend.dart';
 export 'package:reboot_common/src/util/build.dart';
 export 'package:reboot_common/src/util/dll.dart';
 export 'package:reboot_common/src/util/matchmaker.dart';

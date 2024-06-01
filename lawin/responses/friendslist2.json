@@ -1,0 +1,110 @@
+{
+  "friends": [
+    {
+      "accountId": "Player123",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-23T13:38:39.614Z"
+    },
+    {
+      "accountId": "Player857",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-23T13:38:45.823Z"
+    },
+    {
+      "accountId": "Player955",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-23T13:42:38.200Z"
+    },
+    {
+      "accountId": "Player444",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-23T13:47:15.982Z"
+    },
+    {
+      "accountId": "Player742",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-23T13:57:03.026Z"
+    },
+    {
+      "accountId": "abc",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-23T13:57:32.044Z"
+    },
+    {
+      "accountId": "Player",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-23T14:35:00.802Z"
+    },
+    {
+      "accountId": "Player260",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-23T18:41:47.035Z"
+    },
+    {
+      "accountId": "abce1",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-23T19:36:22.635Z"
+    },
+    {
+      "accountId": "Player809",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-31T19:09:47.089Z"
+    },
+    {
+      "accountId": "Player153",
+      "groups": [],
+      "mutual": 0,
+      "alias": "",
+      "note": "",
+      "favorite": false,
+      "created": "2024-05-31T19:50:04.738Z"
+    }
+  ],
+  "incoming": [],
+  "outgoing": [],
+  "suggested": [],
+  "blocklist": [],
+  "settings": {
+    "acceptInvites": "public"
+  }
+}
