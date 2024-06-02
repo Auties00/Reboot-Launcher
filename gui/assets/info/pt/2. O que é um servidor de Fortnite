@@ -1,0 +1,7 @@
+Se você já jogou Minecraft multiplayer, pode saber que os servidores aos quais você se conecta são hospedados em um computador executando um programa chamado Minecraft Game Server.
+Enquanto o servidor do Minecraft é desenvolvido pelos criadores do Minecraft, a Mojang, a Epic Games não fornece um equivalente para o Fortnite.
+No entanto, explorando as entranhas do Fortnite, é possível criar um servidor assim como no Minecraft: isso, em termos simples, é o que o Projeto Reboot faz.
+Algumas versões do Fortnite suportam a execução deste servidor em segundo plano sem renderizar o jogo ("headless"), enquanto outras ainda exigem que o jogo completo esteja aberto.
+Assim como no Minecraft, você precisa de um cliente de jogo para jogar o jogo e um para hospedar o servidor.
+Por padrão, um servidor é iniciado automaticamente no seu PC quando você inicia uma versão do Fortnite na seção "Jogar" do launcher.
+Se você quiser jogar de outra forma, por exemplo, se juntando a um servidor hospedado por um de seus amigos em vez de executar um você mesmo, você pode conferir a seção "Multijogador" na aba "Jogar" do launcher.

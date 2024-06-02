@@ -1,0 +1,6 @@
+Um backend é um software que emula o servidor da Epic Games responsável pela autenticação e por recursos relacionados.
+Por padrão, o Reboot Launcher vem com uma versão ligeiramente personalizada do LawinV1, uma implementação de código aberto disponível no Github.
+Se você estiver enfrentando problemas com o backend integrado, habilite a opção "Detached" na aba "Backend" do Reboot Laucher para solucionar o problema.
+O LawinV1 foi escolhido para permitir que os usuários façam login no Fortnite e entrem nos jogos facilmente, mas tenha em mente que se você quiser usar recursos como festas, bate-papo por voz ou skins, precisará usar um backend personalizado.
+Outras opções populares são LawinV2 e Momentum, ambos disponíveis no Github, mas não é recomendado usá-los se você não for um usuário avançado.
+Você pode executar essas alternativas no seu PC ou em um servidor, selecionando respectivamente "Local" ou "Remoto" na seção "Tipo" na aba "Backend" do Reboot Launcher.

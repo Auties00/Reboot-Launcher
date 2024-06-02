@@ -1,0 +1,4 @@
+Algumas versões do Fortnite suportam a execução deste servidor em segundo plano sem renderizar o jogo: este tipo de servidor é chamado de "headless", pois o jogo está em execução, mas você não pode vê-lo na sua tela.
+Se o modo headless não for suportado pela versão do Fortnite que você deseja jogar, ou se você o desativou manualmente na seção "Configuração" na aba "Host" do launcher, você verá uma instância do Fortnite aberta na sua tela.
+Para conveniência, esta janela será aberta em uma nova Área de Trabalho Virtual, se a sua versão do Windows suportar isso. Esta funcionalidade também pode ser desativada na seção "Configuração" na aba "Host" do launcher.
+Assim como no Minecraft, você precisa de um cliente de jogo para jogar e um para hospedar o servidor."

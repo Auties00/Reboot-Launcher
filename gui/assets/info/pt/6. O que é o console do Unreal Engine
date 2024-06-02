@@ -1,0 +1,4 @@
+Muitas versões do Fortnite não suportam entrar no jogo clicando no botão \"Jogar\".
+Em vez disso, você precisa clicar na tecla atribuída ao console do Unreal Engine, por padrão F8 ou a til (~, o botão acima da tecla Tab), e digitar open 127.0.0.1.
+Tenha em mente que a tecla do console do Unreal Engine é controlada pelo backend, então isso é verdade apenas se você estiver usando o backend incorporado: backends personalizados podem usar teclas diferentes.
+Ao usar o backend incorporado, você pode personalizar a tecla usada para abrir o console na aba \"Backend\" do Reboot Launcher.
