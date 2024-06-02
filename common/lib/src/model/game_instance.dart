@@ -6,9 +6,9 @@ class GameInstance {
   final int gamePid;
   final int? launcherPid;
   final int? eacPid;
-  int? observerPid;
   bool hosting;
   bool launched;
+  bool movedToVirtualDesktop;
   bool tokenError;
   GameInstance? child;
 
@@ -19,7 +19,7 @@ class GameInstance {
     required this.eacPid,
     required this.hosting,
     required this.child
-  }): tokenError = false, launched = false;
+  }): tokenError = false, launched = false, movedToVirtualDesktop = false;
 
   void kill() {
     Process.killPid(gamePid, ProcessSignal.sigabrt);
@@ -29,9 +29,18 @@ class GameInstance {
     if(eacPid != null) {
       Process.killPid(eacPid!, ProcessSignal.sigabrt);
     }
-    if(observerPid != null) {
-      Process.killPid(observerPid!, ProcessSignal.sigabrt);
+  }
+
+  bool get nestedHosting {
+    GameInstance? child = this;
+    while(child != null) {
+      if(child.hosting) {
+        return true;
+      }
+
+      child = child.child;
     }
-    child?.kill();
+
+    return false;
   }
 }

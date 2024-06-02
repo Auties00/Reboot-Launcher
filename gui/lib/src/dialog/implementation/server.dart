@@ -6,9 +6,8 @@ import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
-import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
@@ -19,145 +18,126 @@ import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sync/semaphore.dart';
 
-extension ServerControllerDialog on ServerController {
-  Future<bool> toggleInteractive([bool showSuccessMessage = true]) async {
-    var stream = toggle();
-    var completer = Completer<bool>();
-    worker = stream.listen((event) {
-      switch (event.type) {
-        case ServerResultType.starting:
-          showInfoBar(
-              translations.startingServer(controllerName),
-              severity: InfoBarSeverity.info,
-              loading: true,
-              duration: null
-          );
-          break;
-        case ServerResultType.startSuccess:
-          if(showSuccessMessage) {
-            showInfoBar(
-                type.value == ServerType.local ? translations.checkedServer(controllerName) : translations.startedServer(controllerName),
-                severity: InfoBarSeverity.success
-            );
-          }
-          completer.complete(true);
-          break;
-        case ServerResultType.startError:
-          showInfoBar(
-              type.value == ServerType.local ? translations.localServerError(event.error ?? translations.unknownError, controllerName) : translations.startServerError(event.error ?? translations.unknownError, controllerName),
-              severity: InfoBarSeverity.error,
-              duration: infoBarLongDuration
-          );
-          break;
-        case ServerResultType.stopping:
-          showInfoBar(
-              translations.stoppingServer,
-              severity: InfoBarSeverity.info,
-              loading: true,
-              duration: null
-          );
-          break;
-        case ServerResultType.stopSuccess:
-          if(showSuccessMessage) {
-            showInfoBar(
-                translations.stoppedServer(controllerName),
-                severity: InfoBarSeverity.success
-            );
-          }
-          completer.complete(true);
-          break;
-        case ServerResultType.stopError:
-          showInfoBar(
-              translations.stopServerError(
-                  event.error ?? translations.unknownError, controllerName),
-              severity: InfoBarSeverity.error,
-              duration: infoBarLongDuration
-          );
-          break;
-        case ServerResultType.missingHostError:
-          showInfoBar(
-              translations.missingHostNameError(controllerName),
-              severity: InfoBarSeverity.error
-          );
-          break;
-        case ServerResultType.missingPortError:
-          showInfoBar(
-              translations.missingPortError(controllerName),
-              severity: InfoBarSeverity.error
-          );
-          break;
-        case ServerResultType.illegalPortError:
-          showInfoBar(
-              translations.illegalPortError(controllerName),
-              severity: InfoBarSeverity.error
-          );
-          break;
-        case ServerResultType.freeingPort:
-          showInfoBar(
-              translations.freeingPort(defaultPort),
-              loading: true,
-              duration: null
-          );
-          break;
-        case ServerResultType.freePortSuccess:
-          showInfoBar(
-              translations.freedPort(defaultPort),
-              severity: InfoBarSeverity.success,
-              duration: infoBarShortDuration
-          );
-          break;
-        case ServerResultType.freePortError:
-          showInfoBar(
-              translations.freePortError(event.error ?? translations.unknownError, controllerName),
-              severity: InfoBarSeverity.error,
-              duration: infoBarLongDuration
-          );
-          break;
-        case ServerResultType.pingingRemote:
-          if(started.value) {
-            showInfoBar(
-                translations.pingingRemoteServer(controllerName),
-                severity: InfoBarSeverity.info,
-                loading: true,
-                duration: null
-            );
-          }
-          break;
-        case ServerResultType.pingingLocal:
-          showInfoBar(
-              translations.pingingLocalServer(controllerName, type().name),
-              severity: InfoBarSeverity.info,
-              loading: true,
-              duration: null
-          );
-          break;
-        case ServerResultType.pingError:
-          showInfoBar(
-              translations.pingError(controllerName, type().name),
-              severity: InfoBarSeverity.error
-          );
-          break;
-      }
+final Semaphore _publishingSemaphore = Semaphore();
 
+extension ServerControllerDialog on BackendController {
+  Future<bool> toggleInteractive() async {
+    final stream = toggle();
+    final completer = Completer<bool>();
+    InfoBarEntry? entry;
+    worker = stream.listen((event) {
+      entry?.close();
+      entry = _handeEvent(event);
       if(event.type.isError) {
         completer.complete(false);
+      }else if(event.type.isSuccess) {
+        completer.complete(true);
       }
     });
 
     return await completer.future;
   }
-}
 
-final Semaphore _publishingSemaphore = Semaphore();
+  InfoBarEntry _handeEvent(ServerResult event) {
+     switch (event.type) {
+      case ServerResultType.starting:
+        return showInfoBar(
+            translations.startingServer,
+            severity: InfoBarSeverity.info,
+            loading: true,
+            duration: null
+        );
+      case ServerResultType.startSuccess:
+        return showInfoBar(
+            type.value == ServerType.local ? translations.checkedServer : translations.startedServer,
+            severity: InfoBarSeverity.success
+        );
+      case ServerResultType.startError:
+        return showInfoBar(
+            type.value == ServerType.local ? translations.localServerError(event.error ?? translations.unknownError) : translations.startServerError(event.error ?? translations.unknownError),
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration
+        );
+      case ServerResultType.stopping:
+        return showInfoBar(
+            translations.stoppingServer,
+            severity: InfoBarSeverity.info,
+            loading: true,
+            duration: null
+        );
+      case ServerResultType.stopSuccess:
+        return showInfoBar(
+            translations.stoppedServer,
+            severity: InfoBarSeverity.success
+        );
+      case ServerResultType.stopError:
+        return showInfoBar(
+            translations.stopServerError(event.error ?? translations.unknownError),
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration
+        );
+      case ServerResultType.missingHostError:
+        return showInfoBar(
+            translations.missingHostNameError,
+            severity: InfoBarSeverity.error
+        );
+      case ServerResultType.missingPortError:
+        return showInfoBar(
+            translations.missingPortError,
+            severity: InfoBarSeverity.error
+        );
+      case ServerResultType.illegalPortError:
+        return showInfoBar(
+            translations.illegalPortError,
+            severity: InfoBarSeverity.error
+        );
+      case ServerResultType.freeingPort:
+        return showInfoBar(
+            translations.freeingPort,
+            loading: true,
+            duration: null
+        );
+      case ServerResultType.freePortSuccess:
+        return showInfoBar(
+            translations.freedPort,
+            severity: InfoBarSeverity.success,
+            duration: infoBarShortDuration
+        );
+      case ServerResultType.freePortError:
+        return showInfoBar(
+            translations.freePortError(event.error ?? translations.unknownError),
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration
+        );
+      case ServerResultType.pingingRemote:
+        return showInfoBar(
+            translations.pingingRemoteServer,
+            severity: InfoBarSeverity.info,
+            loading: true,
+            duration: null
+        );
+      case ServerResultType.pingingLocal:
+        return showInfoBar(
+            translations.pingingLocalServer(type.value.name),
+            severity: InfoBarSeverity.info,
+            loading: true,
+            duration: null
+        );
+      case ServerResultType.pingError:
+        return showInfoBar(
+            translations.pingError(type.value.name),
+            severity: InfoBarSeverity.error
+        );
+    }
+  }
 
-extension MatchmakerControllerExtension on MatchmakerController {
   void joinLocalHost() {
     gameServerAddress.text = kDefaultGameServerHost;
     gameServerOwner.value = null;
   }
 
   Future<void> joinServer(String uuid, Map<String, dynamic> entry) async {
-    var id = entry["id"];
+    final id = entry["id"];
     if(uuid == id) {
       showInfoBar(
           translations.joinSelfServer,
@@ -167,13 +147,13 @@ extension MatchmakerControllerExtension on MatchmakerController {
       return;
     }
 
-    var hashedPassword = entry["password"];
-    var hasPassword = hashedPassword != null;
-    var embedded = type.value == ServerType.embedded;
-    var author = entry["author"];
-    var encryptedIp = entry["ip"];
+    final hashedPassword = entry["password"];
+    final hasPassword = hashedPassword != null;
+    final embedded = type.value == ServerType.embedded;
+    final author = entry["author"];
+    final encryptedIp = entry["ip"];
     if(!hasPassword) {
-      var valid = await _isServerValid(encryptedIp);
+      final valid = await _isServerValid(encryptedIp);
       if(!valid) {
         return;
       }
@@ -182,7 +162,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
       return;
     }
 
-    var confirmPassword = await _askForPassword();
+    final confirmPassword = await _askForPassword();
     if(confirmPassword == null) {
       return;
     }
@@ -196,8 +176,8 @@ extension MatchmakerControllerExtension on MatchmakerController {
       return;
     }
 
-    var decryptedIp = aes256Decrypt(encryptedIp, confirmPassword);
-    var valid = await _isServerValid(decryptedIp);
+    final decryptedIp = aes256Decrypt(encryptedIp, confirmPassword);
+    final valid = await _isServerValid(decryptedIp);
     if(!valid) {
       return;
     }
@@ -206,7 +186,7 @@ extension MatchmakerControllerExtension on MatchmakerController {
   }
 
   Future<bool> _isServerValid(String address) async {
-    var result = await pingGameServer(address);
+    final result = await pingGameServer(address);
     if(result) {
       return true;
     }
@@ -303,9 +283,9 @@ extension HostingControllerExtension on HostingController {
         ip = aes256Encrypt(ip, passwordText);
       }
 
-      var supabase = Supabase.instance.client;
-      var hosts = supabase.from("hosting");
-      var payload = {
+      final supabase = Supabase.instance.client;
+      final hosts = supabase.from("hosting");
+      final payload = {
         'name': name.text,
         'description': description.text,
         'author': author,

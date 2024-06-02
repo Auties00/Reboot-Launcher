@@ -7,9 +7,10 @@ import 'dart:isolate';
 import 'dart:math';
 
 import 'package:ffi/ffi.dart';
+import 'package:path/path.dart' as path;
+import 'package:reboot_common/common.dart';
+import 'package:sync/semaphore.dart';
 import 'package:win32/win32.dart';
-
-import '../constant/game.dart';
 
 final _ntdll = DynamicLibrary.open('ntdll.dll');
 final _kernel32 = DynamicLibrary.open('kernel32.dll');
@@ -30,15 +31,16 @@ final _CreateRemoteThread = _kernel32.lookupFunction<
         Pointer lpParameter,
         int dwCreationFlags,
         Pointer<Uint32> lpThreadId)>('CreateRemoteThread');
+const chunkSize = 1024;
 
 Future<void> injectDll(int pid, String dll) async {
-  var process = OpenProcess(
+  final process = OpenProcess(
       0x43A,
       0,
       pid
   );
 
-  var processAddress = GetProcAddress(
+  final processAddress = GetProcAddress(
       GetModuleHandle("KERNEL32".toNativeUtf16()),
       "LoadLibraryA".toNativeUtf8()
   );
@@ -47,7 +49,7 @@ Future<void> injectDll(int pid, String dll) async {
     throw Exception("Cannot get process address for pid $pid");
   }
 
-  var dllAddress = VirtualAllocEx(
+  final dllAddress = VirtualAllocEx(
       process,
       nullptr,
       dll.length + 1,
@@ -55,7 +57,7 @@ Future<void> injectDll(int pid, String dll) async {
       0x4
   );
 
-  var writeMemoryResult = WriteProcessMemory(
+  final writeMemoryResult = WriteProcessMemory(
       process,
       dllAddress,
       dll.toNativeUtf8(),
@@ -67,7 +69,7 @@ Future<void> injectDll(int pid, String dll) async {
     throw Exception("Memory write failed");
   }
 
-  var createThreadResult = _CreateRemoteThread(
+  final createThreadResult = _CreateRemoteThread(
       process,
       nullptr,
       0,
@@ -81,90 +83,66 @@ Future<void> injectDll(int pid, String dll) async {
     throw Exception("Thread creation failed");
   }
 
-  var closeResult = CloseHandle(process);
+  final closeResult = CloseHandle(process);
   if(closeResult != 1){
     throw Exception("Cannot close handle");
   }
 }
 
-bool runElevatedProcess(String executable, String args) {
-  final shellInput = calloc<SHELLEXECUTEINFO>();
-  shellInput.ref.lpFile = executable.toNativeUtf16();
-  shellInput.ref.lpParameters = args.toNativeUtf16();
-  shellInput.ref.nShow = SW_HIDE;
-  shellInput.ref.fMask = ES_AWAYMODE_REQUIRED;
-  shellInput.ref.lpVerb = "runas".toNativeUtf16();
-  shellInput.ref.cbSize = sizeOf<SHELLEXECUTEINFO>();
-  final result = ShellExecuteEx(shellInput) == 1;
-  free(shellInput);
-  return result;
-}
-
-void _startBackgroundProcess(_BackgroundProcessParameters params) {
-  var args = params.args;
-  var concatenatedArgs = args == null ? "" : " ${args.map((entry) => '"$entry"').join(" ")}";
-  var executablePath = TEXT('cmd.exe /k "${params.executable.path}"$concatenatedArgs');
-  var startupInfo = calloc<STARTUPINFO>();
-  var processInfo = calloc<PROCESS_INFORMATION>();
-  var windowFlag = params.window ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW;
-  var success = CreateProcess(
-      nullptr,
-      executablePath,
-      nullptr,
-      nullptr,
-      FALSE,
-      NORMAL_PRIORITY_CLASS | windowFlag | CREATE_NEW_PROCESS_GROUP,
-      nullptr,
-      TEXT(params.executable.parent.path),
-      startupInfo,
-      processInfo
-  );
-  if (success == 0) {
-    var error = GetLastError();
-    params.port.send("Cannot start process: $error");
-    return;
+Future<Process> startProcess({required File executable, List<String>? args, bool wrapProcess = true, bool window = false, String? name}) async {
+  final argsOrEmpty = args ?? [];
+  if(wrapProcess) {
+    final tempScriptDirectory = await tempDirectory.createTemp("reboot_launcher_process");
+    final tempScriptFile = File("${tempScriptDirectory.path}/process.bat");
+    final command = window ? 'cmd.exe /k ""${executable.path}" ${argsOrEmpty.join(" ")}"' : '"${executable.path}" ${argsOrEmpty.join(" ")}';
+    await tempScriptFile.writeAsString(command, flush: true);
+    final process = await Process.start(
+        tempScriptFile.path,
+        [],
+        workingDirectory: executable.parent.path,
+        mode: window ? ProcessStartMode.detachedWithStdio : ProcessStartMode.normal,
+        runInShell: window
+    );
+    return _withLogger(name, executable, process, window);
   }
 
-  var pid = processInfo.ref.dwProcessId;
-  free(startupInfo);
-  free(processInfo);
-  params.port.send(pid);
-}
-
-class _BackgroundProcessParameters {
-  File executable;
-  List<String>? args;
-  bool window;
-  SendPort port;
-
-  _BackgroundProcessParameters(this.executable, this.args, this.window, this.port);
-}
-
-Future<int> startBackgroundProcess({required File executable, List<String>? args, bool window = false}) async {
-  var completer = Completer<int>();
-  var port = ReceivePort();
-  port.listen((message) => message is int ? completer.complete(message) : completer.completeError(message));
-  var isolate = await Isolate.spawn(
-      _startBackgroundProcess,
-      _BackgroundProcessParameters(executable, args, window, port.sendPort),
-      errorsAreFatal: true
+  final process = await Process.start(
+      executable.path,
+      args ?? [],
+      workingDirectory: executable.parent.path,
+      mode: window ? ProcessStartMode.detachedWithStdio : ProcessStartMode.normal,
+      runInShell: window
   );
-  var result = await completer.future;
-  isolate.kill(priority: Isolate.immediate);
-  return result;
+  return _withLogger(name, executable, process, window);
 }
 
-int _NtResumeProcess(int hWnd) {
-  final function = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
-      int Function(int hWnd)>('NtResumeProcess');
-  return function(hWnd);
+_ExtendedProcess _withLogger(String? name, File executable, Process process, bool window) {
+  final extendedProcess = _ExtendedProcess(process, true);
+  final loggingFile = File("${logsDirectory.path}\\${name ?? path.basenameWithoutExtension(executable.path)}-${DateTime.now().millisecondsSinceEpoch}.log");
+  loggingFile.parent.createSync(recursive: true);
+  if(loggingFile.existsSync()) {
+    loggingFile.deleteSync();
+  }
+
+  final semaphore = Semaphore(1);
+  void logEvent(String event) async {
+      await semaphore.acquire();
+      await loggingFile.writeAsString("$event\n", mode: FileMode.append, flush: true);
+      semaphore.release();
+  }
+  extendedProcess.stdOutput.listen(logEvent);
+  extendedProcess.stdError.listen(logEvent);
+  if(!window) {
+    extendedProcess.exitCode.then((value) => logEvent("Process terminated with exit code: $value\n"));
+  }
+  return extendedProcess;
 }
 
-int _NtSuspendProcess(int hWnd) {
-  final function = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
-      int Function(int hWnd)>('NtSuspendProcess');
-  return function(hWnd);
-}
+final _NtResumeProcess = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
+    int Function(int hWnd)>('NtResumeProcess');
+
+final _NtSuspendProcess = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
+    int Function(int hWnd)>('NtSuspendProcess');
 
 bool suspend(int pid) {
   final processHandle = OpenProcess(PROCESS_SUSPEND_RESUME, FALSE, pid);
@@ -182,8 +160,11 @@ bool resume(int pid) {
 
 void _watchProcess(int pid) {
   final processHandle = OpenProcess(SYNCHRONIZE, FALSE, pid);
-  WaitForSingleObject(processHandle, INFINITE);
-  CloseHandle(processHandle);
+  try {
+    WaitForSingleObject(processHandle, INFINITE);
+  }finally {
+    CloseHandle(processHandle);
+  }
 }
 
 Future<bool> watchProcess(int pid) async {
@@ -196,16 +177,14 @@ Future<bool> watchProcess(int pid) async {
   });
   var errorPort = ReceivePort();
   errorPort.listen((_) => completer.complete(false));
-  var isolate = await Isolate.spawn(
+  await Isolate.spawn(
       _watchProcess,
       pid,
       onExit: exitPort.sendPort,
       onError: errorPort.sendPort,
       errorsAreFatal: true
   );
-  var result = await completer.future;
-  isolate.kill(priority: Isolate.immediate);
-  return result;
+  return await completer.future;
 }
 
 List<String> createRebootArgs(String username, String password, bool host, bool headless, String additionalArgs) {
@@ -214,7 +193,7 @@ List<String> createRebootArgs(String username, String password, bool host, bool 
   }
 
   password = password.isNotEmpty ? password : "Rebooted";
-  var args = [
+  final args = [
     "-epicapp=Fortnite",
     "-epicenv=Prod",
     "-epiclocale=en-us",
@@ -259,4 +238,47 @@ String _parseUsername(String username, bool host) {
   }
 
   return username;
+}
+
+final class _ExtendedProcess implements Process {
+  final Process _delegate;
+  final Stream<List<int>>? _stdout;
+  final Stream<List<int>>? _stderr;
+  _ExtendedProcess(Process delegate, bool attached) :
+        _delegate = delegate,
+        _stdout = attached ? delegate.stdout.asBroadcastStream() : null,
+        _stderr = attached ? delegate.stderr.asBroadcastStream() : null;
+
+
+  @override
+  Future<int> get exitCode => _delegate.exitCode;
+
+  @override
+  bool kill([ProcessSignal signal = ProcessSignal.sigterm]) => _delegate.kill(signal);
+
+  @override
+  int get pid => _delegate.pid;
+
+  @override
+  IOSink get stdin => _delegate.stdin;
+
+  @override
+  Stream<List<int>> get stdout {
+    final out = _stdout;
+    if(out == null) {
+      throw StateError("Output is not attached");
+    }
+
+    return out;
+  }
+
+  @override
+  Stream<List<int>> get stderr {
+    final err = _stderr;
+    if(err == null) {
+      throw StateError("Output is not attached");
+    }
+
+    return err;
+  }
 }

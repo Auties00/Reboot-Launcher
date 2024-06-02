@@ -24,4 +24,6 @@ enum ServerResultType {
   pingError;
 
   bool get isError => name.contains("Error");
+
+  bool get isSuccess => this == ServerResultType.startSuccess || this == ServerResultType.stopSuccess;
 }

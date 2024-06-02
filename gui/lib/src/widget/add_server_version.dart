@@ -256,12 +256,6 @@ class _AddServerVersionState extends State<AddServerVersion> {
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      _buildSelectorType(),
-
-      const SizedBox(
-          height: 16.0
-      ),
-
       _buildSelector(),
 
       const SizedBox(
@@ -291,24 +285,6 @@ class _AddServerVersionState extends State<AddServerVersion> {
     ],
   );
 
-  Widget _buildSelectorType() => InfoLabel(
-      label: translations.source,
-      child: Obx(() => ComboBox<FortniteBuildSource>(
-          placeholder: Text(translations.selectBuild),
-          isExpanded: true,
-          items: _buildSources,
-          value: _buildController.selectedBuildSource,
-          onChanged: (value) {
-            if(value == null){
-              return;
-            }
-
-            _buildController.selectedBuildSource = value;
-            _updateFormDefaults();
-          }
-      ))
-  );
-
   Widget _buildSelector() => InfoLabel(
       label: translations.build,
       child: Obx(() => ComboBox<FortniteBuild>(
@@ -328,7 +304,6 @@ class _AddServerVersionState extends State<AddServerVersion> {
   );
 
   List<ComboBoxItem<FortniteBuild>> get _builds => _buildController.builds!
-      .where((element) => element.source == _buildController.selectedBuild?.source)
       .map((element) => _buildItem(element))
       .toList();
 
@@ -336,24 +311,6 @@ class _AddServerVersionState extends State<AddServerVersion> {
       value: element,
       child: Text(element.version.toString())
   );
-
-  List<ComboBoxItem<FortniteBuildSource>> get _buildSources => FortniteBuildSource.values
-      .map((element) => _buildSourceItem(element))
-      .toList();
-
-  ComboBoxItem<FortniteBuildSource> _buildSourceItem(FortniteBuildSource element) => ComboBoxItem<FortniteBuildSource>(
-      value: element,
-      child: Text(_getBuildSourceName(element))
-  );
-
-  String _getBuildSourceName(FortniteBuildSource element) {
-    switch(element) {
-      case FortniteBuildSource.archive:
-        return translations.archive;
-      case FortniteBuildSource.manifest:
-        return translations.manifest;
-    }
-  }
 
   List<DialogButton> get _stopButton => [
     DialogButton(

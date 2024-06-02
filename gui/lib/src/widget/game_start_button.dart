@@ -4,25 +4,26 @@ import 'dart:io';
 import 'package:async/async.dart';
 import 'package:dart_ipify/dart_ipify.dart';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:process_run/shell.dart';
+import 'package:local_notifier/local_notifier.dart';
+import 'package:path/path.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
+import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart' as messenger;
+import 'package:reboot_launcher/src/controller/update_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
-import 'package:reboot_launcher/src/util/daemon.dart';
 import 'package:reboot_launcher/src/util/dll.dart';
+import 'package:reboot_launcher/src/util/log.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:reboot_launcher/src/util/tutorial.dart';
 
 class LaunchButton extends StatefulWidget {
   final bool host;
@@ -36,12 +37,17 @@ class LaunchButton extends StatefulWidget {
 }
 
 class _LaunchButtonState extends State<LaunchButton> {
+  static const Duration _kRebootDelay = Duration(seconds: 10);
+
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
-  final AuthenticatorController _authenticatorController = Get.find<AuthenticatorController>();
-  final MatchmakerController _matchmakerController = Get.find<MatchmakerController>();
+  final BackendController _backendController = Get.find<BackendController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
+  final UpdateController _updateController = Get.find<UpdateController>();
+  InfoBarEntry? _gameClientInfoBar;
+  InfoBarEntry? _gameServerInfoBar;
   CancelableOperation? _operation;
+  IVirtualDesktop? _virtualDesktop;
 
   @override
   Widget build(BuildContext context) => Align(
@@ -51,11 +57,11 @@ class _LaunchButtonState extends State<LaunchButton> {
       child: Obx(() => SizedBox(
         height: 48,
         child: Button(
-          onPressed: () => _operation = CancelableOperation.fromFuture(_start()),
-          child: Align(
-            alignment: Alignment.center,
-            child: Text(_hasStarted ? _stopMessage : _startMessage)
-          )
+            onPressed: () => _operation = CancelableOperation.fromFuture(_toggle()),
+            child: Align(
+                alignment: Alignment.center,
+                child: Text(_hasStarted ? _stopMessage : _startMessage)
+            )
         ),
       )),
     ),
@@ -69,26 +75,35 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   String get _stopMessage => widget.stopLabel ?? (widget.host ? translations.stopHosting : translations.stopGame);
 
-  Future<void> _start() async {
+  Future<void> _toggle({bool forceGUI = false}) async {
+    log("[${widget.host ? 'HOST' : 'GAME'}] Toggling state(forceGUI: $forceGUI)");
     if (_hasStarted) {
+      log("[${widget.host ? 'HOST' : 'GAME'}] User asked to close the current instance");
       _onStop(
-        reason: _StopReason.normal
+          reason: _StopReason.normal
       );
       return;
     }
-    
+
     if(_operation != null) {
+      log("[${widget.host ? 'HOST' : 'GAME'}] Already started, ignoring user action");
       return;
     }
 
-    if(_gameController.selectedVersion == null){
+    final version = _gameController.selectedVersion;
+    log("[${widget.host ? 'HOST' : 'GAME'}] Version data: $version");
+    if(version == null){
+      log("[${widget.host ? 'HOST' : 'GAME'}] No version selected");
       _onStop(
           reason: _StopReason.missingVersionError
       );
       return;
     }
 
+    log("[${widget.host ? 'HOST' : 'GAME'}] Setting started...");
     _setStarted(widget.host, true);
+    log("[${widget.host ? 'HOST' : 'GAME'}] Set started");
+    log("[${widget.host ? 'HOST' : 'GAME'}] Checking dlls: ${_Injectable.values}");
     for (final injectable in _Injectable.values) {
       if(await _getDllFileOrStop(injectable, widget.host) == null) {
         return;
@@ -96,9 +111,9 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     try {
-      final version = _gameController.selectedVersion!;
-      final executable = await version.executable;
+      final executable = version.gameExecutable;
       if(executable == null){
+        log("[${widget.host ? 'HOST' : 'GAME'}] No executable found");
         _onStop(
             reason: _StopReason.missingExecutableError,
             error: version.location.path
@@ -106,24 +121,26 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
 
-      final authenticatorResult = _authenticatorController.started() || await _authenticatorController.toggleInteractive(false);
-      if(!authenticatorResult){
+      log("[${widget.host ? 'HOST' : 'GAME'}] Checking backend(port: ${_backendController.type.value.name}, type: ${_backendController.type.value.name})...");
+      final backendResult = _backendController.started() || await _backendController.toggleInteractive();
+      if(!backendResult){
+        log("[${widget.host ? 'HOST' : 'GAME'}] Cannot start backend");
         _onStop(
-            reason: _StopReason.authenticatorError
+            reason: _StopReason.backendError
         );
         return;
       }
-
-      final matchmakerResult = _matchmakerController.started() || await _matchmakerController.toggleInteractive(false);
-      if(!matchmakerResult){
-        _onStop(
-            reason: _StopReason.matchmakerError
-        );
-        return;
+      log("[${widget.host ? 'HOST' : 'GAME'}] Backend works");
+      final headless = !forceGUI && _hostingController.headless.value;
+      final virtualDesktop = _hostingController.virtualDesktop.value;
+      log("[${widget.host ? 'HOST' : 'GAME'}] Implicit game server metadata: headless($headless)");
+      final linkedHostingInstance = await _startMatchMakingServer(version, headless, virtualDesktop, false);
+      log("[${widget.host ? 'HOST' : 'GAME'}] Implicit game server result: $linkedHostingInstance");
+      await _startGameProcesses(version, widget.host, headless, virtualDesktop, linkedHostingInstance);
+      if(!widget.host) {
+        _showLaunchingGameClientWidget();
       }
 
-      final linkedHostingInstance = await _startMatchMakingServer(version);
-      await _startGameProcesses(version, widget.host, linkedHostingInstance);
       if(linkedHostingInstance != null || widget.host){
         _showLaunchingGameServerWidget();
       }
@@ -136,38 +153,78 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
   }
 
-  Future<GameInstance?> _startMatchMakingServer(FortniteVersion version) async {
+  Future<GameInstance?> _startMatchMakingServer(FortniteVersion version, bool headless, bool virtualDesktop, bool forceLinkedHosting) async {
+    log("[${widget.host ? 'HOST' : 'GAME'}] Checking if a server needs to be started automatically...");
     if(widget.host){
+      log("[${widget.host ? 'HOST' : 'GAME'}] The user clicked on Start hosting, so it's not necessary");
       return null;
     }
 
-    final matchmakingIp = _matchmakerController.gameServerAddress.text;
-    if(!isLocalHost(matchmakingIp)) {
+    if(_backendController.type.value != ServerType.embedded || !isLocalHost(_backendController.gameServerAddress.text)) {
+      log("[${widget.host ? 'HOST' : 'GAME'}] Backend is not set to embedded and/or not pointing to the local game server");
       return null;
     }
 
     if(_hostingController.started()){
-      return null;
-    }
-    
-    if(!_hostingController.automaticServer()) {
+      log("[${widget.host ? 'HOST' : 'GAME'}] The user has already manually started the hosting server");
       return null;
     }
 
-    final instance = await _startGameProcesses(version, true, null);
+    final response = forceLinkedHosting || await _askForAutomaticGameServer();
+    if(!response) {
+      log("[${widget.host ? 'HOST' : 'GAME'}] The user disabled the automatic server");
+      return null;
+    }
+
+    log("[${widget.host ? 'HOST' : 'GAME'}] Starting implicit game server...");
+    final instance = await _startGameProcesses(version, true, headless, virtualDesktop, null);
+    log("[${widget.host ? 'HOST' : 'GAME'}] Started implicit game server...");
     _setStarted(true, true);
+    log("[${widget.host ? 'HOST' : 'GAME'}] Set implicit game server as started");
     return instance;
   }
 
-  Future<GameInstance?> _startGameProcesses(FortniteVersion version, bool host, GameInstance? linkedHosting) async {
-    final launcherProcess = await _createLauncherProcess(version);
-    final eacProcess = await _createEacProcess(version);
-    final executable = await version.executable;
-    final gameProcess = await _createGameProcess(executable!.path, host);
+  Future<bool> _askForAutomaticGameServer() async {
+    final result = await showAppDialog<bool>(
+        builder: (context) => InfoDialog(
+          text: "The launcher detected that you are not running a game server, but that your matchmaker is set to your local machine. "
+              "If you don't want to join another player's server, you should start a game server. This is necessary to be able to play: for more information check the Info tab in the launcher.",
+          buttons: [
+            DialogButton(
+                type: ButtonType.secondary,
+                text: "Ignore"
+            ),
+            DialogButton(
+              type: ButtonType.primary,
+              text: "Start server",
+              onTap: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        )
+    ) ?? false;
+    await Future.delayed(const Duration(seconds: 1));
+    return result;
+  }
+
+  Future<GameInstance?> _startGameProcesses(FortniteVersion version, bool host, bool headless, bool virtualDesktop, GameInstance? linkedHosting) async {
+    log("[${host ? 'HOST' : 'GAME'}] Starting game process...");
+    log("[${host ? 'HOST' : 'GAME'}] Starting paused launcher...");
+    final launcherProcess = await _createPausedProcess(version, version.launcherExecutable);
+
+    log("[${host ? 'HOST' : 'GAME'}] Started paused launcher: $launcherProcess");
+    log("[${host ? 'HOST' : 'GAME'}] Starting paused eac...");
+    final eacProcess = await _createPausedProcess(version, version.eacExecutable);
+
+    log("[${host ? 'HOST' : 'GAME'}] Started paused eac: $eacProcess");
+    final executable = host && headless ? await version.headlessGameExecutable : version.gameExecutable;
+    log("[${host ? 'HOST' : 'GAME'}] Using game path: ${executable?.path}");
+    final gameProcess = await _createGameProcess(version, executable!, host, headless, virtualDesktop, linkedHosting);
     if(gameProcess == null) {
+      log("[${host ? 'HOST' : 'GAME'}] No game process was created");
       return null;
     }
 
+    log("[${host ? 'HOST' : 'GAME'}] Created game process: ${gameProcess}");
     final instance = GameInstance(
         versionName: version.name,
         gamePid: gameProcess,
@@ -176,69 +233,88 @@ class _LaunchButtonState extends State<LaunchButton> {
         hosting: host,
         child: linkedHosting
     );
-    instance.startObserver();
     if(host){
       _hostingController.discardServer();
       _hostingController.instance.value = instance;
     }else{
       _gameController.instance.value = instance;
     }
-    _injectOrShowError(_Injectable.sslBypass, host);
+    await _injectOrShowError(_Injectable.sslBypassV2, host);
+    log("[${host ? 'HOST' : 'GAME'}] Finished creating game instance");
     return instance;
   }
 
-  Future<int?> _createGameProcess(String gamePath, bool host) async {
+  Future<int?> _createGameProcess(FortniteVersion version, File executable, bool host, bool headless, bool virtualDesktop, GameInstance? linkedHosting) async {
     if(!_hasStarted) {
+      log("[${host ? 'HOST' : 'GAME'}] Discarding start game process request as the state is no longer started");
       return null;
     }
 
+    log("[${host ? 'HOST' : 'GAME'}] Generating instance args...");
     final gameArgs = createRebootArgs(
         _gameController.username.text,
         _gameController.password.text,
         host,
         _hostingController.headless.value,
-        _gameController.customLaunchArgs.text
+        ""
     );
-    final gameProcess = await Process.start(
-        gamePath,
-        gameArgs
+    log("[${host ? 'HOST' : 'GAME'}] Generated game args: $gameArgs");
+    final gameProcess = await startProcess(
+        executable: executable,
+        args: gameArgs,
+        wrapProcess: false,
+        name: "${version.name}-${host ? 'HOST' : 'GAME'}"
     );
-    gameProcess
-      ..exitCode.then((_) => _onStop(reason: _StopReason.exitCode))
-      ..outLines.forEach((line) => _onGameOutput(line, host, false))
-      ..errLines.forEach((line) => _onGameOutput(line, host, true));
+    gameProcess.stdOutput.listen((line) => _onGameOutput(line, version, host, virtualDesktop, false));
+    gameProcess.stdError.listen((line) => _onGameOutput(line, version, host, virtualDesktop, true));
+    watchProcess(gameProcess.pid).then((_) async {
+      final instance = host ? _hostingController.instance.value : _gameController.instance.value;
+      if(instance == null) {
+        return;
+      }
+
+      if(!host || !headless || instance.launched) {
+        _onStop(reason: _StopReason.exitCode);
+        return;
+      }
+
+      await _restartGameServer(version, virtualDesktop, _StopReason.exitCode);
+    });
     return gameProcess.pid;
   }
 
-  Future<int?> _createLauncherProcess(FortniteVersion version) async {
-    final launcherFile = version.launcher;
-    if (launcherFile == null) {
+  Future<void> _restartGameServer(FortniteVersion version, bool virtualDesktop, _StopReason reason) async {
+    if (widget.host) {
+      await _onStop(reason: reason);
+      _toggle(forceGUI: true);
+    } else {
+      await _onStop(reason: reason, host: true);
+      final linkedHostingInstance =
+      await _startMatchMakingServer(version, false, virtualDesktop, true);
+      _gameController.instance.value?.child = linkedHostingInstance;
+      if (linkedHostingInstance != null) {
+        _setStarted(true, true);
+        _showLaunchingGameServerWidget();
+      }
+    }
+  }
+
+  Future<int?> _createPausedProcess(FortniteVersion version, File? file) async {
+    if (file == null) {
       return null;
     }
 
-    final launcherProcess = await Process.start(launcherFile.path, []);
-    final pid = launcherProcess.pid;
+    final process = await startProcess(
+        executable: file,
+        wrapProcess: false,
+        name: "${version.name}-${basenameWithoutExtension(file.path)}"
+    );
+    final pid = process.pid;
     suspend(pid);
     return pid;
   }
 
-  Future<int?> _createEacProcess(FortniteVersion version) async {
-    final eacFile = version.eacExecutable;
-    if (eacFile == null) {
-      return null;
-    }
-
-    final eacProcess = await Process.start(eacFile.path, []);
-    final pid = eacProcess.pid;
-    suspend(pid);
-    return pid;
-  }
-
-  void _onGameOutput(String line, bool host, bool error) {
-    if(kDebugMode) {
-      print("${error ? '[ERROR]' : '[MESSAGE]'} $line");
-    }
-
+  void _onGameOutput(String line, FortniteVersion version, bool host, bool virtualDesktop, bool error) async {
     if (line.contains(kShutdownLine)) {
       _onStop(
           reason: _StopReason.normal
@@ -260,105 +336,210 @@ class _LaunchButtonState extends State<LaunchButton> {
       return;
     }
 
-    if(line.contains("Region ")){
-      if(!host){
-        _injectOrShowError(_Injectable.console, host);
-      }else {
-        _injectOrShowError(_Injectable.reboot, host)
-            .then((value) => _onGameServerInjected());
+    if(kLoggedInLines.every((entry) => line.contains(entry))) {
+      final instance = host ? _hostingController.instance.value : _gameController.instance.value;
+      if(instance != null && !instance.launched) {
+        instance.launched = true;
+        instance.tokenError = false;
+        await _injectOrShowError(_Injectable.memoryFix, host);
+        if(!host){
+          await _injectOrShowError(_Injectable.console, host);
+          _onGameClientInjected();
+        }else {
+          final gameServerPort = int.tryParse(_settingsController.gameServerPort.text);
+          if(gameServerPort != null) {
+            await killProcessByPort(gameServerPort);
+          }
+          await _injectOrShowError(_Injectable.reboot, host);
+          _onGameServerInjected();
+        }
       }
 
-      _injectOrShowError(_Injectable.memoryFix, host);
-      final instance = host ? _hostingController.instance.value : _gameController.instance.value;
-      instance?.launched = true;
-      instance?.tokenError = false;
+      return;
+    }
+
+    if(line.contains(kGameFinishedLine) && host) {
+      if(_hostingController.autoRestart.value) {
+        final notification = LocalNotification(
+          title: translations.gameServerEnd,
+          body: translations.gameServerRestart(_kRebootDelay.inSeconds),
+        );
+        notification.show();
+        Future.delayed(_kRebootDelay).then((_) {
+          _restartGameServer(version, virtualDesktop, _StopReason.normal);
+        });
+      }else {
+        final notification = LocalNotification(
+          title: translations.gameServerEnd,
+          body: translations.gameServerShutdown(_kRebootDelay.inSeconds)
+        );
+        notification.show();
+        Future.delayed(_kRebootDelay).then((_) {
+          _onStop(reason: _StopReason.normal, host: true);
+        });
+      }
+      return;
+    }
+
+    if(line.contains("Display") && host && virtualDesktop) {
+      final hostingInstance = _hostingController.instance.value;
+      if(hostingInstance != null && !hostingInstance.movedToVirtualDesktop) {
+        hostingInstance.movedToVirtualDesktop = true;
+        try {
+          final windowManager = VirtualDesktopManager.getInstance();
+          _virtualDesktop = windowManager.createDesktop();
+          windowManager.setDesktopName(_virtualDesktop!, "${version.name} Server (Reboot Launcher)");
+          try {
+            await windowManager.moveWindowToDesktop(hostingInstance.gamePid, _virtualDesktop!);
+          }catch(error) {
+            log("[VIRTUAL_DESKTOP] $error");
+            try {
+              windowManager.removeDesktop(_virtualDesktop!);
+            }catch(error) {
+              log("[VIRTUAL_DESKTOP] $error");
+            }finally {
+              _virtualDesktop = null;
+            }
+          }
+        }catch(error) {
+          log("[VIRTUAL_DESKTOP] $error");
+        }
+      }
     }
   }
 
-  Future<void> _onGameServerInjected() async {
-    final theme = FluentTheme.of(appKey.currentContext!);
+  void _onGameClientInjected() {
+    _gameClientInfoBar?.close();
     showInfoBar(
-        translations.waitingForGameServer,
-        loading: true,
-        duration: null
-    );
-    final gameServerPort = _settingsController.gameServerPort.text;
-    final localPingResult = await pingGameServer(
-        "127.0.0.1:$gameServerPort",
-        timeout: const Duration(minutes: 2)
-    );
-    if(!localPingResult) {
-      showInfoBar(
-          translations.gameServerStartWarning,
-          severity: InfoBarSeverity.error,
-          duration: infoBarLongDuration
-      );
-      return;
-    }
-
-    _matchmakerController.joinLocalHost();
-    final accessible = await _checkGameServer(theme, gameServerPort);
-    if(!accessible) {
-      showInfoBar(
-          translations.gameServerStartLocalWarning,
-          severity: InfoBarSeverity.warning,
-          duration: infoBarLongDuration
-      );
-      return;
-    }
-
-    await _hostingController.publishServer(
-      _gameController.username.text,
-      _hostingController.instance.value!.versionName,
-    );
-    showInfoBar(
-        translations.gameServerStarted,
+        translations.gameClientStarted,
         severity: InfoBarSeverity.success,
         duration: infoBarLongDuration
     );
   }
 
-  Future<bool> _checkGameServer(FluentThemeData theme, String gameServerPort) async {
-    showInfoBar(
-        translations.checkingGameServer,
-        loading: true,
-        duration: null
-    );
-    final publicIp = await Ipify.ipv4();
-    final externalResult = await pingGameServer("$publicIp:$gameServerPort");
-    if(externalResult) {
-      return true;
-    }
+  Future<void> _onGameServerInjected() async {
+    _gameServerInfoBar?.close();
+    final theme = FluentTheme.of(appKey.currentContext!);
+    try {
+      _gameServerInfoBar = showInfoBar(
+          translations.waitingForGameServer,
+          loading: true,
+          duration: null
+      );
+      final gameServerPort = _settingsController.gameServerPort.text;
+      _gameServerInfoBar?.close();
+      final localPingResult = await pingGameServer(
+          "127.0.0.1:$gameServerPort",
+          timeout: const Duration(minutes: 2)
+      );
+      if (!localPingResult) {
+        showInfoBar(
+            translations.gameServerStartWarning,
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration
+        );
+        return;
+      }
 
-    final future = pingGameServer(
-        "$publicIp:$gameServerPort",
-        timeout: const Duration(days: 365)
-    );
-    showInfoBar(
-        translations.checkGameServerFixMessage(gameServerPort),
-        action: Button(
-          onPressed: openPortTutorial,
-          child: Text(translations.checkGameServerFixAction),
-        ),
-        severity: InfoBarSeverity.warning,
-        duration: null,
-        loading: true
-    );
-    return await future;
+      _backendController.joinLocalHost();
+      final accessible = await _checkGameServer(theme, gameServerPort);
+      if (!accessible) {
+        showInfoBar(
+            translations.gameServerStartLocalWarning,
+            severity: InfoBarSeverity.warning,
+            duration: infoBarLongDuration
+        );
+        return;
+      }
+
+      await _hostingController.publishServer(
+        _gameController.username.text,
+        _hostingController.instance.value!.versionName,
+      );
+      showInfoBar(
+          translations.gameServerStarted,
+          severity: InfoBarSeverity.success,
+          duration: infoBarLongDuration
+      );
+    }finally {
+      _gameServerInfoBar?.close();
+    }
   }
 
-  void _onStop({required _StopReason reason, bool? host, String? error, StackTrace? stackTrace}) async {
-    host = host ?? widget.host;
-    await _operation?.cancel();
-    await _authenticatorController.worker?.cancel();
-    await _matchmakerController.worker?.cancel();
-    final instance = host ? _hostingController.instance.value : _gameController.instance.value;
-    if(instance != null){
-      _onStop(
-          reason: _StopReason.normal,
-          host: true
+  Future<bool> _checkGameServer(FluentThemeData theme, String gameServerPort) async {
+    try {
+      _gameServerInfoBar = showInfoBar(
+          translations.checkingGameServer,
+          loading: true,
+          duration: null
       );
+      final publicIp = await Ipify.ipv4();
+      final externalResult = await pingGameServer("$publicIp:$gameServerPort");
+      if (externalResult) {
+        return true;
+      }
+
+      _gameServerInfoBar?.close();
+      final future = pingGameServer(
+          "$publicIp:$gameServerPort",
+          timeout: const Duration(days: 365)
+      );
+      _gameServerInfoBar = showInfoBar(
+          translations.checkGameServerFixMessage(gameServerPort),
+          action: Button(
+            onPressed: () async {
+              pageIndex.value = RebootPageType.info.index;
+            },
+            child: Text(translations.checkGameServerFixAction),
+          ),
+          severity: InfoBarSeverity.warning,
+          duration: null,
+          loading: true
+      );
+      return await future;
+    }finally {
+      _gameServerInfoBar?.close();
+    }
+  }
+
+  Future<void> _onStop({required _StopReason reason, bool? host, String? error, StackTrace? stackTrace}) async {
+    if(_virtualDesktop != null) {
+      try {
+        final instance = VirtualDesktopManager.getInstance();
+        instance.removeDesktop(_virtualDesktop!);
+      }catch(error) {
+        log("[VIRTUAL_DESKTOP] Cannot close virtual desktop: $error");
+      }
+    }
+
+    if(host == null) {
+      await _operation?.cancel();
+      _operation = null;
+      await _backendController.worker?.cancel();
+    }
+
+    host = host ?? widget.host;
+    log("[${host ? 'HOST' : 'GAME'}] Called stop with reason $reason, error data $error $stackTrace");
+    log("[${host ? 'HOST' : 'GAME'}] Caller: ${StackTrace.current}");
+    if(host) {
+      _hostingController.discardServer();
+    }
+
+    final instance = host ? _hostingController.instance.value : _gameController.instance.value;
+    if(instance != null) {
+      if(reason == _StopReason.normal) {
+        instance.launched = true;
+      }
+
       instance.kill();
+      final child = instance.child;
+      if(child != null) {
+        _onStop(
+            reason: reason,
+            host: child.hosting
+        );
+      }
+
       if(host){
         _hostingController.instance.value = null;
       }else {
@@ -367,16 +548,14 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     _setStarted(host, false);
-    if(host){
-      _hostingController.discardServer();
-    }
-
-    if(reason == _StopReason.normal) {
-      messenger.removeMessageByPage(_pageType.index);
+    if(host) {
+      _gameServerInfoBar?.close();
+    }else {
+      _gameClientInfoBar?.close();
     }
 
     switch(reason) {
-      case _StopReason.authenticatorError:
+      case _StopReason.backendError:
       case _StopReason.matchmakerError:
       case _StopReason.normal:
         break;
@@ -434,24 +613,34 @@ class _LaunchButtonState extends State<LaunchButton> {
         );
         break;
     }
-    _operation = null;
   }
 
   Future<void> _injectOrShowError(_Injectable injectable, bool hosting) async {
     final instance = hosting ? _hostingController.instance.value : _gameController.instance.value;
     if (instance == null) {
+      log("[${hosting ? 'HOST' : 'GAME'}] No instance found to inject ${injectable.name}");
       return;
     }
 
     try {
       final gameProcess = instance.gamePid;
+      log("[${hosting ? 'HOST' : 'GAME'}] Injecting ${injectable.name} into process with pid $gameProcess");
       final dllPath = await _getDllFileOrStop(injectable, hosting);
+      log("[${hosting ? 'HOST' : 'GAME'}] File to inject for ${injectable.name} at path $dllPath");
       if(dllPath == null) {
+        log("[${hosting ? 'HOST' : 'GAME'}] The file doesn't exist");
+        _onStop(
+            reason: _StopReason.corruptedDllError,
+            host: hosting
+        );
         return;
       }
 
+      log("[${hosting ? 'HOST' : 'GAME'}] Trying to inject ${injectable.name}...");
       await injectDll(gameProcess, dllPath.path);
+      log("[${hosting ? 'HOST' : 'GAME'}] Injected ${injectable.name}");
     } catch (error, stackTrace) {
+      log("[${hosting ? 'HOST' : 'GAME'}] Cannot inject ${injectable.name}: $error $stackTrace");
       _onStop(
           reason: _StopReason.corruptedDllError,
           host: hosting,
@@ -464,34 +653,50 @@ class _LaunchButtonState extends State<LaunchButton> {
   String _getDllPath(_Injectable injectable) {
     switch(injectable){
       case _Injectable.reboot:
-        return _settingsController.gameServerDll.text;
+        if(_updateController.customGameServer.value) {
+          final file = File(_settingsController.gameServerDll.text);
+          if(file.existsSync()) {
+            return file.path;
+          }
+        }
+
+        return rebootDllFile.path;
       case _Injectable.console:
         return _settingsController.unrealEngineConsoleDll.text;
-      case _Injectable.sslBypass:
-        return _settingsController.authenticatorDll.text;
+      case _Injectable.sslBypassV2:
+        return _settingsController.backendDll.text;
       case _Injectable.memoryFix:
         return _settingsController.memoryLeakDll.text;
     }
   }
-  
+
   Future<File?> _getDllFileOrStop(_Injectable injectable, bool host) async {
+    log("[${host ? 'HOST' : 'GAME'}] Checking dll ${injectable}...");
     final path = _getDllPath(injectable);
+    log("[${host ? 'HOST' : 'GAME'}] Path: $path");
     final file = File(path);
     if(await file.exists()) {
+      log("[${host ? 'HOST' : 'GAME'}] Path exists");
       return file;
     }
 
+    log("[${host ? 'HOST' : 'GAME'}] Path does not exist, downloading critical dll again...");
     await downloadCriticalDllInteractive(path);
-    return null;
+    log("[${host ? 'HOST' : 'GAME'}] Downloaded dll again, retrying check...");
+    return _getDllFileOrStop(injectable, host);
   }
 
-  OverlayEntry _showLaunchingGameServerWidget() => showInfoBar(
+  InfoBarEntry _showLaunchingGameServerWidget() => _gameServerInfoBar = showInfoBar(
       translations.launchingHeadlessServer,
       loading: true,
       duration: null
   );
 
-  RebootPageType get _pageType => widget.host ? RebootPageType.host : RebootPageType.play;
+  InfoBarEntry _showLaunchingGameClientWidget() => _gameClientInfoBar = showInfoBar(
+      translations.launchingGameClient,
+      loading: true,
+      duration: null
+  );
 }
 
 enum _StopReason {
@@ -500,15 +705,18 @@ enum _StopReason {
   missingExecutableError,
   corruptedVersionError,
   corruptedDllError,
-  authenticatorError,
+  backendError,
   matchmakerError,
   tokenError,
-  unknownError, exitCode
+  unknownError,
+  exitCode;
+
+  bool get isError => name.contains("Error");
 }
 
 enum _Injectable {
   console,
-  sslBypass,
+  sslBypassV2,
   reboot,
-  memoryFix
+  memoryFix,
 }

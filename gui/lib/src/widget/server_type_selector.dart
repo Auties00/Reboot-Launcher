@@ -1,15 +1,11 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
-import 'package:reboot_launcher/src/controller/server_controller.dart';
+import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 
 class ServerTypeSelector extends StatefulWidget {
-  final bool authenticator;
-
-  const ServerTypeSelector({Key? key, required this.authenticator})
+  const ServerTypeSelector({Key? key})
       : super(key: key);
 
   @override
@@ -17,7 +13,7 @@ class ServerTypeSelector extends StatefulWidget {
 }
 
 class _ServerTypeSelectorState extends State<ServerTypeSelector> {
-  late final ServerController _controller = widget.authenticator ? Get.find<AuthenticatorController>() : Get.find<MatchmakerController>();
+  late final BackendController _controller = Get.find<BackendController>();
 
   @override
   Widget build(BuildContext context) {

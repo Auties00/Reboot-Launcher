@@ -9,33 +9,49 @@ import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 
 final UpdateController _updateController = Get.find<UpdateController>();
-Future<void> downloadCriticalDllInteractive(String filePath) async {
+final Map<String, Future<void>> _operations = {};
+
+Future<void> downloadCriticalDllInteractive(String filePath) {
+  final old = _operations[filePath];
+  if(old != null) {
+    return old;
+  }
+
+  final newRun = _downloadCriticalDllInteractive(filePath);
+  _operations[filePath] = newRun;
+  return newRun;
+}
+
+Future<void> _downloadCriticalDllInteractive(String filePath) async {
+  final fileName = path.basename(filePath).toLowerCase();
+  InfoBarEntry? entry;
   try {
-    final fileName = path.basename(filePath);
     if (fileName == "reboot.dll") {
-      _updateController.update(true);
+      await _updateController.updateReboot(true);
       return;
     }
 
     final fileNameWithoutExtension = path.basenameWithoutExtension(filePath);
-    await showInfoBar(
+    entry = showInfoBar(
         translations.downloadingDll(fileNameWithoutExtension),
         loading: true,
         duration: null
     );
     await downloadCriticalDll(fileName, filePath);
-    await showInfoBar(
+    entry.close();
+    entry = await showInfoBar(
         translations.downloadDllSuccess(fileNameWithoutExtension),
         severity: InfoBarSeverity.success,
         duration: infoBarShortDuration
     );
   }catch(message) {
+    entry?.close();
     var error = message.toString();
     error = error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
     error = error.toLowerCase();
     final completer = Completer();
     await showInfoBar(
-        translations.downloadDllError(error.toString()),
+        translations.downloadDllError(fileName, error.toString()),
         duration: infoBarLongDuration,
         severity: InfoBarSeverity.error,
         onDismissed: () => completer.complete(null),
@@ -48,5 +64,7 @@ Future<void> downloadCriticalDllInteractive(String filePath) async {
         )
     );
     await completer.future;
+  }finally {
+    _operations.remove(fileName);
   }
 }

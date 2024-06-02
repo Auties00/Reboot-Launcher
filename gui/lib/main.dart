@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:app_links/app_links.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -9,34 +10,47 @@ import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:local_notifier/local_notifier.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
+import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/info_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/error.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/implementation/home_page.dart';
-import 'package:reboot_launcher/src/util/daemon.dart';
+import 'package:reboot_launcher/src/util/info.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:url_protocol/url_protocol.dart';
+import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
 
 const double kDefaultWindowWidth = 1536;
 const double kDefaultWindowHeight = 1024;
 const String kCustomUrlSchema = "Reboot";
 
+Version? appVersion;
+
+class _MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context){
+    return super.createHttpClient(context)
+      ..badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+  }
+}
+
 void main() => runZonedGuarded(
     () async {
+      HttpOverrides.global = _MyHttpOverrides();
       final errors = <Object>[];
       try {
         await installationDirectory.create(recursive: true);
@@ -44,9 +58,19 @@ void main() => runZonedGuarded(
             url: supabaseUrl,
             anonKey: supabaseAnonKey
         );
+        await localNotifier.setup(
+          appName: 'Reboot Launcher',
+          shortcutPolicy: ShortcutPolicy.ignore
+        );
         WidgetsFlutterBinding.ensureInitialized();
         await SystemTheme.accentColor.load();
         _initWindow();
+        initInfoTiles();
+        final versionError = await _initVersion();
+        if(versionError != null) {
+          errors.add(versionError);
+        }
+
         final storageError = await _initStorage();
         if(storageError != null) {
           errors.add(storageError);
@@ -55,11 +79,6 @@ void main() => runZonedGuarded(
         final urlError = await _initUrlHandler();
         if(urlError != null) {
           errors.add(urlError);
-        }
-
-        final observerError = _initObservers();
-        if(observerError != null) {
-          errors.add(observerError);
         }
 
         _checkGameServer();
@@ -80,10 +99,20 @@ void _handleErrors(List<Object?> errors) {
   errors.where((element) => element != null).forEach((element) => onError(element!, null, false));
 }
 
+Future<Object?> _initVersion() async {
+  try {
+    final packageInfo = await PackageInfo.fromPlatform();
+    appVersion = Version.parse(packageInfo.version);
+    return null;
+  }catch(error) {
+    return error;
+  }
+}
+
 Future<void> _checkGameServer() async {
   try {
-    var matchmakerController = Get.find<MatchmakerController>();
-    var address = matchmakerController.gameServerAddress.text;
+    var backendController = Get.find<BackendController>();
+    var address = backendController.gameServerAddress.text;
     if(isLocalHost(address)) {
       return;
     }
@@ -93,8 +122,8 @@ Future<void> _checkGameServer() async {
       return;
     }
 
-    var oldOwner = matchmakerController.gameServerOwner.value;
-    matchmakerController.joinLocalHost();
+    var oldOwner = backendController.gameServerOwner.value;
+    backendController.joinLocalHost();
     WidgetsBinding.instance.addPostFrameCallback((_) => showInfoBar(
         oldOwner == null ? translations.serverNoLongerAvailableUnnamed : translations.serverNoLongerAvailable(oldOwner),
         severity: InfoBarSeverity.warning,
@@ -124,11 +153,11 @@ Future<Object?> _initUrlHandler() async {
 
 void _joinServer(Uri uri) {
   var hostingController = Get.find<HostingController>();
-  var matchmakerController = Get.find<MatchmakerController>();
+  var backendController = Get.find<BackendController>();
   var uuid = _parseCustomUrl(uri);
   var server = hostingController.findServerById(uuid);
   if(server != null) {
-    matchmakerController.joinServer(hostingController.uuid, server);
+    backendController.joinServer(hostingController.uuid, server);
   }else {
     showInfoBar(
         translations.noServerFound,
@@ -168,31 +197,15 @@ void _initWindow() => doWhenWindowReady(() async {
   appWindow.show();
 });
 
-Object? _initObservers() {
-  try {
-    var gameController = Get.find<GameController>();
-    var gameInstance = gameController.instance.value;
-    gameInstance?.startObserver();
-    var hostingController = Get.find<HostingController>();
-    var hostingInstance = hostingController.instance.value;
-    hostingInstance?.startObserver();
-    return null;
-  }catch(error) {
-    return error;
-  }
-}
-
 Future<Object?> _initStorage() async {
   try {
     await GetStorage("game", settingsDirectory.path).initStorage;
-    await GetStorage("authenticator", settingsDirectory.path).initStorage;
-    await GetStorage("matchmaker", settingsDirectory.path).initStorage;
+    await GetStorage("backend", settingsDirectory.path).initStorage;
     await GetStorage("update", settingsDirectory.path).initStorage;
     await GetStorage("settings", settingsDirectory.path).initStorage;
     await GetStorage("hosting", settingsDirectory.path).initStorage;
     Get.put(GameController());
-    Get.put(AuthenticatorController());
-    Get.put(MatchmakerController());
+    Get.put(BackendController());
     Get.put(BuildController());
     Get.put(SettingsController());
     Get.put(HostingController());

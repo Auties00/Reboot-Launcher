@@ -3,22 +3,19 @@ import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_launcher/src/controller/authenticator_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
-import 'package:reboot_launcher/src/controller/server_controller.dart';
+import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 
 class ServerButton extends StatefulWidget {
-  final bool authenticator;
-  const ServerButton({Key? key, required this.authenticator}) : super(key: key);
+  const ServerButton({Key? key}) : super(key: key);
 
   @override
   State<ServerButton> createState() => _ServerButtonState();
 }
 
 class _ServerButtonState extends State<ServerButton> {
-  late final ServerController _controller = widget.authenticator ? Get.find<AuthenticatorController>() : Get.find<MatchmakerController>();
+  late final BackendController _controller = Get.find<BackendController>();
   late final StreamController<void> _textController = StreamController.broadcast();
   late final void Function() _listener = () => _textController.add(null);
 
@@ -55,14 +52,14 @@ class _ServerButtonState extends State<ServerButton> {
   );
 
   String get _buttonText {
-    if(_controller.type.value == ServerType.local && _controller.port.text.trim() == _controller.defaultPort){
-      return translations.checkServer(_controller.controllerName);
+    if(_controller.type.value == ServerType.local && _controller.port.text.trim() == kDefaultBackendPort.toString()){
+      return translations.checkServer;
     }
 
     if(_controller.started.value){
-      return translations.stopServer(_controller.controllerName);
+      return translations.stopServer;
     }
 
-    return translations.startServer(_controller.controllerName);
+    return translations.startServer;
   }
 }

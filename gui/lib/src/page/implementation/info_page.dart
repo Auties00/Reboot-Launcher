@@ -1,11 +1,13 @@
+import 'dart:async';
+
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
+import 'package:reboot_launcher/src/page/pages.dart';
+import 'package:reboot_launcher/src/util/info.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:reboot_launcher/src/util/tutorial.dart';
-import 'package:reboot_launcher/src/widget/setting_tile.dart';
 
 class InfoPage extends RebootPage {
   const InfoPage({Key? key}) : super(key: key);
@@ -27,62 +29,46 @@ class InfoPage extends RebootPage {
 }
 
 class _InfoPageState extends RebootPageState<InfoPage> {
-  @override
-  List<SettingTile> get settings => [
-    _documentation,
-    _discord,
-    _youtubeTutorial,
-    _reportBug
-  ];
-
-  SettingTile get _reportBug => SettingTile(
-      icon: Icon(
-          FluentIcons.bug_24_regular
-      ),
-      title: Text(translations.settingsUtilsBugReportName),
-      subtitle: Text(translations.settingsUtilsBugReportSubtitle)       ,
-      content: Button(
-        onPressed: openBugReport,
-        child: Text(translations.settingsUtilsBugReportContent),
-      )
-  );
-
-  SettingTile get _youtubeTutorial => SettingTile(
-      icon: Icon(
-          FluentIcons.video_24_regular
-      ),
-      title: Text(translations.infoVideoName),
-      subtitle: Text(translations.infoVideoDescription),
-      content: Button(
-          onPressed: openYoutubeTutorial,
-          child: Text(translations.infoVideoContent)
-      )
-  );
-
-  SettingTile get _discord => SettingTile(
-      icon: Icon(
-          Icons.discord_outlined
-      ),
-      title: Text(translations.infoDiscordName),
-      subtitle: Text(translations.infoDiscordDescription),
-      content: Button(
-          onPressed: openDiscordServer,
-          child: Text(translations.infoDiscordContent)
-      )
-  );
-
-  SettingTile get _documentation => SettingTile(
-      icon: Icon(
-          FluentIcons.document_24_regular
-      ),
-      title: Text(translations.infoDocumentationName),
-      subtitle: Text(translations.infoDocumentationDescription),
-      content: Button(
-          onPressed: openTutorials,
-          child: Text(translations.infoDocumentationContent)
-      )
-  );
+  final SettingsController _settingsController = Get.find<SettingsController>();
+  RxInt _counter = RxInt(180);
 
   @override
-  Widget? get button => null;
+  void initState() {
+    if(_settingsController.firstRun.value) {
+      Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_counter.value <= 0) {
+          _settingsController.firstRun.value = false;
+          timer.cancel();
+        } else {
+          _counter.value = _counter.value - 1;
+        }
+      });
+    }
+    super.initState();
+  }
+
+  @override
+  List<Widget> get settings => infoTiles;
+
+  @override
+  Widget? get button => Obx(() {
+    if(!_settingsController.firstRun.value) {
+      return const SizedBox.shrink();
+    }
+
+    final totalSecondsLeft = _counter.value;
+    final minutesLeft = totalSecondsLeft ~/ 60;
+    final secondsLeft = totalSecondsLeft % 60;
+    return SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: Button(
+          onPressed: totalSecondsLeft <= 0 ? () => pageIndex.value = RebootPageType.play.index : null,
+          child: Text(
+              totalSecondsLeft <= 0 ? "I have read the instructions"
+                  : "Read the instructions for at least ${secondsLeft == 0 ? '$minutesLeft minute${minutesLeft > 1 ? 's' : ''}' : minutesLeft == 0 ? '$secondsLeft second${secondsLeft > 1 ? 's' : ''}' : '$minutesLeft minute${minutesLeft > 1 ? 's' : ''} and $secondsLeft second${secondsLeft > 1 ? 's' : ''}'}"
+          ),
+        )
+    );
+  });
 }

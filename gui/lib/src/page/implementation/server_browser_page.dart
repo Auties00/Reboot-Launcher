@@ -5,8 +5,8 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
@@ -34,7 +34,7 @@ class BrowsePage extends RebootPage {
 
 class _BrowsePageState extends RebootPageState<BrowsePage> {
   final HostingController _hostingController = Get.find<HostingController>();
-  final MatchmakerController _matchmakerController = Get.find<MatchmakerController>();
+  final BackendController _backendController = Get.find<BackendController>();
   final TextEditingController _filterController = TextEditingController();
   final StreamController<String> _filterControllerStream = StreamController.broadcast();
 
@@ -87,14 +87,8 @@ class _BrowsePageState extends RebootPageState<BrowsePage> {
   );
 
   Widget _buildPopulatedListBody(Set<Map<String, dynamic>> items) => ListView.builder(
-      itemCount: items.length * 2,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        if(index % 2 != 0) {
-          return const SizedBox(
-              height: 8.0
-          );
-        }
-
         var entry = items.elementAt(index ~/ 2);
         var hasPassword = entry["password"] != null;
         return SettingTile(
@@ -104,11 +98,11 @@ class _BrowsePageState extends RebootPageState<BrowsePage> {
             title: Text("${_formatName(entry)} • ${entry["author"]}"),
             subtitle: Text("${_formatDescription(entry)} • ${_formatVersion(entry)}"),
             content: Button(
-              onPressed: () => _matchmakerController.joinServer(_hostingController.uuid, entry),
+              onPressed: () => _backendController.joinServer(_hostingController.uuid, entry),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(_matchmakerController.type.value == ServerType.embedded ? translations.joinServer : translations.copyIp),
+                  Text(_backendController.type.value == ServerType.embedded ? translations.joinServer : translations.copyIp),
                 ],
               ),
             )

@@ -10,7 +10,7 @@ class SettingsController extends GetxController {
   late final String originalDll;
   late final TextEditingController gameServerDll;
   late final TextEditingController unrealEngineConsoleDll;
-  late final TextEditingController authenticatorDll;
+  late final TextEditingController backendDll;
   late final TextEditingController memoryLeakDll;
   late final TextEditingController gameServerPort;
   late final RxBool firstRun;
@@ -25,7 +25,7 @@ class SettingsController extends GetxController {
     _storage = GetStorage("settings");
     gameServerDll = _createController("game_server", "reboot.dll");
     unrealEngineConsoleDll = _createController("unreal_engine_console", "console.dll");
-    authenticatorDll = _createController("authenticator", "cobalt.dll");
+    backendDll = _createController("backend", "cobalt.dll");
     memoryLeakDll = _createController("memory_leak", "memoryleak.dll");
     gameServerPort = TextEditingController(text: _storage.read("game_server_port") ?? kDefaultGameServerPort);
     gameServerPort.addListener(() => _storage.write("game_server_port", gameServerPort.text));
@@ -33,8 +33,8 @@ class SettingsController extends GetxController {
     height = _storage.read("height") ?? kDefaultWindowHeight;
     offsetX = _storage.read("offset_x");
     offsetY = _storage.read("offset_y");
-    firstRun = RxBool(_storage.read("first_run") ?? true);
-    firstRun.listen((value) => _storage.write("first_run", value));
+    firstRun = RxBool(_storage.read("first_run_new1") ?? true);
+    firstRun.listen((value) => _storage.write("first_run_new1", value));
     themeMode = Rx(ThemeMode.values.elementAt(_storage.read("theme") ?? 0));
     themeMode.listen((value) => _storage.write("theme", value.index));
     language = RxString(_storage.read("language") ?? currentLocale);
@@ -62,7 +62,7 @@ class SettingsController extends GetxController {
   void reset(){
     gameServerDll.text = _controllerDefaultPath("reboot.dll");
     unrealEngineConsoleDll.text = _controllerDefaultPath("console.dll");
-    authenticatorDll.text = _controllerDefaultPath("cobalt.dll");
+    backendDll.text = _controllerDefaultPath("cobalt.dll");
     gameServerPort.text = kDefaultGameServerPort;
     firstRun.value = true;
   }

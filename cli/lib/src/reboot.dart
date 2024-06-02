@@ -42,7 +42,7 @@ Future<void> downloadRequiredDLLs() async {
     await memoryFixDll.writeAsBytes(response.bodyBytes);
   }
 
-  if(!authenticatorDirectory.existsSync()){
+  if(!backendDirectory.existsSync()){
     var response = await http.get(Uri.parse(_embeddedConfigDownload));
     if(response.statusCode != 200){
       throw Exception("Cannot download embedded server config");
@@ -50,6 +50,6 @@ Future<void> downloadRequiredDLLs() async {
 
     var tempZip = File("${tempDirectory.path}/reboot_config.zip");
     await tempZip.writeAsBytes(response.bodyBytes);
-    await extractFileToDisk(tempZip.path, authenticatorDirectory.path);
+    await extractFileToDisk(tempZip.path, backendDirectory.path);
   }
 }

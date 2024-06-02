@@ -1,0 +1,7 @@
+If you have ever played Minecraft multiplayer, you might know that the servers you join are hosted on a computer running a program, called Minecraft Game Server.
+While the Minecraft Game server is written by the creators of Minecraft, Mojang, Epic Games doesn't provide an equivalent for Fortnite.
+By exploiting the Fortnite internals, though, it's possible to create a game server just like in Minecraft: this is in easy terms what Project Reboot does.
+Some Fortnite versions support running this game server in the background without rendering the game("headless"), while others still require the full game to be open.
+Just like in Minecraft, you need a game client to play the game and one to host the server.
+By default, a game server is automatically started on your PC when you start a Fortnite version from the "Play" section in the launcher.
+If you want to play in another way, for example by joining a server hosted by one of your friends instead of running one yourself, you can checkout the "Multiplayer" section in the "Play" tab of the launcher.
