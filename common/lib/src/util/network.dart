@@ -10,7 +10,7 @@ final _getExtendedTcpTable = DynamicLibrary.open('iphlpapi.dll').lookupFunction<
     Int32 Function(Pointer, Pointer<Uint32>, Int32, Int32, Int32, Int32),
     int Function(Pointer, Pointer<Uint32>, int, int, int, int)>('GetExtendedTcpTable');
 
-class _MIB_TCPROW_OWNER_PID extends Struct {
+final class _MIB_TCPROW_OWNER_PID extends Struct {
   @Uint32()
   external int dwState;
 
@@ -30,7 +30,7 @@ class _MIB_TCPROW_OWNER_PID extends Struct {
   external int dwOwningPid;
 }
 
-class _MIB_TCPTABLE_OWNER_PID extends Struct {
+final class _MIB_TCPTABLE_OWNER_PID extends Struct {
   @Uint32()
   external int dwNumEntries;
 

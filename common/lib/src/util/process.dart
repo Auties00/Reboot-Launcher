@@ -1,16 +1,14 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
-import 'package:path/path.dart' as path;
 
 import 'package:ffi/ffi.dart';
+import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
-import 'package:reboot_common/src/extension/process.dart';
 import 'package:sync/semaphore.dart';
 import 'package:win32/win32.dart';
 
@@ -242,7 +240,7 @@ String _parseUsername(String username, bool host) {
   return username;
 }
 
-class _ExtendedProcess extends Process {
+final class _ExtendedProcess implements Process {
   final Process _delegate;
   final Stream<List<int>>? _stdout;
   final Stream<List<int>>? _stderr;

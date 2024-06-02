@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:isolate';
-import 'package:path/path.dart' as path;
 
+import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
 
 extension FortniteVersionExtension on FortniteVersion {
