@@ -29,8 +29,8 @@ Future<bool> _patch(File file, Uint8List original, Uint8List patched) async {
       throw Exception("Cannot mutate length of binary file");
     }
 
-    var read = await file.readAsBytes();
-    var length = await file.length();
+    final read = await file.readAsBytes();
+    final length = await file.length();
     var readOffset = 0;
     var patchOffset = -1;
     var patchCount = 0;
@@ -50,7 +50,6 @@ Future<bool> _patch(File file, Uint8List original, Uint8List patched) async {
       readOffset++;
     }
 
-    print("Offset: $patchOffset");
     if(patchOffset == -1) {
       return false;
     }

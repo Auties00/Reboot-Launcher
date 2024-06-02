@@ -1,19 +1,13 @@
-import 'dart:io';
-
-import 'package:archive/archive_io.dart';
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/data.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
-import 'package:reboot_launcher/src/util/picker.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:url_launcher/url_launcher.dart';

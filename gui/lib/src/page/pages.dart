@@ -3,13 +3,11 @@ import 'dart:collection';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/implementation/backend_page.dart';
 import 'package:reboot_launcher/src/page/implementation/info_page.dart';
-import 'package:reboot_launcher/src/page/implementation/matchmaker_page.dart';
 import 'package:reboot_launcher/src/page/implementation/play_page.dart';
 import 'package:reboot_launcher/src/page/implementation/server_browser_page.dart';
 import 'package:reboot_launcher/src/page/implementation/server_host_page.dart';
@@ -24,7 +22,6 @@ final List<RebootPage> pages = [
   const HostPage(),
   const BrowsePage(),
   const BackendPage(),
-  const MatchmakerPage(),
   const InfoPage(),
   const SettingsPage()
 ];

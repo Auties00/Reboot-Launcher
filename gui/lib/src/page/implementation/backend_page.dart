@@ -9,7 +9,6 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
-import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/keyboard.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/server_start_button.dart';
@@ -67,11 +66,31 @@ class _BackendPageState extends RebootPageState<BackendPage> {
     _type,
     _hostName,
     _port,
-    _detached,
+    _gameServerAddress,
     _unrealEngineConsoleKey,
+    _detached,
     _installationDirectory,
     _resetDefaults
   ];
+
+  Widget get _gameServerAddress => Obx(() {
+    if(_backendController.type.value != ServerType.embedded) {
+      return const SizedBox.shrink();
+    }
+
+    return SettingTile(
+        icon: Icon(
+            FluentIcons.stream_input_20_regular
+        ),
+        title: Text(translations.matchmakerConfigurationAddressName),
+        subtitle: Text(translations.matchmakerConfigurationAddressDescription),
+        content: TextFormBox(
+            placeholder: translations.matchmakerConfigurationAddressName,
+            controller: _backendController.gameServerAddress,
+            focusNode: _backendController.gameServerAddressFocusNode
+        )
+    );
+  });
 
   Widget get _hostName => Obx(() {
     if(_backendController.type.value != ServerType.remote) {
@@ -202,13 +221,9 @@ class _BackendPageState extends RebootPageState<BackendPage> {
       ),
       title: Text(translations.backendTypeName),
       subtitle: Text(translations.backendTypeDescription),
-      content: const ServerTypeSelector(
-          backend: true
-      )
+      content: const ServerTypeSelector()
   );
 
   @override
-  Widget get button => const ServerButton(
-      backend: true
-  );
+  Widget get button => const ServerButton();
 }

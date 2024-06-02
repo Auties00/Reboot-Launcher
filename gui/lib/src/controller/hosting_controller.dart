@@ -15,6 +15,7 @@ class HostingController extends GetxController {
   late final RxBool discoverable;
   late final RxBool headless;
   late final RxBool virtualDesktop;
+  late final RxBool autoRestart;
   late final RxBool started;
   late final RxBool published;
   late final Rxn<GameInstance> instance;
@@ -36,6 +37,8 @@ class HostingController extends GetxController {
     headless.listen((value) => _storage.write("headless", value));
     virtualDesktop = RxBool(_storage.read("virtual_desktop") ?? true);
     virtualDesktop.listen((value) => _storage.write("virtual_desktop", value));
+    autoRestart = RxBool(_storage.read("auto_restart") ?? true);
+    autoRestart.listen((value) => _storage.write("auto_restart", value));
     started = RxBool(false);
     published = RxBool(false);
     showPassword = RxBool(false);

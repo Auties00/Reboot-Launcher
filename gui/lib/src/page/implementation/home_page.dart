@@ -47,7 +47,8 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   void initState() {
     windowManager.addListener(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateController.update();
+      _updateController.notifyLauncherUpdate();
+      _updateController.updateReboot();
       watchDlls().listen((filePath) => showDllDeletedDialog(() {
         downloadCriticalDllInteractive(filePath);
       }));

@@ -10,6 +10,7 @@ import 'package:path/path.dart' as path;
 
 import 'package:ffi/ffi.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_common/src/extension/process.dart';
 import 'package:sync/semaphore.dart';
 import 'package:win32/win32.dart';
 
@@ -282,10 +283,4 @@ class _ExtendedProcess extends Process {
 
     return err;
   }
-}
-
-extension ProcessExtension on Process {
-  Stream<String> get stdOutput => this.stdout.expand((event) => utf8.decode(event).split("\n"));
-
-  Stream<String> get stdError => this.stderr.expand((event) => utf8.decode(event).split("\n"));
 }

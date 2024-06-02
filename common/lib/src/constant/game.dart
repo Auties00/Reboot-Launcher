@@ -20,3 +20,4 @@ const List<String> kCannotConnectErrors = [
   "Network failure when attempting to check platform restrictions",
   "UOnlineAccountCommon::ForceLogout"
 ];
+const String kGameFinishedLine = "PlayersLeft: 1";

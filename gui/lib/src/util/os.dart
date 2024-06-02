@@ -1,10 +1,10 @@
-import 'dart:io';
-
-import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/scheduler.dart';
 import 'dart:collection';
 import 'dart:ffi';
+import 'dart:io';
+
 import 'package:ffi/ffi.dart';
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:win32/win32.dart';
 
 final RegExp _winBuildRegex = RegExp(r'(?<=\(Build )(.*)(?=\))');
@@ -38,15 +38,15 @@ class _ServiceProvider10 extends IUnknown {
   Pointer<COMObject> queryService(String classId, String instanceId) {
     final result = calloc<COMObject>();
     final code = (ptr.ref.vtable + 3)
-            .cast<
-                Pointer<
-                    NativeFunction<
-                        HRESULT Function(Pointer, Pointer<GUID>, Pointer<GUID>,
-                            Pointer<COMObject>)>>>()
-            .value
-            .asFunction<
-                int Function(Pointer, Pointer<GUID>, Pointer<GUID>,
-                    Pointer<COMObject>)>()(ptr.ref.lpVtbl,
+        .cast<
+        Pointer<
+            NativeFunction<
+                HRESULT Function(Pointer, Pointer<GUID>, Pointer<GUID>,
+                    Pointer<COMObject>)>>>()
+        .value
+        .asFunction<
+        int Function(Pointer, Pointer<GUID>, Pointer<GUID>,
+            Pointer<COMObject>)>()(ptr.ref.lpVtbl,
         GUIDFromString(classId), GUIDFromString(instanceId), result);
     if (code != 0) {
       free(result);
@@ -66,11 +66,11 @@ class IVirtualDesktop extends IUnknown {
     final result = calloc<HSTRING>();
     final code = (ptr.ref.vtable + 5)
         .cast<
-            Pointer<
-                NativeFunction<HRESULT Function(Pointer, Pointer<HSTRING>)>>>()
+        Pointer<
+            NativeFunction<HRESULT Function(Pointer, Pointer<HSTRING>)>>>()
         .value
         .asFunction<
-            int Function(Pointer, Pointer<HSTRING>)>()(ptr.ref.lpVtbl, result);
+        int Function(Pointer, Pointer<HSTRING>)>()(ptr.ref.lpVtbl, result);
     if (code != 0) {
       free(result);
       throw WindowsException(code);
@@ -93,11 +93,11 @@ class _IObjectArray extends IUnknown {
     final result = calloc<Int32>();
     final code = (ptr.ref.vtable + 3)
         .cast<
-            Pointer<
-                NativeFunction<HRESULT Function(Pointer, Pointer<Int32>)>>>()
+        Pointer<
+            NativeFunction<HRESULT Function(Pointer, Pointer<Int32>)>>>()
         .value
         .asFunction<
-            int Function(Pointer, Pointer<Int32>)>()(ptr.ref.lpVtbl, result);
+        int Function(Pointer, Pointer<Int32>)>()(ptr.ref.lpVtbl, result);
     if (code != 0) {
       free(result);
       throw WindowsException(code);
@@ -109,15 +109,15 @@ class _IObjectArray extends IUnknown {
   Pointer<COMObject> getAt(int index, String guid) {
     final result = calloc<COMObject>();
     final code = (ptr.ref.vtable + 4)
-            .cast<
-                Pointer<
-                    NativeFunction<
-                        HRESULT Function(Pointer, Int32 index, Pointer<GUID>,
-                            Pointer<COMObject>)>>>()
-            .value
-            .asFunction<
-                int Function(
-                    Pointer, int index, Pointer<GUID>, Pointer<COMObject>)>()(
+        .cast<
+        Pointer<
+            NativeFunction<
+                HRESULT Function(Pointer, Int32 index, Pointer<GUID>,
+                    Pointer<COMObject>)>>>()
+        .value
+        .asFunction<
+        int Function(
+            Pointer, int index, Pointer<GUID>, Pointer<COMObject>)>()(
         ptr.ref.lpVtbl, index, GUIDFromString(guid), result);
     if (code != 0) {
       free(result);
@@ -137,8 +137,8 @@ class _IObjectArrayList<T> extends ListBase<T> {
 
   _IObjectArrayList(
       {required _IObjectArray array,
-      required String guid,
-      required _IObjectMapper<T> mapper})
+        required String guid,
+        required _IObjectMapper<T> mapper})
       : _array = array,
         _guid = guid,
         _mapper = mapper;
@@ -173,11 +173,11 @@ class _IVirtualDesktopManagerInternal extends IUnknown {
     final result = calloc<Int32>();
     final code = (ptr.ref.vtable + 3)
         .cast<
-            Pointer<
-                NativeFunction<HRESULT Function(Pointer, Pointer<Int32>)>>>()
+        Pointer<
+            NativeFunction<HRESULT Function(Pointer, Pointer<Int32>)>>>()
         .value
         .asFunction<
-            int Function(Pointer, Pointer<Int32>)>()(ptr.ref.lpVtbl, result);
+        int Function(Pointer, Pointer<Int32>)>()(ptr.ref.lpVtbl, result);
     if (code != 0) {
       free(result);
       throw WindowsException(code);
@@ -189,12 +189,12 @@ class _IVirtualDesktopManagerInternal extends IUnknown {
   List<IVirtualDesktop> getDesktops() {
     final result = calloc<COMObject>();
     final code = (ptr.ref.vtable + 7)
-            .cast<
-                Pointer<
-                    NativeFunction<
-                        HRESULT Function(Pointer, Pointer<COMObject>)>>>()
-            .value
-            .asFunction<int Function(Pointer, Pointer<COMObject>)>()(
+        .cast<
+        Pointer<
+            NativeFunction<
+                HRESULT Function(Pointer, Pointer<COMObject>)>>>()
+        .value
+        .asFunction<int Function(Pointer, Pointer<COMObject>)>()(
         ptr.ref.lpVtbl, result);
     if (code != 0) {
       free(result);
@@ -210,27 +210,27 @@ class _IVirtualDesktopManagerInternal extends IUnknown {
 
   void moveWindowToDesktop(IApplicationView view, IVirtualDesktop desktop) {
     final code = (ptr.ref.vtable + 4)
-            .cast<
-                Pointer<
-                    NativeFunction<
-                        Int32 Function(Pointer, COMObject, COMObject)>>>()
-            .value
-            .asFunction<int Function(Pointer, COMObject, COMObject)>()(
+        .cast<
+        Pointer<
+            NativeFunction<
+                Int32 Function(Pointer, COMObject, COMObject)>>>()
+        .value
+        .asFunction<int Function(Pointer, COMObject, COMObject)>()(
         ptr.ref.lpVtbl, view.ptr.ref, desktop.ptr.ref);
     if (code != 0) {
-      throw WindowsException(code);
+      throw WindowsException(code, message: "Cannot move window");
     }
   }
 
   IVirtualDesktop createDesktop() {
     final result = calloc<COMObject>();
     final code = (ptr.ref.vtable + 10)
-            .cast<
-                Pointer<
-                    NativeFunction<
-                        HRESULT Function(Pointer, Pointer<COMObject>)>>>()
-            .value
-            .asFunction<int Function(Pointer, Pointer<COMObject>)>()(
+        .cast<
+        Pointer<
+            NativeFunction<
+                HRESULT Function(Pointer, Pointer<COMObject>)>>>()
+        .value
+        .asFunction<int Function(Pointer, Pointer<COMObject>)>()(
         ptr.ref.lpVtbl, result);
     if (code != 0) {
       free(result);
@@ -242,12 +242,12 @@ class _IVirtualDesktopManagerInternal extends IUnknown {
 
   void removeDesktop(IVirtualDesktop desktop, IVirtualDesktop fallback) {
     final code = (ptr.ref.vtable + 12)
-            .cast<
-                Pointer<
-                    NativeFunction<
-                        HRESULT Function(Pointer, COMObject, COMObject)>>>()
-            .value
-            .asFunction<int Function(Pointer, COMObject, COMObject)>()(
+        .cast<
+        Pointer<
+            NativeFunction<
+                HRESULT Function(Pointer, COMObject, COMObject)>>>()
+        .value
+        .asFunction<int Function(Pointer, COMObject, COMObject)>()(
         ptr.ref.lpVtbl, desktop.ptr.ref, fallback.ptr.ref);
     if (code != 0) {
       throw WindowsException(code);
@@ -256,14 +256,14 @@ class _IVirtualDesktopManagerInternal extends IUnknown {
 
   void setDesktopName(IVirtualDesktop desktop, String newName) {
     final code =
-        (ptr.ref.vtable + 15)
-                .cast<
-                    Pointer<
-                        NativeFunction<
-                            HRESULT Function(Pointer, COMObject, Int8)>>>()
-                .value
-                .asFunction<int Function(Pointer, COMObject, int)>()(
-            ptr.ref.lpVtbl, desktop.ptr.ref, convertToHString(newName));
+    (ptr.ref.vtable + 15)
+        .cast<
+        Pointer<
+            NativeFunction<
+                HRESULT Function(Pointer, COMObject, Int8)>>>()
+        .value
+        .asFunction<int Function(Pointer, COMObject, int)>()(
+        ptr.ref.lpVtbl, desktop.ptr.ref, convertToHString(newName));
     if (code != 0) {
       throw WindowsException(code);
     }
@@ -276,57 +276,75 @@ class _IApplicationViewCollection extends IUnknown {
 
   _IApplicationViewCollection._internal(super.ptr);
 
-  IApplicationView getViewForHWnd(int HWnd) {
+  IApplicationView? getViewForHWnd(int HWnd) {
     final result = calloc<COMObject>();
     final code =
-        (ptr.ref.vtable + 6)
-                .cast<
-                    Pointer<
-                        NativeFunction<
-                            HRESULT Function(
-                                Pointer, IntPtr, Pointer<COMObject>)>>>()
-                .value
-                .asFunction<int Function(Pointer, int, Pointer<COMObject>)>()(
-            ptr.ref.lpVtbl, HWnd, result);
+    (ptr.ref.vtable + 6)
+        .cast<
+        Pointer<
+            NativeFunction<
+                HRESULT Function(
+                    Pointer, IntPtr, Pointer<COMObject>)>>>()
+        .value
+        .asFunction<int Function(Pointer, int, Pointer<COMObject>)>()(
+        ptr.ref.lpVtbl, HWnd, result);
     if (code != 0) {
       free(result);
-      throw WindowsException(code);
+      return null;
     }
 
     return IApplicationView._internal(result);
   }
 }
 
-final class _Process extends Struct {
+final class Win32Process extends Struct {
   @Uint32()
   external int pid;
 
   @Uint32()
-  external int HWnd;
+  external int HWndLength;
 
-  static int _filter(int HWnd, int lParam) {
-    final structure = Pointer.fromAddress(lParam).cast<_Process>();
-    final pidPointer = calloc<Uint32>();
-    GetWindowThreadProcessId(HWnd, pidPointer);
-    final pid = pidPointer.value;
-    free(pidPointer);
-    if (pid != structure.ref.pid) {
-      return TRUE;
+  external Pointer<Uint32> HWnd;
+}
+
+int _filter(int HWnd, int lParam) {
+  final structure = Pointer.fromAddress(lParam).cast<Win32Process>();
+  final pidPointer = calloc<Uint32>();
+  GetWindowThreadProcessId(HWnd, pidPointer);
+  final pid = pidPointer.value;
+  if (pid == structure.ref.pid) {
+    final length = structure.ref.HWndLength;
+    final newLength = length + 1;
+    final ptr = malloc.allocate<Uint32>(sizeOf<Uint32>() * newLength);
+    final list = structure.ref.HWnd.asTypedList(length);
+    for (var i = 0; i < list.length; i++) {
+      (ptr + i).value = list[i];
     }
-
-    structure.ref.HWnd = HWnd;
-    return FALSE;
+    ptr[list.length] = HWnd;
+    structure.ref.HWndLength = newLength;
+    free(structure.ref.HWnd);
+    structure.ref.HWnd = ptr;
   }
 
-  static int getHWndFromPid(int pid) {
-    final result = calloc<_Process>();
-    result.ref.pid = pid;
-    EnumWindows(
-        Pointer.fromFunction<EnumWindowsProc>(_filter, TRUE), result.address);
-    final HWnd = result.ref.HWnd;
+  free(pidPointer);
+  return TRUE;
+}
+
+List<int> _getHWnds(int pid) {
+  final result = calloc<Win32Process>();
+  result.ref.pid = pid;
+  EnumWindows(Pointer.fromFunction<EnumWindowsProc>(_filter, TRUE), result.address);
+  final length = result.ref.HWndLength;
+  final HWndsPointer = result.ref.HWnd;
+  if(HWndsPointer == nullptr) {
     calloc.free(result);
-    return HWnd;
+    return [];
   }
+
+  final HWnds = HWndsPointer.asTypedList(length)
+      .toList(growable: false);
+  calloc.free(result);
+  return HWnds;
 }
 
 class VirtualDesktopManager {
@@ -382,10 +400,24 @@ class VirtualDesktopManager {
 
   List<IVirtualDesktop> getDesktops() => windowManager.getDesktops();
 
-  void moveWindowToDesktop(int pid, IVirtualDesktop desktop) {
-    final HWnd = _Process.getHWndFromPid(pid);
-    final window = applicationViewCollection.getViewForHWnd(HWnd);
-    windowManager.moveWindowToDesktop(window, desktop);
+  Future<void> moveWindowToDesktop(int pid, IVirtualDesktop desktop, {Duration pollTime = const Duration(seconds: 1)}) async {
+    final hWNDs = _getHWnds(pid);
+    if(hWNDs.isEmpty) {
+      await Future.delayed(pollTime);
+      await moveWindowToDesktop(pid, desktop, pollTime: pollTime);
+      return;
+    }
+
+    for(final hWND in hWNDs) {
+      final window = applicationViewCollection.getViewForHWnd(hWND);
+      if(window != null) {
+        windowManager.moveWindowToDesktop(window, desktop);
+        return;
+      }
+    }
+
+    await Future.delayed(pollTime);
+    await moveWindowToDesktop(pid, desktop, pollTime: pollTime);
   }
 
   IVirtualDesktop createDesktop() => windowManager.createDesktop();

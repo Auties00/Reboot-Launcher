@@ -1,5 +1,6 @@
 import 'package:clipboard/clipboard.dart';
 import 'package:dart_ipify/dart_ipify.dart';
+import 'package:fluent_ui/fluent_ui.dart' as fluentUi show FluentIcons;
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/services.dart';
@@ -20,7 +21,6 @@ import 'package:reboot_launcher/src/widget/file_setting_tile.dart';
 import 'package:reboot_launcher/src/widget/game_start_button.dart';
 import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:reboot_launcher/src/widget/version_selector_tile.dart';
-import 'package:fluent_ui/fluent_ui.dart' as fluentUi show FluentIcons;
 
 import '../../util/checks.dart';
 
@@ -72,8 +72,9 @@ class _HostingPageState extends RebootPageState<HostPage> {
   @override
   List<Widget> get settings => [
     _information,
-    _configuration,
     versionSelectSettingTile,
+    _options,
+    _internalFiles,
     _share,
     _resetDefaults
   ];
@@ -179,63 +180,104 @@ class _HostingPageState extends RebootPageState<HostPage> {
       ]
   );
 
-  SettingTile get _configuration => SettingTile(
+  SettingTile get _internalFiles => SettingTile(
     icon: Icon(
         FluentIcons.archive_settings_24_regular
     ),
     title: Text(translations.settingsServerName),
     subtitle: Text(translations.settingsServerSubtitle),
     children: [
-      createFileSetting(
-          title: translations.settingsServerFileName,
-          description: translations.settingsServerFileDescription,
-          controller: _settingsController.gameServerDll
-      ),
-      SettingTile(
-          icon: Icon(
-              fluentUi.FluentIcons.number_field
-          ),
-          title: Text(translations.settingsServerPortName),
-          subtitle: Text(translations.settingsServerPortDescription),
-          content: TextFormBox(
-              placeholder:  translations.settingsServerPortName,
-              controller: _settingsController.gameServerPort,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly
-              ]
-          )
-      ),
-      SettingTile(
-          icon: Icon(
-              FluentIcons.globe_24_regular
-          ),
-          title: Text(translations.settingsServerMirrorName),
-          subtitle: Text(translations.settingsServerMirrorDescription),
-          content: TextFormBox(
-              placeholder:  translations.settingsServerMirrorPlaceholder,
-              controller: _updateController.url,
-              validator: checkUpdateUrl
-          )
-      ),
       SettingTile(
           icon: Icon(
               FluentIcons.timer_24_regular
           ),
-          title: Text(translations.settingsServerTimerName),
-          subtitle: Text(translations.settingsServerTimerSubtitle),
+          title: Text(translations.settingsServerTypeName),
+          subtitle: Text(translations.settingsServerTypeDescription),
           content: Obx(() => DropDownButton(
-              leading: Text(_updateController.timer.value.text),
-              items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
-                  text: Text(entry.text),
+              leading: Text(_updateController.customGameServer.value ? translations.settingsServerTypeCustomName : translations.settingsServerTypeEmbeddedName),
+              items: {
+                false: translations.settingsServerTypeEmbeddedName,
+                true: translations.settingsServerTypeCustomName
+              }.entries.map((entry) => MenuFlyoutItem(
+                  text: Text(entry.value),
                   onPressed: () {
-                    _updateController.timer.value = entry;
+                    final oldValue = _updateController.customGameServer.value;
+                    if(oldValue == entry.key) {
+                      return;
+                    }
+
+                    _updateController.customGameServer.value = entry.key;
                     _updateController.infoBarEntry?.close();
-                    _updateController.update(true);
+                    if(!entry.key) {
+                      _updateController.updateReboot(true);
+                    }
                   }
               )).toList()
           ))
       ),
+      Obx(() {
+        if(!_updateController.customGameServer.value) {
+          return const SizedBox.shrink();
+        }
+
+        return createFileSetting(
+            title: translations.settingsServerFileName,
+            description: translations.settingsServerFileDescription,
+            controller: _settingsController.gameServerDll
+        );
+      }),
+      Obx(() {
+        if(_updateController.customGameServer.value) {
+          return const SizedBox.shrink();
+        }
+
+        return SettingTile(
+            icon: Icon(
+                FluentIcons.globe_24_regular
+            ),
+            title: Text(translations.settingsServerMirrorName),
+            subtitle: Text(translations.settingsServerMirrorDescription),
+            content: TextFormBox(
+                placeholder:  translations.settingsServerMirrorPlaceholder,
+                controller: _updateController.url,
+                validator: checkUpdateUrl
+            )
+        );
+      }),
+      Obx(() {
+        if(_updateController.customGameServer.value) {
+          return const SizedBox.shrink();
+        }
+
+        return  SettingTile(
+            icon: Icon(
+                FluentIcons.timer_24_regular
+            ),
+            title: Text(translations.settingsServerTimerName),
+            subtitle: Text(translations.settingsServerTimerSubtitle),
+            content: Obx(() => DropDownButton(
+                leading: Text(_updateController.timer.value.text),
+                items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
+                    text: Text(entry.text),
+                    onPressed: () {
+                      _updateController.timer.value = entry;
+                      _updateController.infoBarEntry?.close();
+                      _updateController.updateReboot(true);
+                    }
+                )).toList()
+            ))
+        );
+      }),
+    ],
+  );
+
+  SettingTile get _options => SettingTile(
+    icon: Icon(
+        FluentIcons.options_24_regular
+    ),
+    title: Text(translations.settingsServerOptionsName),
+    subtitle: Text(translations.settingsServerOptionsSubtitle),
+    children: [
       Obx(() => SettingTile(
         icon: Icon(
             FluentIcons.window_console_20_regular
@@ -280,6 +322,45 @@ class _HostingPageState extends RebootPageState<HostPage> {
           ],
         ),
       )),
+      Obx(() => SettingTile(
+        icon: Icon(
+            FluentIcons.arrow_reset_24_regular
+        ),
+        title: Text(translations.hostAutomaticRestartName),
+        subtitle: Text(translations.hostAutomaticRestartDescription),
+        contentWidth: null,
+        content: Row(
+          children: [
+            Text(
+                _hostingController.autoRestart.value ? translations.on : translations.off
+            ),
+            const SizedBox(
+                width: 16.0
+            ),
+            ToggleSwitch(
+                checked: _hostingController.autoRestart.value,
+                onChanged: (value) => _hostingController.autoRestart.value = value
+            ),
+          ],
+        ),
+      )),
+      SettingTile(
+          icon: Icon(
+              fluentUi.FluentIcons.number_field
+          ),
+          title: Text(translations.settingsServerPortName),
+          subtitle: Text(translations.settingsServerPortDescription),
+          contentWidth: 64,
+          content: TextFormBox(
+              placeholder:  translations.settingsServerPortName,
+              controller: _settingsController.gameServerPort,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly
+              ]
+          )
+      ),
     ],
   );
 

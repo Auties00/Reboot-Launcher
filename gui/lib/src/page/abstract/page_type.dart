@@ -3,7 +3,6 @@ enum RebootPageType {
   host,
   browser,
   backend,
-  matchmaker,
   info,
   settings
 }

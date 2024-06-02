@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:ini/ini.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_common/src/extension/types.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_proxy/shelf_proxy.dart';
 import 'package:sync/semaphore.dart';
@@ -33,8 +35,8 @@ Future<bool> freeBackendPort() async {
 }
 
 Future<Uri?> pingBackend(String host, int port, [bool https=false]) async {
-  var hostName = _getHostName(host);
-  var declaredScheme = _getScheme(host);
+  var hostName = host.replaceFirst("http://", "").replaceFirst("https://", "");
+  var declaredScheme = host.startsWith("http://") ? "http" : host.startsWith("https://") ? "https" : null;
   try{
     var uri = Uri(
         scheme: declaredScheme ?? (https ? "https" : "http"),
@@ -51,10 +53,6 @@ Future<Uri?> pingBackend(String host, int port, [bool https=false]) async {
     return https || declaredScheme != null || isLocalHost(host) ? null : await pingBackend(host, port, true);
   }
 }
-
-String? _getHostName(String host) => host.replaceFirst("http://", "").replaceFirst("https://", "");
-
-String? _getScheme(String host) => host.startsWith("http://") ? "http" : host.startsWith("https://") ? "https" : null;
 
 Stream<String?> watchMatchmakingIp() async* {
   if(!matchmakerConfigFile.existsSync()){
@@ -111,55 +109,3 @@ Future<void> writeMatchmakingIp(String text) async {
   config.set("GameServer", "port", port);
   await matchmakerConfigFile.writeAsString(config.toString(), flush: true);
 }
-
-Future<bool> isMatchmakerPortFree() async => await pingMatchmaker(kDefaultMatchmakerHost, kDefaultMatchmakerPort) == null;
-
-Future<bool> freeMatchmakerPort() async {
-  await killProcessByPort(kDefaultMatchmakerPort);
-  final standardResult = await isMatchmakerPortFree();
-  if(standardResult) {
-    return true;
-  }
-
-  return false;
-}
-
-Future<Uri?> pingMatchmaker(String host, int port, [bool wss=false]) async {
-  var hostName = _getHostName(host);
-  var declaredScheme = _getScheme(host);
-  try{
-    var uri = Uri(
-        scheme: declaredScheme ?? (wss ? "wss" : "ws"),
-        host: hostName,
-        port: port
-    );
-    var completer = Completer<bool>();
-    var socket = await WebSocket.connect(uri.toString());
-    socket.listen(
-          (data) {
-        if(!completer.isCompleted) {
-          completer.complete(true);
-        }
-      },
-      onError: (error) {
-        if(!completer.isCompleted) {
-          completer.complete(false);
-        }
-      },
-      onDone: () {
-        if(!completer.isCompleted) {
-          completer.complete(false);
-        }
-      },
-    );
-    var result = await completer.future;
-    await socket.close();
-    return result ? uri : null;
-  }catch(_){
-    return wss || declaredScheme != null || isLocalHost(host) ? null : await pingMatchmaker(host, port, true);
-  }
-}
-
-String? _getHostName(String host) => host.replaceFirst("ws://", "").replaceFirst("wss://", "");
-
-String? _getScheme(String host) => host.startsWith("ws://") ? "ws" : host.startsWith("wss://") ? "wss" : null;

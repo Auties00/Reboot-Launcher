@@ -6,9 +6,8 @@ import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
-import 'package:reboot_launcher/src/controller/server_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
@@ -19,7 +18,9 @@ import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sync/semaphore.dart';
 
-extension ServerControllerDialog on ServerController {
+final Semaphore _publishingSemaphore = Semaphore();
+
+extension ServerControllerDialog on BackendController {
   Future<bool> toggleInteractive() async {
     final stream = toggle();
     final completer = Completer<bool>();
@@ -41,19 +42,19 @@ extension ServerControllerDialog on ServerController {
      switch (event.type) {
       case ServerResultType.starting:
         return showInfoBar(
-            translations.startingServer(controllerName),
+            translations.startingServer,
             severity: InfoBarSeverity.info,
             loading: true,
             duration: null
         );
       case ServerResultType.startSuccess:
         return showInfoBar(
-            type.value == ServerType.local ? translations.checkedServer(controllerName) : translations.startedServer(controllerName),
+            type.value == ServerType.local ? translations.checkedServer : translations.startedServer,
             severity: InfoBarSeverity.success
         );
       case ServerResultType.startError:
         return showInfoBar(
-            type.value == ServerType.local ? translations.localServerError(event.error ?? translations.unknownError, controllerName) : translations.startServerError(event.error ?? translations.unknownError, controllerName),
+            type.value == ServerType.local ? translations.localServerError(event.error ?? translations.unknownError) : translations.startServerError(event.error ?? translations.unknownError),
             severity: InfoBarSeverity.error,
             duration: infoBarLongDuration
         );
@@ -66,75 +67,70 @@ extension ServerControllerDialog on ServerController {
         );
       case ServerResultType.stopSuccess:
         return showInfoBar(
-            translations.stoppedServer(controllerName),
+            translations.stoppedServer,
             severity: InfoBarSeverity.success
         );
       case ServerResultType.stopError:
         return showInfoBar(
-            translations.stopServerError(
-                event.error ?? translations.unknownError, controllerName),
+            translations.stopServerError(event.error ?? translations.unknownError),
             severity: InfoBarSeverity.error,
             duration: infoBarLongDuration
         );
       case ServerResultType.missingHostError:
         return showInfoBar(
-            translations.missingHostNameError(controllerName),
+            translations.missingHostNameError,
             severity: InfoBarSeverity.error
         );
       case ServerResultType.missingPortError:
         return showInfoBar(
-            translations.missingPortError(controllerName),
+            translations.missingPortError,
             severity: InfoBarSeverity.error
         );
       case ServerResultType.illegalPortError:
         return showInfoBar(
-            translations.illegalPortError(controllerName),
+            translations.illegalPortError,
             severity: InfoBarSeverity.error
         );
       case ServerResultType.freeingPort:
         return showInfoBar(
-            translations.freeingPort(defaultPort),
+            translations.freeingPort,
             loading: true,
             duration: null
         );
       case ServerResultType.freePortSuccess:
         return showInfoBar(
-            translations.freedPort(defaultPort),
+            translations.freedPort,
             severity: InfoBarSeverity.success,
             duration: infoBarShortDuration
         );
       case ServerResultType.freePortError:
         return showInfoBar(
-            translations.freePortError(event.error ?? translations.unknownError, controllerName),
+            translations.freePortError(event.error ?? translations.unknownError),
             severity: InfoBarSeverity.error,
             duration: infoBarLongDuration
         );
       case ServerResultType.pingingRemote:
         return showInfoBar(
-            translations.pingingRemoteServer(controllerName),
+            translations.pingingRemoteServer,
             severity: InfoBarSeverity.info,
             loading: true,
             duration: null
         );
       case ServerResultType.pingingLocal:
         return showInfoBar(
-            translations.pingingLocalServer(controllerName, type().name),
+            translations.pingingLocalServer(type.value.name),
             severity: InfoBarSeverity.info,
             loading: true,
             duration: null
         );
       case ServerResultType.pingError:
         return showInfoBar(
-            translations.pingError(controllerName, type().name),
+            translations.pingError(type.value.name),
             severity: InfoBarSeverity.error
         );
     }
   }
-}
 
-final Semaphore _publishingSemaphore = Semaphore();
-
-extension MatchmakerControllerExtension on MatchmakerController {
   void joinLocalHost() {
     gameServerAddress.text = kDefaultGameServerHost;
     gameServerOwner.value = null;

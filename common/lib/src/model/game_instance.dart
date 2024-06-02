@@ -8,6 +8,7 @@ class GameInstance {
   final int? eacPid;
   bool hosting;
   bool launched;
+  bool movedToVirtualDesktop;
   bool tokenError;
   GameInstance? child;
 
@@ -18,7 +19,7 @@ class GameInstance {
     required this.eacPid,
     required this.hosting,
     required this.child
-  }): tokenError = false, launched = false;
+  }): tokenError = false, launched = false, movedToVirtualDesktop = false;
 
   void kill() {
     Process.killPid(gamePid, ProcessSignal.sigabrt);

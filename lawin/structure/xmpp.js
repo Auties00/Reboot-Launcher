@@ -3,10 +3,11 @@ const XMLBuilder = require("xmlbuilder");
 const XMLParser = require("xml-parser");
 
 const functions = require("./../structure/functions.js");
+const matchmaker = require("./matchmaker.js");
 
 const port = 80;
 
-const wss = new WebSocket({ port: port }, () => console.log("XMPP listening on port", port));
+const wss = new WebSocket({ port: port }, () => console.log("XMPP and Matchmaker started listening on port", port));
 wss.on("error", (err) => {
     console.log("XMPP and Matchmaker \x1b[31mFAILED\x1b[0m to start hosting.");
 })
@@ -16,11 +17,9 @@ global.Clients = [];
 
 wss.on('connection', async (ws) => {
     ws.on('error', () => {});
-    
-    if (ws.protocol.toLowerCase() != "xmpp") {
-        return;
-    }
-    
+
+    if (ws.protocol.toLowerCase() != "xmpp") return matchmaker(ws);
+
     var accountId = "";
     var jid = "";
     var id = "";
@@ -40,7 +39,7 @@ wss.on('connection', async (ws) => {
                 .attribute("id", ID)
                 .attribute("version", "1.0")
                 .attribute("xml:lang", "en").toString())
-                
+
                 if (Authenticated == true) {
                     ws.send(XMLBuilder.create("stream:features").attribute("xmlns:stream", "http://etherx.jabber.org/streams")
                     .element("ver").attribute("xmlns", "urn:xmpp:features:rosterver").up()
@@ -73,7 +72,7 @@ wss.on('connection', async (ws) => {
 
                 if (decodedBase64 && accountId && decodedBase64.length == 3) {
                     Authenticated = true;
-                    
+
                     console.log(`An xmpp client with the account id ${accountId} has logged in.`);
 
                     ws.send(XMLBuilder.create("success").attribute("xmlns", "urn:ietf:params:xml:ns:xmpp-sasl").toString());

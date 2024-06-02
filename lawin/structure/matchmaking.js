@@ -15,7 +15,7 @@ express.get("/fortnite/api/game/v2/matchmakingservice/ticket/player/*", async (r
     res.cookie("currentbuildUniqueId", req.query.bucketId.split(":")[0]);
 
     res.json({
-        "serviceUrl": "ws://127.0.0.1:8080",
+        "serviceUrl": "ws://127.0.0.1:80",
         "ticketType": "mms-player",
         "payload": "69=",
         "signature": "420="

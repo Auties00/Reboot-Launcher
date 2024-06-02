@@ -5,14 +5,12 @@ class FortniteBuild {
   final String identifier;
   final String version;
   final String link;
-  final FortniteBuildSource source;
 
-  FortniteBuild({required this.identifier, required this.version, required this.link, required this.source});
-}
-
-enum FortniteBuildSource {
-  manifest,
-  archive
+  FortniteBuild({
+    required this.identifier,
+    required this.version,
+    required this.link
+  });
 }
 
 class FortniteBuildDownloadProgress {

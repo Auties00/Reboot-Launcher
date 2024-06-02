@@ -5,13 +5,14 @@ import 'package:async/async.dart';
 import 'package:dart_ipify/dart_ipify.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'package:path/path.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/controller/update_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
@@ -23,7 +24,6 @@ import 'package:reboot_launcher/src/util/log.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class LaunchButton extends StatefulWidget {
   final bool host;
@@ -37,11 +37,13 @@ class LaunchButton extends StatefulWidget {
 }
 
 class _LaunchButtonState extends State<LaunchButton> {
+  static const Duration _kRebootDelay = Duration(seconds: 10);
+
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
   final BackendController _backendController = Get.find<BackendController>();
-  final MatchmakerController _matchmakerController = Get.find<MatchmakerController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
+  final UpdateController _updateController = Get.find<UpdateController>();
   InfoBarEntry? _gameClientInfoBar;
   InfoBarEntry? _gameServerInfoBar;
   CancelableOperation? _operation;
@@ -129,18 +131,6 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
       log("[${widget.host ? 'HOST' : 'GAME'}] Backend works");
-
-      log("[${widget.host ? 'HOST' : 'GAME'}] Checking matchmaker(port: ${_matchmakerController.type.value.name}, type: ${_matchmakerController.type.value.name})...");
-      final matchmakerResult = _matchmakerController.started() || await _matchmakerController.toggleInteractive();
-      if(!matchmakerResult){
-        log("[${widget.host ? 'HOST' : 'GAME'}] Cannot start matchmaker");
-        _onStop(
-            reason: _StopReason.matchmakerError
-        );
-        return;
-      }
-      log("[${widget.host ? 'HOST' : 'GAME'}] Matchmaker works");
-
       final headless = !forceGUI && _hostingController.headless.value;
       final virtualDesktop = _hostingController.virtualDesktop.value;
       log("[${widget.host ? 'HOST' : 'GAME'}] Implicit game server metadata: headless($headless)");
@@ -170,9 +160,8 @@ class _LaunchButtonState extends State<LaunchButton> {
       return null;
     }
 
-    final matchmakingIp = _matchmakerController.gameServerAddress.text;
-    if(!isLocalHost(matchmakingIp)) {
-      log("[${widget.host ? 'HOST' : 'GAME'}] The current IP($matchmakingIp) is not set to localhost");
+    if(_backendController.type.value != ServerType.embedded || !isLocalHost(_backendController.gameServerAddress.text)) {
+      log("[${widget.host ? 'HOST' : 'GAME'}] Backend is not set to embedded and/or not pointing to the local game server");
       return null;
     }
 
@@ -267,7 +256,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         _gameController.password.text,
         host,
         _hostingController.headless.value,
-        _gameController.customLaunchArgs.text
+        ""
     );
     log("[${host ? 'HOST' : 'GAME'}] Generated game args: $gameArgs");
     final gameProcess = await startProcess(
@@ -276,60 +265,37 @@ class _LaunchButtonState extends State<LaunchButton> {
         wrapProcess: false,
         name: "${version.name}-${host ? 'HOST' : 'GAME'}"
     );
-    gameProcess.stdOutput.listen((line) => _onGameOutput(line, host, virtualDesktop, false));
-    gameProcess.stdError.listen((line) => _onGameOutput(line, host, virtualDesktop, true));
+    gameProcess.stdOutput.listen((line) => _onGameOutput(line, version, host, virtualDesktop, false));
+    gameProcess.stdError.listen((line) => _onGameOutput(line, version, host, virtualDesktop, true));
     watchProcess(gameProcess.pid).then((_) async {
       final instance = host ? _hostingController.instance.value : _gameController.instance.value;
-      if(instance == null || !host || !headless || instance.launched) {
+      if(instance == null) {
+        return;
+      }
+
+      if(!host || !headless || instance.launched) {
         _onStop(reason: _StopReason.exitCode);
         return;
       }
 
-      if(widget.host) {
-        await _onStop(reason: _StopReason.exitCode);
-        _toggle(forceGUI: true);
-        return;
-      }
-
-      await _onStop(
-          reason: _StopReason.exitCode,
-          host: true
-      );
-      final linkedHostingInstance = await _startMatchMakingServer(version, false, virtualDesktop, true);
-      _gameController.instance.value?.child = linkedHostingInstance;
-      if(linkedHostingInstance != null){
-        _setStarted(true, true);
-        _showLaunchingGameServerWidget();
-      }
+      await _restartGameServer(version, virtualDesktop, _StopReason.exitCode);
     });
-    if(host && !headless && virtualDesktop) {
-      final name = version.name;
-      final pid = gameProcess.pid;
-      _moveProcessToVirtualDesktop(name, pid);
-    }
     return gameProcess.pid;
   }
 
-  Future<void> _moveProcessToVirtualDesktop(String versionName, int pid) async {
-    try {
-      final windowManager = VirtualDesktopManager.getInstance();
-      _virtualDesktop = windowManager.createDesktop();
-      windowManager.setDesktopName(_virtualDesktop!, "$versionName Server (Reboot Launcher)");
-      Object? lastError;
-      for(var i = 0; i < 10; i++) {
-        try {
-          windowManager.moveWindowToDesktop(pid, _virtualDesktop!);
-          break;
-        }catch(error) {
-          lastError = error;
-          await Future.delayed(Duration(seconds: 1));
-        }
+  Future<void> _restartGameServer(FortniteVersion version, bool virtualDesktop, _StopReason reason) async {
+    if (widget.host) {
+      await _onStop(reason: reason);
+      _toggle(forceGUI: true);
+    } else {
+      await _onStop(reason: reason, host: true);
+      final linkedHostingInstance =
+      await _startMatchMakingServer(version, false, virtualDesktop, true);
+      _gameController.instance.value?.child = linkedHostingInstance;
+      if (linkedHostingInstance != null) {
+        _setStarted(true, true);
+        _showLaunchingGameServerWidget();
       }
-      if(lastError != null) {
-        log("[VIRTUAL_DESKTOP] Cannot move window: $lastError");
-      }
-    }catch(error) {
-      log("[VIRTUAL_DESKTOP] Virtual desktop is not supported: $error");
     }
   }
 
@@ -348,7 +314,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     return pid;
   }
 
-  void _onGameOutput(String line, bool host, bool virtualDesktop, bool error) async {
+  void _onGameOutput(String line, FortniteVersion version, bool host, bool virtualDesktop, bool error) async {
     if (line.contains(kShutdownLine)) {
       _onStop(
           reason: _StopReason.normal
@@ -371,17 +337,74 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     if(kLoggedInLines.every((entry) => line.contains(entry))) {
-      await _injectOrShowError(_Injectable.memoryFix, host);
-      if(!host){
-        await _injectOrShowError(_Injectable.console, host);
-        _onGameClientInjected();
-      }else {
-        await _injectOrShowError(_Injectable.reboot, host);
-        _onGameServerInjected();
-      }
       final instance = host ? _hostingController.instance.value : _gameController.instance.value;
-      instance?.launched = true;
-      instance?.tokenError = false;
+      if(instance != null && !instance.launched) {
+        instance.launched = true;
+        instance.tokenError = false;
+        await _injectOrShowError(_Injectable.memoryFix, host);
+        if(!host){
+          await _injectOrShowError(_Injectable.console, host);
+          _onGameClientInjected();
+        }else {
+          final gameServerPort = int.tryParse(_settingsController.gameServerPort.text);
+          if(gameServerPort != null) {
+            await killProcessByPort(gameServerPort);
+          }
+          await _injectOrShowError(_Injectable.reboot, host);
+          _onGameServerInjected();
+        }
+      }
+
+      return;
+    }
+
+    if(line.contains(kGameFinishedLine) && host) {
+      if(_hostingController.autoRestart.value) {
+        final notification = LocalNotification(
+          title: translations.gameServerEnd,
+          body: translations.gameServerRestart(_kRebootDelay.inSeconds),
+        );
+        notification.show();
+        Future.delayed(_kRebootDelay).then((_) {
+          _restartGameServer(version, virtualDesktop, _StopReason.normal);
+        });
+      }else {
+        final notification = LocalNotification(
+          title: translations.gameServerEnd,
+          body: translations.gameServerShutdown(_kRebootDelay.inSeconds)
+        );
+        notification.show();
+        Future.delayed(_kRebootDelay).then((_) {
+          _onStop(reason: _StopReason.normal, host: true);
+        });
+      }
+      return;
+    }
+
+    if(line.contains("Display") && host && virtualDesktop) {
+      final hostingInstance = _hostingController.instance.value;
+      if(hostingInstance != null && !hostingInstance.movedToVirtualDesktop) {
+        hostingInstance.movedToVirtualDesktop = true;
+        try {
+          final windowManager = VirtualDesktopManager.getInstance();
+          _virtualDesktop = windowManager.createDesktop();
+          windowManager.setDesktopName(_virtualDesktop!, "${version.name} Server (Reboot Launcher)");
+          try {
+            await windowManager.moveWindowToDesktop(hostingInstance.gamePid, _virtualDesktop!);
+          }catch(error) {
+            log("[VIRTUAL_DESKTOP] $error");
+            try {
+              windowManager.removeDesktop(_virtualDesktop!);
+            }catch(error) {
+              log("[VIRTUAL_DESKTOP] $error");
+            }finally {
+              _virtualDesktop = null;
+            }
+          }
+        }catch(error) {
+          log("[VIRTUAL_DESKTOP] $error");
+        }
+      }
     }
   }
 
@@ -404,12 +427,12 @@ class _LaunchButtonState extends State<LaunchButton> {
           duration: null
       );
       final gameServerPort = _settingsController.gameServerPort.text;
+      _gameServerInfoBar?.close();
       final localPingResult = await pingGameServer(
           "127.0.0.1:$gameServerPort",
           timeout: const Duration(minutes: 2)
       );
       if (!localPingResult) {
-        _gameServerInfoBar?.close();
         showInfoBar(
             translations.gameServerStartWarning,
             severity: InfoBarSeverity.error,
@@ -418,7 +441,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
 
-      _matchmakerController.joinLocalHost();
+      _backendController.joinLocalHost();
       final accessible = await _checkGameServer(theme, gameServerPort);
       if (!accessible) {
         showInfoBar(
@@ -445,7 +468,6 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   Future<bool> _checkGameServer(FluentThemeData theme, String gameServerPort) async {
     try {
-      _gameServerInfoBar?.close();
       _gameServerInfoBar = showInfoBar(
           translations.checkingGameServer,
           loading: true,
@@ -494,11 +516,11 @@ class _LaunchButtonState extends State<LaunchButton> {
       await _operation?.cancel();
       _operation = null;
       await _backendController.worker?.cancel();
-      await _matchmakerController.worker?.cancel();
     }
 
     host = host ?? widget.host;
     log("[${host ? 'HOST' : 'GAME'}] Called stop with reason $reason, error data $error $stackTrace");
+    log("[${host ? 'HOST' : 'GAME'}] Caller: ${StackTrace.current}");
     if(host) {
       _hostingController.discardServer();
     }
@@ -526,12 +548,10 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     _setStarted(host, false);
-    if(!reason.isError) {
-      if(host) {
-        _gameServerInfoBar?.close();
-      }else {
-        _gameClientInfoBar?.close();
-      }
+    if(host) {
+      _gameServerInfoBar?.close();
+    }else {
+      _gameClientInfoBar?.close();
     }
 
     switch(reason) {
@@ -633,7 +653,14 @@ class _LaunchButtonState extends State<LaunchButton> {
   String _getDllPath(_Injectable injectable) {
     switch(injectable){
       case _Injectable.reboot:
-        return _settingsController.gameServerDll.text;
+        if(_updateController.customGameServer.value) {
+          final file = File(_settingsController.gameServerDll.text);
+          if(file.existsSync()) {
+            return file.path;
+          }
+        }
+
+        return rebootDllFile.path;
       case _Injectable.console:
         return _settingsController.unrealEngineConsoleDll.text;
       case _Injectable.sslBypassV2:

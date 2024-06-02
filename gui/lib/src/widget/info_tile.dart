@@ -1,7 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:reboot_launcher/src/page/pages.dart';
-import 'package:skeletons/skeletons.dart';
 
 class InfoTile extends StatelessWidget {
   final Key? expanderKey;

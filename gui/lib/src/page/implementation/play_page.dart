@@ -1,17 +1,12 @@
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/matchmaker_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
-import 'package:reboot_launcher/src/util/keyboard.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/file_setting_tile.dart';
 import 'package:reboot_launcher/src/widget/game_start_button.dart';
@@ -39,9 +34,9 @@ class PlayPage extends RebootPage {
 }
 
 class _PlayPageState extends RebootPageState<PlayPage> {
-  final MatchmakerController _matchmakerController = Get.find<MatchmakerController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
   final GameController _gameController = Get.find<GameController>();
+  final BackendController _backendController = Get.find<BackendController>();
   
   @override
   Widget? get button => LaunchButton(
@@ -52,8 +47,9 @@ class _PlayPageState extends RebootPageState<PlayPage> {
 
   @override
   List<SettingTile> get settings => [
-    _clientSettings,
     versionSelectSettingTile,
+    _options,
+    _internalFiles,
     _multiplayer
   ];
 
@@ -70,7 +66,7 @@ class _PlayPageState extends RebootPageState<PlayPage> {
     ],
   );
 
-  SettingTile get _clientSettings => SettingTile(
+  SettingTile get _internalFiles => SettingTile(
     icon: Icon(
         FluentIcons.archive_settings_24_regular
     ),
@@ -92,24 +88,34 @@ class _PlayPageState extends RebootPageState<PlayPage> {
           description: translations.settingsClientMemoryDescription,
           controller: _settingsController.memoryLeakDll
       ),
-      SettingTile(
-          icon: Icon(
-              FluentIcons.options_24_regular
-          ),
-          title: Text(translations.settingsClientArgsName),
-          subtitle: Text(translations.settingsClientArgsDescription),
-          content: TextFormBox(
-            placeholder: translations.settingsClientArgsPlaceholder,
-            controller: _gameController.customLaunchArgs,
-          )
-      )
     ],
+  );
+
+  SettingTile get _options => SettingTile(
+      icon: Icon(
+          FluentIcons.options_24_regular
+      ),
+      title: Text(translations.settingsServerOptionsName),
+      subtitle: Text(translations.settingsServerOptionsSubtitle),
+      children: [
+        SettingTile(
+            icon: Icon(
+                FluentIcons.options_24_regular
+            ),
+            title: Text(translations.settingsClientArgsName),
+            subtitle: Text(translations.settingsClientArgsDescription),
+            content: TextFormBox(
+              placeholder: translations.settingsClientArgsPlaceholder,
+              controller: _gameController.customLaunchArgs,
+            )
+        )
+      ]
   );
 
   SettingTile get _matchmakerTile => SettingTile(
     onPressed: () {
-      pageIndex.value = RebootPageType.matchmaker.index;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _matchmakerController.gameServerAddressFocusNode.requestFocus());
+      pageIndex.value = RebootPageType.backend.index;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _backendController.gameServerAddressFocusNode.requestFocus());
     },
     icon: Icon(
         FluentIcons.globe_24_regular

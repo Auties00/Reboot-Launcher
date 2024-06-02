@@ -27,7 +27,7 @@ Future<void> _downloadCriticalDllInteractive(String filePath) async {
   InfoBarEntry? entry;
   try {
     if (fileName == "reboot.dll") {
-      await _updateController.update(true);
+      await _updateController.updateReboot(true);
       return;
     }
 
