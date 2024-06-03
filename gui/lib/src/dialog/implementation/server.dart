@@ -53,6 +53,7 @@ extension ServerControllerDialog on BackendController {
             severity: InfoBarSeverity.success
         );
       case ServerResultType.startError:
+        print(event.stackTrace);
         return showInfoBar(
             type.value == ServerType.local ? translations.localServerError(event.error ?? translations.unknownError) : translations.startServerError(event.error ?? translations.unknownError),
             severity: InfoBarSeverity.error,

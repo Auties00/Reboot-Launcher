@@ -70,7 +70,7 @@ void _onGameOutput(String line, String dll, bool hosting, bool verbose) {
       _injectOrShowError("console.dll");
     }
 
-    _injectOrShowError("memoryleak.dll");
+    _injectOrShowError("memoryFix.dll");
   }
 }
 
@@ -87,12 +87,12 @@ Future<void> _injectOrShowError(String binary, [bool locate = true]) async {
 
   try {
     stdout.writeln("Injecting $binary...");
-    var dll = locate ? File("${assetsDirectory.path}\\dlls\\$binary") : File(binary);
+    var dll = locate ? File("${dllsDirectory.path}\\$binary") : File(binary);
     if(!dll.existsSync()){
       throw Exception("Cannot inject $dll: missing file");
     }
 
-    await injectDll(_gameProcess!.pid, dll.path);
+    await injectDll(_gameProcess!.pid, dll);
   } catch (exception) {
     throw Exception("Cannot inject binary: $binary");
   }

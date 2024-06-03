@@ -90,7 +90,6 @@ flutter:
   uses-material-design: true
   generate: true
   assets:
-    - assets/dlls/
     - assets/icons/
     - assets/images/
     - assets/backend/

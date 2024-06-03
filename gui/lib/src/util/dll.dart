@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
@@ -66,5 +68,28 @@ Future<void> _downloadCriticalDllInteractive(String filePath) async {
     await completer.future;
   }finally {
     _operations.remove(fileName);
+  }
+}
+
+extension InjectableDllExtension on InjectableDll {
+  String get path {
+    final SettingsController settingsController = Get.find<SettingsController>();
+    switch(this){
+      case InjectableDll.reboot:
+        if(_updateController.customGameServer.value) {
+          final file = File(settingsController.gameServerDll.text);
+          if(file.existsSync()) {
+            return file.path;
+          }
+        }
+
+        return rebootDllFile.path;
+      case InjectableDll.console:
+        return settingsController.unrealEngineConsoleDll.text;
+      case InjectableDll.cobalt:
+        return settingsController.backendDll.text;
+      case InjectableDll.memoryFix:
+        return settingsController.memoryLeakDll.text;
+    }
   }
 }

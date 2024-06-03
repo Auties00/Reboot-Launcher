@@ -3,6 +3,8 @@ import 'dart:io';
 Directory get installationDirectory =>
     File(Platform.resolvedExecutable).parent;
 
+Directory get dllsDirectory => Directory("${installationDirectory.path}\\dlls");
+
 Directory get assetsDirectory {
   var directory = Directory("${installationDirectory.path}\\data\\flutter_assets\\assets");
   if(directory.existsSync()) {

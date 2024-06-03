@@ -34,9 +34,10 @@ final class _MIB_TCPTABLE_OWNER_PID extends Struct {
   @Uint32()
   external int dwNumEntries;
 
-  @Array(1)
+  @Array(512)
   external Array<_MIB_TCPROW_OWNER_PID> table;
 }
+
 
 bool isLocalHost(String host) => host.trim() == "127.0.0.1"
     || host.trim().toLowerCase() == "localhost"
@@ -46,7 +47,6 @@ bool killProcessByPort(int port) {
   var pTcpTable = calloc<_MIB_TCPTABLE_OWNER_PID>();
   final dwSize = calloc<DWORD>();
   dwSize.value = 0;
-
   int result = _getExtendedTcpTable(
       nullptr,
       dwSize,
@@ -56,6 +56,7 @@ bool killProcessByPort(int port) {
       0
   );
   if (result == ERROR_INSUFFICIENT_BUFFER) {
+    free(pTcpTable);
     pTcpTable = calloc<_MIB_TCPTABLE_OWNER_PID>(dwSize.value);
     result = _getExtendedTcpTable(
         pTcpTable,

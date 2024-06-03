@@ -1,15 +1,53 @@
 import 'dart:async';
+import 'dart:collection';
+import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
-import 'package:reboot_launcher/src/util/info.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:path/path.dart' as path;
+import 'package:reboot_launcher/src/widget/info_tile.dart';
 
 class InfoPage extends RebootPage {
+  static late final List<InfoTile> _infoTiles;
+  static Object? initInfoTiles() {
+    try {
+      final directory = Directory("${assetsDirectory.path}\\info\\$currentLocale");
+      final map = SplayTreeMap<int, InfoTile>();
+      for(final entry in directory.listSync()) {
+        if(entry is File) {
+          final name = Uri.decodeQueryComponent(path.basename(entry.path));
+          final splitter = name.indexOf(".");
+          if(splitter == -1) {
+            continue;
+          }
+
+          final index = int.tryParse(name.substring(0, splitter));
+          if(index == null) {
+            continue;
+          }
+
+          final questionName = Uri.decodeQueryComponent(name.substring(splitter + 2));
+          map[index] = InfoTile(
+              title: Text(questionName),
+              content: Text(entry.readAsStringSync())
+          );
+        }
+      }
+      _infoTiles = map.values.toList(growable: false);
+      return null;
+    }catch(error) {
+      _infoTiles = [];
+      return error;
+    }
+  }
+
   const InfoPage({Key? key}) : super(key: key);
 
   @override
@@ -30,7 +68,7 @@ class InfoPage extends RebootPage {
 
 class _InfoPageState extends RebootPageState<InfoPage> {
   final SettingsController _settingsController = Get.find<SettingsController>();
-  RxInt _counter = RxInt(180);
+  RxInt _counter = RxInt(kDebugMode ? 0 : 180);
 
   @override
   void initState() {
@@ -48,7 +86,7 @@ class _InfoPageState extends RebootPageState<InfoPage> {
   }
 
   @override
-  List<Widget> get settings => infoTiles;
+  List<Widget> get settings => InfoPage._infoTiles;
 
   @override
   Widget? get button => Obx(() {

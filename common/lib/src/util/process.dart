@@ -33,7 +33,10 @@ final _CreateRemoteThread = _kernel32.lookupFunction<
         Pointer<Uint32> lpThreadId)>('CreateRemoteThread');
 const chunkSize = 1024;
 
-Future<void> injectDll(int pid, String dll) async {
+Future<void> injectDll(int pid, File dll) async {
+  // Get the path to the file
+  final dllPath = dll.path;
+
   final process = OpenProcess(
       0x43A,
       0,
@@ -52,7 +55,7 @@ Future<void> injectDll(int pid, String dll) async {
   final dllAddress = VirtualAllocEx(
       process,
       nullptr,
-      dll.length + 1,
+      dllPath.length + 1,
       0x3000,
       0x4
   );
@@ -60,8 +63,8 @@ Future<void> injectDll(int pid, String dll) async {
   final writeMemoryResult = WriteProcessMemory(
       process,
       dllAddress,
-      dll.toNativeUtf8(),
-      dll.length,
+      dllPath.toNativeUtf8(),
+      dllPath.length,
       nullptr
   );
 
@@ -87,6 +90,18 @@ Future<void> injectDll(int pid, String dll) async {
   if(closeResult != 1){
     throw Exception("Cannot close handle");
   }
+}
+
+Future<bool> startElevatedProcess({required String executable, required String args, bool window = false}) async {
+  var shellInput = calloc<SHELLEXECUTEINFO>();
+  shellInput.ref.lpFile = executable.toNativeUtf16();
+  shellInput.ref.lpParameters = args.toNativeUtf16();
+  shellInput.ref.nShow = window ? SW_SHOWNORMAL : SW_HIDE;
+  shellInput.ref.fMask = ES_AWAYMODE_REQUIRED;
+  shellInput.ref.lpVerb = "runas".toNativeUtf16();
+  shellInput.ref.cbSize = sizeOf<SHELLEXECUTEINFO>();
+  var shellResult = ShellExecuteEx(shellInput);
+  return shellResult == 1;
 }
 
 Future<Process> startProcess({required File executable, List<String>? args, bool wrapProcess = true, bool window = false, String? name}) async {
