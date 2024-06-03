@@ -103,8 +103,8 @@ class _LaunchButtonState extends State<LaunchButton> {
     log("[${widget.host ? 'HOST' : 'GAME'}] Setting started...");
     _setStarted(widget.host, true);
     log("[${widget.host ? 'HOST' : 'GAME'}] Set started");
-    log("[${widget.host ? 'HOST' : 'GAME'}] Checking dlls: ${_Injectable.values}");
-    for (final injectable in _Injectable.values) {
+    log("[${widget.host ? 'HOST' : 'GAME'}] Checking dlls: ${InjectableDll.values}");
+    for (final injectable in InjectableDll.values) {
       if(await _getDllFileOrStop(injectable, widget.host) == null) {
         return;
       }
@@ -239,7 +239,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }else{
       _gameController.instance.value = instance;
     }
-    await _injectOrShowError(_Injectable.sslBypassV2, host);
+    await _injectOrShowError(InjectableDll.cobalt, host);
     log("[${host ? 'HOST' : 'GAME'}] Finished creating game instance");
     return instance;
   }
@@ -319,46 +319,33 @@ class _LaunchButtonState extends State<LaunchButton> {
       _onStop(
           reason: _StopReason.normal
       );
-      return;
-    }
-
-    if(kCorruptedBuildErrors.any((element) => line.contains(element))){
+    }else if(kCorruptedBuildErrors.any((element) => line.contains(element))){
       _onStop(
           reason: _StopReason.corruptedVersionError
       );
-      return;
-    }
-
-    if(kCannotConnectErrors.any((element) => line.contains(element))){
+    }else if(kCannotConnectErrors.any((element) => line.contains(element))){
       _onStop(
           reason: _StopReason.tokenError
       );
-      return;
-    }
-
-    if(kLoggedInLines.every((entry) => line.contains(entry))) {
+    }else if(kLoggedInLines.every((entry) => line.contains(entry))) {
       final instance = host ? _hostingController.instance.value : _gameController.instance.value;
       if(instance != null && !instance.launched) {
         instance.launched = true;
         instance.tokenError = false;
-        await _injectOrShowError(_Injectable.memoryFix, host);
+        await _injectOrShowError(InjectableDll.memory, host);
         if(!host){
-          await _injectOrShowError(_Injectable.console, host);
+          await _injectOrShowError(InjectableDll.console, host);
           _onGameClientInjected();
         }else {
           final gameServerPort = int.tryParse(_settingsController.gameServerPort.text);
           if(gameServerPort != null) {
             await killProcessByPort(gameServerPort);
           }
-          await _injectOrShowError(_Injectable.reboot, host);
+          await _injectOrShowError(InjectableDll.reboot, host);
           _onGameServerInjected();
         }
       }
-
-      return;
-    }
-
-    if(line.contains(kGameFinishedLine) && host) {
+    }else if(line.contains(kGameFinishedLine) && host) {
       if(_hostingController.autoRestart.value) {
         final notification = LocalNotification(
           title: translations.gameServerEnd,
@@ -378,10 +365,7 @@ class _LaunchButtonState extends State<LaunchButton> {
           _onStop(reason: _StopReason.normal, host: true);
         });
       }
-      return;
-    }
-
-    if(line.contains("Display") && host && virtualDesktop) {
+    }else if(line.contains(kDisplayInitializedLine) && host && virtualDesktop) {
       final hostingInstance = _hostingController.instance.value;
       if(hostingInstance != null && !hostingInstance.movedToVirtualDesktop) {
         hostingInstance.movedToVirtualDesktop = true;
@@ -615,7 +599,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
   }
 
-  Future<void> _injectOrShowError(_Injectable injectable, bool hosting) async {
+  Future<void> _injectOrShowError(InjectableDll injectable, bool hosting) async {
     final instance = hosting ? _hostingController.instance.value : _gameController.instance.value;
     if (instance == null) {
       log("[${hosting ? 'HOST' : 'GAME'}] No instance found to inject ${injectable.name}");
@@ -637,7 +621,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       }
 
       log("[${hosting ? 'HOST' : 'GAME'}] Trying to inject ${injectable.name}...");
-      await injectDll(gameProcess, dllPath.path);
+      await injectDll(gameProcess, dllPath);
       log("[${hosting ? 'HOST' : 'GAME'}] Injected ${injectable.name}");
     } catch (error, stackTrace) {
       log("[${hosting ? 'HOST' : 'GAME'}] Cannot inject ${injectable.name}: $error $stackTrace");
@@ -650,29 +634,9 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
   }
 
-  String _getDllPath(_Injectable injectable) {
-    switch(injectable){
-      case _Injectable.reboot:
-        if(_updateController.customGameServer.value) {
-          final file = File(_settingsController.gameServerDll.text);
-          if(file.existsSync()) {
-            return file.path;
-          }
-        }
-
-        return rebootDllFile.path;
-      case _Injectable.console:
-        return _settingsController.unrealEngineConsoleDll.text;
-      case _Injectable.sslBypassV2:
-        return _settingsController.backendDll.text;
-      case _Injectable.memoryFix:
-        return _settingsController.memoryLeakDll.text;
-    }
-  }
-
-  Future<File?> _getDllFileOrStop(_Injectable injectable, bool host) async {
+  Future<File?> _getDllFileOrStop(InjectableDll injectable, bool host) async {
     log("[${host ? 'HOST' : 'GAME'}] Checking dll ${injectable}...");
-    final path = _getDllPath(injectable);
+    final path = injectable.path;
     log("[${host ? 'HOST' : 'GAME'}] Path: $path");
     final file = File(path);
     if(await file.exists()) {
@@ -712,11 +676,4 @@ enum _StopReason {
   exitCode;
 
   bool get isError => name.contains("Error");
-}
-
-enum _Injectable {
-  console,
-  sslBypassV2,
-  reboot,
-  memoryFix,
 }

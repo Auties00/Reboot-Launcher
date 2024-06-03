@@ -10,6 +10,7 @@ export 'package:reboot_common/src/model/server_result.dart';
 export 'package:reboot_common/src/model/server_type.dart';
 export 'package:reboot_common/src/model/update_status.dart';
 export 'package:reboot_common/src/model/update_timer.dart';
+export 'package:reboot_common/src/model/dll.dart';
 export 'package:reboot_common/src/util/backend.dart';
 export 'package:reboot_common/src/util/build.dart';
 export 'package:reboot_common/src/util/dll.dart';

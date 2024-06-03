@@ -21,3 +21,4 @@ const List<String> kCannotConnectErrors = [
   "UOnlineAccountCommon::ForceLogout"
 ];
 const String kGameFinishedLine = "PlayersLeft: 1";
+const String kDisplayInitializedLine = "Display";

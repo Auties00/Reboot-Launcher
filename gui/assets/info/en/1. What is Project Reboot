@@ -1,4 +1,3 @@
-Some Fortnite versions support running this game server in the background without rendering the game: this type of server is called "headless" as the game is running, but you can't see it on your screen.
-If headless is not supported by the Fortnite version you want to play, or if you disabled it manually from the "Configuration" section in the "Host" tab of the launcher, you will see an instance of Fortnite open on your screen.
-For convenience, this window will be opened on a new Virtual Desktop, if your Windows version supports it. This feature can be disabled as well from from the "Configuration" section in the "Host" tab of the launcher.
-Just like in Minecraft, you need a game client to play the game and one to host the server."
+Project Reboot is a game server for Fortnite that aims to support as many seasons as possible.
+The project was started on Discord by Milxnor, while the launcher is developed by Auties00.
+Both are open source on GitHub, anyone can easily contribute or audit the code!"

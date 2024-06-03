@@ -26,7 +26,7 @@ class SettingsController extends GetxController {
     gameServerDll = _createController("game_server", "reboot.dll");
     unrealEngineConsoleDll = _createController("unreal_engine_console", "console.dll");
     backendDll = _createController("backend", "cobalt.dll");
-    memoryLeakDll = _createController("memory_leak", "memoryleak.dll");
+    memoryLeakDll = _createController("memory_leak", "memory.dll");
     gameServerPort = TextEditingController(text: _storage.read("game_server_port") ?? kDefaultGameServerPort);
     gameServerPort.addListener(() => _storage.write("game_server_port", gameServerPort.text));
     width = _storage.read("width") ?? kDefaultWindowWidth;
@@ -67,5 +67,5 @@ class SettingsController extends GetxController {
     firstRun.value = true;
   }
 
-  String _controllerDefaultPath(String name) => "${assetsDirectory.path}\\dlls\\$name";
+  String _controllerDefaultPath(String name) => "${dllsDirectory.path}\\$name";
 }

@@ -24,7 +24,7 @@ import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/error.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/implementation/home_page.dart';
-import 'package:reboot_launcher/src/util/info.dart';
+import 'package:reboot_launcher/src/page/implementation/info_page.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
@@ -35,65 +35,102 @@ import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
 
 const double kDefaultWindowWidth = 1536;
-const double kDefaultWindowHeight = 1024;
+const double kDefaultWindowHeight = 1224;
 const String kCustomUrlSchema = "Reboot";
 
 Version? appVersion;
 
-class _MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context){
-    return super.createHttpClient(context)
-      ..badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+void main() => runZonedGuarded(
+    () => _startApp(),
+    (error, stack) => onError(error, stack, false),
+    zoneSpecification: ZoneSpecification(
+        handleUncaughtError: (self, parent, zone, error, stacktrace) => onError(error, stacktrace, false)
+    )
+);
+
+Future<void> _startApp() async {
+    final errors = <Object>[];
+  try {
+    final pathError = await _initPath();
+    if(pathError != null) {
+      errors.add(pathError);
+    }
+
+    final databaseError = await _initDatabase();
+    if(databaseError != null) {
+      errors.add(databaseError);
+    }
+
+    final notificationsError = await _initNotifications();
+    if(notificationsError != null) {
+      errors.add(notificationsError);
+    }
+
+    WidgetsFlutterBinding.ensureInitialized();
+
+    _initWindow();
+
+    final tilesError = InfoPage.initInfoTiles();
+    if(tilesError != null) {
+      errors.add(tilesError);
+    }
+
+    final versionError = await _initVersion();
+    if(versionError != null) {
+      errors.add(versionError);
+    }
+
+    final storageError = await _initStorage();
+    if(storageError != null) {
+      errors.add(storageError);
+    }
+
+    final urlError = await _initUrlHandler();
+    if(urlError != null) {
+      errors.add(urlError);
+    }
+
+    _checkGameServer();
+  }catch(uncaughtError) {
+    errors.add(uncaughtError);
+  } finally{
+    runApp(const RebootApplication());
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _handleErrors(errors));
   }
 }
 
-void main() => runZonedGuarded(
-    () async {
-      HttpOverrides.global = _MyHttpOverrides();
-      final errors = <Object>[];
-      try {
-        await installationDirectory.create(recursive: true);
-        await Supabase.initialize(
-            url: supabaseUrl,
-            anonKey: supabaseAnonKey
-        );
-        await localNotifier.setup(
-          appName: 'Reboot Launcher',
-          shortcutPolicy: ShortcutPolicy.ignore
-        );
-        WidgetsFlutterBinding.ensureInitialized();
-        await SystemTheme.accentColor.load();
-        _initWindow();
-        initInfoTiles();
-        final versionError = await _initVersion();
-        if(versionError != null) {
-          errors.add(versionError);
-        }
+Future<Object?> _initNotifications() async {
+  try {
+    await localNotifier.setup(
+        appName: 'Reboot Launcher',
+        shortcutPolicy: ShortcutPolicy.ignore
+    );
+    return null;
+  }catch(error) {
+    return error;
+  }
+}
 
-        final storageError = await _initStorage();
-        if(storageError != null) {
-          errors.add(storageError);
-        }
+Future<Object?> _initDatabase() async {
+  try {
+    await Supabase.initialize(
+        url: supabaseUrl,
+        anonKey: supabaseAnonKey
+    );
+    return null;
+  }catch(error) {
+    return error;
+  }
+}
 
-        final urlError = await _initUrlHandler();
-        if(urlError != null) {
-          errors.add(urlError);
-        }
-
-        _checkGameServer();
-      }catch(uncaughtError) {
-        errors.add(uncaughtError);
-      } finally{
-        runApp(const RebootApplication());
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _handleErrors(errors));
-      }
-    },
-    (error, stack) => onError(error, stack, false),
-    zoneSpecification: ZoneSpecification(
-       handleUncaughtError: (self, parent, zone, error, stacktrace) => onError(error, stacktrace, false)
-    )
-);
+Future<Object?> _initPath() async {
+  try {
+    await installationDirectory.create(recursive: true);
+    return null;
+  }catch(error) {
+    return error;
+  }
+}
 
 void _handleErrors(List<Object?> errors) {
   errors.where((element) => element != null).forEach((element) => onError(element!, null, false));
@@ -170,6 +207,7 @@ void _joinServer(Uri uri) {
 String _parseCustomUrl(Uri uri) => uri.host;
 
 void _initWindow() => doWhenWindowReady(() async {
+  await SystemTheme.accentColor.load();
   await windowManager.ensureInitialized();
   await Window.initialize();
   var settingsController = Get.find<SettingsController>();

@@ -46,14 +46,24 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   @override
   void initState() {
     windowManager.addListener(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateController.notifyLauncherUpdate();
-      _updateController.updateReboot();
-      watchDlls().listen((filePath) => showDllDeletedDialog(() {
-        downloadCriticalDllInteractive(filePath);
-      }));
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkUpdates());
     super.initState();
+  }
+
+  void _checkUpdates() {
+    _updateController.notifyLauncherUpdate();
+
+    if(!dllsDirectory.existsSync()) {
+      dllsDirectory.createSync(recursive: true);
+    }
+
+    for(final injectable in InjectableDll.values) {
+      downloadCriticalDllInteractive("${injectable.name}.dll");
+    }
+
+    watchDlls().listen((filePath) => showDllDeletedDialog(() {
+      downloadCriticalDllInteractive(filePath);
+    }));
   }
 
   @override
