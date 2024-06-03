@@ -332,7 +332,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       if(instance != null && !instance.launched) {
         instance.launched = true;
         instance.tokenError = false;
-        await _injectOrShowError(InjectableDll.memoryFix, host);
+        await _injectOrShowError(InjectableDll.memory, host);
         if(!host){
           await _injectOrShowError(InjectableDll.console, host);
           _onGameClientInjected();

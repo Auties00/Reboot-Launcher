@@ -88,7 +88,7 @@ extension InjectableDllExtension on InjectableDll {
         return settingsController.unrealEngineConsoleDll.text;
       case InjectableDll.cobalt:
         return settingsController.backendDll.text;
-      case InjectableDll.memoryFix:
+      case InjectableDll.memory:
         return settingsController.memoryLeakDll.text;
     }
   }

@@ -70,7 +70,7 @@ void _onGameOutput(String line, String dll, bool hosting, bool verbose) {
       _injectOrShowError("console.dll");
     }
 
-    _injectOrShowError("memoryFix.dll");
+    _injectOrShowError("memory.dll");
   }
 }
 
