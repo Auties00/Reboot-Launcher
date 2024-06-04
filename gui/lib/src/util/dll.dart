@@ -13,59 +13,71 @@ import 'package:reboot_launcher/src/util/translations.dart';
 final UpdateController _updateController = Get.find<UpdateController>();
 final Map<String, Future<void>> _operations = {};
 
-Future<void> downloadCriticalDllInteractive(String filePath) {
+Future<void> downloadCriticalDllInteractive(String filePath, {bool silent = false}) {
   final old = _operations[filePath];
   if(old != null) {
     return old;
   }
 
-  final newRun = _downloadCriticalDllInteractive(filePath);
+  final newRun = _downloadCriticalDllInteractive(filePath, silent);
   _operations[filePath] = newRun;
   return newRun;
 }
 
-Future<void> _downloadCriticalDllInteractive(String filePath) async {
+Future<void> _downloadCriticalDllInteractive(String filePath, bool silent) async {
   final fileName = path.basename(filePath).toLowerCase();
   InfoBarEntry? entry;
   try {
     if (fileName == "reboot.dll") {
-      await _updateController.updateReboot(true);
+      await _updateController.updateReboot(
+        silent: silent
+      );
+      return;
+    }
+
+    if(File(filePath).existsSync()) {
       return;
     }
 
     final fileNameWithoutExtension = path.basenameWithoutExtension(filePath);
-    entry = showInfoBar(
-        translations.downloadingDll(fileNameWithoutExtension),
-        loading: true,
-        duration: null
-    );
+    if(!silent) {
+      entry = showInfoBar(
+          translations.downloadingDll(fileNameWithoutExtension),
+          loading: true,
+          duration: null
+      );
+    }
     await downloadCriticalDll(fileName, filePath);
-    entry.close();
-    entry = await showInfoBar(
-        translations.downloadDllSuccess(fileNameWithoutExtension),
-        severity: InfoBarSeverity.success,
-        duration: infoBarShortDuration
-    );
-  }catch(message) {
     entry?.close();
-    var error = message.toString();
-    error = error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
-    error = error.toLowerCase();
-    final completer = Completer();
-    await showInfoBar(
-        translations.downloadDllError(fileName, error.toString()),
-        duration: infoBarLongDuration,
-        severity: InfoBarSeverity.error,
-        onDismissed: () => completer.complete(null),
-        action: Button(
-          onPressed: () async {
-            await downloadCriticalDllInteractive(filePath);
-            completer.complete(null);
-          },
-          child: Text(translations.downloadDllRetry),
-        )
-    );
-    await completer.future;
+    if(!silent) {
+      entry = await showInfoBar(
+          translations.downloadDllSuccess(fileNameWithoutExtension),
+          severity: InfoBarSeverity.success,
+          duration: infoBarShortDuration
+      );
+    }
+  }catch(message) {
+    if(!silent) {
+      entry?.close();
+      var error = message.toString();
+      error = error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
+      error = error.toLowerCase();
+      final completer = Completer();
+      await showInfoBar(
+          translations.downloadDllError(fileName, error.toString()),
+          duration: infoBarLongDuration,
+          severity: InfoBarSeverity.error,
+          onDismissed: () => completer.complete(null),
+          action: Button(
+            onPressed: () async {
+              await downloadCriticalDllInteractive(filePath);
+              completer.complete(null);
+            },
+            child: Text(translations.downloadDllRetry),
+          )
+      );
+      await completer.future;
+    }
   }finally {
     _operations.remove(fileName);
   }

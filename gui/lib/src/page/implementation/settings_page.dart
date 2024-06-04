@@ -5,6 +5,7 @@ import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/implementation/data.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
@@ -46,6 +47,8 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
         title: Text(translations.settingsUtilsLanguageName),
         subtitle: Text(translations.settingsUtilsLanguageDescription),
         content: Obx(() => DropDownButton(
+            onOpen: () => inDialog = true,
+            onClose: () => inDialog = false,
             leading: Text(_getLocaleName(_settingsController.language.value)),
             items: AppLocalizations.supportedLocales.map((locale) => MenuFlyoutItem(
                 text: Text(_getLocaleName(locale.languageCode)),
@@ -60,6 +63,8 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
         title: Text(translations.settingsUtilsThemeName),
         subtitle: Text(translations.settingsUtilsThemeDescription),
         content: Obx(() => DropDownButton(
+            onOpen: () => inDialog = true,
+            onClose: () => inDialog = false,
             leading: Text(_settingsController.themeMode.value.title),
             items: ThemeMode.values.map((themeMode) => MenuFlyoutItem(
                 text: Text(themeMode.title),

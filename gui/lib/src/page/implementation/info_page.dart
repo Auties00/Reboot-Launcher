@@ -69,9 +69,11 @@ class InfoPage extends RebootPage {
 class _InfoPageState extends RebootPageState<InfoPage> {
   final SettingsController _settingsController = Get.find<SettingsController>();
   RxInt _counter = RxInt(kDebugMode ? 0 : 180);
+  late bool _showButton;
 
   @override
   void initState() {
+    _showButton = _settingsController.firstRun.value;
     if(_settingsController.firstRun.value) {
       Timer.periodic(const Duration(seconds: 1), (timer) {
         if (_counter.value <= 0) {
@@ -89,24 +91,29 @@ class _InfoPageState extends RebootPageState<InfoPage> {
   List<Widget> get settings => InfoPage._infoTiles;
 
   @override
-  Widget? get button => Obx(() {
-    if(!_settingsController.firstRun.value) {
+  Widget? get button {
+    if(!_showButton) {
       return const SizedBox.shrink();
     }
 
-    final totalSecondsLeft = _counter.value;
-    final minutesLeft = totalSecondsLeft ~/ 60;
-    final secondsLeft = totalSecondsLeft % 60;
-    return SizedBox(
-        width: double.infinity,
-        height: 48,
-        child: Button(
-          onPressed: totalSecondsLeft <= 0 ? () => pageIndex.value = RebootPageType.play.index : null,
-          child: Text(
-              totalSecondsLeft <= 0 ? "I have read the instructions"
-                  : "Read the instructions for at least ${secondsLeft == 0 ? '$minutesLeft minute${minutesLeft > 1 ? 's' : ''}' : minutesLeft == 0 ? '$secondsLeft second${secondsLeft > 1 ? 's' : ''}' : '$minutesLeft minute${minutesLeft > 1 ? 's' : ''} and $secondsLeft second${secondsLeft > 1 ? 's' : ''}'}"
-          ),
-        )
-    );
-  });
+    return Obx(() {
+      final totalSecondsLeft = _counter.value;
+      final minutesLeft = totalSecondsLeft ~/ 60;
+      final secondsLeft = totalSecondsLeft % 60;
+      return SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: Button(
+            onPressed: totalSecondsLeft <= 0 ? () {
+              _showButton = false;
+              pageIndex.value = RebootPageType.play.index;
+            } : null,
+            child: Text(
+                totalSecondsLeft <= 0 ? "I have read the instructions"
+                    : "Read the instructions for at least ${secondsLeft == 0 ? '$minutesLeft minute${minutesLeft > 1 ? 's' : ''}' : minutesLeft == 0 ? '$secondsLeft second${secondsLeft > 1 ? 's' : ''}' : '$minutesLeft minute${minutesLeft > 1 ? 's' : ''} and $secondsLeft second${secondsLeft > 1 ? 's' : ''}'}"
+            ),
+          )
+      );
+    });
+  }
 }

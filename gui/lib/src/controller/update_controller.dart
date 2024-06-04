@@ -11,7 +11,7 @@ import 'package:version/version.dart';
 import 'package:yaml/yaml.dart';
 
 class UpdateController {
-  late final GetStorage _storage;
+  late final GetStorage? _storage;
   late final RxnInt timestamp;
   late final Rx<UpdateStatus> status;
   late final Rx<UpdateTimer> timer;
@@ -21,17 +21,17 @@ class UpdateController {
   Future? _updater;
 
   UpdateController() {
-    _storage = GetStorage("update");
-    timestamp = RxnInt(_storage.read("ts"));
-    timestamp.listen((value) => _storage.write("ts", value));
-    var timerIndex = _storage.read("timer");
+    _storage = appWithNoStorage ? null : GetStorage("update");
+    timestamp = RxnInt(_storage?.read("ts"));
+    timestamp.listen((value) => _storage?.write("ts", value));
+    var timerIndex = _storage?.read("timer");
     timer = Rx(timerIndex == null ? UpdateTimer.hour : UpdateTimer.values.elementAt(timerIndex));
-    timer.listen((value) => _storage.write("timer", value.index));
-    url = TextEditingController(text: _storage.read("update_url") ?? kRebootDownloadUrl);
-    url.addListener(() => _storage.write("update_url", url.text));
+    timer.listen((value) => _storage?.write("timer", value.index));
+    url = TextEditingController(text: _storage?.read("update_url") ?? kRebootDownloadUrl);
+    url.addListener(() => _storage?.write("update_url", url.text));
     status = Rx(UpdateStatus.waiting);
-    customGameServer = RxBool(_storage.read("custom_game_server") ?? false);
-    customGameServer.listen((value) => _storage.write("custom_game_server", value));
+    customGameServer = RxBool(_storage?.read("custom_game_server") ?? false);
+    customGameServer.listen((value) => _storage?.write("custom_game_server", value));
   }
 
   Future<void> notifyLauncherUpdate() async {
@@ -65,17 +65,17 @@ class UpdateController {
     );
   }
 
-  Future<void> updateReboot([bool force = false]) async {
+  Future<void> updateReboot({bool force = false, bool silent = false}) async {
     if(_updater != null) {
       return await _updater;
     }
 
-    final result = _updateReboot(force);
+    final result = _updateReboot(force, silent);
     _updater = result;
     return await result;
   }
 
-  Future<void> _updateReboot([bool force = false]) async {
+  Future<void> _updateReboot(bool force, bool silent) async {
     try {
       if(customGameServer.value) {
         status.value = UpdateStatus.success;
@@ -92,34 +92,44 @@ class UpdateController {
         return;
       }
 
-      infoBarEntry = showInfoBar(
-          translations.downloadingDll("reboot"),
-          loading: true,
-          duration: null
-      );
+      if(!silent) {
+        infoBarEntry = showInfoBar(
+            translations.downloadingDll("reboot"),
+            loading: true,
+            duration: null
+        );
+      }
       timestamp.value = await downloadRebootDll(url.text);
       status.value = UpdateStatus.success;
       infoBarEntry?.close();
-      infoBarEntry = showInfoBar(
-          translations.downloadDllSuccess("reboot"),
-          severity: InfoBarSeverity.success,
-          duration: infoBarShortDuration
-      );
+      if(!silent) {
+        infoBarEntry = showInfoBar(
+            translations.downloadDllSuccess("reboot"),
+            severity: InfoBarSeverity.success,
+            duration: infoBarShortDuration
+        );
+      }
     }catch(message) {
-      infoBarEntry?.close();
-      var error = message.toString();
-      error = error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
-      error = error.toLowerCase();
-      status.value = UpdateStatus.error;
-      showInfoBar(
-          translations.downloadDllError("reboot.dll", error.toString()),
-          duration: infoBarLongDuration,
-          severity: InfoBarSeverity.error,
-          action: Button(
-            onPressed: () => updateReboot(true),
-            child: Text(translations.downloadDllRetry),
-          )
-      );
+      if(!silent) {
+        infoBarEntry?.close();
+        var error = message.toString();
+        error =
+        error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
+        error = error.toLowerCase();
+        status.value = UpdateStatus.error;
+        showInfoBar(
+            translations.downloadDllError("reboot.dll", error.toString()),
+            duration: infoBarLongDuration,
+            severity: InfoBarSeverity.error,
+            action: Button(
+              onPressed: () => updateReboot(
+                force: true,
+                silent: silent
+              ),
+              child: Text(translations.downloadDllRetry),
+            )
+        );
+      }
     }finally {
       _updater = null;
     }

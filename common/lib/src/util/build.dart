@@ -145,9 +145,11 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
           '"${tempFile.path}"'
         ],
       );
+      var completed = false;
       process.stdOutput.listen((data) {
         final now = DateTime.now().millisecondsSinceEpoch;
         if(data.toLowerCase().contains("everything is ok")) {
+          completed = true;
           _onProgress(startTime, now, 100, true, options);
           process?.kill(ProcessSignal.sigabrt);
           return;
@@ -164,6 +166,11 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
       process.stdError.listen((data) {
         if(!data.isBlank) {
           _onError(data, options);
+        }
+      });
+      process.exitCode.then((_) {
+        if(!completed) {
+          _onError("Corrupted zip archive", options);
         }
       });
       break;
@@ -183,10 +190,12 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
             '"${options.destination.path}"'
           ]
       );
+      var completed = false;
       process.stdOutput.listen((data) {
         final now = DateTime.now().millisecondsSinceEpoch;
         data = data.replaceAll("\r", "").replaceAll("\b", "").trim();
         if(data == "All OK") {
+          completed = true;
           _onProgress(startTime, now, 100, true, options);
           process?.kill(ProcessSignal.sigabrt);
           return;
@@ -203,6 +212,11 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
       process.stdError.listen((data) {
         if(!data.isBlank) {
           _onError(data, options);
+        }
+      });
+      process.exitCode.then((_) {
+        if(!completed) {
+          _onError("Corrupted rar archive", options);
         }
       });
       break;

@@ -10,5 +10,11 @@ SettingTile get versionSelectSettingTile => SettingTile(
     ),
     title: Text(translations.selectFortniteName),
     subtitle: Text(translations.selectFortniteDescription),
-    content: const VersionSelector()
+    contentWidth: null,
+    content: ConstrainedBox(
+        constraints: BoxConstraints(
+            minWidth: SettingTile.kDefaultContentWidth,
+        ),
+        child: const VersionSelector()
+    )
 );

@@ -260,7 +260,7 @@
   "missingExecutableError": "Missing Fortnite executable: usually this means that the installation was moved or deleted",
   "corruptedVersionError": "Corrupted Fortnite installation: please download it again from the launcher or change version",
   "corruptedDllError": "Cannot inject dll: {error}",
-  "tokenError": "Cannot log in into Fortnite: authentication error",
+  "tokenError": "Cannot log in into Fortnite: authentication error (injected dlls: {dlls})",
   "unknownFortniteError": "An unknown error occurred while launching Fortnite: {error}",
   "serverNoLongerAvailable": "{owner}'s server is no longer available",
   "serverNoLongerAvailableUnnamed": "The previous server is no longer available",

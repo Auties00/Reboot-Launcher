@@ -4,14 +4,14 @@ import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 
+import '../../util/log.dart';
+
 
 String? lastError;
 
 void onError(Object exception, StackTrace? stackTrace, bool framework) {
-  if(!kDebugMode) {
-    return;
-  }
-
+  log("[ERROR] $exception");
+  log("[STACKTRACE] $stackTrace");
   if(pageKey.currentContext == null || pageKey.currentState?.mounted == false){
     return;
   }
