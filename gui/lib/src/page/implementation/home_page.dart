@@ -2,20 +2,26 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:app_links/app_links.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' show MaterialPage;
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/backend_controller.dart';
+import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
+import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/dll.dart';
+import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_suggestion.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/dll.dart';
+import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/info_bar_area.dart';
@@ -33,6 +39,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepAliveClientMixin {
   static const double _kDefaultPadding = 12.0;
 
+  final BackendController _backendController = Get.find<BackendController>();
+  final HostingController _hostingController = Get.find<HostingController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
   final UpdateController _updateController = Get.find<UpdateController>();
   final GlobalKey _searchKey = GlobalKey();
@@ -45,9 +53,62 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
 
   @override
   void initState() {
-    windowManager.addListener(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkUpdates());
     super.initState();
+    windowManager.addListener(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUpdates();
+      _initAppLink();
+      _checkGameServer();
+    });
+  }
+
+  void _initAppLink() async {
+    final appLinks = AppLinks();
+    final initialUrl = await appLinks.getInitialLink();
+    if(initialUrl != null) {
+      _joinServer(initialUrl);
+    }
+
+    appLinks.uriLinkStream.listen(_joinServer);
+  }
+
+  void _joinServer(Uri uri) {
+    final uuid = uri.host;
+    final server = _hostingController.findServerById(uuid);
+    if(server != null) {
+      _backendController.joinServer(_hostingController.uuid, server);
+    }else {
+      showInfoBar(
+          translations.noServerFound,
+          duration: infoBarLongDuration,
+          severity: InfoBarSeverity.error
+      );
+    }
+  }
+
+  Future<void> _checkGameServer() async {
+    try {
+      final address = _backendController.gameServerAddress.text;
+      if(isLocalHost(address)) {
+        return;
+      }
+
+      var result = await pingGameServer(address);
+      if(result) {
+        return;
+      }
+
+      var oldOwner = _backendController.gameServerOwner.value;
+      _backendController.joinLocalHost();
+      WidgetsBinding.instance.addPostFrameCallback((_) => showInfoBar(
+          oldOwner == null ? translations.serverNoLongerAvailableUnnamed : translations.serverNoLongerAvailable(oldOwner),
+          severity: InfoBarSeverity.warning,
+          duration: infoBarLongDuration
+      ));
+    }catch(_) {
+      // Intended behaviour
+      // Just ignore the error
+    }
   }
 
   void _checkUpdates() {
@@ -58,7 +119,10 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     }
 
     for(final injectable in InjectableDll.values) {
-      downloadCriticalDllInteractive("${injectable.name}.dll");
+      downloadCriticalDllInteractive(
+          injectable.path,
+          silent: true
+      );
     }
 
     watchDlls().listen((filePath) => showDllDeletedDialog(() {
@@ -157,54 +221,55 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     super.build(context);
     _settingsController.language.value;
     loadTranslations(context);
-    return Obx(() => NavigationPaneTheme(
-        data: NavigationPaneThemeData(
-          backgroundColor: FluentTheme.of(context).micaBackgroundColor.withOpacity(0.93),
-        ),
-        child: NavigationView(
-            paneBodyBuilder: (pane, body) => _PaneBody(
-                padding: _kDefaultPadding,
-                controller: pagesController,
-                body: body
-            ),
-            appBar: NavigationAppBar(
-              height: 32,
-              title: _draggableArea,
-              actions: WindowTitleBar(focused: _focused()),
-              leading: _backButton,
-              automaticallyImplyLeading: false,
-            ),
-            pane: NavigationPane(
-                selected: pageIndex.value,
-                onChanged: (index) {
-                  final lastPageIndex = pageIndex.value;
-                  if(lastPageIndex != index) {
-                    pageIndex.value = index;
-                  }else if(pageStack.isNotEmpty) {
-                    Navigator.of(pageKey.currentContext!).pop();
-                    final element = pageStack.removeLast();
-                    appStack.remove(element);
-                    pagesController.add(null);
-                  }
-                },
-                menuButton: const SizedBox(),
-                displayMode: PaneDisplayMode.open,
-                items: _items,
-                customPane: _CustomPane(_settingsController),
-                header: const ProfileWidget(),
-                autoSuggestBox: _autoSuggestBox,
-                indicator: const StickyNavigationIndicator(
-                    duration: Duration(milliseconds: 500),
-                    curve: Curves.easeOut,
-                    indicatorSize: 3.25
-                )
-            ),
-            contentShape: const RoundedRectangleBorder(),
-            onOpenSearch: () => _searchFocusNode.requestFocus(),
-            transitionBuilder: (child, animation) => child
-        )
-    ),
-    );
+    return Obx(() {
+      return NavigationPaneTheme(
+          data: NavigationPaneThemeData(
+            backgroundColor: FluentTheme.of(context).micaBackgroundColor.withOpacity(0.93),
+          ),
+          child: NavigationView(
+              paneBodyBuilder: (pane, body) => _PaneBody(
+                  padding: _kDefaultPadding,
+                  controller: pagesController,
+                  body: body
+              ),
+              appBar: NavigationAppBar(
+                height: 32,
+                title: _draggableArea,
+                actions: WindowTitleBar(focused: _focused()),
+                leading: _backButton,
+                automaticallyImplyLeading: false,
+              ),
+              pane: NavigationPane(
+                  selected: pageIndex.value,
+                  onChanged: (index) {
+                    final lastPageIndex = pageIndex.value;
+                    if(lastPageIndex != index) {
+                      pageIndex.value = index;
+                    }else if(pageStack.isNotEmpty) {
+                      Navigator.of(pageKey.currentContext!).pop();
+                      final element = pageStack.removeLast();
+                      appStack.remove(element);
+                      pagesController.add(null);
+                    }
+                  },
+                  menuButton: const SizedBox(),
+                  displayMode: PaneDisplayMode.open,
+                  items: _items,
+                  customPane: _CustomPane(_settingsController),
+                  header: const ProfileWidget(),
+                  autoSuggestBox: _autoSuggestBox,
+                  indicator: const StickyNavigationIndicator(
+                      duration: Duration(milliseconds: 500),
+                      curve: Curves.easeOut,
+                      indicatorSize: 3.25
+                  )
+              ),
+              contentShape: const RoundedRectangleBorder(),
+              onOpenSearch: () => _searchFocusNode.requestFocus(),
+              transitionBuilder: (child, animation) => child
+          )
+      );
+    });
   }
 
   Widget get _backButton => StreamBuilder(

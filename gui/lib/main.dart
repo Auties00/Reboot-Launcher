@@ -17,7 +17,6 @@ import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/controller/info_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
@@ -25,6 +24,7 @@ import 'package:reboot_launcher/src/dialog/implementation/error.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
 import 'package:reboot_launcher/src/page/implementation/home_page.dart';
 import 'package:reboot_launcher/src/page/implementation/info_page.dart';
+import 'package:reboot_launcher/src/util/log.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
@@ -33,24 +33,30 @@ import 'package:system_theme/system_theme.dart';
 import 'package:url_protocol/url_protocol.dart';
 import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:win32/win32.dart';
 
-const double kDefaultWindowWidth = 1536;
-const double kDefaultWindowHeight = 1224;
+const double kDefaultWindowWidth = 1164;
+const double kDefaultWindowHeight = 864;
 const String kCustomUrlSchema = "Reboot";
 
 Version? appVersion;
+bool appWithNoStorage = false;
 
-void main() => runZonedGuarded(
-    () => _startApp(),
-    (error, stack) => onError(error, stack, false),
-    zoneSpecification: ZoneSpecification(
-        handleUncaughtError: (self, parent, zone, error, stacktrace) => onError(error, stacktrace, false)
-    )
-);
+void main() {
+  log("[APP] Called");
+  runZonedGuarded(
+          () => _startApp(),
+          (error, stack) => onError(error, stack, false),
+      zoneSpecification: ZoneSpecification(
+          handleUncaughtError: (self, parent, zone, error, stacktrace) => onError(error, stacktrace, false)
+      )
+  );
+}
 
 Future<void> _startApp() async {
-    final errors = <Object>[];
+  final errors = <Object>[];
   try {
+    log("[APP] Starting application");
     final pathError = await _initPath();
     if(pathError != null) {
       errors.add(pathError);
@@ -66,10 +72,6 @@ Future<void> _startApp() async {
       errors.add(notificationsError);
     }
 
-    WidgetsFlutterBinding.ensureInitialized();
-
-    _initWindow();
-
     final tilesError = InfoPage.initInfoTiles();
     if(tilesError != null) {
       errors.add(tilesError);
@@ -80,22 +82,24 @@ Future<void> _startApp() async {
       errors.add(versionError);
     }
 
-    final storageError = await _initStorage();
-    if(storageError != null) {
-      errors.add(storageError);
-    }
+    final storageErrors = await _initStorage();
+    errors.addAll(storageErrors);
+
+    WidgetsFlutterBinding.ensureInitialized();
+
+    _initWindow();
 
     final urlError = await _initUrlHandler();
     if(urlError != null) {
       errors.add(urlError);
     }
-
-    _checkGameServer();
   }catch(uncaughtError) {
     errors.add(uncaughtError);
   } finally{
-    runApp(const RebootApplication());
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _handleErrors(errors));
+    log("[APP] Started applications with errors: $errors");
+    runApp(RebootApplication(
+      errors: errors,
+    ));
   }
 }
 
@@ -132,10 +136,6 @@ Future<Object?> _initPath() async {
   }
 }
 
-void _handleErrors(List<Object?> errors) {
-  errors.where((element) => element != null).forEach((element) => onError(element!, null, false));
-}
-
 Future<Object?> _initVersion() async {
   try {
     final packageInfo = await PackageInfo.fromPlatform();
@@ -146,117 +146,104 @@ Future<Object?> _initVersion() async {
   }
 }
 
-Future<void> _checkGameServer() async {
-  try {
-    var backendController = Get.find<BackendController>();
-    var address = backendController.gameServerAddress.text;
-    if(isLocalHost(address)) {
-      return;
-    }
-
-    var result = await pingGameServer(address);
-    if(result) {
-      return;
-    }
-
-    var oldOwner = backendController.gameServerOwner.value;
-    backendController.joinLocalHost();
-    WidgetsBinding.instance.addPostFrameCallback((_) => showInfoBar(
-        oldOwner == null ? translations.serverNoLongerAvailableUnnamed : translations.serverNoLongerAvailable(oldOwner),
-        severity: InfoBarSeverity.warning,
-        duration: infoBarLongDuration
-    ));
-  }catch(_) {
-    // Intended behaviour
-    // Just ignore the error
-  }
-}
-
 Future<Object?> _initUrlHandler() async {
   try {
     registerProtocolHandler(kCustomUrlSchema, arguments: ['%s']);
-    var appLinks = AppLinks();
-    var initialUrl = await appLinks.getInitialLink();
-    if(initialUrl != null) {
-      _joinServer(initialUrl);
-    }
-
-    appLinks.uriLinkStream.listen(_joinServer);
     return null;
   }catch(error) {
     return error;
   }
 }
 
-void _joinServer(Uri uri) {
-  var hostingController = Get.find<HostingController>();
-  var backendController = Get.find<BackendController>();
-  var uuid = _parseCustomUrl(uri);
-  var server = hostingController.findServerById(uuid);
-  if(server != null) {
-    backendController.joinServer(hostingController.uuid, server);
-  }else {
-    showInfoBar(
-        translations.noServerFound,
-        duration: infoBarLongDuration,
-        severity: InfoBarSeverity.error
-    );
-  }
-}
-
-String _parseCustomUrl(Uri uri) => uri.host;
-
 void _initWindow() => doWhenWindowReady(() async {
-  await SystemTheme.accentColor.load();
-  await windowManager.ensureInitialized();
-  await Window.initialize();
-  var settingsController = Get.find<SettingsController>();
-  var size = Size(settingsController.width, settingsController.height);
-  appWindow.size = size;
-  var offsetX = settingsController.offsetX;
-  var offsetY = settingsController.offsetY;
-  if(offsetX != null && offsetY != null){
-    appWindow.position = Offset(
-        offsetX,
-        offsetY
-    );
-  }else {
-    appWindow.alignment = Alignment.center;
-  }
+  try {
+    await SystemTheme.accentColor.load();
+    await windowManager.ensureInitialized();
+    await Window.initialize();
+    var settingsController = Get.find<SettingsController>();
+    var size = Size(settingsController.width, settingsController.height);
+    appWindow.size = size;
+    var offsetX = settingsController.offsetX;
+    var offsetY = settingsController.offsetY;
+    if(offsetX != null && offsetY != null){
+      appWindow.position = Offset(
+          offsetX,
+          offsetY
+      );
+    }else {
+      appWindow.alignment = Alignment.center;
+    }
 
-  if(isWin11) {
-    await Window.setEffect(
-        effect: WindowEffect.acrylic,
-        color: Colors.transparent,
-        dark: SchedulerBinding.instance.platformDispatcher.platformBrightness.isDark
-    );
+    if(isWin11) {
+      await Window.setEffect(
+          effect: WindowEffect.acrylic,
+          color: Colors.transparent,
+          dark: SchedulerBinding.instance.platformDispatcher.platformBrightness.isDark
+      );
+    }
+  }catch(error, stackTrace) {
+    onError(error, stackTrace, false);
+  }finally {
+    appWindow.show();
   }
-
-  appWindow.show();
 });
 
-Future<Object?> _initStorage() async {
+Future<List<Object>> _initStorage() async {
+  final errors = <Object>[];
   try {
     await GetStorage("game", settingsDirectory.path).initStorage;
     await GetStorage("backend", settingsDirectory.path).initStorage;
     await GetStorage("update", settingsDirectory.path).initStorage;
     await GetStorage("settings", settingsDirectory.path).initStorage;
     await GetStorage("hosting", settingsDirectory.path).initStorage;
-    Get.put(GameController());
-    Get.put(BackendController());
-    Get.put(BuildController());
-    Get.put(SettingsController());
-    Get.put(HostingController());
-    Get.put(InfoController());
-    Get.put(UpdateController());
-    return null;
   }catch(error) {
-    return error;
+    appWithNoStorage = true;
+    errors.add("The Reboot Launcher configuration in ${settingsDirectory.path} cannot be accessed: running with in memory storage");
   }
+
+  try {
+    Get.put(GameController());
+  }catch(error) {
+    errors.add(error);
+  }
+
+  try {
+    Get.put(BackendController());
+  }catch(error) {
+    errors.add(error);
+  }
+
+  try {
+    Get.put(BuildController());
+  }catch(error) {
+    errors.add(error);
+  }
+
+  try {
+    Get.put(HostingController());
+  }catch(error) {
+    errors.add(error);
+  }
+
+  try {
+    Get.put(UpdateController());
+  }catch(error) {
+    errors.add(error);
+  }
+
+  try {
+    Get.put(SettingsController());
+  }catch(error) {
+    errors.add(error);
+  }
+
+
+  return errors;
 }
 
 class RebootApplication extends StatefulWidget {
-  const RebootApplication({Key? key}) : super(key: key);
+  final List<Object> errors;
+  const RebootApplication({Key? key, required this.errors}) : super(key: key);
 
   @override
   State<RebootApplication> createState() => _RebootApplicationState();
@@ -264,6 +251,16 @@ class RebootApplication extends StatefulWidget {
 
 class _RebootApplicationState extends State<RebootApplication> {
   final SettingsController _settingsController = Get.find<SettingsController>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _handleErrors(widget.errors));
+  }
+
+  void _handleErrors(List<Object?> errors) {
+    errors.where((element) => element != null).forEach((element) => onError(element!, null, false));
+  }
 
   @override
   Widget build(BuildContext context) => Obx(() => FluentApp(

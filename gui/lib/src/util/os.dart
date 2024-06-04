@@ -305,10 +305,25 @@ final class Win32Process extends Struct {
   external int HWndLength;
 
   external Pointer<Uint32> HWnd;
+
+  external Pointer<Utf16> excluded;
 }
 
 int _filter(int HWnd, int lParam) {
   final structure = Pointer.fromAddress(lParam).cast<Win32Process>();
+  if(structure.ref.excluded != nullptr) {
+    final excludedWindowName = structure.ref.excluded.toDartString();
+    final windowNameLength = GetWindowTextLength(HWnd);
+    if(windowNameLength > 0) {
+      final windowNamePointer = calloc<Uint16>(windowNameLength + 1).cast<Utf16>();
+      GetWindowText(HWnd, windowNamePointer, windowNameLength);
+      final windowName = windowNamePointer.toDartString(length: windowNameLength);
+      if(windowName.toLowerCase().contains(excludedWindowName.toLowerCase())) {
+        return TRUE;
+      }
+    }
+  }
+
   final pidPointer = calloc<Uint32>();
   GetWindowThreadProcessId(HWnd, pidPointer);
   final pid = pidPointer.value;
@@ -330,9 +345,13 @@ int _filter(int HWnd, int lParam) {
   return TRUE;
 }
 
-List<int> _getHWnds(int pid) {
+List<int> _getHWnds(int pid, String? excludedWindowName) {
   final result = calloc<Win32Process>();
   result.ref.pid = pid;
+  if(excludedWindowName != null) {
+    result.ref.excluded = excludedWindowName.toNativeUtf16();
+  }
+
   EnumWindows(Pointer.fromFunction<EnumWindowsProc>(_filter, TRUE), result.address);
   final length = result.ref.HWndLength;
   final HWndsPointer = result.ref.HWnd;
@@ -400,24 +419,26 @@ class VirtualDesktopManager {
 
   List<IVirtualDesktop> getDesktops() => windowManager.getDesktops();
 
-  Future<void> moveWindowToDesktop(int pid, IVirtualDesktop desktop, {Duration pollTime = const Duration(seconds: 1)}) async {
-    final hWNDs = _getHWnds(pid);
-    if(hWNDs.isEmpty) {
-      await Future.delayed(pollTime);
-      await moveWindowToDesktop(pid, desktop, pollTime: pollTime);
-      return;
-    }
-
-    for(final hWND in hWNDs) {
+  Future<bool> moveWindowToDesktop(int pid, IVirtualDesktop desktop, {Duration pollTime = const Duration(seconds: 1), int remainingPolls = 10, String? excludedWindowName}) async {
+    for(final hWND in _getHWnds(pid, excludedWindowName)) {
       final window = applicationViewCollection.getViewForHWnd(hWND);
       if(window != null) {
         windowManager.moveWindowToDesktop(window, desktop);
-        return;
+        return true;
       }
     }
 
+    if(remainingPolls <= 0) {
+      return false;
+    }
+
     await Future.delayed(pollTime);
-    await moveWindowToDesktop(pid, desktop, pollTime: pollTime);
+    return await moveWindowToDesktop(
+        pid,
+        desktop,
+        pollTime: pollTime,
+        remainingPolls: remainingPolls - 1
+    );
   }
 
   IVirtualDesktop createDesktop() => windowManager.createDesktop();

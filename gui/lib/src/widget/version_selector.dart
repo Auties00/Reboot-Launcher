@@ -14,6 +14,7 @@ import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/add_local_version.dart';
 import 'package:reboot_launcher/src/widget/add_server_version.dart';
 import 'package:reboot_launcher/src/widget/file_selector.dart';
+import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class VersionSelector extends StatefulWidget {
@@ -39,16 +40,22 @@ class _VersionSelectorState extends State<VersionSelector> {
   @override
   Widget build(BuildContext context) => Obx(() {
     return _createOptionsMenu(
-      version: _gameController.selectedVersion,
-      close: false,
-      child: FlyoutTarget(
-        controller: _flyoutController,
-        child: DropDownButton(
-            leading: Text(_gameController.selectedVersion?.name ?? translations.selectVersion),
-            items: _createSelectorItems(context)
-        ),
-      )
-  );
+        version: _gameController.selectedVersion,
+        close: false,
+        child: FlyoutTarget(
+          controller: _flyoutController,
+          child: DropDownButton(
+              onOpen: () => inDialog = true,
+            onClose: () => inDialog = false,
+              leading: Text(
+                _gameController.selectedVersion?.name ?? translations.selectVersion,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              items: _createSelectorItems(context)
+          ),
+        )
+    );
   });
 
   List<MenuFlyoutItem> _createSelectorItems(BuildContext context) {

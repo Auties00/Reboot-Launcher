@@ -5,7 +5,6 @@ import 'package:reboot_cli/src/game.dart';
 import 'package:reboot_cli/src/reboot.dart';
 import 'package:reboot_cli/src/server.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_common/src/util/matchmaker.dart' as matchmaker;
 
 late String? username;
 late bool host;
@@ -82,7 +81,7 @@ void main(List<String> args) async {
     return;
   }
 
-  matchmaker.writeMatchmakingIp(result["matchmaking-address"]);
+  writeMatchmakingIp(result["matchmaking-address"]);
   autoRestart = result["auto-restart"];
   await startGame();
 }

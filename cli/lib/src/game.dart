@@ -24,7 +24,7 @@ Future<void> startGame() async {
 
   _gameProcess = await Process.start(executable.path, createRebootArgs(username!, "", host, host, ""))
     ..exitCode.then((_) => _onClose())
-    ..outLines.forEach((line) => _onGameOutput(line, dll, host, verbose));
+    ..stdOutput.forEach((line) => _onGameOutput(line, dll, host, verbose));
   _injectOrShowError("cobalt.dll");
 }
 
@@ -51,6 +51,17 @@ void _onGameOutput(String line, String dll, bool hosting, bool verbose) {
   if(verbose) {
     stdout.writeln(line);
   }
+
+  handleGameOutput(
+      line: line,
+      host: hosting,
+      onDisplayAttached: () {}, // TODO: Support virtual desktops
+      onLoggedIn: onLoggedIn,
+      onMatchEnd: onMatchEnd,
+      onShutdown: onShutdown,
+      onTokenError: onTokenError,
+      onBuildCorrupted: onBuildCorrupted
+  );
 
   if (line.contains(kShutdownLine)) {
     _onClose();

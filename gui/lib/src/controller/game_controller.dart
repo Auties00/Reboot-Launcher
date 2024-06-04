@@ -9,10 +9,12 @@ import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/util/keyboard.dart';
 
+import '../../main.dart';
+
 class GameController extends GetxController {
   static const PhysicalKeyboardKey _kDefaultConsoleKey = PhysicalKeyboardKey(0x00070041);
 
-  late final GetStorage _storage;
+  late final GetStorage? _storage;
   late final TextEditingController username;
   late final TextEditingController password;
   late final TextEditingController customLaunchArgs;
@@ -23,38 +25,37 @@ class GameController extends GetxController {
   late final Rx<PhysicalKeyboardKey> consoleKey;
   
   GameController() {
-    _storage = GetStorage("game");
-    Iterable decodedVersionsJson = jsonDecode(
-        _storage.read("versions") ?? "[]");
-    var decodedVersions = decodedVersionsJson
+    _storage = appWithNoStorage ? null : GetStorage("game");
+    Iterable decodedVersionsJson = jsonDecode(_storage?.read("versions") ?? "[]");
+    final decodedVersions = decodedVersionsJson
         .map((entry) => FortniteVersion.fromJson(entry))
         .toList();
     versions = Rx(decodedVersions);
     versions.listen((data) => _saveVersions());
-    var decodedSelectedVersionName = _storage.read("version");
-    var decodedSelectedVersion = decodedVersions.firstWhereOrNull((
+    final decodedSelectedVersionName = _storage?.read("version");
+    final decodedSelectedVersion = decodedVersions.firstWhereOrNull((
         element) => element.name == decodedSelectedVersionName);
     _selectedVersion = Rxn(decodedSelectedVersion);
     username = TextEditingController(
-        text: _storage.read("username") ?? kDefaultPlayerName);
-    username.addListener(() => _storage.write("username", username.text));
-    password = TextEditingController(text: _storage.read("password") ?? "");
-    password.addListener(() => _storage.write("password", password.text));
-    customLaunchArgs = TextEditingController(text: _storage.read("custom_launch_args") ?? "");
+        text: _storage?.read("username") ?? kDefaultPlayerName);
+    username.addListener(() => _storage?.write("username", username.text));
+    password = TextEditingController(text: _storage?.read("password") ?? "");
+    password.addListener(() => _storage?.write("password", password.text));
+    customLaunchArgs = TextEditingController(text: _storage?.read("custom_launch_args") ?? "");
     customLaunchArgs.addListener(() =>
-        _storage.write("custom_launch_args", customLaunchArgs.text));
+        _storage?.write("custom_launch_args", customLaunchArgs.text));
     started = RxBool(false);
     instance = Rxn();
     consoleKey = Rx(_readConsoleKey());
     _writeConsoleKey(consoleKey.value);
     consoleKey.listen((newValue) {
-      _storage.write("console_key", newValue.usbHidUsage);
+      _storage?.write("console_key", newValue.usbHidUsage);
       _writeConsoleKey(newValue);
     });
   }
 
   PhysicalKeyboardKey _readConsoleKey() {
-    final consoleKeyValue = _storage.read("console_key");
+    final consoleKeyValue = _storage?.read("console_key");
     if(consoleKeyValue == null) {
       return _kDefaultConsoleKey;
     }
@@ -113,7 +114,7 @@ class GameController extends GetxController {
 
   Future<void> _saveVersions() async {
     var serialized = jsonEncode(versions.value.map((entry) => entry.toJson()).toList());
-    await _storage.write("versions", serialized);
+    await _storage?.write("versions", serialized);
   }
 
   bool get hasVersions => versions.value.isNotEmpty;
@@ -124,7 +125,7 @@ class GameController extends GetxController {
 
   set selectedVersion(FortniteVersion? version) {
     _selectedVersion.value = version;
-    _storage.write("version", version?.name);
+    _storage?.write("version", version?.name);
   }
 
   void updateVersion(FortniteVersion version, Function(FortniteVersion) function) {
