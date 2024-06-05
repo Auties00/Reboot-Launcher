@@ -1,0 +1,7 @@
+Si vous avez déjà joué à Minecraft en multijoueur, vous devriez savoir que les serveur que vous rejoignez sont hébergés sur un ordinateur qui exécute un programme appelé Serveur de jeu Minecraft.
+Alors que le serveur de jeu de Minecraft est écrit par les créateurs de Minecraft (Mojang), Epic Games ne fournit pas d'équivalent pour Fortnite.
+En xploitant les fichiers internes de Fortnite, il est possible de créer un serveur de jeu comme Minecraft : c'est ce que Projet Reboot fait dans les grandes lignes.
+Certaines version de Fortnite sont capables d'exécuter ce serveur de jeu en fond sans rendu graphique (dit "headless"), alors que d'autres nécéssitent d'ouvrir le jeu entier.
+Comme Minecraft, vous avez besoin d'un client de jue pour pouvoir jouer au jeu et un pour héberger le serveur.
+Par défaut, un serveur de jeu est automatiquement démarré sur votre PC lorsque vous démarrez Fortnite depuis la section "Jouer" du launcher
+Si vous voulez jouer d'une autre manière, par exemple en rejoignant un serveur hébergé par un de vos amis au lieu d'en héberger un vous-même, vous pouvez vous rendre dans la section "Multijoueur" dans l'onglet "Jouer" du launcher.  
