@@ -260,7 +260,7 @@
   "missingExecutableError": "Falta el ejecutable de Fortnite: normalmente esto significa que la instalación fue movida o eliminada",
   "corruptedVersionError": "Instalación corrupta de Fortnite: descárguela nuevamente desde el iniciador o cambie la versión",
   "corruptedDllError": "No se puede inyectar dll: {error}",
-  "tokenError": "No puedo iniciar sesión en Fortnite: error de autenticación",
+  "tokenError": "No puedo iniciar sesión en Fortnite: error de autenticación (dlls inyectados: {dlls})",
   "unknownFortniteError": "Se produjo un error desconocido al iniciar Fortnite: {error}",
   "serverNoLongerAvailable": "El servidor de {owner} ya no está disponible",
   "serverNoLongerAvailableUnnamed": "El servidor anterior ya no está disponible",
