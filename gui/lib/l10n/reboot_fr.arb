@@ -1,4 +1,5 @@
 {
+  "@@locale": "fr",
   "find": "Trouver un paramètre",
   "on": "Activé",
   "off": "Désactivé",
@@ -62,7 +63,7 @@
   "copyIp": "Copier IP",
   "hostName": "Hôte",
   "matchmakerConfigurationAddressName": "Adresse du serveur de jeu",
-  "matchmakerConfigurationAddressDescription": "L'adresse du serveur de jue utilisé par le backend",
+  "matchmakerConfigurationAddressDescription": "L'adresse du serveur de jeu utilisé par le backend",
   "playName": "Jouer",
   "playGameServerName": "Multijoueur",
   "playGameServerDescription": "Voir tous les paramètres disponibles pour commencer à jouer",
@@ -254,7 +255,7 @@
   "dllDoesNotExist": "Ce fichier n'existe pas",
   "invalidDllExtension": "Ce fichier n'est pas un DLL",
   "emptyHostname": "Nom d'hôte vide",
-  "hostnameFormat": "Maisvais format de nom d'hôte : format ip:port attendu",
+  "hostnameFormat": "Mauvais format de nom d'hôte : format ip:port attendu",
   "emptyURL": "URL de mise à jour vide",
   "missingVersionError": "Téléchargez ou séléctionnez une version avant de lancer Fortnite",
   "missingExecutableError": "Exécutable Fortnite manquant : cela signifie généralement que la version a été déplacée ou suprimée",
