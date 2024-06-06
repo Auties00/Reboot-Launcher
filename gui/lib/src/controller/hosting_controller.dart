@@ -2,11 +2,12 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 class HostingController extends GetxController {
-  late final GetStorage _storage;
+  late final GetStorage? _storage;
   late final String uuid;
   late final TextEditingController name;
   late final TextEditingController description;
@@ -22,23 +23,23 @@ class HostingController extends GetxController {
   late final Rxn<Set<Map<String, dynamic>>> servers;
 
   HostingController() {
-    _storage = GetStorage("hosting");
-    uuid = _storage.read("uuid") ?? const Uuid().v4();
-    _storage.write("uuid", uuid);
-    name = TextEditingController(text: _storage.read("name"));
-    name.addListener(() => _storage.write("name", name.text));
-    description = TextEditingController(text: _storage.read("description"));
-    description.addListener(() => _storage.write("description", description.text));
-    password = TextEditingController(text: _storage.read("password") ?? "");
-    password.addListener(() => _storage.write("password", password.text));
-    discoverable = RxBool(_storage.read("discoverable") ?? false);
-    discoverable.listen((value) => _storage.write("discoverable", value));
-    headless = RxBool(_storage.read("headless") ?? true);
-    headless.listen((value) => _storage.write("headless", value));
-    virtualDesktop = RxBool(_storage.read("virtual_desktop") ?? true);
-    virtualDesktop.listen((value) => _storage.write("virtual_desktop", value));
-    autoRestart = RxBool(_storage.read("auto_restart") ?? true);
-    autoRestart.listen((value) => _storage.write("auto_restart", value));
+    _storage = appWithNoStorage ? null : GetStorage("hosting");
+    uuid = _storage?.read("uuid") ?? const Uuid().v4();
+    _storage?.write("uuid", uuid);
+    name = TextEditingController(text: _storage?.read("name"));
+    name.addListener(() => _storage?.write("name", name.text));
+    description = TextEditingController(text: _storage?.read("description"));
+    description.addListener(() => _storage?.write("description", description.text));
+    password = TextEditingController(text: _storage?.read("password") ?? "");
+    password.addListener(() => _storage?.write("password", password.text));
+    discoverable = RxBool(_storage?.read("discoverable") ?? false);
+    discoverable.listen((value) => _storage?.write("discoverable", value));
+    headless = RxBool(_storage?.read("headless") ?? true);
+    headless.listen((value) => _storage?.write("headless", value));
+    virtualDesktop = RxBool(_storage?.read("virtual_desktop") ?? true);
+    virtualDesktop.listen((value) => _storage?.write("virtual_desktop", value));
+    autoRestart = RxBool(_storage?.read("auto_restart") ?? true);
+    autoRestart.listen((value) => _storage?.write("auto_restart", value));
     started = RxBool(false);
     published = RxBool(false);
     showPassword = RxBool(false);

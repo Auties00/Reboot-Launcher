@@ -17,7 +17,13 @@ File _createLoggingFile() {
 }
 
 void log(String message) async {
-  await _semaphore.acquire();
-  await _loggingFile.writeAsString("$message\n", mode: FileMode.append, flush: true);
-  _semaphore.release();
+  try {
+    await _semaphore.acquire();
+    print(message);
+    await _loggingFile.writeAsString("$message\n", mode: FileMode.append, flush: true);
+  }catch(error) {
+    print(error);
+  }finally {
+    _semaphore.release();
+  }
 }

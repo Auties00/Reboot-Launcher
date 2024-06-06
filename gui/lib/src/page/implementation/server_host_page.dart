@@ -11,6 +11,7 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/controller/update_controller.dart';
+import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
 import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/dialog/implementation/data.dart';
 import 'package:reboot_launcher/src/dialog/implementation/server.dart';
@@ -65,8 +66,10 @@ class _HostingPageState extends RebootPageState<HostPage> {
   }
 
   @override
-  Widget get button => const LaunchButton(
-      host: true
+  Widget get button => LaunchButton(
+    host: true,
+    startLabel: translations.startHosting,
+    stopLabel: translations.stopHosting
   );
 
   @override
@@ -194,6 +197,8 @@ class _HostingPageState extends RebootPageState<HostPage> {
           title: Text(translations.settingsServerTypeName),
           subtitle: Text(translations.settingsServerTypeDescription),
           content: Obx(() => DropDownButton(
+              onOpen: () => inDialog = true,
+            onClose: () => inDialog = false,
               leading: Text(_updateController.customGameServer.value ? translations.settingsServerTypeCustomName : translations.settingsServerTypeEmbeddedName),
               items: {
                 false: translations.settingsServerTypeEmbeddedName,
@@ -209,7 +214,9 @@ class _HostingPageState extends RebootPageState<HostPage> {
                     _updateController.customGameServer.value = entry.key;
                     _updateController.infoBarEntry?.close();
                     if(!entry.key) {
-                      _updateController.updateReboot(true);
+                      _updateController.updateReboot(
+                        force: true
+                      );
                     }
                   }
               )).toList()
@@ -256,13 +263,17 @@ class _HostingPageState extends RebootPageState<HostPage> {
             title: Text(translations.settingsServerTimerName),
             subtitle: Text(translations.settingsServerTimerSubtitle),
             content: Obx(() => DropDownButton(
+                onOpen: () => inDialog = true,
+            onClose: () => inDialog = false,
                 leading: Text(_updateController.timer.value.text),
                 items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
                     text: Text(entry.text),
                     onPressed: () {
                       _updateController.timer.value = entry;
                       _updateController.infoBarEntry?.close();
-                      _updateController.updateReboot(true);
+                      _updateController.updateReboot(
+                        force: true
+                      );
                     }
                 )).toList()
             ))

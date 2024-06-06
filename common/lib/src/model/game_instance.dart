@@ -1,11 +1,14 @@
 import 'dart:io';
 
+import 'package:reboot_common/common.dart';
+
 
 class GameInstance {
   final String versionName;
   final int gamePid;
   final int? launcherPid;
   final int? eacPid;
+  final List<InjectableDll> injectedDlls;
   bool hosting;
   bool launched;
   bool movedToVirtualDesktop;
@@ -19,7 +22,7 @@ class GameInstance {
     required this.eacPid,
     required this.hosting,
     required this.child
-  }): tokenError = false, launched = false, movedToVirtualDesktop = false;
+  }): tokenError = false, launched = false, movedToVirtualDesktop = false, injectedDlls = [];
 
   void kill() {
     Process.killPid(gamePid, ProcessSignal.sigabrt);

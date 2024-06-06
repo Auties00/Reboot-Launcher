@@ -238,6 +238,31 @@ List<String> createRebootArgs(String username, String password, bool host, bool 
   return args;
 }
 
+void handleGameOutput({
+  required String line,
+  required bool host,
+  required void Function() onDisplayAttached,
+  required void Function() onLoggedIn,
+  required void Function() onMatchEnd,
+  required void Function() onShutdown,
+  required void Function() onTokenError,
+  required void Function() onBuildCorrupted,
+}) {
+  if (line.contains(kShutdownLine)) {
+    onShutdown();
+  }else if(kCorruptedBuildErrors.any((element) => line.contains(element))){
+    onBuildCorrupted();
+  }else if(kCannotConnectErrors.any((element) => line.contains(element))){
+    onTokenError();
+  }else if(kLoggedInLines.every((entry) => line.contains(entry))) {
+    onLoggedIn();
+  }else if(line.contains(kGameFinishedLine) && host) {
+    onMatchEnd();
+  }else if(line.contains(kDisplayInitializedLine) && host) {
+    onDisplayAttached();
+  }
+}
+
 String _parseUsername(String username, bool host) {
   if(host) {
     return "Player${Random().nextInt(1000)}";

@@ -5,9 +5,10 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/main.dart';
 
 class BackendController extends GetxController {
-  late final GetStorage storage;
+  late final GetStorage? storage;
   late final TextEditingController host;
   late final TextEditingController port;
   late final Rx<ServerType> type;
@@ -21,13 +22,13 @@ class BackendController extends GetxController {
   HttpServer? remoteServer;
 
   BackendController() {
-    storage = GetStorage("backend");
+    storage = appWithNoStorage ? null : GetStorage("backend");
     started = RxBool(false);
-    type = Rx(ServerType.values.elementAt(storage.read("type") ?? 0));
+    type = Rx(ServerType.values.elementAt(storage?.read("type") ?? 0));
     type.listen((value) {
       host.text = _readHost();
       port.text = _readPort();
-      storage.write("type", value.index);
+      storage?.write("type", value.index);
       if (!started.value) {
         return;
       }
@@ -36,13 +37,13 @@ class BackendController extends GetxController {
     });
     host = TextEditingController(text: _readHost());
     host.addListener(() =>
-        storage.write("${type.value.name}_host", host.text));
+        storage?.write("${type.value.name}_host", host.text));
     port = TextEditingController(text: _readPort());
     port.addListener(() =>
-        storage.write("${type.value.name}_port", port.text));
-    detached = RxBool(storage.read("detached") ?? false);
-    detached.listen((value) => storage.write("detached", value));
-    gameServerAddress = TextEditingController(text: storage.read("game_server_address") ?? "127.0.0.1");
+        storage?.write("${type.value.name}_port", port.text));
+    detached = RxBool(storage?.read("detached") ?? false);
+    detached.listen((value) => storage?.write("detached", value));
+    gameServerAddress = TextEditingController(text: storage?.read("game_server_address") ?? "127.0.0.1");
     var lastValue = gameServerAddress.text;
     writeMatchmakingIp(lastValue);
     gameServerAddress.addListener(() {
@@ -53,7 +54,7 @@ class BackendController extends GetxController {
 
       lastValue = newValue;
       gameServerAddress.selection = TextSelection.collapsed(offset: newValue.length);
-      storage.write("game_server_address", newValue);
+      storage?.write("game_server_address", newValue);
       writeMatchmakingIp(newValue);
     });
     watchMatchmakingIp().listen((event) {
@@ -62,15 +63,15 @@ class BackendController extends GetxController {
       }
     });
     gameServerAddressFocusNode = FocusNode();
-    gameServerOwner = RxnString(storage.read("game_server_owner"));
-    gameServerOwner.listen((value) => storage.write("game_server_owner", value));
+    gameServerOwner = RxnString(storage?.read("game_server_owner"));
+    gameServerOwner.listen((value) => storage?.write("game_server_owner", value));
   }
 
   void reset() async {
     type.value = ServerType.values.elementAt(0);
     for (final type in ServerType.values) {
-      storage.write("${type.name}_host", null);
-      storage.write("${type.name}_port", null);
+      storage?.write("${type.name}_host", null);
+      storage?.write("${type.name}_port", null);
     }
 
     host.text = type.value != ServerType.remote ? kDefaultBackendHost : "";
@@ -79,7 +80,7 @@ class BackendController extends GetxController {
   }
 
   String _readHost() {
-    String? value = storage.read("${type.value.name}_host");
+    String? value = storage?.read("${type.value.name}_host");
     if (value != null && value.isNotEmpty) {
       return value;
     }
@@ -92,7 +93,7 @@ class BackendController extends GetxController {
   }
 
   String _readPort() =>
-      storage.read("${type.value.name}_port") ?? kDefaultBackendPort.toString();
+      storage?.read("${type.value.name}_port") ?? kDefaultBackendPort.toString();
 
   Stream<ServerResult> start() async* {
     try {
