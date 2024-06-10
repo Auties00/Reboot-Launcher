@@ -157,7 +157,7 @@
   "downloadDllRetry": "Réessayer",
   "uncaughtErrorMessage": "Une erreur imprévue est survenue : {error}",
   "launchingHeadlessServer": "Lancement du serveur de jeu...",
-  "launchingGameClient": "Lancement du client du jeu...",
+  "launchingGameClient": "Lancement du client de jeu...",
   "usernameOrEmail": "Pseudo/E-mail",
   "usernameOrEmailPlaceholder": "Entrez votre pseudo ou e-mail",
   "password": "Mot de passe",
