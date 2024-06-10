@@ -1,0 +1,21 @@
+Pour que d'autres persones puissent rejoindre votre serveur de jeu, le port 7777 de votre PC doit être accessible.
+Une des options est d'utiliser un service VPN privé comme Hamachi ou Radmin, mais tous les autres joueurs devront télécharger le logiciel
+La meilleure solution est de faire une redirection de port :
+1. Assigner une IP fixe
+    Si vous n'avez pas déjà une IP fixe, assignez-en une en suivant n'importe quel tutoriel sur Google.
+2. Se connecter sur le panneau administrateur de votre routeur
+    Souvent accessible depuis votre navigateur internet en allant sur une des adresses suivantes : http://192.168.1.1 (Orange, SFR, générique) ou http://192.168.1.254 (Free, Bouygues Telecom)
+    Vous aurez peut-être besoin d'un nom d'utilisateur et d'un mot de passe pour vous connecter : réferez-vous au manuel de votre routeur.
+3. Trouver la section redirection d'IP
+    Une fois connecté sur le panneau administrateur, naviguez jusqu'à la section redirection d'IP des paramètres de votre routeur.
+    Cette section peut varier d'un routeur à l'autre, mais les appellations les plus fréquentes sont "Redirection des ports" ou "Gestion des ports"
+    Réferez-vous au manuel de votre routeur pour des instructions plus précises (il y a également beaucoup de tutoriels sur YouTube selon votre routeur)
+4. Ajouter une règle de redirection des ports
+    Maintenant, vous aurez besoin de créer une nouvelle règle de redirection des ports. Voici les paramètres que vous aurez à spécifier :
+    - Nom du service/description : choisissez un nom pour votre règle de redirection des ports (ex. "Serveur Fortnite")
+    - Port (de début/de fin/de destination) : Entrez 7777 pour toutes ces cases
+    - Protocole : Séléctionnez UDP
+    - Actif : Cocher pour activer la redirection
+5. Sauvegarder et appliquer les changements
+    Après avoir configuré la règle de redirection de ports, sauvegardez vos changements et appliquez-les
+    Cette étape peut impliquer de cliquer sur un bouton "sauvegarder" ou "apliquer" sur l'interface web de votre routeur
