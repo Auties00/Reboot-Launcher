@@ -1,0 +1,6 @@
+Un backend est un logiciel qui émule les serveurs d'Epic Games responsables de l'authentification et les fonctionnalitées liées.
+Par défaut, le launcher Rebbot fournit une version légèrement modifiée de LawinV1, une implémentation open source disponible sur GitHub.
+Si vous avez un problème avec le backend intégré, activez l'option "Détaché" dans l'onglet "Backend" du launcher Reboot.
+LawinV1 a été choisi pour permettre aux utilisateurs de se connecter à Fortnite et rejoindre des parties facilement, mais gardez en tête que si vous voulez utiliser des fonctionnalités comme les salons, le chat vocal ou les skins, vous devrez utiliser un backend customisé.
+D'autres options populaires sont LawinV2 et Momentum, les deux étant disponible sur GitHub, mais il n'est pas recommandé de les utiliser si vous n'êtes pas un utilisateur avancé.
+Vous pouvez exécuter ces alternatives soit sur votre PC ou soit sur un serveur en séléctionnant respectivement "Local" ou "Distant" dans la section "Type" de l'onglet "Backend" du launcher Reboot.
