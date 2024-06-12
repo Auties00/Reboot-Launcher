@@ -1,8 +1,3 @@
-To resolve this issue:
-- Check that your backend is working correctly from the "Backend" tab
-- If you are using a custom backend, try to use the embedded one
-- Try to run the backend as detached by enabling the "Detached" option in the "Backend" tab
-
 Pour résoudre le problème :
 - Vérifiez que le backend fonctionne correctement via l'onglet "Backend"
 - Si vous utilisez un backend personnalisé, essayez d'utiliser celui intégré
