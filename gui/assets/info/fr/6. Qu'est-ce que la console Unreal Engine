@@ -1,0 +1,4 @@
+Beaucoup de versions de Fortnite ne supportent pas l'arrivée dans une partie en appuyant sur le bouton "Jouer".
+À la place, vous devez appuyer sur la touche assignée à la console Unreal Engine, qui par défaut est F8, et entrer "open 127.0.0.1"
+Gardez en tête que la touche de la console Unreal Engine est contrôlée par le backend, donc cela est vrai que si vous utilisez le backend intégré : les backends customisés peuvent utiliser une touche différente.
+Quand vous utilisez le backend intégré, vous pouvez personnaliser la touche utilisée pour ouvrir la console dans l'onglet "Backend" du launcher Reboot.
