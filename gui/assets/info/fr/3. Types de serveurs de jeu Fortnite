@@ -1,0 +1,4 @@
+Certaines version de Fortnite peuvent exécuter le serveur de jeu en fond sans rendu graphique : ce type de serveur est appelé "headless" ("sans tête") car il s'exécute mais sans le voir à l'écran.
+Si le serveur headless n'est pas supporté par la version de Fortnite à laquelle vous voulez jouer, ou si vous l'avez désactivé manuellement dans la section "Configuration" de l'onglet "Hôte" du launcher, vous allez voir une instance de Fortnite s'ouvrir sur votre écran.
+Pour plus de praticité, cette fenêtre va être ouverte dans un nouveau Bureau Virtuel, si votre version de Windows le permet. Cette fonctionnalité peut également être désactivée dans la section "Configuration" de l'onglet "Hôte" du launcher.
+Tout comme Minecraft, vous aurez besoin d'un client de jeu pour jouer au jeu et un autre pour héberger le serveur.

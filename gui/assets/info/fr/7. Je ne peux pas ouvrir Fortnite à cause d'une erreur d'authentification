@@ -1,0 +1,4 @@
+Pour résoudre le problème :
+- Vérifiez que le backend fonctionne correctement via l'onglet "Backend"
+- Si vous utilisez un backend personnalisé, essayez d'utiliser celui intégré
+- Essayez d'exécuter le backend en mode en mode détaché en cochant l'option "Détaché" dans l'onglet "Backend"

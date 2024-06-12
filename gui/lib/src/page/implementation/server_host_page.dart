@@ -29,8 +29,7 @@ class HostPage extends RebootPage {
   const HostPage({Key? key}) : super(key: key);
 
   @override
-  String get name => "Host";
-
+  String get name => translations.hostName;
   @override
   String get iconAsset => "assets/images/host.png";
 
