@@ -29,6 +29,8 @@ import 'package:reboot_launcher/src/widget/profile_tile.dart';
 import 'package:reboot_launcher/src/widget/title_bar.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'info_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
@@ -221,6 +223,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     super.build(context);
     _settingsController.language.value;
     loadTranslations(context);
+    // InfoPage.initInfoTiles();
     return Obx(() {
       return NavigationPaneTheme(
           data: NavigationPaneThemeData(
@@ -394,7 +397,7 @@ class _PaneBody extends StatefulWidget {
 
 class _PaneBodyState extends State<_PaneBody> with AutomaticKeepAliveClientMixin {
   final SettingsController _settingsController = Get.find<SettingsController>();
-  final PageController _pageController = PageController(keepPage: true);
+  final PageController _pageController = PageController(keepPage: true, initialPage: pageIndex.value);
 
   @override
   bool get wantKeepAlive => true;
@@ -402,7 +405,15 @@ class _PaneBodyState extends State<_PaneBody> with AutomaticKeepAliveClientMixin
   @override
   void initState() {
     super.initState();
-    pageIndex.listen((index) => _pageController.jumpToPage(index));
+    var lastPage = pageIndex.value;
+    pageIndex.listen((index) {
+      if(index == lastPage) {
+        return;
+      }
+
+      lastPage = index;
+      _pageController.jumpToPage(index);
+    });
   }
 
   @override
@@ -437,6 +448,10 @@ class _PaneBodyState extends State<_PaneBody> with AutomaticKeepAliveClientMixin
                               elements.add(TextSpan(
                                   text: pages[pageIndex.value].name,
                                   recognizer: pageStack.isNotEmpty ? (TapGestureRecognizer()..onTap = () {
+                                    if(inDialog) {
+                                      return;
+                                    }
+
                                     for(var i = 0; i < pageStack.length; i++) {
                                       Navigator.of(pageKey.currentContext!).pop();
                                       final element = pageStack.removeLast();
@@ -461,6 +476,10 @@ class _PaneBodyState extends State<_PaneBody> with AutomaticKeepAliveClientMixin
                                 elements.add(TextSpan(
                                     text: innerPage,
                                     recognizer: i == pageStack.length - 1 ? null : (TapGestureRecognizer()..onTap = () {
+                                      if(inDialog) {
+                                        return;
+                                      }
+
                                       for(var j = 0; j < i - 1; j++) {
                                         Navigator.of(pageKey.currentContext!).pop();
                                         final element = pageStack.removeLast();

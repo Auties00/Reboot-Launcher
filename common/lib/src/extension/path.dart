@@ -5,6 +5,8 @@ import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
 
 extension FortniteVersionExtension on FortniteVersion {
+  static DateTime _marker = DateTime.fromMicrosecondsSinceEpoch(0);
+
   static File? findExecutable(Directory directory, String name) {
     try{
       final result = directory.listSync(recursive: true)
@@ -15,23 +17,20 @@ extension FortniteVersionExtension on FortniteVersion {
     }
   }
 
-  File? get gameExecutable => findExecutable(location, "FortniteClient-Win64-Shipping.exe");
-
-  Future<File?> get headlessGameExecutable async {
-    final result = findExecutable(location, "FortniteClient-Win64-Shipping-Headless.exe");
-    if(result != null) {
-      return result;
-    }
-
-    final original = findExecutable(location, "FortniteClient-Win64-Shipping.exe");
-    if(original == null) {
+  Future<File?> get shippingExecutable async {
+    final result = findExecutable(location, "FortniteClient-Win64-Shipping.exe");
+    if(result == null) {
       return null;
     }
 
-    final output = File("${original.parent.path}\\FortniteClient-Win64-Shipping-Headless.exe");
-    await original.copy(output.path);
-    await Isolate.run(() => patchHeadless(output));
-    return output;
+    final lastModified = await result.lastModified();
+    if(lastModified != _marker) {
+      print("Applying patch");
+      await Isolate.run(() => patchHeadless(result));
+      await result.setLastModified(_marker);
+    }
+
+    return result;
   }
 
   File? get launcherExecutable => findExecutable(location, "FortniteLauncher.exe");
