@@ -15,7 +15,6 @@ DisableProgramGroupPage=yes
 OutputBaseFilename={{OUTPUT_BASE_FILENAME}}
 Compression=zip
 SolidCompression=yes
-SetupIconFile={{SETUP_ICON_FILE}}
 WizardStyle=modern
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64

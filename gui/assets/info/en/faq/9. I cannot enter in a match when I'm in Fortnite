@@ -1,0 +1,3 @@
+As explained in the "What is the Unreal Engine console?" section, the "Play" button doesn't work in many Fortnite versions.
+Instead, you need to click the key assigned to the Unreal Engine console, by default F8 or the tilde(the button above tab), and type open 127.0.0.1
+If that doesn't work, go to the Host page and make sure that you are running a game server by clicking "Start Hosting".

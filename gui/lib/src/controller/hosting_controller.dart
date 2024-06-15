@@ -14,8 +14,7 @@ class HostingController extends GetxController {
   late final TextEditingController password;
   late final RxBool showPassword;
   late final RxBool discoverable;
-  late final RxBool headless;
-  late final RxBool virtualDesktop;
+  late final Rx<GameServerType> type;
   late final RxBool autoRestart;
   late final RxBool started;
   late final RxBool published;
@@ -34,10 +33,8 @@ class HostingController extends GetxController {
     password.addListener(() => _storage?.write("password", password.text));
     discoverable = RxBool(_storage?.read("discoverable") ?? false);
     discoverable.listen((value) => _storage?.write("discoverable", value));
-    headless = RxBool(_storage?.read("headless") ?? true);
-    headless.listen((value) => _storage?.write("headless", value));
-    virtualDesktop = RxBool(_storage?.read("virtual_desktop") ?? true);
-    virtualDesktop.listen((value) => _storage?.write("virtual_desktop", value));
+    type = Rx(GameServerType.values.elementAt(_storage?.read("type") ?? GameServerType.headless.index));
+    type.listen((value) => _storage?.write("type", value.index));
     autoRestart = RxBool(_storage?.read("auto_restart") ?? true);
     autoRestart.listen((value) => _storage?.write("auto_restart", value));
     started = RxBool(false);
@@ -64,8 +61,8 @@ class HostingController extends GetxController {
     discoverable.value = false;
     started.value = false;
     instance.value = null;
-    headless.value = true;
-    virtualDesktop.value = true;
+    type.value = GameServerType.headless;
+    autoRestart.value = true;
   }
 
   Map<String, dynamic>? findServerById(String uuid) {

@@ -67,7 +67,7 @@ Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
     }
 
     final startTime = DateTime.now().millisecondsSinceEpoch;
-    final response = _downloadArchive(options, tempFile, startTime);
+    final response = _downloadArchive(options, stopped, tempFile, startTime);
     await Future.any([stopped.future, response]);
     if(!stopped.isCompleted) {
       await _extractArchive(stopped, extension, tempFile, options);
@@ -79,13 +79,17 @@ Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
   }
 }
 
-Future<void> _downloadArchive(FortniteBuildDownloadOptions options, File tempFile, int startTime, [int? byteStart = null, int errorsCount = 0]) async {
+Future<void> _downloadArchive(FortniteBuildDownloadOptions options, Completer stopped, File tempFile, int startTime, [int? byteStart = null, int errorsCount = 0]) async {
   var received = byteStart ?? 0;
   try {
     await _dio.download(
         options.build.link,
         tempFile.path,
         onReceiveProgress: (data, length) {
+          if(stopped.isCompleted) {
+            throw StateError("Download interrupted");
+          }
+
           received = data;
           final percentage = (received / length) * 100;
           _onProgress(startTime, percentage < 1 ? null : DateTime.now().millisecondsSinceEpoch, percentage, false, options);
@@ -116,12 +120,16 @@ Future<void> _downloadArchive(FortniteBuildDownloadOptions options, File tempFil
         )
     );
   }catch(error) {
+    if(stopped.isCompleted) {
+      return;
+    }
+
     if(errorsCount > _maxErrors || error.toString().contains(_deniedConnectionError) || error.toString().contains(_unavailableError)) {
       _onError(error, options);
       return;
     }
 
-    await _downloadArchive(options, tempFile, startTime, received, errorsCount + 1);
+    await _downloadArchive(options, stopped, tempFile, startTime, received, errorsCount + 1);
   }
 }
 
@@ -225,6 +233,7 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
   }
 
   await Future.any([stopped.future, process.exitCode]);
+  process.kill(ProcessSignal.sigabrt);
 }
 
 void _onProgress(int startTime, int? now, double percentage, bool extracting, FortniteBuildDownloadOptions options) {

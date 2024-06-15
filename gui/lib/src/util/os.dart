@@ -6,6 +6,7 @@ import 'package:ffi/ffi.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:win32/win32.dart';
+import 'package:file_picker/file_picker.dart';
 
 final RegExp _winBuildRegex = RegExp(r'(?<=\(Build )(.*)(?=\))');
 
@@ -21,6 +22,22 @@ int? get windowsBuild {
 bool get isWin11 {
   final intBuild = windowsBuild;
   return intBuild != null && intBuild > 22000;
+}
+
+Future<String?> openFolderPicker(String title) async =>
+    await FilePicker.platform.getDirectoryPath(dialogTitle: title);
+
+Future<String?> openFilePicker(String extension) async {
+  var result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowMultiple: false,
+      allowedExtensions: [extension]
+  );
+  if(result == null || result.files.isEmpty){
+    return null;
+  }
+
+  return result.files.first.path;
 }
 
 bool get isDarkMode =>

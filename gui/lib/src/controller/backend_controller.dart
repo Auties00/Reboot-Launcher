@@ -43,7 +43,8 @@ class BackendController extends GetxController {
         storage?.write("${type.value.name}_port", port.text));
     detached = RxBool(storage?.read("detached") ?? false);
     detached.listen((value) => storage?.write("detached", value));
-    gameServerAddress = TextEditingController(text: storage?.read("game_server_address") ?? "127.0.0.1");
+    final address = storage?.read("game_server_address");
+    gameServerAddress = TextEditingController(text: address == null || address.isEmpty ? "127.0.0.1" : address);
     var lastValue = gameServerAddress.text;
     writeMatchmakingIp(lastValue);
     gameServerAddress.addListener(() {
@@ -76,6 +77,7 @@ class BackendController extends GetxController {
 
     host.text = type.value != ServerType.remote ? kDefaultBackendHost : "";
     port.text = kDefaultBackendPort.toString();
+    gameServerAddress.text = "127.0.0.1";
     detached.value = false;
   }
 

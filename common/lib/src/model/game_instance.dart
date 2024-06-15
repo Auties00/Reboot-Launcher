@@ -9,7 +9,7 @@ class GameInstance {
   final int? launcherPid;
   final int? eacPid;
   final List<InjectableDll> injectedDlls;
-  bool hosting;
+  final GameServerType? serverType;
   bool launched;
   bool movedToVirtualDesktop;
   bool tokenError;
@@ -20,7 +20,7 @@ class GameInstance {
     required this.gamePid,
     required this.launcherPid,
     required this.eacPid,
-    required this.hosting,
+    required this.serverType,
     required this.child
   }): tokenError = false, launched = false, movedToVirtualDesktop = false, injectedDlls = [];
 
@@ -37,7 +37,7 @@ class GameInstance {
   bool get nestedHosting {
     GameInstance? child = this;
     while(child != null) {
-      if(child.hosting) {
+      if(child.serverType != null) {
         return true;
       }
 
@@ -46,4 +46,10 @@ class GameInstance {
 
     return false;
   }
+}
+
+enum GameServerType {
+  headless,
+  virtualWindow,
+  window
 }
