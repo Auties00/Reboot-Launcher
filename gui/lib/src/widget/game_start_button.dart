@@ -239,6 +239,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         _gameController.password.text,
         host,
         hostType,
+        false,
         ""
     );
     log("[${host ? 'HOST' : 'GAME'}] Generated game args: ${gameArgs.join(" ")}");
