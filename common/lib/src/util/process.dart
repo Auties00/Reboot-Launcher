@@ -202,7 +202,7 @@ Future<bool> watchProcess(int pid) async {
   return await completer.future;
 }
 
-List<String> createRebootArgs(String username, String password, bool host, GameServerType hostType, bool log, String additionalArgs) {
+List<String> createRebootArgs(String username, String password, bool host, GameServerType hostType, String additionalArgs) {
   if(password.isEmpty) {
     username = '${_parseUsername(username, host)}@projectreboot.dev';
   }
@@ -223,14 +223,11 @@ List<String> createRebootArgs(String username, String password, bool host, GameS
     "-AUTH_TYPE=epic"
   ];
 
-  if(log) {
-    args.add("-log");
-  }
-
   if(host) {
     args.addAll([
       "-nosplash",
-      "-nosound"
+      "-nosound",
+      "-log"
     ]);
     if(hostType == GameServerType.headless){
       args.add("-nullrhi");
