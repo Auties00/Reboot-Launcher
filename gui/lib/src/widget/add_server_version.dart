@@ -38,6 +38,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   late Future _fetchFuture;
   late Future _diskFuture;
 
+  Isolate? _isolate;
   SendPort? _downloadPort;
   Object? _error;
   StackTrace? _stackTrace;
@@ -65,6 +66,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
   void _cancelDownload() {
     Process.run('${assetsDirectory.path}\\build\\stop.bat', []);
     _downloadPort?.send(kStopBuildDownloadSignal);
+    _isolate?.kill(priority: Isolate.immediate);
   }
 
   @override
@@ -147,7 +149,7 @@ class _AddServerVersionState extends State<AddServerVersion> {
       );
       final errorPort = ReceivePort();
       errorPort.listen((message) => _onDownloadError(message, null));
-      await Isolate.spawn(
+      _isolate = await Isolate.spawn(
           downloadArchiveBuild,
           options,
           onError: errorPort.sendPort,

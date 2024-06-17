@@ -1,6 +1,6 @@
 name: reboot_launcher
 description: Graphical User Interface for Project Reboot
-version: "9.1.3"
+version: "9.1.4"
 
 publish_to: 'none'
 
@@ -99,4 +99,5 @@ flutter:
     - assets/backend/public/
     - assets/backend/responses/
     - assets/build/
-    - assets/info/en/
+    - assets/info/en/faq/
+    - assets/info/en/questions/

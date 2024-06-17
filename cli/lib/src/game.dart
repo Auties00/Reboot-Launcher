@@ -12,7 +12,7 @@ Future<void> startGame() async {
   await _startLauncherProcess(version);
   await _startEacProcess(version);
 
-  var executable = await version.gameExecutable;
+  var executable = await version.shippingExecutable;
   if (executable == null) {
     throw Exception("${version.location.path} no longer contains a Fortnite executable, did you delete or move it?");
   }

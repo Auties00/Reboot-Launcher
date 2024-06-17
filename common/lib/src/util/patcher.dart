@@ -9,6 +9,7 @@ final Uint8List _patchedHeadless = Uint8List.fromList([
   45, 0, 108, 0, 111, 0, 103, 0, 32, 0, 45, 0, 110, 0, 111, 0, 115, 0, 112, 0, 108, 0, 97, 0, 115, 0, 104, 0, 32, 0, 45, 0, 110, 0, 111, 0, 115, 0, 111, 0, 117, 0, 110, 0, 100, 0, 32, 0, 45, 0, 110, 0, 117, 0, 108, 0, 108, 0, 114, 0, 104, 0, 105, 0, 32, 0, 45, 0, 117, 0, 115, 0, 101, 0, 111, 0, 108, 0, 100, 0, 105, 0, 116, 0, 101, 0, 109, 0, 99, 0, 97, 0, 114, 0, 100, 0, 115, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
 ]);
 
+// Not used right now
 final Uint8List _originalMatchmaking = Uint8List.fromList([
   63, 0, 69, 0, 110, 0, 99, 0, 114, 0, 121, 0, 112, 0, 116, 0, 105, 0, 111, 0, 110, 0, 84, 0, 111, 0, 107, 0, 101, 0, 110, 0, 61
 ]);
@@ -18,7 +19,7 @@ final Uint8List _patchedMatchmaking = Uint8List.fromList([
 ]);
 
 Future<bool> patchHeadless(File file) async =>
-    _patch(file, _originalHeadless, _patchedHeadless);
+    await _patch(file, _originalHeadless, _patchedHeadless);
 
 Future<bool> patchMatchmaking(File file) async =>
     await _patch(file, _originalMatchmaking, _patchedMatchmaking);
@@ -29,22 +30,24 @@ Future<bool> _patch(File file, Uint8List original, Uint8List patched) async {
       throw Exception("Cannot mutate length of binary file");
     }
 
-    final read = await file.readAsBytes();
-    final length = await file.length();
+    final source = await file.readAsBytes();
     var readOffset = 0;
     var patchOffset = -1;
     var patchCount = 0;
-    while(readOffset < length){
-      if(read[readOffset] == original[patchCount]){
+    while(readOffset < source.length){
+      if(source[readOffset] == original[patchCount]){
         if(patchOffset == -1) {
           patchOffset = readOffset;
         }
 
-        if(++patchCount == original.length) {
+        if(readOffset - patchOffset + 1 == original.length) {
           break;
         }
+
+        patchCount++;
       }else {
         patchOffset = -1;
+        patchCount = 0;
       }
 
       readOffset++;
@@ -55,10 +58,10 @@ Future<bool> _patch(File file, Uint8List original, Uint8List patched) async {
     }
 
     for(var i = 0; i < patched.length; i++) {
-      read[patchOffset + i] = patched[i];
+      source[patchOffset + i] = patched[i];
     }
 
-    await file.writeAsBytes(read, flush: true);
+    await file.writeAsBytes(source, flush: true);
     return true;
   }catch(_){
     return false;

@@ -1,6 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
-import 'package:reboot_launcher/src/util/picker.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 
 class FileSelector extends StatefulWidget {
   final String placeholder;

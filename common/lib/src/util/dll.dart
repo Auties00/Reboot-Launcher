@@ -18,7 +18,6 @@ Future<bool> hasRebootDllUpdate(int? lastUpdateMs, {int hours = 24, bool force =
 }
 
 Future<void> downloadCriticalDll(String name, String outputPath) async {
-    print("https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/$name");
     final response = await http.get(Uri.parse("https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/$name"));
     if(response.statusCode != 200) {
         throw Exception("Cannot download $name: status code ${response.statusCode}");

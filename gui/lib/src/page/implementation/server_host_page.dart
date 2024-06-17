@@ -29,7 +29,7 @@ class HostPage extends RebootPage {
   const HostPage({Key? key}) : super(key: key);
 
   @override
-  String get name => "Host";
+  String get name => translations.hostName;
 
   @override
   String get iconAsset => "assets/images/host.png";
@@ -289,51 +289,23 @@ class _HostingPageState extends RebootPageState<HostPage> {
     title: Text(translations.settingsServerOptionsName),
     subtitle: Text(translations.settingsServerOptionsSubtitle),
     children: [
-      Obx(() => SettingTile(
+      SettingTile(
         icon: Icon(
             FluentIcons.window_console_20_regular
         ),
-        title: Text(translations.hostHeadlessName),
-        subtitle: Text(translations.hostHeadlessDescription),
-        contentWidth: null,
-        content: Row(
-          children: [
-            Text(
-                _hostingController.headless.value ? translations.on : translations.off
-            ),
-            const SizedBox(
-                width: 16.0
-            ),
-            ToggleSwitch(
-                checked: _hostingController.headless.value,
-                onChanged: (value) => _hostingController.headless.value = value
-            ),
-          ],
-        ),
-      )),
-      Obx(() => SettingTile(
-        icon: Icon(
-            FluentIcons.desktop_edit_24_regular
-        ),
-        title: Text(translations.hostVirtualDesktopName),
-        subtitle: Text(translations.hostVirtualDesktopDescription),
-        contentWidth: null,
-        content: Row(
-          children: [
-            Text(
-                _hostingController.virtualDesktop.value ? translations.on : translations.off
-            ),
-            const SizedBox(
-                width: 16.0
-            ),
-            ToggleSwitch(
-                checked: _hostingController.virtualDesktop.value,
-                onChanged: (value) => _hostingController.virtualDesktop.value = value
-            ),
-          ],
-        ),
-      )),
-      Obx(() => SettingTile(
+        title: Text(translations.gameServerTypeName),
+        subtitle: Text(translations.gameServerTypeDescription),
+        content: Obx(() => DropDownButton(
+            onOpen: () => inDialog = true,
+            onClose: () => inDialog = false,
+            leading: Text(_hostingController.type.value.translatedName),
+            items: GameServerType.values.map((entry) => MenuFlyoutItem(
+                text: Text(entry.translatedName),
+                onPressed: () => _hostingController.type.value = entry
+            )).toList()
+        )),
+      ),
+      SettingTile(
         icon: Icon(
             FluentIcons.arrow_reset_24_regular
         ),
@@ -348,13 +320,13 @@ class _HostingPageState extends RebootPageState<HostPage> {
             const SizedBox(
                 width: 16.0
             ),
-            ToggleSwitch(
+            Obx(() => ToggleSwitch(
                 checked: _hostingController.autoRestart.value,
                 onChanged: (value) => _hostingController.autoRestart.value = value
-            ),
+            )),
           ],
         ),
-      )),
+      ),
       SettingTile(
           icon: Icon(
               fluentUi.FluentIcons.number_field

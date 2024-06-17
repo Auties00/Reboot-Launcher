@@ -104,9 +104,9 @@ Future<bool> startElevatedProcess({required String executable, required String a
   return shellResult == 1;
 }
 
-Future<Process> startProcess({required File executable, List<String>? args, bool wrapProcess = true, bool window = false, String? name}) async {
+Future<Process> startProcess({required File executable, List<String>? args, bool useTempBatch = true, bool window = false, String? name}) async {
   final argsOrEmpty = args ?? [];
-  if(wrapProcess) {
+  if(useTempBatch) {
     final tempScriptDirectory = await tempDirectory.createTemp("reboot_launcher_process");
     final tempScriptFile = File("${tempScriptDirectory.path}/process.bat");
     final command = window ? 'cmd.exe /k ""${executable.path}" ${argsOrEmpty.join(" ")}"' : '"${executable.path}" ${argsOrEmpty.join(" ")}';
@@ -202,7 +202,7 @@ Future<bool> watchProcess(int pid) async {
   return await completer.future;
 }
 
-List<String> createRebootArgs(String username, String password, bool host, bool headless, String additionalArgs) {
+List<String> createRebootArgs(String username, String password, bool host, GameServerType hostType, bool log, String additionalArgs) {
   if(password.isEmpty) {
     username = '${_parseUsername(username, host)}@projectreboot.dev';
   }
@@ -223,12 +223,18 @@ List<String> createRebootArgs(String username, String password, bool host, bool 
     "-AUTH_TYPE=epic"
   ];
 
-  if(host && headless){
+  if(log) {
+    args.add("-log");
+  }
+
+  if(host) {
     args.addAll([
-      "-nullrhi",
       "-nosplash",
-      "-nosound",
+      "-nosound"
     ]);
+    if(hostType == GameServerType.headless){
+      args.add("-nullrhi");
+    }
   }
 
   if(additionalArgs.isNotEmpty){

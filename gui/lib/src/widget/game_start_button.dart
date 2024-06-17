@@ -68,9 +68,9 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   void _setStarted(bool hosting, bool started) => hosting ? _hostingController.started.value = started : _gameController.started.value = started;
 
-  Future<void> _toggle({bool? host, bool forceGUI = false}) async {
+  Future<void> _toggle({bool? host}) async {
     host ??= widget.host;
-    log("[${host ? 'HOST' : 'GAME'}] Toggling state(forceGUI: $forceGUI)");
+    log("[${host ? 'HOST' : 'GAME'}] Toggling state");
     if (host ? _hostingController.started() : _gameController.started()) {
       log("[${host ? 'HOST' : 'GAME'}] User asked to close the current instance");
       _onStop(
@@ -100,7 +100,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     try {
-      final executable = version.gameExecutable;
+      final executable = await version.shippingExecutable;
       if(executable == null){
         log("[${host ? 'HOST' : 'GAME'}] No executable found");
         _onStop(
@@ -120,12 +120,11 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
       log("[${host ? 'HOST' : 'GAME'}] Backend works");
-      final headless = !forceGUI && _hostingController.headless.value;
-      final virtualDesktop = _hostingController.virtualDesktop.value;
-      log("[${host ? 'HOST' : 'GAME'}] Implicit game server metadata: headless($headless)");
-      final linkedHostingInstance = await _startMatchMakingServer(version, host, headless, virtualDesktop, false);
+      final serverType =  _hostingController.type.value;
+      log("[${host ? 'HOST' : 'GAME'}] Implicit game server metadata: headless($serverType)");
+      final linkedHostingInstance = await _startMatchMakingServer(version, host, serverType, false);
       log("[${host ? 'HOST' : 'GAME'}] Implicit game server result: $linkedHostingInstance");
-      await _startGameProcesses(version, host, headless, virtualDesktop, linkedHostingInstance);
+      await _startGameProcesses(version, host, serverType, linkedHostingInstance);
       if(!host) {
         _showLaunchingGameClientWidget();
       }
@@ -142,14 +141,14 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
   }
 
-  Future<GameInstance?> _startMatchMakingServer(FortniteVersion version, bool host, bool headless, bool virtualDesktop, bool forceLinkedHosting) async {
+  Future<GameInstance?> _startMatchMakingServer(FortniteVersion version, bool host, GameServerType hostType, bool forceLinkedHosting) async {
     log("[${host ? 'HOST' : 'GAME'}] Checking if a server needs to be started automatically...");
     if(host){
       log("[${host ? 'HOST' : 'GAME'}] The user clicked on Start hosting, so it's not necessary");
       return null;
     }
 
-    if(_backendController.type.value != ServerType.embedded || !isLocalHost(_backendController.gameServerAddress.text)) {
+    if(_backendController.type.value == ServerType.embedded && !isLocalHost(_backendController.gameServerAddress.text)) {
       log("[${host ? 'HOST' : 'GAME'}] Backend is not set to embedded and/or not pointing to the local game server");
       return null;
     }
@@ -166,7 +165,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     log("[${host ? 'HOST' : 'GAME'}] Starting implicit game server...");
-    final instance = await _startGameProcesses(version, true, headless, virtualDesktop, null);
+    final instance = await _startGameProcesses(version, true, hostType, null);
     log("[${host ? 'HOST' : 'GAME'}] Started implicit game server...");
     _setStarted(true, true);
     log("[${host ? 'HOST' : 'GAME'}] Set implicit game server as started");
@@ -195,7 +194,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     return result;
   }
 
-  Future<GameInstance?> _startGameProcesses(FortniteVersion version, bool host, bool headless, bool virtualDesktop, GameInstance? linkedHosting) async {
+  Future<GameInstance?> _startGameProcesses(FortniteVersion version, bool host, GameServerType hostType, GameInstance? linkedHosting) async {
     log("[${host ? 'HOST' : 'GAME'}] Starting game process...");
     log("[${host ? 'HOST' : 'GAME'}] Starting paused launcher...");
     final launcherProcess = await _createPausedProcess(version, version.launcherExecutable);
@@ -205,9 +204,9 @@ class _LaunchButtonState extends State<LaunchButton> {
     final eacProcess = await _createPausedProcess(version, version.eacExecutable);
 
     log("[${host ? 'HOST' : 'GAME'}] Started paused eac: $eacProcess");
-    final executable = host && headless ? await version.headlessGameExecutable : version.gameExecutable;
+    final executable = await version.shippingExecutable;
     log("[${host ? 'HOST' : 'GAME'}] Using game path: ${executable?.path}");
-    final gameProcess = await _createGameProcess(version, executable!, host, headless, virtualDesktop, linkedHosting);
+    final gameProcess = await _createGameProcess(version, executable!, host, hostType, linkedHosting);
     if(gameProcess == null) {
       log("[${host ? 'HOST' : 'GAME'}] No game process was created");
       return null;
@@ -219,7 +218,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         gamePid: gameProcess,
         launcherPid: launcherProcess,
         eacPid: eacProcess,
-        hosting: host,
+        serverType: host ? hostType : null,
         child: linkedHosting
     );
     if(host){
@@ -233,20 +232,21 @@ class _LaunchButtonState extends State<LaunchButton> {
     return instance;
   }
 
-  Future<int?> _createGameProcess(FortniteVersion version, File executable, bool host, bool headless, bool virtualDesktop, GameInstance? linkedHosting) async {
+  Future<int?> _createGameProcess(FortniteVersion version, File executable, bool host, GameServerType hostType, GameInstance? linkedHosting) async {
     log("[${host ? 'HOST' : 'GAME'}] Generating instance args...");
     final gameArgs = createRebootArgs(
         _gameController.username.text,
         _gameController.password.text,
         host,
-        _hostingController.headless.value,
+        hostType,
+        false,
         ""
     );
-    log("[${host ? 'HOST' : 'GAME'}] Generated game args: $gameArgs");
+    log("[${host ? 'HOST' : 'GAME'}] Generated game args: ${gameArgs.join(" ")}");
     final gameProcess = await startProcess(
         executable: executable,
         args: gameArgs,
-        wrapProcess: false,
+        useTempBatch: false,
         name: "${version.name}-${host ? 'HOST' : 'GAME'}"
     );
     void onGameOutput(String line, bool error) {
@@ -259,8 +259,8 @@ class _LaunchButtonState extends State<LaunchButton> {
           onTokenError: () => _onStop(reason: _StopReason.tokenError),
           onBuildCorrupted: () => _onStop(reason: _StopReason.corruptedVersionError),
           onLoggedIn: () =>_onLoggedIn(host),
-          onMatchEnd: () => _onMatchEnd(version, virtualDesktop),
-          onDisplayAttached: () => _onDisplayAttached(headless, virtualDesktop, version)
+          onMatchEnd: () => _onMatchEnd(version),
+          onDisplayAttached: () => _onDisplayAttached(host, hostType, version)
       );
     }
     gameProcess.stdOutput.listen((line) => onGameOutput(line, false));
@@ -272,24 +272,10 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
 
-      if(!host || instance.launched) {
-        log("[${host ? 'HOST' : 'GAME'}] Called exit code(headless: $headless, launched: ${instance.launched}): stop signal");
-        _onStop(
-            reason: _StopReason.exitCode,
-            host: host
-        );
-        return;
-      }
-
-      log("[${host ? 'HOST' : 'GAME'}] Called exit code(headless: $headless, launched: ${instance.launched}): restart signal");
-      instance.launched = true;
-      await _onStop(
+      log("[${host ? 'HOST' : 'GAME'}] Called exit code(launched: ${instance.launched}): stop signal");
+      _onStop(
           reason: _StopReason.exitCode,
-          host: true
-      );
-      await _toggle(
-          forceGUI: true,
-          host: true
+          host: host
       );
     });
     return gameProcess.pid;
@@ -302,7 +288,7 @@ class _LaunchButtonState extends State<LaunchButton> {
 
     final process = await startProcess(
         executable: file,
-        wrapProcess: false,
+        useTempBatch: false,
         name: "${version.name}-${basenameWithoutExtension(file.path)}"
     );
     final pid = process.pid;
@@ -310,8 +296,8 @@ class _LaunchButtonState extends State<LaunchButton> {
     return pid;
   }
 
-  Future<void> _onDisplayAttached(bool headless, bool virtualDesktop, FortniteVersion version) async {
-    if(!headless && virtualDesktop) {
+  Future<void> _onDisplayAttached(bool host, GameServerType type, FortniteVersion version) async {
+    if(host && type == GameServerType.virtualWindow) {
       final hostingInstance = _hostingController.instance.value;
       if(hostingInstance != null && !hostingInstance.movedToVirtualDesktop) {
         hostingInstance.movedToVirtualDesktop = true;
@@ -346,7 +332,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
   }
 
-  void _onMatchEnd(FortniteVersion version, bool virtualDesktop) {
+  void _onMatchEnd(FortniteVersion version) {
     if(_hostingController.autoRestart.value) {
       final notification = LocalNotification(
         title: translations.gameServerEnd,
@@ -536,7 +522,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       if(child != null) {
         await _onStop(
             reason: reason,
-            host: child.hosting
+            host: child.serverType != null
         );
       }
     }
