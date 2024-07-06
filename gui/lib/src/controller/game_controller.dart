@@ -25,7 +25,7 @@ class GameController extends GetxController {
   late final Rx<PhysicalKeyboardKey> consoleKey;
   
   GameController() {
-    _storage = appWithNoStorage ? null : GetStorage("game");
+    _storage = appWithNoStorage ? null : GetStorage("game_storage");
     Iterable decodedVersionsJson = jsonDecode(_storage?.read("versions") ?? "[]");
     final decodedVersions = decodedVersionsJson
         .map((entry) => FortniteVersion.fromJson(entry))
@@ -33,8 +33,7 @@ class GameController extends GetxController {
     versions = Rx(decodedVersions);
     versions.listen((data) => _saveVersions());
     final decodedSelectedVersionName = _storage?.read("version");
-    final decodedSelectedVersion = decodedVersions.firstWhereOrNull((
-        element) => element.name == decodedSelectedVersionName);
+    final decodedSelectedVersion = decodedVersions.firstWhereOrNull((element) => element.content.toString() == decodedSelectedVersionName);
     _selectedVersion = Rxn(decodedSelectedVersion);
     username = TextEditingController(
         text: _storage?.read("username") ?? kDefaultPlayerName);
@@ -88,7 +87,7 @@ class GameController extends GetxController {
   }
 
   FortniteVersion? getVersionByName(String name) {
-    return versions.value.firstWhereOrNull((element) => element.name == name);
+    return versions.value.firstWhereOrNull((element) => element.content.toString() == name);
   }
 
   void addVersion(FortniteVersion version) {
@@ -99,15 +98,9 @@ class GameController extends GetxController {
     }
   }
 
-  FortniteVersion removeVersionByName(String versionName) {
-    var version = versions.value.firstWhere((element) => element.name == versionName);
-    removeVersion(version);
-    return version;
-  }
-
   void removeVersion(FortniteVersion version) {
     versions.update((val) => val?.remove(version));
-    if (selectedVersion?.name == version.name || hasNoVersions) {
+    if (selectedVersion == version || hasNoVersions) {
       selectedVersion = null;
     }
   }
@@ -125,7 +118,7 @@ class GameController extends GetxController {
 
   set selectedVersion(FortniteVersion? version) {
     _selectedVersion.value = version;
-    _storage?.write("version", version?.name);
+    _storage?.write("version", version?.content.toString());
   }
 
   void updateVersion(FortniteVersion version, Function(FortniteVersion) function) {

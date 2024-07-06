@@ -8,6 +8,7 @@ import 'package:dio/io.dart';
 import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
 import 'package:reboot_common/src/extension/types.dart';
+import 'package:version/version.dart';
 
 const String kStopBuildDownloadSignal = "kill";
 
@@ -23,7 +24,7 @@ Dio _buildDioInstance() {
   return dio;
 }
 
-final String _archiveSourceUrl = "http://185.203.216.3/versions.json";
+final String _archiveSourceUrl = "https://raw.githubusercontent.com/simplyblk/Fortnitebuilds/main/README.md";
 final RegExp _rarProgressRegex = RegExp("^((100)|(\\d{1,2}(.\\d*)?))%\$");
 const String _deniedConnectionError = "The connection was denied: your firewall might be blocking the download";
 const String _unavailableError = "The build downloader is not available right now";
@@ -41,15 +42,35 @@ Future<List<FortniteBuild>> fetchBuilds(ignored) async {
     return [];
   }
 
-  final data = jsonDecode(response.data ?? "{}");
   var results = <FortniteBuild>[];
-  for(final entry in data.entries) {
-    results.add(FortniteBuild(
-        identifier: entry.key,
-        version: "${entry.value["title"]} (${entry.key})",
-        link: entry.value["url"]
-    ));
+  for (final line in response.data?.split("\n") ?? []) {
+    if (!line.startsWith("|")) {
+      continue;
+    }
+
+    var parts = line.substring(1, line.length - 1).split("|");
+    if (parts.isEmpty) {
+      continue;
+    }
+
+    var versionName = parts.first.trim();
+    final separator = versionName.indexOf("-");
+    if(separator != -1) {
+      versionName = versionName.substring(0, separator);
+    }
+
+    final link = parts.last.trim();
+    try {
+      results.add(FortniteBuild(
+          version: Version.parse(versionName),
+          link: link,
+          available: link.endsWith(".zip") || link.endsWith(".rar")
+      ));
+    } on FormatException {
+      // Ignore
+    }
   }
+
   return results;
 }
 

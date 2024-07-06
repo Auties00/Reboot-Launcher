@@ -3,14 +3,14 @@ import 'dart:collection';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/implementation/backend_page.dart';
+import 'package:reboot_launcher/src/page/implementation/browser_page.dart';
+import 'package:reboot_launcher/src/page/implementation/host_page.dart';
 import 'package:reboot_launcher/src/page/implementation/info_page.dart';
 import 'package:reboot_launcher/src/page/implementation/play_page.dart';
-import 'package:reboot_launcher/src/page/implementation/server_browser_page.dart';
-import 'package:reboot_launcher/src/page/implementation/server_host_page.dart';
 import 'package:reboot_launcher/src/page/implementation/settings_page.dart';
 import 'package:reboot_launcher/src/widget/info_bar_area.dart';
 
@@ -26,15 +26,15 @@ final List<RebootPage> pages = [
   const SettingsPage()
 ];
 
-final RxInt pageIndex = _initialPageIndex;
-RxInt get _initialPageIndex {
-  final settingsController = Get.find<SettingsController>();
-  return RxInt(settingsController.firstRun.value ? RebootPageType.info.index : RebootPageType.play.index);
-}
+final List<GlobalKey<OverlayTargetState>> _flyoutPageControllers = List.generate(pages.length, (_) => GlobalKey());
+
+final RxInt pageIndex = RxInt(RebootPageType.play.index);
 
 final HashMap<int, GlobalKey> _pageKeys = HashMap();
 
-final GlobalKey appKey = GlobalKey();
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey();
+
+final GlobalKey<OverlayState> appOverlayKey = GlobalKey();
 
 final GlobalKey<InfoBarAreaState> infoBarAreaKey = GlobalKey();
 
@@ -80,3 +80,7 @@ void addSubPageToStack(String pageName) {
   _pagesStack[index]!.add(identifier);
   pagesController.add(null);
 }
+
+GlobalKey<OverlayTargetState> getOverlayTargetKeyByPage(int pageIndex) => _flyoutPageControllers[pageIndex];
+
+GlobalKey<OverlayTargetState> get pageOverlayTargetKey => _flyoutPageControllers[pageIndex.value];

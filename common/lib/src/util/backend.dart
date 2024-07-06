@@ -26,6 +26,7 @@ Future<bool> isBackendPortFree() async => await pingBackend(kDefaultBackendHost,
 
 Future<bool> freeBackendPort() async {
   await killProcessByPort(kDefaultBackendPort);
+  await killProcessByPort(kDefaultXmppPort);
   final standardResult = await isBackendPortFree();
   if(standardResult) {
     return true;
@@ -35,21 +36,24 @@ Future<bool> freeBackendPort() async {
 }
 
 Future<Uri?> pingBackend(String host, int port, [bool https=false]) async {
-  var hostName = host.replaceFirst("http://", "").replaceFirst("https://", "");
-  var declaredScheme = host.startsWith("http://") ? "http" : host.startsWith("https://") ? "https" : null;
+  final hostName = host.replaceFirst("http://", "").replaceFirst("https://", "");
+  final declaredScheme = host.startsWith("http://") ? "http" : host.startsWith("https://") ? "https" : null;
   try{
-    var uri = Uri(
+    final uri = Uri(
         scheme: declaredScheme ?? (https ? "https" : "http"),
         host: hostName,
         port: port,
         path: "unknown"
     );
-    var client = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 5);
-    var request = await client.getUrl(uri);
-    var response = await request.close();
-    return response.statusCode == 200 || response.statusCode == 404 ? uri : null;
-  }catch(_){
+    log("[BACKEND] Pinging $uri...");
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 10);
+    final request = await client.getUrl(uri);
+    await request.close().timeout(const Duration(seconds: 10));
+    log("[BACKEND] Ping successful");
+    return uri;
+  }catch(error){
+    log("[BACKEND] Cannot ping backend: $error");
     return https || declaredScheme != null || isLocalHost(host) ? null : await pingBackend(host, port, true);
   }
 }
@@ -59,16 +63,16 @@ Stream<String?> watchMatchmakingIp() async* {
     return;
   }
 
-  var observer = matchmakerConfigFile.parent.watch(events: FileSystemEvent.modify);
+  final observer = matchmakerConfigFile.parent.watch(events: FileSystemEvent.modify);
   yield* observer.where((event) => event.path == matchmakerConfigFile.path).asyncMap((event) async {
     try {
-      var config = Config.fromString(await matchmakerConfigFile.readAsString());
-      var ip = config.get("GameServer", "ip");
+      final config = Config.fromString(await matchmakerConfigFile.readAsString());
+      final ip = config.get("GameServer", "ip");
       if(ip == null) {
         return null;
       }
 
-      var port = config.get("GameServer", "port");
+      final port = config.get("GameServer", "port");
       if(port == null) {
         return null;
       }
@@ -89,14 +93,14 @@ Stream<String?> watchMatchmakingIp() async* {
 }
 
 Future<void> writeMatchmakingIp(String text) async {
-  var exists = await matchmakerConfigFile.exists();
+  final exists = await matchmakerConfigFile.exists();
   if(!exists) {
     return;
   }
 
   _semaphore.acquire();
-  var splitIndex = text.indexOf(":");
-  var ip = splitIndex != -1 ? text.substring(0, splitIndex) : text;
+  final splitIndex = text.indexOf(":");
+  final ip = splitIndex != -1 ? text.substring(0, splitIndex) : text;
   var port = splitIndex != -1 ? text.substring(splitIndex + 1) : kDefaultGameServerPort;
   if(port.isBlank) {
     port = kDefaultGameServerPort;
@@ -104,7 +108,7 @@ Future<void> writeMatchmakingIp(String text) async {
 
   _lastIp = ip;
   _lastPort = port;
-  var config = Config.fromString(await matchmakerConfigFile.readAsString());
+  final config = Config.fromString(await matchmakerConfigFile.readAsString());
   config.set("GameServer", "ip", ip);
   config.set("GameServer", "port", port);
   await matchmakerConfigFile.writeAsString(config.toString(), flush: true);

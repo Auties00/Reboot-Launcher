@@ -2,11 +2,12 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/dialog/implementation/profile.dart';
+import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
+import 'package:reboot_launcher/src/messenger/implementation/profile.dart';
 
 class ProfileWidget extends StatefulWidget {
-  const ProfileWidget({Key? key}) : super(key: key);
+  final GlobalKey<OverlayTargetState> overlayKey;
+  const ProfileWidget({required this.overlayKey});
 
   @override
   State<ProfileWidget> createState() => _ProfileWidgetState();
@@ -14,14 +15,13 @@ class ProfileWidget extends StatefulWidget {
 
 class _ProfileWidgetState extends State<ProfileWidget> {
   final GameController _gameController = Get.find<GameController>();
-  final SettingsController _settingsController = Get.find<SettingsController>();
 
   @override
-  Widget build(BuildContext context) => Obx(() {
-    final firstRun = _settingsController.firstRun.value;
-    return HoverButton(
+  Widget build(BuildContext context) => OverlayTarget(
+    key: widget.overlayKey,
+    child: HoverButton(
         margin: const EdgeInsets.all(8.0),
-        onPressed: firstRun ? null : () async {
+        onPressed: () async {
           if(await showProfileForm(context)) {
             setState(() {});
           }
@@ -78,8 +78,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             ),
           ),
         )
-    );
-  });
+    ),
+  );
 
   String get _username {
     var username = _gameController.username.text;

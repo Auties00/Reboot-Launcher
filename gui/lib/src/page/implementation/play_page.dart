@@ -1,18 +1,19 @@
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
+import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
+import 'package:reboot_launcher/src/messenger/implementation/onboard.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
-import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/file_setting_tile.dart';
 import 'package:reboot_launcher/src/widget/game_start_button.dart';
 import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:reboot_launcher/src/widget/version_selector_tile.dart';
 
+final GlobalKey<OverlayTargetState> gameVersionOverlayTargetKey = GlobalKey();
 
 class PlayPage extends RebootPage {
   const PlayPage({Key? key}) : super(key: key);
@@ -36,8 +37,49 @@ class PlayPage extends RebootPage {
 class _PlayPageState extends RebootPageState<PlayPage> {
   final SettingsController _settingsController = Get.find<SettingsController>();
   final GameController _gameController = Get.find<GameController>();
-  final BackendController _backendController = Get.find<BackendController>();
-  
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFirstLaunchInfo(),
+        Expanded(
+          child: super.build(context),
+        )
+      ],
+    );
+  }
+
+  Widget _buildFirstLaunchInfo() => Obx(() {
+    if(!_settingsController.firstRun.value) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(
+          bottom: 8.0
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: InfoBar(
+          title: Text(translations.welcomeTitle),
+          severity: InfoBarSeverity.warning,
+          isLong: true,
+          content: SizedBox(
+            width: double.infinity,
+            child: Text(translations.welcomeDescription)
+          ),
+          action: Button(
+            child: Text(translations.welcomeAction),
+            onPressed: () => startOnboarding(),
+          ),
+          onClose: () => _settingsController.firstRun.value = false
+        ),
+      ),
+    );
+  });
+
   @override
   Widget? get button => LaunchButton(
       startLabel: translations.launchFortnite,
@@ -47,24 +89,12 @@ class _PlayPageState extends RebootPageState<PlayPage> {
 
   @override
   List<SettingTile> get settings => [
-    versionSelectSettingTile,
+    buildVersionSelector(
+      key: gameVersionOverlayTargetKey
+    ),
     _options,
     _internalFiles,
-    _multiplayer
   ];
-
-  SettingTile get _multiplayer => SettingTile(
-    icon: Icon(
-        FluentIcons.people_24_regular
-    ),
-    title: Text(translations.playGameServerName),
-    subtitle: Text(translations.playGameServerDescription),
-    children: [
-      _hostSettingTile,
-      _browseServerTile,
-      _matchmakerTile,
-    ],
-  );
 
   SettingTile get _internalFiles => SettingTile(
     icon: Icon(
@@ -95,8 +125,8 @@ class _PlayPageState extends RebootPageState<PlayPage> {
       icon: Icon(
           FluentIcons.options_24_regular
       ),
-      title: Text(translations.settingsServerOptionsName),
-      subtitle: Text(translations.settingsServerOptionsSubtitle),
+      title: Text(translations.settingsClientOptionsName),
+      subtitle: Text(translations.settingsClientOptionsDescription),
       children: [
         SettingTile(
             icon: Icon(
@@ -110,35 +140,5 @@ class _PlayPageState extends RebootPageState<PlayPage> {
             )
         )
       ]
-  );
-
-  SettingTile get _matchmakerTile => SettingTile(
-    onPressed: () {
-      pageIndex.value = RebootPageType.backend.index;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _backendController.gameServerAddressFocusNode.requestFocus());
-    },
-    icon: Icon(
-        FluentIcons.globe_24_regular
-    ),
-    title: Text(translations.playGameServerCustomName),
-    subtitle: Text(translations.playGameServerCustomDescription),
-  );
-
-  SettingTile get _browseServerTile => SettingTile(
-    onPressed: () => pageIndex.value = RebootPageType.browser.index,
-    icon: Icon(
-        FluentIcons.search_24_regular
-    ),
-    title: Text(translations.playGameServerBrowserName),
-    subtitle: Text(translations.playGameServerBrowserDescription)
-  );
-
-  SettingTile get _hostSettingTile => SettingTile(
-    onPressed: () => pageIndex.value = RebootPageType.host.index,
-    icon: Icon(
-        FluentIcons.desktop_24_regular
-    ),
-    title: Text(translations.playGameServerHostName),
-    subtitle: Text(translations.playGameServerHostDescription),
   );
 }

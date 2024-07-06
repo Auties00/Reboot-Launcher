@@ -2,7 +2,7 @@
   "_id": "LawinServer",
   "created": "0001-01-01T00:00:00.000Z",
   "updated": "0001-01-01T00:00:00.000Z",
-  "rvn": 21,
+  "rvn": 23,
   "wipeNumber": 1,
   "accountId": "LawinServer",
   "profileId": "athena",
@@ -131978,7 +131978,7 @@
     "S4-ChallengeBundleSchedule:Season4_Challenge_Schedule": {
       "templateId": "ChallengeBundleSchedule:Season4_Challenge_Schedule",
       "attributes": {
-        "unlock_epoch": "2024-05-31T19:57:34.940Z",
+        "unlock_epoch": "2024-06-24T20:17:00.089Z",
         "max_level_bonus": 0,
         "level": 1,
         "item_seen": true,
@@ -132004,7 +132004,7 @@
     "S4-ChallengeBundleSchedule:Season4_ProgressiveB_Schedule": {
       "templateId": "ChallengeBundleSchedule:Season4_ProgressiveB_Schedule",
       "attributes": {
-        "unlock_epoch": "2024-05-31T19:57:34.940Z",
+        "unlock_epoch": "2024-06-24T20:17:00.089Z",
         "max_level_bonus": 0,
         "level": 1,
         "item_seen": true,
@@ -132019,7 +132019,7 @@
     "S4-ChallengeBundleSchedule:Season4_StarterChallenge_Schedule": {
       "templateId": "ChallengeBundleSchedule:Season4_StarterChallenge_Schedule",
       "attributes": {
-        "unlock_epoch": "2024-05-31T19:57:34.940Z",
+        "unlock_epoch": "2024-06-24T20:17:00.089Z",
         "max_level_bonus": 0,
         "level": 1,
         "item_seen": true,
@@ -132404,7 +132404,7 @@
     "S4-Quest:Quest_BR_S4_Cumulative_CollectTokens_01": {
       "templateId": "Quest:Quest_BR_S4_Cumulative_CollectTokens_01",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132415,7 +132415,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132428,7 +132428,7 @@
     "S4-Quest:Quest_BR_S4_Cumulative_CollectTokens_02": {
       "templateId": "Quest:Quest_BR_S4_Cumulative_CollectTokens_02",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132439,7 +132439,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132452,7 +132452,7 @@
     "S4-Quest:Quest_BR_S4_Cumulative_CollectTokens_03": {
       "templateId": "Quest:Quest_BR_S4_Cumulative_CollectTokens_03",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132463,7 +132463,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132476,7 +132476,7 @@
     "S4-Quest:Quest_BR_S4_Cumulative_CollectTokens_04": {
       "templateId": "Quest:Quest_BR_S4_Cumulative_CollectTokens_04",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132487,7 +132487,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132500,7 +132500,7 @@
     "S4-Quest:Quest_BR_S4_Cumulative_CollectTokens_05": {
       "templateId": "Quest:Quest_BR_S4_Cumulative_CollectTokens_05",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132511,7 +132511,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132524,7 +132524,7 @@
     "S4-Quest:Quest_BR_S4_Cumulative_CollectTokens_06": {
       "templateId": "Quest:Quest_BR_S4_Cumulative_CollectTokens_06",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132535,7 +132535,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132548,7 +132548,7 @@
     "S4-Quest:Quest_BR_S4_Cumulative_CollectTokens_07": {
       "templateId": "Quest:Quest_BR_S4_Cumulative_CollectTokens_07",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132559,7 +132559,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132572,7 +132572,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_01": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_01",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132583,7 +132583,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132596,7 +132596,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_02": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_02",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132607,7 +132607,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132620,7 +132620,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_03": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_03",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132631,7 +132631,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132644,7 +132644,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_04": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_04",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132655,7 +132655,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132668,7 +132668,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_05": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveA_05",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132679,7 +132679,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132692,7 +132692,7 @@
     "S4-Quest:Quest_BR_Damage_SniperRifle": {
       "templateId": "Quest:Quest_BR_Damage_SniperRifle",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132703,7 +132703,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132716,7 +132716,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_FlushFactory": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_FlushFactory",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132727,7 +132727,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132740,7 +132740,7 @@
     "S4-Quest:Quest_BR_Eliminate_Weapon_Pistol": {
       "templateId": "Quest:Quest_BR_Eliminate_Weapon_Pistol",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132751,7 +132751,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132764,7 +132764,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_HauntedHills": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_HauntedHills",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132775,7 +132775,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132788,7 +132788,7 @@
     "S4-Quest:Quest_BR_Interact_FORTNITE": {
       "templateId": "Quest:Quest_BR_Interact_FORTNITE",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132799,7 +132799,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132831,7 +132831,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_01": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_01",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132842,7 +132842,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132855,7 +132855,7 @@
     "S4-Quest:Quest_BR_S4W1_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W1_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132866,7 +132866,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132885,7 +132885,7 @@
     "S4-Quest:Quest_BR_Use_PortaFort": {
       "templateId": "Quest:Quest_BR_Use_PortaFort",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132896,7 +132896,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132909,7 +132909,7 @@
     "S4-Quest:Quest_BR_Damage_SuppressedWeapon": {
       "templateId": "Quest:Quest_BR_Damage_SuppressedWeapon",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132920,7 +132920,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132933,7 +132933,7 @@
     "S4-Quest:Quest_BR_Dance_ScavengerHunt_Cameras": {
       "templateId": "Quest:Quest_BR_Dance_ScavengerHunt_Cameras",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132944,7 +132944,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132967,7 +132967,7 @@
     "S4-Quest:Quest_BR_Eliminate_ExplosiveWeapon": {
       "templateId": "Quest:Quest_BR_Eliminate_ExplosiveWeapon",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -132978,7 +132978,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -132991,7 +132991,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_TomatoTown": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_TomatoTown",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133002,7 +133002,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133015,7 +133015,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_GreasyGrove": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_GreasyGrove",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133026,7 +133026,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133039,7 +133039,7 @@
     "S4-Quest:Quest_BR_Interact_GravityStones": {
       "templateId": "Quest:Quest_BR_Interact_GravityStones",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133050,7 +133050,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133063,7 +133063,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_01": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_01",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133074,7 +133074,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133087,7 +133087,7 @@
     "S4-Quest:Quest_BR_S4W2_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W2_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133098,7 +133098,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133117,7 +133117,7 @@
     "S4-Quest:Quest_BR_Damage_Pistol": {
       "templateId": "Quest:Quest_BR_Damage_Pistol",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133128,7 +133128,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133141,7 +133141,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_TiltedTowers": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_TiltedTowers",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133152,7 +133152,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133165,7 +133165,7 @@
     "S4-Quest:Quest_BR_Eliminate_Weapon_SniperRifle": {
       "templateId": "Quest:Quest_BR_Eliminate_Weapon_SniperRifle",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133176,7 +133176,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133189,7 +133189,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_LonelyLodge": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_LonelyLodge",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133200,7 +133200,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133213,7 +133213,7 @@
     "S4-Quest:Quest_BR_Interact_RubberDuckies": {
       "templateId": "Quest:Quest_BR_Interact_RubberDuckies",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133224,7 +133224,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133256,7 +133256,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_02": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_02",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133267,7 +133267,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133280,7 +133280,7 @@
     "S4-Quest:Quest_BR_Revive": {
       "templateId": "Quest:Quest_BR_Revive",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133291,7 +133291,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133304,7 +133304,7 @@
     "S4-Quest:Quest_BR_S4W3_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W3_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133315,7 +133315,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133334,7 +133334,7 @@
     "S4-Quest:Quest_BR_Damage_AssaultRifle": {
       "templateId": "Quest:Quest_BR_Damage_AssaultRifle",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133345,7 +133345,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133358,7 +133358,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_SnobbyShores": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_SnobbyShores",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133369,7 +133369,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.940Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133382,7 +133382,7 @@
     "S4-Quest:Quest_BR_Eliminate_Trap": {
       "templateId": "Quest:Quest_BR_Eliminate_Trap",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.940Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133393,7 +133393,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133406,7 +133406,7 @@
     "S4-Quest:Quest_BR_Interact_AmmoBoxes_SingleMatch": {
       "templateId": "Quest:Quest_BR_Interact_AmmoBoxes_SingleMatch",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133417,7 +133417,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133430,7 +133430,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_WailingWoods": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_WailingWoods",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133441,7 +133441,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133454,7 +133454,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_02": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_02",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133465,7 +133465,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133478,7 +133478,7 @@
     "S4-Quest:Quest_BR_S4W4_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W4_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133489,7 +133489,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133508,7 +133508,7 @@
     "S4-Quest:Quest_BR_Visit_ScavengerHunt_StormCircles": {
       "templateId": "Quest:Quest_BR_Visit_ScavengerHunt_StormCircles",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133519,7 +133519,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133532,7 +133532,7 @@
     "S4-Quest:Quest_BR_Damage_SMG": {
       "templateId": "Quest:Quest_BR_Damage_SMG",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133543,7 +133543,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133556,7 +133556,7 @@
     "S4-Quest:Quest_BR_Dance_ScavengerHunt_Platforms": {
       "templateId": "Quest:Quest_BR_Dance_ScavengerHunt_Platforms",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133567,7 +133567,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133580,7 +133580,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_LuckyLanding": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_LuckyLanding",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133591,7 +133591,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133604,7 +133604,7 @@
     "S4-Quest:Quest_BR_Eliminate_Weapon_MinigunLMG": {
       "templateId": "Quest:Quest_BR_Eliminate_Weapon_MinigunLMG",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133615,7 +133615,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133628,7 +133628,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_DustyDivot": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_DustyDivot",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133639,7 +133639,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133652,7 +133652,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_03": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_03",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133663,7 +133663,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133676,7 +133676,7 @@
     "S4-Quest:Quest_BR_S4W5_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W5_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133687,7 +133687,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133706,7 +133706,7 @@
     "S4-Quest:Quest_BR_Use_VendingMachine": {
       "templateId": "Quest:Quest_BR_Use_VendingMachine",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133717,7 +133717,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133730,7 +133730,7 @@
     "S4-Quest:Quest_BR_Damage_Shotgun": {
       "templateId": "Quest:Quest_BR_Damage_Shotgun",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133741,7 +133741,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133754,7 +133754,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_RetailRow": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_RetailRow",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133765,7 +133765,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133778,7 +133778,7 @@
     "S4-Quest:Quest_BR_Eliminate_Weapon_SMG": {
       "templateId": "Quest:Quest_BR_Eliminate_Weapon_SMG",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133789,7 +133789,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133802,7 +133802,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_LootLake": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_LootLake",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133813,7 +133813,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133826,7 +133826,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_03": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_03",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133837,7 +133837,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133850,7 +133850,7 @@
     "S4-Quest:Quest_BR_Interact_SupplyDrops": {
       "templateId": "Quest:Quest_BR_Interact_SupplyDrops",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133861,7 +133861,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133874,7 +133874,7 @@
     "S4-Quest:Quest_BR_S4W6_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W6_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133885,7 +133885,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133904,7 +133904,7 @@
     "S4-Quest:Quest_BR_Spray_SpecificTargets": {
       "templateId": "Quest:Quest_BR_Spray_SpecificTargets",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133915,7 +133915,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133943,7 +133943,7 @@
     "S4-Quest:Quest_BR_Damage_Pickaxe": {
       "templateId": "Quest:Quest_BR_Damage_Pickaxe",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133954,7 +133954,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133967,7 +133967,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_ShiftyShafts": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_ShiftyShafts",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -133978,7 +133978,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -133991,7 +133991,7 @@
     "S4-Quest:Quest_BR_Eliminate_Weapon_AssaultRifle": {
       "templateId": "Quest:Quest_BR_Eliminate_Weapon_AssaultRifle",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134002,7 +134002,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134015,7 +134015,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_RiskyReels": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_RiskyReels",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134026,7 +134026,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134039,7 +134039,7 @@
     "S4-Quest:Quest_BR_Interact_ForagedItems": {
       "templateId": "Quest:Quest_BR_Interact_ForagedItems",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134050,7 +134050,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134063,7 +134063,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_04": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_04",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134074,7 +134074,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134087,7 +134087,7 @@
     "S4-Quest:Quest_BR_S4W7_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W7_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.090Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134098,7 +134098,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.090Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134117,7 +134117,7 @@
     "S4-Quest:Quest_BR_Score_Goals": {
       "templateId": "Quest:Quest_BR_Score_Goals",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134128,7 +134128,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134147,7 +134147,7 @@
     "S4-Quest:Quest_BR_Damage_Headshot": {
       "templateId": "Quest:Quest_BR_Damage_Headshot",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134158,7 +134158,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134171,7 +134171,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_PleasantPark": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_PleasantPark",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134182,7 +134182,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134195,7 +134195,7 @@
     "S4-Quest:Quest_BR_Eliminate_SuppressedWeapon": {
       "templateId": "Quest:Quest_BR_Eliminate_SuppressedWeapon",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134206,7 +134206,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134219,7 +134219,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_SaltySprings": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_SaltySprings",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134230,7 +134230,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134243,7 +134243,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_SingleMatch": {
       "templateId": "Quest:Quest_BR_Interact_Chests_SingleMatch",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134254,7 +134254,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134267,7 +134267,7 @@
     "S4-Quest:Quest_BR_Interact_GniceGnomes": {
       "templateId": "Quest:Quest_BR_Interact_GniceGnomes",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134278,7 +134278,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134304,7 +134304,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_04": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_04",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134315,7 +134315,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134328,7 +134328,7 @@
     "S4-Quest:Quest_BR_S4W8_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W8_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134339,7 +134339,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134358,7 +134358,7 @@
     "S4-Quest:Quest_BR_Damage_ExplosiveWeapon": {
       "templateId": "Quest:Quest_BR_Damage_ExplosiveWeapon",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134369,7 +134369,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134382,7 +134382,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_AnarchyAcres": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_AnarchyAcres",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134393,7 +134393,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134406,7 +134406,7 @@
     "S4-Quest:Quest_BR_Eliminate_Weapon_Shotgun": {
       "templateId": "Quest:Quest_BR_Eliminate_Weapon_Shotgun",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134417,7 +134417,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134430,7 +134430,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_MoistyMire": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_MoistyMire",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134441,7 +134441,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134454,7 +134454,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_05": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_TreasureMap_05",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134465,7 +134465,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134478,7 +134478,7 @@
     "S4-Quest:Quest_BR_S4W9_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W9_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134489,7 +134489,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134508,7 +134508,7 @@
     "S4-Quest:Quest_BR_Use_ShoppingCart": {
       "templateId": "Quest:Quest_BR_Use_ShoppingCart",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134519,7 +134519,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134532,7 +134532,7 @@
     "S4-Quest:Quest_BR_Visit_NamedLocations_SingleMatch": {
       "templateId": "Quest:Quest_BR_Visit_NamedLocations_SingleMatch",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134543,7 +134543,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134575,7 +134575,7 @@
     "S4-Quest:Quest_BR_Damage_Enemy_Buildings": {
       "templateId": "Quest:Quest_BR_Damage_Enemy_Buildings",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134586,7 +134586,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134599,7 +134599,7 @@
     "S4-Quest:Quest_BR_Eliminate": {
       "templateId": "Quest:Quest_BR_Eliminate",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134610,7 +134610,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134623,7 +134623,7 @@
     "S4-Quest:Quest_BR_Eliminate_Location_FatalFields": {
       "templateId": "Quest:Quest_BR_Eliminate_Location_FatalFields",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134634,7 +134634,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134647,7 +134647,7 @@
     "S4-Quest:Quest_BR_Interact_ChestAmmoBoxSupplyDrop_SingleMatch": {
       "templateId": "Quest:Quest_BR_Interact_ChestAmmoBoxSupplyDrop_SingleMatch",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134658,7 +134658,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134673,7 +134673,7 @@
     "S4-Quest:Quest_BR_Interact_Chests_Location_JunkJunction": {
       "templateId": "Quest:Quest_BR_Interact_Chests_Location_JunkJunction",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134684,7 +134684,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134697,7 +134697,7 @@
     "S4-Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_05": {
       "templateId": "Quest:Quest_BR_Interact_ScavengerHunt_Triangulate_05",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134708,7 +134708,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134721,7 +134721,7 @@
     "S4-Quest:Quest_BR_S4W10_Cumulative_CompleteAll": {
       "templateId": "Quest:Quest_BR_S4W10_Cumulative_CompleteAll",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134732,7 +134732,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134751,7 +134751,7 @@
     "S4-Quest:Quest_BR_Skydive_Rings": {
       "templateId": "Quest:Quest_BR_Skydive_Rings",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134762,7 +134762,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134775,7 +134775,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_01": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_01",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134786,7 +134786,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134799,7 +134799,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_02": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_02",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134810,7 +134810,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134823,7 +134823,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_03": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_03",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134834,7 +134834,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134847,7 +134847,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_04": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_04",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134858,7 +134858,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134871,7 +134871,7 @@
     "S4-Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_05": {
       "templateId": "Quest:Quest_BR_LevelUp_SeasonLevel_ProgressiveB_05",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134882,7 +134882,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134895,7 +134895,7 @@
     "S4-Quest:Quest_BR_Damage": {
       "templateId": "Quest:Quest_BR_Damage",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134906,7 +134906,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134919,7 +134919,7 @@
     "S4-Quest:Quest_BR_Land_Locations_Different": {
       "templateId": "Quest:Quest_BR_Land_Locations_Different",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134930,7 +134930,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134962,7 +134962,7 @@
     "S4-Quest:Quest_BR_Outlive": {
       "templateId": "Quest:Quest_BR_Outlive",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134973,7 +134973,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -134986,7 +134986,7 @@
     "S4-Quest:Quest_BR_Place_Win": {
       "templateId": "Quest:Quest_BR_Place_Win",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -134997,7 +134997,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -135010,7 +135010,7 @@
     "S4-Quest:Quest_BR_Play": {
       "templateId": "Quest:Quest_BR_Play",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -135021,7 +135021,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -135034,7 +135034,7 @@
     "S4-Quest:Quest_BR_Play_Min1Elimination": {
       "templateId": "Quest:Quest_BR_Play_Min1Elimination",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -135045,7 +135045,7 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
@@ -135058,7 +135058,7 @@
     "S4-Quest:Quest_BR_Play_Min1Friend": {
       "templateId": "Quest:Quest_BR_Play_Min1Friend",
       "attributes": {
-        "creation_time": "2024-05-31T19:57:34.941Z",
+        "creation_time": "2024-06-24T20:17:00.091Z",
         "level": -1,
         "item_seen": true,
         "playlists": [],
@@ -135069,13 +135069,37 @@
         "quest_pool": "",
         "quest_state": "Active",
         "bucket": "",
-        "last_state_change_time": "2024-05-31T19:57:34.941Z",
+        "last_state_change_time": "2024-06-24T20:17:00.091Z",
         "challenge_linked_quest_parent": "",
         "max_level_bonus": 0,
         "xp": 0,
         "quest_rarity": "uncommon",
         "favorite": false,
         "completion_battlepass_athena_friend": 0
+      },
+      "quantity": 1
+    },
+    "b1b4d9c3-4a9b-4916-a15f-0eaf8b24e472": {
+      "templateId": "Quest:AthenaDailyQuest_PlayerEliminationSniperRifles",
+      "attributes": {
+        "creation_time": "2024-06-24T20:17:00.086Z",
+        "level": -1,
+        "item_seen": false,
+        "playlists": [],
+        "sent_new_notification": true,
+        "challenge_bundle_id": "",
+        "xp_reward_scalar": 1,
+        "challenge_linked_quest_given": "",
+        "quest_pool": "",
+        "quest_state": "Active",
+        "bucket": "",
+        "last_state_change_time": "2024-06-24T20:17:00.086Z",
+        "challenge_linked_quest_parent": "",
+        "max_level_bonus": 0,
+        "xp": 0,
+        "quest_rarity": "uncommon",
+        "favorite": false,
+        "completion_athena_daily_kill_players_sniper_v2": 0
       },
       "quantity": 1
     }
@@ -135090,7 +135114,7 @@
       "favorite_victorypose": "",
       "mfa_reward_claimed": true,
       "quest_manager": {
-        "dailyLoginInterval": "2024-05-31T19:09:53.495Z",
+        "dailyLoginInterval": "2024-06-24T20:17:00.086Z",
         "dailyQuestRerolls": 1
       },
       "book_level": 1,
@@ -135148,5 +135172,5 @@
       ]
     }
   },
-  "commandRevision": 20
+  "commandRevision": 22
 }

@@ -1,10 +1,13 @@
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:reboot_launcher/src/widget/version_selector.dart';
 
-SettingTile get versionSelectSettingTile => SettingTile(
+SettingTile buildVersionSelector({
+  required GlobalKey<OverlayTargetState> key
+}) => SettingTile(
     icon: Icon(
         FluentIcons.play_24_regular
     ),
@@ -15,6 +18,9 @@ SettingTile get versionSelectSettingTile => SettingTile(
         constraints: BoxConstraints(
             minWidth: SettingTile.kDefaultContentWidth,
         ),
-        child: const VersionSelector()
+        child: OverlayTarget(
+          key: key,
+          child: const VersionSelector(),
+        )
     )
 );

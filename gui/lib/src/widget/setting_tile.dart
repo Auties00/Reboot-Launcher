@@ -1,11 +1,12 @@
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:skeletons/skeletons.dart';
 
-class SettingTile extends StatelessWidget {
+class SettingTile extends StatefulWidget {
+  static const double kDefaultHeight = 80.0;
   static const double kDefaultContentWidth = 200.0;
-  static const double kDefaultHeaderHeight = 72;
 
   final void Function()? onPressed;
   final Icon icon;
@@ -13,28 +14,38 @@ class SettingTile extends StatelessWidget {
   final Text? subtitle;
   final Widget? content;
   final double? contentWidth;
+  final Key? overlayKey;
   final List<Widget>? children;
 
   const SettingTile({
+    super.key,
     this.onPressed,
     required this.icon,
     required this.title,
     required this.subtitle,
     this.content,
     this.contentWidth = kDefaultContentWidth,
+    this.overlayKey,
     this.children
   });
-  
+
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(
-          bottom: 4.0
-      ),
-      child: HoverButton(
-        onPressed: _buildOnPressed(context),
-        builder: (context, states) => Container(
-            height: 80,
+  State<SettingTile> createState() => SettingTileState();
+}
+
+class SettingTileState extends State<SettingTile> {
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(
+        bottom: 4.0
+    ),
+    child: HoverButton(
+      onPressed: _buildOnPressed(),
+      builder: (context, states) => ConstrainedBox(
+        constraints: BoxConstraints(
+            minHeight: SettingTile.kDefaultHeight
+        ),
+        child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
                 color: ButtonThemeData.uncheckedInputColor(
@@ -42,76 +53,92 @@ class SettingTile extends StatelessWidget {
                   states,
                   transparentWhenNone: true,
                 ),
-                borderRadius: BorderRadius.all(Radius.circular(4.0))
+                borderRadius: BorderRadius.all(Radius.circular(6.0))
             ),
-            child: Card(
-                borderRadius: const BorderRadius.all(
-                    Radius.circular(4.0)
-                ),
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: 12.0,
-                      vertical: 6.0
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      icon,
-                      const SizedBox(width: 16.0),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          title == null ? _skeletonTitle : title!,
-                          subtitle == null ? _skeletonSubtitle : subtitle!,
-                        ],
-                      ),
-                      const Spacer(),
-                      _trailing
-                    ],
-                  ),
-                )
-            )
+            child: _buildBody()
         ),
       ),
+    ),
+  );
+
+  Card _buildBody() {
+    return Card(
+        borderRadius: const BorderRadius.all(
+            Radius.circular(6.0)
+        ),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: 12.0
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if(widget.overlayKey != null)
+                OverlayTarget(
+                  key: widget.overlayKey,
+                  child: widget.icon,
+                )
+              else
+                widget.icon,
+              const SizedBox(width: 16.0),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  widget.title == null ? _skeletonTitle : widget.title!,
+                  widget.subtitle == null ? _skeletonSubtitle : widget.subtitle!,
+                ],
+              ),
+              const Spacer(),
+              _trailing
+            ],
+          ),
+        )
     );
   }
 
-  void Function()? _buildOnPressed(BuildContext context) {
-    if(onPressed != null) {
-      return onPressed;
+  void Function()? _buildOnPressed() {
+    if(widget.onPressed != null) {
+      return widget.onPressed;
     }
 
-    final children = this.children;
+    final children = this.widget.children;
     if (children == null) {
       return null;
     }
 
-    return () async {
-      await Navigator.of(context).push(PageRouteBuilder(
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-          settings: RouteSettings(
-              name: title?.data
-          ),
-          pageBuilder: (context, incoming, outgoing) => ListView.builder(
-              itemCount: children.length,
-              itemBuilder: (context, index) => children[index]
-          )
-      ));
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) => pageIndex.value = pageIndex.value);
-    };
+    return () => openNestedPage();
+  }
+
+  Future<void> openNestedPage() async {
+    final children = this.widget.children;
+    if (children == null) {
+      return;
+    }
+
+    await Navigator.of(context).push(PageRouteBuilder(
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        settings: RouteSettings(
+            name: widget.title?.data
+        ),
+        pageBuilder: (context, incoming, outgoing) => ListView.builder(
+            itemCount: children.length,
+            itemBuilder: (context, index) => children[index]
+        )
+    ));
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => pageIndex.value = pageIndex.value);
   }
 
   Widget get _trailing {
-    final hasContent = content != null;
-    final hasChildren = children?.isNotEmpty == true;
-    final hasListener = onPressed != null;
+    final hasContent = widget.content != null;
+    final hasChildren = widget.children?.isNotEmpty == true;
+    final hasListener = widget.onPressed != null;
     if(hasContent && hasChildren) {
       return Row(
         children: [
           SizedBox(
-              width: contentWidth,
-              child: content
+              width: widget.contentWidth,
+              child: widget.content
           ),
           const SizedBox(width: 16.0),
           Icon(
@@ -123,8 +150,8 @@ class SettingTile extends StatelessWidget {
 
     if (hasContent) {
       return SizedBox(
-          width: contentWidth,
-          child: content
+          width: widget.contentWidth,
+          child: widget.content
       );
     }
 
