@@ -23,14 +23,29 @@ extension FortniteVersionExtension on FortniteVersion {
       return null;
     }
 
-    final lastModified = await result.lastModified();
+    final lastModified = await _getLastModifiedTime(result);
     if(lastModified != _marker) {
-      print("Applying patch");
       await Isolate.run(() => patchHeadless(result));
-      await result.setLastModified(_marker);
+      await _setLastModifiedTime(result);
     }
 
     return result;
+  }
+
+  Future<void> _setLastModifiedTime(File result) async {
+    try {
+      await result.setLastModified(_marker);
+    }catch(_) {
+      // Ignored
+    }
+  }
+
+  Future<DateTime?> _getLastModifiedTime(File result) async {
+    try {
+      return await result.lastModified();
+    }catch(_) {
+      return null;
+    }
   }
 
   File? get launcherExecutable => findExecutable(location, "FortniteLauncher.exe");
