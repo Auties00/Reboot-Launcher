@@ -1,17 +1,22 @@
 import 'dart:io';
 
+import 'package:version/version.dart';
+
 class FortniteVersion {
-  String name;
+  Version content;
   Directory location;
 
   FortniteVersion.fromJson(json)
-      : name = json["name"],
+      : content = Version.parse(json["content"]),
         location = Directory(json["location"]);
 
-  FortniteVersion({required this.name, required this.location});
+  FortniteVersion({required this.content, required this.location});
 
   Map<String, dynamic> toJson() => {
-    'name': name,
+    'content': content.toString(),
     'location': location.path
   };
+
+  @override
+  bool operator ==(Object other) => other is FortniteVersion && this.content == other.content;
 }

@@ -14,7 +14,6 @@ class BackendController extends GetxController {
   late final Rx<ServerType> type;
   late final TextEditingController gameServerAddress;
   late final FocusNode gameServerAddressFocusNode;
-  late final RxnString gameServerOwner;
   late final RxBool started;
   late final RxBool detached;
   StreamSubscription? worker;
@@ -22,7 +21,7 @@ class BackendController extends GetxController {
   HttpServer? remoteServer;
 
   BackendController() {
-    storage = appWithNoStorage ? null : GetStorage("backend");
+    storage = appWithNoStorage ? null : GetStorage("backend_storage");
     started = RxBool(false);
     type = Rx(ServerType.values.elementAt(storage?.read("type") ?? 0));
     type.listen((value) {
@@ -64,8 +63,10 @@ class BackendController extends GetxController {
       }
     });
     gameServerAddressFocusNode = FocusNode();
-    gameServerOwner = RxnString(storage?.read("game_server_owner"));
-    gameServerOwner.listen((value) => storage?.write("game_server_owner", value));
+  }
+
+  void joinLocalhost() {
+    gameServerAddress.text = kDefaultGameServerHost;
   }
 
   void reset() async {
@@ -147,12 +148,11 @@ class BackendController extends GetxController {
       switch(type()){
         case ServerType.embedded:
           final process = await startEmbeddedBackend(detached.value);
-          final processPid = process.pid;
-          watchProcess(processPid).then((value) {
-            if(started()) {
-              started.value = false;
-            }
-          });
+          watchProcess(process.pid)
+              .asStream()
+              .asBroadcastStream()
+              .where((_) => !started())
+              .map((_) => ServerResult(ServerResultType.processError));
           break;
         case ServerType.remote:
           yield ServerResult(ServerResultType.pingingRemote);

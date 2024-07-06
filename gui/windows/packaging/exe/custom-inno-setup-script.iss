@@ -19,6 +19,7 @@ WizardStyle=modern
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
+ChangesEnvironment=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -48,3 +49,8 @@ begin
     Dependency_AddVC2015To2022
 Result := True;
 end;
+
+[Registry]
+Root: HKCU; Subkey: "Environment"; ValueType:string; ValueName: "OPENSSL_ia32cap"; \
+    ValueData: "~0x20000000"; Flags: preservestringtype
+

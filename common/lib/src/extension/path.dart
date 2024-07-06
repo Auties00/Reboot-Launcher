@@ -5,9 +5,9 @@ import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
 
 extension FortniteVersionExtension on FortniteVersion {
-  static DateTime _marker = DateTime.fromMicrosecondsSinceEpoch(0);
+  static String _marker = "FortniteClient.mod";
 
-  static File? findExecutable(Directory directory, String name) {
+  static File? findFile(Directory directory, String name) {
     try{
       final result = directory.listSync(recursive: true)
           .firstWhere((element) => path.basename(element.path) == name);
@@ -18,39 +18,24 @@ extension FortniteVersionExtension on FortniteVersion {
   }
 
   Future<File?> get shippingExecutable async {
-    final result = findExecutable(location, "FortniteClient-Win64-Shipping.exe");
+    final result = findFile(location, "FortniteClient-Win64-Shipping.exe");
     if(result == null) {
       return null;
     }
 
-    final lastModified = await _getLastModifiedTime(result);
-    if(lastModified != _marker) {
-      await Isolate.run(() => patchHeadless(result));
-      await _setLastModifiedTime(result);
+    final marker = findFile(location, _marker);
+    if(marker != null) {
+      return result;
     }
 
+    await Isolate.run(() => patchHeadless(result));
+    await File("${location.path}\\$_marker").create();
     return result;
   }
 
-  Future<void> _setLastModifiedTime(File result) async {
-    try {
-      await result.setLastModified(_marker);
-    }catch(_) {
-      // Ignored
-    }
-  }
+  File? get launcherExecutable => findFile(location, "FortniteLauncher.exe");
 
-  Future<DateTime?> _getLastModifiedTime(File result) async {
-    try {
-      return await result.lastModified();
-    }catch(_) {
-      return null;
-    }
-  }
+  File? get eacExecutable => findFile(location, "FortniteClient-Win64-Shipping_EAC.exe");
 
-  File? get launcherExecutable => findExecutable(location, "FortniteLauncher.exe");
-
-  File? get eacExecutable => findExecutable(location, "FortniteClient-Win64-Shipping_EAC.exe");
-
-  File? get splashBitmap => findExecutable(location, "Splash.bmp");
+  File? get splashBitmap => findFile(location, "Splash.bmp");
 }

@@ -1,6 +1,6 @@
 name: reboot_launcher
 description: Graphical User Interface for Project Reboot
-version: "9.1.4"
+version: "9.2.0"
 
 publish_to: 'none'
 
@@ -31,7 +31,7 @@ dependencies:
   bitsdojo_window: ^0.1.5
   window_manager: ^0.3.8
 
-  # Extract zip archives (for example the reboot.zip coming from github)
+  # Extract zip archives (for example the reboot.zip)
   archive: ^3.3.1
 
   # Cryptographic functions
@@ -99,5 +99,3 @@ flutter:
     - assets/backend/public/
     - assets/backend/responses/
     - assets/build/
-    - assets/info/en/faq/
-    - assets/info/en/questions/
