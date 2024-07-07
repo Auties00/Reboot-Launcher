@@ -172,7 +172,6 @@ void _initWindow() => doWhenWindowReady(() async {
       appWindow.alignment = Alignment.center;
     }
 
-    appWindow.minSize = const Size(kDefaultWindowWidth, kDefaultWindowHeight);
     if(isWin11) {
       await Window.setEffect(
           effect: WindowEffect.acrylic,
