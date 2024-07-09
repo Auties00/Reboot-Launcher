@@ -15,7 +15,6 @@ import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/dialog.dart';
 import 'package:reboot_launcher/src/messenger/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/messenger/implementation/server.dart';
-import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/os.dart';
@@ -502,6 +501,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     if(host == null) {
       await _operation?.cancel();
       _operation = null;
+      _backendController.cancelInteractive();
     }
 
     host = host ?? widget.host;
@@ -584,6 +584,10 @@ class _LaunchButtonState extends State<LaunchButton> {
           translations.corruptedVersionError,
           severity: InfoBarSeverity.error,
           duration: infoBarLongDuration,
+            action: Button(
+              onPressed: () => launchUrl(launcherLogFile.uri),
+              child: Text(translations.openLog),
+            )
         );
         break;
       case _StopReason.corruptedDllError:

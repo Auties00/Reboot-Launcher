@@ -17,6 +17,7 @@ class BackendController extends GetxController {
   late final RxBool started;
   late final RxBool detached;
   StreamSubscription? worker;
+  int? embeddedProcessPid;
   HttpServer? localServer;
   HttpServer? remoteServer;
 
@@ -148,11 +149,7 @@ class BackendController extends GetxController {
       switch(type()){
         case ServerType.embedded:
           final process = await startEmbeddedBackend(detached.value);
-          watchProcess(process.pid)
-              .asStream()
-              .asBroadcastStream()
-              .where((_) => !started())
-              .map((_) => ServerResult(ServerResultType.processError));
+          embeddedProcessPid = process.pid;
           break;
         case ServerType.remote:
           yield ServerResult(ServerResultType.pingingRemote);
@@ -166,7 +163,15 @@ class BackendController extends GetxController {
           remoteServer = await startRemoteBackendProxy(uriResult);
           break;
         case ServerType.local:
-          if(portData != kDefaultBackendPort.toString()) {
+          if(portNumber != kDefaultBackendPort) {
+            yield ServerResult(ServerResultType.pingingLocal);
+            final uriResult = await pingBackend(kDefaultBackendHost, portNumber);
+            if(uriResult == null) {
+              yield ServerResult(ServerResultType.pingError);
+              started.value = false;
+              return;
+            }
+
             localServer = await startRemoteBackendProxy(Uri.parse("http://$kDefaultBackendHost:$portData"));
           }
 
@@ -206,7 +211,11 @@ class BackendController extends GetxController {
     try{
       switch(type()){
         case ServerType.embedded:
-          killProcessByPort(kDefaultBackendPort);
+          final embeddedProcessPid = this.embeddedProcessPid;
+          if(embeddedProcessPid != null) {
+            Process.killPid(embeddedProcessPid, ProcessSignal.sigterm);
+            this.embeddedProcessPid = null;
+          }
           break;
         case ServerType.remote:
           await remoteServer?.close(force: true);

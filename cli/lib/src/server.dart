@@ -7,7 +7,7 @@ Future<bool> startServerCli(String? host, int? port, ServerType type) async {
   stdout.writeln("Starting backend server...");
   switch(type){
     case ServerType.local:
-      var result = await pingBackend(host ?? kDefaultBackendHost, port ?? kDefaultBackendPort);
+      final result = await pingBackend(host ?? kDefaultBackendHost, port ?? kDefaultBackendPort);
       if(result == null){
         throw Exception("Local backend server is not running");
       }

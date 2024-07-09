@@ -16,7 +16,6 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/implementation/error.dart';
-import 'package:reboot_launcher/src/messenger/implementation/server.dart';
 import 'package:reboot_launcher/src/page/implementation/home_page.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -172,7 +171,6 @@ void _initWindow() => doWhenWindowReady(() async {
       appWindow.alignment = Alignment.center;
     }
 
-    appWindow.minSize = const Size(kDefaultWindowWidth, kDefaultWindowHeight);
     if(isWin11) {
       await Window.setEffect(
           effect: WindowEffect.acrylic,
