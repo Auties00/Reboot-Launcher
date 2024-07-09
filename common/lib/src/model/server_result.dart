@@ -26,8 +26,7 @@ enum ServerResultType {
   freePortError,
   pingingRemote,
   pingingLocal,
-  pingError,
-  processError;
+  pingError;
 
   bool get isError => name.contains("Error");
 
