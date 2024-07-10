@@ -105,16 +105,12 @@ class BackendController extends GetxController {
         return;
       }
 
+      final serverType = type.value;
       final hostData = this.host.text.trim();
       final portData = this.port.text.trim();
-      if(type() != ServerType.local) {
-        started.value = true;
+      started.value = true;
+      if(serverType != ServerType.local || portData != kDefaultBackendPort.toString()) {
         yield ServerResult(ServerResultType.starting);
-      }else {
-        started.value = false;
-        if(portData != kDefaultBackendPort.toString()) {
-          yield ServerResult(ServerResultType.starting);
-        }
       }
 
       if (hostData.isEmpty) {
@@ -136,7 +132,7 @@ class BackendController extends GetxController {
         return;
       }
 
-      if ((type() != ServerType.local || portData != kDefaultBackendPort.toString()) && !(await isBackendPortFree())) {
+      if ((serverType != ServerType.local || portData != kDefaultBackendPort.toString()) && !(await isBackendPortFree())) {
         yield ServerResult(ServerResultType.freeingPort);
         final result = await freeBackendPort();
         yield ServerResult(result ? ServerResultType.freePortSuccess : ServerResultType.freePortError);
@@ -146,7 +142,7 @@ class BackendController extends GetxController {
         }
       }
 
-      switch(type()){
+      switch(serverType){
         case ServerType.embedded:
           final process = await startEmbeddedBackend(detached.value);
           embeddedProcessPid = process.pid;
@@ -173,6 +169,10 @@ class BackendController extends GetxController {
             }
 
             localServer = await startRemoteBackendProxy(Uri.parse("http://$kDefaultBackendHost:$portData"));
+          }else {
+            // If the local server is running on port 3551 there is no reverse proxy running
+            // We only need to check if everything is working
+            started.value = false;
           }
 
           break;
