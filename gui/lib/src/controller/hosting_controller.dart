@@ -28,6 +28,7 @@ class HostingController extends GetxController {
   late final RxBool published;
   late final Rxn<GameInstance> instance;
   late final Rxn<Set<FortniteServer>> servers;
+  late final TextEditingController customLaunchArgs;
   late final Semaphore _semaphore;
 
   HostingController() {
@@ -62,6 +63,8 @@ class HostingController extends GetxController {
           servers.value = event;
           published.value = event.any((element) => element.id == uuid);
         });
+    customLaunchArgs = TextEditingController(text: _storage?.read("custom_launch_args") ?? "");
+    customLaunchArgs.addListener(() => _storage?.write("custom_launch_args", customLaunchArgs.text));
     _semaphore = Semaphore();
   }
 

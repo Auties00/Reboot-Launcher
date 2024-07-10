@@ -1,3 +1,4 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' show Icons;
 import 'package:get/get.dart';
@@ -23,6 +24,17 @@ Future<bool> showProfileForm(BuildContext context) async{
                   label: translations.usernameOrEmail,
                   child: TextFormBox(
                     placeholder: translations.usernameOrEmailPlaceholder,
+                    validator: (text) {
+                      if(_gameController.password.text.isEmpty) {
+                        return null;
+                      }
+
+                      if(EmailValidator.validate(_gameController.username.text)) {
+                        return null;
+                      }
+
+                      return translations.invalidEmail;
+                    },
                     controller: _gameController.username,
                     autovalidateMode: AutovalidateMode.always,
                     enableSuggestions: true,

@@ -15,10 +15,16 @@ final Semaphore _semaphore = Semaphore();
 String? _lastIp;
 String? _lastPort;
 
-Future<Process> startEmbeddedBackend(bool detached) async => startProcess(
+Future<Process> startEmbeddedBackend(bool detached) async {
+  final process = await startProcess(
     executable: backendStartExecutable,
     window: detached,
-);
+  );
+  process.stdOutput.listen((message) => log("[BACKEND] Message: $message"));
+  process.stdError.listen((error) => log("[BACKEND] Error: $error"));
+  process.exitCode.then((exitCode) => log("[BACKEND] Exit code: $exitCode"));
+  return process;
+}
 
 Future<HttpServer> startRemoteBackendProxy(Uri uri) async => await serve(proxyHandler(uri), kDefaultBackendHost, kDefaultBackendPort);
 

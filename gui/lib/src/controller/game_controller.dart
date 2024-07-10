@@ -41,8 +41,7 @@ class GameController extends GetxController {
     password = TextEditingController(text: _storage?.read("password") ?? "");
     password.addListener(() => _storage?.write("password", password.text));
     customLaunchArgs = TextEditingController(text: _storage?.read("custom_launch_args") ?? "");
-    customLaunchArgs.addListener(() =>
-        _storage?.write("custom_launch_args", customLaunchArgs.text));
+    customLaunchArgs.addListener(() => _storage?.write("custom_launch_args", customLaunchArgs.text));
     started = RxBool(false);
     instance = Rxn();
     consoleKey = Rx(_readConsoleKey());

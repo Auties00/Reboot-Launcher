@@ -251,7 +251,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         host,
         hostType,
         false,
-        ""
+        host ? _hostingController.customLaunchArgs.text : _gameController.customLaunchArgs.text
     );
     log("[${host ? 'HOST' : 'GAME'}] Generated game args: ${gameArgs.join(" ")}");
     final gameProcess = await startProcess(

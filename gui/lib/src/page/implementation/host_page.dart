@@ -200,6 +200,17 @@ class _HostingPageState extends RebootPageState<HostPage> {
     subtitle: Text(translations.settingsServerOptionsSubtitle),
     children: [
       SettingTile(
+          icon: Icon(
+              FluentIcons.options_24_regular
+          ),
+          title: Text(translations.settingsClientArgsName),
+          subtitle: Text(translations.settingsClientArgsDescription),
+          content: TextFormBox(
+            placeholder: translations.settingsClientArgsPlaceholder,
+            controller: _hostingController.customLaunchArgs,
+          )
+      ),
+      SettingTile(
         icon: Icon(
             FluentIcons.window_console_20_regular
         ),
@@ -253,7 +264,7 @@ class _HostingPageState extends RebootPageState<HostPage> {
                 FilteringTextInputFormatter.digitsOnly
               ]
           )
-      ),
+      )
     ],
   );
 

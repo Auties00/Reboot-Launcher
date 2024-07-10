@@ -1,6 +1,7 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
@@ -9,6 +10,7 @@ import 'dart:math';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
+import 'package:reboot_common/src/util/log.dart';
 import 'package:sync/semaphore.dart';
 import 'package:win32/win32.dart';
 
@@ -105,53 +107,45 @@ Future<bool> startElevatedProcess({required String executable, required String a
 }
 
 Future<Process> startProcess({required File executable, List<String>? args, bool useTempBatch = true, bool window = false, String? name, Map<String, String>? environment}) async {
+  log("[PROCESS] Starting process on ${executable.path} with $args (useTempBatch: $useTempBatch, window: $window, name: $name, environment: $environment)");
   final argsOrEmpty = args ?? [];
+  final workingDirectory = _getWorkingDirectory(executable);
   if(useTempBatch) {
     final tempScriptDirectory = await tempDirectory.createTemp("reboot_launcher_process");
-    final tempScriptFile = File("${tempScriptDirectory.path}/process.bat");
+    final tempScriptFile = File("${tempScriptDirectory.path}\\process.bat");
     final command = window ? 'cmd.exe /k ""${executable.path}" ${argsOrEmpty.join(" ")}"' : '"${executable.path}" ${argsOrEmpty.join(" ")}';
     await tempScriptFile.writeAsString(command, flush: true);
     final process = await Process.start(
         tempScriptFile.path,
         [],
-        workingDirectory: executable.parent.path,
+        workingDirectory: workingDirectory,
         environment: environment,
         mode: window ? ProcessStartMode.detachedWithStdio : ProcessStartMode.normal,
         runInShell: window
     );
-    return _withLogger(name, executable, process, window);
+    return _ExtendedProcess(process, true);
   }
 
   final process = await Process.start(
       executable.path,
       args ?? [],
-      workingDirectory: executable.parent.path,
+      workingDirectory: workingDirectory,
       mode: window ? ProcessStartMode.detachedWithStdio : ProcessStartMode.normal,
       runInShell: window
   );
-  return _withLogger(name, executable, process, window);
+  return _ExtendedProcess(process, true);
 }
 
-_ExtendedProcess _withLogger(String? name, File executable, Process process, bool window) {
-  final extendedProcess = _ExtendedProcess(process, true);
-  final loggingFile = File("${logsDirectory.path}\\${name ?? path.basenameWithoutExtension(executable.path)}-${DateTime.now().millisecondsSinceEpoch}.log");
-  loggingFile.parent.createSync(recursive: true);
-  if(loggingFile.existsSync()) {
-    loggingFile.deleteSync();
+String? _getWorkingDirectory(File executable) {
+  try {
+    log("[PROCESS] Calculating working directory for $executable");
+    final workingDirectory = executable.parent.resolveSymbolicLinksSync();
+    log("[PROCESS] Using working directory: $workingDirectory");
+    return workingDirectory;
+  }catch(error) {
+    log("[PROCESS] Cannot infer working directory: $error");
+    return null;
   }
-
-  final semaphore = Semaphore(1);
-  void logEvent(String event) async {
-      await semaphore.acquire();
-      await loggingFile.writeAsString("$event\n", mode: FileMode.append, flush: true);
-      semaphore.release();
-  }
-  extendedProcess.stdOutput.listen(logEvent);
-  extendedProcess.stdError.listen(logEvent);
-  if(!window) {
-    extendedProcess.exitCode.then((value) => logEvent("Process terminated with exit code: $value\n"));
-  }
-  return extendedProcess;
 }
 
 final _NtResumeProcess = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
@@ -203,47 +197,61 @@ Future<bool> watchProcess(int pid) async {
   return await completer.future;
 }
 
-// TODO: Template
-List<String> createRebootArgs(String username, String password, bool host, GameServerType hostType, bool log, String additionalArgs) {
+List<String> createRebootArgs(String username, String password, bool host, GameServerType hostType, bool logging, String additionalArgs) {
+  log("[PROCESS] Generating reboot args");
   if(password.isEmpty) {
     username = '${_parseUsername(username, host)}@projectreboot.dev';
   }
 
   password = password.isNotEmpty ? password : "Rebooted";
-  final args = [
-    "-epicapp=Fortnite",
-    "-epicenv=Prod",
-    "-epiclocale=en-us",
-    "-epicportal",
-    "-skippatchcheck",
-    "-nobe",
-    "-fromfl=eac",
-    "-fltoken=3db3ba5dcbd2e16703f3978d",
-    "-caldera=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ",
-    "-AUTH_LOGIN=$username",
-    "-AUTH_PASSWORD=${password.isNotEmpty ? password : "Rebooted"}",
-    "-AUTH_TYPE=epic"
-  ];
+  final args = LinkedHashMap<String, String>(
+      equals: (a, b) => a.toUpperCase() == b.toUpperCase(),
+      hashCode: (a) => a.toUpperCase().hashCode
+  );
+  args.addAll({
+    "-epicapp": "Fortnite",
+    "-epicenv": "Prod",
+    "-epiclocale": "en-us",
+    "-epicportal": "",
+    "-skippatchcheck": "",
+    "-nobe": "",
+    "-fromfl": "eac",
+    "-fltoken": "3db3ba5dcbd2e16703f3978d",
+    "-caldera": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X2lkIjoiYmU5ZGE1YzJmYmVhNDQwN2IyZjQwZWJhYWQ4NTlhZDQiLCJnZW5lcmF0ZWQiOjE2Mzg3MTcyNzgsImNhbGRlcmFHdWlkIjoiMzgxMGI4NjMtMmE2NS00NDU3LTliNTgtNGRhYjNiNDgyYTg2IiwiYWNQcm92aWRlciI6IkVhc3lBbnRpQ2hlYXQiLCJub3RlcyI6IiIsImZhbGxiYWNrIjpmYWxzZX0.VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ",
+    "-AUTH_LOGIN": username,
+    "-AUTH_PASSWORD": password.isNotEmpty ? password : "Rebooted",
+    "-AUTH_TYPE": "epic"
+  });
 
-  if(log) {
-    args.add("-log");
+  if(logging) {
+    args["-log"] = "";
   }
 
   if(host) {
-    args.addAll([
-      "-nosplash",
-      "-nosound"
-    ]);
+    args["-nosplash"] = "";
+    args["-nosound"] = "";
     if(hostType == GameServerType.headless){
-      args.add("-nullrhi");
+      args["-nullrhi"] = "";
     }
   }
 
-  if(additionalArgs.isNotEmpty){
-    args.addAll(additionalArgs.split(" "));
+  log("[PROCESS] Default args: $args");
+  log("[PROCESS] Adding custom args: $additionalArgs");
+  for(final additionalArg in additionalArgs.split(" ")) {
+    log("[PROCESS] Processing custom arg: $additionalArg");
+    final separatorIndex = additionalArg.indexOf("=");
+    final argName = separatorIndex == -1 ? additionalArg : additionalArg.substring(0, separatorIndex);
+    log("[PROCESS] Custom arg key: $argName");
+    final argValue = separatorIndex == -1 || separatorIndex + 1 >= additionalArg.length ? "" : additionalArg.substring(separatorIndex + 1);
+    log("[PROCESS] Custom arg value: $argValue");
+    args[argName] = argValue;
+    log("[PROCESS] Updated args: $args");
   }
 
-  return args;
+  log("[PROCESS] Final args result: $args");
+  return args.entries
+      .map((entry) => entry.value.isEmpty ? entry.key : "${entry.key}=${entry.value}")
+      .toList();
 }
 
 void handleGameOutput({
@@ -257,16 +265,22 @@ void handleGameOutput({
   required void Function() onBuildCorrupted,
 }) {
   if (line.contains(kShutdownLine)) {
+    log("[FORTNITE_OUTPUT_HANDLER] Detected shutdown: $line");
     onShutdown();
   }else if(kCorruptedBuildErrors.any((element) => line.contains(element))){
+    log("[FORTNITE_OUTPUT_HANDLER] Detected corrupt build: $line");
     onBuildCorrupted();
   }else if(kCannotConnectErrors.any((element) => line.contains(element))){
+    log("[FORTNITE_OUTPUT_HANDLER] Detected cannot connect error: $line");
     onTokenError();
   }else if(kLoggedInLines.every((entry) => line.contains(entry))) {
+    log("[FORTNITE_OUTPUT_HANDLER] Detected logged in: $line");
     onLoggedIn();
   }else if(line.contains(kGameFinishedLine) && host) {
+    log("[FORTNITE_OUTPUT_HANDLER] Detected match end: $line");
     onMatchEnd();
   }else if(line.contains(kDisplayInitializedLine) && host) {
+    log("[FORTNITE_OUTPUT_HANDLER] Detected display attach: $line");
     onDisplayAttached();
   }
 }

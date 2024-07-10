@@ -14,9 +14,6 @@ Directory get assetsDirectory {
   return installationDirectory;
 }
 
-Directory get logsDirectory =>
-    Directory("${installationDirectory.path}\\logs");
-
 Directory get settingsDirectory =>
     Directory("${installationDirectory.path}\\settings");
 
