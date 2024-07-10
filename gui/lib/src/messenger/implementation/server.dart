@@ -307,7 +307,9 @@ extension ServerControllerDialog on BackendController {
       onDismissed: onDismissed,
       action: action
     );
-    _infoBars.add(result);
+    if(severity == InfoBarSeverity.info || severity == InfoBarSeverity.success) {
+      _infoBars.add(result);
+    }
     return result;
   }
 }
