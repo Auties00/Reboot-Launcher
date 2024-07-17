@@ -6,7 +6,7 @@ Directory get installationDirectory =>
 Directory get dllsDirectory => Directory("${installationDirectory.path}\\dlls");
 
 Directory get assetsDirectory {
-  var directory = Directory("${installationDirectory.path}\\data\\flutter_assets\\assets");
+  final directory = Directory("${installationDirectory.path}\\data\\flutter_assets\\assets");
   if(directory.existsSync()) {
     return directory;
   }

@@ -3,10 +3,10 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:ffi/ffi.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:win32/win32.dart';
-import 'package:file_picker/file_picker.dart';
 
 final RegExp _winBuildRegex = RegExp(r'(?<=\(Build )(.*)(?=\))');
 

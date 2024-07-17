@@ -4,6 +4,11 @@ class ServerResult {
   final StackTrace? stackTrace;
 
   ServerResult(this.type, {this.error, this.stackTrace});
+
+  @override
+  String toString() {
+    return 'ServerResult{type: $type, error: $error, stackTrace: $stackTrace}';
+  }
 }
 
 enum ServerResultType {

@@ -12,15 +12,14 @@ import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/controller/update_controller.dart';
-import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
-import 'package:reboot_launcher/src/dialog/implementation/dll.dart';
-import 'package:reboot_launcher/src/dialog/implementation/server.dart';
+import 'package:reboot_launcher/src/messenger/abstract/dialog.dart';
+import 'package:reboot_launcher/src/messenger/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
+import 'package:reboot_launcher/src/messenger/implementation/dll.dart';
+import 'package:reboot_launcher/src/messenger/implementation/server.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_suggestion.dart';
 import 'package:reboot_launcher/src/page/pages.dart';
-import 'package:reboot_launcher/src/util/dll.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
@@ -29,9 +28,12 @@ import 'package:reboot_launcher/src/widget/profile_tile.dart';
 import 'package:reboot_launcher/src/widget/title_bar.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'info_page.dart';
+final GlobalKey<OverlayTargetState> profileOverlayKey = GlobalKey();
 
 class HomePage extends StatefulWidget {
+  static const double kDefaultPadding = 12.0;
+  static const double kTitleBarHeight = 32;
+
   const HomePage({Key? key}) : super(key: key);
 
   @override
@@ -39,16 +41,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepAliveClientMixin {
-  static const double _kDefaultPadding = 12.0;
-
   final BackendController _backendController = Get.find<BackendController>();
   final HostingController _hostingController = Get.find<HostingController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
-  final UpdateController _updateController = Get.find<UpdateController>();
   final GlobalKey _searchKey = GlobalKey();
   final FocusNode _searchFocusNode = FocusNode();
   final TextEditingController _searchController = TextEditingController();
   final RxBool _focused = RxBool(true);
+  final PageController _pageController = PageController(keepPage: true, initialPage: pageIndex.value);
 
   @override
   bool get wantKeepAlive => true;
@@ -56,11 +56,25 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   @override
   void initState() {
     super.initState();
+    windowManager.setPreventClose(true);
     windowManager.addListener(this);
+    _syncPageViewWithNavigator();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUpdates();
       _initAppLink();
       _checkGameServer();
+    });
+  }
+
+  void _syncPageViewWithNavigator() {
+    var lastPage = pageIndex.value;
+    pageIndex.listen((index) {
+      if(index == lastPage) {
+        return;
+      }
+
+      lastPage = index;
+      _pageController.jumpToPage(index);
     });
   }
 
@@ -78,9 +92,9 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     final uuid = uri.host;
     final server = _hostingController.findServerById(uuid);
     if(server != null) {
-      _backendController.joinServer(_hostingController.uuid, server);
+      _backendController.joinServerInteractive(_hostingController.uuid, server);
     }else {
-      showInfoBar(
+      showRebootInfoBar(
           translations.noServerFound,
           duration: infoBarLongDuration,
           severity: InfoBarSeverity.error
@@ -100,10 +114,9 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
         return;
       }
 
-      var oldOwner = _backendController.gameServerOwner.value;
-      _backendController.joinLocalHost();
-      WidgetsBinding.instance.addPostFrameCallback((_) => showInfoBar(
-          oldOwner == null ? translations.serverNoLongerAvailableUnnamed : translations.serverNoLongerAvailable(oldOwner),
+      _backendController.joinLocalhost();
+      WidgetsBinding.instance.addPostFrameCallback((_) => showRebootInfoBar(
+          translations.serverNoLongerAvailableUnnamed,
           severity: InfoBarSeverity.warning,
           duration: infoBarLongDuration
       ));
@@ -114,27 +127,34 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   }
 
   void _checkUpdates() {
-    _updateController.notifyLauncherUpdate();
+    _settingsController.notifyLauncherUpdate();
 
     if(!dllsDirectory.existsSync()) {
       dllsDirectory.createSync(recursive: true);
     }
 
     for(final injectable in InjectableDll.values) {
-      downloadCriticalDllInteractive(
-          injectable.path,
-          silent: true
-      );
+      final (file, custom) = _settingsController.getInjectableData(injectable);
+      if(!custom) {
+        _settingsController.downloadCriticalDllInteractive(
+            file.path,
+            silent: true
+        );
+      }
     }
 
     watchDlls().listen((filePath) => showDllDeletedDialog(() {
-      downloadCriticalDllInteractive(filePath);
+      _settingsController.downloadCriticalDllInteractive(filePath);
     }));
   }
 
   @override
-  void onWindowClose() {
-    exit(0); // Force closing
+  void onWindowClose() async {
+    try {
+      await _hostingController.discardServer();
+    }finally {
+      exit(0); // Force closing
+    }
   }
 
   @override
@@ -153,7 +173,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
 
   @override
   void onWindowBlur() {
-    _focused.value = false;
+    _focused.value = !_focused.value;
   }
 
   @override
@@ -219,136 +239,363 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   }
 
   @override
+  void onWindowEvent(String eventName) {
+    if(eventName != "move") {
+      WidgetsBinding.instance.addPostFrameCallback((_) => log("[WINDOW] Event: $eventName ${_focused.value}"));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     _settingsController.language.value;
     loadTranslations(context);
-    // InfoPage.initInfoTiles();
     return Obx(() {
-      return NavigationPaneTheme(
-          data: NavigationPaneThemeData(
-            backgroundColor: FluentTheme.of(context).micaBackgroundColor.withOpacity(0.93),
-          ),
-          child: NavigationView(
-              paneBodyBuilder: (pane, body) => _PaneBody(
-                  padding: _kDefaultPadding,
-                  controller: pagesController,
-                  body: body
-              ),
-              appBar: NavigationAppBar(
-                height: 32,
-                title: _draggableArea,
-                actions: WindowTitleBar(focused: _focused()),
-                leading: _backButton,
-                automaticallyImplyLeading: false,
-              ),
-              pane: NavigationPane(
-                  selected: pageIndex.value,
-                  onChanged: (index) {
-                    final lastPageIndex = pageIndex.value;
-                    if(lastPageIndex != index) {
-                      pageIndex.value = index;
-                    }else if(pageStack.isNotEmpty) {
-                      Navigator.of(pageKey.currentContext!).pop();
-                      final element = pageStack.removeLast();
-                      appStack.remove(element);
-                      pagesController.add(null);
-                    }
-                  },
-                  menuButton: const SizedBox(),
-                  displayMode: PaneDisplayMode.open,
-                  items: _items,
-                  customPane: _CustomPane(_settingsController),
-                  header: const ProfileWidget(),
-                  autoSuggestBox: _autoSuggestBox,
-                  indicator: const StickyNavigationIndicator(
-                      duration: Duration(milliseconds: 500),
-                      curve: Curves.easeOut,
-                      indicatorSize: 3.25
+      return Container(
+        color: FluentTheme.of(context).micaBackgroundColor.withOpacity(0.93),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: HomePage.kTitleBarHeight,
+              child: Row(
+                children: [
+                  _backButton,
+                  Expanded(child: _draggableArea),
+                  WindowTitleBar(focused: _focused())
+                ],
+              )
+            ),
+            Expanded(
+              child: Navigator(
+                key: appNavigatorKey,
+                onPopPage: (page, data) => false,
+                pages: [
+                  MaterialPage(
+                    child: Overlay(
+                      key: appOverlayKey,
+                      initialEntries: [
+                        OverlayEntry(
+                            maintainState: true,
+                            builder: (context) => Row(
+                              children: [
+                                _buildLateralView(),
+                                _buildBody()
+                              ],
+                            )
+                        )
+                      ],
+                    ),
                   )
-              ),
-              contentShape: const RoundedRectangleBorder(),
-              onOpenSearch: () => _searchFocusNode.requestFocus(),
-              transitionBuilder: (child, animation) => child
-          )
+                ],
+              )
+            )
+          ],
+        ),
       );
     });
+  }
+
+  Widget _buildBody() {
+    return Expanded(
+      child: Padding(
+          padding: EdgeInsets.only(
+              left: HomePage.kDefaultPadding,
+              right: HomePage.kDefaultPadding * 2,
+              top: HomePage.kDefaultPadding,
+              bottom: HomePage.kDefaultPadding * 2
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                      maxWidth: 1000
+                  ),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        _buildBodyHeader(),
+                        const SizedBox(height: 24.0),
+                        Expanded(
+                            child: Stack(
+                              fit: StackFit.loose,
+                              children: [
+                                _buildBodyContent(),
+                                InfoBarArea(
+                                    key: infoBarAreaKey
+                                )
+                              ],
+                            )
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            ],
+          )
+      ),
+    );
+  }
+
+  Widget _buildBodyContent() => PageView.builder(
+      controller: _pageController,
+      itemBuilder: (context, index) => Navigator(
+        onPopPage: (page, data) => true,
+        observers: [
+          _NestedPageObserver(
+              onChanged: (routeName) {
+                if(routeName != null) {
+                  pageIndex.refresh();
+                  addSubPageToStack(routeName);
+                  pagesController.add(null);
+                }
+              }
+          )
+        ],
+        pages: [
+          MaterialPage(
+              child: KeyedSubtree(
+                  key: getPageKeyByIndex(index),
+                  child: pages[index]
+              )
+          )
+        ],
+      ),
+      itemCount: pages.length
+  );
+
+  Widget _buildBodyHeader() {
+    final themeMode = _settingsController.themeMode.value;
+    final inactiveColor = themeMode == ThemeMode.dark
+        || (themeMode == ThemeMode.system && isDarkMode) ? Colors.grey[60] : Colors.grey[100];
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: StreamBuilder(
+          stream: pagesController.stream,
+          builder: (context, _) {
+            final elements = <TextSpan>[];
+            elements.add(_buildBodyHeaderRootPage(inactiveColor));
+            for(var i = pageStack.length - 1; i >= 0; i--) {
+              var innerPage = pageStack.elementAt(i);
+              innerPage = innerPage.substring(innerPage.indexOf("_") + 1);
+              elements.add(_buildBodyHeaderPageSeparator(inactiveColor));
+              elements.add(_buildBodyHeaderNestedPage(innerPage, i, inactiveColor));
+            }
+
+            return Text.rich(
+              TextSpan(
+                  children: elements
+              ),
+              style: TextStyle(
+                  fontSize: 32.0,
+                  fontWeight: FontWeight.w600
+              ),
+            );
+          }
+      ),
+    );
+  }
+
+  TextSpan _buildBodyHeaderRootPage(Color inactiveColor) => TextSpan(
+      text: pages[pageIndex.value].name,
+      recognizer: pageStack.isNotEmpty ? (TapGestureRecognizer()..onTap = () {
+        if(inDialog) {
+          return;
+        }
+
+        for(var i = 0; i < pageStack.length; i++) {
+          Navigator.of(pageKey.currentContext!).pop();
+          final element = pageStack.removeLast();
+          appStack.remove(element);
+        }
+
+        pagesController.add(null);
+      }) : null,
+      style: TextStyle(
+          color: pageStack.isNotEmpty ? inactiveColor : null
+      )
+  );
+
+  TextSpan _buildBodyHeaderPageSeparator(Color inactiveColor) => TextSpan(
+      text: " > ",
+      style: TextStyle(
+          color: inactiveColor
+      )
+  );
+
+  TextSpan _buildBodyHeaderNestedPage(String nestedPageName, int nestedPageIndex, Color inactiveColor) => TextSpan(
+      text: nestedPageName,
+      recognizer: nestedPageIndex == pageStack.length - 1 ? null : (TapGestureRecognizer()..onTap = () {
+        if(inDialog) {
+          return;
+        }
+
+        for(var j = 0; j < nestedPageIndex - 1; j++) {
+          Navigator.of(pageKey.currentContext!).pop();
+          final element = pageStack.removeLast();
+          appStack.remove(element);
+        }
+        pagesController.add(null);
+      }),
+      style: TextStyle(
+          color: nestedPageIndex == pageStack.length - 1 ? null : inactiveColor
+      )
+  );
+
+  Widget _buildLateralView() => SizedBox(
+    width: 310,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ProfileWidget(
+          overlayKey: profileOverlayKey
+        ),
+        _autoSuggestBox,
+        const SizedBox(height: 12.0),
+        _buildNavigationTrail()
+      ],
+    ),
+  );
+
+  Widget _buildNavigationTrail() => Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: 16.0
+        ),
+        child: Scrollbar(
+          child: ListView.separated(
+            primary: true,
+            itemCount: pages.length,
+            separatorBuilder: (context, index) => const SizedBox(
+                height: 4.0
+            ),
+            itemBuilder: (context, index) => _buildNavigationItem(pages[index]),
+          ),
+        ),
+      )
+  );
+
+  Widget _buildNavigationItem(RebootPage page) {
+    final index = page.type.index;
+    return OverlayTarget(
+      key: getOverlayTargetKeyByPage(index),
+      child: HoverButton(
+        onPressed: () {
+          final lastPageIndex = pageIndex.value;
+          if(lastPageIndex != index) {
+            pageIndex.value = index;
+          }else if(pageStack.isNotEmpty) {
+            Navigator.of(pageKey.currentContext!).pop();
+            final element = pageStack.removeLast();
+            appStack.remove(element);
+            pagesController.add(null);
+          }
+        },
+        builder: (context, states) => Obx(() => Container(
+          height: 36,
+          decoration: BoxDecoration(
+              color: ButtonThemeData.uncheckedInputColor(
+                FluentTheme.of(context),
+                pageIndex.value == index ? {ButtonStates.hovering} : states,
+                transparentWhenNone: true,
+              ),
+              borderRadius: BorderRadius.all(Radius.circular(6.0))
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 8.0
+            ),
+            child: Row(
+              children: [
+                SizedBox.square(
+                    dimension: 24,
+                    child: Image.asset(page.iconAsset)
+                ),
+                const SizedBox(width: 12.0),
+                Text(page.name)
+              ],
+            ),
+          ),
+        )),
+      ),
+    );
   }
 
   Widget get _backButton => StreamBuilder(
       stream: pagesController.stream,
       builder: (context, _) => Button(
-          style: ButtonStyle(
-              padding: ButtonState.all(const EdgeInsets.only(top: 6.0)),
-              backgroundColor: ButtonState.all(Colors.transparent),
-              shape: ButtonState.all(Border())
-          ),
-          onPressed: appStack.isEmpty && !inDialog ? null : () {
-            if(inDialog) {
-              Navigator.of(appKey.currentContext!).pop();
-            }else {
-              final lastPage = appStack.removeLast();
-              pageStack.remove(lastPage);
-              if (lastPage is int) {
-                hitBack = true;
-                pageIndex.value = lastPage;
-              } else {
-                Navigator.of(pageKey.currentContext!).pop();
-              }
+        style: ButtonStyle(
+            padding: ButtonState.all(const EdgeInsets.symmetric(
+              vertical: 12.0,
+              horizontal: 16.0
+            )),
+            backgroundColor: ButtonState.all(Colors.transparent),
+            shape: ButtonState.all(Border())
+        ),
+        onPressed: appStack.isEmpty && !inDialog ? null : () {
+          if(inDialog) {
+            Navigator.of(appNavigatorKey.currentContext!).pop();
+          }else {
+            final lastPage = appStack.removeLast();
+            pageStack.remove(lastPage);
+            if (lastPage is int) {
+              hitBack = true;
+              pageIndex.value = lastPage;
+            } else {
+              Navigator.of(pageKey.currentContext!).pop();
             }
-            pagesController.add(null);
-          },
-          child: const Icon(FluentIcons.back, size: 12.0),
-        )
+          }
+          pagesController.add(null);
+        },
+        child: const Icon(FluentIcons.back, size: 12.0),
+      )
   );
 
   GestureDetector get _draggableArea => GestureDetector(
       onDoubleTap: appWindow.maximizeOrRestore,
-      onHorizontalDragStart: (_) => appWindow.startDragging(),
-      onVerticalDragStart: (_) => appWindow.startDragging()
+      onHorizontalDragStart: (_) => windowManager.startDragging(),
+      onVerticalDragStart: (_) => windowManager.startDragging()
   );
 
-  Widget get _autoSuggestBox => Obx(() {
-    final firstRun = _settingsController.firstRun.value;
-    return Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 16.0,
-            vertical: 8.0
+  Widget get _autoSuggestBox => Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 16.0,
+          vertical: 8.0
+      ),
+      child: AutoSuggestBox<PageSuggestion>(
+        key: _searchKey,
+        controller: _searchController,
+        placeholder: translations.find,
+        focusNode: _searchFocusNode,
+        selectionHeightStyle: BoxHeightStyle.max,
+        itemBuilder: (context, item) => ListTile(
+            onPressed: () {
+              pageIndex.value = item.value.pageIndex;
+              _searchController.clear();
+              _searchFocusNode.unfocus();
+            },
+            leading: item.child,
+            title: Text(
+                item.value.name,
+                overflow: TextOverflow.clip,
+                maxLines: 1
+            )
         ),
-        child: AutoSuggestBox<PageSuggestion>(
-          key: _searchKey,
-          controller: _searchController,
-          enabled: !firstRun,
-          placeholder: translations.find,
-          focusNode: _searchFocusNode,
-          selectionHeightStyle: BoxHeightStyle.max,
-          itemBuilder: (context, item) => ListTile(
-              onPressed: () {
-                pageIndex.value = item.value.pageIndex;
-                _searchController.clear();
-                _searchFocusNode.unfocus();
-              },
-              leading: item.child,
-              title: Text(
-                  item.value.name,
-                  overflow: TextOverflow.clip,
-                  maxLines: 1
-              )
-          ),
-          items: _suggestedItems,
-          autofocus: true,
-          trailingIcon: IgnorePointer(
-              child: IconButton(
-                onPressed: () {},
-                icon: Transform.flip(
-                    flipX: true,
-                    child: const Icon(FluentIcons.search)
-                ),
-              )
-          ),
-        )
-    );
-  });
+        items: _suggestedItems,
+        autofocus: true,
+        trailingIcon: IgnorePointer(
+            child: IconButton(
+              onPressed: () {},
+              icon: Transform.flip(
+                  flipX: true,
+                  child: const Icon(FluentIcons.search)
+              ),
+            )
+        ),
+      )
+  );
 
   List<AutoSuggestBoxItem<PageSuggestion>> get _suggestedItems => pages.mapMany((page) {
     final pageIcon = SizedBox.square(
@@ -367,282 +614,6 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     ));
     return results;
   }).toList();
-
-  List<NavigationPaneItem> get _items => pages.map((page) => _createItem(page)).toList();
-
-  NavigationPaneItem _createItem(RebootPage page) => PaneItem(
-      title: Text(page.name),
-      icon: SizedBox.square(
-          dimension: 24,
-          child: Image.asset(page.iconAsset)
-      ),
-      body: page
-  );
-}
-
-class _PaneBody extends StatefulWidget {
-  const _PaneBody({
-    required this.padding,
-    required this.controller,
-    required this.body
-  });
-
-  final double padding;
-  final StreamController<void> controller;
-  final Widget? body;
-
-  @override
-  State<_PaneBody> createState() => _PaneBodyState();
-}
-
-class _PaneBodyState extends State<_PaneBody> with AutomaticKeepAliveClientMixin {
-  final SettingsController _settingsController = Get.find<SettingsController>();
-  final PageController _pageController = PageController(keepPage: true, initialPage: pageIndex.value);
-
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  void initState() {
-    super.initState();
-    var lastPage = pageIndex.value;
-    pageIndex.listen((index) {
-      if(index == lastPage) {
-        return;
-      }
-
-      lastPage = index;
-      _pageController.jumpToPage(index);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    final themeMode = _settingsController.themeMode.value;
-    final inactiveColor = themeMode == ThemeMode.dark
-        || (themeMode == ThemeMode.system && isDarkMode) ? Colors.grey[60] : Colors.grey[100];
-    return Padding(
-        padding: EdgeInsets.only(
-            left: widget.padding,
-            right: widget.padding * 2,
-            top: widget.padding,
-            bottom: widget.padding * 2
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxWidth: 1000
-                ),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: StreamBuilder(
-                            stream: widget.controller.stream,
-                            builder: (context, _) {
-                              final elements = <TextSpan>[];
-                              elements.add(TextSpan(
-                                  text: pages[pageIndex.value].name,
-                                  recognizer: pageStack.isNotEmpty ? (TapGestureRecognizer()..onTap = () {
-                                    if(inDialog) {
-                                      return;
-                                    }
-
-                                    for(var i = 0; i < pageStack.length; i++) {
-                                      Navigator.of(pageKey.currentContext!).pop();
-                                      final element = pageStack.removeLast();
-                                      appStack.remove(element);
-                                    }
-
-                                    widget.controller.add(null);
-                                  }) : null,
-                                  style: TextStyle(
-                                      color: pageStack.isNotEmpty ? inactiveColor : null
-                                  )
-                              ));
-                              for(var i = pageStack.length - 1; i >= 0; i--) {
-                                var innerPage = pageStack.elementAt(i);
-                                innerPage = innerPage.substring(innerPage.indexOf("_") + 1);
-                                elements.add(TextSpan(
-                                    text: " > ",
-                                    style: TextStyle(
-                                        color: inactiveColor
-                                    )
-                                ));
-                                elements.add(TextSpan(
-                                    text: innerPage,
-                                    recognizer: i == pageStack.length - 1 ? null : (TapGestureRecognizer()..onTap = () {
-                                      if(inDialog) {
-                                        return;
-                                      }
-
-                                      for(var j = 0; j < i - 1; j++) {
-                                        Navigator.of(pageKey.currentContext!).pop();
-                                        final element = pageStack.removeLast();
-                                        appStack.remove(element);
-                                      }
-                                      widget.controller.add(null);
-                                    }),
-                                    style: TextStyle(
-                                        color: i == pageStack.length - 1 ? null : inactiveColor
-                                    )
-                                ));
-                              }
-
-                              return Text.rich(
-                                TextSpan(
-                                    children: elements
-                                ),
-                                style: TextStyle(
-                                    fontSize: 32.0,
-                                    fontWeight: FontWeight.w600
-                                ),
-                              );
-                            }
-                        ),
-                      ),
-                      const SizedBox(height: 24.0),
-                      Expanded(
-                          child: Stack(
-                            fit: StackFit.loose,
-                            children: [
-                              PageView.builder(
-                                  controller: _pageController,
-                                  itemBuilder: (context, index) => Navigator(
-                                    onPopPage: (page, data) => true,
-                                    observers: [
-                                      _NestedPageObserver(
-                                          onChanged: (routeName) {
-                                            if(routeName != null) {
-                                              pageIndex.refresh();
-                                              addSubPageToStack(routeName);
-                                              widget.controller.add(null);
-                                            }
-                                          }
-                                      )
-                                    ],
-                                    pages: [
-                                      MaterialPage(
-                                          child: KeyedSubtree(
-                                              key: getPageKeyByIndex(index),
-                                              child: widget.body ?? const SizedBox.shrink()
-                                          )
-                                      )
-                                    ],
-                                  ),
-                                  itemCount: pages.length
-                              ),
-                              InfoBarArea(
-                                key: infoBarAreaKey
-                              )
-                            ],
-                          )
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          ],
-        )
-    );
-  }
-}
-
-class _CustomPane extends NavigationPaneWidget {
-  final SettingsController settingsController;
-  _CustomPane(this.settingsController);
-
-  @override
-  Widget build(BuildContext context, NavigationPaneWidgetData data) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      data.appBar,
-      Expanded(
-        child: Navigator(
-          key: appKey,
-          onPopPage: (page, data) => false,
-          pages: [
-            MaterialPage(
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 310,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          data.pane.header ?? const SizedBox.shrink(),
-                          data.pane.autoSuggestBox ?? const SizedBox.shrink(),
-                          const SizedBox(height: 12.0),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0
-                              ),
-                              child: Scrollbar(
-                                controller: data.scrollController,
-                                child: ListView.separated(
-                                  controller: data.scrollController,
-                                  itemCount: data.pane.items.length,
-                                  separatorBuilder: (context, index) => const SizedBox(
-                                      height: 4.0
-                                  ),
-                                  itemBuilder: (context, index) {
-                                    final item = data.pane.items[index] as PaneItem;
-                                    return Obx(() {
-                                      final firstRun = settingsController.firstRun.value;
-                                      return HoverButton(
-                                        onPressed: firstRun ? null : () => data.pane.onChanged?.call(index),
-                                        builder: (context, states) => Container(
-                                          height: 36,
-                                          decoration: BoxDecoration(
-                                              color: ButtonThemeData.uncheckedInputColor(
-                                                FluentTheme.of(context),
-                                                item == data.pane.selectedItem ? {ButtonStates.hovering} : states,
-                                                transparentWhenNone: true,
-                                              ),
-                                              borderRadius: BorderRadius.all(Radius.circular(6.0))
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8.0
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                data.pane.indicator ?? const SizedBox.shrink(),
-                                                item.icon,
-                                                const SizedBox(width: 12.0),
-                                                item.title ?? const SizedBox.shrink()
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                        child: data.content
-                    )
-                  ],
-                )
-            )
-          ],
-        ),
-
-      )
-    ],
-  );
 }
 
 class _NestedPageObserver extends NavigatorObserver {

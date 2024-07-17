@@ -14,15 +14,15 @@ class BackendController extends GetxController {
   late final Rx<ServerType> type;
   late final TextEditingController gameServerAddress;
   late final FocusNode gameServerAddressFocusNode;
-  late final RxnString gameServerOwner;
   late final RxBool started;
   late final RxBool detached;
   StreamSubscription? worker;
+  int? embeddedProcessPid;
   HttpServer? localServer;
   HttpServer? remoteServer;
 
   BackendController() {
-    storage = appWithNoStorage ? null : GetStorage("backend");
+    storage = appWithNoStorage ? null : GetStorage("backend_storage");
     started = RxBool(false);
     type = Rx(ServerType.values.elementAt(storage?.read("type") ?? 0));
     type.listen((value) {
@@ -64,8 +64,10 @@ class BackendController extends GetxController {
       }
     });
     gameServerAddressFocusNode = FocusNode();
-    gameServerOwner = RxnString(storage?.read("game_server_owner"));
-    gameServerOwner.listen((value) => storage?.write("game_server_owner", value));
+  }
+
+  void joinLocalhost() {
+    gameServerAddress.text = kDefaultGameServerHost;
   }
 
   void reset() async {
@@ -147,12 +149,7 @@ class BackendController extends GetxController {
       switch(type()){
         case ServerType.embedded:
           final process = await startEmbeddedBackend(detached.value);
-          final processPid = process.pid;
-          watchProcess(processPid).then((value) {
-            if(started()) {
-              started.value = false;
-            }
-          });
+          embeddedProcessPid = process.pid;
           break;
         case ServerType.remote:
           yield ServerResult(ServerResultType.pingingRemote);
@@ -166,7 +163,15 @@ class BackendController extends GetxController {
           remoteServer = await startRemoteBackendProxy(uriResult);
           break;
         case ServerType.local:
-          if(portData != kDefaultBackendPort.toString()) {
+          if(portNumber != kDefaultBackendPort) {
+            yield ServerResult(ServerResultType.pingingLocal);
+            final uriResult = await pingBackend(kDefaultBackendHost, portNumber);
+            if(uriResult == null) {
+              yield ServerResult(ServerResultType.pingError);
+              started.value = false;
+              return;
+            }
+
             localServer = await startRemoteBackendProxy(Uri.parse("http://$kDefaultBackendHost:$portData"));
           }
 
@@ -206,7 +211,11 @@ class BackendController extends GetxController {
     try{
       switch(type()){
         case ServerType.embedded:
-          killProcessByPort(kDefaultBackendPort);
+          final embeddedProcessPid = this.embeddedProcessPid;
+          if(embeddedProcessPid != null) {
+            Process.killPid(embeddedProcessPid, ProcessSignal.sigterm);
+            this.embeddedProcessPid = null;
+          }
           break;
         case ServerType.remote:
           await remoteServer?.close(force: true);

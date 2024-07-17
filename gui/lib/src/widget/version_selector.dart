@@ -1,31 +1,25 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:fluent_ui/fluent_ui.dart';
+import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/dialog/abstract/dialog.dart';
-import 'package:reboot_launcher/src/dialog/abstract/dialog_button.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
-import 'package:reboot_launcher/src/util/checks.dart';
+import 'package:reboot_launcher/src/messenger/abstract/dialog.dart';
+import 'package:reboot_launcher/src/messenger/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/messenger/implementation/version.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:reboot_launcher/src/widget/add_local_version.dart';
-import 'package:reboot_launcher/src/widget/add_server_version.dart';
-import 'package:reboot_launcher/src/widget/file_selector.dart';
-import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class VersionSelector extends StatefulWidget {
   const VersionSelector({Key? key}) : super(key: key);
 
-  static Future<void> openDownloadDialog() => showAppDialog<bool>(
-    builder: (context) => const AddServerVersion(),
-  );
-
-  static Future<void> openAddDialog() => showAppDialog<bool>(
-    builder: (context) => const AddLocalVersion(),
+  static Future<void> openDownloadDialog({bool closable = true}) => showRebootDialog<bool>(
+    builder: (context) => AddVersionDialog(
+      closable: closable,
+    ),
+    dismissWithEsc: closable
   );
 
   @override
@@ -48,7 +42,7 @@ class _VersionSelectorState extends State<VersionSelector> {
               onOpen: () => inDialog = true,
             onClose: () => inDialog = false,
               leading: Text(
-                _gameController.selectedVersion?.name ?? translations.selectVersion,
+                _gameController.selectedVersion?.content.toString() ?? translations.selectVersion,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -57,30 +51,6 @@ class _VersionSelectorState extends State<VersionSelector> {
         )
     );
   });
-
-  List<MenuFlyoutItem> _createSelectorItems(BuildContext context) {
-    final items = _gameController.versions.value
-      .map((version) => _createVersionItem(context, version))
-      .toList();
-    items.add(MenuFlyoutItem(
-        text: Text(translations.addLocalBuildContent),
-        onPressed: VersionSelector.openAddDialog
-    ));
-    items.add(MenuFlyoutItem(
-        text: Text(translations.downloadBuildContent),
-        onPressed: VersionSelector.openDownloadDialog
-    ));
-    return items;
-  }
-
-  MenuFlyoutItem _createVersionItem(BuildContext context, FortniteVersion version) => MenuFlyoutItem(
-      text: _createOptionsMenu(
-        version: version,
-        close: true,
-        child: Text(version.name),
-      ),
-      onPressed: () => _gameController.selectedVersion = version
-  );
 
   Widget _createOptionsMenu({required FortniteVersion? version, required bool close, required Widget child}) => Listener(
       onPointerDown: (event) async {
@@ -104,13 +74,64 @@ class _VersionSelectorState extends State<VersionSelector> {
       child: child
   );
 
+  List<MenuFlyoutItem> _createSelectorItems(BuildContext context) {
+    final items = _gameController.versions.value
+        .map((version) => _createVersionItem(context, version))
+        .toList();
+    items.add(MenuFlyoutItem(
+        trailing: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Icon(
+              FluentIcons.add_24_regular,
+              size: 12
+          ),
+        ),
+        text: Text(translations.addVersion),
+        onPressed: VersionSelector.openDownloadDialog
+    ));
+    return items;
+  }
+
+  MenuFlyoutItem _createVersionItem(BuildContext context, FortniteVersion version) => MenuFlyoutItem(
+      text: Listener(
+          onPointerDown: (event) async {
+            if (event.kind != PointerDeviceKind.mouse || event.buttons != kSecondaryMouseButton) {
+              return;
+            }
+
+            await _openVersionOptions(version);
+          },
+          child: Text(version.content.toString())
+      ),
+      trailing: IconButton(
+          onPressed: () => _openVersionOptions(version),
+          icon: Icon(
+            FluentIcons.more_vertical_24_regular
+          )
+      ),
+      onPressed: () => _gameController.selectedVersion = version
+  );
+
+  Future<void> _openVersionOptions(FortniteVersion version) async {
+    final result = await _flyoutController.showFlyout<_ContextualOption?>(
+        builder: (context) => MenuFlyout(
+            items: _ContextualOption.values
+                .map((entry) => _createOption(context, entry))
+                .toList()
+        ),
+        barrierDismissible: true,
+        barrierColor: Colors.transparent
+    );
+    _handleResult(result, version, true);
+  }
+
   void _handleResult(_ContextualOption? result, FortniteVersion version, bool close) async {
+    if(!mounted){
+      return;
+    }
+
     switch (result) {
       case _ContextualOption.openExplorer:
-        if(!mounted){
-          return;
-        }
-
         if(close) {
           Navigator.of(context).pop();
         }
@@ -118,23 +139,8 @@ class _VersionSelectorState extends State<VersionSelector> {
         launchUrl(version.location.uri)
             .onError((error, stackTrace) => _onExplorerError());
         break;
-      case _ContextualOption.modify:
-        if(!mounted){
-          return;
-        }
-
-        if(close) {
-          Navigator.of(context).pop();
-        }
-
-        await _openRenameDialog(context, version);
-        break;
       case _ContextualOption.delete:
-        if(!mounted){
-          return;
-        }
-
-        var result = await _openDeleteDialog(context, version) ?? false;
+        final result = await _openDeleteDialog(context, version) ?? false;
         if(!mounted || !result){
           return;
         }
@@ -149,25 +155,25 @@ class _VersionSelectorState extends State<VersionSelector> {
         }
 
         break;
-      default:
+      case null:
         break;
     }
   }
 
   MenuFlyoutItem _createOption(BuildContext context, _ContextualOption entry) {
     return MenuFlyoutItem(
-        text: Text(entry.name),
+        text: Text(entry.translatedName),
         onPressed: () => Navigator.of(context).pop(entry)
     );
   }
 
   bool _onExplorerError() {
-    showInfoBar(translations.missingVersion);
+    showRebootInfoBar(translations.missingVersion);
     return false;
   }
 
   Future<bool?> _openDeleteDialog(BuildContext context, FortniteVersion version) {
-    return showAppDialog<bool>(
+    return showRebootDialog<bool>(
         builder: (context) => ContentDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -189,72 +195,17 @@ class _VersionSelectorState extends State<VersionSelector> {
             ],
           ),
           actions: [
-            Button(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(translations.deleteVersionCancel),
+            DialogButton(
+              type: ButtonType.secondary,
+              onTap: () => Navigator.of(context).pop(false),
+              text: translations.deleteVersionCancel
             ),
-            Button(
-              onPressed: ()  => Navigator.of(context).pop(true),
-              child: Text(translations.deleteVersionConfirm),
+            DialogButton(
+              type: ButtonType.primary,
+              onTap: ()  => Navigator.of(context).pop(true),
+              text: translations.deleteVersionConfirm
             )
           ],
-        )
-    );
-  }
-
-  Future<String?> _openRenameDialog(BuildContext context, FortniteVersion version) {
-    var nameController = TextEditingController(text: version.name);
-    var pathController = TextEditingController(text: version.location.path);
-    return showAppDialog<String?>(
-        builder: (context) => FormDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                InfoLabel(
-                    label: translations.versionName,
-                    child: TextFormBox(
-                        controller: nameController,
-                        placeholder: translations.newVersionNameLabel,
-                        autofocus: true,
-                        validator: (text) => checkChangeVersion(text)
-                    )
-                ),
-
-                const SizedBox(
-                    height: 16.0
-                ),
-
-                FileSelector(
-                    placeholder: translations.newVersionNameLabel,
-                    windowTitle: translations.gameFolderPlaceWindowTitle,
-                    label: translations.gameFolderLabel,
-                    controller: pathController,
-                    validator: checkGameFolder,
-                    folder: true
-                ),
-
-                const SizedBox(height: 8.0),
-              ],
-            ),
-            buttons: [
-              DialogButton(
-                  type: ButtonType.secondary
-              ),
-
-              DialogButton(
-                text: translations.newVersionNameConfirm,
-                type: ButtonType.primary,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _gameController.updateVersion(version, (version) {
-                    version.name = nameController.text;
-                    version.location = Directory(pathController.text);
-                  });
-                },
-              )
-            ]
         )
     );
   }
@@ -262,14 +213,14 @@ class _VersionSelectorState extends State<VersionSelector> {
 
 enum _ContextualOption {
   openExplorer,
-  modify,
-  delete
-}
+  delete;
 
-extension _ContextualOptionExtension on _ContextualOption {
-  String get name {
-    return this == _ContextualOption.openExplorer ? translations.openInExplorer
-        : this == _ContextualOption.modify ? translations.modify
-        : translations.delete;
+  String get translatedName {
+    switch(this) {
+      case _ContextualOption.openExplorer:
+        return translations.openInExplorer;
+      case _ContextualOption.delete:
+        return translations.delete;
+    }
   }
 }

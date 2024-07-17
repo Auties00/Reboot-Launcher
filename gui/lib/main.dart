@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:app_links/app_links.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
@@ -14,26 +12,17 @@ import 'package:local_notifier/local_notifier.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
-import 'package:reboot_launcher/src/controller/build_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/controller/update_controller.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
-import 'package:reboot_launcher/src/dialog/implementation/error.dart';
-import 'package:reboot_launcher/src/dialog/implementation/server.dart';
+import 'package:reboot_launcher/src/messenger/implementation/error.dart';
 import 'package:reboot_launcher/src/page/implementation/home_page.dart';
-import 'package:reboot_launcher/src/page/implementation/info_page.dart';
-import 'package:reboot_launcher/src/util/log.dart';
-import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/os.dart';
-import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:url_protocol/url_protocol.dart';
 import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:win32/win32.dart';
 
 const double kDefaultWindowWidth = 1164;
 const double kDefaultWindowHeight = 864;
@@ -45,8 +34,8 @@ bool appWithNoStorage = false;
 void main() {
   log("[APP] Called");
   runZonedGuarded(
-          () => _startApp(),
-          (error, stack) => onError(error, stack, false),
+      () => _startApp(),
+      (error, stack) => onError(error, stack, false),
       zoneSpecification: ZoneSpecification(
           handleUncaughtError: (self, parent, zone, error, stacktrace) => onError(error, stacktrace, false)
       )
@@ -54,6 +43,7 @@ void main() {
 }
 
 Future<void> _startApp() async {
+  _overrideHttpCertificate();
   final errors = <Object>[];
   try {
     log("[APP] Starting application");
@@ -70,11 +60,6 @@ Future<void> _startApp() async {
     final notificationsError = await _initNotifications();
     if(notificationsError != null) {
       errors.add(notificationsError);
-    }
-
-    final tilesError = InfoPage.initInfoTiles();
-    if(tilesError != null) {
-      errors.add(tilesError);
     }
 
     final versionError = await _initVersion();
@@ -101,6 +86,18 @@ Future<void> _startApp() async {
       errors: errors,
     ));
   }
+}
+
+class _MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context){
+    return super.createHttpClient(context)
+      ..badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+  }
+}
+
+void _overrideHttpCertificate() {
+  HttpOverrides.global = _MyHttpOverrides(); // Not safe, but necessary
 }
 
 Future<Object?> _initNotifications() async {
@@ -178,7 +175,7 @@ void _initWindow() => doWhenWindowReady(() async {
       await Window.setEffect(
           effect: WindowEffect.acrylic,
           color: Colors.transparent,
-          dark: SchedulerBinding.instance.platformDispatcher.platformBrightness.isDark
+          dark: isDarkMode
       );
     }
   }catch(error, stackTrace) {
@@ -191,11 +188,10 @@ void _initWindow() => doWhenWindowReady(() async {
 Future<List<Object>> _initStorage() async {
   final errors = <Object>[];
   try {
-    await GetStorage("game", settingsDirectory.path).initStorage;
-    await GetStorage("backend", settingsDirectory.path).initStorage;
-    await GetStorage("update", settingsDirectory.path).initStorage;
-    await GetStorage("settings", settingsDirectory.path).initStorage;
-    await GetStorage("hosting", settingsDirectory.path).initStorage;
+    await GetStorage("game_storage", settingsDirectory.path).initStorage;
+    await GetStorage("backend_storage", settingsDirectory.path).initStorage;
+    await GetStorage("settings_storage", settingsDirectory.path).initStorage;
+    await GetStorage("hosting_storage", settingsDirectory.path).initStorage;
   }catch(error) {
     appWithNoStorage = true;
     errors.add("The Reboot Launcher configuration in ${settingsDirectory.path} cannot be accessed: running with in memory storage");
@@ -214,19 +210,9 @@ Future<List<Object>> _initStorage() async {
   }
 
   try {
-    Get.put(BuildController());
-  }catch(error) {
-    errors.add(error);
-  }
-
-  try {
-    Get.put(HostingController());
-  }catch(error) {
-    errors.add(error);
-  }
-
-  try {
-    Get.put(UpdateController());
+    final controller = HostingController();
+    Get.put(controller);
+    controller.discardServer();
   }catch(error) {
     errors.add(error);
   }

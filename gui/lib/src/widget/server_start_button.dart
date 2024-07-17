@@ -4,7 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
-import 'package:reboot_launcher/src/dialog/implementation/server.dart';
+import 'package:reboot_launcher/src/messenger/implementation/server.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 
 class ServerButton extends StatefulWidget {

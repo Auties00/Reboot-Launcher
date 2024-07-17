@@ -104,7 +104,7 @@ Future<bool> startElevatedProcess({required String executable, required String a
   return shellResult == 1;
 }
 
-Future<Process> startProcess({required File executable, List<String>? args, bool useTempBatch = true, bool window = false, String? name}) async {
+Future<Process> startProcess({required File executable, List<String>? args, bool useTempBatch = true, bool window = false, String? name, Map<String, String>? environment}) async {
   final argsOrEmpty = args ?? [];
   if(useTempBatch) {
     final tempScriptDirectory = await tempDirectory.createTemp("reboot_launcher_process");
@@ -115,6 +115,7 @@ Future<Process> startProcess({required File executable, List<String>? args, bool
         tempScriptFile.path,
         [],
         workingDirectory: executable.parent.path,
+        environment: environment,
         mode: window ? ProcessStartMode.detachedWithStdio : ProcessStartMode.normal,
         runInShell: window
     );
@@ -202,6 +203,7 @@ Future<bool> watchProcess(int pid) async {
   return await completer.future;
 }
 
+// TODO: Template
 List<String> createRebootArgs(String username, String password, bool host, GameServerType hostType, bool log, String additionalArgs) {
   if(password.isEmpty) {
     username = '${_parseUsername(username, host)}@projectreboot.dev';

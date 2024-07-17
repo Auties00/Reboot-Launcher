@@ -4,6 +4,16 @@ const fs = require("fs");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 
+const audit = require('express-requests-logger')
+express.use(audit({
+    request: {
+        maxBodyLength: 150
+    },
+    response: {
+        maxBodyLength: 150
+    }
+}));
+
 express.use(Express.json());
 express.use(Express.urlencoded({ extended: true }));
 express.use(Express.static('public'));

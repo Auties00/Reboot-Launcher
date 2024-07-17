@@ -6,7 +6,9 @@ import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/dialog/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/messenger/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
+import 'package:reboot_launcher/src/messenger/implementation/data.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/util/keyboard.dart';
@@ -16,7 +18,10 @@ import 'package:reboot_launcher/src/widget/server_type_selector.dart';
 import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../dialog/implementation/data.dart';
+final GlobalKey<OverlayTargetState> backendTypeOverlayTargetKey = GlobalKey();
+final GlobalKey<OverlayTargetState> backendGameServerAddressOverlayTargetKey = GlobalKey();
+final GlobalKey<OverlayTargetState> backendUnrealEngineOverlayTargetKey = GlobalKey();
+final GlobalKey<OverlayTargetState> backendDetachedOverlayTargetKey = GlobalKey();
 
 class BackendPage extends RebootPage {
   const BackendPage({Key? key}) : super(key: key);
@@ -42,7 +47,7 @@ class _BackendPageState extends RebootPageState<BackendPage> {
   final BackendController _backendController = Get.find<BackendController>();
 
   InfoBarEntry? _infoBarEntry;
-  
+
   @override
   void initState() {
     ServicesBinding.instance.keyboard.addHandler((keyEvent) {
@@ -60,7 +65,7 @@ class _BackendPageState extends RebootPageState<BackendPage> {
     });
     super.initState();
   }
-  
+
   @override
   List<Widget> get settings => [
     _type,
@@ -84,10 +89,13 @@ class _BackendPageState extends RebootPageState<BackendPage> {
         ),
         title: Text(translations.matchmakerConfigurationAddressName),
         subtitle: Text(translations.matchmakerConfigurationAddressDescription),
-        content: TextFormBox(
-            placeholder: translations.matchmakerConfigurationAddressName,
-            controller: _backendController.gameServerAddress,
-            focusNode: _backendController.gameServerAddressFocusNode
+        content: OverlayTarget(
+          key: backendGameServerAddressOverlayTargetKey,
+          child: TextFormBox(
+              placeholder: translations.matchmakerConfigurationAddressName,
+              controller: _backendController.gameServerAddress,
+              focusNode: _backendController.gameServerAddressFocusNode
+          ),
         )
     );
   });
@@ -152,15 +160,18 @@ class _BackendPageState extends RebootPageState<BackendPage> {
             const SizedBox(
                 width: 16.0
             ),
-            ToggleSwitch(
-                checked: _backendController.detached(),
-                onChanged: (value) => _backendController.detached.value = value
+            OverlayTarget(
+              key: backendDetachedOverlayTargetKey,
+              child: ToggleSwitch(
+                  checked: _backendController.detached(),
+                  onChanged: (value) => _backendController.detached.value = value
+              ),
             ),
           ],
         )
     );
-  }); 
-  
+  });
+
   Widget get _unrealEngineConsoleKey => Obx(() {
     if(_backendController.type.value != ServerType.embedded) {
       return const SizedBox.shrink();
@@ -173,14 +184,18 @@ class _BackendPageState extends RebootPageState<BackendPage> {
       title: Text(translations.settingsClientConsoleKeyName),
       subtitle: Text(translations.settingsClientConsoleKeyDescription),
       contentWidth: null,
-      content: Button(
-        onPressed: () {
-          _infoBarEntry = showInfoBar(
-              translations.clickKey,
-              loading: true
-          );
-        },
-        child: Text(_gameController.consoleKey.value.unrealEnginePrettyName ?? ""),
+      content: OverlayTarget(
+        key: backendUnrealEngineOverlayTargetKey,
+        child: Button(
+          onPressed: () {
+            _infoBarEntry = showRebootInfoBar(
+                translations.clickKey,
+                loading: true,
+                duration: null
+            );
+          },
+          child: Text(_gameController.consoleKey.value.unrealEnginePrettyName ?? ""),
+        ),
       )
     );
   });
@@ -221,7 +236,9 @@ class _BackendPageState extends RebootPageState<BackendPage> {
       ),
       title: Text(translations.backendTypeName),
       subtitle: Text(translations.backendTypeDescription),
-      content: const ServerTypeSelector()
+      content: ServerTypeSelector(
+        overlayKey: backendTypeOverlayTargetKey
+      )
   );
 
   @override
