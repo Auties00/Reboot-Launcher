@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
+import 'package:reboot_launcher/src/controller/dll_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
@@ -53,6 +54,7 @@ class _HostingPageState extends RebootPageState<HostPage> {
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
+  final DllController _dllController = Get.find<DllController>();
 
   late final RxBool _showPasswordTrailing = RxBool(_hostingController.password.text.isNotEmpty);
 
@@ -200,6 +202,17 @@ class _HostingPageState extends RebootPageState<HostPage> {
     subtitle: Text(translations.settingsServerOptionsSubtitle),
     children: [
       SettingTile(
+          icon: Icon(
+              FluentIcons.options_24_regular
+          ),
+          title: Text(translations.settingsClientArgsName),
+          subtitle: Text(translations.settingsClientArgsDescription),
+          content: TextFormBox(
+            placeholder: translations.settingsClientArgsPlaceholder,
+            controller: _hostingController.customLaunchArgs,
+          )
+      ),
+      SettingTile(
         icon: Icon(
             FluentIcons.window_console_20_regular
         ),
@@ -246,14 +259,14 @@ class _HostingPageState extends RebootPageState<HostPage> {
           contentWidth: 64,
           content: TextFormBox(
               placeholder:  translations.settingsServerPortName,
-              controller: _settingsController.gameServerPort,
+              controller: _dllController.gameServerPort,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly
               ]
           )
-      ),
+      )
     ],
   );
 
@@ -273,22 +286,22 @@ class _HostingPageState extends RebootPageState<HostPage> {
           content: Obx(() => DropDownButton(
               onOpen: () => inDialog = true,
               onClose: () => inDialog = false,
-              leading: Text(_settingsController.customGameServer.value ? translations.settingsServerTypeCustomName : translations.settingsServerTypeEmbeddedName),
+              leading: Text(_dllController.customGameServer.value ? translations.settingsServerTypeCustomName : translations.settingsServerTypeEmbeddedName),
               items: {
                 false: translations.settingsServerTypeEmbeddedName,
                 true: translations.settingsServerTypeCustomName
               }.entries.map((entry) => MenuFlyoutItem(
                   text: Text(entry.value),
                   onPressed: () {
-                    final oldValue = _settingsController.customGameServer.value;
+                    final oldValue = _dllController.customGameServer.value;
                     if(oldValue == entry.key) {
                       return;
                     }
 
-                    _settingsController.customGameServer.value = entry.key;
-                    _settingsController.infoBarEntry?.close();
+                    _dllController.customGameServer.value = entry.key;
+                    _dllController.infoBarEntry?.close();
                     if(!entry.key) {
-                      _settingsController.updateReboot(
+                      _dllController.updateGameServerDll(
                           force: true
                       );
                     }
@@ -297,18 +310,18 @@ class _HostingPageState extends RebootPageState<HostPage> {
           ))
       ),
       Obx(() {
-        if(!_settingsController.customGameServer.value) {
+        if(!_dllController.customGameServer.value) {
           return const SizedBox.shrink();
         }
 
         return createFileSetting(
             title: translations.settingsServerFileName,
             description: translations.settingsServerFileDescription,
-            controller: _settingsController.gameServerDll
+            controller: _dllController.gameServerDll
         );
       }),
       Obx(() {
-        if(_settingsController.customGameServer.value) {
+        if(_dllController.customGameServer.value) {
           return const SizedBox.shrink();
         }
 
@@ -320,13 +333,13 @@ class _HostingPageState extends RebootPageState<HostPage> {
             subtitle: Text(translations.settingsServerMirrorDescription),
             content: TextFormBox(
                 placeholder:  translations.settingsServerMirrorPlaceholder,
-                controller: _settingsController.url,
+                controller: _dllController.url,
                 validator: _checkUpdateUrl
             )
         );
       }),
       Obx(() {
-        if(_settingsController.customGameServer.value) {
+        if(_dllController.customGameServer.value) {
           return const SizedBox.shrink();
         }
 
@@ -339,13 +352,13 @@ class _HostingPageState extends RebootPageState<HostPage> {
             content: Obx(() => DropDownButton(
                 onOpen: () => inDialog = true,
                 onClose: () => inDialog = false,
-                leading: Text(_settingsController.timer.value.text),
+                leading: Text(_dllController.timer.value.text),
                 items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
                     text: Text(entry.text),
                     onPressed: () {
-                      _settingsController.timer.value = entry;
-                      _settingsController.infoBarEntry?.close();
-                      _settingsController.updateReboot(
+                      _dllController.timer.value = entry;
+                      _dllController.infoBarEntry?.close();
+                      _dllController.updateGameServerDll(
                           force: true
                       );
                     }
@@ -420,7 +433,10 @@ class _HostingPageState extends RebootPageState<HostPage> {
       title: Text(translations.hostResetName),
       subtitle: Text(translations.hostResetDescription),
       content: Button(
-        onPressed: () => showResetDialog(_hostingController.reset),
+        onPressed: () => showResetDialog(() {
+          _hostingController.reset();
+          _dllController.resetServer();
+        }),
         child: Text(translations.hostResetContent),
       )
   );

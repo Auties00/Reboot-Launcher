@@ -7,7 +7,7 @@ final File launcherLogFile = _createLoggingFile();
 final Semaphore _semaphore = Semaphore(1);
 
 File _createLoggingFile() {
-  final file = File("${logsDirectory.path}\\launcher.log");
+  final file = File("${installationDirectory.path}\\launcher.log");
   file.parent.createSync(recursive: true);
   if(file.existsSync()) {
     file.deleteSync();

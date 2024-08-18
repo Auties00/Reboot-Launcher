@@ -10,6 +10,7 @@ import 'package:flutter/material.dart' show MaterialPage;
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
+import 'package:reboot_launcher/src/controller/dll_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/dialog.dart';
@@ -44,6 +45,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   final BackendController _backendController = Get.find<BackendController>();
   final HostingController _hostingController = Get.find<HostingController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
+  final DllController _dllController = Get.find<DllController>();
   final GlobalKey _searchKey = GlobalKey();
   final FocusNode _searchFocusNode = FocusNode();
   final TextEditingController _searchController = TextEditingController();
@@ -134,9 +136,9 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     }
 
     for(final injectable in InjectableDll.values) {
-      final (file, custom) = _settingsController.getInjectableData(injectable);
+      final (file, custom) = _dllController.getInjectableData(injectable);
       if(!custom) {
-        _settingsController.downloadCriticalDllInteractive(
+        _dllController.downloadCriticalDllInteractive(
             file.path,
             silent: true
         );
@@ -144,7 +146,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     }
 
     watchDlls().listen((filePath) => showDllDeletedDialog(() {
-      _settingsController.downloadCriticalDllInteractive(filePath);
+      _dllController.downloadCriticalDllInteractive(filePath);
     }));
   }
 

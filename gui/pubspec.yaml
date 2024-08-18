@@ -1,6 +1,6 @@
 name: reboot_launcher
 description: Graphical User Interface for Project Reboot
-version: "9.2.2"
+version: "9.2.5"
 
 publish_to: 'none'
 
@@ -74,6 +74,9 @@ dependencies:
   package_info_plus: ^8.0.0
   version: ^3.0.2
 
+  # Validate profile
+  email_validator: ^3.0.0
+
 dependency_overrides:
   xml: ^6.3.0
   http: ^0.13.5
@@ -98,4 +101,9 @@ flutter:
     - assets/backend/profiles/
     - assets/backend/public/
     - assets/backend/responses/
+    - assets/backend/responses/Athena/
+    - assets/backend/responses/Athena/BattlePass/
+    - assets/backend/responses/Athena/Discovery/
+    - assets/backend/responses/Campaign/
+    - assets/backend/responses/CloudDir/
     - assets/build/

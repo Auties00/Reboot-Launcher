@@ -42,7 +42,6 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
   List<Widget> get settings => [
     _language,
     _theme,
-    _resetDefaults,
     _installationDirectory
   ];
 
@@ -87,18 +86,6 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
               onPressed: () => _settingsController.themeMode.value = themeMode
           )).toList()
       ))
-  );
-
-  SettingTile get _resetDefaults => SettingTile(
-      icon: Icon(
-          FluentIcons.arrow_reset_24_regular
-      ),
-      title: Text(translations.settingsUtilsResetDefaultsName),
-      subtitle: Text(translations.settingsUtilsResetDefaultsSubtitle),
-      content: Button(
-        onPressed: () => showResetDialog(_settingsController.reset),
-        child: Text(translations.settingsUtilsResetDefaultsContent),
-      )
   );
   
   SettingTile get _installationDirectory => SettingTile(

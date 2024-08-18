@@ -12,6 +12,7 @@ import 'package:local_notifier/local_notifier.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
+import 'package:reboot_launcher/src/controller/dll_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
@@ -188,10 +189,11 @@ void _initWindow() => doWhenWindowReady(() async {
 Future<List<Object>> _initStorage() async {
   final errors = <Object>[];
   try {
-    await GetStorage("game_storage", settingsDirectory.path).initStorage;
-    await GetStorage("backend_storage", settingsDirectory.path).initStorage;
-    await GetStorage("settings_storage", settingsDirectory.path).initStorage;
-    await GetStorage("hosting_storage", settingsDirectory.path).initStorage;
+    await GetStorage(GameController.storageName, settingsDirectory.path).initStorage;
+    await GetStorage(BackendController.storageName, settingsDirectory.path).initStorage;
+    await GetStorage(SettingsController.storageName, settingsDirectory.path).initStorage;
+    await GetStorage(HostingController.storageName, settingsDirectory.path).initStorage;
+    await GetStorage(DllController.storageName, settingsDirectory.path).initStorage;
   }catch(error) {
     appWithNoStorage = true;
     errors.add("The Reboot Launcher configuration in ${settingsDirectory.path} cannot be accessed: running with in memory storage");
@@ -219,6 +221,12 @@ Future<List<Object>> _initStorage() async {
 
   try {
     Get.put(SettingsController());
+  }catch(error) {
+    errors.add(error);
+  }
+
+  try {
+    Get.put(DllController());
   }catch(error) {
     errors.add(error);
   }
