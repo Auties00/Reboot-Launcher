@@ -11,7 +11,7 @@ const List<String> kCorruptedBuildErrors = [
   "Critical error",
   "when 0 bytes remain",
   "Pak chunk signature verification failed!",
-  "Couldn't find pak signature file"
+  "LogWindows:Error: Fatal error!"
 ];
 const List<String> kCannotConnectErrors = [
   "port 3551 failed: Connection refused",

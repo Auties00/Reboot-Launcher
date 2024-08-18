@@ -9,9 +9,22 @@ extension FortniteVersionExtension on FortniteVersion {
 
   static File? findFile(Directory directory, String name) {
     try{
-      final result = directory.listSync(recursive: true)
-          .firstWhere((element) => path.basename(element.path) == name);
-      return File(result.path);
+      for(final child in directory.listSync()) {
+        if(child is Directory) {
+          if(!path.basename(child.path).startsWith("\.")) {
+            final result = findFile(child, name);
+            if(result != null) {
+              return result;
+            }
+          }
+        }else if(child is File) {
+          if(path.basename(child.path) == name) {
+            return child;
+          }
+        }
+      }
+
+      return null;
     }catch(_){
       return null;
     }

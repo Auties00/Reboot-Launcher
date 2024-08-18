@@ -15,13 +15,16 @@ final Semaphore _semaphore = Semaphore();
 String? _lastIp;
 String? _lastPort;
 
-Future<Process> startEmbeddedBackend(bool detached) async {
+Future<Process> startEmbeddedBackend(bool detached, {void Function(String)? onError}) async {
   final process = await startProcess(
     executable: backendStartExecutable,
     window: detached,
   );
   process.stdOutput.listen((message) => log("[BACKEND] Message: $message"));
-  process.stdError.listen((error) => log("[BACKEND] Error: $error"));
+  process.stdError.listen((error) {
+    log("[BACKEND] Error: $error");
+    onError?.call(error);
+  });
   process.exitCode.then((exitCode) => log("[BACKEND] Exit code: $exitCode"));
   return process;
 }

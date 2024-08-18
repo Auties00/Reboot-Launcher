@@ -1,9 +1,11 @@
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
+import 'package:reboot_launcher/src/controller/dll_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
+import 'package:reboot_launcher/src/messenger/implementation/data.dart';
 import 'package:reboot_launcher/src/messenger/implementation/onboard.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
@@ -37,7 +39,8 @@ class PlayPage extends RebootPage {
 class _PlayPageState extends RebootPageState<PlayPage> {
   final SettingsController _settingsController = Get.find<SettingsController>();
   final GameController _gameController = Get.find<GameController>();
-
+  final DllController _dllController = Get.find<DllController>();
+  
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -94,6 +97,7 @@ class _PlayPageState extends RebootPageState<PlayPage> {
     ),
     _options,
     _internalFiles,
+    _resetDefaults
   ];
 
   SettingTile get _internalFiles => SettingTile(
@@ -106,17 +110,17 @@ class _PlayPageState extends RebootPageState<PlayPage> {
       createFileSetting(
           title: translations.settingsClientConsoleName,
           description: translations.settingsClientConsoleDescription,
-          controller: _settingsController.unrealEngineConsoleDll
+          controller: _dllController.unrealEngineConsoleDll
       ),
       createFileSetting(
           title: translations.settingsClientAuthName,
           description: translations.settingsClientAuthDescription,
-          controller: _settingsController.backendDll
+          controller: _dllController.backendDll
       ),
       createFileSetting(
           title: translations.settingsClientMemoryName,
           description: translations.settingsClientMemoryDescription,
-          controller: _settingsController.memoryLeakDll
+          controller: _dllController.memoryLeakDll
       ),
     ],
   );
@@ -140,5 +144,20 @@ class _PlayPageState extends RebootPageState<PlayPage> {
             )
         )
       ]
+  );
+
+  SettingTile get _resetDefaults => SettingTile(
+      icon: Icon(
+          FluentIcons.arrow_reset_24_regular
+      ),
+      title: Text(translations.gameResetDefaultsName),
+      subtitle: Text(translations.gameResetDefaultsDescription),
+      content: Button(
+        onPressed: () => showResetDialog(() {
+          _gameController.reset();
+          _dllController.resetGame();
+        }),
+        child: Text(translations.gameResetDefaultsContent),
+      )
   );
 }

@@ -102,8 +102,7 @@ Future<bool> startElevatedProcess({required String executable, required String a
   shellInput.ref.fMask = ES_AWAYMODE_REQUIRED;
   shellInput.ref.lpVerb = "runas".toNativeUtf16();
   shellInput.ref.cbSize = sizeOf<SHELLEXECUTEINFO>();
-  var shellResult = ShellExecuteEx(shellInput);
-  return shellResult == 1;
+  return ShellExecuteEx(shellInput) == 1;
 }
 
 Future<Process> startProcess({required File executable, List<String>? args, bool useTempBatch = true, bool window = false, String? name, Map<String, String>? environment}) async {
@@ -313,7 +312,14 @@ final class _ExtendedProcess implements Process {
 
 
   @override
-  Future<int> get exitCode => _delegate.exitCode;
+  Future<int> get exitCode {
+    try {
+      return _delegate.exitCode;
+    }catch(_) {
+      return watchProcess(_delegate.pid)
+          .then((_) => -1);
+    }
+  }
 
   @override
   bool kill([ProcessSignal signal = ProcessSignal.sigterm]) => _delegate.kill(signal);

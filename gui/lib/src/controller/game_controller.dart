@@ -1,18 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_launcher/src/util/keyboard.dart';
-
-import '../../main.dart';
+import 'package:reboot_launcher/main.dart';
 
 class GameController extends GetxController {
-  static const PhysicalKeyboardKey _kDefaultConsoleKey = PhysicalKeyboardKey(0x00070041);
+  static const String storageName = "game_storage";
 
   late final GetStorage? _storage;
   late final TextEditingController username;
@@ -22,10 +18,9 @@ class GameController extends GetxController {
   late final Rxn<FortniteVersion> _selectedVersion;
   late final RxBool started;
   late final Rxn<GameInstance> instance;
-  late final Rx<PhysicalKeyboardKey> consoleKey;
   
   GameController() {
-    _storage = appWithNoStorage ? null : GetStorage("game_storage");
+    _storage = appWithNoStorage ? null : GetStorage(storageName);
     Iterable decodedVersionsJson = jsonDecode(_storage?.read("versions") ?? "[]");
     final decodedVersions = decodedVersionsJson
         .map((entry) => FortniteVersion.fromJson(entry))
@@ -44,37 +39,6 @@ class GameController extends GetxController {
     customLaunchArgs.addListener(() => _storage?.write("custom_launch_args", customLaunchArgs.text));
     started = RxBool(false);
     instance = Rxn();
-    consoleKey = Rx(_readConsoleKey());
-    _writeConsoleKey(consoleKey.value);
-    consoleKey.listen((newValue) {
-      _storage?.write("console_key", newValue.usbHidUsage);
-      _writeConsoleKey(newValue);
-    });
-  }
-
-  PhysicalKeyboardKey _readConsoleKey() {
-    final consoleKeyValue = _storage?.read("console_key");
-    if(consoleKeyValue == null) {
-      return _kDefaultConsoleKey;
-    }
-
-    final consoleKeyNumber = int.tryParse(consoleKeyValue.toString());
-    if(consoleKeyNumber == null) {
-      return _kDefaultConsoleKey;
-    }
-
-    final consoleKey = PhysicalKeyboardKey(consoleKeyNumber);
-    if(!consoleKey.isUnrealEngineKey) {
-      return _kDefaultConsoleKey;
-    }
-
-    return consoleKey;
-  }
-
-  Future<void> _writeConsoleKey(PhysicalKeyboardKey keyValue) async {
-    final defaultInput = File("${backendDirectory.path}\\CloudStorage\\DefaultInput.ini");
-    await defaultInput.parent.create(recursive: true);
-    await defaultInput.writeAsString("[/Script/Engine.InputSettings]\n+ConsoleKeys=Tilde\n+ConsoleKeys=${keyValue.unrealEngineName}", flush: true);
   }
 
   void reset() {
@@ -82,6 +46,7 @@ class GameController extends GetxController {
     password.text = "";
     customLaunchArgs.text = "";
     versions.value = [];
+    _selectedVersion.value = null;
     instance.value = null;
   }
 

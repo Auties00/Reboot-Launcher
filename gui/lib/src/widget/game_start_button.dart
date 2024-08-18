@@ -9,6 +9,7 @@ import 'package:local_notifier/local_notifier.dart';
 import 'package:path/path.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
+import 'package:reboot_launcher/src/controller/dll_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
@@ -39,7 +40,7 @@ class _LaunchButtonState extends State<LaunchButton> {
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
   final BackendController _backendController = Get.find<BackendController>();
-  final SettingsController _settingsController = Get.find<SettingsController>();
+  final DllController _dllController = Get.find<DllController>();
 
   InfoBarEntry? _gameClientInfoBar;
   InfoBarEntry? _gameServerInfoBar;
@@ -263,15 +264,21 @@ class _LaunchButtonState extends State<LaunchButton> {
           "OPENSSL_ia32cap": "~0x20000000"
         }
     );
+    final instance = host ? _hostingController.instance.value : _gameController.instance.value;
     void onGameOutput(String line, bool error) {
       log("[${host ? 'HOST' : 'GAME'}] ${error ? '[ERROR]' : '[MESSAGE]'} $line");
-
       handleGameOutput(
           line: line,
           host: host,
           onShutdown: () => _onStop(reason: _StopReason.normal),
           onTokenError: () => _onStop(reason: _StopReason.tokenError),
-          onBuildCorrupted: () => _onStop(reason: _StopReason.corruptedVersionError),
+          onBuildCorrupted: () {
+            if(instance?.launched == false) {
+              _onStop(reason: _StopReason.corruptedVersionError);
+            }else {
+              _onStop(reason: _StopReason.crash);
+            }
+          },
           onLoggedIn: () =>_onLoggedIn(host),
           onMatchEnd: () => _onMatchEnd(version),
           onDisplayAttached: () => _onDisplayAttached(host, hostType, version)
@@ -391,7 +398,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         await _injectOrShowError(InjectableDll.console, host);
         _onGameClientInjected();
       }else {
-        final gameServerPort = int.tryParse(_settingsController.gameServerPort.text);
+        final gameServerPort = int.tryParse(_dllController.gameServerPort.text);
         if(gameServerPort != null) {
           await killProcessByPort(gameServerPort);
         }
@@ -424,7 +431,7 @@ class _LaunchButtonState extends State<LaunchButton> {
           loading: true,
           duration: null
       );
-      final gameServerPort = _settingsController.gameServerPort.text;
+      final gameServerPort = _dllController.gameServerPort.text;
       final localPingResult = await pingGameServer(
           "127.0.0.1:$gameServerPort",
           timeout: const Duration(minutes: 2)
@@ -605,6 +612,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         );
         break;
       case _StopReason.tokenError:
+        _backendController.stop();
         showRebootInfoBar(
           translations.tokenError(instance?.injectedDlls.map((element) => element.name).join(", ") ?? translations.none),
           severity: InfoBarSeverity.error,
@@ -613,6 +621,13 @@ class _LaunchButtonState extends State<LaunchButton> {
             onPressed: () => launchUrl(launcherLogFile.uri),
             child: Text(translations.openLog),
           )
+        );
+        break;
+      case _StopReason.crash:
+        showRebootInfoBar(
+          translations.fortniteCrashError(host ? "game server" : "client"),
+          severity: InfoBarSeverity.error,
+          duration: infoBarLongDuration,
         );
         break;
       case _StopReason.unknownError:
@@ -664,7 +679,7 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   Future<File?> _getDllFileOrStop(InjectableDll injectable, bool host, [bool isRetry = false]) async {
     log("[${host ? 'HOST' : 'GAME'}] Checking dll ${injectable}...");
-    final (file, customDll) = _settingsController.getInjectableData(injectable);
+    final (file, customDll) = _dllController.getInjectableData(injectable);
     log("[${host ? 'HOST' : 'GAME'}] Path: ${file.path}, custom: $customDll");
     if(await file.exists()) {
       log("[${host ? 'HOST' : 'GAME'}] Path exists");
@@ -678,7 +693,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     log("[${host ? 'HOST' : 'GAME'}] Path does not exist, downloading critical dll again...");
-    await _settingsController.downloadCriticalDllInteractive(file.path);
+    await _dllController.downloadCriticalDllInteractive(file.path);
     log("[${host ? 'HOST' : 'GAME'}] Downloaded dll again, retrying check...");
     return _getDllFileOrStop(injectable, host, true);
   }
@@ -731,7 +746,8 @@ enum _StopReason {
   matchmakerError,
   tokenError,
   unknownError,
-  exitCode;
+  exitCode,
+  crash;
 
   bool get isError => name.contains("Error");
 }

@@ -15,6 +15,7 @@ import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/cryptography.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final List<InfoBarEntry> _infoBars = [];
 
@@ -27,7 +28,27 @@ extension ServerControllerDialog on BackendController {
 
   Future<bool> toggleInteractive() async {
     cancelInteractive();
-    final stream = toggle();
+    final stream = toggle(
+      onExit: () {
+        cancelInteractive();
+        _showRebootInfoBar(
+            translations.backendProcessError,
+            severity: InfoBarSeverity.error
+        );
+      },
+      onError: (errorMessage) {
+        cancelInteractive();
+        _showRebootInfoBar(
+            translations.backendErrorMessage,
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration,
+            action: Button(
+              onPressed: () => launchUrl(launcherLogFile.uri),
+              child: Text(translations.openLog),
+            )
+        );
+      }
+    );
     final completer = Completer<bool>();
     InfoBarEntry? entry;
     worker = stream.listen((event) {
@@ -54,19 +75,6 @@ extension ServerControllerDialog on BackendController {
             duration: null
         );
       case ServerResultType.startSuccess:
-        final embeddedProcessPid = this.embeddedProcessPid;
-        if(embeddedProcessPid != null) {
-          watchProcess(embeddedProcessPid).then((_) {
-            if(started.value) {
-              started.value = false;
-              _showRebootInfoBar(
-                  translations.backendProcessError,
-                  severity: InfoBarSeverity.error
-              );
-            }
-          });
-        }
-
         return _showRebootInfoBar(
             type.value == ServerType.local ? translations.checkedServer : translations.startedServer,
             severity: InfoBarSeverity.success

@@ -12,6 +12,8 @@ import 'package:sync/semaphore.dart';
 import 'package:uuid/uuid.dart';
 
 class HostingController extends GetxController {
+  static const String storageName = "hosting_storage";
+
   late final GetStorage? _storage;
   late final String uuid;
   late final TextEditingController name;
@@ -32,7 +34,7 @@ class HostingController extends GetxController {
   late final Semaphore _semaphore;
 
   HostingController() {
-    _storage = appWithNoStorage ? null : GetStorage("hosting_storage");
+    _storage = appWithNoStorage ? null : GetStorage(storageName);
     uuid = _storage?.read("uuid") ?? const Uuid().v4();
     _storage?.write("uuid", uuid);
     name = TextEditingController(text: _storage?.read("name"));
@@ -138,10 +140,10 @@ class HostingController extends GetxController {
     description.text = "";
     showPassword.value = false;
     discoverable.value = false;
-    started.value = false;
     instance.value = null;
     type.value = GameServerType.headless;
     autoRestart.value = true;
+    customLaunchArgs.text = "";
   }
 
   FortniteServer? findServerById(String uuid) {

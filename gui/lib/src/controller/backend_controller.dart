@@ -2,18 +2,24 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
+import 'package:reboot_launcher/src/util/keyboard.dart';
 
 class BackendController extends GetxController {
-  late final GetStorage? storage;
+  static const String storageName = "backend_storage";
+  static const PhysicalKeyboardKey _kDefaultConsoleKey = PhysicalKeyboardKey(0x00070041);
+
+  late final GetStorage? _storage;
   late final TextEditingController host;
   late final TextEditingController port;
   late final Rx<ServerType> type;
   late final TextEditingController gameServerAddress;
   late final FocusNode gameServerAddressFocusNode;
+  late final Rx<PhysicalKeyboardKey> consoleKey;
   late final RxBool started;
   late final RxBool detached;
   StreamSubscription? worker;
@@ -22,13 +28,13 @@ class BackendController extends GetxController {
   HttpServer? remoteServer;
 
   BackendController() {
-    storage = appWithNoStorage ? null : GetStorage("backend_storage");
+    _storage = appWithNoStorage ? null : GetStorage(storageName);
     started = RxBool(false);
-    type = Rx(ServerType.values.elementAt(storage?.read("type") ?? 0));
+    type = Rx(ServerType.values.elementAt(_storage?.read("type") ?? 0));
     type.listen((value) {
       host.text = _readHost();
       port.text = _readPort();
-      storage?.write("type", value.index);
+      _storage?.write("type", value.index);
       if (!started.value) {
         return;
       }
@@ -37,13 +43,13 @@ class BackendController extends GetxController {
     });
     host = TextEditingController(text: _readHost());
     host.addListener(() =>
-        storage?.write("${type.value.name}_host", host.text));
+        _storage?.write("${type.value.name}_host", host.text));
     port = TextEditingController(text: _readPort());
     port.addListener(() =>
-        storage?.write("${type.value.name}_port", port.text));
-    detached = RxBool(storage?.read("detached") ?? false);
-    detached.listen((value) => storage?.write("detached", value));
-    final address = storage?.read("game_server_address");
+        _storage?.write("${type.value.name}_port", port.text));
+    detached = RxBool(_storage?.read("detached") ?? false);
+    detached.listen((value) => _storage?.write("detached", value));
+    final address = _storage?.read("game_server_address");
     gameServerAddress = TextEditingController(text: address == null || address.isEmpty ? "127.0.0.1" : address);
     var lastValue = gameServerAddress.text;
     writeMatchmakingIp(lastValue);
@@ -55,7 +61,7 @@ class BackendController extends GetxController {
 
       lastValue = newValue;
       gameServerAddress.selection = TextSelection.collapsed(offset: newValue.length);
-      storage?.write("game_server_address", newValue);
+      _storage?.write("game_server_address", newValue);
       writeMatchmakingIp(newValue);
     });
     watchMatchmakingIp().listen((event) {
@@ -64,6 +70,37 @@ class BackendController extends GetxController {
       }
     });
     gameServerAddressFocusNode = FocusNode();
+    consoleKey = Rx(_readConsoleKey());
+    _writeConsoleKey(consoleKey.value);
+    consoleKey.listen((newValue) {
+      _storage?.write("console_key", newValue.usbHidUsage);
+      _writeConsoleKey(newValue);
+    });
+  }
+
+  PhysicalKeyboardKey _readConsoleKey() {
+    final consoleKeyValue = _storage?.read("console_key");
+    if(consoleKeyValue == null) {
+      return _kDefaultConsoleKey;
+    }
+
+    final consoleKeyNumber = int.tryParse(consoleKeyValue.toString());
+    if(consoleKeyNumber == null) {
+      return _kDefaultConsoleKey;
+    }
+
+    final consoleKey = PhysicalKeyboardKey(consoleKeyNumber);
+    if(!consoleKey.isUnrealEngineKey) {
+      return _kDefaultConsoleKey;
+    }
+
+    return consoleKey;
+  }
+
+  Future<void> _writeConsoleKey(PhysicalKeyboardKey keyValue) async {
+    final defaultInput = File("${backendDirectory.path}\\CloudStorage\\DefaultInput.ini");
+    await defaultInput.parent.create(recursive: true);
+    await defaultInput.writeAsString("[/Script/Engine.InputSettings]\n+ConsoleKeys=Tilde\n+ConsoleKeys=${keyValue.unrealEngineName}", flush: true);
   }
 
   void joinLocalhost() {
@@ -73,18 +110,19 @@ class BackendController extends GetxController {
   void reset() async {
     type.value = ServerType.values.elementAt(0);
     for (final type in ServerType.values) {
-      storage?.write("${type.name}_host", null);
-      storage?.write("${type.name}_port", null);
+      _storage?.write("${type.name}_host", null);
+      _storage?.write("${type.name}_port", null);
     }
 
     host.text = type.value != ServerType.remote ? kDefaultBackendHost : "";
     port.text = kDefaultBackendPort.toString();
     gameServerAddress.text = "127.0.0.1";
+    consoleKey.value = _kDefaultConsoleKey;
     detached.value = false;
   }
 
   String _readHost() {
-    String? value = storage?.read("${type.value.name}_host");
+    String? value = _storage?.read("${type.value.name}_host");
     if (value != null && value.isNotEmpty) {
       return value;
     }
@@ -97,9 +135,9 @@ class BackendController extends GetxController {
   }
 
   String _readPort() =>
-      storage?.read("${type.value.name}_port") ?? kDefaultBackendPort.toString();
+      _storage?.read("${type.value.name}_port") ?? kDefaultBackendPort.toString();
 
-  Stream<ServerResult> start() async* {
+  Stream<ServerResult> start({required void Function() onExit, required void Function(String) onError}) async* {
     try {
       if(started.value) {
         return;
@@ -144,7 +182,18 @@ class BackendController extends GetxController {
 
       switch(serverType){
         case ServerType.embedded:
-          final process = await startEmbeddedBackend(detached.value);
+          final process = await startEmbeddedBackend(detached.value, onError: (errorMessage) {
+            if(started.value) {
+              started.value = false;
+              onError(errorMessage);
+            }
+          });
+          watchProcess(process.pid).then((_) {
+            if(started.value) {
+              started.value = false;
+              onExit();
+            }
+          });
           embeddedProcessPid = process.pid;
           break;
         case ServerType.remote:
@@ -237,11 +286,14 @@ class BackendController extends GetxController {
     }
   }
 
-  Stream<ServerResult> toggle() async* {
+  Stream<ServerResult> toggle({required void Function() onExit, required void Function(String) onError}) async* {
     if(started()) {
       yield* stop();
     }else {
-      yield* start();
+      yield* start(
+        onExit: onExit,
+        onError: onError
+      );
     }
   }
 }

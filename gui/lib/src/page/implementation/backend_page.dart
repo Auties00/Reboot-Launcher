@@ -43,7 +43,6 @@ class BackendPage extends RebootPage {
 }
 
 class _BackendPageState extends RebootPageState<BackendPage> {
-  final GameController _gameController = Get.find<GameController>();
   final BackendController _backendController = Get.find<BackendController>();
 
   InfoBarEntry? _infoBarEntry;
@@ -56,7 +55,7 @@ class _BackendPageState extends RebootPageState<BackendPage> {
       }
 
       if(keyEvent.physicalKey.isUnrealEngineKey) {
-        _gameController.consoleKey.value = keyEvent.physicalKey;
+        _backendController.consoleKey.value = keyEvent.physicalKey;
       }
 
       _infoBarEntry?.close();
@@ -194,7 +193,7 @@ class _BackendPageState extends RebootPageState<BackendPage> {
                 duration: null
             );
           },
-          child: Text(_gameController.consoleKey.value.unrealEnginePrettyName ?? ""),
+          child: Text(_backendController.consoleKey.value.unrealEnginePrettyName ?? ""),
         ),
       )
     );

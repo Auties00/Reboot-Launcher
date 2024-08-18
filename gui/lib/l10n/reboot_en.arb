@@ -118,9 +118,7 @@
   "settingsUtilsResetDefaultsName": "Reset settings",
   "settingsUtilsResetDefaultsSubtitle": "Resets the launcher's settings to their default values",
   "settingsUtilsDialogTitle": "Do you want to reset all the setting in this tab to their default values? This action is irreversible",
-  "settingsUtilsResetDefaultsContent": "Reset",
   "settingsUtilsDialogSecondaryAction": "Close",
-  "settingsUtilsDialogPrimaryAction": "Reset",
   "selectFortniteName": "Fortnite version",
   "selectFortniteDescription": "Select the version of Fortnite you want to use",
   "manageVersionsName": "Manage versions",
@@ -262,6 +260,7 @@
   "missingCustomDllError": "The custom {dll}.dll doesn't exist: check your settings",
   "tokenError": "Cannot log in into Fortnite: authentication error (injected dlls: {dlls})",
   "unknownFortniteError": "An unknown error occurred while launching Fortnite: {error}",
+  "fortniteCrashError": "The {name} crashed after being launched",
   "serverNoLongerAvailableUnnamed": "The previous server is no longer available",
   "noServerFound": "No server found: invalid or expired link",
   "settingsUtilsThemeName": "Theme",
@@ -321,6 +320,7 @@
   "none": "none",
   "openLog": "Open log",
   "backendProcessError": "The backend shut down unexpectedly",
+  "backendErrorMessage": "The backend reported an unexpected error",
   "welcomeTitle": "Welcome to Reboot Launcher",
   "welcomeDescription": "If you have never used a Fortnite game server, or this launcher in particular, please click on take a tour\nPlease don't ask for support on Discord without taking the tour: this helps me prioritize real bugs\nYou can always take the tour again in the Info tab",
   "welcomeAction": "Take the tour",
@@ -364,5 +364,8 @@
   "promptSettingsTabActionLabel": "Done",
   "automaticGameServerDialogContent": "The launcher detected that you are not running a game server, but that your matchmaker is set to your local machine. If you don't want to join another player's server, you should start a game server. This is necessary to be able to play!",
   "automaticGameServerDialogIgnore": "Ignore",
-  "automaticGameServerDialogStart": "Start server"
+  "automaticGameServerDialogStart": "Start server",
+  "gameResetDefaultsName": "Reset",
+  "gameResetDefaultsDescription": "Resets the game's settings to their default values",
+  "gameResetDefaultsContent": "Reset"
 }
