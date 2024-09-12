@@ -221,11 +221,12 @@ class _HostingPageState extends RebootPageState<HostPage> {
         content: Obx(() => DropDownButton(
             onOpen: () => inDialog = true,
             onClose: () => inDialog = false,
-            leading: Text(_hostingController.type.value.translatedName),
+            leading: Text(_settingsController.debug.value ? GameServerType.window.translatedName : _hostingController.type.value.translatedName),
             items: GameServerType.values.map((entry) => MenuFlyoutItem(
                 text: Text(entry.translatedName),
                 onPressed: () => _hostingController.type.value = entry
-            )).toList()
+            )).toList(),
+          disabled: _settingsController.debug.value
         )),
       ),
       SettingTile(
@@ -317,7 +318,12 @@ class _HostingPageState extends RebootPageState<HostPage> {
         return createFileSetting(
             title: translations.settingsServerFileName,
             description: translations.settingsServerFileDescription,
-            controller: _dllController.gameServerDll
+            controller: _dllController.gameServerDll,
+            onReset: () {
+              final path = _dllController.getDefaultDllPath(InjectableDll.reboot);
+              _dllController.gameServerDll.text = path;
+              _dllController.downloadCriticalDllInteractive(path);
+            }
         );
       }),
       Obx(() {
@@ -331,10 +337,29 @@ class _HostingPageState extends RebootPageState<HostPage> {
             ),
             title: Text(translations.settingsServerMirrorName),
             subtitle: Text(translations.settingsServerMirrorDescription),
-            content: TextFormBox(
-                placeholder:  translations.settingsServerMirrorPlaceholder,
-                controller: _dllController.url,
-                validator: _checkUpdateUrl
+            content: Row(
+              children: [
+                Expanded(
+                  child: TextFormBox(
+                      placeholder:  translations.settingsServerMirrorPlaceholder,
+                      controller: _dllController.url,
+                      validator: _checkUpdateUrl
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Button(
+                    style: ButtonStyle(
+                        padding: ButtonState.all(EdgeInsets.zero)
+                    ),
+                    onPressed: () => _dllController.url.text = kRebootDownloadUrl,
+                    child: SizedBox.square(
+                      dimension: 30,
+                      child: Icon(
+                          FluentIcons.arrow_reset_24_regular
+                      ),
+                    )
+                )
+              ],
             )
         );
       }),
@@ -343,29 +368,50 @@ class _HostingPageState extends RebootPageState<HostPage> {
           return const SizedBox.shrink();
         }
 
-        return  SettingTile(
+        return SettingTile(
             icon: Icon(
                 FluentIcons.timer_24_regular
             ),
             title: Text(translations.settingsServerTimerName),
             subtitle: Text(translations.settingsServerTimerSubtitle),
-            content: Obx(() => DropDownButton(
-                onOpen: () => inDialog = true,
-                onClose: () => inDialog = false,
-                leading: Text(_dllController.timer.value.text),
-                items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
-                    text: Text(entry.text),
-                    onPressed: () {
-                      _dllController.timer.value = entry;
-                      _dllController.infoBarEntry?.close();
-                      _dllController.updateGameServerDll(
-                          force: true
-                      );
-                    }
-                )).toList()
-            ))
+            content: Row(
+              children: [
+                Expanded(
+                  child: Obx(() => DropDownButton(
+                      onOpen: () => inDialog = true,
+                      onClose: () => inDialog = false,
+                      leading: Text(_dllController.timer.value.text),
+                      items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
+                          text: Text(entry.text),
+                          onPressed: () {
+                            _dllController.timer.value = entry;
+                            _dllController.infoBarEntry?.close();
+                            _dllController.updateGameServerDll(
+                                force: true
+                            );
+                          }
+                      )).toList()
+                  )),
+                ),
+                const SizedBox(width: 8.0),
+                Button(
+                  style: ButtonStyle(
+                    padding: ButtonState.all(EdgeInsets.zero)
+                  ),
+                  onPressed: () {
+                    _dllController.updateGameServerDll(force: true);
+                  },
+                  child: SizedBox.square(
+                    dimension: 30,
+                    child: Icon(
+                        FluentIcons.arrow_download_24_regular
+                    ),
+                  )
+                )
+              ],
+            )
         );
-      }),
+      })
     ],
   );
 

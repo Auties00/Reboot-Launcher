@@ -21,6 +21,7 @@ class SettingsController extends GetxController {
   late final RxString language;
   late final Rx<ThemeMode> themeMode;
   late final RxBool firstRun;
+  late final RxBool debug;
   late double width;
   late double height;
   late double? offsetX;
@@ -38,6 +39,7 @@ class SettingsController extends GetxController {
     language.listen((value) => _storage?.write("language", value));
     firstRun = RxBool(_storage?.read("first_run_tutorial") ?? true);
     firstRun.listen((value) => _storage?.write("first_run_tutorial", value));
+    debug = RxBool(false);
   }
 
   void saveWindowSize(Size size) {
