@@ -42,7 +42,8 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
   List<Widget> get settings => [
     _language,
     _theme,
-    _installationDirectory
+    _debugMode,
+    _installationDirectory,
   ];
 
   SettingTile get _language => SettingTile(
@@ -97,6 +98,29 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
       content: Button(
         onPressed: () => launchUrl(installationDirectory.uri),
         child: Text(translations.settingsUtilsInstallationDirectoryContent),
+      )
+  );
+
+  SettingTile get _debugMode => SettingTile(
+      icon: Icon(
+          FluentIcons.developer_board_24_regular
+      ),
+      title: Text("Debug mode"),
+      subtitle: Text("Whether the launcher should disable automatic features for troubleshooting"),
+      contentWidth: null,
+      content: Row(
+        children: [
+          Text(
+              _settingsController.debug.value ? translations.on : translations.off
+          ),
+          const SizedBox(
+              width: 16.0
+          ),
+          Obx(() => ToggleSwitch(
+              checked: _settingsController.debug.value,
+              onChanged: (value) => _settingsController.debug.value = value
+          ))
+        ],
       )
   );
 }

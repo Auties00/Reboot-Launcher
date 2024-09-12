@@ -41,10 +41,12 @@ class _LaunchButtonState extends State<LaunchButton> {
   final HostingController _hostingController = Get.find<HostingController>();
   final BackendController _backendController = Get.find<BackendController>();
   final DllController _dllController = Get.find<DllController>();
+  final SettingsController _settingsController = Get.find<SettingsController>();
 
   InfoBarEntry? _gameClientInfoBar;
   InfoBarEntry? _gameServerInfoBar;
   CancelableOperation? _operation;
+  CancelableOperation? _pingOperation;
   IVirtualDesktop? _virtualDesktop;
 
   @override
@@ -94,10 +96,6 @@ class _LaunchButtonState extends State<LaunchButton> {
     log("[${host ? 'HOST' : 'GAME'}] Checking dlls: ${InjectableDll.values}");
     for (final injectable in InjectableDll.values) {
       if(await _getDllFileOrStop(injectable, host) == null) {
-        _onStop(
-            reason: _StopReason.missingCustomDllError,
-          error: injectable.name,
-        );
         return;
       }
     }
@@ -123,7 +121,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
       log("[${host ? 'HOST' : 'GAME'}] Backend works");
-      final serverType =  _hostingController.type.value;
+      final serverType = _settingsController.debug.value ? GameServerType.window : _hostingController.type.value;
       log("[${host ? 'HOST' : 'GAME'}] Implicit game server metadata: headless($serverType)");
       final linkedHostingInstance = await _startMatchMakingServer(version, host, serverType, false);
       log("[${host ? 'HOST' : 'GAME'}] Implicit game server result: $linkedHostingInstance");
@@ -139,6 +137,12 @@ class _LaunchButtonState extends State<LaunchButton> {
       }else {
         _showLaunchingGameServerWidget();
       }
+    } on ProcessException catch (exception, stackTrace) {
+      _onStop(
+          reason: _StopReason.corruptedVersionError,
+          error: exception.toString(),
+          stackTrace: stackTrace
+      );
     } catch (exception, stackTrace) {
       _onStop(
           reason: _StopReason.unknownError,
@@ -152,6 +156,11 @@ class _LaunchButtonState extends State<LaunchButton> {
     log("[${host ? 'HOST' : 'GAME'}] Checking if a server needs to be started automatically...");
     if(host){
       log("[${host ? 'HOST' : 'GAME'}] The user clicked on Start hosting, so it's not necessary");
+      return null;
+    }
+
+    if(_settingsController.debug.value) {
+      log("[${host ? 'HOST' : 'GAME'}] The user is on debug mode, not asking for auto server");
       return null;
     }
 
@@ -271,9 +280,17 @@ class _LaunchButtonState extends State<LaunchButton> {
           line: line,
           host: host,
           onShutdown: () => _onStop(reason: _StopReason.normal),
-          onTokenError: () => _onStop(reason: _StopReason.tokenError),
+          onTokenError: () {
+            if(_settingsController.debug.value) {
+              log("[PROCESS] Ignoring token error because debug mode is on");
+            }else {
+              _onStop(reason: _StopReason.tokenError);
+            }
+          },
           onBuildCorrupted: () {
-            if(instance?.launched == false) {
+            if(instance == null) {
+              return;
+            }else if(!instance.launched) {
               _onStop(reason: _StopReason.corruptedVersionError);
             }else {
               _onStop(reason: _StopReason.crash);
@@ -432,10 +449,11 @@ class _LaunchButtonState extends State<LaunchButton> {
           duration: null
       );
       final gameServerPort = _dllController.gameServerPort.text;
-      final localPingResult = await pingGameServer(
+      this._pingOperation = await CancelableOperation.fromFuture(pingGameServer(
           "127.0.0.1:$gameServerPort",
           timeout: const Duration(minutes: 2)
-      );
+      ));
+      final localPingResult = (await _pingOperation?.value) ?? false;
       _gameServerInfoBar?.close();
       if (!localPingResult) {
         showRebootInfoBar(
@@ -478,16 +496,18 @@ class _LaunchButtonState extends State<LaunchButton> {
           duration: null
       );
       final publicIp = await Ipify.ipv4();
-      final externalResult = await pingGameServer("$publicIp:$gameServerPort");
+      this._pingOperation = CancelableOperation.fromFuture(pingGameServer("$publicIp:$gameServerPort"));
+      final externalResult = (await _pingOperation?.value) ?? false;
       if (externalResult) {
         return true;
       }
 
       _gameServerInfoBar?.close();
-      final future = pingGameServer(
+      this._pingOperation = CancelableOperation.fromFuture(pingGameServer(
           "$publicIp:$gameServerPort",
           timeout: const Duration(days: 365)
-      );
+      ));
+      final future = await _pingOperation?.value ?? false;
       _gameServerInfoBar = showRebootInfoBar(
           translations.checkGameServerFixMessage(gameServerPort),
           action: Button(
@@ -506,6 +526,8 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   Future<void> _onStop({required _StopReason reason, bool? host, String? error, StackTrace? stackTrace}) async {
     if(host == null) {
+      await _pingOperation?.cancel();
+      _pingOperation = null;
       await _operation?.cancel();
       _operation = null;
       _backendController.cancelInteractive();
@@ -513,6 +535,10 @@ class _LaunchButtonState extends State<LaunchButton> {
 
     host = host ?? widget.host;
     final instance = host ? _hostingController.instance.value : _gameController.instance.value;
+    if(instance == null) {
+      return;
+    }
+
     if(host){
       _hostingController.instance.value = null;
     }else {
@@ -534,19 +560,17 @@ class _LaunchButtonState extends State<LaunchButton> {
       _hostingController.discardServer();
     }
 
-    if(instance != null) {
-      if(reason == _StopReason.normal) {
-        instance.launched = true;
-      }
+    if(reason == _StopReason.normal) {
+      instance.launched = true;
+    }
 
-      instance.kill();
-      final child = instance.child;
-      if(child != null) {
-        await _onStop(
-            reason: reason,
-            host: child.serverType != null
-        );
-      }
+    instance.kill();
+    final child = instance.child;
+    if(child != null) {
+      await _onStop(
+          reason: reason,
+          host: child.serverType != null
+      );
     }
 
     _setStarted(host, false);
@@ -578,7 +602,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         );
         break;
       case _StopReason.exitCode:
-        if(instance != null && !instance.launched) {
+        if(!instance.launched) {
           showRebootInfoBar(
             translations.corruptedVersionError,
             severity: InfoBarSeverity.error,
@@ -614,7 +638,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       case _StopReason.tokenError:
         _backendController.stop();
         showRebootInfoBar(
-          translations.tokenError(instance?.injectedDlls.map((element) => element.name).join(", ") ?? translations.none),
+          translations.tokenError(instance.injectedDlls.map((element) => element.name).join(", ")),
           severity: InfoBarSeverity.error,
           duration: infoBarLongDuration,
           action: Button(
@@ -663,6 +687,10 @@ class _LaunchButtonState extends State<LaunchButton> {
       }
 
       log("[${hosting ? 'HOST' : 'GAME'}] Trying to inject ${injectable.name}...");
+      if(_settingsController.debug.value) {
+        return;
+      }
+
       await injectDll(gameProcess, dllPath);
       instance.injectedDlls.add(injectable);
       log("[${hosting ? 'HOST' : 'GAME'}] Injected ${injectable.name}");
@@ -687,13 +715,17 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
 
     log("[${host ? 'HOST' : 'GAME'}] Path doesn't exist");
-    if(customDll || isRetry) {
+    if(customDll) {
       log("[${host ? 'HOST' : 'GAME'}] Custom dll -> no recovery");
+      _onStop(
+        reason: _StopReason.missingCustomDllError,
+        error: injectable.name,
+      );
       return null;
     }
 
     log("[${host ? 'HOST' : 'GAME'}] Path does not exist, downloading critical dll again...");
-    await _dllController.downloadCriticalDllInteractive(file.path);
+    await _dllController.downloadCriticalDllInteractive(file.path, force: true);
     log("[${host ? 'HOST' : 'GAME'}] Downloaded dll again, retrying check...");
     return _getDllFileOrStop(injectable, host, true);
   }
@@ -710,7 +742,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       loading: true,
       duration: null,
       action: Obx(() {
-        if(_hostingController.started.value || linkedHosting) {
+        if(_settingsController.debug.value || _hostingController.started.value || linkedHosting) {
           return const SizedBox.shrink();
         }
 

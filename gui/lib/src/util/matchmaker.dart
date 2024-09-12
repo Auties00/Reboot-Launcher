@@ -36,7 +36,6 @@ Future<bool> pingGameServer(String address, {Duration? timeout}) async {
     }
   }
 
-
   final start = DateTime.now();
   var firstTime = true;
   final split = address.split(":");

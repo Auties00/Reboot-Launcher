@@ -23,19 +23,18 @@ InfoBarEntry showRebootInfoBar(dynamic text, {
 
 Widget _buildOverlay(text, Widget? action, bool loading, InfoBarSeverity severity) => ConstrainedBox(
   constraints: BoxConstraints(
-      minWidth: double.infinity,
-      minHeight: _height
+    minHeight: _height
   ),
   child: Mica(
       elevation: 1,
       child: InfoBar(
           title: Row(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if(text is Widget)
-                text,
-              if(text is String)
-                Text(text),
+              Expanded(
+                  child: text is Widget ? text : Text(text)
+              ),
               if(action != null)
                 action
             ],

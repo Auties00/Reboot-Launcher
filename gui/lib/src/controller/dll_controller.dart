@@ -28,7 +28,6 @@ class DllController extends GetxController {
   late final TextEditingController url;
   late final RxBool customGameServer;
   late final RxnInt timestamp;
-  late final Map<String, Future<bool>> _operations;
   late final Rx<UpdateStatus> status;
   InfoBarEntry? infoBarEntry;
   Future<bool>? _updater;
@@ -51,20 +50,19 @@ class DllController extends GetxController {
     customGameServer.listen((value) => _storage?.write("custom_game_server", value));
     timestamp = RxnInt(_storage?.read("ts"));
     timestamp.listen((value) => _storage?.write("ts", value));
-    _operations = {};
   }
 
   TextEditingController _createController(String key, InjectableDll dll) {
-    final controller = TextEditingController(text: _storage?.read(key) ?? _getDefaultPath(dll));
+    final controller = TextEditingController(text: _storage?.read(key) ?? getDefaultDllPath(dll));
     controller.addListener(() => _storage?.write(key, controller.text));
     return controller;
   }
 
   void resetGame() {
-    gameServerDll.text = _getDefaultPath(InjectableDll.reboot);
-    unrealEngineConsoleDll.text = _getDefaultPath(InjectableDll.console);
-    backendDll.text = _getDefaultPath(InjectableDll.cobalt);
-    memoryLeakDll.text = _getDefaultPath(InjectableDll.memory);
+    gameServerDll.text = getDefaultDllPath(InjectableDll.reboot);
+    unrealEngineConsoleDll.text = getDefaultDllPath(InjectableDll.console);
+    backendDll.text = getDefaultDllPath(InjectableDll.cobalt);
+    memoryLeakDll.text = getDefaultDllPath(InjectableDll.memory);
   }
 
   void resetServer() {
@@ -147,7 +145,7 @@ class DllController extends GetxController {
   }
 
   (File, bool) getInjectableData(InjectableDll dll) {
-    final defaultPath = canonicalize(_getDefaultPath(dll));
+    final defaultPath = canonicalize(getDefaultDllPath(dll));
     switch(dll){
       case InjectableDll.reboot:
         if(customGameServer.value) {
@@ -170,23 +168,10 @@ class DllController extends GetxController {
     }
   }
 
-  String _getDefaultPath(InjectableDll dll) => "${dllsDirectory.path}\\${dll.name}.dll";
+  String getDefaultDllPath(InjectableDll dll) => "${dllsDirectory.path}\\${dll.name}.dll";
 
-  Future<bool> downloadCriticalDllInteractive(String filePath, {bool silent = false}) {
+  Future<bool> downloadCriticalDllInteractive(String filePath, {bool silent = false, bool force = false}) async {
     log("[DLL] Asking for $filePath(silent: $silent)");
-    final old = _operations[filePath];
-    if(old != null) {
-      log("[DLL] Download task already exists");
-      return old;
-    }
-
-    log("[DLL] Creating new download task...");
-    final newRun = _downloadCriticalDllInteractive(filePath, silent);
-    _operations[filePath] = newRun;
-    return newRun;
-  }
-
-  Future<bool> _downloadCriticalDllInteractive(String filePath, bool silent) async {
     final fileName = basename(filePath).toLowerCase();
     log("[DLL] File name: $fileName");
     InfoBarEntry? entry;
@@ -198,7 +183,7 @@ class DllController extends GetxController {
         );
       }
 
-      if(File(filePath).existsSync()) {
+      if(!force && File(filePath).existsSync()) {
         log("[DLL] File already exists");
         return true;
       }
@@ -225,7 +210,8 @@ class DllController extends GetxController {
       log("[DLL] Error: $message");
       entry?.close();
       var error = message.toString();
-      error = error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
+      error =
+      error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
       error = error.toLowerCase();
       final completer = Completer();
       await showRebootInfoBar(
@@ -243,8 +229,6 @@ class DllController extends GetxController {
       );
       await completer.future;
       return false;
-    }finally {
-      _operations.remove(fileName);
     }
   }
 }
