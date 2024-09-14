@@ -5,10 +5,13 @@ import 'dart:isolate';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/dialog.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:reboot_launcher/src/util/types.dart';
 import 'package:reboot_launcher/src/widget/file_selector.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 import 'package:windows_taskbar/windows_taskbar.dart';
@@ -41,6 +44,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
   SendPort? _downloadPort;
   Object? _error;
   StackTrace? _stackTrace;
+  bool _selecting = false;
 
   @override
   void initState() {
@@ -102,7 +106,12 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
             return ErrorDialog(
                 exception: _error ?? Exception(translations.unknownError),
                 stackTrace: _stackTrace,
-                errorMessageBuilder: (exception) => translations.downloadVersionError(exception.toString())
+                errorMessageBuilder: (exception) {
+                  var error = exception.toString();
+                  error = error.after("Error: ")?.replaceAll(":", ",") ?? error.after(": ") ?? error;
+                  error = error.toLowerCase();
+                  return translations.downloadVersionError(error);
+                }
             );
           case _DownloadStatus.done:
             return InfoDialog(
@@ -274,7 +283,8 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
     );
   }
 
-  Widget _buildFormBody(List<FortniteBuild> builds) => Column(
+  Widget _buildFormBody(List<FortniteBuild> builds) {
+    return Column(
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -292,7 +302,8 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
           windowTitle: _source.value == _BuildSource.local ? translations.gameFolderPlaceWindowTitle : translations.buildInstallationDirectoryWindowTitle,
           controller: _pathController,
           validator: _source.value == _BuildSource.local ? _checkGameFolder : _checkDownloadDestination,
-          folder: true
+          folder: true,
+          allowNavigator: true
       ),
 
       const SizedBox(
@@ -300,6 +311,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
       )
     ],
   );
+  }
 
   String? _checkGameFolder(text) {
     if (text == null || text.isEmpty) {

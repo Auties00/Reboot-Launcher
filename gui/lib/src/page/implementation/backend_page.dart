@@ -153,9 +153,9 @@ class _BackendPageState extends RebootPageState<BackendPage> {
         contentWidth: null,
         content: Row(
           children: [
-            Text(
+            Obx(() => Text(
                 _backendController.detached.value ? translations.on : translations.off
-            ),
+            )),
             const SizedBox(
                 width: 16.0
             ),

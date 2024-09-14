@@ -298,48 +298,46 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     });
   }
 
-  Widget _buildBody() {
-    return Expanded(
-      child: Padding(
-          padding: EdgeInsets.only(
-              left: HomePage.kDefaultPadding,
-              right: HomePage.kDefaultPadding * 2,
-              top: HomePage.kDefaultPadding,
-              bottom: HomePage.kDefaultPadding * 2
-          ),
-          child: Column(
-            children: [
-              Expanded(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                      maxWidth: 1000
-                  ),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        _buildBodyHeader(),
-                        const SizedBox(height: 24.0),
-                        Expanded(
-                            child: Stack(
-                              fit: StackFit.loose,
-                              children: [
-                                _buildBodyContent(),
-                                InfoBarArea(
-                                    key: infoBarAreaKey
-                                )
-                              ],
-                            )
-                        ),
-                      ],
-                    ),
+  Widget _buildBody() => Expanded(
+    child: Padding(
+        padding: EdgeInsets.only(
+            left: HomePage.kDefaultPadding,
+            right: HomePage.kDefaultPadding * 2,
+            top: HomePage.kDefaultPadding,
+            bottom: HomePage.kDefaultPadding * 2
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                    maxWidth: 1000
+                ),
+                child: Center(
+                  child: Column(
+                    children: [
+                      _buildBodyHeader(),
+                      const SizedBox(height: 24.0),
+                      Expanded(
+                          child: Stack(
+                            fit: StackFit.loose,
+                            children: [
+                              _buildBodyContent(),
+                              InfoBarArea(
+                                  key: infoBarAreaKey
+                              )
+                            ],
+                          )
+                      ),
+                    ],
                   ),
                 ),
-              )
-            ],
-          )
-      ),
-    );
-  }
+              ),
+            )
+          ],
+        )
+    ),
+  );
 
   Widget _buildBodyContent() => PageView.builder(
       controller: _pageController,

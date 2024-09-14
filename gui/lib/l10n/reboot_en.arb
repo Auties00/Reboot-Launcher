@@ -368,5 +368,7 @@
   "automaticGameServerDialogStart": "Start server",
   "gameResetDefaultsName": "Reset",
   "gameResetDefaultsDescription": "Resets the game's settings to their default values",
-  "gameResetDefaultsContent": "Reset"
+  "gameResetDefaultsContent": "Reset",
+  "selectFile": "Select a file",
+  "reset": "Reset"
 }

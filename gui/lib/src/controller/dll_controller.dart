@@ -109,7 +109,9 @@ class DllController extends GetxController {
             duration: null
         );
       }
-      timestamp.value = await downloadRebootDll(url.text);
+      final result = downloadRebootDll(url.text);
+      timestamp.value = await Future.wait([result, Future.delayed(const Duration(seconds: 1))], eagerError: false)
+          .then((_) => result);
       status.value = UpdateStatus.success;
       infoBarEntry?.close();
       if(!silent) {
@@ -126,15 +128,18 @@ class DllController extends GetxController {
       error = error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
       error = error.toLowerCase();
       status.value = UpdateStatus.error;
-      showRebootInfoBar(
-          translations.downloadDllError("reboot.dll", error.toString()),
+      infoBarEntry = showRebootInfoBar(
+          translations.downloadDllError(error.toString(), "reboot.dll"),
           duration: infoBarLongDuration,
           severity: InfoBarSeverity.error,
           action: Button(
-            onPressed: () => updateGameServerDll(
-                force: true,
-                silent: silent
-            ),
+            onPressed: () async {
+              infoBarEntry?.close();
+              updateGameServerDll(
+                  force: true,
+                  silent: silent
+              );
+            },
             child: Text(translations.downloadDllRetry),
           )
       );
@@ -215,7 +220,7 @@ class DllController extends GetxController {
       error = error.toLowerCase();
       final completer = Completer();
       await showRebootInfoBar(
-          translations.downloadDllError(fileName, error.toString()),
+          translations.downloadDllError(error.toString(), fileName),
           duration: infoBarLongDuration,
           severity: InfoBarSeverity.error,
           onDismissed: () => completer.complete(null),

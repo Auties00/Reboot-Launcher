@@ -110,9 +110,9 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
       contentWidth: null,
       content: Row(
         children: [
-          Text(
+          Obx(() => Text(
               _settingsController.debug.value ? translations.on : translations.off
-          ),
+          )),
           const SizedBox(
               width: 16.0
           ),

@@ -18,9 +18,12 @@ void onError(Object exception, StackTrace? stackTrace, bool framework) {
   }
 
   lastError = exception.toString();
-  final route = ModalRoute.of(pageKey.currentContext!);
-  if(route != null && !route.isCurrent){
-    Navigator.of(pageKey.currentContext!).pop(false);
+  if(inDialog){
+    final context = pageKey.currentContext;
+    if(context != null) {
+      Navigator.of(context).pop(false);
+      inDialog = false;
+    }
   }
 
   WidgetsBinding.instance.addPostFrameCallback((timeStamp) => showRebootDialog(
