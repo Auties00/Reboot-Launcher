@@ -1,0 +1,22 @@
+Para que outros possam se juntar ao seu servidor, a porta 7777 deve estar acessível no seu PC.
+Uma opção é usar um serviço VPN privado como o Hamachi ou Radmin, mas todos os jogadores precisarão baixar este software.
+A melhor solução é usar o encaminhamento de porta:
+1. Configure um IP estático
+    Se você ainda não tem um IP estático configurado, defina um seguindo qualquer tutorial no Google.
+2. Faça login no painel de administração do seu roteador 
+    Normalmente, isso pode ser acessado em qualquer navegador da web indo para http://192.168.0.1/ ou http://192.168.1.1/
+    Você pode precisar de um nome de usuário e uma senha para fazer login: consulte o manual do seu roteador para instruções precisas.
+3. Encontre a seção de encaminhamento de porta
+    Depois de fazer login no painel de administração, navegue até a seção de encaminhamento de porta nas configurações do seu roteador.
+    A localização pode variar de um roteador para outro, mas geralmente é rotulada como "Encaminhamento de Porta," "Mapeamento de Porta" ou "Servidor Virtual."
+    Consulte o manual do seu roteador para instruções precisas.
+4. Adicione uma regra de encaminhamento de porta
+    Agora, você precisará criar uma nova regra de encaminhamento de porta. Aqui está o que você geralmente precisa especificar:
+    - Nome do Serviço: Escolha um nome para a sua regra de encaminhamento de porta (por exemplo, "Servido de Fortnite").
+    - Número da Porta: Insira 7777 para ambas as portas externa e interna.
+    - Protocolo: Selecione o protocolo UDP.
+    - Endereço IP Interno: Insira o endereço IP estático que você configurou anteriormente.
+    - Ativar: Verifique se a regra de encaminhamento de porta está ativada.
+5. Salve e aplique as alterações
+    Após configurar a regra de encaminhamento de porta, salve suas alterações e aplique-as.
+    Esta etapa pode envolver clicar em um botão "Salvar" ou "Aplicar" na interface web do seu roteador.

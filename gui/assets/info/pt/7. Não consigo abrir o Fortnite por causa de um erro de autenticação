@@ -1,0 +1,4 @@
+Para resolver esse problema:
+- Verifique se o seu backend está funcionando corretamente na aba "Backend".
+- Se estiver usando um backend personalizado, tente usar o embutido.
+- Tente executar o backend como destacado, ativando a opção "Destacado" na aba "Backend".

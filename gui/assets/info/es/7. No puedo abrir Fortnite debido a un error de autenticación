@@ -1,0 +1,4 @@
+Para resolver este problema:
+- Verifica que tu backend esté funcionando correctamente desde la pestaña "Backend".
+- Si estás utilizando un backend personalizado, intenta usar el integrado.
+- Intenta ejecutar el backend como desvinculado activando la opción "Desvinculado" en la pestaña "Backend".

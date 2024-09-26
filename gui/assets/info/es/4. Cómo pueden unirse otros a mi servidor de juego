@@ -1,0 +1,22 @@
+Para que otros puedan unirse a tu servidor, el puerto 7777 debe ser accesible en tu PC.
+Una opción es usar un servicio VPN privado como Hamachi o Radmin, pero todos los jugadores necesitarán descargar este software.
+La mejor solución es usar el reenvío de puertos:
+1. Set a static IP
+    Si aún no tienes una IP estática configurada, establece una siguiendo cualquier tutorial en Google.
+2. Log into your router's admin panel
+    Normalmente se puede acceder a esto en cualquier navegador web yendo a http://192.168.1.1/.
+    Es posible que necesites un nombre de usuario y una contraseña para iniciar sesión: consulta el manual de tu enrutador para obtener instrucciones precisas.
+3. Find the port forwarding section
+    Una vez que hayas iniciado sesión en el panel de administración, navega hasta la sección de reenvío de puertos de la configuración de tu enrutador.
+    Esta ubicación puede variar de un enrutador a otro, pero generalmente está etiquetada como "Reenvío de puertos", "Mapeo de puertos" o "Servidor virtual".
+    Consulta el manual de tu enrutador para obtener instrucciones precisas.
+4. Add a port forwarding rule
+    Ahora, necesitarás crear una nueva regla de reenvío de puertos. Aquí es lo que generalmente necesitarás especificar:
+    - Nombre del servicio: Elige un nombre para tu regla de reenvío de puertos (por ejemplo, "Servidor de Fortnite").
+    - Número de puerto: Ingresa 7777 para ambos los puertos externo e interno.
+    - Protocolo: Selecciona el protocolo UDP.
+    - Dirección IP interna: Ingresa la dirección IP estática que configuraste anteriormente.
+    - Habilitar: Asegúrate de que la regla de reenvío de puertos esté habilitada.
+5. Save and apply the changes
+    Después de configurar la regla de reenvío de puertos, guarda tus cambios y aplícalos.
+    Este paso puede implicar hacer clic en un botón "Guardar" o "Aplicar" en la interfaz web de tu enrutador.
