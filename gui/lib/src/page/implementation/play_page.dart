@@ -7,7 +7,6 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
 import 'package:reboot_launcher/src/messenger/implementation/data.dart';
-import 'package:reboot_launcher/src/messenger/implementation/onboard.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
@@ -38,7 +37,6 @@ class PlayPage extends RebootPage {
 }
 
 class _PlayPageState extends RebootPageState<PlayPage> {
-  final SettingsController _settingsController = Get.find<SettingsController>();
   final GameController _gameController = Get.find<GameController>();
   final DllController _dllController = Get.find<DllController>();
 

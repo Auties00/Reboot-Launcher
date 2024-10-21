@@ -6,13 +6,16 @@ import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
 
 bool _watcher = false;
-final File rebootDllFile = File("${dllsDirectory.path}\\reboot.dll");
-const String kRebootDownloadUrl =
+final File rebootBeforeS20DllFile = File("${dllsDirectory.path}\\reboot.dll");
+final File rebootAboveS20DllFile = File("${dllsDirectory.path}\\rebootS20.dll");
+const String kRebootBelowS20DownloadUrl =
     "http://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/Release.zip";
+const String kRebootAboveS20DownloadUrl =
+    "http://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/aboveS20/Release.zip";
 
 Future<bool> hasRebootDllUpdate(int? lastUpdateMs, {int hours = 24, bool force = false}) async {
     final lastUpdate = await _getLastUpdate(lastUpdateMs);
-    final exists = await rebootDllFile.exists();
+    final exists = await rebootBeforeS20DllFile.exists() && await rebootAboveS20DllFile.exists();
     final now = DateTime.now();
     return force || !exists || (hours > 0 && lastUpdate != null && now.difference(lastUpdate).inHours > hours);
 }
@@ -28,9 +31,8 @@ Future<void> downloadCriticalDll(String name, String outputPath) async {
     await output.writeAsBytes(response.bodyBytes, flush: true);
 }
 
-Future<int> downloadRebootDll(String url) async {
+Future<void> downloadRebootDll(File file, String url) async {
     Directory? outputDir;
-    final now = DateTime.now();
     try {
         final response = await http.get(Uri.parse(url));
         if(response.statusCode != 200) {
@@ -42,8 +44,7 @@ Future<int> downloadRebootDll(String url) async {
         await tempZip.writeAsBytes(response.bodyBytes, flush: true);
         await extractFileToDisk(tempZip.path, outputDir.path);
         final rebootDll = File(outputDir.listSync().firstWhere((element) => path.extension(element.path) == ".dll").path);
-        await rebootDllFile.writeAsBytes(await rebootDll.readAsBytes(), flush: true);
-        return now.millisecondsSinceEpoch;
+        await file.writeAsBytes(await rebootDll.readAsBytes(), flush: true);
     } finally{
         if(outputDir != null) {
             delete(outputDir);
@@ -63,7 +64,7 @@ Stream<String> watchDlls() async* {
     }
 
     _watcher = true;
-    await for(final event in rebootDllFile.parent.watch(events: FileSystemEvent.delete | FileSystemEvent.move)) {
+    await for(final event in dllsDirectory.watch(events: FileSystemEvent.delete | FileSystemEvent.move)) {
         if (event.path.endsWith(".dll")) {
             yield event.path;
         }

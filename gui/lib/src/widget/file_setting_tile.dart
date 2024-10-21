@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluent_ui/fluent_ui.dart' as fluentIcons show FluentIcons;
+import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -23,7 +23,7 @@ SettingTile createFileSetting({required String title, required String descriptio
       ),
       title: Text(title),
       subtitle: Text(description),
-      contentWidth: SettingTile.kDefaultContentWidth + _kButtonDimensions * 2 + _kButtonSpacing * 2,
+      contentWidth: SettingTile.kDefaultContentWidth + _kButtonDimensions,
       content: Row(
         children: [
           Expanded(
@@ -47,7 +47,7 @@ SettingTile createFileSetting({required String title, required String descriptio
               message: translations.selectFile,
               child: Button(
                   style: ButtonStyle(
-                      padding: ButtonState.all(EdgeInsets.zero)
+                      padding: WidgetStateProperty.all(EdgeInsets.zero)
                   ),
                   onPressed: () => _onPressed(selecting, controller),
                   child: SizedBox.square(
@@ -68,7 +68,7 @@ SettingTile createFileSetting({required String title, required String descriptio
               message: translations.reset,
               child: Button(
                   style: ButtonStyle(
-                      padding: ButtonState.all(EdgeInsets.zero)
+                      padding: WidgetStateProperty.all(EdgeInsets.zero)
                   ),
                   onPressed: onReset,
                   child: SizedBox.square(

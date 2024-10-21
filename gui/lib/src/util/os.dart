@@ -24,10 +24,13 @@ bool get isWin11 {
   return intBuild != null && intBuild > 22000;
 }
 
-Future<String?> openFolderPicker(String title) async =>
-    await FilePicker.platform.getDirectoryPath(dialogTitle: title);
+Future<String?> openFolderPicker(String title) async {
+  FilePicker.platform = FilePickerWindows();
+  return await FilePicker.platform.getDirectoryPath(dialogTitle: title);
+}
 
 Future<String?> openFilePicker(String extension) async {
+  FilePicker.platform = FilePickerWindows();
   var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowMultiple: false,
@@ -93,7 +96,7 @@ class IVirtualDesktop extends IUnknown {
       throw WindowsException(code);
     }
 
-    return convertFromHString(result.value);
+    return _convertFromHString(result.value);
   }
 }
 
@@ -280,7 +283,7 @@ class _IVirtualDesktopManagerInternal extends IUnknown {
                 HRESULT Function(Pointer, COMObject, Int8)>>>()
         .value
         .asFunction<int Function(Pointer, COMObject, int)>()(
-        ptr.ref.lpVtbl, desktop.ptr.ref, convertToHString(newName));
+        ptr.ref.lpVtbl, desktop.ptr.ref, _convertToHString(newName));
     if (code != 0) {
       throw WindowsException(code);
     }
@@ -369,7 +372,7 @@ List<int> _getHWnds(int pid, String? excludedWindowName) {
     result.ref.excluded = excludedWindowName.toNativeUtf16();
   }
 
-  EnumWindows(Pointer.fromFunction<EnumWindowsProc>(_filter, TRUE), result.address);
+  EnumWindows(Pointer.fromFunction<WNDENUMPROC>(_filter, TRUE), result.address);
   final length = result.ref.HWndLength;
   final HWndsPointer = result.ref.HWnd;
   if(HWndsPointer == nullptr) {
@@ -397,7 +400,7 @@ class VirtualDesktopManager {
     }
 
     final hr = CoInitializeEx(
-        nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+        nullptr, COINIT.COINIT_APARTMENTTHREADED | COINIT.COINIT_DISABLE_OLE1DDE);
     if (FAILED(hr)) {
       throw WindowsException(hr);
     }
@@ -467,4 +470,20 @@ class VirtualDesktopManager {
 
   void setDesktopName(IVirtualDesktop desktop, String newName) =>
       windowManager.setDesktopName(desktop, newName);
+}
+
+String _convertFromHString(int hstring) =>
+    WindowsGetStringRawBuffer(hstring, nullptr).toDartString();
+
+int _convertToHString(String string) {
+  final hString = calloc<HSTRING>();
+  final stringPtr = string.toNativeUtf16();
+  try {
+    final hr = WindowsCreateString(stringPtr, string.length, hString);
+    if (FAILED(hr)) throw WindowsException(hr);
+    return hString.value;
+  } finally {
+    free(stringPtr);
+    free(hString);
+  }
 }

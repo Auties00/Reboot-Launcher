@@ -133,9 +133,9 @@ Future<void> _downloadArchive(FortniteBuildDownloadOptions options, Completer st
             throw _genericError;
           },
           headers: byteStart == null || byteStart <= 0 ? {
-
+            "Cookie": "_c_t_c=1"
           } :  {
-
+            "Cookie": "_c_t_c=1",
             "Range": "bytes=${byteStart}-"
           },
         )

@@ -56,18 +56,34 @@ class HostingController extends GetxController {
     published = RxBool(false);
     showPassword = RxBool(false);
     instance = Rxn();
-    final supabase = Supabase.instance.client;
     servers = Rxn();
-    supabase.from("hosting_v2")
-        .stream(primaryKey: ['id'])
-        .map((event) => event.map((element) => FortniteServer.fromJson(element)).where((element) => element.ip.isNotEmpty).toSet())
-        .listen((event) {
-          servers.value = event;
-          published.value = event.any((element) => element.id == uuid);
-        });
+    _listenServers();
     customLaunchArgs = TextEditingController(text: _storage?.read("custom_launch_args") ?? "");
     customLaunchArgs.addListener(() => _storage?.write("custom_launch_args", customLaunchArgs.text));
     _semaphore = Semaphore();
+  }
+
+  void _listenServers([int attempt = 0]) {
+    log("[SUPABASE] Listening...");
+    final supabase = Supabase.instance.client;
+    supabase.from("hosting_v2")
+        .stream(primaryKey: ['id'])
+        .map((event) => event.map((element) => FortniteServer.fromJson(element)).where((element) => element.ip.isNotEmpty).toSet())
+        .listen(
+          _onNewServer,
+          onError: (error) async {
+            log("[SUPABASE] Error: ${error}");
+            await Future.delayed(Duration(seconds: attempt * 5));
+            _listenServers(attempt + 1);
+          },
+          cancelOnError: true
+    );
+  }
+
+  void _onNewServer(Set<FortniteServer> event) {
+    log("[SUPABASE] New event: ${event}");
+    servers.value = event;
+    published.value = event.any((element) => element.id == uuid);
   }
 
   Future<void> publishServer(String author, String version) async {

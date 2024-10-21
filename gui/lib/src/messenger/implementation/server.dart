@@ -257,8 +257,8 @@ extension ServerControllerDialog on BackendController {
                         suffix: !showPasswordTrailing.value ? null : Button(
                           onPressed: () => showPassword.value = !showPassword.value,
                           style: ButtonStyle(
-                              shape: ButtonState.all(const CircleBorder()),
-                              backgroundColor: ButtonState.all(Colors.transparent)
+                              shape: WidgetStateProperty.all(const CircleBorder()),
+                              backgroundColor: WidgetStateProperty.all(Colors.transparent)
                           ),
                           child: Icon(
                               showPassword.value ? FluentIcons.eye_off_24_regular : FluentIcons.eye_24_regular

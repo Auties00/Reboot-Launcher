@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
@@ -19,9 +20,9 @@ import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/implementation/error.dart';
 import 'package:reboot_launcher/src/page/implementation/home_page.dart';
 import 'package:reboot_launcher/src/util/os.dart';
+import 'package:reboot_launcher/src/util/url_protocol.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:system_theme/system_theme.dart';
-import 'package:url_protocol/url_protocol.dart';
 import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -146,7 +147,7 @@ Future<Object?> _initVersion() async {
 
 Future<Object?> _initUrlHandler() async {
   try {
-    registerProtocolHandler(kCustomUrlSchema, arguments: ['%s']);
+    registerUrlProtocol(kCustomUrlSchema, arguments: ['%s']);
     return null;
   }catch(error) {
     return error;

@@ -276,8 +276,8 @@ class _BrowsePageState extends RebootPageState<BrowsePage> {
         _filterControllerStream.add("");
       },
       style: ButtonStyle(
-          backgroundColor: ButtonState.all(Colors.transparent),
-          shape: ButtonState.all(Border())
+          backgroundColor: WidgetStateProperty.all(Colors.transparent),
+          shape: WidgetStateProperty.all(Border())
       ),
       child: _searchBarIconData
   );
