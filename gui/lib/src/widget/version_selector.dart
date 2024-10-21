@@ -15,11 +15,11 @@ import 'package:url_launcher/url_launcher.dart';
 class VersionSelector extends StatefulWidget {
   const VersionSelector({Key? key}) : super(key: key);
 
-  static Future<void> openDownloadDialog({bool closable = true}) => showRebootDialog<bool>(
+  static Future<void> openDownloadDialog() => showRebootDialog<bool>(
     builder: (context) => AddVersionDialog(
-      closable: closable,
+      closable: true,
     ),
-    dismissWithEsc: closable
+    dismissWithEsc: true
   );
 
   @override

@@ -4,15 +4,11 @@ import 'dart:io';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/messenger/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:version/version.dart';
-import 'package:yaml/yaml.dart';
 
 class DllController extends GetxController {
   static const String storageName = "dll_storage";
@@ -25,7 +21,8 @@ class DllController extends GetxController {
   late final TextEditingController memoryLeakDll;
   late final TextEditingController gameServerPort;
   late final Rx<UpdateTimer> timer;
-  late final TextEditingController url;
+  late final TextEditingController beforeS20Mirror;
+  late final TextEditingController aboveS20Mirror;
   late final RxBool customGameServer;
   late final RxnInt timestamp;
   late final Rx<UpdateStatus> status;
@@ -43,8 +40,10 @@ class DllController extends GetxController {
     final timerIndex = _storage?.read("timer");
     timer = Rx(timerIndex == null ? UpdateTimer.hour : UpdateTimer.values.elementAt(timerIndex));
     timer.listen((value) => _storage?.write("timer", value.index));
-    url = TextEditingController(text: _storage?.read("update_url") ?? kRebootDownloadUrl);
-    url.addListener(() => _storage?.write("update_url", url.text));
+    beforeS20Mirror = TextEditingController(text: _storage?.read("update_url") ?? kRebootBelowS20DownloadUrl);
+    beforeS20Mirror.addListener(() => _storage?.write("update_url", beforeS20Mirror.text));
+    aboveS20Mirror = TextEditingController(text: _storage?.read("old_update_url") ?? kRebootAboveS20DownloadUrl);
+    aboveS20Mirror.addListener(() => _storage?.write("new_update_url", aboveS20Mirror.text));
     status = Rx(UpdateStatus.waiting);
     customGameServer = RxBool(_storage?.read("custom_game_server") ?? false);
     customGameServer.listen((value) => _storage?.write("custom_game_server", value));
@@ -68,7 +67,8 @@ class DllController extends GetxController {
   void resetServer() {
     gameServerPort.text = kDefaultGameServerPort;
     timer.value = UpdateTimer.hour;
-    url.text = kRebootDownloadUrl;
+    beforeS20Mirror.text = kRebootBelowS20DownloadUrl;
+    aboveS20Mirror.text = kRebootAboveS20DownloadUrl;
     status.value = UpdateStatus.waiting;
     customGameServer.value = false;
     timestamp.value = null;
@@ -109,7 +109,15 @@ class DllController extends GetxController {
             duration: null
         );
       }
-      timestamp.value = await downloadRebootDll(url.text);
+      await Future.wait(
+          [
+            downloadRebootDll(rebootBeforeS20DllFile, beforeS20Mirror.text),
+            downloadRebootDll(rebootAboveS20DllFile, aboveS20Mirror.text),
+            Future.delayed(const Duration(seconds: 1))
+          ],
+          eagerError: false
+      );
+      timestamp.value = DateTime.now().millisecondsSinceEpoch;
       status.value = UpdateStatus.success;
       infoBarEntry?.close();
       if(!silent) {
@@ -126,15 +134,18 @@ class DllController extends GetxController {
       error = error.contains(": ") ? error.substring(error.indexOf(": ") + 2) : error;
       error = error.toLowerCase();
       status.value = UpdateStatus.error;
-      showRebootInfoBar(
-          translations.downloadDllError("reboot.dll", error.toString()),
+      infoBarEntry = showRebootInfoBar(
+          translations.downloadDllError(error.toString(), "reboot.dll"),
           duration: infoBarLongDuration,
           severity: InfoBarSeverity.error,
           action: Button(
-            onPressed: () => updateGameServerDll(
-                force: true,
-                silent: silent
-            ),
+            onPressed: () async {
+              infoBarEntry?.close();
+              updateGameServerDll(
+                  force: true,
+                  silent: silent
+              );
+            },
             child: Text(translations.downloadDllRetry),
           )
       );
@@ -155,7 +166,7 @@ class DllController extends GetxController {
           }
         }
 
-        return (rebootDllFile, false);
+        return (rebootBeforeS20DllFile, false);
       case InjectableDll.console:
         final ue4ConsoleFile = File(unrealEngineConsoleDll.text);
         return (ue4ConsoleFile, canonicalize(ue4ConsoleFile.path) != defaultPath);
@@ -215,7 +226,7 @@ class DllController extends GetxController {
       error = error.toLowerCase();
       final completer = Completer();
       await showRebootInfoBar(
-          translations.downloadDllError(fileName, error.toString()),
+          translations.downloadDllError(error.toString(), fileName),
           duration: infoBarLongDuration,
           severity: InfoBarSeverity.error,
           onDismissed: () => completer.complete(null),

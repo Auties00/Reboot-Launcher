@@ -298,48 +298,46 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     });
   }
 
-  Widget _buildBody() {
-    return Expanded(
-      child: Padding(
-          padding: EdgeInsets.only(
-              left: HomePage.kDefaultPadding,
-              right: HomePage.kDefaultPadding * 2,
-              top: HomePage.kDefaultPadding,
-              bottom: HomePage.kDefaultPadding * 2
-          ),
-          child: Column(
-            children: [
-              Expanded(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                      maxWidth: 1000
-                  ),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        _buildBodyHeader(),
-                        const SizedBox(height: 24.0),
-                        Expanded(
-                            child: Stack(
-                              fit: StackFit.loose,
-                              children: [
-                                _buildBodyContent(),
-                                InfoBarArea(
-                                    key: infoBarAreaKey
-                                )
-                              ],
-                            )
-                        ),
-                      ],
-                    ),
+  Widget _buildBody() => Expanded(
+    child: Padding(
+        padding: EdgeInsets.only(
+            left: HomePage.kDefaultPadding,
+            right: HomePage.kDefaultPadding * 2,
+            top: HomePage.kDefaultPadding,
+            bottom: HomePage.kDefaultPadding * 2
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                    maxWidth: 1000
+                ),
+                child: Center(
+                  child: Column(
+                    children: [
+                      _buildBodyHeader(),
+                      const SizedBox(height: 24.0),
+                      Expanded(
+                          child: Stack(
+                            fit: StackFit.loose,
+                            children: [
+                              _buildBodyContent(),
+                              InfoBarArea(
+                                  key: infoBarAreaKey
+                              )
+                            ],
+                          )
+                      ),
+                    ],
                   ),
                 ),
-              )
-            ],
-          )
-      ),
-    );
-  }
+              ),
+            )
+          ],
+        )
+    ),
+  );
 
   Widget _buildBodyContent() => PageView.builder(
       controller: _pageController,
@@ -500,7 +498,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
           decoration: BoxDecoration(
               color: ButtonThemeData.uncheckedInputColor(
                 FluentTheme.of(context),
-                pageIndex.value == index ? {ButtonStates.hovering} : states,
+                pageIndex.value == index ? {WidgetState.hovered} : states,
                 transparentWhenNone: true,
               ),
               borderRadius: BorderRadius.all(Radius.circular(6.0))
@@ -529,12 +527,12 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
       stream: pagesController.stream,
       builder: (context, _) => Button(
         style: ButtonStyle(
-            padding: ButtonState.all(const EdgeInsets.symmetric(
+            padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
               vertical: 12.0,
               horizontal: 16.0
             )),
-            backgroundColor: ButtonState.all(Colors.transparent),
-            shape: ButtonState.all(Border())
+            backgroundColor: WidgetStateProperty.all(Colors.transparent),
+            shape: WidgetStateProperty.all(Border())
         ),
         onPressed: appStack.isEmpty && !inDialog ? null : () {
           if(inDialog) {

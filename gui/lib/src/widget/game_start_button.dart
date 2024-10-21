@@ -121,7 +121,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
       log("[${host ? 'HOST' : 'GAME'}] Backend works");
-      final serverType = _settingsController.debug.value ? GameServerType.window : _hostingController.type.value;
+      final serverType = _hostingController.type.value;
       log("[${host ? 'HOST' : 'GAME'}] Implicit game server metadata: headless($serverType)");
       final linkedHostingInstance = await _startMatchMakingServer(version, host, serverType, false);
       log("[${host ? 'HOST' : 'GAME'}] Implicit game server result: $linkedHostingInstance");
@@ -156,11 +156,6 @@ class _LaunchButtonState extends State<LaunchButton> {
     log("[${host ? 'HOST' : 'GAME'}] Checking if a server needs to be started automatically...");
     if(host){
       log("[${host ? 'HOST' : 'GAME'}] The user clicked on Start hosting, so it's not necessary");
-      return null;
-    }
-
-    if(_settingsController.debug.value) {
-      log("[${host ? 'HOST' : 'GAME'}] The user is on debug mode, not asking for auto server");
       return null;
     }
 
@@ -248,7 +243,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     }else{
       _gameController.instance.value = instance;
     }
-    await _injectOrShowError(InjectableDll.cobalt, host);
+    await _injectOrShowError(InjectableDll.sinum, host);
     log("[${host ? 'HOST' : 'GAME'}] Finished creating game instance");
     return instance;
   }
@@ -280,13 +275,7 @@ class _LaunchButtonState extends State<LaunchButton> {
           line: line,
           host: host,
           onShutdown: () => _onStop(reason: _StopReason.normal),
-          onTokenError: () {
-            if(_settingsController.debug.value) {
-              log("[PROCESS] Ignoring token error because debug mode is on");
-            }else {
-              _onStop(reason: _StopReason.tokenError);
-            }
-          },
+          onTokenError: () => _onStop(reason: _StopReason.tokenError),
           onBuildCorrupted: () {
             if(instance == null) {
               return;
@@ -687,10 +676,6 @@ class _LaunchButtonState extends State<LaunchButton> {
       }
 
       log("[${hosting ? 'HOST' : 'GAME'}] Trying to inject ${injectable.name}...");
-      if(_settingsController.debug.value) {
-        return;
-      }
-
       await injectDll(gameProcess, dllPath);
       instance.injectedDlls.add(injectable);
       log("[${hosting ? 'HOST' : 'GAME'}] Injected ${injectable.name}");
@@ -742,7 +727,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       loading: true,
       duration: null,
       action: Obx(() {
-        if(_settingsController.debug.value || _hostingController.started.value || linkedHosting) {
+        if(_hostingController.started.value || linkedHosting) {
           return const SizedBox.shrink();
         }
 

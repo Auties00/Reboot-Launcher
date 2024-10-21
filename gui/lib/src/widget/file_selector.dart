@@ -19,10 +19,10 @@ class FileSelector extends StatefulWidget {
         required this.controller,
         required this.validator,
         required this.folder,
+        required this.allowNavigator,
         this.label,
         this.extension,
         this.validatorMode,
-        this.allowNavigator = true,
         Key? key})
       : assert(folder || extension != null, "Missing extension for file selector"),
         super(key: key);

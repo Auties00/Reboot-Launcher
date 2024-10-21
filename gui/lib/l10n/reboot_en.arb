@@ -98,11 +98,13 @@
   "settingsServerTypeDescription": "The type of game server to inject",
   "settingsServerTypeEmbeddedName": "Embedded",
   "settingsServerTypeCustomName": "Custom",
-  "settingsServerFileName": "Implementation",
+  "settingsOldServerFileName": "Game server (Before Fortnite Season 20)",
+  "settingsNewServerFileName": "Game server (After Fortnite Season 20)",
   "settingsServerFileDescription": "The file injected to create the game server",
   "settingsServerPortName": "Port",
   "settingsServerPortDescription": "The port the launcher expects the game server to be hosted on",
-  "settingsServerMirrorName": "Update mirror",
+  "settingsServerOldMirrorName": "Update mirror (Before Fortnite Season 20)",
+  "settingsServerNewMirrorName": "Update mirror (After Fortnite Season 20)",
   "settingsServerMirrorDescription": "The URL used to update the game server dll",
   "settingsServerMirrorPlaceholder": "mirror",
   "settingsServerTimerName": "Update timer",
@@ -368,5 +370,7 @@
   "automaticGameServerDialogStart": "Start server",
   "gameResetDefaultsName": "Reset",
   "gameResetDefaultsDescription": "Resets the game's settings to their default values",
-  "gameResetDefaultsContent": "Reset"
+  "gameResetDefaultsContent": "Reset",
+  "selectFile": "Select a file",
+  "reset": "Reset"
 }

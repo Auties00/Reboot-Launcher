@@ -1,6 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/implementation/onboard.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
@@ -35,7 +34,6 @@ abstract class RebootPageState<T extends RebootPage> extends State<T> with Autom
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildFirstLaunchInfo(),
-          _buildDebugInfo(),
           Expanded(
             child: _listView
           )
@@ -47,7 +45,6 @@ abstract class RebootPageState<T extends RebootPage> extends State<T> with Autom
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildFirstLaunchInfo(),
-        _buildDebugInfo(),
         Expanded(
           child: Column(
             children: [
@@ -96,35 +93,6 @@ abstract class RebootPageState<T extends RebootPage> extends State<T> with Autom
             onClose: () => _settingsController.firstRun.value = false
         ),
       ),
-    );
-  });
-
-  Widget _buildDebugInfo() => Obx(() {
-    if(!_settingsController.debug.value) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-        padding: const EdgeInsets.only(
-            bottom: 8.0
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          child: InfoBar(
-            title: Text("Debug mode is enabled"),
-            severity: InfoBarSeverity.warning,
-            isLong: true,
-            content: SizedBox(
-                width: double.infinity,
-                child: Text( "• Automatic dll injection is disabled\n"
-                    "• The game server cannot start automatically\n"
-                    "• The game server runs in a normal window")
-            ),
-            onClose: () {
-              _settingsController.debug.value = false;
-            },
-          ),
-        )
     );
   });
 

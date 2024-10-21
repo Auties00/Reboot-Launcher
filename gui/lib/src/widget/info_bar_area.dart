@@ -24,19 +24,22 @@ class InfoBarAreaState extends State<InfoBarArea> {
   }
 
   @override
-  Widget build(BuildContext context) => Obx(() => Padding(
-    padding: EdgeInsets.only(
-        bottom: hasPageButton ? 72.0 : 16.0
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: _children.value.map((child) => Padding(
-          padding: EdgeInsets.only(
-            top: 12.0
-          ),
-          child: child
-        )).toList(growable: false)
-    ),
-  ));
+  Widget build(BuildContext context) => StreamBuilder(
+      stream: pagesController.stream,
+      builder: (context, _) => Obx(() => Padding(
+        padding: EdgeInsets.only(
+            bottom: hasPageButton ? 72.0 : 16.0
+        ),
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: _children.value.map((child) => Padding(
+                padding: EdgeInsets.only(
+                    top: 12.0
+                ),
+                child: child
+            )).toList(growable: false)
+        ),
+      ))
+  );
 }

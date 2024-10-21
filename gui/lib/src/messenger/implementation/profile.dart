@@ -56,8 +56,8 @@ Future<bool> showProfileForm(BuildContext context) async{
                       suffix: Button(
                         onPressed: () => showPassword.value = !showPassword.value,
                         style: ButtonStyle(
-                            shape: ButtonState.all(const CircleBorder()),
-                            backgroundColor: ButtonState.all(Colors.transparent)
+                            shape: WidgetStateProperty.all(const CircleBorder()),
+                            backgroundColor: WidgetStateProperty.all(Colors.transparent)
                         ),
                         child: Icon(
                             showPassword.value ? Icons.visibility_off : Icons.visibility,

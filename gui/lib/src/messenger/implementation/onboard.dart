@@ -62,7 +62,7 @@ void _promptPlayVersion() {
           onTap: () async {
             onClose();
             if(!hasBuilds) {
-              await VersionSelector.openDownloadDialog(closable: false);
+              await VersionSelector.openDownloadDialog();
             }
             _promptServerBrowserPage();
           }
@@ -339,7 +339,7 @@ Widget _buildActionButton({
   required void Function() onTap,
 }) => Button(
     style: themed ? ButtonStyle(
-        backgroundColor: ButtonState.all(FluentTheme.of(context).accentColor)
+        backgroundColor: WidgetStateProperty.all(FluentTheme.of(context).accentColor)
     ) : null,
     child: Text(label),
     onPressed: onTap

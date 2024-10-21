@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
-import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/info_bar.dart';
 import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
 import 'package:reboot_launcher/src/messenger/implementation/data.dart';
@@ -153,9 +152,9 @@ class _BackendPageState extends RebootPageState<BackendPage> {
         contentWidth: null,
         content: Row(
           children: [
-            Text(
+            Obx(() => Text(
                 _backendController.detached.value ? translations.on : translations.off
-            ),
+            )),
             const SizedBox(
                 width: 16.0
             ),

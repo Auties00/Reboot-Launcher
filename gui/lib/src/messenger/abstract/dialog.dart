@@ -300,7 +300,7 @@ class _DialogButtonState extends State<DialogButton> {
 
   Widget get _primaryButton => Button(
     style: ButtonStyle(
-        backgroundColor: ButtonState.all(FluentTheme.of(context).accentColor)
+        backgroundColor: WidgetStateProperty.all(FluentTheme.of(context).accentColor)
     ),
     onPressed: widget.onTap!,
     child: Text(widget.text!),
@@ -308,7 +308,7 @@ class _DialogButtonState extends State<DialogButton> {
 
   Widget get _secondaryButton => Button(
     style: widget.color != null ? ButtonStyle(
-        backgroundColor: ButtonState.all(widget.color!)
+        backgroundColor: WidgetStateProperty.all(widget.color!)
     ) : null,
     onPressed: widget.onTap ?? _onDefaultSecondaryActionTap,
     child: Text(widget.text ?? translations.defaultDialogSecondaryAction),

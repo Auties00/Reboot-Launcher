@@ -1,6 +1,6 @@
 enum InjectableDll {
   console,
-  cobalt,
+  sinum,
   reboot,
   memory
 }
