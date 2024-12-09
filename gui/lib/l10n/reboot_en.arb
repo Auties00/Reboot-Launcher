@@ -216,7 +216,6 @@
   "downloadedVersion": "The download was completed successfully!",
   "download": "Download",
   "downloading": "Downloading...",
-  "allocatingSpace": "Allocating disk space...",
   "startingDownload": "Starting download...",
   "extracting": "Extracting...",
   "buildProgress": "{progress}%",

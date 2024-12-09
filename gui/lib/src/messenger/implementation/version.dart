@@ -244,12 +244,12 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
           ),
         ),
 
-        if(_progress.value != null && !_isAllocatingDiskSpace)
+        if(_progress.value != null)
           const SizedBox(
             height: 8.0,
           ),
 
-        if(_progress.value != null && !_isAllocatingDiskSpace)
+        if(_progress.value != null)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -272,7 +272,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
 
         SizedBox(
             width: double.infinity,
-            child: ProgressBar(value: _isAllocatingDiskSpace ? null : _progress.value?.toDouble())
+            child: ProgressBar(value: _progress.value?.toDouble())
         ),
 
         const SizedBox(
@@ -291,14 +291,8 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
       return translations.startingDownload;
     }
 
-    if (_speed.value == 0) {
-      return translations.allocatingSpace;
-    }
-
     return translations.downloading;
   }
-
-  bool get _isAllocatingDiskSpace => _status.value == _DownloadStatus.downloading && _speed.value == 0;
 
   Widget _buildFormBody(List<FortniteBuild> builds) {
     return Column(

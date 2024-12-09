@@ -134,17 +134,13 @@ Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
 }
 
 Future<void> _startAriaServer() async {
-  final running = await _isAriaRunning();
-  if(running) {
-    await killProcessByPort(_ariaPort);
-  }
-
+  await stopDownloadServer();
   final aria2c = File("${assetsDirectory.path}\\build\\aria2c.exe");
   if(!aria2c.existsSync()) {
     throw "Missing aria2c.exe";
   }
 
-  await startProcess(
+  final process = await startProcess(
       executable: aria2c,
       args: [
         "--max-connection-per-server=${Platform.numberOfProcessors}",
@@ -153,10 +149,14 @@ Future<void> _startAriaServer() async {
         "--rpc-listen-all=true",
         "--rpc-allow-origin-all",
         "--rpc-secret=$_ariaSecret",
-        "--rpc-listen-port=$_ariaPort"
+        "--rpc-listen-port=$_ariaPort",
+        "--file-allocation=none"
       ],
-    window: false
+      window: false
   );
+  process.stdOutput.listen((message) => log("[ARIA] Message: $message"));
+  process.stdError.listen((error) => log("[ARIA] Error: $error"));
+  process.exitCode.then((exitCode) => log("[ARIA] Exit code: $exitCode"));
   for(var i = 0; i < _ariaMaxSpawnTime.inSeconds; i++) {
     if(await _isAriaRunning()) {
       return;
@@ -177,8 +177,8 @@ Future<bool> _isAriaRunning() async {
         "token:${_ariaSecret}"
       ]
     };
-    await http.post(_ariaEndpoint, body: jsonEncode(statusRequest));
-    return true;
+    final response = await http.post(_ariaEndpoint, body: jsonEncode(statusRequest));
+    return response.statusCode == 200;
   }catch(_) {
     return false;
   }
@@ -227,9 +227,14 @@ Future<void> _stopAriaDownload(String downloadId) async {
       ]
     };
     await http.post(_ariaEndpoint, body: jsonEncode(addDownloadRequest));
+    stopDownloadServer();
   }catch(error) {
     throw "Stop failed (${error})";
   }
+}
+
+Future<void> stopDownloadServer() async {
+  await killProcessByPort(_ariaPort);
 }
 
 

@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/dll_controller.dart';
+import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/dialog.dart';
@@ -43,6 +44,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepAliveClientMixin {
   final BackendController _backendController = Get.find<BackendController>();
+  final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
   final SettingsController _settingsController = Get.find<SettingsController>();
   final DllController _dllController = Get.find<DllController>();
@@ -161,13 +163,44 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   @override
   void onWindowClose() async {
     try {
+      await windowManager.hide();
+    }catch(error) {
+      log("[WINDOW] Cannot hide window: $error");
+    }
+
+    try {
       await _hostingController.discardServer();
     }catch(error) {
-      log("[HOSTING] Cannot discard server: $error");
-    }finally {
-      // Force closing because the backend might be running, but we want the process to exit
-      exit(0);
+      log("[HOSTING] Cannot discard server on exit: $error");
     }
+
+    try {
+      if(_backendController.started.value) {
+        await _backendController.toggleInteractive();
+      }
+    }catch(error) {
+      log("[BACKEND] Cannot stop backend on exit: $error");
+    }
+
+    try {
+      _gameController.instance.value?.kill();
+    }catch(error) {
+      log("[GAME] Cannot stop game on exit: $error");
+    }
+
+    try {
+      _hostingController.instance.value?.kill();
+    }catch(error) {
+      log("[HOST] Cannot stop host on exit: $error");
+    }
+
+    try {
+      await stopDownloadServer();
+    }catch(error) {
+      log("[ARIA] Cannot stop aria server on exit: $error");
+    }
+
+    exit(0);
   }
 
   @override
