@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
@@ -154,23 +152,24 @@ Future<Object?> _initUrlHandler() async {
   }
 }
 
-void _initWindow() => doWhenWindowReady(() async {
+Future<void> _initWindow() async {
   try {
     await SystemTheme.accentColor.load();
     await windowManager.ensureInitialized();
     await Window.initialize();
     var settingsController = Get.find<SettingsController>();
     var size = Size(settingsController.width, settingsController.height);
-    appWindow.size = size;
+    await windowManager.setSize(size);
     var offsetX = settingsController.offsetX;
     var offsetY = settingsController.offsetY;
-    if(offsetX != null && offsetY != null){
-      appWindow.position = Offset(
+    if(offsetX != null && offsetY != null) {
+      final position = Offset(
           offsetX,
           offsetY
       );
+      await windowManager.setPosition(position);
     }else {
-      appWindow.alignment = Alignment.center;
+      await windowManager.setAlignment(Alignment.center);
     }
 
     if(isWin11) {
@@ -183,9 +182,9 @@ void _initWindow() => doWhenWindowReady(() async {
   }catch(error, stackTrace) {
     onError(error, stackTrace, false);
   }finally {
-    appWindow.show();
+    windowManager.show();
   }
-});
+}
 
 Future<List<Object>> _initStorage() async {
   final errors = <Object>[];

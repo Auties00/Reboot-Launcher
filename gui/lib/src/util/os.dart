@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:win32/win32.dart';
+import 'package:window_manager/window_manager.dart';
 
 final RegExp _winBuildRegex = RegExp(r'(?<=\(Build )(.*)(?=\))');
 
@@ -486,4 +487,8 @@ int _convertToHString(String string) {
     free(stringPtr);
     free(hString);
   }
+}
+
+extension WindowManagerExtension on WindowManager {
+  Future<void> maximizeOrRestore() async => await windowManager.isMaximized() ? windowManager.restore() : windowManager.maximize();
 }

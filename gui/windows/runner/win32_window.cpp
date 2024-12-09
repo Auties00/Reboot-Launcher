@@ -121,7 +121,7 @@ bool Win32Window::CreateAndShow(const std::wstring &title,
     HWND window = CreateWindow(
             window_class,
             title.c_str(),
-            WS_OVERLAPPED | WS_BORDER | WS_THICKFRAME,
+            WS_OVERLAPPEDWINDOW,
             Scale(origin.x, scale_factor),
             Scale(origin.y, scale_factor),
             Scale(size.width, scale_factor),
@@ -197,6 +197,9 @@ Win32Window::MessageHandler(HWND hwnd,
             if (child_content_ != nullptr) {
                 SetFocus(child_content_);
             }
+            return 0;
+
+        case WM_NCCALCSIZE:
             return 0;
     }
 

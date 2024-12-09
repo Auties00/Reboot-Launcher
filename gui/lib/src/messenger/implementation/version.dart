@@ -33,16 +33,15 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
   final Rxn<FortniteBuild> _build = Rxn();
   final RxnInt _timeLeft = RxnInt();
   final Rxn<double> _progress = Rxn();
+  final RxInt _speed = RxInt(0);
 
   late DiskSpace _diskSpace;
   late Future<List<FortniteBuild>> _fetchFuture;
   late Future _diskFuture;
 
-  Isolate? _isolate;
   SendPort? _downloadPort;
   Object? _error;
   StackTrace? _stackTrace;
-  bool _selecting = false;
 
   @override
   void initState() {
@@ -61,9 +60,8 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
   }
 
   void _cancelDownload() {
-    Process.run('${assetsDirectory.path}\\build\\stop.bat', []);
     _downloadPort?.send(kStopBuildDownloadSignal);
-    _isolate?.kill(priority: Isolate.immediate);
+    WindowsTaskbar.setProgressMode(TaskbarProgressMode.noProgress);
   }
 
   @override
@@ -158,7 +156,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
       final communicationPort = ReceivePort();
       communicationPort.listen((message) {
         if(message is FortniteBuildDownloadProgress) {
-          _onProgress(build, message.progress, message.minutesLeft, message.extracting);
+          _onProgress(build, message);
         }else if(message is SendPort) {
           _downloadPort = message;
         }else {
@@ -172,7 +170,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
       );
       final errorPort = ReceivePort();
       errorPort.listen((message) => _onDownloadError(message, null));
-      _isolate = await Isolate.spawn(
+      await Isolate.spawn(
           downloadArchiveBuild,
           options,
           onError: errorPort.sendPort,
@@ -212,23 +210,24 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
     _stackTrace = stackTrace;
   }
 
-  void _onProgress(FortniteBuild build, double progress, int? timeLeft, bool extracting) {
+  void _onProgress(FortniteBuild build, FortniteBuildDownloadProgress message) {
     if (!mounted) {
       return;
     }
 
-    if(progress >= 100 && extracting) {
+    if(message.progress >= 100 && message.extracting) {
       _onDownloadComplete(build);
       return;
     }
 
-    _status.value = extracting ? _DownloadStatus.extracting : _DownloadStatus.downloading;
-    if(progress >= 0) {
-      WindowsTaskbar.setProgress(progress.round(), 100);
+    _status.value = message.extracting ? _DownloadStatus.extracting : _DownloadStatus.downloading;
+    if(message.progress >= 0) {
+      WindowsTaskbar.setProgress(message.progress.round(), 100);
     }
 
-    _timeLeft.value = timeLeft;
-    _progress.value = progress;
+    _timeLeft.value = message.timeLeft;
+    _progress.value = message.progress;
+    _speed.value = message.speed;
   }
 
   Widget get _progressBody {
@@ -239,31 +238,33 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            _status.value == _DownloadStatus.downloading ? translations.downloading : translations.extracting,
+            _statusText,
             style: FluentTheme.maybeOf(context)?.typography.body,
             textAlign: TextAlign.start,
           ),
         ),
 
-        const SizedBox(
-          height: 8.0,
-        ),
+        if(_progress.value != null && !_isAllocatingDiskSpace)
+          const SizedBox(
+            height: 8.0,
+          ),
 
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              translations.buildProgress((_progress.value ?? 0).round()),
-              style: FluentTheme.maybeOf(context)?.typography.body,
-            ),
-
-            if(timeLeft != null)
+        if(_progress.value != null && !_isAllocatingDiskSpace)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               Text(
-                translations.timeLeft(timeLeft),
+                translations.buildProgress((_progress.value ?? 0).round()),
                 style: FluentTheme.maybeOf(context)?.typography.body,
-              )
-          ],
-        ),
+              ),
+
+              if(timeLeft != null)
+                Text(
+                  translations.timeLeft(timeLeft),
+                  style: FluentTheme.maybeOf(context)?.typography.body,
+                )
+            ],
+          ),
 
         const SizedBox(
           height: 8.0,
@@ -271,7 +272,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
 
         SizedBox(
             width: double.infinity,
-            child: ProgressBar(value: (_progress.value ?? 0).toDouble())
+            child: ProgressBar(value: _isAllocatingDiskSpace ? null : _progress.value?.toDouble())
         ),
 
         const SizedBox(
@@ -280,6 +281,24 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
       ],
     );
   }
+
+  String get _statusText {
+    if (_status.value != _DownloadStatus.downloading) {
+      return translations.extracting;
+    }
+
+    if (_progress.value == null) {
+      return translations.startingDownload;
+    }
+
+    if (_speed.value == 0) {
+      return translations.allocatingSpace;
+    }
+
+    return translations.downloading;
+  }
+
+  bool get _isAllocatingDiskSpace => _status.value == _DownloadStatus.downloading && _speed.value == 0;
 
   Widget _buildFormBody(List<FortniteBuild> builds) {
     return Column(

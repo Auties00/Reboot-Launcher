@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:app_links/app_links.dart';
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' show MaterialPage;
@@ -27,6 +26,7 @@ import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/info_bar_area.dart';
 import 'package:reboot_launcher/src/widget/profile_tile.dart';
 import 'package:reboot_launcher/src/widget/title_bar.dart';
+import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
 
 final GlobalKey<OverlayTargetState> profileOverlayKey = GlobalKey();
@@ -58,7 +58,6 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   @override
   void initState() {
     super.initState();
-    windowManager.setPreventClose(true);
     windowManager.addListener(this);
     _syncPageViewWithNavigator();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -111,7 +110,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
         return;
       }
 
-      var result = await pingGameServer(address);
+      final result = await pingGameServer(address);
       if(result) {
         return;
       }
@@ -135,13 +134,12 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
       dllsDirectory.createSync(recursive: true);
     }
 
+    final dummy = Version.parse("1");
+    final dummyS20 = Version.parse("20");
     for(final injectable in InjectableDll.values) {
-      final (file, custom) = _dllController.getInjectableData(injectable);
-      if(!custom) {
-        _dllController.downloadCriticalDllInteractive(
-            file.path,
-            silent: true
-        );
+      _downloadDll(dummy, injectable);
+      if(injectable.isVersionDependent) {
+        _downloadDll(dummyS20, injectable);
       }
     }
 
@@ -150,12 +148,22 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     }));
   }
 
+  void _downloadDll(Version version, InjectableDll injectable) {
+    final (file, custom) = _dllController.getInjectableData(version, injectable);
+    if(!custom) {
+      _dllController.downloadCriticalDllInteractive(
+          file.path,
+          silent: false
+      );
+    }
+  }
+
   @override
   void onWindowClose() async {
     try {
       await _hostingController.discardServer();
-    }finally {
-      exit(0); // Force closing
+    }catch(error) {
+      log("[HOSTING] Cannot discard server: $error");
     }
   }
 
@@ -220,14 +228,18 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
 
   @override
   void onWindowResized() {
-    _settingsController.saveWindowSize(appWindow.size);
     _focused.value = true;
+    windowManager.getSize().then((size) {
+      _settingsController.saveWindowSize(size);
+    });
   }
 
   @override
   void onWindowMoved() {
-    _settingsController.saveWindowOffset(appWindow.position);
     _focused.value = true;
+    windowManager.getPosition().then((position) {
+      _settingsController.saveWindowOffset(position);
+    });
   }
 
   @override
@@ -449,9 +461,12 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ProfileWidget(
-          overlayKey: profileOverlayKey
-        ),
+        Obx(() {
+          pageIndex.value;
+          return ProfileWidget(
+              overlayKey: profileOverlayKey
+          );
+        }),
         _autoSuggestBox,
         const SizedBox(height: 12.0),
         _buildNavigationTrail()
@@ -554,7 +569,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
   );
 
   GestureDetector get _draggableArea => GestureDetector(
-      onDoubleTap: appWindow.maximizeOrRestore,
+      onDoubleTap: windowManager.maximizeOrRestore,
       onHorizontalDragStart: (_) => windowManager.startDragging(),
       onVerticalDragStart: (_) => windowManager.startDragging()
   );

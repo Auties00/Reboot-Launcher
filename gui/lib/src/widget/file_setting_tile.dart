@@ -13,6 +13,7 @@ import 'package:reboot_launcher/src/widget/setting_tile.dart';
 const double _kButtonDimensions = 30;
 const double _kButtonSpacing = 8;
 
+// FIXME: If the user clicks on the reset button, the text field checker won't be called
 SettingTile createFileSetting({required String title, required String description, required TextEditingController controller, required void Function() onReset}) {
   final obx = RxString(controller.text);
   controller.addListener(() => obx.value = controller.text);

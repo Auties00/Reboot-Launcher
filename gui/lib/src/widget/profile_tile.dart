@@ -2,8 +2,11 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
 import 'package:reboot_launcher/src/messenger/implementation/profile.dart';
+import 'package:reboot_launcher/src/page/abstract/page_type.dart';
+import 'package:reboot_launcher/src/page/pages.dart';
 
 class ProfileWidget extends StatefulWidget {
   final GlobalKey<OverlayTargetState> overlayKey;
@@ -15,6 +18,7 @@ class ProfileWidget extends StatefulWidget {
 
 class _ProfileWidgetState extends State<ProfileWidget> {
   final GameController _gameController = Get.find<GameController>();
+  final HostingController _hostingController = Get.find<HostingController>();
 
   @override
   Widget build(BuildContext context) => OverlayTarget(
@@ -22,7 +26,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     child: HoverButton(
         margin: const EdgeInsets.all(8.0),
         onPressed: () async {
-          if(await showProfileForm(context)) {
+          if(await showProfileForm(context, _username, _password)) {
             setState(() {});
           }
         },
@@ -57,7 +61,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                        _username,
+                        _usernameLabel,
                         textAlign: TextAlign.start,
                         style: const TextStyle(
                             fontWeight: FontWeight.w600
@@ -65,7 +69,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                         maxLines: 1
                     ),
                     Text(
-                        _email,
+                        _emailLabel,
                         textAlign: TextAlign.start,
                         style: const TextStyle(
                             fontWeight: FontWeight.w100
@@ -81,8 +85,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     ),
   );
 
-  String get _username {
-    var username = _gameController.username.text;
+  String get _usernameLabel {
+    final username = _username.text;
     if(username.isEmpty) {
       return kDefaultPlayerName;
     }
@@ -96,8 +100,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     return result.substring(0, 1).toUpperCase() + result.substring(1);
   }
 
-  String get _email {
-    var username = _gameController.username.text;
+  String get _emailLabel {
+    final username = _username.text;
     if(username.isEmpty) {
       return "$kDefaultPlayerName@projectreboot.dev";
     }
@@ -108,4 +112,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
     return "$username@projectreboot.dev".toLowerCase();
   }
+
+  TextEditingController get _username => pageIndex.value == RebootPageType.host.index ? _hostingController.accountUsername : _gameController.username;
+  TextEditingController get _password => pageIndex.value == RebootPageType.host.index ? _hostingController.accountPassword : _gameController.password;
 }

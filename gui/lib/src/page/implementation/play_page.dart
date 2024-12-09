@@ -1,16 +1,12 @@
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
-import 'package:reboot_common/common.dart';
-import 'package:reboot_launcher/src/controller/dll_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
-import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
 import 'package:reboot_launcher/src/messenger/implementation/data.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
-import 'package:reboot_launcher/src/widget/file_setting_tile.dart';
 import 'package:reboot_launcher/src/widget/game_start_button.dart';
 import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:reboot_launcher/src/widget/version_selector_tile.dart';
@@ -38,7 +34,6 @@ class PlayPage extends RebootPage {
 
 class _PlayPageState extends RebootPageState<PlayPage> {
   final GameController _gameController = Get.find<GameController>();
-  final DllController _dllController = Get.find<DllController>();
 
   @override
   Widget? get button => LaunchButton(
@@ -53,49 +48,8 @@ class _PlayPageState extends RebootPageState<PlayPage> {
       key: gameVersionOverlayTargetKey
     ),
     _options,
-    _internalFiles,
     _resetDefaults
   ];
-
-  SettingTile get _internalFiles => SettingTile(
-    icon: Icon(
-        FluentIcons.archive_settings_24_regular
-    ),
-    title: Text(translations.settingsClientName),
-    subtitle: Text(translations.settingsClientDescription),
-    children: [
-      createFileSetting(
-          title: translations.settingsClientConsoleName,
-          description: translations.settingsClientConsoleDescription,
-          controller: _dllController.unrealEngineConsoleDll,
-          onReset: () {
-            final path = _dllController.getDefaultDllPath(InjectableDll.console);
-            _dllController.unrealEngineConsoleDll.text = path;
-            _dllController.downloadCriticalDllInteractive(path, force: true);
-          }
-      ),
-      createFileSetting(
-          title: translations.settingsClientAuthName,
-          description: translations.settingsClientAuthDescription,
-          controller: _dllController.backendDll,
-          onReset: () {
-            final path = _dllController.getDefaultDllPath(InjectableDll.cobalt);
-            _dllController.backendDll.text = path;
-            _dllController.downloadCriticalDllInteractive(path, force: true);
-          }
-      ),
-      createFileSetting(
-          title: translations.settingsClientMemoryName,
-          description: translations.settingsClientMemoryDescription,
-          controller: _dllController.memoryLeakDll,
-          onReset: () {
-            final path = _dllController.getDefaultDllPath(InjectableDll.memory);
-            _dllController.memoryLeakDll.text = path;
-            _dllController.downloadCriticalDllInteractive(path, force: true);
-          }
-      ),
-    ],
-  );
 
   SettingTile get _options => SettingTile(
       icon: Icon(
@@ -127,7 +81,6 @@ class _PlayPageState extends RebootPageState<PlayPage> {
       content: Button(
         onPressed: () => showResetDialog(() {
           _gameController.reset();
-          _dllController.resetGame();
         }),
         child: Text(translations.gameResetDefaultsContent),
       )

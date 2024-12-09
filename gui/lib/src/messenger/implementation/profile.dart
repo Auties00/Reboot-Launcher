@@ -6,13 +6,11 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/dialog.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 
-final GameController _gameController = Get.find<GameController>();
-
-Future<bool> showProfileForm(BuildContext context) async{
+Future<bool> showProfileForm(BuildContext context, TextEditingController username, TextEditingController password) async{
   final showPassword = RxBool(false);
-  final oldUsername = _gameController.username.text;
+  final oldUsername = username.text;
   final showPasswordTrailing = RxBool(oldUsername.isNotEmpty);
-  final oldPassword = _gameController.password.text;
+  final oldPassword = password.text;
   final result = await showRebootDialog<bool?>(
       builder: (context) => Obx(() => FormDialog(
           content: Column(
@@ -25,17 +23,17 @@ Future<bool> showProfileForm(BuildContext context) async{
                   child: TextFormBox(
                     placeholder: translations.usernameOrEmailPlaceholder,
                     validator: (text) {
-                      if(_gameController.password.text.isEmpty) {
+                      if(password.text.isEmpty) {
                         return null;
                       }
 
-                      if(EmailValidator.validate(_gameController.username.text)) {
+                      if(EmailValidator.validate(username.text)) {
                         return null;
                       }
 
                       return translations.invalidEmail;
                     },
-                    controller: _gameController.username,
+                    controller: username,
                     autovalidateMode: AutovalidateMode.always,
                     enableSuggestions: true,
                     autofocus: true,
@@ -47,7 +45,7 @@ Future<bool> showProfileForm(BuildContext context) async{
                   label: translations.password,
                   child: TextFormBox(
                       placeholder: translations.passwordPlaceholder,
-                      controller: _gameController.password,
+                      controller: password,
                       autovalidateMode: AutovalidateMode.always,
                       obscureText: !showPassword.value,
                       enableSuggestions: false,
@@ -87,7 +85,7 @@ Future<bool> showProfileForm(BuildContext context) async{
     return true;
   }
 
-  _gameController.username.text = oldUsername;
-  _gameController.password.text = oldPassword;
+  username.text = oldUsername;
+  password.text = oldPassword;
   return false;
 }

@@ -1,10 +1,11 @@
 import 'dart:io';
 
 import 'package:reboot_common/common.dart';
+import 'package:version/version.dart';
 
 
 class GameInstance {
-  final String versionName;
+  final Version version;
   final int gamePid;
   final int? launcherPid;
   final int? eacPid;
@@ -17,7 +18,7 @@ class GameInstance {
   GameInstance? child;
 
   GameInstance({
-    required this.versionName,
+    required this.version,
     required this.gamePid,
     required this.launcherPid,
     required this.eacPid,

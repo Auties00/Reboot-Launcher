@@ -1,4 +1,5 @@
 const String kDefaultPlayerName = "Player";
+const String kDefaultHostName = "Host";
 const String kDefaultGameServerHost = "127.0.0.1";
 const String kDefaultGameServerPort = "7777";
 const String kInitializedLine = "Game Engine Initialized";

@@ -8,7 +8,7 @@ import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
 
 class GameController extends GetxController {
-  static const String storageName = "game_storage";
+  static const String storageName = "v2_game_storage";
 
   late final GetStorage? _storage;
   late final TextEditingController username;

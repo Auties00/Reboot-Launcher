@@ -3,165 +3,243 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
 import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
 import 'package:reboot_common/src/extension/types.dart';
+import 'package:uuid/uuid.dart';
 import 'package:version/version.dart';
+
+import 'package:http/http.dart' as http;
 
 const String kStopBuildDownloadSignal = "kill";
 
-final Dio _dio = _buildDioInstance();
-Dio _buildDioInstance() {
-  final dio = Dio();
-  final httpClientAdapter = dio.httpClientAdapter as IOHttpClientAdapter;
-  httpClientAdapter.createHttpClient = () {
-    final client = HttpClient();
-    client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-    return client;
-  };
-  return dio;
-}
-
-final String _archiveSourceUrl = "https://raw.githubusercontent.com/simplyblk/Fortnitebuilds/main/README.md";
+final Uri _archiveSourceUrl = Uri.parse("https://builds.rebootfn.org/versions.json");
+final int _ariaPort = 6800;
+final Uri _ariaEndpoint = Uri.parse('http://localhost:$_ariaPort/jsonrpc');
+final Duration _ariaMaxSpawnTime = const Duration(seconds: 10);
+final String _ariaSecret = "RebootLauncher";
 final RegExp _rarProgressRegex = RegExp("^((100)|(\\d{1,2}(.\\d*)?))%\$");
-const String _deniedConnectionError = "The connection was denied: your firewall might be blocking the download";
-const String _unavailableError = "The build downloader is not available right now";
-const String _genericError = "The build downloader is not working correctly";
-const int _maxErrors = 100;
 
 Future<List<FortniteBuild>> fetchBuilds(ignored) async {
-  final response = await _dio.get<String>(
-      _archiveSourceUrl,
-      options: Options(
-          responseType: ResponseType.plain
-      )
-  );
+  final response = await http.get(_archiveSourceUrl);
   if (response.statusCode != 200) {
     return [];
   }
 
-  var results = <FortniteBuild>[];
-  for (final line in response.data?.split("\n") ?? []) {
-    if (!line.startsWith("|")) {
-      continue;
-    }
-
-    var parts = line.substring(1, line.length - 1).split("|");
-    if (parts.isEmpty) {
-      continue;
-    }
-
-    var versionName = parts.first.trim();
-    final separator = versionName.indexOf("-");
-    if(separator != -1) {
-      versionName = versionName.substring(0, separator);
-    }
-
-    final link = parts.last.trim();
-    try {
-      results.add(FortniteBuild(
-          version: Version.parse(versionName),
-          link: link,
-          available: link.endsWith(".zip") || link.endsWith(".rar")
-      ));
-    } on FormatException {
-      // Ignore
-    }
-  }
-
-  return results;
+  return jsonDecode(response.body)
+      .map((entry) {
+        try {
+          final fileUrl = entry as String;
+          final fileName = Uri.parse(fileUrl).pathSegments.last;
+          final fileNameWithoutExtension = path.basenameWithoutExtension(fileName);
+          return FortniteBuild(
+              version: Version.parse(fileNameWithoutExtension),
+              link: entry,
+              available: true
+          );
+        }catch(_) {
+          return null;
+        }
+      })
+      .whereType<FortniteBuild>()
+      .toList();
 }
-
 
 Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
+  final fileName = options.build.link.substring(options.build.link.lastIndexOf("/") + 1);
+  final outputFile = File("${options.destination.path}\\.build\\$fileName");
   try {
     final stopped = _setupLifecycle(options);
-    final outputDir = Directory("${options.destination.path}\\.build");
-    await outputDir.create(recursive: true);
-    final fileName = options.build.link.substring(options.build.link.lastIndexOf("/") + 1);
-    final extension = path.extension(fileName);
-    final tempFile = File("${outputDir.path}\\$fileName");
-    if(await tempFile.exists()) {
-      await tempFile.delete(recursive: true);
-    }
+    await outputFile.parent.create(recursive: true);
 
-    final startTime = DateTime.now().millisecondsSinceEpoch;
-    final response = _downloadArchive(options, stopped, tempFile, startTime);
-    await Future.any([stopped.future, response]);
-    if(!stopped.isCompleted) {
-      await _extractArchive(stopped, extension, tempFile, options);
-    }
+    final downloadItemCompleter = Completer<File>();
 
-    delete(outputDir);
-  }catch(error) {
-    _onError(error, options);
-  }
-}
+    await _startAriaServer();
+    final downloadId = await _startAriaDownload(options, outputFile);
+    Timer.periodic(const Duration(seconds: 5), (Timer timer) async {
+      try {
+        final statusRequestId = Uuid().toString().replaceAll("-", "");
+        final statusRequest = {
+          "jsonrcp": "2.0",
+          "id": statusRequestId,
+          "method": "aria2.tellStatus",
+          "params": [
+            "token:${_ariaSecret}",
+            downloadId
+          ]
+        };
+        final statusResponse = await http.post(_ariaEndpoint, body: jsonEncode(statusRequest));
+        final statusResponseJson = jsonDecode(statusResponse.body) as Map?;
+        if(statusResponseJson == null) {
+          downloadItemCompleter.completeError("Invalid download status (invalid JSON)");
+          timer.cancel();
+          return;
+        }
 
-Future<void> _downloadArchive(FortniteBuildDownloadOptions options, Completer stopped, File tempFile, int startTime, [int? byteStart = null, int errorsCount = 0]) async {
-  var received = byteStart ?? 0;
-  try {
-    await _dio.download(
-        options.build.link,
-        tempFile.path,
-        onReceiveProgress: (data, length) {
-          if(stopped.isCompleted) {
-            throw StateError("Download interrupted");
+        final result = statusResponseJson["result"];
+        final files = result["files"] as List?;
+        if(files == null || files.isEmpty) {
+          downloadItemCompleter.completeError("Download aborted");
+          timer.cancel();
+          return;
+        }
+
+        final error = result["errorCode"];
+        if(error != null) {
+          final errorCode = int.tryParse(error);
+          if(errorCode == 0) {
+            final path = File(files[0]["path"]);
+            downloadItemCompleter.complete(path);
+          }else if(errorCode == 3) {
+            downloadItemCompleter.completeError("This build is not available yet");
+          }else {
+            final errorMessage = result["errorMessage"];
+            downloadItemCompleter.completeError("$errorMessage (error code $errorCode)");
           }
 
-          received = data;
-          final percentage = (received / length) * 100;
-          _onProgress(startTime, percentage < 1 ? null : DateTime.now().millisecondsSinceEpoch, percentage, false, options);
-        },
-        deleteOnError: false,
-        options: Options(
-          validateStatus: (statusCode) {
-            if(statusCode == 200) {
-              return true;
-            }
+          timer.cancel();
+          return;
+        }
 
-            if(statusCode == 403 || statusCode == 503) {
-              throw _deniedConnectionError;
-            }
+        final speed = int.parse(result["downloadSpeed"] ?? "0");
+        final completedLength = int.parse(files[0]["completedLength"] ?? "0");
+        final totalLength = int.parse(files[0]["length"] ?? "0");
 
-            if(statusCode == 404) {
-              throw _unavailableError;
-            }
+        final percentage = completedLength * 100 / totalLength;
+        final minutesLeft = speed == 0 ? -1 : ((totalLength - completedLength) / speed / 60).round();
+        _onProgress(
+            options.port,
+            percentage,
+            speed,
+            minutesLeft,
+            false
+        );
+      }catch(error) {
+        throw "Invalid download status (${error})";
+      }
+    });
 
-            throw _genericError;
-          },
-          headers: byteStart == null || byteStart <= 0 ? {
-            "Cookie": "_c_t_c=1"
-          } :  {
-            "Cookie": "_c_t_c=1",
-            "Range": "bytes=${byteStart}-"
-          },
-        )
-    );
+    await Future.any([stopped.future, downloadItemCompleter.future]);
+    if(!stopped.isCompleted) {
+      final extension = path.extension(fileName);
+      await _extractArchive(stopped, extension, await downloadItemCompleter.future, options);
+    }else {
+      await _stopAriaDownload(downloadId);
+    }
   }catch(error) {
-    if(stopped.isCompleted) {
-      return;
-    }
-
-    if(errorsCount > _maxErrors || error.toString().contains(_deniedConnectionError) || error.toString().contains(_unavailableError)) {
-      _onError(error, options);
-      return;
-    }
-
-    await _downloadArchive(options, stopped, tempFile, startTime, received, errorsCount + 1);
+    _onError(error, options);
+  }finally {
+    delete(outputFile);
   }
 }
 
+Future<void> _startAriaServer() async {
+  final running = await _isAriaRunning();
+  if(running) {
+    await killProcessByPort(_ariaPort);
+  }
+
+  final aria2c = File("${assetsDirectory.path}\\build\\aria2c.exe");
+  if(!aria2c.existsSync()) {
+    throw "Missing aria2c.exe";
+  }
+
+  await startProcess(
+      executable: aria2c,
+      args: [
+        "--max-connection-per-server=${Platform.numberOfProcessors}",
+        "--split=${Platform.numberOfProcessors}",
+        "--enable-rpc",
+        "--rpc-listen-all=true",
+        "--rpc-allow-origin-all",
+        "--rpc-secret=$_ariaSecret",
+        "--rpc-listen-port=$_ariaPort"
+      ],
+    window: false
+  );
+  for(var i = 0; i < _ariaMaxSpawnTime.inSeconds; i++) {
+    if(await _isAriaRunning()) {
+      return;
+    }
+    await Future.delayed(const Duration(seconds: 1));
+  }
+  throw "cannot start download server (timeout exceeded)";
+}
+
+Future<bool> _isAriaRunning() async {
+  try {
+    final statusRequestId = Uuid().toString().replaceAll("-", "");
+    final statusRequest = {
+      "jsonrcp": "2.0",
+      "id": statusRequestId,
+      "method": "aria2.getVersion",
+      "params": [
+        "token:${_ariaSecret}"
+      ]
+    };
+    await http.post(_ariaEndpoint, body: jsonEncode(statusRequest));
+    return true;
+  }catch(_) {
+    return false;
+  }
+}
+
+Future<String> _startAriaDownload(FortniteBuildDownloadOptions options, File outputFile) async {
+  http.Response? addDownloadResponse;
+  try {
+    final addDownloadRequestId = Uuid().toString().replaceAll("-", "");
+    final addDownloadRequest = {
+      "jsonrcp": "2.0",
+      "id": addDownloadRequestId,
+      "method": "aria2.addUri",
+      "params": [
+        "token:${_ariaSecret}",
+        [options.build.link],
+        {
+          "dir": outputFile.parent.path,
+          "out": path.basename(outputFile.path)
+        }
+      ]
+    };
+    addDownloadResponse = await http.post(_ariaEndpoint, body: jsonEncode(addDownloadRequest));
+    final addDownloadResponseJson = jsonDecode(addDownloadResponse.body);
+    final downloadId = addDownloadResponseJson is Map ? addDownloadResponseJson['result'] : null;
+    if(downloadId == null) {
+      throw "Start failed (${addDownloadResponse.body})";
+    }
+
+    return downloadId;
+  }catch(error) {
+    throw "Start failed (${addDownloadResponse?.body ?? error})";
+  }
+}
+
+Future<void> _stopAriaDownload(String downloadId) async {
+  try {
+    final addDownloadRequestId = Uuid().toString().replaceAll("-", "");
+    final addDownloadRequest = {
+      "jsonrcp": "2.0",
+      "id": addDownloadRequestId,
+      "method": "aria2.forceRemove",
+      "params": [
+        "token:${_ariaSecret}",
+        downloadId
+      ]
+    };
+    await http.post(_ariaEndpoint, body: jsonEncode(addDownloadRequest));
+  }catch(error) {
+    throw "Stop failed (${error})";
+  }
+}
+
+
 Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File tempFile, FortniteBuildDownloadOptions options) async {
-  final startTime = DateTime.now().millisecondsSinceEpoch;
   Process? process;
   switch (extension.toLowerCase()) {
     case ".zip":
       final sevenZip = File("${assetsDirectory.path}\\build\\7zip.exe");
       if(!sevenZip.existsSync()) {
-        throw "Corrupted installation: missing 7zip.exe";
+        throw "Missing 7zip.exe";
       }
 
       process = await startProcess(
@@ -176,10 +254,15 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
       );
       var completed = false;
       process.stdOutput.listen((data) {
-        final now = DateTime.now().millisecondsSinceEpoch;
         if(data.toLowerCase().contains("everything is ok")) {
           completed = true;
-          _onProgress(startTime, now, 100, true, options);
+          _onProgress(
+              options.port,
+              100,
+              0,
+              -1,
+              true
+          );
           process?.kill(ProcessSignal.sigabrt);
           return;
         }
@@ -190,7 +273,13 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
         }
 
         final percentage = int.parse(element.substring(0, element.length - 1)).toDouble();
-        _onProgress(startTime, now, percentage, true, options);
+        _onProgress(
+            options.port,
+            percentage,
+            0,
+            -1,
+            true
+        );
       });
       process.stdError.listen((data) {
         if(!data.isBlank) {
@@ -206,7 +295,7 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
     case ".rar":
       final winrar = File("${assetsDirectory.path}\\build\\winrar.exe");
       if(!winrar.existsSync()) {
-        throw "Corrupted installation: missing winrar.exe";
+        throw "Missing winrar.exe";
       }
 
       process = await startProcess(
@@ -221,11 +310,16 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
       );
       var completed = false;
       process.stdOutput.listen((data) {
-        final now = DateTime.now().millisecondsSinceEpoch;
         data = data.replaceAll("\r", "").replaceAll("\b", "").trim();
         if(data == "All OK") {
           completed = true;
-          _onProgress(startTime, now, 100, true, options);
+          _onProgress(
+              options.port,
+              100,
+              0,
+              -1,
+              true
+          );
           process?.kill(ProcessSignal.sigabrt);
           return;
         }
@@ -236,7 +330,13 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
         }
 
         final percentage = int.parse(element).toDouble();
-        _onProgress(startTime, now, percentage, true, options);
+        _onProgress(
+            options.port,
+            percentage,
+            0,
+            -1,
+            true
+        );
       });
       process.stdError.listen((data) {
         if(!data.isBlank) {
@@ -257,21 +357,22 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
   process.kill(ProcessSignal.sigabrt);
 }
 
-void _onProgress(int startTime, int? now, double percentage, bool extracting, FortniteBuildDownloadOptions options) {
+void _onProgress(SendPort port, double percentage, int speed, int minutesLeft, bool extracting) {
   if(percentage == 0) {
-    options.port.send(FortniteBuildDownloadProgress(
+    port.send(FortniteBuildDownloadProgress(
         progress: percentage,
-        extracting: extracting
+        extracting: extracting,
+        timeLeft: null,
+        speed: speed
     ));
     return;
   }
 
-  final msLeft = now == null ? null : startTime + (now - startTime) * 100 / percentage - now;
-  final minutesLeft = msLeft == null ? null : (msLeft / 1000 / 60).round();
-  options.port.send(FortniteBuildDownloadProgress(
+  port.send(FortniteBuildDownloadProgress(
       progress: percentage,
       extracting: extracting,
-      minutesLeft: minutesLeft
+      timeLeft: minutesLeft,
+      speed: speed
   ));
 }
 
@@ -292,3 +393,4 @@ Completer<dynamic> _setupLifecycle(FortniteBuildDownloadOptions options) {
   options.port.send(lifecyclePort.sendPort);
   return stopped;
 }
+

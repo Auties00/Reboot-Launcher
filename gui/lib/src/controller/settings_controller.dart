@@ -13,7 +13,7 @@ import 'package:version/version.dart';
 import 'package:yaml/yaml.dart';
 
 class SettingsController extends GetxController {
-  static const String storageName = "settings_storage";
+  static const String storageName = "v2_settings_storage";
 
   late final GetStorage? _storage;
   late final RxString language;

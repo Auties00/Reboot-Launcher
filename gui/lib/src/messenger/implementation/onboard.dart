@@ -17,6 +17,7 @@ import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/version_selector.dart';
 
 void startOnboarding() {
+  final gameController = Get.find<GameController>();
   final settingsController = Get.find<SettingsController>();
   settingsController.firstRun.value = false;
   profileOverlayKey.currentState!.showOverlay(
@@ -27,7 +28,7 @@ void startOnboarding() {
           label: translations.startOnboardingActionLabel,
           onTap: () async {
             onClose();
-            await showProfileForm(context);
+            await showProfileForm(context, gameController.username, gameController.password);
             _promptPlayPage();
           }
       )
@@ -79,6 +80,22 @@ void _promptServerBrowserPage() {
           label: translations.promptServerBrowserPageActionLabel,
           onTap: () {
             onClose();
+            _promptHostAccount();
+          }
+      )
+  );
+}
+
+void _promptHostAccount() {
+  pageIndex.value = RebootPageType.host.index;
+  profileOverlayKey.currentState!.showOverlay(
+      text: translations.hostAccountText,
+      offset: Offset(27.5, 17.5),
+      actionBuilder: (context, onClose) => _buildActionButton(
+          context: context,
+          label: translations.hostAccountAction,
+          onTap: () async {
+            onClose();
             _promptHostPage();
           }
       )
@@ -86,7 +103,6 @@ void _promptServerBrowserPage() {
 }
 
 void _promptHostPage() {
-  pageIndex.value = RebootPageType.host.index;
   pageOverlayTargetKey.currentState!.showOverlay(
       text: translations.promptHostPageText,
       actionBuilder: (context, onClose) => _buildActionButton(
