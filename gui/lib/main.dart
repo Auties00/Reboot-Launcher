@@ -171,6 +171,7 @@ Future<void> _initWindow() async {
     }else {
       await windowManager.setAlignment(Alignment.center);
     }
+    await windowManager.setPreventClose(true);
 
     if(isWin11) {
       await Window.setEffect(

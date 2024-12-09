@@ -164,6 +164,9 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
       await _hostingController.discardServer();
     }catch(error) {
       log("[HOSTING] Cannot discard server: $error");
+    }finally {
+      // Force closing because the backend might be running, but we want the process to exit
+      exit(0);
     }
   }
 
