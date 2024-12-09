@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:reboot_common/common.dart';
 
@@ -9,20 +10,22 @@ const Duration _timeout = Duration(seconds: 5);
 Completer<bool> pingGameServerOrTimeout(String address, Duration timeout) {
   final completer = Completer<bool>();
   final start = DateTime.now();
-  (() async {
-    while (!completer.isCompleted && DateTime.now().millisecondsSinceEpoch - start.millisecondsSinceEpoch < timeout.inMilliseconds) {
-      final result = await pingGameServer(address);
-      if(result) {
-        completer.complete(true);
-      }else {
-        await Future.delayed(_timeout);
-      }
-    }
-    if(!completer.isCompleted) {
-      completer.complete(false);
-    }
-  })();
+  _pingGameServerOrTimeout(completer, start, timeout, address);
   return completer;
+}
+
+Future<void> _pingGameServerOrTimeout(Completer<bool> completer, DateTime start, Duration timeout, String address) async {
+  while (!completer.isCompleted && max(DateTime.now().millisecondsSinceEpoch - start.millisecondsSinceEpoch, 0) < timeout.inMilliseconds) {
+    final result = await pingGameServer(address);
+    if(result) {
+      completer.complete(true);
+    }else {
+      await Future.delayed(_timeout);
+    }
+  }
+  if(!completer.isCompleted) {
+    completer.complete(false);
+  }
 }
 
 Future<bool> pingGameServer(String address) async {

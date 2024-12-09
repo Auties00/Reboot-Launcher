@@ -492,7 +492,7 @@ class _LaunchButtonState extends State<LaunchButton> {
 
       final pingOperation = pingGameServerOrTimeout(
           "$publicIp:$gameServerPort",
-          const Duration(days: 365)
+          const Duration(days: 1)
       );
       this._pingOperation = pingOperation;
       _gameServerInfoBar = showRebootInfoBar(

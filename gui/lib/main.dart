@@ -172,7 +172,7 @@ Future<void> _initWindow() async {
       await windowManager.setAlignment(Alignment.center);
     }
     await windowManager.setPreventClose(true);
-
+    await windowManager.setResizable(true);
     if(isWin11) {
       await Window.setEffect(
           effect: WindowEffect.acrylic,

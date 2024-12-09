@@ -492,3 +492,57 @@ int _convertToHString(String string) {
 extension WindowManagerExtension on WindowManager {
   Future<void> maximizeOrRestore() async => await windowManager.isMaximized() ? windowManager.restore() : windowManager.maximize();
 }
+
+class WindowsDisk {
+  static final String _nullTerminator = String.fromCharCode(0);
+
+  final String path;
+  final int freeBytesAvailable;
+  final int totalNumberOfBytes;
+
+  const WindowsDisk._internal(this.path, this.freeBytesAvailable, this.totalNumberOfBytes);
+
+  static List<WindowsDisk> available() {
+    final buffer = malloc.allocate<Utf16>(MAX_PATH);
+    try {
+      final length = GetLogicalDriveStrings(MAX_PATH, buffer);
+      if (length == 0) {
+        return [];
+      }
+
+      return buffer.toDartString(length: length)
+          .split(_nullTerminator)
+          .where((drive) => drive.length > 1)
+          .map((driveName) {
+              final freeBytesAvailable = calloc<Uint64>();
+              final totalNumberOfBytes = calloc<Uint64>();
+              final totalNumberOfFreeBytes = calloc<Uint64>();
+              try {
+                GetDiskFreeSpaceEx(
+                    driveName.toNativeUtf16(),
+                    freeBytesAvailable,
+                    totalNumberOfBytes,
+                    totalNumberOfFreeBytes
+                );
+                return WindowsDisk._internal(
+                    driveName,
+                    freeBytesAvailable.value,
+                    totalNumberOfBytes.value
+                );
+              } finally {
+                calloc.free(freeBytesAvailable);
+                calloc.free(totalNumberOfBytes);
+                calloc.free(totalNumberOfFreeBytes);
+              }
+          })
+          .toList(growable: false);
+    } finally {
+      calloc.free(buffer);
+    }
+  }
+
+  @override
+  String toString() {
+    return 'WindowsDisk{path: $path, freeBytesAvailable: $freeBytesAvailable, totalNumberOfBytes: $totalNumberOfBytes}';
+  }
+}

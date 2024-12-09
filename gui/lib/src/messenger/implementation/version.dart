@@ -8,10 +8,10 @@ import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/dialog.dart';
+import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/util/types.dart';
 import 'package:reboot_launcher/src/widget/file_selector.dart';
-import 'package:universal_disk_space/universal_disk_space.dart';
 import 'package:windows_taskbar/windows_taskbar.dart';
 
 class AddVersionDialog extends StatefulWidget {
@@ -35,9 +35,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
   final Rxn<double> _progress = Rxn();
   final RxInt _speed = RxInt(0);
 
-  late DiskSpace _diskSpace;
   late Future<List<FortniteBuild>> _fetchFuture;
-  late Future _diskFuture;
 
   SendPort? _downloadPort;
   Object? _error;
@@ -45,10 +43,10 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
 
   @override
   void initState() {
-    _fetchFuture = compute(fetchBuilds, null);
-    _diskSpace = DiskSpace();
-    _diskFuture = _diskSpace.scan()
-        .then((_) => _updateFormDefaults());
+    _fetchFuture = compute(fetchBuilds, null).then((value) {
+      _updateFormDefaults();
+      return value;
+    });
     super.initState();
   }
 
@@ -71,7 +69,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
         switch(_status.value){
           case _DownloadStatus.form:
             return FutureBuilder(
-                future: Future.wait([_fetchFuture, _diskFuture]).then((_) async => await _fetchFuture),
+                future: _fetchFuture,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     WidgetsBinding.instance.addPostFrameCallback((_) => _onDownloadError(snapshot.error, snapshot.stackTrace));
@@ -444,16 +442,16 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
       _build.value = null;
     }
 
-    if(_source.value != _BuildSource.local && _diskSpace.disks.isNotEmpty) {
-      await _fetchFuture;
-      final bestDisk = _diskSpace.disks
-          .reduce((first, second) => first.availableSpace > second.availableSpace ? first : second);
+    final disks = WindowsDisk.available();
+    if(_source.value != _BuildSource.local && disks.isNotEmpty) {
+      final bestDisk = disks.reduce((first, second) => first.freeBytesAvailable > second.freeBytesAvailable ? first : second);
       final build = _build.value;
       if(build == null){
         return;
       }
 
-      final pathText = "${bestDisk.devicePath}\\FortniteBuilds\\${build.version}";
+      print("${bestDisk.path}\\FortniteBuilds\\${build.version}");
+      final pathText = "${bestDisk.path}FortniteBuilds\\${build.version}";
       _pathController.text = pathText;
       _pathController.selection = TextSelection.collapsed(offset: pathText.length);
     }

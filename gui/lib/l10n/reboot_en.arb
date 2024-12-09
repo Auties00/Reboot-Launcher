@@ -236,7 +236,7 @@
   "startGame": "Start fortnite",
   "stopGame": "Close fortnite",
   "waitingForGameServer": "Waiting for the game server to boot up...",
-  "gameServerStartWarning": "The game server was started successfully, but Reboot didn't load",
+  "gameServerStartWarning": "Unsupported version: the game server crashed while setting up the server",
   "gameServerStartLocalWarning": "The game server was started successfully, but other players can't join",
   "gameServerStarted": "The game server was started successfully",
   "gameClientStarted": "The game client was started successfully",
