@@ -1,5 +1,6 @@
-import 'package:bitsdojo_window/bitsdojo_window.dart' show appWindow;
 import 'package:flutter/material.dart';
+import 'package:reboot_launcher/src/util/os.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'title_bar_icons.dart';
 import 'title_bar_mouse.dart';
@@ -132,7 +133,7 @@ class MinimizeWindowButton extends WindowButton {
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 MinimizeIcon(color: buttonContext.iconColor),
-            onPressed: onPressed ?? () => appWindow.minimize());
+            onPressed: onPressed ?? () => windowManager.minimize());
 }
 
 class MaximizeWindowButton extends WindowButton {
@@ -148,7 +149,7 @@ class MaximizeWindowButton extends WindowButton {
             iconBuilder: (buttonContext) =>
                 MaximizeIcon(color: buttonContext.iconColor),
             onPressed: onPressed ??
-                    () => appWindow.maximizeOrRestore());
+                    () => windowManager.maximizeOrRestore());
 }
 
 final _defaultCloseButtonColors = WindowButtonColors(
@@ -169,5 +170,5 @@ class CloseWindowButton extends WindowButton {
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 CloseIcon(color: buttonContext.iconColor),
-            onPressed: onPressed ?? () => appWindow.close());
+            onPressed: onPressed ?? () => windowManager.close());
 }

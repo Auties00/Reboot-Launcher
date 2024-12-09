@@ -1,6 +1,6 @@
 name: reboot_launcher
 description: Graphical User Interface for Project Reboot
-version: "9.2.7"
+version: "10.0.0"
 
 publish_to: 'none'
 
@@ -28,7 +28,6 @@ dependencies:
       ref: main
 
   # Window management
-  bitsdojo_window: ^0.1.6
   window_manager: ^0.4.2
 
   # Extract zip archives (for example the reboot.zip)

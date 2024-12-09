@@ -8,10 +8,7 @@ import 'dart:isolate';
 import 'dart:math';
 
 import 'package:ffi/ffi.dart';
-import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
-import 'package:reboot_common/src/util/log.dart';
-import 'package:sync/semaphore.dart';
 import 'package:win32/win32.dart';
 
 final _ntdll = DynamicLibrary.open('ntdll.dll');
@@ -98,8 +95,8 @@ Future<bool> startElevatedProcess({required String executable, required String a
   var shellInput = calloc<SHELLEXECUTEINFO>();
   shellInput.ref.lpFile = executable.toNativeUtf16();
   shellInput.ref.lpParameters = args.toNativeUtf16();
-  shellInput.ref.nShow = window ? SW_SHOWNORMAL : SW_HIDE;
-  shellInput.ref.fMask = ES_AWAYMODE_REQUIRED;
+  shellInput.ref.nShow = window ? SHOW_WINDOW_CMD.SW_SHOWNORMAL : SHOW_WINDOW_CMD.SW_HIDE;
+  shellInput.ref.fMask = EXECUTION_STATE.ES_AWAYMODE_REQUIRED;
   shellInput.ref.lpVerb = "runas".toNativeUtf16();
   shellInput.ref.cbSize = sizeOf<SHELLEXECUTEINFO>();
   return ShellExecuteEx(shellInput) == 1;
@@ -154,47 +151,36 @@ final _NtSuspendProcess = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
     int Function(int hWnd)>('NtSuspendProcess');
 
 bool suspend(int pid) {
-  final processHandle = OpenProcess(PROCESS_SUSPEND_RESUME, FALSE, pid);
-  final result = _NtSuspendProcess(processHandle);
-  CloseHandle(processHandle);
-  return result == 0;
+  final processHandle = OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_SUSPEND_RESUME, FALSE, pid);
+  try {
+    return _NtSuspendProcess(processHandle) == 0;
+  } finally {
+    CloseHandle(processHandle);
+  }
 }
 
 bool resume(int pid) {
-  final processHandle = OpenProcess(PROCESS_SUSPEND_RESUME, FALSE, pid);
-  final result = _NtResumeProcess(processHandle);
-  CloseHandle(processHandle);
-  return result == 0;
+  final processHandle = OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_SUSPEND_RESUME, FALSE, pid);
+  try {
+    return _NtResumeProcess(processHandle) == 0;
+  } finally {
+    CloseHandle(processHandle);
+  }
 }
 
-void _watchProcess(int pid) {
-  final processHandle = OpenProcess(SYNCHRONIZE, FALSE, pid);
+
+Future<void> watchProcess(int pid) => Isolate.run(() {
+  final processHandle = OpenProcess(FILE_ACCESS_RIGHTS.SYNCHRONIZE, FALSE, pid);
+  if (processHandle == 0) {
+    return;
+  }
+
   try {
     WaitForSingleObject(processHandle, INFINITE);
   }finally {
     CloseHandle(processHandle);
   }
-}
-
-Future<bool> watchProcess(int pid) async {
-  var completer = Completer<bool>();
-  var exitPort = ReceivePort();
-  exitPort.listen((_) {
-    if(!completer.isCompleted) {
-      completer.complete(true);
-    }
-  });
-  var errorPort = ReceivePort();
-  errorPort.listen((_) => completer.complete(false));
-  await Isolate.spawn(
-      _watchProcess,
-      pid,
-      onExit: exitPort.sendPort,
-      onError: errorPort.sendPort,
-      errorsAreFatal: true
-  );
-  return await completer.future;
-}
+});
 
 List<String> createRebootArgs(String username, String password, bool host, GameServerType hostType, bool logging, String additionalArgs) {
   log("[PROCESS] Generating reboot args");

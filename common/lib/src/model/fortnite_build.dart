@@ -17,13 +17,15 @@ class FortniteBuild {
 
 class FortniteBuildDownloadProgress {
   final double progress;
-  final int? minutesLeft;
+  final int? timeLeft;
   final bool extracting;
+  final int speed;
 
   FortniteBuildDownloadProgress({
     required this.progress,
     required this.extracting,
-    this.minutesLeft,
+    required this.timeLeft,
+    required this.speed
   });
 }
 

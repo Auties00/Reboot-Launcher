@@ -12,10 +12,12 @@ import 'package:sync/semaphore.dart';
 import 'package:uuid/uuid.dart';
 
 class HostingController extends GetxController {
-  static const String storageName = "hosting_storage";
+  static const String storageName = "v2_hosting_storage";
 
   late final GetStorage? _storage;
   late final String uuid;
+  late final TextEditingController accountUsername;
+  late final TextEditingController accountPassword;
   late final TextEditingController name;
   late final FocusNode nameFocusNode;
   late final TextEditingController description;
@@ -37,6 +39,10 @@ class HostingController extends GetxController {
     _storage = appWithNoStorage ? null : GetStorage(storageName);
     uuid = _storage?.read("uuid") ?? const Uuid().v4();
     _storage?.write("uuid", uuid);
+    accountUsername = TextEditingController(text: _storage?.read("account_username") ?? kDefaultHostName);
+    accountUsername.addListener(() => _storage?.write("account_username", accountUsername.text));
+    accountPassword = TextEditingController(text: _storage?.read("account_password") ?? "");
+    accountPassword.addListener(() => _storage?.write("account_password", password.text));
     name = TextEditingController(text: _storage?.read("name"));
     name.addListener(() => _storage?.write("name", name.text));
     description = TextEditingController(text: _storage?.read("description"));
@@ -152,6 +158,8 @@ class HostingController extends GetxController {
   }
 
   void reset() {
+    accountUsername.text = kDefaultHostName;
+    accountPassword.text = "";
     name.text = "";
     description.text = "";
     showPassword.value = false;

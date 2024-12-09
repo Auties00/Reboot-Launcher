@@ -53,7 +53,6 @@ class HostPage extends RebootPage {
 class _HostingPageState extends RebootPageState<HostPage> {
   final GameController _gameController = Get.find<GameController>();
   final HostingController _hostingController = Get.find<HostingController>();
-  final SettingsController _settingsController = Get.find<SettingsController>();
   final DllController _dllController = Get.find<DllController>();
 
   late final RxBool _showPasswordTrailing = RxBool(_hostingController.password.text.isNotEmpty);
@@ -85,7 +84,6 @@ class _HostingPageState extends RebootPageState<HostPage> {
         key: hostVersionOverlayTargetKey
     ),
     _options,
-    _internalFiles,
     _share,
     _resetDefaults
   ];
@@ -270,220 +268,6 @@ class _HostingPageState extends RebootPageState<HostPage> {
     ],
   );
 
-  SettingTile get _internalFiles => SettingTile(
-    icon: Icon(
-        FluentIcons.archive_settings_24_regular
-    ),
-    title: Text(translations.settingsServerName),
-    subtitle: Text(translations.settingsServerSubtitle),
-    children: [
-      _internalFilesServerType,
-      _internalFilesUpdateTimer,
-      _internalFilesOldServerSource,
-      _internalFilesNewServerSource,
-    ],
-  );
-
-  Widget get _internalFilesServerType => SettingTile(
-      icon: Icon(
-          FluentIcons.games_24_regular
-      ),
-      title: Text(translations.settingsServerTypeName),
-      subtitle: Text(translations.settingsServerTypeDescription),
-      contentWidth: SettingTile.kDefaultContentWidth + 30,
-      content: Obx(() => DropDownButton(
-          onOpen: () => inDialog = true,
-          onClose: () => inDialog = false,
-          leading: Text(_dllController.customGameServer.value ? translations.settingsServerTypeCustomName : translations.settingsServerTypeEmbeddedName),
-          items: {
-            false: translations.settingsServerTypeEmbeddedName,
-            true: translations.settingsServerTypeCustomName
-          }.entries.map((entry) => MenuFlyoutItem(
-              text: Text(entry.value),
-              onPressed: () {
-                final oldValue = _dllController.customGameServer.value;
-                if(oldValue == entry.key) {
-                  return;
-                }
-
-                _dllController.customGameServer.value = entry.key;
-                _dllController.infoBarEntry?.close();
-                if(!entry.key) {
-                  _dllController.updateGameServerDll(
-                      force: true
-                  );
-                }
-              }
-          )).toList()
-      ))
-  );
-
-  Widget get _internalFilesOldServerSource => Obx(() {
-    if(!_dllController.customGameServer.value) {
-      return SettingTile(
-          icon: Icon(
-              FluentIcons.globe_24_regular
-          ),
-          title: Text(translations.settingsServerOldMirrorName),
-          subtitle: Text(translations.settingsServerMirrorDescription),
-          contentWidth: SettingTile.kDefaultContentWidth + 30,
-          content: Row(
-            children: [
-              Expanded(
-                child: TextFormBox(
-                  placeholder:  translations.settingsServerMirrorPlaceholder,
-                  controller: _dllController.beforeS20Mirror,
-                  onChanged: (value) {
-                    if(Uri.tryParse(value) != null) {
-                      _dllController.updateGameServerDll(force: true);
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 8.0),
-              Button(
-                  style: ButtonStyle(
-                      padding: WidgetStateProperty.all(EdgeInsets.zero)
-                  ),
-                  onPressed: () => _dllController.updateGameServerDll(force: true),
-                  child: SizedBox.square(
-                    dimension: 30,
-                    child: Icon(
-                        FluentIcons.arrow_download_24_regular
-                    ),
-                  )
-              ),
-              const SizedBox(width: 8.0),
-              Button(
-                  style: ButtonStyle(
-                      padding: WidgetStateProperty.all(EdgeInsets.zero)
-                  ),
-                  onPressed: () {
-                    _dllController.beforeS20Mirror.text = kRebootBelowS20DownloadUrl;
-                    _dllController.updateGameServerDll(force: true);
-                  },
-                  child: SizedBox.square(
-                    dimension: 30,
-                    child: Icon(
-                        FluentIcons.arrow_reset_24_regular
-                    ),
-                  )
-              )
-            ],
-          )
-      );
-    }else {
-      return createFileSetting(
-          title: translations.settingsOldServerFileName,
-          description: translations.settingsServerFileDescription,
-          controller: _dllController.gameServerDll,
-          onReset: () {
-            final path = _dllController.getDefaultDllPath(InjectableDll.reboot);
-            _dllController.gameServerDll.text = path;
-            _dllController.downloadCriticalDllInteractive(path);
-          }
-      );
-    }
-  });
-
-  Widget get _internalFilesNewServerSource => Obx(() {
-    if(!_dllController.customGameServer.value) {
-      return SettingTile(
-          icon: Icon(
-              FluentIcons.globe_24_regular
-          ),
-          title: Text(translations.settingsServerNewMirrorName),
-          subtitle: Text(translations.settingsServerMirrorDescription),
-          contentWidth: SettingTile.kDefaultContentWidth + 30,
-          content: Row(
-            children: [
-              Expanded(
-                child: TextFormBox(
-                  placeholder: translations.settingsServerMirrorPlaceholder,
-                  controller: _dllController.aboveS20Mirror,
-                  onChanged: (value) {
-                    if(Uri.tryParse(value) != null) {
-                      _dllController.updateGameServerDll(force: true);
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 8.0),
-              Button(
-                  style: ButtonStyle(
-                      padding: WidgetStateProperty.all(EdgeInsets.zero)
-                  ),
-                  onPressed: () => _dllController.updateGameServerDll(force: true),
-                  child: SizedBox.square(
-                    dimension: 30,
-                    child: Icon(
-                        FluentIcons.arrow_download_24_regular
-                    ),
-                  )
-              ),
-              const SizedBox(width: 8.0),
-              Button(
-                  style: ButtonStyle(
-                      padding: WidgetStateProperty.all(EdgeInsets.zero)
-                  ),
-                  onPressed: () {
-                    _dllController.aboveS20Mirror.text = kRebootBelowS20DownloadUrl;
-                    _dllController.updateGameServerDll(force: true);
-                  },
-                  child: SizedBox.square(
-                    dimension: 30,
-                    child: Icon(
-                        FluentIcons.arrow_reset_24_regular
-                    ),
-                  )
-              )
-            ],
-          )
-      );
-    }else {
-      return createFileSetting(
-          title: translations.settingsNewServerFileName,
-          description: translations.settingsServerFileDescription,
-          controller: _dllController.gameServerDll,
-          onReset: () {
-            final path = _dllController.getDefaultDllPath(InjectableDll.reboot);
-            _dllController.gameServerDll.text = path;
-            _dllController.downloadCriticalDllInteractive(path);
-          }
-      );
-    }
-  });
-
-  Widget get _internalFilesUpdateTimer => Obx(() {
-    if(_dllController.customGameServer.value) {
-      return const SizedBox.shrink();
-    }
-
-    return SettingTile(
-        icon: Icon(
-            FluentIcons.timer_24_regular
-        ),
-        title: Text(translations.settingsServerTimerName),
-        subtitle: Text(translations.settingsServerTimerSubtitle),
-        contentWidth: SettingTile.kDefaultContentWidth + 30,
-        content: Obx(() => DropDownButton(
-            onOpen: () => inDialog = true,
-            onClose: () => inDialog = false,
-            leading: Text(_dllController.timer.value.text),
-            items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
-                text: Text(entry.text),
-                onPressed: () {
-                  _dllController.timer.value = entry;
-                  _dllController.infoBarEntry?.close();
-                  _dllController.updateGameServerDll(
-                      force: true
-                  );
-                }
-            )).toList()
-        ))
-    );
-  });
-
   SettingTile get _share => SettingTile(
     icon: Icon(
         FluentIcons.link_24_regular
@@ -554,8 +338,8 @@ class _HostingPageState extends RebootPageState<HostPage> {
 
     try {
       _hostingController.publishServer(
-          _gameController.username.text,
-          _hostingController.instance.value!.versionName
+          _hostingController.accountUsername.text,
+          _hostingController.instance.value!.version.toString()
       );
     } catch(error) {
       _showCannotUpdateGameServer(error);
@@ -589,14 +373,4 @@ class _HostingPageState extends RebootPageState<HostPage> {
       severity: InfoBarSeverity.success,
       duration: infoBarLongDuration
   );
-}
-
-extension _UpdateTimerExtension on UpdateTimer {
-  String get text {
-    if (this == UpdateTimer.never) {
-      return translations.updateGameServerDllNever;
-    }
-
-    return translations.updateGameServerDllEvery(name);
-  }
 }

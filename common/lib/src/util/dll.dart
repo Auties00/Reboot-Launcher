@@ -9,9 +9,9 @@ bool _watcher = false;
 final File rebootBeforeS20DllFile = File("${dllsDirectory.path}\\reboot.dll");
 final File rebootAboveS20DllFile = File("${dllsDirectory.path}\\rebootS20.dll");
 const String kRebootBelowS20DownloadUrl =
-    "http://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/Release.zip";
+    "https://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/Reboot.zip";
 const String kRebootAboveS20DownloadUrl =
-    "http://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/aboveS20/Release.zip";
+    "https://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/RebootS20.zip";
 
 Future<bool> hasRebootDllUpdate(int? lastUpdateMs, {int hours = 24, bool force = false}) async {
     final lastUpdate = await _getLastUpdate(lastUpdateMs);

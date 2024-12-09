@@ -4,11 +4,13 @@ import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
+import 'package:reboot_launcher/src/controller/dll_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
 import 'package:reboot_launcher/src/messenger/abstract/dialog.dart';
 import 'package:reboot_launcher/src/page/abstract/page.dart';
 import 'package:reboot_launcher/src/page/abstract/page_type.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:reboot_launcher/src/widget/file_setting_tile.dart';
 import 'package:reboot_launcher/src/widget/setting_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -33,6 +35,7 @@ class SettingsPage extends RebootPage {
 
 class _SettingsPageState extends RebootPageState<SettingsPage> {
   final SettingsController _settingsController = Get.find<SettingsController>();
+  final DllController _dllController = Get.find<DllController>();
 
   @override
   Widget? get button => null;
@@ -41,8 +44,234 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
   List<Widget> get settings => [
     _language,
     _theme,
+    _internalFiles,
     _installationDirectory,
   ];
+
+  SettingTile get _internalFiles => SettingTile(
+    icon: Icon(
+        FluentIcons.archive_settings_24_regular
+    ),
+    title: Text(translations.settingsClientName),
+    subtitle: Text(translations.settingsClientDescription),
+    children: [
+      createFileSetting(
+          title: translations.settingsClientConsoleName,
+          description: translations.settingsClientConsoleDescription,
+          controller: _dllController.unrealEngineConsoleDll,
+          onReset: () {
+            final path = _dllController.getDefaultDllPath(InjectableDll.console);
+            _dllController.unrealEngineConsoleDll.text = path;
+            _dllController.downloadCriticalDllInteractive(path, force: true);
+          }
+      ),
+      createFileSetting(
+          title: translations.settingsClientAuthName,
+          description: translations.settingsClientAuthDescription,
+          controller: _dllController.backendDll,
+          onReset: () {
+            final path = _dllController.getDefaultDllPath(InjectableDll.starfall);
+            _dllController.backendDll.text = path;
+            _dllController.downloadCriticalDllInteractive(path, force: true);
+          }
+      ),
+      _internalFilesServerType,
+      _internalFilesUpdateTimer,
+      _internalFilesServerSource,
+      _internalFilesNewServerSource,
+    ],
+  );
+
+  Widget get _internalFilesServerType => SettingTile(
+      icon: Icon(
+          FluentIcons.games_24_regular
+      ),
+      title: Text(translations.settingsServerTypeName),
+      subtitle: Text(translations.settingsServerTypeDescription),
+      contentWidth: SettingTile.kDefaultContentWidth + 30,
+      content: Obx(() => DropDownButton(
+          onOpen: () => inDialog = true,
+          onClose: () => inDialog = false,
+          leading: Text(_dllController.customGameServer.value ? translations.settingsServerTypeCustomName : translations.settingsServerTypeEmbeddedName),
+          items: {
+            false: translations.settingsServerTypeEmbeddedName,
+            true: translations.settingsServerTypeCustomName
+          }.entries.map((entry) => MenuFlyoutItem(
+              text: Text(entry.value),
+              onPressed: () {
+                final oldValue = _dllController.customGameServer.value;
+                if(oldValue == entry.key) {
+                  return;
+                }
+
+                _dllController.customGameServer.value = entry.key;
+                _dllController.infoBarEntry?.close();
+                if(!entry.key) {
+                  _dllController.updateGameServerDll(
+                      force: true
+                  );
+                }
+              }
+          )).toList()
+      ))
+  );
+
+  Widget get _internalFilesServerSource => Obx(() {
+    if(!_dllController.customGameServer.value) {
+      return SettingTile(
+          icon: Icon(
+              FluentIcons.globe_24_regular
+          ),
+          title: Text(translations.settingsServerOldMirrorName),
+          subtitle: Text(translations.settingsServerMirrorDescription),
+          contentWidth: SettingTile.kDefaultContentWidth + 30,
+          content: Row(
+            children: [
+              Expanded(
+                child: TextFormBox(
+                  placeholder:  translations.settingsServerMirrorPlaceholder,
+                  controller: _dllController.beforeS20Mirror,
+                  onChanged: (value) {
+                    if(Uri.tryParse(value) != null) {
+                      _dllController.updateGameServerDll(force: true);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8.0),
+              Button(
+                  style: ButtonStyle(
+                      padding: WidgetStateProperty.all(EdgeInsets.zero)
+                  ),
+                  onPressed: () => _dllController.updateGameServerDll(force: true),
+                  child: SizedBox.square(
+                    dimension: 30,
+                    child: Icon(
+                        FluentIcons.arrow_download_24_regular
+                    ),
+                  )
+              ),
+              const SizedBox(width: 8.0),
+              Button(
+                  style: ButtonStyle(
+                      padding: WidgetStateProperty.all(EdgeInsets.zero)
+                  ),
+                  onPressed: () {
+                    _dllController.beforeS20Mirror.text = kRebootBelowS20DownloadUrl;
+                    _dllController.updateGameServerDll(force: true);
+                  },
+                  child: SizedBox.square(
+                    dimension: 30,
+                    child: Icon(
+                        FluentIcons.arrow_reset_24_regular
+                    ),
+                  )
+              )
+            ],
+          )
+      );
+    }else {
+      return createFileSetting(
+          title: translations.settingsOldServerFileName,
+          description: translations.settingsServerFileDescription,
+          controller: _dllController.gameServerDll,
+          onReset: () {
+            final path = _dllController.getDefaultDllPath(InjectableDll.reboot);
+            _dllController.gameServerDll.text = path;
+            _dllController.downloadCriticalDllInteractive(path);
+          }
+      );
+    }
+  });
+
+  Widget get _internalFilesNewServerSource => Obx(() {
+    if(!_dllController.customGameServer.value) {
+      return SettingTile(
+          icon: Icon(
+              FluentIcons.globe_24_regular
+          ),
+          title: Text(translations.settingsServerNewMirrorName),
+          subtitle: Text(translations.settingsServerMirrorDescription),
+          contentWidth: SettingTile.kDefaultContentWidth + 30,
+          content: Row(
+            children: [
+              Expanded(
+                child: TextFormBox(
+                  placeholder: translations.settingsServerMirrorPlaceholder,
+                  controller: _dllController.aboveS20Mirror,
+                  onChanged: (value) {
+                    if(Uri.tryParse(value) != null) {
+                      _dllController.updateGameServerDll(force: true);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8.0),
+              Button(
+                  style: ButtonStyle(
+                      padding: WidgetStateProperty.all(EdgeInsets.zero)
+                  ),
+                  onPressed: () => _dllController.updateGameServerDll(force: true),
+                  child: SizedBox.square(
+                    dimension: 30,
+                    child: Icon(
+                        FluentIcons.arrow_download_24_regular
+                    ),
+                  )
+              ),
+              const SizedBox(width: 8.0),
+              Button(
+                  style: ButtonStyle(
+                      padding: WidgetStateProperty.all(EdgeInsets.zero)
+                  ),
+                  onPressed: () {
+                    _dllController.aboveS20Mirror.text = kRebootBelowS20DownloadUrl;
+                    _dllController.updateGameServerDll(force: true);
+                  },
+                  child: SizedBox.square(
+                    dimension: 30,
+                    child: Icon(
+                        FluentIcons.arrow_reset_24_regular
+                    ),
+                  )
+              )
+            ],
+          )
+      );
+    }else {
+      return const SizedBox();
+    }
+  });
+
+  Widget get _internalFilesUpdateTimer => Obx(() {
+    if(_dllController.customGameServer.value) {
+      return const SizedBox.shrink();
+    }
+
+    return SettingTile(
+        icon: Icon(
+            FluentIcons.timer_24_regular
+        ),
+        title: Text(translations.settingsServerTimerName),
+        subtitle: Text(translations.settingsServerTimerSubtitle),
+        contentWidth: SettingTile.kDefaultContentWidth + 30,
+        content: Obx(() => DropDownButton(
+            onOpen: () => inDialog = true,
+            onClose: () => inDialog = false,
+            leading: Text(_dllController.timer.value.text),
+            items: UpdateTimer.values.map((entry) => MenuFlyoutItem(
+                text: Text(entry.text),
+                onPressed: () {
+                  _dllController.timer.value = entry;
+                  _dllController.infoBarEntry?.close();
+                  _dllController.updateGameServerDll(
+                      force: true
+                  );
+                }
+            )).toList()
+        ))
+    );
+  });
 
   SettingTile get _language => SettingTile(
       icon: Icon(
@@ -110,5 +339,15 @@ extension _ThemeModeExtension on ThemeMode {
       case ThemeMode.light:
         return translations.light;
     }
+  }
+}
+
+extension _UpdateTimerExtension on UpdateTimer {
+  String get text {
+    if (this == UpdateTimer.never) {
+      return translations.updateGameServerDllNever;
+    }
+
+    return translations.updateGameServerDllEvery(name);
   }
 }

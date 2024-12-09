@@ -4,7 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
-  bitsdojo_window_windows
   flutter_acrylic
   local_notifier
   screen_retriever

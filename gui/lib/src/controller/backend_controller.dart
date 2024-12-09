@@ -10,7 +10,7 @@ import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/util/keyboard.dart';
 
 class BackendController extends GetxController {
-  static const String storageName = "backend_storage";
+  static const String storageName = "v2_backend_storage";
   static const PhysicalKeyboardKey _kDefaultConsoleKey = PhysicalKeyboardKey(0x00070041);
 
   late final GetStorage? _storage;
