@@ -36,7 +36,6 @@ Source: "{{SOURCE_DIR}}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdir
 Source: "..\..\dependencies\redist\VC_redist.x64.exe"; DestDir: {tmp}; Flags: dontcopy
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -Command ""Add-MpPreference -ExclusionPath '{app}'"""; Flags: runhidden
 Filename: "{app}\{{EXECUTABLE_NAME}}"; Description: "{cm:LaunchProgram,{{DISPLAY_NAME}}}"; Flags: runascurrentuser nowait postinstall skipifsilent
 Filename: "{tmp}\VC_redist.x64.exe"; StatusMsg: "{cm:InstallingVC2017redist}"; Parameters: "/quiet"; Check: VC2017RedistNeedsInstall; Flags: waituntilterminated
 
@@ -46,6 +45,44 @@ Name: "{autodesktop}\{{DISPLAY_NAME}}"; Filename: "{app}\{{EXECUTABLE_NAME}}"; T
 Name: "{userstartup}\{{DISPLAY_NAME}}"; Filename: "{app}\{{EXECUTABLE_NAME}}"; WorkingDir: "{app}"; Tasks: launchAtStartup
 
 [Code]
+var
+  Page: TInputOptionWizardPage;
+
+procedure InitializeWizard();
+begin
+  Page := CreateInputOptionPage(
+         wpWelcome,
+        '   Allow DLL injection',
+        ' The Reboot Launcher needs to inject DLLs into Fortnite to create the game server',
+        'Selecting the option below will add the Reboot Launcher to the Windows Exclusions list. ' +
+        'This is necessary because DLL injection is often detected as a virus, but is necessary to modify Fortnite. ' +
+        'This option was designed for advanced users who want to manually manage the exclusions list on their machine. ' +
+        'If you do not trust the Reboot Launcher, you can audit the source code at https://github.com/Auties00/reboot_launcher and build it from source.',
+        False,
+        False
+  );
+  Page.Add('&Add the launcher to the Windows Exclusions list');
+  Page.Values[0] := True;
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+  InstallationDir: String;
+begin
+  if (CurStep = ssPostInstall) and Page.Values[0] then
+  begin
+    InstallationDir := ExpandConstant('{app}');
+    Exec('powershell.exe', '-ExecutionPolicy Bypass -Command ""Add-MpPreference -ExclusionPath ''' + InstallationDir + '''""' , '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Log('Powershell exit code: ' + IntToStr(ResultCode));
+  end;
+end;
+
 function CompareVersion(version1, version2: String): Integer;
 var
     packVersion1, packVersion2: Int64;
