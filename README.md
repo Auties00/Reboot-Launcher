@@ -1,7 +1,7 @@
 ![Banner](https://i.imgur.com/p0P4tcI.png)
 
 GUI and CLI Launcher for [Project Reboot](https://github.com/Milxnor/Project-Reboot-3.0/)
-Join our discord at https://discord.gg/reboot
+Join our [Discord](https://discord.gg/rebootmp)
 
 ## Modules
 
