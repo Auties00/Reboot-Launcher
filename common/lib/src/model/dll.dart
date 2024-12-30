@@ -1,9 +1,10 @@
 enum InjectableDll {
   console,
-  starfall,
-  reboot,
+  auth,
+  gameServer,
+  memoryLeak
 }
 
 extension InjectableDllVersionAware on InjectableDll {
-  bool get isVersionDependent => this == InjectableDll.reboot;
+  bool get isVersionDependent => this == InjectableDll.gameServer;
 }

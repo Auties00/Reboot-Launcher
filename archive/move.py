@@ -58,7 +58,7 @@ def main():
         for future in as_completed(futures):
             try:
                 uploaded_url, uploaded_key = future.result()
-                print(f"Uploaded: {uploaded_url} -> s3://{bucket_name}/{uploaded_key}")
+                print(f"Uploaded: {uploaded_url}")
             except Exception as e:
                 print(f"Error uploading: {e}")
 

@@ -6,6 +6,10 @@
 
 #include <dwmapi.h>
 
+#include <iostream>
+
+#include "Windowsx.h"
+
 namespace {
 
     constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
@@ -160,51 +164,44 @@ LRESULT CALLBACK Win32Window::WndProc(HWND const window,
 }
 
 LRESULT
-Win32Window::MessageHandler(HWND hwnd,
-                            UINT const message,
-                            WPARAM const wparam,
-                            LPARAM const lparam) noexcept {
-    switch (message) {
-        case WM_DESTROY:
+Win32Window::MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) noexcept {
+    switch (uMsg) {
+        case WM_DESTROY: {
             window_handle_ = nullptr;
             Destroy();
             if (quit_on_close_) {
                 PostQuitMessage(0);
             }
             return 0;
+        }
 
         case WM_DPICHANGED: {
-            auto newRectSize = reinterpret_cast<RECT *>(lparam);
+            auto newRectSize = reinterpret_cast<RECT *>(lParam);
             LONG newWidth = newRectSize->right - newRectSize->left;
             LONG newHeight = newRectSize->bottom - newRectSize->top;
-
-            SetWindowPos(hwnd, nullptr, newRectSize->left, newRectSize->top, newWidth,
-                         newHeight, SWP_NOZORDER | SWP_NOACTIVATE);
-
+            SetWindowPos(hWnd, nullptr, newRectSize->left, newRectSize->top, newWidth,newHeight, SWP_NOZORDER | SWP_NOACTIVATE);
             return 0;
         }
+
         case WM_SIZE: {
-            RECT rect = GetClientArea();
+            auto rect = GetClientArea();
             if (child_content_ != nullptr) {
-                // Size and position the child window.
-                MoveWindow(child_content_, rect.left, rect.top, rect.right - rect.left,
-                           rect.bottom - rect.top, TRUE);
+                MoveWindow(child_content_, rect.left, rect.top, rect.right - rect.left,rect.bottom - rect.top, TRUE);
             }
-            return 0;
+            return DefWindowProc(child_content_, uMsg, wParam, lParam);
         }
 
-        case WM_ACTIVATE:
+        case WM_ACTIVATE: {
             if (child_content_ != nullptr) {
                 SetFocus(child_content_);
             }
             return 0;
+        }
 
-        case WM_NCCALCSIZE:
-            return 0;
+        default:
+            return DefWindowProc(window_handle_, uMsg, wParam, lParam);
+        }
     }
-
-    return DefWindowProc(window_handle_, message, wparam, lparam);
-}
 
 void Win32Window::Destroy() {
     OnDestroy();
@@ -228,8 +225,7 @@ void Win32Window::SetChildContent(HWND content) {
     SetParent(content, window_handle_);
     RECT frame = GetClientArea();
 
-    MoveWindow(content, frame.left, frame.top, frame.right - frame.left,
-               frame.bottom - frame.top, true);
+    MoveWindow(content, frame.left, frame.top, frame.right - frame.left,frame.bottom - frame.top, true);
 
     SetFocus(child_content_);
 }

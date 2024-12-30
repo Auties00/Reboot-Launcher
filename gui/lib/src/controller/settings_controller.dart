@@ -6,7 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
-import 'package:reboot_launcher/src/messenger/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/messenger/info_bar.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:version/version.dart';

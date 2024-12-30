@@ -7,9 +7,10 @@ import 'package:get_storage/get_storage.dart';
 import 'package:path/path.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
-import 'package:reboot_launcher/src/messenger/abstract/info_bar.dart';
+import 'package:reboot_launcher/src/messenger/info_bar.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:version/version.dart';
+import 'package:path/path.dart' as path;
 
 class DllController extends GetxController {
   static const String storageName = "v2_dll_storage";
@@ -19,6 +20,7 @@ class DllController extends GetxController {
   late final TextEditingController gameServerDll;
   late final TextEditingController unrealEngineConsoleDll;
   late final TextEditingController backendDll;
+  late final TextEditingController memoryLeakDll;
   late final TextEditingController gameServerPort;
   late final Rx<UpdateTimer> timer;
   late final TextEditingController beforeS20Mirror;
@@ -27,13 +29,13 @@ class DllController extends GetxController {
   late final RxnInt timestamp;
   late final Rx<UpdateStatus> status;
   InfoBarEntry? infoBarEntry;
-  Future<bool>? _updater;
 
   DllController() {
     _storage = appWithNoStorage ? null : GetStorage(storageName);
-    gameServerDll = _createController("game_server", InjectableDll.reboot);
+    gameServerDll = _createController("game_server", InjectableDll.gameServer);
     unrealEngineConsoleDll = _createController("unreal_engine_console", InjectableDll.console);
-    backendDll = _createController("backend", InjectableDll.starfall);
+    backendDll = _createController("backend", InjectableDll.auth);
+    memoryLeakDll = _createController("memory_leak", InjectableDll.memoryLeak);
     gameServerPort = TextEditingController(text: _storage?.read("game_server_port") ?? kDefaultGameServerPort);
     gameServerPort.addListener(() => _storage?.write("game_server_port", gameServerPort.text));
     final timerIndex = _storage?.read("timer");
@@ -57,9 +59,9 @@ class DllController extends GetxController {
   }
 
   void resetGame() {
-    gameServerDll.text = getDefaultDllPath(InjectableDll.reboot);
+    gameServerDll.text = getDefaultDllPath(InjectableDll.gameServer);
     unrealEngineConsoleDll.text = getDefaultDllPath(InjectableDll.console);
-    backendDll.text = getDefaultDllPath(InjectableDll.starfall);
+    backendDll.text = getDefaultDllPath(InjectableDll.auth);
   }
 
   void resetServer() {
@@ -74,16 +76,6 @@ class DllController extends GetxController {
   }
 
   Future<bool> updateGameServerDll({bool force = false, bool silent = false}) async {
-    if(_updater != null) {
-      return await _updater!;
-    }
-
-    final result = _updateGameServerDll(force, silent);
-    _updater = result;
-    return await result;
-  }
-
-  Future<bool> _updateGameServerDll(bool force, bool silent) async {
     try {
       if(customGameServer.value) {
         status.value = UpdateStatus.success;
@@ -148,15 +140,13 @@ class DllController extends GetxController {
           )
       );
       return false;
-    }finally {
-      _updater = null;
     }
   }
 
   (File, bool) getInjectableData(Version version, InjectableDll dll) {
     final defaultPath = canonicalize(getDefaultDllPath(dll));
     switch(dll){
-      case InjectableDll.reboot:
+      case InjectableDll.gameServer:
         if(customGameServer.value) {
           return (File(gameServerDll.text), true);
         }
@@ -165,25 +155,47 @@ class DllController extends GetxController {
       case InjectableDll.console:
         final ue4ConsoleFile = File(unrealEngineConsoleDll.text);
         return (ue4ConsoleFile, canonicalize(ue4ConsoleFile.path) != defaultPath);
-      case InjectableDll.starfall:
+      case InjectableDll.auth:
         final backendFile = File(backendDll.text);
         return (backendFile, canonicalize(backendFile.path) != defaultPath);
+      case InjectableDll.memoryLeak:
+        final memoryFile = File(memoryLeakDll.text);
+        return (memoryFile, canonicalize(memoryFile.path) != defaultPath);
     }
   }
 
-  String getDefaultDllPath(InjectableDll dll) => "${dllsDirectory.path}\\${dll.name}.dll";
+  TextEditingController getDllEditingController(InjectableDll dll) {
+    switch(dll) {
+      case InjectableDll.console:
+        return unrealEngineConsoleDll;
+      case InjectableDll.auth:
+        return backendDll;
+      case InjectableDll.gameServer:
+        return gameServerDll;
+      case InjectableDll.memoryLeak:
+        return memoryLeakDll;
+    }
+  }
 
-  Future<bool> downloadCriticalDllInteractive(String filePath, {bool silent = false, bool force = false}) async {
-    log("[DLL] Asking for $filePath(silent: $silent)");
-    final fileName = basename(filePath).toLowerCase();
-    log("[DLL] File name: $fileName");
+  String getDefaultDllPath(InjectableDll dll) {
+   switch(dll) {
+     case InjectableDll.console:
+       return "${dllsDirectory.path}\\console.dll";
+     case InjectableDll.auth:
+       return "${dllsDirectory.path}\\starfall.dll";
+     case InjectableDll.gameServer:
+       return "${dllsDirectory.path}\\reboot.dll";
+     case InjectableDll.memoryLeak:
+       return "${dllsDirectory.path}\\memory.dll";
+   }
+  }
+
+  Future<bool> download(InjectableDll dll, String filePath, {bool silent = false, bool force = false}) async {
+    log("[DLL] Asking for $dll at $filePath(silent: $silent, force: $force)");
     InfoBarEntry? entry;
     try {
-      if (fileName.contains("reboot")) {
-        log("[DLL] Downloading reboot.dll...");
-        return await updateGameServerDll(
-            silent: silent
-        );
+      if (dll == InjectableDll.gameServer) {
+        return await updateGameServerDll(silent: silent);
       }
 
       if(!force && File(filePath).existsSync()) {
@@ -199,7 +211,7 @@ class DllController extends GetxController {
             duration: null
         );
       }
-      await downloadCriticalDll(fileName, filePath);
+      await downloadDependency(dll, filePath);
       entry?.close();
       if(!silent) {
         entry = await showRebootInfoBar(
@@ -218,13 +230,13 @@ class DllController extends GetxController {
       error = error.toLowerCase();
       final completer = Completer();
       await showRebootInfoBar(
-          translations.downloadDllError(error.toString(), fileName),
+          translations.downloadDllError(error.toString(), dll.name),
           duration: infoBarLongDuration,
           severity: InfoBarSeverity.error,
           onDismissed: () => completer.complete(null),
           action: Button(
             onPressed: () async {
-              await downloadCriticalDllInteractive(filePath);
+              await download(dll, filePath, silent: silent, force: force);
               completer.complete(null);
             },
             child: Text(translations.downloadDllRetry),
@@ -232,6 +244,32 @@ class DllController extends GetxController {
       );
       await completer.future;
       return false;
+    }
+  }
+
+  void guardFiles() {
+    for(final injectable in InjectableDll.values) {
+      final controller = getDllEditingController(injectable);
+      final defaultPath = getDefaultDllPath(injectable);
+      if (path.equals(controller.text, defaultPath)) {
+        download(injectable, controller.text);
+      }
+      controller.addListener(() async {
+        try {
+          if (!path.equals(controller.text, defaultPath)) {
+            return;
+          }
+
+          final filePath = controller.text;
+          await for(final event in File(filePath).parent.watch(events: FileSystemEvent.delete | FileSystemEvent.move)) {
+            if (path.equals(event.path, filePath)) {
+              await download(injectable, filePath);
+            }
+          }
+        } catch(_) {
+          // Ignore
+        }
+      });
     }
   }
 }

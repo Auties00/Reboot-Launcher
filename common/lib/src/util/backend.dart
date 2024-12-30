@@ -61,7 +61,7 @@ Future<Uri?> pingBackend(String host, int port, [bool https=false]) async {
     await request.close().timeout(const Duration(seconds: 10));
     log("[BACKEND] Ping successful");
     return uri;
-  }catch(error){
+  }catch(error) {
     log("[BACKEND] Cannot ping backend: $error");
     return https || declaredScheme != null || isLocalHost(host) ? null : await pingBackend(host, port, true);
   }

@@ -3,16 +3,16 @@ import 'dart:collection';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
-import 'package:reboot_launcher/src/messenger/abstract/overlay.dart';
-import 'package:reboot_launcher/src/page/abstract/page.dart';
-import 'package:reboot_launcher/src/page/abstract/page_type.dart';
-import 'package:reboot_launcher/src/page/implementation/backend_page.dart';
-import 'package:reboot_launcher/src/page/implementation/browser_page.dart';
-import 'package:reboot_launcher/src/page/implementation/host_page.dart';
-import 'package:reboot_launcher/src/page/implementation/info_page.dart';
-import 'package:reboot_launcher/src/page/implementation/play_page.dart';
-import 'package:reboot_launcher/src/page/implementation/settings_page.dart';
-import 'package:reboot_launcher/src/widget/info_bar_area.dart';
+import 'package:reboot_launcher/src/messenger/overlay.dart';
+import 'package:reboot_launcher/src/page/page.dart';
+import 'package:reboot_launcher/src/page/page_type.dart';
+import 'package:reboot_launcher/src/widget/page/backend_page.dart';
+import 'package:reboot_launcher/src/widget/page/browser_page.dart';
+import 'package:reboot_launcher/src/widget/page/host_page.dart';
+import 'package:reboot_launcher/src/widget/page/info_page.dart';
+import 'package:reboot_launcher/src/widget/page/play_page.dart';
+import 'package:reboot_launcher/src/widget/page/settings_page.dart';
+import 'package:reboot_launcher/src/widget/window/info_bar_area.dart';
 
 final StreamController<void> pagesController = StreamController.broadcast();
 bool hitBack = false;

@@ -1,11 +1,15 @@
 name: reboot_launcher
 description: Graphical User Interface for Project Reboot
-version: "10.0.4"
+version: "10.0.5"
 
 publish_to: 'none'
 
 environment:
-  sdk: ">=3.0.0 <=4.0.0"
+  # 3.19.0 is the last version that supports Windows 7/8/8.1 officially
+  # I have no clue who is still using Windows 7, but some users requested support, so might as well add it
+  # Repository Issue: https://github.com/Auties00/Reboot-Launcher/issues/58
+  # Flutter issue: https://github.com/flutter/flutter/issues/140830#issuecomment-1936397549
+  sdk: ">=3.0.0 <=3.19.0"
 
 dependencies:
   # The flutter SDK
@@ -18,8 +22,7 @@ dependencies:
 
   # Windows UI 3
   fluent_ui: ^4.9.1
-  flutter_acrylic:
-    path: ./dependencies/flutter_acrylic
+  flutter_acrylic: ^1.1.4
   fluentui_system_icons: ^1.1.258
   system_theme: ^3.1.1
   skeletons:

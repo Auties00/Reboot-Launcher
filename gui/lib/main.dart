@@ -15,8 +15,8 @@ import 'package:reboot_launcher/src/controller/dll_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/controller/settings_controller.dart';
-import 'package:reboot_launcher/src/messenger/implementation/error.dart';
-import 'package:reboot_launcher/src/page/implementation/home_page.dart';
+import 'package:reboot_launcher/src/widget/message/error.dart';
+import 'package:reboot_launcher/src/widget/page/home_page.dart';
 import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/url_protocol.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -82,9 +82,7 @@ Future<void> _startApp() async {
     errors.add(uncaughtError);
   } finally{
     log("[APP] Started applications with errors: $errors");
-    runApp(RebootApplication(
-      errors: errors,
-    ));
+    runApp(RebootApplication(errors: errors));
   }
 }
 
@@ -176,7 +174,7 @@ Future<void> _initWindow() async {
     if(isWin11) {
       await Window.setEffect(
           effect: WindowEffect.acrylic,
-          color: Colors.transparent,
+          color: Colors.green,
           dark: isDarkMode
       );
     }
@@ -232,7 +230,6 @@ Future<List<Object>> _initStorage() async {
     errors.add(error);
   }
 
-
   return errors;
 }
 
@@ -254,7 +251,11 @@ class _RebootApplicationState extends State<RebootApplication> {
   }
 
   void _handleErrors(List<Object?> errors) {
-    errors.where((element) => element != null).forEach((element) => onError(element!, null, false));
+    for(final error in errors) {
+      if(error != null) {
+        onError(error, null, false);
+      }
+    }
   }
 
   @override

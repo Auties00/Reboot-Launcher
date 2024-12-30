@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:reboot_common/common.dart';
 
-bool _watcher = false;
 final File rebootBeforeS20DllFile = File("${dllsDirectory.path}\\reboot.dll");
 final File rebootAboveS20DllFile = File("${dllsDirectory.path}\\rebootS20.dll");
 const String kRebootBelowS20DownloadUrl =
@@ -20,7 +19,22 @@ Future<bool> hasRebootDllUpdate(int? lastUpdateMs, {int hours = 24, bool force =
     return force || !exists || (hours > 0 && lastUpdate != null && now.difference(lastUpdate).inHours > hours);
 }
 
-Future<void> downloadCriticalDll(String name, String outputPath) async {
+Future<void> downloadDependency(InjectableDll dll, String outputPath) async {
+    String? name;
+    switch(dll) {
+      case InjectableDll.console:
+        name = "console.dll";
+      case InjectableDll.auth:
+          name = "starfall.dll";
+      case InjectableDll.memoryLeak:
+        name = "memory.dll";
+        case InjectableDll.gameServer:
+         name = null;
+    }
+    if(name == null) {
+        return;
+    }
+
     final response = await http.get(Uri.parse("https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/$name"));
     if(response.statusCode != 200) {
         throw Exception("Cannot download $name: status code ${response.statusCode}");
@@ -56,17 +70,4 @@ Future<DateTime?> _getLastUpdate(int? lastUpdateMs) async {
   return lastUpdateMs != null
       ? DateTime.fromMillisecondsSinceEpoch(lastUpdateMs)
       : null;
-}
-
-Stream<String> watchDlls() async* {
-    if(_watcher) {
-        return;
-    }
-
-    _watcher = true;
-    await for(final event in dllsDirectory.watch(events: FileSystemEvent.delete | FileSystemEvent.move)) {
-        if (event.path.endsWith(".dll")) {
-            yield event.path;
-        }
-    }
 }
