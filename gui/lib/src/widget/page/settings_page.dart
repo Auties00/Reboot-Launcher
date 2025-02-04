@@ -184,10 +184,10 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
       return createFileSetting(
           title: translations.settingsOldServerFileName,
           description: translations.settingsServerFileDescription,
-          controller: _dllController.gameServerDll,
+          controller: _dllController.customGameServerDll,
           onReset: () {
             final path = _dllController.getDefaultDllPath(InjectableDll.gameServer);
-            _dllController.gameServerDll.text = path;
+            _dllController.customGameServerDll.text = path;
             _dllController.download(InjectableDll.gameServer, path);
           }
       );

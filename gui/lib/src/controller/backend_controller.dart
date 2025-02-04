@@ -357,7 +357,6 @@ class BackendController extends GetxController {
             severity: InfoBarSeverity.success
         );
       case ServerResultType.startError:
-        print(event.stackTrace);
         return _showRebootInfoBar(
             type.value == ServerType.local ? translations.localServerError(event.error ?? translations.unknownError) : translations.startServerError(event.error ?? translations.unknownError),
             severity: InfoBarSeverity.error,

@@ -35,18 +35,12 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
   final Rxn<double> _progress = Rxn();
   final RxInt _speed = RxInt(0);
 
-  late Future<List<FortniteBuild>> _fetchFuture;
-
   SendPort? _downloadPort;
   Object? _error;
   StackTrace? _stackTrace;
 
   @override
   void initState() {
-    _fetchFuture = compute(fetchBuilds, null).then((value) {
-      _updateFormDefaults();
-      return value;
-    });
     super.initState();
   }
 
@@ -60,6 +54,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
   void _cancelDownload() {
     _downloadPort?.send(kStopBuildDownloadSignal);
     WindowsTaskbar.setProgressMode(TaskbarProgressMode.noProgress);
+    stopDownloadServer();
   }
 
   @override
@@ -68,28 +63,10 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
       child: Obx(() {
         switch(_status.value){
           case _DownloadStatus.form:
-            return FutureBuilder(
-                future: _fetchFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) => _onDownloadError(snapshot.error, snapshot.stackTrace));
-                  }
-
-                  final data = snapshot.data;
-                  if (data == null) {
-                    return ProgressDialog(
-                        text: translations.fetchingBuilds,
-                        showButton: widget.closable,
-                        onStop: () => Navigator.of(context).pop()
-                    );
-                  }
-
-                  return Obx(() => FormDialog(
-                      content: _buildFormBody(data),
-                      buttons: _formButtons
-                  ));
-                }
-            );
+            return Obx(() => FormDialog(
+                content: _buildFormBody(downloadableBuilds),
+                buttons: _formButtons
+            ));
           case _DownloadStatus.downloading:
           case _DownloadStatus.extracting:
             return GenericDialog(
@@ -256,7 +233,7 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
                 style: FluentTheme.maybeOf(context)?.typography.body,
               ),
 
-              if(timeLeft != null)
+              if(timeLeft != null && timeLeft != -1)
                 Text(
                   translations.timeLeft(timeLeft),
                   style: FluentTheme.maybeOf(context)?.typography.body,
@@ -450,7 +427,6 @@ class _AddVersionDialogState extends State<AddVersionDialog> {
         return;
       }
 
-      print("${bestDisk.path}\\FortniteBuilds\\${build.version}");
       final pathText = "${bestDisk.path}FortniteBuilds\\${build.version}";
       _pathController.text = pathText;
       _pathController.selection = TextSelection.collapsed(offset: pathText.length);

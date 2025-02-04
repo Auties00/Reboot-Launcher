@@ -16,8 +16,7 @@ class DllController extends GetxController {
   static const String storageName = "v2_dll_storage";
 
   late final GetStorage? _storage;
-  late final String originalDll;
-  late final TextEditingController gameServerDll;
+  late final TextEditingController customGameServerDll;
   late final TextEditingController unrealEngineConsoleDll;
   late final TextEditingController backendDll;
   late final TextEditingController memoryLeakDll;
@@ -32,7 +31,7 @@ class DllController extends GetxController {
 
   DllController() {
     _storage = appWithNoStorage ? null : GetStorage(storageName);
-    gameServerDll = _createController("game_server", InjectableDll.gameServer);
+    customGameServerDll = _createController("game_server", InjectableDll.gameServer);
     unrealEngineConsoleDll = _createController("unreal_engine_console", InjectableDll.console);
     backendDll = _createController("backend", InjectableDll.auth);
     memoryLeakDll = _createController("memory_leak", InjectableDll.memoryLeak);
@@ -59,7 +58,7 @@ class DllController extends GetxController {
   }
 
   void resetGame() {
-    gameServerDll.text = getDefaultDllPath(InjectableDll.gameServer);
+    customGameServerDll.text = getDefaultDllPath(InjectableDll.gameServer);
     unrealEngineConsoleDll.text = getDefaultDllPath(InjectableDll.console);
     backendDll.text = getDefaultDllPath(InjectableDll.auth);
   }
@@ -148,7 +147,7 @@ class DllController extends GetxController {
     switch(dll){
       case InjectableDll.gameServer:
         if(customGameServer.value) {
-          return (File(gameServerDll.text), true);
+          return (File(customGameServerDll.text), true);
         }
 
         return (version.major >= 20 ? rebootAboveS20DllFile : rebootBeforeS20DllFile, false);
@@ -171,7 +170,7 @@ class DllController extends GetxController {
       case InjectableDll.auth:
         return backendDll;
       case InjectableDll.gameServer:
-        return gameServerDll;
+        return customGameServerDll;
       case InjectableDll.memoryLeak:
         return memoryLeakDll;
     }
@@ -182,7 +181,7 @@ class DllController extends GetxController {
      case InjectableDll.console:
        return "${dllsDirectory.path}\\console.dll";
      case InjectableDll.auth:
-       return "${dllsDirectory.path}\\starfall.dll";
+       return "${dllsDirectory.path}\\cobalt.dll";
      case InjectableDll.gameServer:
        return "${dllsDirectory.path}\\reboot.dll";
      case InjectableDll.memoryLeak:

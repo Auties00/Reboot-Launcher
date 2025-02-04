@@ -25,7 +25,7 @@ Future<void> downloadDependency(InjectableDll dll, String outputPath) async {
       case InjectableDll.console:
         name = "console.dll";
       case InjectableDll.auth:
-          name = "starfall.dll";
+          name = "cobalt.dll";
       case InjectableDll.memoryLeak:
         name = "memory.dll";
         case InjectableDll.gameServer:

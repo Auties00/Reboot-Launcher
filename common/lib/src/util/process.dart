@@ -264,17 +264,13 @@ void handleGameOutput({
   }else if(line.contains(kGameFinishedLine) && host) {
     log("[FORTNITE_OUTPUT_HANDLER] Detected match end: $line");
     onMatchEnd();
-  }else if(line.contains(kDisplayInitializedLine) && host) {
+  }else if(line.contains(kDisplayLine) && line.contains(kDisplayInitializedLine) && host) {
     log("[FORTNITE_OUTPUT_HANDLER] Detected display attach: $line");
     onDisplayAttached();
   }
 }
 
 String _parseUsername(String username, bool host) {
-  if(host) {
-    return "Player${Random().nextInt(1000)}";
-  }
-
   if (username.isEmpty) {
     return kDefaultPlayerName;
   }

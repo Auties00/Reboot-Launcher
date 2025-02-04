@@ -250,7 +250,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     log("[${host ? 'HOST' : 'GAME'}] Generating instance args...");
     final gameArgs = createRebootArgs(
         host ? _hostingController.accountUsername.text : _gameController.username.text,
-        host ? _hostingController.accountPassword.text :_gameController.password.text,
+        host ? _hostingController.accountPassword.text : _gameController.password.text,
         host,
         hostType,
         false,
@@ -495,6 +495,7 @@ class _LaunchButtonState extends State<LaunchButton> {
           const Duration(days: 1)
       );
       this._pingOperation = pingOperation;
+      _gameServerInfoBar?.close();
       _gameServerInfoBar = showRebootInfoBar(
           translations.checkGameServerFixMessage(gameServerPort),
           action: Button(
@@ -508,8 +509,9 @@ class _LaunchButtonState extends State<LaunchButton> {
       final result = await pingOperation.future;
       _gameServerInfoBar?.close();
       return result;
-    }finally {
+    }catch(_) {
       _gameServerInfoBar?.close();
+      return false;
     }
   }
 

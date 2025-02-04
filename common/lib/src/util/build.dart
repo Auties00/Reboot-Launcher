@@ -13,37 +13,99 @@ import 'package:http/http.dart' as http;
 
 const String kStopBuildDownloadSignal = "kill";
 
-final Uri _archiveSourceUrl = Uri.parse("https://builds.rebootfn.org/versions.json");
 final int _ariaPort = 6800;
 final Uri _ariaEndpoint = Uri.parse('http://localhost:$_ariaPort/jsonrpc');
 final Duration _ariaMaxSpawnTime = const Duration(seconds: 10);
 final String _ariaSecret = "RebootLauncher";
 final RegExp _rarProgressRegex = RegExp("^((100)|(\\d{1,2}(.\\d*)?))%\$");
+final List<FortniteBuild> downloadableBuilds = [
+  FortniteBuild(version: Version.parse("1.7.2"), link: "https://public.simplyblk.xyz/1.7.2.zip", available: true),
+  FortniteBuild(version: Version.parse("1.8"), link: "https://public.simplyblk.xyz/1.8.rar", available: true),
+  FortniteBuild(version: Version.parse("1.8.1"), link: "https://public.simplyblk.xyz/1.8.1.rar", available: true),
+  FortniteBuild(version: Version.parse("1.8.2"), link: "https://public.simplyblk.xyz/1.8.2.rar", available: true),
+  FortniteBuild(version: Version.parse("1.9"), link: "https://public.simplyblk.xyz/1.9.rar", available: true),
+  FortniteBuild(version: Version.parse("1.9.1"), link: "https://public.simplyblk.xyz/1.9.1.rar", available: true),
+  FortniteBuild(version: Version.parse("1.10"), link: "https://public.simplyblk.xyz/1.10.rar", available: true),
+  FortniteBuild(version: Version.parse("1.11"), link: "https://public.simplyblk.xyz/1.11.zip", available: true),
+  FortniteBuild(version: Version.parse("2.1.0"), link: "https://public.simplyblk.xyz/2.1.0.zip", available: true),
+  FortniteBuild(version: Version.parse("2.2.0"), link: "https://public.simplyblk.xyz/2.2.0.rar", available: true),
+  FortniteBuild(version: Version.parse("2.3"), link: "https://public.simplyblk.xyz/2.3.rar", available: true),
+  FortniteBuild(version: Version.parse("2.4.0"), link: "https://public.simplyblk.xyz/2.4.0.zip", available: true),
+  FortniteBuild(version: Version.parse("2.4.2"), link: "https://public.simplyblk.xyz/2.4.2.zip", available: true),
+  FortniteBuild(version: Version.parse("2.5.0"), link: "https://public.simplyblk.xyz/2.5.0.rar", available: true),
+  FortniteBuild(version: Version.parse("3.0"), link: "https://public.simplyblk.xyz/3.0.zip", available: true),
+  FortniteBuild(version: Version.parse("3.1"), link: "https://public.simplyblk.xyz/3.1.rar", available: true),
+  FortniteBuild(version: Version.parse("3.1.1"), link: "https://public.simplyblk.xyz/3.1.1.zip", available: true),
+  FortniteBuild(version: Version.parse("3.2"), link: "https://public.simplyblk.xyz/3.2.zip", available: true),
+  FortniteBuild(version: Version.parse("3.3"), link: "https://public.simplyblk.xyz/3.3.rar", available: true),
+  FortniteBuild(version: Version.parse("3.5"), link: "https://public.simplyblk.xyz/3.5.rar", available: true),
+  FortniteBuild(version: Version.parse("3.6"), link: "https://public.simplyblk.xyz/3.6.zip", available: true),
+  FortniteBuild(version: Version.parse("4.0"), link: "https://public.simplyblk.xyz/4.0.zip", available: true),
+  FortniteBuild(version: Version.parse("4.1"), link: "https://public.simplyblk.xyz/4.1.zip", available: true),
+  FortniteBuild(version: Version.parse("4.2"), link: "https://public.simplyblk.xyz/4.2.zip", available: true),
+  FortniteBuild(version: Version.parse("4.4"), link: "https://public.simplyblk.xyz/4.4.rar", available: true),
+  FortniteBuild(version: Version.parse("4.5"), link: "https://public.simplyblk.xyz/4.5.rar", available: true),
+  FortniteBuild(version: Version.parse("5.00"), link: "https://public.simplyblk.xyz/5.00.rar", available: true),
+  FortniteBuild(version: Version.parse("5.0.1"), link: "https://public.simplyblk.xyz/5.0.1.rar", available: true),
+  FortniteBuild(version: Version.parse("5.10"), link: "https://public.simplyblk.xyz/5.10.rar", available: true),
+  FortniteBuild(version: Version.parse("5.21"), link: "https://public.simplyblk.xyz/5.21.rar", available: true),
+  FortniteBuild(version: Version.parse("5.30"), link: "https://public.simplyblk.xyz/5.30.rar", available: true),
+  FortniteBuild(version: Version.parse("5.40"), link: "https://public.simplyblk.xyz/5.40.rar", available: true),
+  FortniteBuild(version: Version.parse("6.00"), link: "https://public.simplyblk.xyz/6.00.rar", available: true),
+  FortniteBuild(version: Version.parse("6.01"), link: "https://public.simplyblk.xyz/6.01.rar", available: true),
+  FortniteBuild(version: Version.parse("6.1.1"), link: "https://public.simplyblk.xyz/6.1.1.rar", available: true),
+  FortniteBuild(version: Version.parse("6.02"), link: "https://public.simplyblk.xyz/6.02.rar", available: true),
+  FortniteBuild(version: Version.parse("6.2.1"), link: "https://public.simplyblk.xyz/6.2.1.rar", available: true),
+  FortniteBuild(version: Version.parse("6.10"), link: "https://public.simplyblk.xyz/6.10.rar", available: true),
+  FortniteBuild(version: Version.parse("6.10.1"), link: "https://public.simplyblk.xyz/6.10.1.rar", available: true),
+  FortniteBuild(version: Version.parse("6.10.2"), link: "https://public.simplyblk.xyz/6.10.2.rar", available: true),
+  FortniteBuild(version: Version.parse("6.21"), link: "https://public.simplyblk.xyz/6.21.rar", available: true),
+  FortniteBuild(version: Version.parse("6.22"), link: "https://public.simplyblk.xyz/6.22.rar", available: true),
+  FortniteBuild(version: Version.parse("6.30"), link: "https://public.simplyblk.xyz/6.30.rar", available: true),
+  FortniteBuild(version: Version.parse("6.31"), link: "https://public.simplyblk.xyz/6.31.rar", available: true),
+  FortniteBuild(version: Version.parse("7.00"), link: "https://public.simplyblk.xyz/7.00.rar", available: true),
+  FortniteBuild(version: Version.parse("7.10"), link: "https://public.simplyblk.xyz/7.10.rar", available: true),
+  FortniteBuild(version: Version.parse("7.20"), link: "https://public.simplyblk.xyz/7.20.rar", available: true),
+  FortniteBuild(version: Version.parse("7.30"), link: "https://public.simplyblk.xyz/7.30.zip", available: true),
+  FortniteBuild(version: Version.parse("7.40"), link: "https://public.simplyblk.xyz/7.40.rar", available: true),
+  FortniteBuild(version: Version.parse("8.00"), link: "https://public.simplyblk.xyz/8.00.zip", available: true),
+  FortniteBuild(version: Version.parse("8.20"), link: "https://public.simplyblk.xyz/8.20.rar", available: true),
+  FortniteBuild(version: Version.parse("8.30"), link: "https://public.simplyblk.xyz/8.30.rar", available: true),
+  FortniteBuild(version: Version.parse("8.40"), link: "https://public.simplyblk.xyz/8.40.zip", available: true),
+  FortniteBuild(version: Version.parse("8.50"), link: "https://public.simplyblk.xyz/8.50.zip", available: true),
+  FortniteBuild(version: Version.parse("8.51"), link: "https://public.simplyblk.xyz/8.51.rar", available: true),
+  FortniteBuild(version: Version.parse("9.00"), link: "https://public.simplyblk.xyz/9.00.zip", available: true),
+  FortniteBuild(version: Version.parse("9.01"), link: "https://public.simplyblk.xyz/9.01.zip", available: true),
+  FortniteBuild(version: Version.parse("9.10"), link: "https://public.simplyblk.xyz/9.10.rar", available: true),
+  FortniteBuild(version: Version.parse("9.21"), link: "https://public.simplyblk.xyz/9.21.zip", available: true),
+  FortniteBuild(version: Version.parse("9.30"), link: "https://public.simplyblk.xyz/9.30.zip", available: true),
+  FortniteBuild(version: Version.parse("9.40"), link: "https://public.simplyblk.xyz/9.40.zip", available: true),
+  FortniteBuild(version: Version.parse("9.41"), link: "https://public.simplyblk.xyz/9.41.rar", available: true),
+  FortniteBuild(version: Version.parse("10.00"), link: "https://public.simplyblk.xyz/10.00.zip", available: true),
+  FortniteBuild(version: Version.parse("10.10"), link: "https://public.simplyblk.xyz/10.10.zip", available: true),
+  FortniteBuild(version: Version.parse("10.20"), link: "https://public.simplyblk.xyz/10.20.zip", available: true),
+  FortniteBuild(version: Version.parse("10.31"), link: "https://public.simplyblk.xyz/10.31.zip", available: true),
+  FortniteBuild(version: Version.parse("10.40"), link: "https://public.simplyblk.xyz/10.40.rar", available: true),
+  FortniteBuild(version: Version.parse("11.00"), link: "https://public.simplyblk.xyz/11.00.zip", available: true),
+  FortniteBuild(version: Version.parse("11.31"), link: "https://public.simplyblk.xyz/11.31.rar", available: true),
+  FortniteBuild(version: Version.parse("12.00"), link: "https://public.simplyblk.xyz/12.00.rar", available: true),
+  FortniteBuild(version: Version.parse("12.21"), link: "https://public.simplyblk.xyz/12.21.zip", available: true),
+  FortniteBuild(version: Version.parse("12.50"), link: "https://public.simplyblk.xyz/12.50.zip", available: true),
+  FortniteBuild(version: Version.parse("12.61"), link: "https://public.simplyblk.xyz/12.61.zip", available: true),
+  FortniteBuild(version: Version.parse("13.00"), link: "https://public.simplyblk.xyz/13.00.rar", available: true),
+  FortniteBuild(version: Version.parse("13.40"), link: "https://public.simplyblk.xyz/13.40.zip", available: true),
+  FortniteBuild(version: Version.parse("14.00"), link: "https://public.simplyblk.xyz/14.00.rar", available: true),
+  FortniteBuild(version: Version.parse("14.40"), link: "https://public.simplyblk.xyz/14.40.rar", available: true),
+  FortniteBuild(version: Version.parse("14.60"), link: "https://public.simplyblk.xyz/14.60.rar", available: true),
+  FortniteBuild(version: Version.parse("15.30"), link: "https://public.simplyblk.xyz/15.30.rar", available: true),
+  FortniteBuild(version: Version.parse("16.40"), link: "https://public.simplyblk.xyz/16.40.rar", available: true),
+  FortniteBuild(version: Version.parse("17.30"), link: "https://public.simplyblk.xyz/17.30.zip", available: true),
+  FortniteBuild(version: Version.parse("17.50"), link: "https://public.simplyblk.xyz/17.50.zip", available: true),
+  FortniteBuild(version: Version.parse("18.40"), link: "https://public.simplyblk.xyz/18.40.zip", available: true),
+  FortniteBuild(version: Version.parse("19.10"), link: "https://public.simplyblk.xyz/19.10.rar", available: true),
+  FortniteBuild(version: Version.parse("20.40"), link: "https://public.simplyblk.xyz/20.40.zip", available: true),
+];
 
-Future<List<FortniteBuild>> fetchBuilds(ignored) async {
-  final response = await http.get(_archiveSourceUrl);
-  if (response.statusCode != 200) {
-    return [];
-  }
-
-  return jsonDecode(response.body)
-      .map((entry) {
-        try {
-          final fileUrl = entry as String;
-          final fileName = Uri.parse(fileUrl).pathSegments.last;
-          final fileNameWithoutExtension = path.basenameWithoutExtension(fileName);
-          return FortniteBuild(
-              version: Version.parse(fileNameWithoutExtension),
-              link: entry,
-              available: true
-          );
-        }catch(_) {
-          return null;
-        }
-      })
-      .whereType<FortniteBuild>()
-      .toList();
-}
 
 Future<void> downloadArchiveBuild(FortniteBuildDownloadOptions options) async {
   final fileName = options.build.link.substring(options.build.link.lastIndexOf("/") + 1);
@@ -150,7 +212,8 @@ Future<void> _startAriaServer() async {
         "--rpc-allow-origin-all",
         "--rpc-secret=$_ariaSecret",
         "--rpc-listen-port=$_ariaPort",
-        "--file-allocation=none"
+        "--file-allocation=none",
+        "--check-certificate=false"
       ],
       window: false
   );
