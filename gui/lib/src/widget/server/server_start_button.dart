@@ -45,7 +45,7 @@ class _ServerButtonState extends State<ServerButton> {
                     builder: (context, snapshot) => Obx(() => Text(_buttonText))
                 ),
               ),
-              onPressed: () => _controller.toggleInteractive()
+              onPressed: () => _controller.toggle()
           )
       )
   );

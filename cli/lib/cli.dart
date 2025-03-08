@@ -1,87 +1,89 @@
-import 'dart:io';
+import 'dart:collection';
 
-import 'package:args/args.dart';
-import 'package:reboot_cli/src/game.dart';
-import 'package:reboot_cli/src/reboot.dart';
-import 'package:reboot_cli/src/server.dart';
-import 'package:reboot_common/common.dart';
+class Parser {
+  final List<Command> commands;
 
-late String? username;
-late bool host;
-late bool verbose;
-late String dll;
-late FortniteVersion version;
-late bool autoRestart;
+  Parser({required this.commands});
 
-void main(List<String> args) async {
-  stdout.writeln("Reboot Launcher");
-  stdout.writeln("Wrote by Auties00");
-  stdout.writeln("Version 1.0");
-
-  kill();
-
-  var parser = ArgParser()
-    ..addOption("path", mandatory: true)
-    ..addOption("username")
-    ..addOption("server-type", allowed: ServerType.values.map((entry) => entry.name), defaultsTo: ServerType.embedded.name)
-    ..addOption("server-host")
-    ..addOption("server-port")
-    ..addOption("matchmaking-address")
-    ..addOption("dll", defaultsTo: rebootDllFile.path)
-    ..addFlag("update", defaultsTo: true, negatable: true)
-    ..addFlag("log", defaultsTo: false)
-    ..addFlag("host", defaultsTo: false)
-    ..addFlag("auto-restart", defaultsTo: false, negatable: true);
-  var result = parser.parse(args);
-
-  dll = result["dll"];
-  host = result["host"];
-  username = result["username"] ?? kDefaultPlayerName;
-  verbose = result["log"];
-  version = FortniteVersion(name: "Dummy", location: Directory(result["path"]));
-
-  await downloadRequiredDLLs();
-  if(result["update"]) {
-    stdout.writeln("Updating reboot dll...");
-    try {
-      await downloadRebootDll(kRebootDownloadUrl);
-    }catch(error){
-      stderr.writeln("Cannot update reboot dll: $error");
+  CommandCall? parse(List<String> args) {
+    var position = 0;
+    var allowedCommands = _toMap(commands);
+    var allowedParameters = <String>{};
+    Command? command;
+    CommandCall? head;
+    CommandCall? tail;
+    String? parameterName;
+    while(position < args.length) {
+      final current = args[position].toLowerCase();
+      if(parameterName != null) {
+        tail?.parameters[parameterName] = current;
+        parameterName = null;
+      }else if(allowedParameters.contains(current.toLowerCase())) {
+        parameterName = current.substring(2);
+        if(args.elementAtOrNull(position + 1) == '"') {
+          position++;
+        }
+      }else {
+        final newCommand = allowedCommands[current];
+        if(newCommand != null) {
+          final newCall = CommandCall(name: newCommand.name);
+          if(head == null) {
+            head = newCall;
+            tail = newCall;
+          }
+          if(tail != null) {
+            tail.subCall = newCall;
+          }
+          tail = newCall;
+          command = newCommand;
+          allowedCommands = _toMap(newCommand.subCommands);
+          allowedParameters = _toParameters(command);
+        }
+      }
+      position++;
     }
+    return head;
   }
 
-  stdout.writeln("Launching game...");
-  var executable = version.shippingExecutable;
-  if(executable == null){
-    throw Exception("Missing game executable at: ${version.location.path}");
-  }
+  Set<String> _toParameters(Command? parent) => parent?.parameters
+      .map((e) => '--${e.toLowerCase()}')
+      .toSet() ?? {};
 
-  final serverHost = result["server-host"]?.trim();
-  if(serverHost?.isEmpty == true){
-    throw Exception("Missing host name");
-  }
-
-  final serverPort = result["server-port"]?.trim();
-  if(serverPort?.isEmpty == true){
-    throw Exception("Missing port");
-  }
-
-  final serverPortNumber = serverPort == null ? null : int.tryParse(serverPort);
-  if(serverPort != null && serverPortNumber == null){
-    throw Exception("Invalid port, use only numbers");
-  }
-
-  var started = await startServerCli(
-      serverHost,
-      serverPortNumber,
-      ServerType.values.firstWhere((element) => element.name == result["server-type"])
+  Map<String, Command> _toMap(List<Command> children) => Map.fromIterable(
+      children,
+      key: (command) => command.name.toLowerCase(),
+      value: (command) => command
   );
-  if(!started){
-    stderr.writeln("Cannot start server!");
-    return;
-  }
+}
 
-  writeMatchmakingIp(result["matchmaking-address"]);
-  autoRestart = result["auto-restart"];
-  await startGame();
+class Command {
+  final String name;
+  final List<String> parameters;
+  final List<Command> subCommands;
+
+  const Command({required this.name, required this.parameters, required this.subCommands});
+
+  @override
+  String toString() => 'Command{name: $name, parameters: $parameters, subCommands: $subCommands}';
+}
+
+class Parameter {
+  final String name;
+  final bool Function(String) validator;
+
+  const Parameter({required this.name, required this.validator});
+
+  @override
+  String toString() => 'Parameter{name: $name, validator: $validator}';
+}
+
+class CommandCall {
+  final String name;
+  final Map<String, String> parameters;
+  CommandCall? subCall;
+
+  CommandCall({required this.name}) : parameters = {};
+
+  @override
+  String toString() => 'CommandCall{name: $name, parameters: $parameters, subCall: $subCall}';
 }

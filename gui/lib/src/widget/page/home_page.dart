@@ -75,6 +75,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
 
       lastPage = index;
       _pageController.jumpToPage(index);
+      pagesController.add(null);
     });
   }
 
@@ -152,7 +153,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
 
     try {
       if(_backendController.started.value) {
-        await _backendController.toggleInteractive();
+        await _backendController.toggle();
       }
     }catch(error) {
       log("[BACKEND] Cannot stop backend on exit: $error");
@@ -523,36 +524,6 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
       ),
     );
   }
-
-  Widget get _backButton => StreamBuilder(
-      stream: pagesController.stream,
-      builder: (context, _) => Button(
-        style: ButtonStyle(
-            padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
-              vertical: 12.0,
-              horizontal: 16.0
-            )),
-            backgroundColor: WidgetStateProperty.all(Colors.transparent),
-            shape: WidgetStateProperty.all(Border())
-        ),
-        onPressed: appStack.isEmpty && !inDialog ? null : () {
-          if(inDialog) {
-            Navigator.of(appNavigatorKey.currentContext!).pop();
-          }else {
-            final lastPage = appStack.removeLast();
-            pageStack.remove(lastPage);
-            if (lastPage is int) {
-              hitBack = true;
-              pageIndex.value = lastPage;
-            } else {
-              Navigator.of(pageKey.currentContext!).pop();
-            }
-          }
-          pagesController.add(null);
-        },
-        child: const Icon(FluentIcons.back, size: 12.0),
-      )
-  );
 
   Widget get _autoSuggestBox => Padding(
       padding: const EdgeInsets.symmetric(

@@ -1,17 +1,18 @@
 name: reboot_cli
 description: Command Line Interface for Project Reboot
-version: "1.0.0"
+version: "10.0.7"
 
 publish_to: 'none'
 
 environment:
-  sdk: ">=2.19.0 <=3.3.4"
+  sdk: ">=2.19.0 <=3.5.3"
 
 dependencies:
   reboot_common:
     path: ./../common
-  args: ^2.3.1
-  process_run: ^0.13.1
+  tint: ^2.0.1
+  interact: ^2.2.0
+  args: ^2.6.0
 
 dependency_overrides:
   xml: ^6.3.0

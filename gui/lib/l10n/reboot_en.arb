@@ -128,7 +128,7 @@
   "importVersionDescription": "Import a new version of Fortnite into the launcher",
   "addLocalBuildName": "Add a version from this PC's local storage",
   "addLocalBuildDescription": "Versions coming from your local disk are not guaranteed to work",
-  "addVersion": "Add version",
+  "addVersion": "New version",
   "downloadBuildName": "Download any version from the cloud",
   "downloadBuildDescription": "Download any Fortnite build easily from the cloud",
   "downloadBuildContent": "Download build",

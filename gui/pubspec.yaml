@@ -1,6 +1,6 @@
 name: reboot_launcher
 description: Graphical User Interface for Project Reboot
-version: "10.0.6"
+version: "10.0.7"
 
 publish_to: 'none'
 
@@ -43,6 +43,7 @@ dependencies:
   # Async helpers
   async: ^2.11.0
   sync: ^0.3.0
+  synchronized: ^3.3.0+3
 
   # State management
   get: ^4.6.6

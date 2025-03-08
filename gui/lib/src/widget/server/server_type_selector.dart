@@ -32,18 +32,16 @@ class _ServerTypeSelectorState extends State<ServerTypeSelector> {
     ));
   }
 
-  MenuFlyoutItem _createItem(ServerType type) {
-    return MenuFlyoutItem(
-        text: Text(type.label),
-        onPressed: () async {
-          _controller.stop();
-          _controller.type.value = type;
-        }
-    );
-  }
+  MenuFlyoutItem _createItem(ServerType type) => MenuFlyoutItem(
+      text: Text(type.label),
+      onPressed: () async {
+        await _controller.stop(interactive: false);
+        _controller.type.value = type;
+      }
+  );
 }
 
-extension ServerTypeExtension on ServerType {
+extension _ServerTypeExtension on ServerType {
   String get label {
     return this == ServerType.embedded ? translations.embedded
         : this == ServerType.remote ? translations.remote

@@ -35,10 +35,8 @@ class BackendController extends GetxController {
   late final RxBool started;
   late final RxBool detached;
   late final List<InfoBarEntry> _infoBars;
-  StreamSubscription? worker;
-  int? embeddedProcessPid;
-  HttpServer? localServer;
-  HttpServer? remoteServer;
+  StreamSubscription? _worker;
+  ServerImplementation? _implementation;
 
   BackendController() {
     _storage = appWithNoStorage ? null : GetStorage(storageName);
@@ -48,11 +46,6 @@ class BackendController extends GetxController {
       host.text = _readHost();
       port.text = _readPort();
       _storage?.write("type", value.index);
-      if (!started.value) {
-        return;
-      }
-
-      stop();
     });
     host = TextEditingController(text: _readHost());
     host.addListener(() =>
@@ -148,18 +141,27 @@ class BackendController extends GetxController {
     detached.value = false;
   }
 
-  Future<bool> toggleInteractive() async {
+  Future<bool> toggle() {
+    if(started.value) {
+      return stop(interactive: true);
+    }else {
+      return start(interactive: true);
+    }
+  }
+
+  Future<bool> start({required bool interactive}) async {
+    if(started.value) {
+      return true;
+    }
+
     _cancel();
-    final stream = started.value ? stop() : start(
-        onExit: () {
-          _cancel();
-          _showRebootInfoBar(
-              translations.backendProcessError,
-              severity: InfoBarSeverity.error
-          );
-        },
+    final stream = startBackend(
+        type: type.value,
+        host: host.text,
+        port: port.text,
+        detached: detached.value,
         onError: (errorMessage) {
-          _cancel();
+          stop(interactive: false);
           _showRebootInfoBar(
               translations.backendErrorMessage,
               severity: InfoBarSeverity.error,
@@ -173,265 +175,203 @@ class BackendController extends GetxController {
     );
     final completer = Completer<bool>();
     InfoBarEntry? entry;
-    worker = stream.listen((event) {
+    _worker = stream.listen((event) {
       entry?.close();
-      entry = _handeEvent(event);
+      entry = _handeEvent(event, interactive);
       if(event.type.isError) {
         completer.complete(false);
       }else if(event.type.isSuccess) {
         completer.complete(true);
       }
     });
-
     return await completer.future;
   }
 
-  Stream<ServerResult> start({required void Function() onExit, required void Function(String) onError}) async* {
-    try {
-      if(started.value) {
-        return;
-      }
-
-      final serverType = type.value;
-      final hostData = this.host.text.trim();
-      final portData = this.port.text.trim();
-      started.value = true;
-      if(serverType != ServerType.local || portData != kDefaultBackendPort.toString()) {
-        yield ServerResult(ServerResultType.starting);
-      }
-
-      if (hostData.isEmpty) {
-        yield ServerResult(ServerResultType.missingHostError);
-        started.value = false;
-        return;
-      }
-
-      if (portData.isEmpty) {
-        yield ServerResult(ServerResultType.missingPortError);
-        started.value = false;
-        return;
-      }
-
-      final portNumber = int.tryParse(portData);
-      if (portNumber == null) {
-        yield ServerResult(ServerResultType.illegalPortError);
-        started.value = false;
-        return;
-      }
-
-      if ((serverType != ServerType.local || portData != kDefaultBackendPort.toString()) && !(await isBackendPortFree())) {
-        yield ServerResult(ServerResultType.freeingPort);
-        final result = await freeBackendPort();
-        yield ServerResult(result ? ServerResultType.freePortSuccess : ServerResultType.freePortError);
-        if(!result) {
-          started.value = false;
-          return;
-        }
-      }
-
-      switch(serverType){
-        case ServerType.embedded:
-          final process = await startEmbeddedBackend(detached.value, onError: (errorMessage) {
-            if(started.value) {
-              started.value = false;
-              onError(errorMessage);
-            }
-          });
-          watchProcess(process.pid).then((_) {
-            if(started.value) {
-              started.value = false;
-              onExit();
-            }
-          });
-          embeddedProcessPid = process.pid;
-          break;
-        case ServerType.remote:
-          yield ServerResult(ServerResultType.pingingRemote);
-          final uriResult = await pingBackend(hostData, portNumber);
-          if(uriResult == null) {
-            yield ServerResult(ServerResultType.pingError);
-            started.value = false;
-            return;
-          }
-
-          remoteServer = await startRemoteBackendProxy(uriResult);
-          break;
-        case ServerType.local:
-          if(portNumber != kDefaultBackendPort) {
-            yield ServerResult(ServerResultType.pingingLocal);
-            final uriResult = await pingBackend(kDefaultBackendHost, portNumber);
-            if(uriResult == null) {
-              yield ServerResult(ServerResultType.pingError);
-              started.value = false;
-              return;
-            }
-
-            localServer = await startRemoteBackendProxy(Uri.parse("http://$kDefaultBackendHost:$portData"));
-          }else {
-            // If the local server is running on port 3551 there is no reverse proxy running
-            // We only need to check if everything is working
-            started.value = false;
-          }
-
-          break;
-      }
-
-      yield ServerResult(ServerResultType.pingingLocal);
-      final uriResult = await pingBackend(kDefaultBackendHost, kDefaultBackendPort);
-      if(uriResult == null) {
-        yield ServerResult(ServerResultType.pingError);
-        remoteServer?.close(force: true);
-        localServer?.close(force: true);
-        started.value = false;
-        return;
-      }
-
-      yield ServerResult(ServerResultType.startSuccess);
-    }catch(error, stackTrace) {
-      yield ServerResult(
-          ServerResultType.startError,
-          error: error,
-          stackTrace: stackTrace
-      );
-      remoteServer?.close(force: true);
-      localServer?.close(force: true);
-      started.value = false;
-    }
-  }
-
-  Stream<ServerResult> stop() async* {
+  Future<bool> stop({required bool interactive}) async {
     if(!started.value) {
-      return;
+      return true;
     }
 
-    yield ServerResult(ServerResultType.stopping);
-    started.value = false;
-    try{
-      switch(type()){
-        case ServerType.embedded:
-          final embeddedProcessPid = this.embeddedProcessPid;
-          if(embeddedProcessPid != null) {
-            Process.killPid(embeddedProcessPid, ProcessSignal.sigterm);
-            this.embeddedProcessPid = null;
-          }
-          break;
-        case ServerType.remote:
-          await remoteServer?.close(force: true);
-          remoteServer = null;
-          break;
-        case ServerType.local:
-          await localServer?.close(force: true);
-          localServer = null;
-          break;
+    _cancel();
+    final stream = stopBackend(
+        type: type.value,
+        implementation: _implementation
+    );
+    final completer = Completer<bool>();
+    InfoBarEntry? entry;
+    _worker = stream.listen((event) {
+      entry?.close();
+      entry = _handeEvent(event, interactive);
+      if(event.type.isError) {
+        completer.complete(false);
+      }else if(event.type.isSuccess) {
+        completer.complete(true);
       }
-      yield ServerResult(ServerResultType.stopSuccess);
-    }catch(error, stackTrace){
-      yield ServerResult(
-          ServerResultType.stopError,
-          error: error,
-          stackTrace: stackTrace
-      );
-      started.value = true;
-    }
+    });
+    return await completer.future;
   }
 
   void _cancel() {
-    worker?.cancel(); // Do not await or it will hang
+    _worker?.cancel(); // Do not await or it will hang
     _infoBars.forEach((infoBar) => infoBar.close());
     _infoBars.clear();
   }
 
-  InfoBarEntry _handeEvent(ServerResult event) {
-    log("[BACKEND] Handling event: $event");
+  InfoBarEntry? _handeEvent(ServerResult event, bool interactive) {
+    log("[BACKEND] Handling event: $event (interactive: $interactive, start: ${event.type.isStart}, error: ${event.type.isError})");
+    started.value = event.type.isStart && !event.type.isError;
     switch (event.type) {
       case ServerResultType.starting:
-        return _showRebootInfoBar(
-            translations.startingServer,
-            severity: InfoBarSeverity.info,
-            loading: true,
-            duration: null
-        );
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.startingServer,
+              severity: InfoBarSeverity.info,
+              loading: true,
+              duration: null
+          );
+        }else {
+          return null;
+        }
       case ServerResultType.startSuccess:
-        return _showRebootInfoBar(
-            type.value == ServerType.local ? translations.checkedServer : translations.startedServer,
-            severity: InfoBarSeverity.success
-        );
+        if(interactive) {
+          return _showRebootInfoBar(
+              type.value == ServerType.local ? translations.checkedServer : translations.startedServer,
+              severity: InfoBarSeverity.success
+          );
+        }else {
+          return null;
+        }
       case ServerResultType.startError:
-        return _showRebootInfoBar(
-            type.value == ServerType.local ? translations.localServerError(event.error ?? translations.unknownError) : translations.startServerError(event.error ?? translations.unknownError),
-            severity: InfoBarSeverity.error,
-            duration: infoBarLongDuration
-        );
+        if(interactive) {
+          return _showRebootInfoBar(
+              type.value == ServerType.local ? translations.localServerError(event.error ?? translations.unknownError) : translations.startServerError(event.error ?? translations.unknownError),
+              severity: InfoBarSeverity.error,
+              duration: infoBarLongDuration
+          );
+        }else {
+          return null;
+        }
       case ServerResultType.stopping:
-        return _showRebootInfoBar(
-            translations.stoppingServer,
-            severity: InfoBarSeverity.info,
-            loading: true,
-            duration: null
-        );
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.stoppingServer,
+              severity: InfoBarSeverity.info,
+              loading: true,
+              duration: null
+          );
+        }else {
+          return null;
+        }
       case ServerResultType.stopSuccess:
-        return _showRebootInfoBar(
-            translations.stoppedServer,
-            severity: InfoBarSeverity.success
-        );
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.stoppedServer,
+              severity: InfoBarSeverity.success
+          );
+        }else {
+          return null;
+        }
       case ServerResultType.stopError:
-        return _showRebootInfoBar(
-            translations.stopServerError(event.error ?? translations.unknownError),
-            severity: InfoBarSeverity.error,
-            duration: infoBarLongDuration
-        );
-      case ServerResultType.missingHostError:
-        return _showRebootInfoBar(
-            translations.missingHostNameError,
-            severity: InfoBarSeverity.error
-        );
-      case ServerResultType.missingPortError:
-        return _showRebootInfoBar(
-            translations.missingPortError,
-            severity: InfoBarSeverity.error
-        );
-      case ServerResultType.illegalPortError:
-        return _showRebootInfoBar(
-            translations.illegalPortError,
-            severity: InfoBarSeverity.error
-        );
-      case ServerResultType.freeingPort:
-        return _showRebootInfoBar(
-            translations.freeingPort,
-            loading: true,
-            duration: null
-        );
-      case ServerResultType.freePortSuccess:
-        return _showRebootInfoBar(
-            translations.freedPort,
-            severity: InfoBarSeverity.success,
-            duration: infoBarShortDuration
-        );
-      case ServerResultType.freePortError:
-        return _showRebootInfoBar(
-            translations.freePortError(event.error ?? translations.unknownError),
-            severity: InfoBarSeverity.error,
-            duration: infoBarLongDuration
-        );
-      case ServerResultType.pingingRemote:
-        return _showRebootInfoBar(
-            translations.pingingServer(ServerType.remote.name),
-            severity: InfoBarSeverity.info,
-            loading: true,
-            duration: null
-        );
-      case ServerResultType.pingingLocal:
-        return _showRebootInfoBar(
-            translations.pingingServer(type.value.name),
-            severity: InfoBarSeverity.info,
-            loading: true,
-            duration: null
-        );
-      case ServerResultType.pingError:
-        return _showRebootInfoBar(
-            translations.pingError(type.value.name),
-            severity: InfoBarSeverity.error
-        );
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.stopServerError(event.error ?? translations.unknownError),
+              severity: InfoBarSeverity.error,
+              duration: infoBarLongDuration
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startMissingHostError:
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.missingHostNameError,
+              severity: InfoBarSeverity.error
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startMissingPortError:
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.missingPortError,
+              severity: InfoBarSeverity.error
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startIllegalPortError:
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.illegalPortError,
+              severity: InfoBarSeverity.error
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startFreeingPort:
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.freeingPort,
+              loading: true,
+              duration: null
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startFreePortSuccess:
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.freedPort,
+              severity: InfoBarSeverity.success,
+              duration: infoBarShortDuration
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startFreePortError:
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.freePortError(event.error ?? translations.unknownError),
+              severity: InfoBarSeverity.error,
+              duration: infoBarLongDuration
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startPingingRemote:
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.pingingServer(ServerType.remote.name),
+              severity: InfoBarSeverity.info,
+              loading: true,
+              duration: null
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startPingingLocal:
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.pingingServer(type.value.name),
+              severity: InfoBarSeverity.info,
+              loading: true,
+              duration: null
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startPingError:
+        if(interactive) {
+          return _showRebootInfoBar(
+              translations.pingError(type.value.name),
+              severity: InfoBarSeverity.error
+          );
+        }else {
+          return null;
+        }
+      case ServerResultType.startedImplementation:
+        _implementation = event.implementation;
+        return null;
     }
   }
 
@@ -596,5 +536,12 @@ class BackendController extends GetxController {
       _infoBars.add(result);
     }
     return result;
+  }
+
+  Future<void> restart() async {
+    if(started.value) {
+      await stop(interactive: false);
+      await start(interactive: true);
+    }
   }
 }

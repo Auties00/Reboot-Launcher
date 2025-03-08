@@ -110,7 +110,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       }
 
       log("[${host ? 'HOST' : 'GAME'}] Checking backend(port: ${_backendController.type.value.name}, type: ${_backendController.type.value.name})...");
-      final backendResult = _backendController.started() || await _backendController.toggleInteractive();
+      final backendResult = _backendController.started() || await _backendController.toggle();
       if(!backendResult){
         log("[${host ? 'HOST' : 'GAME'}] Cannot start backend");
         _onStop(
@@ -526,7 +526,7 @@ class _LaunchButtonState extends State<LaunchButton> {
       }
       await _operation?.cancel();
       _operation = null;
-      _backendController.stop();
+      _backendController.stop(interactive: false);
     }
 
     host = host ?? widget.host;
@@ -629,7 +629,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         );
         break;
       case _StopReason.tokenError:
-        _backendController.stop();
+        _backendController.stop(interactive: false);
         showRebootInfoBar(
             translations.tokenError(instance == null ? translations.none : instance.injectedDlls.map((element) => element.name).join(", ")),
             severity: InfoBarSeverity.error,

@@ -168,20 +168,6 @@ bool resume(int pid) {
   }
 }
 
-
-Future<void> watchProcess(int pid) => Isolate.run(() {
-  final processHandle = OpenProcess(FILE_ACCESS_RIGHTS.SYNCHRONIZE, FALSE, pid);
-  if (processHandle == 0) {
-    return;
-  }
-
-  try {
-    WaitForSingleObject(processHandle, INFINITE);
-  }finally {
-    CloseHandle(processHandle);
-  }
-});
-
 List<String> createRebootArgs(String username, String password, bool host, GameServerType hostType, bool logging, String additionalArgs) {
   log("[PROCESS] Generating reboot args");
   if(password.isEmpty) {
@@ -292,16 +278,8 @@ final class _ExtendedProcess implements Process {
         _stdout = attached ? delegate.stdout.asBroadcastStream() : null,
         _stderr = attached ? delegate.stderr.asBroadcastStream() : null;
 
-
   @override
-  Future<int> get exitCode {
-    try {
-      return _delegate.exitCode;
-    }catch(_) {
-      return watchProcess(_delegate.pid)
-          .then((_) => -1);
-    }
-  }
+  Future<int> get exitCode => _delegate.exitCode;
 
   @override
   bool kill([ProcessSignal signal = ProcessSignal.sigterm]) => _delegate.kill(signal);

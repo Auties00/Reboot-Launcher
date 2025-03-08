@@ -27,7 +27,6 @@ class DllController extends GetxController {
   late final RxBool customGameServer;
   late final RxnInt timestamp;
   late final Rx<UpdateStatus> status;
-  InfoBarEntry? infoBarEntry;
 
   DllController() {
     _storage = appWithNoStorage ? null : GetStorage(storageName);
@@ -75,6 +74,7 @@ class DllController extends GetxController {
   }
 
   Future<bool> updateGameServerDll({bool force = false, bool silent = false}) async {
+    InfoBarEntry? infoBarEntry;
     try {
       if(customGameServer.value) {
         status.value = UpdateStatus.success;
@@ -100,8 +100,8 @@ class DllController extends GetxController {
       }
       await Future.wait(
           [
-            downloadRebootDll(rebootBeforeS20DllFile, beforeS20Mirror.text),
-            downloadRebootDll(rebootAboveS20DllFile, aboveS20Mirror.text),
+            downloadRebootDll(rebootBeforeS20DllFile, beforeS20Mirror.text, false),
+            downloadRebootDll(rebootAboveS20DllFile, aboveS20Mirror.text, true),
             Future.delayed(const Duration(seconds: 1))
           ],
           eagerError: false

@@ -7,10 +7,16 @@ import 'package:reboot_common/common.dart';
 
 final File rebootBeforeS20DllFile = File("${dllsDirectory.path}\\reboot.dll");
 final File rebootAboveS20DllFile = File("${dllsDirectory.path}\\rebootS20.dll");
+
 const String kRebootBelowS20DownloadUrl =
     "https://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/Reboot.zip";
 const String kRebootAboveS20DownloadUrl =
     "https://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/RebootS20.zip";
+
+const String _kRebootBelowS20FallbackDownloadUrl =
+    "https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/RebootFallback.zip";
+const String _kRebootAboveS20FallbackDownloadUrl =
+    "https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/RebootS20Fallback.zip";
 
 Future<bool> hasRebootDllUpdate(int? lastUpdateMs, {int hours = 24, bool force = false}) async {
     final lastUpdate = await _getLastUpdate(lastUpdateMs);
@@ -45,12 +51,15 @@ Future<void> downloadDependency(InjectableDll dll, String outputPath) async {
     await output.writeAsBytes(response.bodyBytes, flush: true);
 }
 
-Future<void> downloadRebootDll(File file, String url) async {
+Future<void> downloadRebootDll(File file, String url, bool aboveS20) async {
     Directory? outputDir;
     try {
-        final response = await http.get(Uri.parse(url));
+        var response = await http.get(Uri.parse(url));
         if(response.statusCode != 200) {
-            throw Exception("Cannot download reboot.zip: status code ${response.statusCode}");
+            response = await http.get(Uri.parse(aboveS20 ? _kRebootAboveS20FallbackDownloadUrl : _kRebootBelowS20FallbackDownloadUrl));
+            if(response.statusCode != 200) {
+                throw Exception("status code ${response.statusCode}");
+            }
         }
 
         outputDir = await installationDirectory.createTemp("reboot_out");

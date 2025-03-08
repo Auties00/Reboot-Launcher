@@ -1,9 +1,12 @@
+import 'dart:io';
+
 class ServerResult {
   final ServerResultType type;
+  final ServerImplementation? implementation;
   final Object? error;
   final StackTrace? stackTrace;
 
-  ServerResult(this.type, {this.error, this.stackTrace});
+  ServerResult(this.type, {this.implementation, this.error, this.stackTrace});
 
   @override
   String toString() {
@@ -11,22 +14,32 @@ class ServerResult {
   }
 }
 
+class ServerImplementation {
+  final Process? process;
+  final HttpServer? server;
+
+  ServerImplementation({this.process, this.server});
+}
+
 enum ServerResultType {
   starting,
+  startMissingHostError,
+  startMissingPortError,
+  startIllegalPortError,
+  startFreeingPort,
+  startFreePortSuccess,
+  startFreePortError,
+  startPingingRemote,
+  startPingingLocal,
+  startPingError,
+  startedImplementation,
   startSuccess,
   startError,
   stopping,
   stopSuccess,
-  stopError,
-  missingHostError,
-  missingPortError,
-  illegalPortError,
-  freeingPort,
-  freePortSuccess,
-  freePortError,
-  pingingRemote,
-  pingingLocal,
-  pingError;
+  stopError;
+
+  bool get isStart => name.contains("start");
 
   bool get isError => name.contains("Error");
 

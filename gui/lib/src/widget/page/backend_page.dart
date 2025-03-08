@@ -162,7 +162,12 @@ class _BackendPageState extends RebootPageState<BackendPage> {
               key: backendDetachedOverlayTargetKey,
               child: ToggleSwitch(
                   checked: _backendController.detached(),
-                  onChanged: (value) => _backendController.detached.value = value
+                  onChanged: (value) async {
+                    _backendController.detached.value = value;
+                    if(_backendController.started.value) {
+                      await _backendController.restart();
+                    }
+                  }
               ),
             ),
           ],

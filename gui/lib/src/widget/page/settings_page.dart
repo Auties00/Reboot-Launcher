@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:async/async.dart';
 import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
@@ -36,6 +39,7 @@ class SettingsPage extends RebootPage {
 class _SettingsPageState extends RebootPageState<SettingsPage> {
   final SettingsController _settingsController = Get.find<SettingsController>();
   final DllController _dllController = Get.find<DllController>();
+  int? _downloadFromMirrorId;
 
   @override
   Widget? get button => null;
@@ -115,7 +119,6 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
                 }
 
                 _dllController.customGameServer.value = entry.key;
-                _dllController.infoBarEntry?.close();
                 if(!entry.key) {
                   _dllController.updateGameServerDll(
                       force: true
@@ -141,11 +144,7 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
                 child: TextFormBox(
                   placeholder:  translations.settingsServerMirrorPlaceholder,
                   controller: _dllController.beforeS20Mirror,
-                  onChanged: (value) {
-                    if(Uri.tryParse(value) != null) {
-                      _dllController.updateGameServerDll(force: true);
-                    }
-                  },
+                  onChanged: _scheduleMirrorDownload
                 ),
               ),
               const SizedBox(width: 8.0),
@@ -194,6 +193,24 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
     }
   });
 
+  void _scheduleMirrorDownload(String value) async {
+    if(_downloadFromMirrorId != null) {
+      return;
+    }
+
+    if(Uri.tryParse(value) == null) {
+      return;
+    }
+
+    final id = Random.secure().nextInt(1000000);
+    _downloadFromMirrorId = id;
+    await Future.delayed(const Duration(seconds: 2));
+    if(_downloadFromMirrorId == id) {
+      await _dllController.updateGameServerDll(force: true);
+    }
+    _downloadFromMirrorId = null;
+  }
+
   Widget get _internalFilesNewServerSource => Obx(() {
     if(!_dllController.customGameServer.value) {
       return SettingTile(
@@ -209,11 +226,7 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
                 child: TextFormBox(
                   placeholder: translations.settingsServerMirrorPlaceholder,
                   controller: _dllController.aboveS20Mirror,
-                  onChanged: (value) {
-                    if(Uri.tryParse(value) != null) {
-                      _dllController.updateGameServerDll(force: true);
-                    }
-                  },
+                  onChanged: _scheduleMirrorDownload
                 ),
               ),
               const SizedBox(width: 8.0),
@@ -273,7 +286,6 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
                 text: Text(entry.text),
                 onPressed: () {
                   _dllController.timer.value = entry;
-                  _dllController.infoBarEntry?.close();
                   _dllController.updateGameServerDll(
                       force: true
                   );

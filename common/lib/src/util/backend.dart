@@ -15,6 +15,122 @@ final Semaphore _semaphore = Semaphore();
 String? _lastIp;
 String? _lastPort;
 
+Stream<ServerResult> startBackend({required ServerType type, required String host, required String port, required bool detached, required void Function(String) onError}) async* {
+  Process? process;
+  HttpServer? server;
+  try {
+    host = host.trim();
+    port = port.trim();
+    if(type != ServerType.local || port != kDefaultBackendPort.toString()) {
+      yield ServerResult(ServerResultType.starting);
+    }
+
+    if (host.isEmpty) {
+      yield ServerResult(ServerResultType.startMissingHostError);
+      return;
+    }
+
+    if (port.isEmpty) {
+      yield ServerResult(ServerResultType.startMissingPortError);
+      return;
+    }
+
+    final portNumber = int.tryParse(port);
+    if (portNumber == null) {
+      yield ServerResult(ServerResultType.startIllegalPortError);
+      return;
+    }
+
+    if ((type != ServerType.local || port != kDefaultBackendPort.toString()) && !(await isBackendPortFree())) {
+      yield ServerResult(ServerResultType.startFreeingPort);
+      final result = await freeBackendPort();
+      if(!result) {
+        yield ServerResult(ServerResultType.startFreePortError);
+        return;
+      }
+
+      yield ServerResult(ServerResultType.startFreePortSuccess);
+    }
+
+    switch(type){
+      case ServerType.embedded:
+        process = await startEmbeddedBackend(detached, onError: onError);
+        yield ServerResult(ServerResultType.startedImplementation, implementation: ServerImplementation(process: process));
+        break;
+      case ServerType.remote:
+        yield ServerResult(ServerResultType.startPingingRemote);
+        final uriResult = await pingBackend(host, portNumber);
+        if(uriResult == null) {
+          yield ServerResult(ServerResultType.startPingError);
+          return;
+        }
+
+        server = await startRemoteBackendProxy(uriResult);
+        yield ServerResult(ServerResultType.startedImplementation, implementation: ServerImplementation(server: server));
+        break;
+      case ServerType.local:
+        if(portNumber != kDefaultBackendPort) {
+          yield ServerResult(ServerResultType.startPingingLocal);
+          final uriResult = await pingBackend(kDefaultBackendHost, portNumber);
+          if(uriResult == null) {
+            yield ServerResult(ServerResultType.startPingError);
+            return;
+          }
+
+          server = await startRemoteBackendProxy(Uri.parse("http://$kDefaultBackendHost:$port"));
+          yield ServerResult(ServerResultType.startedImplementation, implementation: ServerImplementation(server: server));
+        }
+        break;
+    }
+
+    yield ServerResult(ServerResultType.startPingingLocal);
+    final uriResult = await pingBackend(kDefaultBackendHost, kDefaultBackendPort);
+    if(uriResult == null) {
+      yield ServerResult(ServerResultType.startPingError);
+      process?.kill(ProcessSignal.sigterm);
+      server?.close(force: true);
+      return;
+    }
+
+    yield ServerResult(ServerResultType.startSuccess);
+  }catch(error, stackTrace) {
+    yield ServerResult(
+        ServerResultType.startError,
+        error: error,
+        stackTrace: stackTrace
+    );
+    process?.kill(ProcessSignal.sigterm);
+    server?.close(force: true);
+  }
+}
+
+Stream<ServerResult> stopBackend({required ServerType type, required ServerImplementation? implementation}) async* {
+  yield ServerResult(ServerResultType.stopping);
+  try{
+    switch(type){
+      case ServerType.embedded:
+        final process = implementation?.process;
+        if(process != null) {
+          Process.killPid(process.pid, ProcessSignal.sigterm);
+        }
+        break;
+      case ServerType.remote:
+        await implementation?.server?.close(force: true);
+        break;
+      case ServerType.local:
+        await implementation?.server?.close(force: true);
+        break;
+    }
+    yield ServerResult(ServerResultType.stopSuccess);
+  }catch(error, stackTrace){
+    yield ServerResult(
+        ServerResultType.stopError,
+        error: error,
+        stackTrace: stackTrace
+    );
+  }
+}
+
 Future<Process> startEmbeddedBackend(bool detached, {void Function(String)? onError}) async {
   final process = await startProcess(
     executable: backendStartExecutable,
@@ -25,7 +141,9 @@ Future<Process> startEmbeddedBackend(bool detached, {void Function(String)? onEr
     log("[BACKEND] Error: $error");
     onError?.call(error);
   });
-  process.exitCode.then((exitCode) => log("[BACKEND] Exit code: $exitCode"));
+  if(!detached) {
+    process.exitCode.then((exitCode) => log("[BACKEND] Exit code: $exitCode"));
+  }
   return process;
 }
 
