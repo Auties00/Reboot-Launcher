@@ -19,6 +19,7 @@ dependencies:
   uuid: ^4.5.1
   shelf_web_socket: ^2.0.0
   version: ^3.0.2
+  synchronized: ^3.3.0+3
 
 dev_dependencies:
   flutter_lints: ^5.0.0

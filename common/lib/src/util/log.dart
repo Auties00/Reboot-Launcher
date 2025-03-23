@@ -1,10 +1,9 @@
 import 'dart:io';
 
 import 'package:reboot_common/common.dart';
-import 'package:sync/semaphore.dart';
+import 'package:synchronized/extension.dart';
 
 final File launcherLogFile = _createLoggingFile();
-final Semaphore _semaphore = Semaphore(1);
 bool enableLoggingToConsole = true;
 
 File _createLoggingFile() {
@@ -19,14 +18,14 @@ File _createLoggingFile() {
 
 void log(String message) async {
   try {
-    await _semaphore.acquire();
     if(enableLoggingToConsole) {
       print(message);
     }
-    await launcherLogFile.writeAsString("$message\n", mode: FileMode.append, flush: true);
+
+    launcherLogFile.synchronized(() async {
+      await launcherLogFile.writeAsString("$message\n", mode: FileMode.append, flush: true);
+    });
   }catch(error) {
     print("[LOGGER_ERROR] An error occurred while logging: $error");
-  }finally {
-    _semaphore.release();
   }
 }

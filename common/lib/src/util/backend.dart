@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:ini/ini.dart';
 import 'package:reboot_common/common.dart';
-import 'package:reboot_common/src/extension/types.dart';
+
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_proxy/shelf_proxy.dart';
 import 'package:sync/semaphore.dart';
@@ -234,7 +234,7 @@ Future<void> writeMatchmakingIp(String text) async {
   final splitIndex = text.indexOf(":");
   final ip = splitIndex != -1 ? text.substring(0, splitIndex) : text;
   var port = splitIndex != -1 ? text.substring(splitIndex + 1) : kDefaultGameServerPort;
-  if(port.isBlank) {
+  if(port.isBlankOrEmpty) {
     port = kDefaultGameServerPort;
   }
 

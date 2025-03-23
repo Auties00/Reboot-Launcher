@@ -396,7 +396,7 @@ class BackendController extends GetxController {
     }
 
     final version = Get.find<GameController>()
-        .getVersionByName(server.version.toString());
+        .getVersionByGame(server.version.toString());
     if(version == null) {
       _showRebootInfoBar(
           translations.cannotJoinServerVersion(server.version.toString()),

@@ -29,4 +29,5 @@ const String kDisplayInitializedLine = "Initialized";
 const String kShippingExe = "FortniteClient-Win64-Shipping.exe";
 const String kLauncherExe = "FortniteLauncher.exe";
 const String kEacExe = "FortniteClient-Win64-Shipping_EAC.exe";
+const String kCrashReportExe = "CrashReportClient.exe";
 final Version kMaxAllowedVersion = Version.parse("30.10");

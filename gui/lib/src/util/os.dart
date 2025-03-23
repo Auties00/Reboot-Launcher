@@ -47,37 +47,6 @@ Future<String?> openFilePicker(String extension) async {
 bool get isDarkMode =>
     SchedulerBinding.instance.platformDispatcher.platformBrightness.isDark;
 
-class _ServiceProvider10 extends IUnknown {
-  static const String _CLSID = "{C2F03A33-21F5-47FA-B4BB-156362A2F239}";
-  static const String _IID = "{6D5140C1-7436-11CE-8034-00AA006009FA}";
-
-  _ServiceProvider10._internal(Pointer<COMObject> ptr) : super(ptr);
-
-  factory _ServiceProvider10.createInstance() =>
-      _ServiceProvider10._internal(COMObject.createFromID(_CLSID, _IID));
-
-  Pointer<COMObject> queryService(String classId, String instanceId) {
-    final result = calloc<COMObject>();
-    final code = (ptr.ref.vtable + 3)
-        .cast<
-        Pointer<
-            NativeFunction<
-                HRESULT Function(Pointer, Pointer<GUID>, Pointer<GUID>,
-                    Pointer<COMObject>)>>>()
-        .value
-        .asFunction<
-        int Function(Pointer, Pointer<GUID>, Pointer<GUID>,
-            Pointer<COMObject>)>()(ptr.ref.lpVtbl,
-        GUIDFromString(classId), GUIDFromString(instanceId), result);
-    if (code != 0) {
-      free(result);
-      throw WindowsException(code);
-    }
-
-    return result;
-  }
-}
-
 extension WindowManagerExtension on WindowManager {
   Future<void> maximizeOrRestore() async => await windowManager.isMaximized() ? windowManager.restore() : windowManager.maximize();
 }

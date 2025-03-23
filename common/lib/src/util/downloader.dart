@@ -8,7 +8,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:reboot_common/src/extension/types.dart';
 import 'package:uuid/uuid.dart';
 
 
@@ -361,7 +360,7 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
                 );
             });
             process.stdError.listen((data) {
-                if(!data.isBlank) {
+                if(!data.isBlankOrEmpty) {
                     _onError(data, options);
                 }
             });
@@ -418,7 +417,7 @@ Future<void> _extractArchive(Completer<dynamic> stopped, String extension, File 
                 );
             });
             process.stdError.listen((data) {
-                if(!data.isBlank) {
+                if(!data.isBlankOrEmpty) {
                     _onError(data, options);
                 }
             });

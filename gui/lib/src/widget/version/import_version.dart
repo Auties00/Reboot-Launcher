@@ -147,27 +147,24 @@ class _ImportVersionDialogState extends State<ImportVersionDialog> {
     final name = _nameController.text.trim();
     final directory = Directory(_pathController.text.trim());
 
-    final files = await Future.wait([
+    final shippingExes = await Future.wait([
       Future.delayed(const Duration(seconds: 1)).then((_) => <File>[]),
-      findFiles(directory, kShippingExe).then((files) async {
-        if(files.length == 1) {
-          await patchHeadless(files.first);
-        }
-        return files;
-      })
+      findFiles(directory, kShippingExe)
     ]).then((values) => values.expand((entry) => entry).toList());
 
-    if (files.isEmpty) {
+    if (shippingExes.isEmpty) {
       _validator.value = _ImportState.missingShippingExeError;
       return;
     }
 
-    if(files.length != 1) {
+    if(shippingExes.length != 1) {
       _validator.value = _ImportState.multipleShippingExesError;
       return;
     }
 
-    final gameVersion = await extractGameVersion(files.first.path, path.basename(directory.path));
+    await patchHeadless(shippingExes.first);
+
+    final gameVersion = await extractGameVersion(directory);
     try {
       if(Version.parse(gameVersion) >= kMaxAllowedVersion) {
         _validator.value = _ImportState.unsupportedVersionError;
@@ -181,13 +178,13 @@ class _ImportVersionDialogState extends State<ImportVersionDialog> {
       final version = FortniteVersion(
           name: name,
           gameVersion: gameVersion,
-          location: files.first.parent
+          location: shippingExes.first.parent
       );
       _gameController.addVersion(version);
     }else {
       widget.version?.name = name;
       widget.version?.gameVersion = gameVersion;
-      widget.version?.location = files.first.parent;
+      widget.version?.location = shippingExes.first.parent;
     }
     _validator.value = _ImportState.success;
   }

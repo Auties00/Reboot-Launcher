@@ -38,7 +38,6 @@ SettingTile createFileSetting({
               controller: controller,
               validator: (text) {
                 final result = _checkDll(text);
-                print("Called validator: $result");
                 obx.value = result;
                 return result;
               },

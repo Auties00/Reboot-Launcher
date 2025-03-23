@@ -180,7 +180,7 @@ class _BrowsePageState extends RebootPageState<BrowsePage> {
         case _Filter.accessible:
           return element.password == null;
         case _Filter.playable:
-          return _gameController.getVersionByName(element.version) != null;
+          return _gameController.getVersionByGame(element.version) != null;
       }
     }).toList();
     final sort = _sort.value;

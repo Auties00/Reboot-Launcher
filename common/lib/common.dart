@@ -1,7 +1,6 @@
 export 'package:reboot_common/src/constant/backend.dart';
 export 'package:reboot_common/src/constant/game.dart';
 export 'package:reboot_common/src/constant/supabase.dart';
-export 'package:reboot_common/src/extension/process.dart';
 export 'package:reboot_common/src/model/fortnite_build.dart';
 export 'package:reboot_common/src/model/fortnite_version.dart';
 export 'package:reboot_common/src/model/game_instance.dart';
@@ -16,3 +15,4 @@ export 'package:reboot_common/src/util/downloader.dart';
 export 'package:reboot_common/src/util/os.dart';
 export 'package:reboot_common/src/util/log.dart';
 export 'package:reboot_common/src/util/game.dart';
+export 'package:reboot_common/src/util/extensions.dart';

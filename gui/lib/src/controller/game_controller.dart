@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
+import 'package:version/version.dart';
 
 class GameController extends GetxController {
   static const String storageName = "v3_game_storage";
@@ -54,6 +55,21 @@ class GameController extends GetxController {
   FortniteVersion? getVersionByName(String name) {
     name = name.trim();
     return versions.value.firstWhereOrNull((element) => element.name == name);
+  }
+
+  FortniteVersion? getVersionByGame(String gameVersion) {
+    gameVersion = gameVersion.trim();
+    final parsedGameVersion = Version.parse(gameVersion);
+    return versions.value.firstWhereOrNull((element) {
+      final compare = element.gameVersion.trim();
+      try {
+        final parsedCompare = Version.parse(compare);
+        return parsedCompare.major == parsedGameVersion.major
+            && parsedCompare.minor == parsedGameVersion.minor;
+      } on FormatException {
+        return compare == gameVersion;
+      }
+    });
   }
 
   void addVersion(FortniteVersion version) {
