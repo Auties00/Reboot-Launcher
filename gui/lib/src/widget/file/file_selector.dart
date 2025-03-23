@@ -1,28 +1,35 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/util/os.dart';
+
+typedef FileSelectorValidator = String? Function(String?);
 
 class FileSelector extends StatefulWidget {
   final String placeholder;
   final String windowTitle;
   final bool allowNavigator;
   final TextEditingController controller;
-  final String? Function(String?) validator;
+  final FileSelectorValidator? validator;
   final AutovalidateMode? validatorMode;
+  final Key? validatorKey;
   final String? extension;
   final String? label;
   final bool folder;
+  final void Function(String)? onSelected;
 
   const FileSelector(
       {required this.placeholder,
         required this.windowTitle,
         required this.controller,
-        required this.validator,
         required this.folder,
         required this.allowNavigator,
+        this.validator,
+        this.validatorKey,
         this.label,
         this.extension,
         this.validatorMode,
+        this.onSelected,
         Key? key})
       : assert(folder || extension != null, "Missing extension for file selector"),
         super(key: key);
@@ -47,6 +54,7 @@ class _FileSelectorState extends State<FileSelector> {
       placeholder: widget.placeholder,
       validator: widget.validator,
       autovalidateMode: widget.validatorMode ?? AutovalidateMode.onUserInteraction,
+      key: widget.validatorKey,
       suffix: !widget.allowNavigator ? null : Button(
           onPressed: _onPressed,
           child: const Icon(FluentIcons.open_folder_horizontal)
@@ -72,6 +80,10 @@ class _FileSelectorState extends State<FileSelector> {
   }
 
   void _updateText(String? value) {
+    if(value != null) {
+      widget.onSelected?.call(value);
+    }
+
     var text = value ?? widget.controller.text;
     widget.controller.text = value ?? widget.controller.text;
     widget.controller.selection = TextSelection.collapsed(offset: text.length);

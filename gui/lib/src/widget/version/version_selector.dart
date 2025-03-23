@@ -8,15 +8,46 @@ import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/messenger/dialog.dart';
 import 'package:reboot_launcher/src/messenger/info_bar.dart';
-import 'package:reboot_launcher/src/widget/message/version.dart';
+import 'package:reboot_launcher/src/messenger/overlay.dart';
+import 'package:reboot_launcher/src/widget/fluent/setting_tile.dart';
+import 'package:reboot_launcher/src/widget/version/download_version.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:reboot_launcher/src/widget/version/import_version.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class VersionSelector extends StatefulWidget {
   const VersionSelector({Key? key}) : super(key: key);
 
+  static SettingTile buildTile({
+    required GlobalKey<OverlayTargetState> key
+  }) => SettingTile(
+      icon: Icon(
+          FluentIcons.play_24_regular
+      ),
+      title: Text(translations.selectFortniteName),
+      subtitle: Text(translations.selectFortniteDescription),
+      contentWidth: null,
+      content: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: SettingTile.kDefaultContentWidth,
+          ),
+          child: OverlayTarget(
+            key: key,
+            child: const VersionSelector(),
+          )
+      )
+  );
+
+  static Future<void> openImportDialog(FortniteVersion? version) => showRebootDialog<bool>(
+      builder: (context) => ImportVersionDialog(
+        version: version,
+        closable: true,
+      ),
+      dismissWithEsc: true
+  );
+
   static Future<void> openDownloadDialog() => showRebootDialog<bool>(
-    builder: (context) => AddVersionDialog(
+    builder: (context) => DownloadVersionDialog(
       closable: true,
     ),
     dismissWithEsc: true
@@ -34,7 +65,7 @@ class _VersionSelectorState extends State<VersionSelector> {
   @override
   Widget build(BuildContext context) => Obx(() {
     return _createOptionsMenu(
-        version: _gameController.selectedVersion,
+        version: _gameController.selectedVersion.value,
         close: false,
         child: FlyoutTarget(
           controller: _flyoutController,
@@ -42,7 +73,7 @@ class _VersionSelectorState extends State<VersionSelector> {
               onOpen: () => inDialog = true,
             onClose: () => inDialog = false,
               leading: Text(
-                _gameController.selectedVersion?.content.toString() ?? translations.selectVersion,
+                _gameController.selectedVersion.value?.name ?? translations.selectVersion,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -65,7 +96,7 @@ class _VersionSelectorState extends State<VersionSelector> {
         var result = await _flyoutController.showFlyout<_ContextualOption?>(
             builder: (context) => MenuFlyout(
                 items: _ContextualOption.values
-                    .map((entry) => _createOption(context, entry))
+                    .map((entry) => _createOption(entry))
                     .toList()
             )
         );
@@ -76,7 +107,7 @@ class _VersionSelectorState extends State<VersionSelector> {
 
   List<MenuFlyoutItem> _createSelectorItems(BuildContext context) {
     final items = _gameController.versions.value
-        .map((version) => _createVersionItem(context, version))
+        .map((version) => _createVersionItem(version))
         .toList();
     items.add(MenuFlyoutItem(
         trailing: Padding(
@@ -87,12 +118,23 @@ class _VersionSelectorState extends State<VersionSelector> {
           ),
         ),
         text: Text(translations.addVersion),
+        onPressed: () =>  VersionSelector.openImportDialog(null)
+    ));
+    items.add(MenuFlyoutItem(
+        trailing: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Icon(
+              FluentIcons.arrow_download_24_regular,
+              size: 14
+          ),
+        ),
+        text: Text(translations.downloadVersion),
         onPressed: VersionSelector.openDownloadDialog
     ));
     return items;
   }
 
-  MenuFlyoutItem _createVersionItem(BuildContext context, FortniteVersion version) => MenuFlyoutItem(
+  MenuFlyoutItem _createVersionItem(FortniteVersion version) => MenuFlyoutItem(
       text: Listener(
           onPointerDown: (event) async {
             if (event.kind != PointerDeviceKind.mouse || event.buttons != kSecondaryMouseButton) {
@@ -101,7 +143,7 @@ class _VersionSelectorState extends State<VersionSelector> {
 
             await _openVersionOptions(version);
           },
-          child: Text(version.content.toString())
+          child: Text(version.name)
       ),
       trailing: IconButton(
           onPressed: () => _openVersionOptions(version),
@@ -109,14 +151,14 @@ class _VersionSelectorState extends State<VersionSelector> {
             FluentIcons.more_vertical_24_regular
           )
       ),
-      onPressed: () => _gameController.selectedVersion = version
+      onPressed: () => _gameController.selectedVersion.value = version
   );
 
   Future<void> _openVersionOptions(FortniteVersion version) async {
     final result = await _flyoutController.showFlyout<_ContextualOption?>(
         builder: (context) => MenuFlyout(
             items: _ContextualOption.values
-                .map((entry) => _createOption(context, entry))
+                .map((entry) => _createOption(entry))
                 .toList()
         ),
         barrierDismissible: true,
@@ -139,8 +181,19 @@ class _VersionSelectorState extends State<VersionSelector> {
         launchUrl(version.location.uri)
             .onError((error, stackTrace) => _onExplorerError());
         break;
+      case _ContextualOption.modify:
+        if(!mounted){
+          return;
+        }
+
+        if(close) {
+          Navigator.of(context).pop();
+        }
+
+        await VersionSelector.openImportDialog(version);
+        break;
       case _ContextualOption.delete:
-        final result = await _openDeleteDialog(context, version) ?? false;
+        final result = await _openDeleteDialog(version) ?? false;
         if(!mounted || !result){
           return;
         }
@@ -160,7 +213,7 @@ class _VersionSelectorState extends State<VersionSelector> {
     }
   }
 
-  MenuFlyoutItem _createOption(BuildContext context, _ContextualOption entry) {
+  MenuFlyoutItem _createOption(_ContextualOption entry) {
     return MenuFlyoutItem(
         text: Text(entry.translatedName),
         onPressed: () => Navigator.of(context).pop(entry)
@@ -168,11 +221,15 @@ class _VersionSelectorState extends State<VersionSelector> {
   }
 
   bool _onExplorerError() {
-    showRebootInfoBar(translations.missingVersion);
+    showRebootInfoBar(
+      translations.missingVersionError,
+      severity: InfoBarSeverity.error,
+      duration: infoBarLongDuration,
+    );
     return false;
   }
 
-  Future<bool?> _openDeleteDialog(BuildContext context, FortniteVersion version) {
+  Future<bool?> _openDeleteDialog(FortniteVersion version) {
     return showRebootDialog<bool>(
         builder: (context) => ContentDialog(
           content: Column(
@@ -209,18 +266,21 @@ class _VersionSelectorState extends State<VersionSelector> {
         )
     );
   }
+
+  @override
+  GameController get gameController => _gameController;
 }
 
 enum _ContextualOption {
   openExplorer,
-  delete;
+  modify,
+  delete
+}
 
+extension _ContextualOptionExtension on _ContextualOption {
   String get translatedName {
-    switch(this) {
-      case _ContextualOption.openExplorer:
-        return translations.openInExplorer;
-      case _ContextualOption.delete:
-        return translations.delete;
-    }
+    return this == _ContextualOption.openExplorer ? translations.openInExplorer
+        : this == _ContextualOption.modify ? translations.modify
+        : translations.delete;
   }
 }

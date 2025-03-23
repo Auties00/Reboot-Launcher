@@ -2,7 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:reboot_launcher/src/messenger/dialog.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 
-Future<void> showDllDeletedDialog(Function() onConfirm) => showRebootDialog(
+Future<void> showDllDeletedDialog() => showRebootDialog(
     builder: (context) => InfoDialog(
       text: translations.dllDeletedTitle,
       buttons: [
@@ -15,7 +15,7 @@ Future<void> showDllDeletedDialog(Function() onConfirm) => showRebootDialog(
           text: translations.dllDeletedPrimaryAction,
           onTap: () {
             Navigator.pop(context);
-            onConfirm();
+
           },
         ),
       ],

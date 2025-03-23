@@ -13,10 +13,14 @@ import 'package:reboot_launcher/src/widget/fluent/setting_tile.dart';
 const double _kButtonDimensions = 30;
 const double _kButtonSpacing = 8;
 
-// FIXME: If the user clicks on the reset button, the text field checker won't be called
-SettingTile createFileSetting({required String title, required String description, required TextEditingController controller, required void Function() onReset}) {
-  final obx = RxString(controller.text);
-  controller.addListener(() => obx.value = controller.text);
+SettingTile createFileSetting({
+  required GlobalKey<TextFormBoxState> key,
+  required String title,
+  required String description,
+  required TextEditingController controller,
+  required void Function() onReset
+}) {
+  final obx = RxnString();
   final selecting = RxBool(false);
   return SettingTile(
       icon: Icon(
@@ -32,17 +36,23 @@ SettingTile createFileSetting({required String title, required String descriptio
               placeholder: translations.selectPathPlaceholder,
               windowTitle: translations.selectPathWindowTitle,
               controller: controller,
-              validator: _checkDll,
+              validator: (text) {
+                final result = _checkDll(text);
+                print("Called validator: $result");
+                obx.value = result;
+                return result;
+              },
               extension: "dll",
               folder: false,
               validatorMode: AutovalidateMode.always,
               allowNavigator: false,
+              validatorKey: key
             ),
           ),
           const SizedBox(width: _kButtonSpacing),
           Obx(() => Padding(
             padding: EdgeInsets.only(
-                bottom: _checkDll(obx.value) == null ? 0.0 : 20.0
+                bottom: obx.value == null ? 0.0 : 20.0
             ),
             child: Tooltip(
               message: translations.selectFile,
@@ -63,7 +73,7 @@ SettingTile createFileSetting({required String title, required String descriptio
           const SizedBox(width: _kButtonSpacing),
           Obx(() => Padding(
             padding: EdgeInsets.only(
-                bottom: _checkDll(obx.value) == null ? 0.0 : 20.0
+                bottom: obx.value == null ? 0.0 : 20.0
             ),
             child: Tooltip(
               message: translations.reset,
@@ -109,7 +119,9 @@ String? _checkDll(String? text) {
   }
 
   final file = File(text);
-  if (!file.existsSync()) {
+  try {
+    file.readAsBytesSync();
+  }catch(_) {
     return translations.dllDoesNotExist;
   }
 

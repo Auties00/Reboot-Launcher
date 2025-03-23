@@ -5,12 +5,10 @@ import 'package:fluent_ui/fluent_ui.dart' hide FluentIcons;
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
 import 'package:reboot_launcher/src/controller/dll_controller.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
-import 'package:reboot_launcher/src/messenger/dialog.dart';
 import 'package:reboot_launcher/src/messenger/info_bar.dart';
 import 'package:reboot_launcher/src/messenger/overlay.dart';
 import 'package:reboot_launcher/src/widget/message/data.dart';
@@ -19,7 +17,7 @@ import 'package:reboot_launcher/src/page/page_type.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/game/game_start_button.dart';
 import 'package:reboot_launcher/src/widget/fluent/setting_tile.dart';
-import 'package:reboot_launcher/src/widget/version/version_selector_tile.dart';
+import 'package:reboot_launcher/src/widget/version/version_selector.dart';
 
 final GlobalKey<OverlayTargetState> hostVersionOverlayTargetKey = GlobalKey();
 final GlobalKey<OverlayTargetState> hostInfoOverlayTargetKey = GlobalKey();
@@ -78,7 +76,7 @@ class _HostingPageState extends RebootPageState<HostPage> {
   @override
   List<Widget> get settings => [
     _information,
-    buildVersionSelector(
+    VersionSelector.buildTile(
         key: hostVersionOverlayTargetKey
     ),
     _options,
@@ -171,7 +169,7 @@ class _HostingPageState extends RebootPageState<HostPage> {
             contentWidth: null,
             content: Obx(() => Row(
               children: [
-  Obx(() => Text(
+                Obx(() => Text(
                     _hostingController.discoverable.value ? translations.on : translations.off
                 )),
                 const SizedBox(
@@ -214,15 +212,21 @@ class _HostingPageState extends RebootPageState<HostPage> {
         ),
         title: Text(translations.gameServerTypeName),
         subtitle: Text(translations.gameServerTypeDescription),
-        content: Obx(() => DropDownButton(
-            onOpen: () => inDialog = true,
-            onClose: () => inDialog = false,
-            leading: Text(_hostingController.type.value.translatedName),
-            items: GameServerType.values.map((entry) => MenuFlyoutItem(
-                text: Text(entry.translatedName),
-                onPressed: () => _hostingController.type.value = entry
-            )).toList()
-        )),
+        contentWidth: null,
+        content: Row(
+          children: [
+            Obx(() => Text(
+                _hostingController.headless.value ? translations.on : translations.off
+            )),
+            const SizedBox(
+                width: 16.0
+            ),
+            Obx(() => ToggleSwitch(
+                checked: _hostingController.headless.value,
+                onChanged: (value) => _hostingController.headless.value = value
+            )),
+          ],
+        ),
       ),
       SettingTile(
         icon: Icon(

@@ -12,7 +12,7 @@ import 'package:sync/semaphore.dart';
 import 'package:uuid/uuid.dart';
 
 class HostingController extends GetxController {
-  static const String storageName = "v2_hosting_storage";
+  static const String storageName = "v3_hosting_storage";
 
   late final GetStorage? _storage;
   late final String uuid;
@@ -26,7 +26,7 @@ class HostingController extends GetxController {
   late final FocusNode passwordFocusNode;
   late final RxBool showPassword;
   late final RxBool discoverable;
-  late final Rx<GameServerType> type;
+  late final RxBool headless;
   late final RxBool autoRestart;
   late final RxBool started;
   late final RxBool published;
@@ -54,8 +54,8 @@ class HostingController extends GetxController {
     passwordFocusNode = FocusNode();
     discoverable = RxBool(_storage?.read("discoverable") ?? false);
     discoverable.listen((value) => _storage?.write("discoverable", value));
-    type = Rx(GameServerType.values.elementAt(_storage?.read("type") ?? GameServerType.headless.index));
-    type.listen((value) => _storage?.write("type", value.index));
+    headless = RxBool(_storage?.read("headless") ?? true);
+    headless.listen((value) => _storage?.write("headless", value));
     autoRestart = RxBool(_storage?.read("auto_restart") ?? true);
     autoRestart.listen((value) => _storage?.write("auto_restart", value));
     started = RxBool(false);
@@ -165,7 +165,7 @@ class HostingController extends GetxController {
     showPassword.value = false;
     discoverable.value = false;
     instance.value = null;
-    type.value = GameServerType.headless;
+    headless.value = true;
     autoRestart.value = true;
     customLaunchArgs.text = "";
   }

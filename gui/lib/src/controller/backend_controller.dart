@@ -21,8 +21,10 @@ import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'hosting_controller.dart';
+
 class BackendController extends GetxController {
-  static const String storageName = "v2_backend_storage";
+  static const String storageName = "v3_backend_storage";
   static const PhysicalKeyboardKey _kDefaultConsoleKey = PhysicalKeyboardKey(0x00070041);
 
   late final GetStorage? _storage;
@@ -162,6 +164,14 @@ class BackendController extends GetxController {
         detached: detached.value,
         onError: (errorMessage) {
           stop(interactive: false);
+          Get.find<GameController>()
+              .instance
+              .value
+              ?.kill();
+          Get.find<HostingController>()
+              .instance
+              .value
+              ?.kill();
           _showRebootInfoBar(
               translations.backendErrorMessage,
               severity: InfoBarSeverity.error,
@@ -508,8 +518,7 @@ class BackendController extends GetxController {
     }else {
       FlutterClipboard.controlC(decryptedIp);
     }
-    Get.find<GameController>()
-        .selectedVersion = version;
+    Get.find<GameController>().selectedVersion.value = version;
     WidgetsBinding.instance.addPostFrameCallback((_) => _showRebootInfoBar(
         embedded ? translations.joinedServer(author) : translations.copiedIp,
         duration: infoBarLongDuration,

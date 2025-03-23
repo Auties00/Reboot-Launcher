@@ -134,7 +134,7 @@ class _HomePageState extends State<HomePage> with WindowListener, AutomaticKeepA
       dllsDirectory.createSync(recursive: true);
     }
 
-    _dllController.guardFiles();
+    _dllController.downloadAndGuardDependencies();
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'package:version/version.dart';
+
 const String kDefaultPlayerName = "Player";
 const String kDefaultHostName = "Host";
 const String kDefaultGameServerHost = "127.0.0.1";
@@ -21,6 +23,10 @@ const List<String> kCannotConnectErrors = [
   "Network failure when attempting to check platform restrictions",
   "UOnlineAccountCommon::ForceLogout"
 ];
-const String kGameFinishedLine = "PlayersLeft: 1";
+const String kGameFinishedLine = "TeamsLeft: 1";
 const String kDisplayLine = "Display";
 const String kDisplayInitializedLine = "Initialized";
+const String kShippingExe = "FortniteClient-Win64-Shipping.exe";
+const String kLauncherExe = "FortniteLauncher.exe";
+const String kEacExe = "FortniteClient-Win64-Shipping_EAC.exe";
+final Version kMaxAllowedVersion = Version.parse("30.10");

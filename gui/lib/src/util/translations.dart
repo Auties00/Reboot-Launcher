@@ -20,16 +20,3 @@ void loadTranslations(BuildContext context) {
 }
 
 String get currentLocale => Intl.getCurrentLocale().split("_")[0];
-
-extension GameServerTypeExtension on GameServerType {
-  String get translatedName {
-    switch(this) {
-      case GameServerType.headless:
-        return translations.gameServerTypeHeadless;
-      case GameServerType.virtualWindow:
-        return translations.gameServerTypeVirtualWindow;
-      case GameServerType.window:
-        return translations.gameServerTypeWindow;
-    }
-  }
-}

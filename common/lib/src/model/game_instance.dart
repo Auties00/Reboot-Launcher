@@ -5,14 +5,13 @@ import 'package:version/version.dart';
 
 
 class GameInstance {
-  final Version version;
+  final String version;
   final int gamePid;
   final int? launcherPid;
   final int? eacPid;
   final List<InjectableDll> injectedDlls;
-  final GameServerType? serverType;
+  final bool headless;
   bool launched;
-  bool movedToVirtualDesktop;
   bool tokenError;
   bool killed;
   GameInstance? child;
@@ -22,9 +21,9 @@ class GameInstance {
     required this.gamePid,
     required this.launcherPid,
     required this.eacPid,
-    required this.serverType,
+    required this.headless,
     required this.child
-  }): tokenError = false, killed = false, launched = false, movedToVirtualDesktop = false, injectedDlls = [];
+  }): tokenError = false, killed = false, launched = false, injectedDlls = [];
 
   void kill() {
     GameInstance? child = this;
@@ -35,20 +34,16 @@ class GameInstance {
   }
 
   void _kill() {
-    launched = true;
-    killed = true;
-    Process.killPid(gamePid, ProcessSignal.sigabrt);
-    if(launcherPid != null) {
-      Process.killPid(launcherPid!, ProcessSignal.sigabrt);
-    }
-    if(eacPid != null) {
-      Process.killPid(eacPid!, ProcessSignal.sigabrt);
+    if(!killed) {
+      launched = true;
+      killed = true;
+      Process.killPid(gamePid, ProcessSignal.sigabrt);
+      if (launcherPid != null) {
+        Process.killPid(launcherPid!, ProcessSignal.sigabrt);
+      }
+      if (eacPid != null) {
+        Process.killPid(eacPid!, ProcessSignal.sigabrt);
+      }
     }
   }
-}
-
-enum GameServerType {
-  headless,
-  virtualWindow,
-  window
 }

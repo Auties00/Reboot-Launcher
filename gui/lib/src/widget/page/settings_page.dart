@@ -17,6 +17,11 @@ import 'package:reboot_launcher/src/widget/file/file_setting_tile.dart';
 import 'package:reboot_launcher/src/widget/fluent/setting_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+final GlobalKey<TextFormBoxState> settingsConsoleDllInputKey = GlobalKey();
+final GlobalKey<TextFormBoxState> settingsAuthDllInputKey = GlobalKey();
+final GlobalKey<TextFormBoxState> settingsMemoryDllInputKey = GlobalKey();
+final GlobalKey<TextFormBoxState> settingsGameServerDllInputKey = GlobalKey();
+
 class SettingsPage extends RebootPage {
   const SettingsPage({Key? key}) : super(key: key);
 
@@ -60,33 +65,39 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
     subtitle: Text(translations.settingsClientDescription),
     children: [
       createFileSetting(
+          key: settingsConsoleDllInputKey,
           title: translations.settingsClientConsoleName,
           description: translations.settingsClientConsoleDescription,
           controller: _dllController.unrealEngineConsoleDll,
-          onReset: () {
+          onReset: () async {
             final path = _dllController.getDefaultDllPath(InjectableDll.console);
             _dllController.unrealEngineConsoleDll.text = path;
-            _dllController.download(InjectableDll.console, path, force: true);
+            await _dllController.download(InjectableDll.console, path, force: true);
+            settingsConsoleDllInputKey.currentState?.validate();
           }
       ),
       createFileSetting(
+          key: settingsAuthDllInputKey,
           title: translations.settingsClientAuthName,
           description: translations.settingsClientAuthDescription,
           controller: _dllController.backendDll,
-          onReset: () {
+          onReset: () async {
             final path = _dllController.getDefaultDllPath(InjectableDll.auth);
             _dllController.backendDll.text = path;
-            _dllController.download(InjectableDll.auth, path, force: true);
+            await _dllController.download(InjectableDll.auth, path, force: true);
+            settingsAuthDllInputKey.currentState?.validate();
           }
       ),
       createFileSetting(
+          key: settingsMemoryDllInputKey,
           title: translations.settingsClientMemoryName,
           description: translations.settingsClientMemoryDescription,
           controller: _dllController.memoryLeakDll,
-          onReset: () {
+          onReset: () async {
             final path = _dllController.getDefaultDllPath(InjectableDll.memoryLeak);
             _dllController.memoryLeakDll.text = path;
-            _dllController.download(InjectableDll.memoryLeak, path, force: true);
+            await _dllController.download(InjectableDll.memoryLeak, path, force: true);
+            settingsAuthDllInputKey.currentState?.validate();
           }
       ),
       _internalFilesServerType,
@@ -142,9 +153,9 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
             children: [
               Expanded(
                 child: TextFormBox(
-                  placeholder:  translations.settingsServerMirrorPlaceholder,
-                  controller: _dllController.beforeS20Mirror,
-                  onChanged: _scheduleMirrorDownload
+                    placeholder:  translations.settingsServerMirrorPlaceholder,
+                    controller: _dllController.beforeS20Mirror,
+                    onChanged: _scheduleMirrorDownload
                 ),
               ),
               const SizedBox(width: 8.0),
@@ -181,13 +192,15 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
       );
     }else {
       return createFileSetting(
+          key: settingsGameServerDllInputKey,
           title: translations.settingsOldServerFileName,
           description: translations.settingsServerFileDescription,
           controller: _dllController.customGameServerDll,
-          onReset: () {
+          onReset: () async {
             final path = _dllController.getDefaultDllPath(InjectableDll.gameServer);
             _dllController.customGameServerDll.text = path;
-            _dllController.download(InjectableDll.gameServer, path);
+            await _dllController.download(InjectableDll.gameServer, path);
+            settingsGameServerDllInputKey.currentState?.validate();
           }
       );
     }
@@ -224,9 +237,9 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
             children: [
               Expanded(
                 child: TextFormBox(
-                  placeholder: translations.settingsServerMirrorPlaceholder,
-                  controller: _dllController.aboveS20Mirror,
-                  onChanged: _scheduleMirrorDownload
+                    placeholder: translations.settingsServerMirrorPlaceholder,
+                    controller: _dllController.aboveS20Mirror,
+                    onChanged: _scheduleMirrorDownload
                 ),
               ),
               const SizedBox(width: 8.0),
@@ -337,7 +350,7 @@ class _SettingsPageState extends RebootPageState<SettingsPage> {
           )).toList()
       ))
   );
-  
+
   SettingTile get _installationDirectory => SettingTile(
       icon: Icon(
           FluentIcons.folder_24_regular

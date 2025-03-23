@@ -126,7 +126,7 @@ class ProgressDialog extends AbstractDialog {
         header: InfoLabel(
           label: text,
           child: Container(
-              padding: const EdgeInsets.only(bottom: 16.0),
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
               width: double.infinity,
               child: const ProgressBar()
           ),

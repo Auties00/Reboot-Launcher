@@ -10,7 +10,7 @@ import 'package:reboot_launcher/src/page/page_type.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/widget/game/game_start_button.dart';
 import 'package:reboot_launcher/src/widget/fluent/setting_tile.dart';
-import 'package:reboot_launcher/src/widget/version/version_selector_tile.dart';
+import 'package:reboot_launcher/src/widget/version/version_selector.dart';
 
 final GlobalKey<OverlayTargetState> gameVersionOverlayTargetKey = GlobalKey();
 
@@ -46,7 +46,7 @@ class _PlayPageState extends RebootPageState<PlayPage> {
 
   @override
   List<SettingTile> get settings => [
-    buildVersionSelector(
+    VersionSelector.buildTile(
       key: gameVersionOverlayTargetKey
     ),
     _options,

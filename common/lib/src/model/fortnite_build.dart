@@ -1,15 +1,13 @@
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:version/version.dart';
-
 class FortniteBuild {
-  final Version version;
+  final String gameVersion;
   final String link;
   final bool available;
 
   FortniteBuild({
-    required this.version,
+    required this.gameVersion,
     required this.link,
     required this.available
   });

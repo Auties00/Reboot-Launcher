@@ -137,9 +137,14 @@ Future<Process> startEmbeddedBackend(bool detached, {void Function(String)? onEr
     window: detached,
   );
   process.stdOutput.listen((message) => log("[BACKEND] Message: $message"));
+  var killed = false;
   process.stdError.listen((error) {
-    log("[BACKEND] Error: $error");
-    onError?.call(error);
+    if(!killed) {
+      log("[BACKEND] Error: $error");
+      killed = true;
+      process.kill(ProcessSignal.sigterm);
+      onError?.call(error);
+    }
   });
   if(!detached) {
     process.exitCode.then((exitCode) => log("[BACKEND] Exit code: $exitCode"));

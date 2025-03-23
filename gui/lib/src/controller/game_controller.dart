@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
@@ -8,14 +9,14 @@ import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
 
 class GameController extends GetxController {
-  static const String storageName = "v2_game_storage";
+  static const String storageName = "v3_game_storage";
 
   late final GetStorage? _storage;
   late final TextEditingController username;
   late final TextEditingController password;
   late final TextEditingController customLaunchArgs;
   late final Rx<List<FortniteVersion>> versions;
-  late final Rxn<FortniteVersion> _selectedVersion;
+  late final Rxn<FortniteVersion> selectedVersion;
   late final RxBool started;
   late final Rxn<GameInstance> instance;
   
@@ -28,8 +29,8 @@ class GameController extends GetxController {
     versions = Rx(decodedVersions);
     versions.listen((data) => _saveVersions());
     final decodedSelectedVersionName = _storage?.read("version");
-    final decodedSelectedVersion = decodedVersions.firstWhereOrNull((element) => element.content.toString() == decodedSelectedVersionName);
-    _selectedVersion = Rxn(decodedSelectedVersion);
+    selectedVersion = Rxn(decodedVersions.firstWhereOrNull((element) => element.name == decodedSelectedVersionName));
+    selectedVersion.listen((version) => _storage?.write("version", version?.name));
     username = TextEditingController(
         text: _storage?.read("username") ?? kDefaultPlayerName);
     username.addListener(() => _storage?.write("username", username.text));
@@ -46,26 +47,27 @@ class GameController extends GetxController {
     password.text = "";
     customLaunchArgs.text = "";
     versions.value = [];
-    _selectedVersion.value = null;
+    selectedVersion.value = null;
     instance.value = null;
   }
 
   FortniteVersion? getVersionByName(String name) {
-    return versions.value.firstWhereOrNull((element) => element.content.toString() == name);
+    name = name.trim();
+    return versions.value.firstWhereOrNull((element) => element.name == name);
   }
 
   void addVersion(FortniteVersion version) {
-    var empty = versions.value.isEmpty;
     versions.update((val) => val?.add(version));
-    if(empty){
-      selectedVersion = version;
-    }
+    selectedVersion.value = version;
   }
 
   void removeVersion(FortniteVersion version) {
-    versions.update((val) => val?.remove(version));
-    if (selectedVersion == version || hasNoVersions) {
-      selectedVersion = null;
+    final index = versions.value.indexOf(version);
+    versions.update((val) => val?.removeAt(index));
+    if(hasNoVersions) {
+      selectedVersion.value = null;
+    }else {
+      selectedVersion.value = versions.value.elementAt(max(0, index - 1));
     }
   }
 
@@ -78,14 +80,5 @@ class GameController extends GetxController {
 
   bool get hasNoVersions => versions.value.isEmpty;
 
-  FortniteVersion? get selectedVersion => _selectedVersion();
-
-  set selectedVersion(FortniteVersion? version) {
-    _selectedVersion.value = version;
-    _storage?.write("version", version?.content.toString());
-  }
-
-  void updateVersion(FortniteVersion version, Function(FortniteVersion) function) {
-    versions.update((val) => function(version));
-  }
+  void updateVersion(FortniteVersion version, Function(FortniteVersion) function) => versions.update((val) => function(version));
 }

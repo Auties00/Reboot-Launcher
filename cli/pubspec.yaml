@@ -5,14 +5,15 @@ version: "10.0.7"
 publish_to: 'none'
 
 environment:
-  sdk: ">=2.19.0 <=3.5.3"
+  sdk: ">=3.0.0 <=3.5.3"
 
 dependencies:
   reboot_common:
     path: ./../common
   tint: ^2.0.1
-  interact: ^2.2.0
+  interact_cli: ^2.4.0
   args: ^2.6.0
+  version: ^3.0.2
 
 dependency_overrides:
   xml: ^6.3.0

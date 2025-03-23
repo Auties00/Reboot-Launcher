@@ -55,6 +55,7 @@ begin
         '   Allow DLL injection',
         ' The Reboot Launcher needs to inject DLLs into Fortnite to create the game server',
         'Selecting the option below will add the Reboot Launcher to the Windows Exclusions list. ' +
+        'If you are using another AntiVirus, it might be necessary to add an exclusion manually. ' +
         'This is necessary because DLL injection is often detected as a virus, but is necessary to modify Fortnite. ' +
         'This option was designed for advanced users who want to manually manage the exclusions list on their machine. ' +
         'If you do not trust the Reboot Launcher, you can audit the source code at https://github.com/Auties00/reboot_launcher and build it from source.',
