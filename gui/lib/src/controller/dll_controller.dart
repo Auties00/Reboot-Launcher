@@ -105,14 +105,25 @@ class DllController extends GetxController {
             duration: null
         );
       }
-      await Future.wait(
+      final result = await Future.wait(
           [
             downloadRebootDll(rebootBeforeS20DllFile, beforeS20Mirror.text, false),
             downloadRebootDll(rebootAboveS20DllFile, aboveS20Mirror.text, true),
             Future.delayed(const Duration(seconds: 1))
+                .then((_) => true)
           ],
           eagerError: false
-      );
+      ).then((values) => values.reduce((first, second) => first && second));
+      if(!result) {
+        status.value = UpdateStatus.error;
+        showRebootInfoBar(
+            translations.downloadDllAntivirus(antiVirusName ?? defaultAntiVirusName, "reboot"),
+            duration: infoBarLongDuration,
+            severity: InfoBarSeverity.error
+        );
+        infoBarEntry?.close();
+        return false;
+      }
       timestamp.value = DateTime.now().millisecondsSinceEpoch;
       status.value = UpdateStatus.success;
       infoBarEntry?.close();

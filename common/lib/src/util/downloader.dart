@@ -514,23 +514,38 @@ Future<bool> downloadDependency(InjectableDll dll, String outputPath) async {
     }
 }
 
-Future<void> downloadRebootDll(File file, String url, bool aboveS20) async {
+Future<bool> downloadRebootDll(File file, String url, bool aboveS20) async {
     Directory? outputDir;
     try {
         var response = await http.get(Uri.parse(url));
         if(response.statusCode != 200) {
             response = await http.get(Uri.parse(aboveS20 ? _kRebootAboveS20FallbackDownloadUrl : _kRebootBelowS20FallbackDownloadUrl));
             if(response.statusCode != 200) {
-                throw Exception("status code ${response.statusCode}");
+                throw "status code ${response.statusCode}";
             }
         }
 
         outputDir = await installationDirectory.createTemp("reboot_out");
         final tempZip = File("${outputDir.path}\\reboot.zip");
-        await tempZip.writeAsBytes(response.bodyBytes, flush: true);
-        await extractFileToDisk(tempZip.path, outputDir.path);
-        final rebootDll = File(outputDir.listSync().firstWhere((element) => path.extension(element.path) == ".dll").path);
-        await file.writeAsBytes(await rebootDll.readAsBytes(), flush: true);
+
+        try {
+            await tempZip.writeAsBytes(response.bodyBytes, flush: true); // Write reboot.zip to disk
+
+            await tempZip.readAsBytes(); // Check implicitly if antivirus doesn't like reboot
+
+            await extractFileToDisk(tempZip.path, outputDir.path);
+
+            final rebootDll = outputDir.listSync()
+                .firstWhere((element) => path.extension(element.path) == ".dll") as File;
+            final rebootDllSource = await rebootDll.readAsBytes();
+            await file.writeAsBytes(rebootDllSource, flush: true);
+
+            await file.readAsBytes(); // Check implicitly if antivirus doesn't like reboot
+
+            return true;
+        } catch(_) {
+            return false; // Anti virus probably flagged reboot
+        }
     } finally{
         if(outputDir != null) {
             delete(outputDir);
