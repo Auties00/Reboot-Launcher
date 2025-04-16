@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/game_controller.dart';
@@ -12,6 +11,7 @@ import 'package:reboot_launcher/src/util/os.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/util/types.dart';
 import 'package:reboot_launcher/src/widget/file/file_selector.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:windows_taskbar/windows_taskbar.dart';
 
 class DownloadVersionDialog extends StatefulWidget {
@@ -75,15 +75,24 @@ class _DownloadVersionDialogState extends State<DownloadVersionDialog> {
                 buttons: _stopButton
             );
           case _DownloadStatus.error:
-            return ErrorDialog(
-                exception: _error ?? Exception(translations.unknownError),
-                stackTrace: _stackTrace,
-                errorMessageBuilder: (exception) {
-                  var error = exception.toString();
-                  error = error.after("Error: ")?.replaceAll(":", ",") ?? error.after(": ") ?? error;
-                  error = error.toLowerCase();
-                  return translations.downloadVersionError(error);
-                }
+            final build = _build.value;
+            var error = _error?.toString() ?? translations.unknownError;
+            error = error.after("Error: ")?.replaceAll(":", ",") ?? error.after(": ") ?? error;
+            error = error.toLowerCase();
+            return InfoDialog(
+              text: translations.downloadVersionError(error),
+              buttons: [
+                DialogButton(
+                    type: ButtonType.secondary,
+                    text: translations.defaultDialogSecondaryAction
+                ),
+                if(build != null)
+                  DialogButton(
+                      type: ButtonType.primary,
+                      text: translations.downloadManually,
+                      onTap: () => launchUrlString(build.link)
+                  ),
+              ],
             );
           case _DownloadStatus.done:
             return InfoDialog(

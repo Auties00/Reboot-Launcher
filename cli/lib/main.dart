@@ -16,7 +16,12 @@ const Command _build = Command(name: 'versions', parameters: [], subCommands: [_
 const Command _play = Command(name: 'play', parameters: [], subCommands: []);
 const Command _host = Command(name: 'host', parameters: [], subCommands: []);
 const Command _backend = Command(name: 'backend', parameters: [], subCommands: []);
-final List<String> _versions = downloadableBuilds.map((build) => build.version.toString()).toList(growable: false);
+final List<String> _versions = downloadableBuilds.map((build) => build.gameVersion).toList(growable: false);
+const String _playVersionAction = 'Play';
+const String _hostVersionAction = 'Host';
+const String _deleteVersionAction = 'Delete';
+const String _infoVersionAction = 'Info';
+const List<String> _versionActions = [_playVersionAction, _hostVersionAction, _deleteVersionAction, _infoVersionAction];
 
 void main(List<String> args) async {
   enableLoggingToConsole = false;
@@ -98,19 +103,46 @@ Future<void> _handleBuildCommand(CommandCall? call) async {
 }
 
 void _handleBuildListCommand(CommandCall commandCall) {
-  final versions = readVersions();
+  List<FortniteVersion> versions;
+  try {
+    versions = readVersions();
+  }catch(error) {
+    print("❌ $error");
+    return;
+  }
+
+  if(versions.isEmpty) {
+    print("❌ No versions found");
+    return;
+  }
+
   final versionSelector = Select.withTheme(
       prompt: ' Select a version:',
-      options: versions.map((version) => version.content.toString()).toList(growable: false),
+      options: versions.map((version) => version.gameVersion).toList(growable: false),
       theme: Theme.colorfulTheme.copyWith(inputPrefix: '❓', inputSuffix: '', successSuffix: '', errorPrefix: '❌')
   );
   final version = versions[versionSelector.interact()];
   final actionSelector = Select.withTheme(
       prompt: ' Select an action:',
-      options: ['Play', 'Host', 'Delete', 'Open in Explorer'],
+      options: _versionActions,
       theme: Theme.colorfulTheme.copyWith(inputPrefix: '❓', inputSuffix: '', successSuffix: '', errorPrefix: '❌')
   );
-  actionSelector.interact();
+  final action = _versionActions[actionSelector.interact()];
+  switch(action) {
+    case _playVersionAction:
+       break;
+    case _hostVersionAction:
+      break;
+    case _deleteVersionAction:
+      break;
+    case _infoVersionAction:
+      print('');
+  print("""
+🏷️ ${"Version: ".cyan()} ${version.gameVersion}
+📁 ${"Location:".cyan()} ${version.location.path}
+""".green());
+      break;
+  }
 }
 
 Future<void> _handleBuildImportCommand(CommandCall call) async {
@@ -125,8 +157,8 @@ Future<void> _handleBuildImportCommand(CommandCall call) async {
   }
 
   final fortniteVersion = FortniteVersion(
-    name: "dummy",
-      content: Version.parse(version),
+      name: '',
+      gameVersion: version,
       location: Directory(path)
   );
   writeVersion(fortniteVersion);
@@ -197,18 +229,32 @@ Future<bool> _checkBuildPath(String path, bool existing) async {
   if (existing) {
     final checker = Spinner.withTheme(
         icon: '✅',
-        rightPrompt: (status) => status != SpinnerStateType.inProgress ? 'Finished looking for FortniteClient-Win64-Shipping.exe' : 'Looking for FortniteClient-Win64-Shipping.exe...',
+        rightPrompt: (status) {
+          switch(status) {
+            case SpinnerStateType.inProgress:
+              return 'Looking for FortniteClient-Win64-Shipping.exe...';
+            case SpinnerStateType.done:
+              return 'Finished looking for FortniteClient-Win64-Shipping.exe';
+            case SpinnerStateType.failed:
+              return 'Failed to look for FortniteClient-Win64-Shipping.exe';
+          }
+        },
         theme: Theme.colorfulTheme.copyWith(successSuffix: '', errorPrefix: '❌', spinners: '🕐 🕑 🕒 🕓 🕔 🕕 🕖 🕗 🕘 🕙 🕚 🕛'.split(' '))
     ).interact();
-    final result = await Future.wait([
-      Future.delayed(const Duration(seconds: 1)).then((_) => true),
-      Isolate.run(() => FortniteVersionExtension.findFiles(directory, "FortniteClient-Win64-Shipping.exe") != null)
-    ]).then((values) => values.reduce((first, second) => first && second));
-    checker.done();
-    if(!result) {
-      print("❌ Cannot find FortniteClient-Win64-Shipping.exe: $path");
+
+    final files = await findFiles(directory, "FortniteClient-Win64-Shipping.exe")
+        .withMinimumDuration(const Duration(seconds: 1));
+    if(files.isEmpty) {
+      print("❌ Cannot find FortniteClient-Win64-Shipping.exe in $path");
       return false;
     }
+
+    if(files.length > 1) {
+      print("❌ There must be only one executable named FortniteClient-Win64-Shipping.exe in $path");
+      return false;
+    }
+
+    checker.done();
   }
 
   return true;
@@ -309,7 +355,7 @@ Future<void> _handleBuildDownloadCommand(CommandCall call) async {
   }
 
   final parsedVersion = Version.parse(version);
-  final build = downloadableBuilds.firstWhereOrNull((build) => build.version == parsedVersion);
+  final build = downloadableBuilds.firstWhereOrNull((build) => Version.parse(build.gameVersion) == parsedVersion);
   if(build == null) {
     print('');
     print("❌ Cannot find mirror for version: $parsedVersion");
@@ -339,8 +385,8 @@ Future<void> _handleBuildDownloadCommand(CommandCall call) async {
         downloader.done();
         receivePort.close();
         final fortniteVersion = FortniteVersion(
-          name: "dummy",
-            content: parsedVersion,
+            name: "dummy",
+            gameVersion: version,
             location: parsedDirectory
         );
         writeVersion(fortniteVersion);

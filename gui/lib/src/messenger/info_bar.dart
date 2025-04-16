@@ -5,7 +5,7 @@ const infoBarLongDuration = Duration(seconds: 4);
 const infoBarShortDuration = Duration(seconds: 2);
 const _height = 64.0;
 
-InfoBarEntry showRebootInfoBar(dynamic text, {
+InfoBarEntry showRebootInfoBar(String text, {
   InfoBarSeverity severity = InfoBarSeverity.info,
   bool loading = false,
   Duration? duration = infoBarShortDuration,

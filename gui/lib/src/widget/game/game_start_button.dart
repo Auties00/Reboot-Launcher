@@ -7,6 +7,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:path/path.dart';
+import 'package:port_forwarder/port_forwarder.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/src/controller/backend_controller.dart';
 import 'package:reboot_launcher/src/controller/dll_controller.dart';
@@ -14,7 +15,6 @@ import 'package:reboot_launcher/src/controller/game_controller.dart';
 import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 import 'package:reboot_launcher/src/messenger/dialog.dart';
 import 'package:reboot_launcher/src/messenger/info_bar.dart';
-import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/matchmaker.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -110,6 +110,7 @@ class _LaunchButtonState extends State<LaunchButton> {
         return;
       }
       log("[${host ? 'HOST' : 'GAME'}] Backend works");
+
       final headless = _hostingController.headless.value;
       log("[${host ? 'HOST' : 'GAME'}] Implicit game server metadata: headless($headless)");
       final linkedHostingInstance = await _startMatchMakingServer(version, host, headless, false);
@@ -119,6 +120,16 @@ class _LaunchButtonState extends State<LaunchButton> {
       if(!started) {
         result?.kill();
         return;
+      }
+
+      if(host || linkedHostingInstance != null) {
+        if (_dllController.gameServerPort.text == kDefaultBackendPort.toString()) {
+          _onStop(
+              reason: _StopReason.gameServerPortError,
+              host: host
+          );
+          return;
+        }
       }
 
       if(!host) {
@@ -131,7 +142,7 @@ class _LaunchButtonState extends State<LaunchButton> {
           reason: _StopReason.corruptedVersionError,
           error: exception.toString(),
           stackTrace: stackTrace,
-        host: host
+          host: host
       );
     } catch (exception, stackTrace) {
       _onStop(
@@ -213,6 +224,7 @@ class _LaunchButtonState extends State<LaunchButton> {
     log("[${host ? 'HOST' : 'GAME'}] Created game process: ${gameProcess}");
     final instance = GameInstance(
         version: version.gameVersion,
+        host: host,
         gamePid: gameProcess,
         launcherPid: launcherProcess,
         eacPid: eacProcess,
@@ -232,6 +244,22 @@ class _LaunchButtonState extends State<LaunchButton> {
 
   Future<int?> _createGameProcess(FortniteVersion version, bool host, bool headless, GameInstance? linkedHosting) async {
     log("[${host ? 'HOST' : 'GAME'}] Starting game process...");
+    try {
+      log("[${host ? 'HOST' : 'GAME'}] Deleting $kGFSDKAftermathLibDll...");
+      final dlls = await findFiles(version.location, kGFSDKAftermathLibDll);
+      log("[${host ? 'HOST' : 'GAME'}] Found ${dlls.length} to delete for $kGFSDKAftermathLibDll");
+      for(final dll in dlls) {
+        log("[${host ? 'HOST' : 'GAME'}] Deleting ${dll.path}...");
+        final result = await delete(dll);
+        if(result) {
+          log("[${host ? 'HOST' : 'GAME'}] Deleted ${dll.path}");
+        }else {
+          log("[${host ? 'HOST' : 'GAME'}] Cannot delete ${dll.path}");
+        }
+      }
+    }catch(_) {
+
+    }
     final shippingExecutables = await findFiles(version.location, kShippingExe);
     if(shippingExecutables.isEmpty){
       log("[${host ? 'HOST' : 'GAME'}] No game executable found");
@@ -421,36 +449,30 @@ class _LaunchButtonState extends State<LaunchButton> {
       _gameClientInfoBar?.close();
     }
 
-    final theme = FluentTheme.of(appNavigatorKey.currentContext!);
     try {
-      _gameServerInfoBar = showRebootInfoBar(
-          translations.waitingForGameServer,
-          loading: true,
-          duration: null
-      );
       final gameServerPort = _dllController.gameServerPort.text;
-      final pingOperation = pingGameServerOrTimeout(
-          "127.0.0.1:$gameServerPort",
-          const Duration(minutes: 2)
-      );
-      this._pingOperation = pingOperation;
-      final localPingResult = await pingOperation.future;
-      _gameServerInfoBar?.close();
-      if (!localPingResult) {
-        showRebootInfoBar(
-            translations.gameServerStartWarning,
-            severity: InfoBarSeverity.error,
-            duration: infoBarLongDuration
-        );
+      final started = await _checkLocalGameServer(gameServerPort);
+      if(!started) {
+        if (_hostingController.instance.value?.killed != true) {
+          showRebootInfoBar(
+              translations.gameServerStartWarning,
+              severity: InfoBarSeverity.error,
+              duration: infoBarLongDuration
+          );
+        }
         return;
       }
       _backendController.joinLocalhost();
-      final accessible = await _checkGameServer(theme, gameServerPort);
+      final accessible = await _checkPublicGameServer(gameServerPort);
       if (!accessible) {
         showRebootInfoBar(
-            translations.gameServerStartLocalWarning,
-            severity: InfoBarSeverity.warning,
-            duration: infoBarLongDuration
+          translations.gameServerStartLocalWarning,
+          severity: InfoBarSeverity.warning,
+          duration: infoBarLongDuration,
+          action: Button(
+            onPressed: () => launchUrlString("https://github.com/Auties00/reboot_launcher/blob/master/documentation/$currentLocale/PortForwarding.md"),
+            child: Text(translations.checkGameServerFixAction),
+          ),
         );
         return;
       }
@@ -469,7 +491,30 @@ class _LaunchButtonState extends State<LaunchButton> {
     }
   }
 
-  Future<bool> _checkGameServer(FluentThemeData theme, String gameServerPort) async {
+  Future<bool> _checkLocalGameServer(String gameServerPort) async {
+    try {
+      _gameServerInfoBar = showRebootInfoBar(
+          translations.waitingForGameServer,
+          loading: true,
+          duration: null
+      );
+      final gameServerPort = _dllController.gameServerPort.text;
+      final pingOperation = pingGameServerOrTimeout(
+          "127.0.0.1:$gameServerPort",
+          const Duration(minutes: 2)
+      );
+      this._pingOperation = pingOperation;
+      final localPingResult = await pingOperation.future;
+      _gameServerInfoBar?.close();
+      return localPingResult;
+    }catch(_) {
+      _gameServerInfoBar?.close();
+      return false;
+    }
+  }
+
+
+  Future<bool> _checkPublicGameServer(String gameServerPort) async {
     try {
       _gameServerInfoBar = showRebootInfoBar(
           translations.checkingGameServer,
@@ -477,43 +522,64 @@ class _LaunchButtonState extends State<LaunchButton> {
           duration: null
       );
       final publicIp = await Ipify.ipv4();
-      final available = await pingGameServer("$publicIp:$gameServerPort");
-      if(available) {
+      var pingOperation = await pingGameServerOrTimeout(
+          "$publicIp:$gameServerPort",
+          const Duration(seconds: 10)
+      );
+      _pingOperation = pingOperation;
+      var publicPingResult = await pingOperation.future;
+      if (publicPingResult) {
         _gameServerInfoBar?.close();
         return true;
       }
 
-      final pingOperation = pingGameServerOrTimeout(
+      final gateway = await Gateway.discover();
+      if (gateway == null) {
+        _gameServerInfoBar?.close();
+        return false;
+      }
+
+      final forwarded = await gateway.openPort(
+          protocol: PortType.udp,
+          externalPort: int.parse(gameServerPort),
+          portDescription: "Reboot Game Server"
+      );
+      if (!forwarded) {
+        _gameServerInfoBar?.close();
+        return false;
+      }
+
+      // Give the modem a couple of seconds just in case
+      // This is not technically necessary, but I can't guarantee that the modem has no race conditions
+      // So might as well wait
+      await Future.delayed(const Duration(seconds: 5));
+
+      pingOperation = await pingGameServerOrTimeout(
           "$publicIp:$gameServerPort",
-          const Duration(days: 1)
+          const Duration(seconds: 10)
       );
-      this._pingOperation = pingOperation;
+      _pingOperation = pingOperation;
+      publicPingResult = await pingOperation.future;
       _gameServerInfoBar?.close();
-      _gameServerInfoBar = showRebootInfoBar(
-          translations.checkGameServerFixMessage(gameServerPort),
-          action: Button(
-            onPressed: () => launchUrlString("https://github.com/Auties00/reboot_launcher/blob/master/documentation/$currentLocale/PortForwarding.md"),
-            child: Text(translations.checkGameServerFixAction),
-          ),
-          severity: InfoBarSeverity.warning,
-          duration: null,
-          loading: true
-      );
-      final result = await pingOperation.future;
-      _gameServerInfoBar?.close();
-      return result;
+      return publicPingResult;
     }catch(_) {
       _gameServerInfoBar?.close();
       return false;
     }
   }
 
-  Future<void> _onStop({required _StopReason reason, required bool host, String? error, StackTrace? stackTrace}) async {
+  Future<void> _onStop({
+    required _StopReason reason,
+    required bool host,
+    String? error,
+    StackTrace? stackTrace,
+    bool interactive = true
+  }) async {
     if(host) {
       try {
         _pingOperation?.complete(false);
       } catch (_) {
-        // Ignore: might be running, don't bother checking
+        // Ignore: might have been already terminated, don't bother checking
       } finally {
         _pingOperation = null;
       }
@@ -545,107 +611,121 @@ class _LaunchButtonState extends State<LaunchButton> {
     if(child != null) {
       await _onStop(
           reason: reason,
-          host: host
+          host: child.host,
+          error: error,
+          stackTrace: stackTrace,
+          interactive: false
       );
     }
 
     _setStarted(host, false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if(host == true) {
-        _gameServerInfoBar?.close();
-      }else {
-        _gameClientInfoBar?.close();
-      }
-    });
 
-    switch(reason) {
-      case _StopReason.backendError:
-      case _StopReason.matchmakerError:
-      case _StopReason.normal:
-        break;
-      case _StopReason.missingVersionError:
-        showRebootInfoBar(
-          translations.missingVersionError,
-          severity: InfoBarSeverity.error,
-          duration: infoBarLongDuration,
-        );
-        break;
-      case _StopReason.missingExecutableError:
-        showRebootInfoBar(
-          translations.missingExecutableError,
-          severity: InfoBarSeverity.error,
-          duration: infoBarLongDuration,
-        );
-        break;
-      case _StopReason.multipleExecutablesError:
-        showRebootInfoBar(
-          translations.multipleExecutablesError(error ?? translations.unknown),
-          severity: InfoBarSeverity.error,
-          duration: infoBarLongDuration,
-        );
-        break;
-      case _StopReason.exitCode:
-        if(instance != null && !instance.launched) {
-          final injectedDlls = instance.injectedDlls;
+    if(interactive) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if(host == true) {
+          _gameServerInfoBar?.close();
+        }else {
+          _gameClientInfoBar?.close();
+        }
+      });
+
+      switch(reason) {
+        case _StopReason.backendError:
+        case _StopReason.matchmakerError:
+        case _StopReason.normal:
+          break;
+        case _StopReason.missingVersionError:
           showRebootInfoBar(
-            translations.corruptedVersionError(injectedDlls.isEmpty ? translations.none : injectedDlls.map((element) => element.name).join(", ")),
+            translations.missingVersionError,
             severity: InfoBarSeverity.error,
             duration: infoBarLongDuration,
           );
-        }
-        break;
-      case _StopReason.corruptedVersionError:
-        showRebootInfoBar(
-            translations.corruptedVersionError,
+          break;
+        case _StopReason.missingExecutableError:
+          showRebootInfoBar(
+            translations.missingExecutableError,
             severity: InfoBarSeverity.error,
             duration: infoBarLongDuration,
-            action: Button(
-              onPressed: () => launchUrl(launcherLogFile.uri),
-              child: Text(translations.openLog),
-            )
-        );
-        break;
-      case _StopReason.corruptedDllError:
-        showRebootInfoBar(
-          translations.corruptedDllError(error ?? translations.unknownError),
-          severity: InfoBarSeverity.error,
-          duration: infoBarLongDuration,
-        );
-        break;
-      case _StopReason.missingCustomDllError:
-        showRebootInfoBar(
-          translations.missingCustomDllError(error!),
-          severity: InfoBarSeverity.error,
-          duration: infoBarLongDuration,
-        );
-        break;
-      case _StopReason.tokenError:
-        _backendController.stop(interactive: false);
-        final injectedDlls = instance?.injectedDlls;
-        showRebootInfoBar(
-            translations.tokenError(injectedDlls == null || injectedDlls.isEmpty ? translations.none : injectedDlls.map((element) => element.name).join(", ")),
+          );
+          break;
+        case _StopReason.multipleExecutablesError:
+          showRebootInfoBar(
+            translations.multipleExecutablesError(error ?? translations.unknown),
             severity: InfoBarSeverity.error,
             duration: infoBarLongDuration,
-            action: Button(
-              onPressed: () => launchUrl(launcherLogFile.uri),
-              child: Text(translations.openLog),
-            )
-        );
-        break;
-      case _StopReason.crash:
-        showRebootInfoBar(
-          translations.fortniteCrashError(host ? "game server" : "client"),
-          severity: InfoBarSeverity.error,
-          duration: infoBarLongDuration,
-        );
-        break;
-      case _StopReason.unknownError:
-        showRebootInfoBar(
-          translations.unknownFortniteError(error ?? translations.unknownError),
-          severity: InfoBarSeverity.error,
-          duration: infoBarLongDuration,
-        );
-        break;
+          );
+          break;
+        case _StopReason.exitCode:
+          if(instance != null && !instance.launched) {
+            final injectedDlls = instance.injectedDlls;
+            showRebootInfoBar(
+              translations.corruptedVersionError(injectedDlls.isEmpty ? translations.none : injectedDlls.map((element) => element.name).join(", ")),
+              severity: InfoBarSeverity.error,
+              duration: infoBarLongDuration,
+            );
+          }
+          break;
+        case _StopReason.corruptedVersionError:
+          final injectedDlls = instance?.injectedDlls ?? [];
+          showRebootInfoBar(
+              translations.corruptedVersionError(injectedDlls.isEmpty ? translations.none : injectedDlls.map((element) => element.name).join(", ")),
+              severity: InfoBarSeverity.error,
+              duration: infoBarLongDuration,
+              action: Button(
+                onPressed: () => launchUrl(launcherLogFile.uri),
+                child: Text(translations.openLog),
+              )
+          );
+          break;
+        case _StopReason.corruptedDllError:
+          showRebootInfoBar(
+            translations.corruptedDllError(error ?? translations.unknownError),
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration,
+          );
+          break;
+        case _StopReason.missingCustomDllError:
+          showRebootInfoBar(
+            translations.missingCustomDllError(error!),
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration,
+          );
+          break;
+        case _StopReason.tokenError:
+          _backendController.stop(interactive: false);
+          final injectedDlls = instance?.injectedDlls;
+          showRebootInfoBar(
+              translations.tokenError(injectedDlls == null || injectedDlls.isEmpty ? translations.none : injectedDlls.map((element) => element.name).join(", ")),
+              severity: InfoBarSeverity.error,
+              duration: infoBarLongDuration,
+              action: Button(
+                onPressed: () => launchUrl(launcherLogFile.uri),
+                child: Text(translations.openLog),
+              )
+          );
+          break;
+        case _StopReason.crash:
+          showRebootInfoBar(
+            translations.fortniteCrashError(host ? translations.gameServer : translations.client),
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration,
+          );
+          break;
+        case _StopReason.unknownError:
+          showRebootInfoBar(
+            translations.unknownFortniteError(error ?? translations.unknownError),
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration,
+          );
+          break;
+        case _StopReason.gameServerPortError:
+          showRebootInfoBar(
+            translations.gameServerPortEqualsBackendPort(kDefaultBackendPort),
+            severity: InfoBarSeverity.error,
+            duration: infoBarLongDuration,
+          );
+          break;
+      }
     }
   }
 
@@ -698,9 +778,9 @@ class _LaunchButtonState extends State<LaunchButton> {
     if(customDll) {
       log("[${host ? 'HOST' : 'GAME'}] Custom dll -> no recovery");
       _onStop(
-        reason: _StopReason.missingCustomDllError,
-        error: injectable.name,
-        host: host
+          reason: _StopReason.missingCustomDllError,
+          error: injectable.name,
+          host: host
       );
       return null;
     }
@@ -765,6 +845,7 @@ enum _StopReason {
   matchmakerError,
   tokenError,
   unknownError,
+  gameServerPortError,
   exitCode,
   crash;
 

@@ -266,9 +266,6 @@ class _VersionSelectorState extends State<VersionSelector> {
         )
     );
   }
-
-  @override
-  GameController get gameController => _gameController;
 }
 
 enum _ContextualOption {

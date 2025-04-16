@@ -369,7 +369,7 @@ Future<String> extractGameVersion(Directory directory) => Isolate.run(() async {
             log("[VERSION] Engine build: $engineVersionBuild");
             gameVersion = _buildToGameVersion[engineVersionBuild] ?? defaultGameVersion;
           }
-          log("[VERSION] Returning $gameVersion");
+          log("[VERSION] Parsed game version: $gameVersion");
           return gameVersion;
         }
       }

@@ -1,6 +1,6 @@
 name: reboot_launcher
 description: Graphical User Interface for Project Reboot
-version: "10.0.8"
+version: "10.0.9"
 
 publish_to: 'none'
 
@@ -54,6 +54,7 @@ dependencies:
   file_picker: ^8.1.2
   url_launcher: ^6.3.0
   local_notifier: ^0.1.6
+  port_forwarder: ^1.0.0
 
   # Server browser
   supabase_flutter: ^2.7.0

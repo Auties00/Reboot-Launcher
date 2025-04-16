@@ -15,7 +15,13 @@ final Semaphore _semaphore = Semaphore();
 String? _lastIp;
 String? _lastPort;
 
-Stream<ServerResult> startBackend({required ServerType type, required String host, required String port, required bool detached, required void Function(String) onError}) async* {
+Stream<ServerResult> startBackend({
+  required ServerType type,
+  required String host,
+  required String port,
+  required bool detached,
+  required void Function(String) onError
+}) async* {
   Process? process;
   HttpServer? server;
   try {
@@ -147,7 +153,13 @@ Future<Process> startEmbeddedBackend(bool detached, {void Function(String)? onEr
     }
   });
   if(!detached) {
-    process.exitCode.then((exitCode) => log("[BACKEND] Exit code: $exitCode"));
+    process.exitCode.then((exitCode) {
+      if(!killed) {
+        log("[BACKEND] Exit code: $exitCode");
+        onError?.call("Exit code: $exitCode");
+        killed = true;
+      }
+    });
   }
   return process;
 }

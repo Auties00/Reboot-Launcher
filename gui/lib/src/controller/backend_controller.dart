@@ -163,24 +163,26 @@ class BackendController extends GetxController {
         port: port.text,
         detached: detached.value,
         onError: (errorMessage) {
-          stop(interactive: false);
-          Get.find<GameController>()
-              .instance
-              .value
-              ?.kill();
-          Get.find<HostingController>()
-              .instance
-              .value
-              ?.kill();
-          _showRebootInfoBar(
-              translations.backendErrorMessage,
-              severity: InfoBarSeverity.error,
-              duration: infoBarLongDuration,
-              action: Button(
-                onPressed: () => launchUrl(launcherLogFile.uri),
-                child: Text(translations.openLog),
-              )
-          );
+          if(started.value) {
+            stop(interactive: false);
+            Get.find<GameController>()
+                .instance
+                .value
+                ?.kill();
+            Get.find<HostingController>()
+                .instance
+                .value
+                ?.kill();
+            _showRebootInfoBar(
+                translations.backendErrorMessage,
+                severity: InfoBarSeverity.error,
+                duration: infoBarLongDuration,
+                action: Button(
+                  onPressed: () => launchUrl(launcherLogFile.uri),
+                  child: Text(translations.openLog),
+                )
+            );
+          }
         }
     );
     final completer = Completer<bool>();

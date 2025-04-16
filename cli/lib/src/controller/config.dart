@@ -9,10 +9,20 @@ List<FortniteVersion> readVersions() {
     return [];
   }
 
-  Iterable decodedVersionsJson = jsonDecode(file.readAsStringSync());
-  return decodedVersionsJson
-      .map((entry) => FortniteVersion.fromJson(entry))
-      .toList();
+  try {
+    Iterable decodedVersionsJson = jsonDecode(file.readAsStringSync());
+    return decodedVersionsJson
+        .map((entry) {
+      try {
+        return FortniteVersion.fromJson(entry);
+      }catch(error) {
+        throw "Cannot parse version: $error";
+      }
+    })
+        .toList();
+  }catch(error) {
+    throw "Cannot parse versions: $error";
+  }
 }
 
 void writeVersion(FortniteVersion version) {

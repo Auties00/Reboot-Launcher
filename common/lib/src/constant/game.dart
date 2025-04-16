@@ -30,4 +30,5 @@ const String kShippingExe = "FortniteClient-Win64-Shipping.exe";
 const String kLauncherExe = "FortniteLauncher.exe";
 const String kEacExe = "FortniteClient-Win64-Shipping_EAC.exe";
 const String kCrashReportExe = "CrashReportClient.exe";
+const String kGFSDKAftermathLibDll = "GFSDK_Aftermath_Lib.dll";
 final Version kMaxAllowedVersion = Version.parse("30.10");

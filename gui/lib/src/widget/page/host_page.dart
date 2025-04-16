@@ -131,7 +131,7 @@ class _HostingPageState extends RebootPageState<HostPage> {
                 FluentIcons.password_24_regular
             ),
             title: Text(translations.hostGameServerPasswordName),
-            subtitle: Text(translations.hostGameServerDescriptionDescription),
+            subtitle: Text(translations.hostGameServerPasswordDescription),
             content: Obx(() => OverlayTarget(
               key: hostInfoPasswordOverlayTargetKey,
               child: TextFormBox(

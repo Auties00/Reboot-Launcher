@@ -243,8 +243,8 @@
   "gameServerStarted": "The game server was started successfully",
   "gameClientStarted": "The game client was started successfully",
   "checkingGameServer": "Checking if other players can join the game server...",
-  "checkGameServerFixMessage": "Other players can't join the game server as port {port} isn't open",
-  "checkGameServerFixAction": "Fix",
+  "checkGameServerFixMessage": "The game server was started successfully, but other players can't join yet as port {port} isn't open",
+  "checkGameServerFixAction": "Learn more",
   "infoName": "Info",
   "emptyVersionName": "Empty version name",
   "versionAlreadyExists": "This version already exists",
@@ -379,5 +379,9 @@
   "importedVersion": "Successfully imported version",
   "importVersionMissingShippingExeError": "Cannot import version: {name} should exist in the directory",
   "importVersionMultipleShippingExesError": "Cannot import version: only one {name} should exist in the directory",
-  "importVersionUnsupportedVersionError": "This version of Fortnite is not supported by the launcher"
+  "importVersionUnsupportedVersionError": "This version of Fortnite is not supported by the launcher",
+  "downloadManually": "Download manually",
+  "gameServerPortEqualsBackendPort": "The game server port cannot be {backendPort} as its reserved for the backend",
+  "gameServer": "game server",
+  "client": "client"
 }
