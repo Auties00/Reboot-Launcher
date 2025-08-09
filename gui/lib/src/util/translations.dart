@@ -1,6 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 import 'package:intl/intl.dart';
+import 'package:reboot_launcher/l10n/reboot_localizations.dart';
 
 AppLocalizations? _translations;
 bool _init = false;

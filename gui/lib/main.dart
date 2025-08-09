@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
-import 'package:flutter_gen/gen_l10n/reboot_localizations.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -23,6 +22,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
+
+import 'l10n/reboot_localizations.dart';
 
 const double kDefaultWindowWidth = 1164;
 const double kDefaultWindowHeight = 864;
