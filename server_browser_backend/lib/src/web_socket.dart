@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:server_browser_backend/src/server_entry.dart';
+import 'package:server_browser_backend/src/server_browser_entry.dart';
 
-class WebSocketServer {
+class ServerBrowserBackend {
   static const String addEvent = 'add';
   static const String removeEvent = 'remove';
+  static const String pingEvent = 'ping';
 
-  final Map<String, ServerEntry> _entries = {};
+  final Map<String, ServerBrowserEntry> _entries = {};
   final Set<WebSocket> _clients = {};
 
   late HttpServer _server;
@@ -54,8 +55,11 @@ class WebSocketServer {
       type = data['type'];
       final payload = data['data'];
       switch (type) {
+        case pingEvent:
+          client.add(json.encode({"type": pingEvent}));
+          break;
         case addEvent:
-          final entry = ServerEntry.fromJson(payload);
+          final entry = ServerBrowserEntry.fromJson(payload);
           _entries[entry.id] = entry;
           _broadcastEvent(addEvent, entry.toJson());
           break;

@@ -1,0 +1,1 @@
+dart compile exe bin/main.dart -o dist/server.exe

@@ -3,21 +3,21 @@ import 'dart:collection';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
+import 'package:reboot_launcher/src/pager/page_type.dart';
 import 'package:reboot_launcher/src/messenger/overlay.dart';
-import 'package:reboot_launcher/src/page/page.dart';
-import 'package:reboot_launcher/src/page/page_type.dart';
-import 'package:reboot_launcher/src/widget/page/backend_page.dart';
-import 'package:reboot_launcher/src/widget/page/browser_page.dart';
-import 'package:reboot_launcher/src/widget/page/host_page.dart';
-import 'package:reboot_launcher/src/widget/page/info_page.dart';
-import 'package:reboot_launcher/src/widget/page/play_page.dart';
-import 'package:reboot_launcher/src/widget/page/settings_page.dart';
-import 'package:reboot_launcher/src/widget/window/info_bar_area.dart';
+import 'package:reboot_launcher/src/page/backend_page.dart';
+import 'package:reboot_launcher/src/page/browser_page.dart';
+import 'package:reboot_launcher/src/page/host_page.dart';
+import 'package:reboot_launcher/src/page/info_page.dart';
+import 'package:reboot_launcher/src/pager/abstract_page.dart';
+import 'package:reboot_launcher/src/page/play_page.dart';
+import 'package:reboot_launcher/src/page/settings_page.dart';
+import 'package:reboot_launcher/src/messenger/info_bar_area.dart';
 
 final StreamController<void> pagesController = StreamController.broadcast();
 bool hitBack = false;
 
-final List<RebootPage> pages = [
+final List<AbstractPage> pages = [
   const PlayPage(),
   const HostPage(),
   const BrowsePage(),
@@ -28,7 +28,7 @@ final List<RebootPage> pages = [
 
 final List<GlobalKey<OverlayTargetState>> _flyoutPageControllers = List.generate(pages.length, (_) => GlobalKey());
 
-final RxInt pageIndex = RxInt(RebootPageType.play.index);
+final RxInt pageIndex = RxInt(PageType.play.index);
 
 final HashMap<int, GlobalKey> _pageKeys = HashMap();
 
@@ -51,7 +51,9 @@ GlobalKey getPageKeyByIndex(int index) {
   return result;
 }
 
-bool get hasPageButton => pages[pageIndex.value].hasButton(pageStack.lastOrNull);
+bool get hasPageButton => currentPage.hasButton(currentPageStack.lastOrNull);
+
+AbstractPage get currentPage => pages[pageIndex.value];
 
 final Queue<Object?> appStack = _createAppStack();
 Queue _createAppStack() {
@@ -71,13 +73,12 @@ Queue _createAppStack() {
 
 final Map<int, Queue<String>> _pagesStack = Map.fromEntries(List.generate(pages.length, (index) => MapEntry(index, Queue<String>())));
 
-Queue<String> get pageStack => _pagesStack[pageIndex.value]!;
+Queue<String> get currentPageStack => _pagesStack[pageIndex.value]!;
 
-void addSubPageToStack(String pageName) {
+void addSubPageToCurrent(String pageName) {
   final index = pageIndex.value;
-  final identifier = "${index}_$pageName";
-  appStack.add(identifier);
-  _pagesStack[index]!.add(identifier);
+  appStack.add(pageName);
+  _pagesStack[index]!.add(pageName);
   pagesController.add(null);
 }
 

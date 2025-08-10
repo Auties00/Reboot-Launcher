@@ -5,11 +5,11 @@ import 'package:test/test.dart';
 
 void main() {
   group('WebSocket Server Tests', () {
-    late WebSocketServer server;
+    late ServerBrowserBackend server;
     final int testPort = 8081;
 
     setUp(() async {
-      server = WebSocketServer();
+      server = ServerBrowserBackend();
       await server.start(port: testPort);
     });
 

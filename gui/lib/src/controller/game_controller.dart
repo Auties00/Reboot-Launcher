@@ -16,8 +16,8 @@ class GameController extends GetxController {
   late final TextEditingController username;
   late final TextEditingController password;
   late final TextEditingController customLaunchArgs;
-  late final Rx<List<FortniteVersion>> versions;
-  late final Rxn<FortniteVersion> selectedVersion;
+  late final Rx<List<GameVersion>> versions;
+  late final Rxn<GameVersion> selectedVersion;
   late final RxBool started;
   late final Rxn<GameInstance> instance;
   
@@ -25,7 +25,7 @@ class GameController extends GetxController {
     _storage = appWithNoStorage ? null : GetStorage(storageName);
     Iterable decodedVersionsJson = jsonDecode(_storage?.read("versions") ?? "[]");
     final decodedVersions = decodedVersionsJson
-        .map((entry) => FortniteVersion.fromJson(entry))
+        .map((entry) => GameVersion.fromJson(entry))
         .toList();
     versions = Rx(decodedVersions);
     versions.listen((data) => _saveVersions());
@@ -52,12 +52,12 @@ class GameController extends GetxController {
     instance.value = null;
   }
 
-  FortniteVersion? getVersionByName(String name) {
+  GameVersion? getVersionByName(String name) {
     name = name.trim();
     return versions.value.firstWhereOrNull((element) => element.name == name);
   }
 
-  FortniteVersion? getVersionByGame(String gameVersion) {
+  GameVersion? getVersionByGame(String gameVersion) {
     gameVersion = gameVersion.trim();
     final parsedGameVersion = Version.parse(gameVersion);
     return versions.value.firstWhereOrNull((element) {
@@ -72,12 +72,12 @@ class GameController extends GetxController {
     });
   }
 
-  void addVersion(FortniteVersion version) {
+  void addVersion(GameVersion version) {
     versions.update((val) => val?.add(version));
     selectedVersion.value = version;
   }
 
-  void removeVersion(FortniteVersion version) {
+  void removeVersion(GameVersion version) {
     final index = versions.value.indexOf(version);
     versions.update((val) => val?.removeAt(index));
     if(hasNoVersions) {
@@ -96,5 +96,5 @@ class GameController extends GetxController {
 
   bool get hasNoVersions => versions.value.isEmpty;
 
-  void updateVersion(FortniteVersion version, Function(FortniteVersion) function) => versions.update((val) => function(version));
+  void updateVersion(GameVersion version, Function(GameVersion) function) => versions.update((val) => function(version));
 }

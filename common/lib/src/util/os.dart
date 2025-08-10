@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:reboot_common/common.dart';
@@ -41,7 +40,7 @@ String? get antiVirusName {
   final hr = CoCreateInstance(
     rclsid,
     nullptr,
-    CLSCTX.CLSCTX_INPROC_SERVER,
+    CLSCTX_INPROC_SERVER,
     riid,
     pLoc.cast(),
   );
@@ -84,7 +83,7 @@ String? get antiVirusName {
   final hr3 = service.execQuery(
     wql,
     query,
-    WBEM_GENERIC_FLAG_TYPE.WBEM_FLAG_FORWARD_ONLY | WBEM_GENERIC_FLAG_TYPE.WBEM_FLAG_RETURN_IMMEDIATELY,
+    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
     nullptr,
     pEnumerator.cast(),
   );
@@ -125,7 +124,7 @@ String? get antiVirusName {
 
     calloc.free(propName);
 
-    if (SUCCEEDED(hr5) && vtProp.ref.vt == VARENUM.VT_BSTR) {
+    if (SUCCEEDED(hr5) && vtProp.ref.vt == VT_BSTR) {
       final bstr = vtProp.ref.bstrVal;
       result = bstr.toDartString();
     }
@@ -225,7 +224,7 @@ bool killProcessByPort(int port) {
       _TCP_TABLE_OWNER_PID_LISTENER,
       0
   );
-  if (result == WIN32_ERROR.ERROR_INSUFFICIENT_BUFFER) {
+  if (result == ERROR_INSUFFICIENT_BUFFER) {
     calloc.free(pTcpTable);
     pTcpTable = calloc<_MIB_TCPTABLE_OWNER_PID>(dwSize.value);
     result = _getExtendedTcpTable(
@@ -247,7 +246,7 @@ bool killProcessByPort(int port) {
         final pid = row.dwOwningPid;
         calloc.free(pTcpTable);
         calloc.free(dwSize);
-        final hProcess = OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_TERMINATE, FALSE, pid);
+        final hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
         if (hProcess != NULL) {
           final result = TerminateProcess(hProcess, 0);
           CloseHandle(hProcess);
@@ -345,8 +344,8 @@ Future<bool> startElevatedProcess({required String executable, required String a
   var shellInput = calloc<SHELLEXECUTEINFO>();
   shellInput.ref.lpFile = executable.toNativeUtf16();
   shellInput.ref.lpParameters = args.toNativeUtf16();
-  shellInput.ref.nShow = window ? SHOW_WINDOW_CMD.SW_SHOWNORMAL : SHOW_WINDOW_CMD.SW_HIDE;
-  shellInput.ref.fMask = EXECUTION_STATE.ES_AWAYMODE_REQUIRED;
+  shellInput.ref.nShow = window ? SW_SHOWNORMAL : SW_HIDE;
+  shellInput.ref.fMask = ES_AWAYMODE_REQUIRED;
   shellInput.ref.lpVerb = "runas".toNativeUtf16();
   shellInput.ref.cbSize = sizeOf<SHELLEXECUTEINFO>();
   return ShellExecuteEx(shellInput) == 1;
@@ -402,7 +401,7 @@ final _NtSuspendProcess = _ntdll.lookupFunction<Int32 Function(IntPtr hWnd),
     int Function(int hWnd)>('NtSuspendProcess');
 
 bool suspend(int pid) {
-  final processHandle = OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_SUSPEND_RESUME, FALSE, pid);
+  final processHandle = OpenProcess(PROCESS_SUSPEND_RESUME, FALSE, pid);
   try {
     return _NtSuspendProcess(processHandle) == 0;
   } finally {
@@ -411,7 +410,7 @@ bool suspend(int pid) {
 }
 
 bool resume(int pid) {
-  final processHandle = OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_SUSPEND_RESUME, FALSE, pid);
+  final processHandle = OpenProcess(PROCESS_SUSPEND_RESUME, FALSE, pid);
   try {
     return _NtResumeProcess(processHandle) == 0;
   } finally {

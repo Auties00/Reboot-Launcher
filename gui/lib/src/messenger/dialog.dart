@@ -1,9 +1,10 @@
 import 'package:clipboard/clipboard.dart';
 import 'package:fluent_ui/fluent_ui.dart' as fluent show showDialog;
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:reboot_launcher/src/messenger/info_bar.dart';
-import 'package:reboot_launcher/src/page/pages.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:reboot_launcher/src/page/pages.dart';
+
+import 'info_bar.dart';
 
 bool inDialog = false;
 

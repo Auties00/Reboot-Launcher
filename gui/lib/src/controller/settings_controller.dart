@@ -6,8 +6,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
-import 'package:reboot_launcher/src/messenger/info_bar.dart';
 import 'package:reboot_launcher/src/util/translations.dart';
+import 'package:reboot_launcher/src/messenger/info_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:version/version.dart';
 import 'package:yaml/yaml.dart';
@@ -48,51 +48,5 @@ class SettingsController extends GetxController {
     offsetY = position.dy;
     _storage?.write("offset_x", offsetX);
     _storage?.write("offset_y", offsetY);
-  }
-
-  Future<void> notifyLauncherUpdate() async {
-    if (appVersion == null) {
-      return;
-    }
-
-    final pubspec = await _getPubspecYaml();
-    if (pubspec == null) {
-      return;
-    }
-
-    final latestVersion = Version.parse(pubspec["version"]);
-    if (latestVersion <= appVersion) {
-      return;
-    }
-
-    late InfoBarEntry infoBar;
-    infoBar = showRebootInfoBar(
-        translations.updateAvailable(latestVersion.toString()),
-        duration: null,
-        severity: InfoBarSeverity.warning,
-        action: Button(
-          child: Text(translations.updateAvailableAction),
-          onPressed: () {
-            infoBar.close();
-            launchUrl(Uri.parse(
-                "https://github.com/Auties00/reboot_launcher/releases"));
-          },
-        )
-    );
-  }
-
-  Future<dynamic> _getPubspecYaml() async {
-    try {
-      final pubspecResponse = await http.get(Uri.parse(
-          "https://raw.githubusercontent.com/Auties00/reboot_launcher/master/gui/pubspec.yaml"));
-      if (pubspecResponse.statusCode != 200) {
-        return null;
-      }
-
-      return loadYaml(pubspecResponse.body);
-    } catch (error) {
-      log("[UPDATER] Cannot check for updates: $error");
-      return null;
-    }
   }
 }
