@@ -309,10 +309,6 @@ class _HostingPageState extends AbstractPageState<HostPage> {
   );
 
   Future<void> _updateServer() async {
-    if(!_hostingController.published()) {
-      return;
-    }
-
     try {
       final server = await _hostingController.createServerBrowserEntry();
       _serverBrowserController.addServer(server);
@@ -320,7 +316,6 @@ class _HostingPageState extends AbstractPageState<HostPage> {
       _showCannotUpdateGameServer(error);
     }
   }
-
 
   void _showCopiedLink() => showRebootInfoBar(
       translations.hostShareLinkMessageSuccess,

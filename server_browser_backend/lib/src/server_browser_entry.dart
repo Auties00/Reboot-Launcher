@@ -7,7 +7,6 @@ class ServerBrowserEntry {
   final DateTime timestamp;
   final String ip;
   final String author;
-  final bool discoverable;
 
   ServerBrowserEntry({
     required this.id,
@@ -17,8 +16,7 @@ class ServerBrowserEntry {
     required this.password,
     required this.timestamp,
     required this.ip,
-    required this.author,
-    required this.discoverable,
+    required this.author
   });
 
   Map<String, dynamic> toJson() {
@@ -30,8 +28,7 @@ class ServerBrowserEntry {
       'password': password,
       'timestamp': timestamp.toIso8601String(),
       'ip': ip,
-      'author': author,
-      'discoverable': discoverable,
+      'author': author
     };
   }
 
@@ -44,8 +41,7 @@ class ServerBrowserEntry {
       password: json['password'],
       timestamp: DateTime.parse(json['timestamp']),
       ip: json['ip'],
-      author: json['author'],
-      discoverable: json['discoverable'],
+      author: json['author']
     );
   }
 }

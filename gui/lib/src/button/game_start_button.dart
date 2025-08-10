@@ -325,19 +325,34 @@ class _LaunchButtonState extends State<LaunchButton> {
       handleGameOutput(
           line: line,
           host: host,
-          onShutdown: () => _onStop(reason: _StopReason.normal, host: host),
-          onTokenError: () => _onStop(reason: _StopReason.tokenError, host: host),
+          onShutdown: () {
+            log("[${host ? 'HOST' : 'GAME'}] Called shutdown");
+            _onStop(reason: _StopReason.normal, host: host);
+          },
+          onTokenError: () {
+            log("[${host ? 'HOST' : 'GAME'}] Called token error");
+            _onStop(reason: _StopReason.tokenError, host: host);
+          },
           onBuildCorrupted: () {
             if(instance == null) {
+              log("[${host ? 'HOST' : 'GAME'}] Called build corrupted: no instance");
               return;
             }else if(!instance.launched) {
+              log("[${host ? 'HOST' : 'GAME'}] Called build corrupted: not launched");
               _onStop(reason: _StopReason.corruptedVersionError, host: host);
             }else {
+              log("[${host ? 'HOST' : 'GAME'}] Called build corrupted: crash");
               _onStop(reason: _StopReason.crash, host: host);
             }
           },
-          onLoggedIn: () =>_onLoggedIn(host),
-          onMatchEnd: () => _onMatchEnd(version)
+          onLoggedIn: () {
+            log("[${host ? 'HOST' : 'GAME'}] Called logged in");
+            _onLoggedIn(host);
+          },
+          onMatchEnd: () {
+            log("[${host ? 'HOST' : 'GAME'}] Called match end");
+            _onMatchEnd(version);
+          }
       );
     }
     gameProcess.stdOutput.listen((line) => onGameOutput(line, false));

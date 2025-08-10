@@ -25,7 +25,6 @@ class HostingController extends GetxController {
   late final RxBool headless;
   late final RxBool autoRestart;
   late final RxBool started;
-  late final RxBool published;
   late final Rxn<GameInstance> instance;
   late final TextEditingController customLaunchArgs;
 
@@ -51,7 +50,6 @@ class HostingController extends GetxController {
     autoRestart = RxBool(_storage?.read("auto_restart") ?? true);
     autoRestart.listen((value) => _storage?.write("auto_restart", value));
     started = RxBool(false);
-    published = RxBool(false);
     showPassword = RxBool(false);
     instance = Rxn();
     customLaunchArgs = TextEditingController(text: _storage?.read("custom_launch_args") ?? "");

@@ -4,14 +4,18 @@ import 'dart:io';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:path/path.dart' as path;
 import 'package:path/path.dart';
 import 'package:reboot_common/common.dart';
 import 'package:reboot_launcher/main.dart';
-import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:reboot_launcher/src/messenger/info_bar.dart';
+import 'package:reboot_launcher/src/page/settings_page.dart';
+import 'package:reboot_launcher/src/util/translations.dart';
 import 'package:version/version.dart';
+import 'package:path/path.dart' as path;
+import 'package:reboot_launcher/src/controller/game_controller.dart';
+import 'package:reboot_launcher/src/controller/hosting_controller.dart';
 
+// TODO: Refactor me
 class DllController extends GetxController {
   static const String storageName = "v3_dll_storage";
 
@@ -26,6 +30,7 @@ class DllController extends GetxController {
   late final RxBool customGameServer;
   late final RxnInt timestamp;
   late final Rx<UpdateStatus> status;
+  late final Map<GameDll, StreamSubscription?> _subscriptions;
 
   DllController() {
     _storage = appWithNoStorage ? null : GetStorage(storageName);
@@ -44,6 +49,7 @@ class DllController extends GetxController {
     customGameServer.listen((value) => _storage?.write("custom_game_server", value));
     timestamp = RxnInt(_storage?.read("ts"));
     timestamp.listen((value) => _storage?.write("ts", value));
+    _subscriptions = {};
   }
 
   TextEditingController _createController(String key, GameDll dll) {
@@ -73,6 +79,7 @@ class DllController extends GetxController {
     try {
       if(customGameServer.value) {
         status.value = UpdateStatus.success;
+        _listenToFileEvents(GameDll.gameServer);
         return true;
       }
 
@@ -82,6 +89,7 @@ class DllController extends GetxController {
       );
       if(!needsUpdate) {
         status.value = UpdateStatus.success;
+        _listenToFileEvents(GameDll.gameServer);
         return true;
       }
 
@@ -121,6 +129,7 @@ class DllController extends GetxController {
             duration: infoBarShortDuration
         );
       }
+      _listenToFileEvents(GameDll.gameServer);
       return true;
     }catch(message) {
       infoBarEntry?.close();
@@ -215,6 +224,7 @@ class DllController extends GetxController {
 
       if(!force && File(filePath).existsSync()) {
         log("[DLL] $dll already exists");
+        _listenToFileEvents(dll);
         return true;
       }
 
@@ -252,6 +262,7 @@ class DllController extends GetxController {
       }else {
         log("[DLL] Not showing success dialog for $dll");
       }
+      _listenToFileEvents(dll);
       return true;
     }catch(message) {
       log("[DLL] An error occurred while downloading $dll: $message");
@@ -285,6 +296,63 @@ class DllController extends GetxController {
       if(path.equals(controller.text, defaultPath)) {
         await download(injectable, controller.text);
       }
+    }
+  }
+
+  void _listenToFileEvents(GameDll injectable) {
+    final controller = getDllEditingController(injectable);
+    final defaultPath = getDefaultDllPath(injectable);
+
+    void onFileEvent(FileSystemEvent event, String filePath) {
+      if (!path.equals(event.path, filePath)) {
+        return;
+      }
+
+      if(path.equals(filePath, defaultPath)) {
+        Get.find<GameController>()
+            .instance
+            .value
+            ?.kill();
+        Get.find<HostingController>()
+            .instance
+            .value
+            ?.kill();
+        showRebootInfoBar(
+            translations.downloadDllAntivirus(antiVirusName ?? defaultAntiVirusName, injectable.name),
+            duration: infoBarLongDuration,
+            severity: InfoBarSeverity.error
+        );
+      }
+
+      _updateInput(injectable);
+    }
+
+    StreamSubscription subscribe(String filePath) => File(filePath)
+        .parent
+        .watch(events: FileSystemEvent.delete | FileSystemEvent.move)
+        .listen((event) => onFileEvent(event, filePath));
+
+    controller.addListener(() {
+      _subscriptions[injectable]?.cancel();
+      _subscriptions[injectable] = subscribe(controller.text);
+    });
+    _subscriptions[injectable] = subscribe(controller.text);
+  }
+
+  void _updateInput(GameDll injectable) {
+    switch(injectable) {
+      case GameDll.console:
+        settingsConsoleDllInputKey.currentState?.validate();
+        break;
+      case GameDll.auth:
+        settingsAuthDllInputKey.currentState?.validate();
+        break;
+      case GameDll.gameServer:
+        settingsGameServerDllInputKey.currentState?.validate();
+        break;
+      case GameDll.memoryLeak:
+        settingsMemoryDllInputKey.currentState?.validate();
+        break;
     }
   }
 }
