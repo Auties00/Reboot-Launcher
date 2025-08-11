@@ -19,11 +19,6 @@ const String kRebootBelowS20DownloadUrl =
 const String kRebootAboveS20DownloadUrl =
     "https://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/RebootS20.zip";
 
-const String _kRebootBelowS20FallbackDownloadUrl =
-    "https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/RebootFallback.zip";
-const String _kRebootAboveS20FallbackDownloadUrl =
-    "https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/RebootS20Fallback.zip";
-
 const String kStopBuildDownloadSignal = "kill";
 
 final int _ariaPort = 6800;
@@ -487,7 +482,7 @@ Future<bool> downloadDependency(GameDll dll, String outputPath) async {
       case GameDll.console:
         name = "console.dll";
       case GameDll.auth:
-          name = "cobalt.dll";
+          name = "sinum.dll";
       case GameDll.memoryLeak:
         name = "memory.dll";
         case GameDll.gameServer:

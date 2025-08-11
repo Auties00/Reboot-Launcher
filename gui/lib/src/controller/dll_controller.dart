@@ -206,7 +206,7 @@ class DllController extends GetxController {
       case GameDll.console:
         return "${dllsDirectory.path}\\console.dll";
       case GameDll.auth:
-        return "${dllsDirectory.path}\\cobalt.dll";
+        return "${dllsDirectory.path}\\sinum.dll";
       case GameDll.gameServer:
         return "${dllsDirectory.path}\\reboot.dll";
       case GameDll.memoryLeak:
