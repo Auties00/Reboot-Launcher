@@ -7,3 +7,4 @@ install_dir_name: Reboot Launcher
 create_desktop_icon: true
 locales:
   - en
+  - ja

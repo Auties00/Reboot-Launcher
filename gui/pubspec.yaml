@@ -54,7 +54,7 @@ dependencies:
   file_picker: ^8.1.2
   url_launcher: ^6.3.0
   local_notifier: ^0.1.6
-  port_forwarder: ^1.0.0
+  port_forwarder: 1.0.0
 
   # Server browser
   dart_ipify: ^1.1.1
@@ -79,7 +79,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
