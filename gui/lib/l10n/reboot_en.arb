@@ -352,7 +352,7 @@
   "promptHostInformationPasswordActionLabel": "Next",
   "promptHostVersionText": "You can select the version of Fortnite to host here.\nThese are synchronized with the Play tab.",
   "promptHostVersionActionLabel": "Next",
-  "promptHostShareText": "If you don't want to use the server browser, other players can join\nyou server by using your Reboot Launcher link or your public IP.",
+  "promptHostShareText": "If you don't want to use the server browser, other players can join\nyour server by using your Reboot Launcher link or your public IP.",
   "promptHostShareActionLabel": "Next",
   "promptBackendPageText": "The Backend tab is used for authentication and queuing.\nWhen you usually play Fortnite, you connect to an Epic Games' backend.\nTo play using Reboot, you'll need to host the backend yourself, or join someone else's.\nIf the backend doesn't work correctly, an authentication error will be displayed.",
   "promptBackendPageActionLabel": "Next",
