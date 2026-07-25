@@ -265,7 +265,7 @@
   "corruptedVersionError": "Fortnite crashed while starting: either the game installation is corrupted or an injected dll({dlls}) tried to access memory illegally",
   "corruptedDllError": "Cannot inject dll: {error}",
   "missingCustomDllError": "The custom {dll}.dll doesn't exist: check your settings",
-  "tokenError": "Cannot log in into Fortnite: authentication error (injected dlls: {dlls})",
+  "tokenError": "Cannot log into Fortnite: authentication error (injected dlls: {dlls})",
   "unknownFortniteError": "An unknown error occurred while launching Fortnite: {error}",
   "fortniteCrashError": "The {name} crashed after being launched",
   "serverNoLongerAvailableUnnamed": "The previous server is no longer available",
