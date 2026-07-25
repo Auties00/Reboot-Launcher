@@ -33,7 +33,7 @@ package.bat
 Native support for these platforms is not currently planned, but Linux support is a priority for the 10.0 release cycle
 
 - [Linux Tutorial using Proton](https://www.reddit.com/r/linux_gaming/comments/1fwa4l8/guide_running_a_fortnite_private_server_to_play/)
-- No tutorials are available for MacOS(got lost when the Reboot discord was banned), but it's possible to run Reboot using a compatibility layer
+- No tutorials are available for MacOS (got lost when the Reboot discord was banned), but it's possible to run Reboot using a compatibility layer
 
 ## Contributing
 Contributions are welcome! Feel free to open an issue or submit a pull request.
