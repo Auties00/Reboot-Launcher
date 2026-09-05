@@ -1,5 +1,7 @@
 ![Banner](https://i.imgur.com/p0P4tcI.png)
 
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/Auties00/Reboot-Launcher/total)
+
 GUI and CLI Launcher for [Project Reboot](https://github.com/Milxnor/Project-Reboot-3.0/)
 
 Join our [Discord](https://discord.gg/rebootmp)
