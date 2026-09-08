@@ -5,7 +5,7 @@ If you want other players to join your own server, you can either:
 - Port forwarding
 
   Port forwarding is a network technique that allows devices on the internet, like your friends' PC, to access devices your fortnite game server 
-  running on your private WI-FI network. This is the better alternative in terms of latency as you don't have to pass through an external service.
+  running on your private Wi-Fi network. This is the better alternative in terms of latency as you don't have to pass through an external service.
 
 - Use a private VPN software
 
