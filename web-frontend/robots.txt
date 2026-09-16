@@ -1,0 +1,6 @@
+# https://rebootfn.org/
+# Project Reboot is a single public landing page. Everything on it is meant to be
+# crawled; build files live on their own host, which serves files only.
+
+User-agent: *
+Allow: /

@@ -1,0 +1,55 @@
+# Immutable assets: the filenames are stable and their contents never change
+# in place, so let browsers and the Cloudflare edge hold them for a year.
+/hero/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+/seasons/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+/logo.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/logo.webp
+  Cache-Control: public, max-age=31536000, immutable
+
+# Self-hosted woff2. Same reasoning as the art: the filenames carry the Google Fonts
+# revision, so a new cut of a face lands under a new name.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+/favicon.png
+  Cache-Control: public, max-age=31536000, immutable
+
+# The page itself must always be fresh, but may be served stale briefly
+# while it revalidates so a repeat visit paints instantly.
+/
+  Cache-Control: public, max-age=0, s-maxage=60, stale-while-revalidate=86400
+
+/index.html
+  Cache-Control: public, max-age=0, s-maxage=60, stale-while-revalidate=86400
+
+# The modal's three lazy files. They are not fingerprinted, so a long
+# stale-while-revalidate would hand every returning visitor the previous design on
+# their first open after a change, which is exactly how the second redesign was
+# mistaken for the first. Five minutes fresh, then an ETag revalidation (a 304, a few
+# hundred bytes) before anything stale is ever used. The catalogue's staleness is
+# cheap; the wrong stylesheet on the wrong script is not.
+/builds.json
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Content-Type-Options: nosniff
+
+/builds.css
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Content-Type-Options: nosniff
+
+/builds.js
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Content-Type-Options: nosniff
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin

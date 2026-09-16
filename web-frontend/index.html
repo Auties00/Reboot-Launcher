@@ -1,0 +1,2276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Reboot</title>
+<meta name="description" content="Play the old Fortnite seasons again with your friends. Free, fan-made, and available on Windows, Linux and macOS.">
+<meta property="og:title" content="Project Reboot">
+<meta property="og:description" content="Play the old Fortnite seasons again with your friends. Free, on Windows, Linux and macOS.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#06111C">
+<link rel="icon" type="image/png" href="favicon.png">
+<!-- Fonts are served from this origin. The Google Fonts stylesheet used to block the
+     first paint on a second origin (DNS + TLS + CSS) before the woff2 files could even
+     start, so the faces below are declared inline and the three used above the fold are
+     preloaded alongside the HTML. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/barlow-condensed-900-italic-v2.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/barlow-condensed-800-italic-v2.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/figtree-variable-v2.woff2">
+<script>
+  // A URL with a fragment (#seasons, #code, ...) makes the browser animate all the way
+  // down the page, because html has scroll-behavior: smooth. Every lazy image it passes
+  // on the way is pulled into the viewport and starts downloading at once. Jump straight
+  // to the anchor instead; smooth scrolling comes back once the page has loaded.
+  // A #season-N / #builds entry opens the builds dialog over the hero. The wall's 42 tiles are
+  // lazy and hidden until the dialog closes (see the hero-wall script), which cancels ~300 KB
+  // of Low-priority requests that would otherwise starve the dialog's own art.
+  if (/^#(?:builds|season-(?:\d+|pre))$/.test(location.hash)) document.documentElement.classList.add('bl-deep');
+  if (location.hash) {
+    document.documentElement.style.scrollBehavior = 'auto';
+    addEventListener('load', () => { document.documentElement.style.scrollBehavior = ''; }, { once: true });
+  }
+</script>
+<style>
+  /* Only the faces the page actually uses: Barlow Condensed in italic 800 and 900,
+     Figtree as one variable file covering 400-700, and JetBrains Mono subset to the
+     characters the repo paths and the modal's mono labels need (A-Z a-z 0-9 and -./,:&'()#+_).
+     Widen that subset at fonts/ if new copy needs a character outside it. */
+  @font-face {
+    font-family: "Barlow Condensed";
+    font-style: italic;
+    font-weight: 800;
+    font-display: swap;
+    src: url("fonts/barlow-condensed-800-italic-v2.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Barlow Condensed";
+    font-style: italic;
+    font-weight: 900;
+    font-display: swap;
+    src: url("fonts/barlow-condensed-900-italic-v2.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Figtree";
+    font-style: normal;
+    font-weight: 300 900;
+    font-display: swap;
+    src: url("fonts/figtree-variable-v2.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "JetBrains Mono";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("fonts/jetbrains-mono-500-subset.woff2") format("woff2");
+  }
+
+  /* Metrics-matched stand-in for the display face. Without it the swap from the
+     fallback to Barlow Condensed reflowed the hero headline by 116px (CLS 0.145). */
+  @font-face {
+    font-family: "Display Fallback";
+    src: local("Arial Narrow"), local("Helvetica Neue Condensed"), local("Arial");
+    size-adjust: 75%;
+    ascent-override: 90%;
+    descent-override: 25%;
+    line-gap-override: 0%;
+  }
+  :root {
+    --ground: #06111C;
+    --ground-2: #0A1826;
+    --panel: #0E1F30;
+    --panel-2: #13293D;
+    --line: #1E3548;
+    --line-strong: #2B4A62;
+    --ink: #EEF7FC;
+    --ink-2: #BFD6E4;
+    --ink-3: #7F9DB2;
+    --storm: #3FD0FF;
+    --storm-deep: #0E9BD1;
+    --storm-glow: rgba(63, 208, 255, 0.35);
+    --gold: #FFB13B;
+    --gold-deep: #FF7A1A;
+    --gold-ink: #2A1500;
+    --stable: #56D36B;
+    --partial: #B49CFF;
+    --unstable: #FF8A5B;
+    --none: #3A5468;
+    --display: "Barlow Condensed", "Display Fallback", "Arial Narrow", Impact, sans-serif;
+    --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --wrap: 1120px;
+    --gutter: clamp(16px, 4vw, 40px);
+    --radius: 6px;
+    /* Motion */
+    --e-drop: cubic-bezier(.16,.84,.28,1);
+    --e-snap: cubic-bezier(.2,.7,.2,1);
+    --e-storm: cubic-bezier(.65,0,.35,1);
+    --t-tap: 90ms;
+    --t-ui: 180ms;
+    --t-move: 320ms;
+    --t-land: 620ms;
+    --t-drift: 1200ms;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--storm);
+    outline-offset: 3px;
+  }
+
+  .skip-link {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 60;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    background: var(--storm);
+    color: #04202C;
+    font-weight: 700;
+    text-decoration: none;
+    transform: translateY(-160%);
+    transition: transform 160ms var(--e-snap);
+  }
+  .skip-link:focus-visible { transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) { .skip-link { transition: none; } }
+
+  .wrap {
+    max-width: var(--wrap);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: clamp(38px, 5.5vw, 60px);
+    line-height: 0.95;
+    letter-spacing: 0.005em;
+  }
+
+  .lede {
+    color: var(--ink-2);
+    font-size: 18px;
+    max-width: 58ch;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 20px;
+    line-height: 1;
+    padding: 15px 24px 14px 22px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    border: 1px solid transparent;
+    transform: skewX(-6deg);
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  }
+  .btn > * { transform: skewX(6deg); }
+  .btn:hover { transform: skewX(-6deg) translateY(-2px); }
+  .btn-gold {
+    color: #04202C;
+    background: linear-gradient(180deg, #5EDCFF 0%, #34CCFB 100%);
+    box-shadow: 0 8px 24px rgba(63, 208, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 0 rgba(4, 32, 44, 0.18);
+  }
+  .btn-gold:hover {
+    background: linear-gradient(180deg, #74E3FF 0%, #3FD0FF 100%);
+    box-shadow: 0 12px 30px rgba(63, 208, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(4, 32, 44, 0.18);
+  }
+  .btn-ghost {
+    color: var(--ink);
+    background: rgba(63, 208, 255, 0.08);
+    border-color: var(--line-strong);
+  }
+  .btn-ghost:hover { background: rgba(63, 208, 255, 0.16); }
+  .btn svg { width: 20px; height: 20px; flex: none; }
+
+  /* Large hero variant: same button, more room, arrow that nudges on hover. */
+  .btn-lg {
+    min-height: 60px;
+    padding: 0 28px 0 22px;
+    gap: 12px;
+    font-size: 21px;
+  }
+  .btn-arrow { transition: transform 200ms cubic-bezier(.2,.7,.2,1); }
+  .btn:hover .btn-arrow { transform: skewX(6deg) translateY(2px); }
+  @media (max-width: 480px) {
+    .btn-lg { min-height: 54px; padding: 0 20px 0 22px; font-size: 19px; }
+  }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(6, 17, 28, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    height: 64px;    contain: layout style;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 24px;
+    letter-spacing: 0.02em;
+  }
+  .brand img { width: 30px; height: 30px; display: block; filter: drop-shadow(0 0 8px rgba(64, 214, 255, 0.45)); }
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .nav-links a {
+    text-decoration: none;
+    color: var(--ink-2);
+    font-weight: 500;
+    font-size: 15px;
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav .btn { font-size: 17px; padding: 11px 18px 10px 14px; gap: 8px; }
+  .nav .btn-gold svg { width: 18px; height: 18px; }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  /* The action group animates between 0 and its measured width (set by JS as --actions-w),
+     so the links slide left to make room as the buttons glide in from the right. */
+  .nav-actions {
+    width: var(--actions-w, auto);
+    flex: none;
+    transition: width 420ms cubic-bezier(.22,.9,.28,1);
+  }
+  .nav-actions-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 28px;
+    width: max-content;
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 260ms ease 140ms, transform 420ms cubic-bezier(.22,.9,.28,1);
+  }
+  .nav-actions.is-hidden { width: 0; }
+  .nav-actions.is-hidden .nav-actions-inner {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(18px);
+    transition: opacity 160ms ease, transform 420ms cubic-bezier(.22,.9,.28,1), visibility 0s linear 420ms;
+  }
+  .nav-actions.no-anim, .nav-actions.no-anim .nav-actions-inner { transition: none !important; }
+  @media (max-width: 760px) {
+    .nav-actions-inner { padding-left: 0; }
+  }
+  .nav .btn-square {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    justify-content: center;
+  }
+  .nav .btn-square svg { width: 22px; height: 22px; }
+  @media (max-width: 760px) {
+    .nav-links { display: none; }
+    .nav .btn-square { display: none; }
+    /* Icon-only download button: the label does not fit beside the wordmark on a phone. */
+    .nav .btn-gold { width: 42px; height: 42px; padding: 0; justify-content: center; gap: 0; }
+    .nav .btn-gold span { display: none; }
+    .nav .btn-gold svg { width: 20px; height: 20px; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    padding-block: clamp(44px, 7vw, 84px) clamp(40px, 6vw, 72px);
+  }
+  /* The glow is not clipped to the hero: it runs on past the bottom edge and fades out
+     on its own, so the first section sits inside the tail of the light instead of under a hard line. */
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 -420px;
+    z-index: -1;
+    background:
+      linear-gradient(180deg, transparent 0%, transparent 48%, var(--ground) 100%),
+      radial-gradient(1000px 640px at 78% 26%, rgba(63, 208, 255, 0.17), rgba(63, 208, 255, 0.05) 45%, transparent 72%),
+      radial-gradient(760px 560px at 8% 58%, rgba(255, 138, 40, 0.09), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: clamp(32px, 6vw, 72px);
+    align-items: center;
+  }
+  .hero h1 {
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: clamp(64px, 11vw, 132px);
+    line-height: 0.88;
+    letter-spacing: 0.005em;
+    margin-block: 0 22px;
+  }
+  .hero h1 .storm-word {
+    color: transparent;
+    background: linear-gradient(90deg, var(--storm) 0%, #A9ECFF 60%, var(--storm) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .hero .lede { font-size: clamp(17px, 2vw, 20px); }
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 28px;
+  }
+
+  /* Hero visual: a tilted wall of season art whose columns drift endlessly at different speeds. */
+  html.bl-deep #hero-visual { display: none; }   /* behind a dialog opened from the URL; shown on close */
+  .hero-visual {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    width: min(100%, 540px);
+    margin-inline: auto;
+  }
+  .hv-glow {
+    position: absolute;
+    inset: 6%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, rgba(63, 208, 255, 0.4), rgba(63, 208, 255, 0.1) 46%, transparent 70%);
+    filter: blur(16px);
+  }
+  .wall-clip {
+    position: absolute;
+    inset: -6%;
+    overflow: hidden;
+    -webkit-mask-image: radial-gradient(ellipse 62% 58% at 50% 50%, #000 45%, transparent 100%);
+    mask-image: radial-gradient(ellipse 62% 58% at 50% 50%, #000 45%, transparent 100%);
+  }
+  /* Declared non-inheriting so a tilt write restyles .wall alone, not its 268 descendants. */
+  @property --tx { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+  @property --ty { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+  .wall {
+    --gap: 12px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 118%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0 var(--gap);
+    transform: translate(-50%, -50%) perspective(1400px) rotateX(calc(16deg + var(--tx, 0deg))) rotateY(calc(-20deg + var(--ty, 0deg))) rotateZ(5deg) scale(1.04);
+    transform-style: preserve-3d;
+    transition: transform 700ms cubic-bezier(.2,.7,.2,1);
+  }
+  .wall-col {
+    display: flex;
+    flex-direction: column;
+    animation: wall-up var(--dur) linear infinite;
+    will-change: transform;
+  }
+  .wall-col:nth-child(even) { animation-name: wall-down; }
+  .hero-visual.is-idle .wall-col,
+  .hero-visual.is-idle .hv-sparks i { animation-play-state: paused; }
+  @keyframes wall-up   { from { transform: translateY(0); }          to { transform: translateY(-33.3333%); } }
+  @keyframes wall-down { from { transform: translateY(-33.3333%); } to { transform: translateY(0); } }
+  .wall-tile {
+    margin: 0 0 var(--gap);
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px rgba(63, 208, 255, 0.3), 0 10px 26px rgba(0, 0, 0, 0.45);
+  }
+  .wall-tile img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .hv-sparks { position: absolute; inset: 0; overflow: hidden; border-radius: 50%; pointer-events: none; }
+  .hv-sparks i {
+    position: absolute;
+    left: var(--x);
+    bottom: -4%;
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    background: #BFEFFF;
+    box-shadow: 0 0 8px 2px rgba(63, 208, 255, 0.7);
+    opacity: 0;
+    animation: hv-rise var(--d) linear var(--t) infinite;
+  }
+  @keyframes hv-rise {
+    0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+    12%  { opacity: 0.9; }
+    70%  { opacity: 0.5; }
+    100% { transform: translateY(-560px) scale(1.1); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wall-col { animation: none; }
+    .wall-col:nth-child(even) { transform: translateY(-16.6667%); }
+    .hv-sparks { display: none; }
+    .wall { transition: none; }
+  }
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .hero-visual { width: min(100%, 360px); }
+  }
+
+  /* ---------- Sections ---------- */
+  section { padding-block: clamp(44px, 6vw, 76px); }
+  .section-head {
+    display: grid;
+    gap: 12px;
+    margin-bottom: clamp(24px, 3.2vw, 36px);
+    max-width: 720px;
+  }
+  .rule { border-top: 1px solid var(--line); }
+
+  /* ---------- Seasons (chapter reels) ---------- */
+  .seasons-section { position: relative; overflow: hidden; }
+  .seasons-section > .wrap { position: relative; z-index: 2; }
+  .seasons-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .seasons-backdrop img {
+    position: absolute;
+    inset: -12%;
+    width: 124%;
+    height: 124%;
+    object-fit: cover;
+    filter: blur(56px) saturate(1.35);
+    opacity: 0;
+    transition: opacity 900ms ease;
+  }
+  .seasons-backdrop img.on { opacity: 0.4; }
+  .seasons-backdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, var(--ground) 0%, rgba(6, 17, 28, 0.6) 30%, rgba(6, 17, 28, 0.5) 70%, var(--ground) 100%);
+  }
+
+  .reel-group {
+    position: relative;
+    z-index: 1;
+    margin-top: clamp(26px, 3.5vw, 40px);
+    --bleed: max(var(--gutter), calc((100vw - var(--wrap)) / 2 + var(--gutter)));
+  }
+  .reel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+  .reel-head h3 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  .reel-nav { display: flex; gap: 8px; }
+  .reel-btn {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius);
+    border: 1px solid var(--line-strong);
+    background: rgba(63, 208, 255, 0.06);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease, opacity 200ms ease;
+  }
+  .reel-btn svg { width: 20px; height: 20px; }
+  .reel-btn:hover { background: rgba(63, 208, 255, 0.16); border-color: var(--storm); }
+  .reel-btn[disabled] { opacity: 0.3; cursor: default; }
+  .reel-btn[disabled]:hover { background: rgba(63, 208, 255, 0.06); border-color: var(--line-strong); }
+  /* Chrome snaps to the card's *transformed* box, and the coverflow tilt pushes every
+     scrollable reel to rest ~20px in. A reel that cannot scroll never snaps, so its first card
+     sits ~20px right of every other first card. The two-card reel gets a trailing spacer that
+     leaves it about 40px of overflow: enough to snap like the rest, not enough to go anywhere. */
+  .reel-group[data-chapter="0"] .reel::after { content: ""; flex: none; width: max(0px, calc(100% - 2 * clamp(216px, 24vw, 312px) + 8px)); }
+
+  .reel {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    padding: 12px var(--bleed) 10px;
+    scroll-padding-inline: var(--bleed);
+    scrollbar-width: none;
+    cursor: grab;
+  }
+  .reel::-webkit-scrollbar { display: none; }
+  .reel:focus-visible { outline: 2px solid var(--storm); outline-offset: -2px; }
+  .reel.dragging { cursor: grabbing; scroll-snap-type: none; }
+  .reel-end { flex: none; width: 1px; }
+
+  .film {
+    --tone: var(--stable);
+    --halo: 86, 211, 107;
+    flex: none;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    width: clamp(216px, 24vw, 312px);
+    scroll-snap-align: start;
+  }
+  .film.partial { --tone: var(--partial); --halo: 180, 156, 255; }
+  .film.unstable { --tone: var(--unstable); --halo: 255, 138, 91; }
+  .film-art {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--panel);
+    box-shadow:
+      0 0 0 1px rgba(var(--halo), 0.55),
+      0 0 18px rgba(var(--halo), 0.14),
+      0 8px 24px rgba(0, 0, 0, 0.35);
+    transition: transform 320ms cubic-bezier(.2,.7,.2,1), box-shadow 320ms ease;
+  }
+  .film-art::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .film.is-loading .film-art img { animation: film-wait 0.9s ease-in-out infinite; }
+    @keyframes film-wait { 50% { opacity: 0.45; } }
+  }
+  .film-art img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 700ms cubic-bezier(.2,.7,.2,1);
+  }
+  .film:hover .film-art, .film.is-focus .film-art {
+    transform: translateY(-4px);
+    box-shadow:
+      0 0 0 1.5px rgba(var(--halo), 0.95),
+      0 0 26px rgba(var(--halo), 0.45),
+      0 14px 34px rgba(0, 0, 0, 0.45);
+  }
+  .film:hover .film-art img { transform: scale(1.05); }
+  .film-cap {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 2px 0;
+    min-width: 0;
+  }
+  .film-num {
+    flex: none;
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    color: var(--tone);
+  }
+  .film-num small { font-size: 15px; margin-right: 1px; opacity: 0.85; }
+  .film-title {
+    font-family: var(--display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: 0.03em;
+    color: var(--ink-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .legend span::before {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 8px;
+    vertical-align: -1px;
+    background: var(--tone);
+  }
+  .legend .stable { --tone: var(--stable); }
+  .legend .partial { --tone: var(--partial); }
+  .legend .unstable { --tone: var(--unstable); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .film-art, .film-art img, .seasons-backdrop img { transition: none; }
+    .film:hover .film-art img { transform: none; }
+  }
+
+  /* ---------- Steps ---------- */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .step {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 24px 28px;
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 12px;
+  }
+  .step .n {
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    font-size: 54px;
+    line-height: 0.9;
+    color: var(--storm);
+  }
+  .step h3 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 28px;
+    line-height: 1;
+  }
+  .step p { color: var(--ink-2); font-size: 15px; }
+  @media (max-width: 860px) {
+    .steps { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Features ---------- */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--line);
+    grid-gap: 1px;
+  }
+  .feature {
+    background: var(--ground-2);
+    padding: 26px 24px;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+  .feature svg { width: 26px; height: 26px; color: var(--storm); }
+  .feature h3 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 24px;
+    line-height: 1;
+  }
+  .feature p { color: var(--ink-2); font-size: 15px; }
+  @media (max-width: 900px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .features { grid-template-columns: 1fr; } }
+
+  /* ---------- Repos ---------- */
+  .repos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .repo {
+    display: grid;
+    gap: 14px;
+    padding: 26px 24px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: border-color 160ms ease, transform 160ms ease;
+  }
+  .repo:hover { border-color: var(--storm); transform: translateY(-2px); }
+  .repo .path {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .repo .path svg { width: 16px; height: 16px; }
+  .repo h3 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 30px;
+    line-height: 1;
+  }
+  .repo p { color: var(--ink-2); font-size: 15px; }
+  @media (max-width: 760px) {
+    .repos { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- FAQ ---------- */
+  .faq-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+    gap: clamp(28px, 5vw, 72px);
+    align-items: start;
+  }
+  .faq-side {
+    position: sticky;
+    top: 88px;
+    display: grid;
+    gap: 16px;
+    justify-items: start;
+  }
+  .faq-side .lede { font-size: 17px; }
+  .faq-side .btn { margin-top: 6px; font-size: 18px; padding: 13px 20px 12px 18px; }
+  .faq-list {
+    display: grid;
+    gap: 10px;
+  }
+  .faq-item {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 160ms ease, background 160ms ease;
+  }
+  .faq-item:hover { border-color: var(--line-strong); }
+  .faq-item.is-open { border-color: rgba(63, 208, 255, 0.45); background: var(--panel-2); }
+  .faq-item h3 { margin: 0; font: inherit; }
+  .faq-q {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    background: none;
+    border: 0;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+  }
+  .faq-q:focus-visible { outline: 2px solid var(--storm); outline-offset: -2px; border-radius: var(--radius); }
+  .faq-t {
+    font-family: var(--display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  .faq-i {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    flex: none;
+  }
+  .faq-i::before, .faq-i::after {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    background: var(--storm);
+    border-radius: 2px;
+    transition: transform 220ms cubic-bezier(.2,.7,.2,1);
+  }
+  .faq-i::before { width: 18px; height: 2px; transform: translate(-50%, -50%); }
+  .faq-i::after { width: 2px; height: 18px; transform: translate(-50%, -50%); }
+  .faq-item.is-open .faq-i::after { transform: translate(-50%, -50%) rotate(90deg); }
+  .faq-a {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 280ms cubic-bezier(.2,.7,.2,1);
+  }
+  .faq-item.is-open .faq-a { grid-template-rows: 1fr; }
+  .faq-a-inner { min-height: 0; overflow: hidden; }
+  .faq-a-inner p {
+    padding: 0 20px 20px;
+    color: var(--ink-2);
+    max-width: 60ch;
+  }
+  .faq-a-inner a { color: var(--storm); text-decoration: none; border-bottom: 1px solid rgba(63, 208, 255, 0.4); }
+  .faq-a-inner a:hover { border-color: var(--storm); }
+  @media (max-width: 860px) {
+    .faq-grid { grid-template-columns: 1fr; }
+    .faq-side { position: static; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .faq-a, .faq-i::before, .faq-i::after { transition: none; }
+  }
+
+  /* ---------- Footer ---------- */
+  .footer {
+    position: relative;
+    overflow: hidden;
+    margin-top: clamp(8px, 2vw, 24px);
+    border-top: 1px solid var(--line);
+    background:
+      radial-gradient(800px 320px at 0% 0%, rgba(63, 208, 255, 0.10), transparent 60%),
+      var(--ground-2);
+    padding-block: clamp(36px, 5vw, 56px) clamp(32px, 4vw, 48px);
+  }
+  .footer .wrap { position: relative; z-index: 1; }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+    gap: 36px 32px;
+    align-items: start;
+  }
+  .footer-brand { display: grid; gap: 18px; justify-items: start; max-width: 38ch; }
+  .footer-brand p { color: var(--ink-2); font-size: 15px; }
+  .footer-col { display: grid; gap: 10px; align-content: start; }
+  .footer-col h4 {
+    margin: 0 0 4px;
+    font-family: var(--display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 20px;
+    letter-spacing: 0.03em;
+    color: var(--storm);
+  }
+  .footer-col a {
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: 15px;
+    width: fit-content;
+    border-bottom: 1px solid transparent;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .footer-col a:hover { color: var(--ink); border-color: var(--storm); }
+  .footer-mark {
+    position: absolute;
+    right: -0.04em;
+    bottom: -0.28em;
+    z-index: 0;
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: clamp(120px, 22vw, 300px);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(63, 208, 255, 0.16);
+    user-select: none;
+    pointer-events: none;
+  }
+  @media (max-width: 900px) {
+    .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .footer-brand { grid-column: 1 / -1; }
+  }
+  @media (max-width: 520px) {
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+
+
+  /* =======================================================================
+     MOTION LAYER
+     Appended last so it composes over the rules above without editing them.
+     Rules: compositor-only properties; text opacity never starts at 0; every
+     scroll-driven effect is decoration behind @supports, so where it is
+     unsupported the page is exactly the static page.
+     ======================================================================= */
+
+  /* ---- Page load: transform-only, so the first painted frame has every word ---- */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero h1    { animation: boot-rise var(--t-land) var(--e-drop) 60ms backwards; }
+    .hero .lede { animation: boot-rise 560ms var(--e-drop) 150ms backwards; }
+    #hero-cta .btn:nth-child(1) { animation: boot-cta 520ms var(--e-drop) 220ms backwards; }
+    #hero-cta .btn:nth-child(2) { animation: boot-cta 520ms var(--e-drop) 290ms backwards; }
+    .wall-clip   { animation: boot-iris 900ms var(--e-drop) 80ms backwards; }
+    .hv-glow     { animation: boot-bloom 800ms var(--e-drop) 120ms backwards; }
+    .wall-col    { animation-delay: 260ms; }
+    .hv-sparks i { animation-delay: calc(var(--t) + 700ms); }
+  }
+  /* No `to` frame: the resting state is each element's own computed style,
+     so these can never leave anything displaced. */
+  @keyframes boot-rise  { from { transform: translate3d(0, 14px, 0); } }
+  @keyframes boot-cta   { from { transform: skewX(-6deg) translate3d(0, 10px, 0); } }
+  @keyframes boot-iris  { from { transform: scale(.90) rotate(-2deg); } }
+  @keyframes boot-bloom { from { opacity: 0; transform: scale(.72); } }
+
+  /* ---- Scroll reveal: light crosses the content, the content never moves ---- */
+  /* Clip the divider's own overflow: its scroll-driven light sweep translates
+     past the right edge, and without this it widened the page as you scrolled.
+     overflow-x: clip keeps the vertical axis visible so the 1px line still shows,
+     and it sits on the divider (not an ancestor of the nav) so sticky is safe. */
+  .rule { position: relative; overflow-x: clip; }
+  .rule::after {
+    content: "";
+    position: absolute;
+    top: -1px; left: var(--gutter);
+    width: 30%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--storm) 45%, #BFEFFF 50%, var(--storm) 55%, transparent);
+    opacity: 0;
+    transform: translateX(-110%);
+    pointer-events: none;
+  }
+  .features { position: relative; }
+  .features::after {
+    content: "";
+    position: absolute;
+    inset: -25% -45%;
+    z-index: 3;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0;
+    transform: translate3d(-38%, 0, 0);
+    background: linear-gradient(105deg, transparent 38%, rgba(63,208,255,.12) 46%, rgba(191,239,255,.26) 50%, rgba(63,208,255,.12) 54%, transparent 62%);
+  }
+  @keyframes sweep-line {
+    0%   { transform: translateX(-110%); opacity: 0; }
+    20%,80% { opacity: 1; }
+    100% { transform: translateX(340%); opacity: 0; }
+  }
+  @keyframes sweep-band {
+    0%   { transform: translate3d(-38%,0,0); opacity: 0; }
+    25%,75% { opacity: 1; }
+    100% { transform: translate3d(38%,0,0); opacity: 0; }
+  }
+
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .rule::after {
+        animation: sweep-line linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 30%;
+      }
+      .features::after {
+        animation: sweep-band linear both;
+        animation-timeline: view();
+        animation-range: entry 20% cover 55%;
+      }
+      /* Each card knows its own position inside its own reel: no scroll listener. */
+      .reel { perspective: 1150px; }
+      .film {
+        animation: coverflow linear both;
+        animation-timeline: view(inline);
+        animation-range: cover 0% cover 100%;
+      }
+    }
+  }
+  @keyframes coverflow {
+    0%   { transform: rotateY(14deg) translateZ(-30px); }
+    50%  { transform: rotateY(0deg) translateZ(0px); }
+    100% { transform: rotateY(-14deg) translateZ(-30px); }
+  }
+
+  /* ---- Micro-interactions ---- */
+  .btn:active { transform: skewX(-6deg) translateY(0) scale(.97); transition-duration: var(--t-tap); }
+  .btn-gold { position: relative; overflow: hidden; }
+  .btn-gold::after {
+    content: "";
+    position: absolute;
+    top: -40%; bottom: -40%; left: 0; width: 26%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+    transform: translateX(-300%) skewX(14deg);
+    pointer-events: none;
+  }
+  .btn-gold:hover::after { animation: btn-sheen 640ms var(--e-storm); }
+  @keyframes btn-sheen { to { transform: translateX(520%) skewX(14deg); } }
+
+  .nav-links a { position: relative; transition: color var(--t-ui) ease; }
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -7px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--storm);
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform var(--t-ui) var(--e-snap), opacity var(--t-ui) ease;
+  }
+  .nav-links a:hover::after,
+  .nav-links a.is-current::after { opacity: 1; transform: scaleX(1); }
+  .nav-links a.is-current { color: var(--ink); }
+
+  .reel-btn { transition: background var(--t-ui) ease, border-color var(--t-ui) ease, opacity var(--t-move) ease, transform var(--t-ui) var(--e-snap); }
+  .reel-btn:active { transform: scale(.9); }
+  .reel-btn svg { transition: transform var(--t-move) var(--e-drop); }
+  .reel-prev:hover svg { transform: translateX(-3px); }
+  .reel-next:hover svg { transform: translateX(3px); }
+
+  .faq-item { position: relative; }
+  .faq-item::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--storm), rgba(63,208,255,0));
+    transform: scaleY(0);
+    transform-origin: 50% 0;
+    transition: transform 340ms var(--e-drop);
+  }
+  .faq-item.is-open::before { transform: scaleY(1); }
+  .faq-i { transition: transform 280ms var(--e-drop); }
+  .faq-item.is-open .faq-i { transform: rotate(180deg); }
+  .faq-item.is-open .faq-i::after { transform: translate(-50%, -50%) scaleY(0); }
+  /* Safe to start at 0: the answer sits inside a collapsed 0fr row, and the
+     first item ships open in the HTML, so it is opaque at first paint. */
+  .faq-a-inner p { opacity: 0; transform: translate3d(0,-6px,0); transition: opacity 200ms ease, transform 300ms var(--e-drop); }
+  .faq-item.is-open .faq-a-inner p { opacity: 1; transform: none; transition-delay: 90ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero h1, .hero .lede, #hero-cta .btn, .wall-clip, .hv-glow { animation: none; }
+    .rule::after, .features::after { display: none; }
+    .film { animation: none; }
+    .btn-gold:hover::after { animation: none; }
+    .faq-item::before, .faq-i, .reel-btn, .reel-btn svg, .nav-links a::after { transition: none; }
+    .faq-a-inner p { opacity: 1; transform: none; transition: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-actions, .nav-actions-inner, .nav-actions.is-hidden .nav-actions-inner { transition: none; }
+    .btn, .btn-arrow, .repo { transition: none; }
+    .btn:hover, .repo:hover { transform: skewX(-6deg); }
+    .repo:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#top">Skip to content</a>
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="Project Reboot home">
+      <img src="logo.webp" alt="" width="30" height="30" decoding="async">
+      Project Reboot
+    </a>
+    <div class="nav-right">
+      <nav aria-label="Primary">
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how">How to play</a></li>
+          <li><a href="#seasons">Seasons</a></li>
+          <li><a href="#code">Source</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </nav>
+      <div class="nav-actions" id="nav-actions">
+        <div class="nav-actions-inner">
+          <a class="btn btn-ghost btn-square" href="https://discord.gg/rebootmp" target="_blank" rel="noopener" aria-label="Join the Discord" title="Join the Discord">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.6 5.6A16 16 0 0 0 15.7 4.4l-.5 1a15 15 0 0 0-6.4 0l-.5-1a16 16 0 0 0-3.9 1.2C2 9.3 1.3 12.9 1.6 16.5a16 16 0 0 0 4.8 2.4l1-1.6a10 10 0 0 1-1.6-.8l.4-.3a11.5 11.5 0 0 0 11.6 0l.4.3a10 10 0 0 1-1.6.8l1 1.6a16 16 0 0 0 4.8-2.4c.4-4.1-.7-7.7-2.8-10.9ZM8.7 14.3c-.9 0-1.7-.9-1.7-2s.7-2 1.7-2 1.7.9 1.7 2-.8 2-1.7 2Zm6.6 0c-.9 0-1.7-.9-1.7-2s.7-2 1.7-2 1.7.9 1.7 2-.8 2-1.7 2Z"/></svg>
+          </a>
+          <a class="btn btn-gold" href="https://github.com/Auties00/Reboot-Launcher/releases" target="_blank" rel="noopener" aria-label="Download the launcher" title="Download the launcher">
+            <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span>Download</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <h1>Drop back<br>into <span class="storm-word">old</span><br>Fortnite.</h1>
+        <p class="lede">Project Reboot brings the old seasons of Fortnite back. Host a lobby for you and your friends, or join one, with a launcher that takes care of everything. On Windows, Linux and macOS.</p>
+        <div class="cta-row" id="hero-cta">
+          <a class="btn btn-gold btn-lg" id="hero-download" href="https://github.com/Auties00/Reboot-Launcher/releases" target="_blank" rel="noopener">
+            <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span>Download Launcher</span>
+          </a>
+          <a class="btn btn-ghost btn-lg" href="https://discord.gg/rebootmp" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.6 5.6A16 16 0 0 0 15.7 4.4l-.5 1a15 15 0 0 0-6.4 0l-.5-1a16 16 0 0 0-3.9 1.2C2 9.3 1.3 12.9 1.6 16.5a16 16 0 0 0 4.8 2.4l1-1.6a10 10 0 0 1-1.6-.8l.4-.3a11.5 11.5 0 0 0 11.6 0l.4.3a10 10 0 0 1-1.6.8l1 1.6a16 16 0 0 0 4.8-2.4c.4-4.1-.7-7.7-2.8-10.9ZM8.7 14.3c-.9 0-1.7-.9-1.7-2s.7-2 1.7-2 1.7.9 1.7 2-.8 2-1.7 2Zm6.6 0c-.9 0-1.7-.9-1.7-2s.7-2 1.7-2 1.7.9 1.7 2-.8 2-1.7 2Z"/></svg>
+            <span>Join the Discord</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual" id="hero-visual" aria-hidden="true">
+        <div class="hv-glow"></div>
+        <div class="wall-clip">
+          <div class="wall" id="wall">
+            <div class="wall-col" style="--dur:46s">
+              <figure class="wall-tile"><img loading="lazy" src="hero/s01-176.webp" srcset="hero/s01-176.webp 176w, hero/s01-256.webp 256w, hero/s01.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s05-176.webp" srcset="hero/s05-176.webp 176w, hero/s05-256.webp 256w, hero/s05.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s09-176.webp" srcset="hero/s09-176.webp 176w, hero/s09-256.webp 256w, hero/s09.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s13-176.webp" srcset="hero/s13-176.webp 176w, hero/s13-256.webp 256w, hero/s13.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s17-176.webp" srcset="hero/s17-176.webp 176w, hero/s17-256.webp 256w, hero/s17.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s21-176.webp" srcset="hero/s21-176.webp 176w, hero/s21-256.webp 256w, hero/s21.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s25-176.webp" srcset="hero/s25-176.webp 176w, hero/s25-256.webp 256w, hero/s25.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s29-176.webp" srcset="hero/s29-176.webp 176w, hero/s29-256.webp 256w, hero/s29.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s33-176.webp" srcset="hero/s33-176.webp 176w, hero/s33-256.webp 256w, hero/s33.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s37-176.webp" srcset="hero/s37-176.webp 176w, hero/s37-256.webp 256w, hero/s37.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s41-176.webp" srcset="hero/s41-176.webp 176w, hero/s41-256.webp 256w, hero/s41.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s01-176.webp" srcset="hero/s01-176.webp 176w, hero/s01-256.webp 256w, hero/s01.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s05-176.webp" srcset="hero/s05-176.webp 176w, hero/s05-256.webp 256w, hero/s05.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s09-176.webp" srcset="hero/s09-176.webp 176w, hero/s09-256.webp 256w, hero/s09.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s13-176.webp" srcset="hero/s13-176.webp 176w, hero/s13-256.webp 256w, hero/s13.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s17-176.webp" srcset="hero/s17-176.webp 176w, hero/s17-256.webp 256w, hero/s17.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s21-176.webp" srcset="hero/s21-176.webp 176w, hero/s21-256.webp 256w, hero/s21.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s25-176.webp" srcset="hero/s25-176.webp 176w, hero/s25-256.webp 256w, hero/s25.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s29-176.webp" srcset="hero/s29-176.webp 176w, hero/s29-256.webp 256w, hero/s29.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s33-176.webp" srcset="hero/s33-176.webp 176w, hero/s33-256.webp 256w, hero/s33.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s37-176.webp" srcset="hero/s37-176.webp 176w, hero/s37-256.webp 256w, hero/s37.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s41-176.webp" srcset="hero/s41-176.webp 176w, hero/s41-256.webp 256w, hero/s41.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s01-176.webp" srcset="hero/s01-176.webp 176w, hero/s01-256.webp 256w, hero/s01.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s05-176.webp" srcset="hero/s05-176.webp 176w, hero/s05-256.webp 256w, hero/s05.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s09-176.webp" srcset="hero/s09-176.webp 176w, hero/s09-256.webp 256w, hero/s09.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s13-176.webp" srcset="hero/s13-176.webp 176w, hero/s13-256.webp 256w, hero/s13.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s17-176.webp" srcset="hero/s17-176.webp 176w, hero/s17-256.webp 256w, hero/s17.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s21-176.webp" srcset="hero/s21-176.webp 176w, hero/s21-256.webp 256w, hero/s21.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s25-176.webp" srcset="hero/s25-176.webp 176w, hero/s25-256.webp 256w, hero/s25.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s29-176.webp" srcset="hero/s29-176.webp 176w, hero/s29-256.webp 256w, hero/s29.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s33-176.webp" srcset="hero/s33-176.webp 176w, hero/s33-256.webp 256w, hero/s33.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s37-176.webp" srcset="hero/s37-176.webp 176w, hero/s37-256.webp 256w, hero/s37.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s41-176.webp" srcset="hero/s41-176.webp 176w, hero/s41-256.webp 256w, hero/s41.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+            </div>
+            <div class="wall-col" style="--dur:62s">
+              <figure class="wall-tile"><img loading="lazy" src="hero/s02-176.webp" srcset="hero/s02-176.webp 176w, hero/s02-256.webp 256w, hero/s02.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s06-176.webp" srcset="hero/s06-176.webp 176w, hero/s06-256.webp 256w, hero/s06.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s10-176.webp" srcset="hero/s10-176.webp 176w, hero/s10-256.webp 256w, hero/s10.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s14-176.webp" srcset="hero/s14-176.webp 176w, hero/s14-256.webp 256w, hero/s14.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s18-176.webp" srcset="hero/s18-176.webp 176w, hero/s18-256.webp 256w, hero/s18.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s22-176.webp" srcset="hero/s22-176.webp 176w, hero/s22-256.webp 256w, hero/s22.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s26-176.webp" srcset="hero/s26-176.webp 176w, hero/s26-256.webp 256w, hero/s26.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s30-176.webp" srcset="hero/s30-176.webp 176w, hero/s30-256.webp 256w, hero/s30.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s34-176.webp" srcset="hero/s34-176.webp 176w, hero/s34-256.webp 256w, hero/s34.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s38-176.webp" srcset="hero/s38-176.webp 176w, hero/s38-256.webp 256w, hero/s38.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s42-176.webp" srcset="hero/s42-176.webp 176w, hero/s42-256.webp 256w, hero/s42.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s02-176.webp" srcset="hero/s02-176.webp 176w, hero/s02-256.webp 256w, hero/s02.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s06-176.webp" srcset="hero/s06-176.webp 176w, hero/s06-256.webp 256w, hero/s06.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s10-176.webp" srcset="hero/s10-176.webp 176w, hero/s10-256.webp 256w, hero/s10.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s14-176.webp" srcset="hero/s14-176.webp 176w, hero/s14-256.webp 256w, hero/s14.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s18-176.webp" srcset="hero/s18-176.webp 176w, hero/s18-256.webp 256w, hero/s18.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s22-176.webp" srcset="hero/s22-176.webp 176w, hero/s22-256.webp 256w, hero/s22.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s26-176.webp" srcset="hero/s26-176.webp 176w, hero/s26-256.webp 256w, hero/s26.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s30-176.webp" srcset="hero/s30-176.webp 176w, hero/s30-256.webp 256w, hero/s30.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s34-176.webp" srcset="hero/s34-176.webp 176w, hero/s34-256.webp 256w, hero/s34.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s38-176.webp" srcset="hero/s38-176.webp 176w, hero/s38-256.webp 256w, hero/s38.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s42-176.webp" srcset="hero/s42-176.webp 176w, hero/s42-256.webp 256w, hero/s42.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s02-176.webp" srcset="hero/s02-176.webp 176w, hero/s02-256.webp 256w, hero/s02.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s06-176.webp" srcset="hero/s06-176.webp 176w, hero/s06-256.webp 256w, hero/s06.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s10-176.webp" srcset="hero/s10-176.webp 176w, hero/s10-256.webp 256w, hero/s10.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s14-176.webp" srcset="hero/s14-176.webp 176w, hero/s14-256.webp 256w, hero/s14.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s18-176.webp" srcset="hero/s18-176.webp 176w, hero/s18-256.webp 256w, hero/s18.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s22-176.webp" srcset="hero/s22-176.webp 176w, hero/s22-256.webp 256w, hero/s22.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s26-176.webp" srcset="hero/s26-176.webp 176w, hero/s26-256.webp 256w, hero/s26.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s30-176.webp" srcset="hero/s30-176.webp 176w, hero/s30-256.webp 256w, hero/s30.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s34-176.webp" srcset="hero/s34-176.webp 176w, hero/s34-256.webp 256w, hero/s34.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s38-176.webp" srcset="hero/s38-176.webp 176w, hero/s38-256.webp 256w, hero/s38.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s42-176.webp" srcset="hero/s42-176.webp 176w, hero/s42-256.webp 256w, hero/s42.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+            </div>
+            <div class="wall-col" style="--dur:54s">
+              <figure class="wall-tile"><img loading="lazy" src="hero/s03-176.webp" srcset="hero/s03-176.webp 176w, hero/s03-256.webp 256w, hero/s03.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s07-176.webp" srcset="hero/s07-176.webp 176w, hero/s07-256.webp 256w, hero/s07.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s11-176.webp" srcset="hero/s11-176.webp 176w, hero/s11-256.webp 256w, hero/s11.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s15-176.webp" srcset="hero/s15-176.webp 176w, hero/s15-256.webp 256w, hero/s15.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s19-176.webp" srcset="hero/s19-176.webp 176w, hero/s19-256.webp 256w, hero/s19.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s23-176.webp" srcset="hero/s23-176.webp 176w, hero/s23-256.webp 256w, hero/s23.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s27-176.webp" srcset="hero/s27-176.webp 176w, hero/s27-256.webp 256w, hero/s27.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s31-176.webp" srcset="hero/s31-176.webp 176w, hero/s31-256.webp 256w, hero/s31.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s35-176.webp" srcset="hero/s35-176.webp 176w, hero/s35-256.webp 256w, hero/s35.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s39-176.webp" srcset="hero/s39-176.webp 176w, hero/s39-256.webp 256w, hero/s39.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s05-176.webp" srcset="hero/s05-176.webp 176w, hero/s05-256.webp 256w, hero/s05.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s03-176.webp" srcset="hero/s03-176.webp 176w, hero/s03-256.webp 256w, hero/s03.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s07-176.webp" srcset="hero/s07-176.webp 176w, hero/s07-256.webp 256w, hero/s07.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s11-176.webp" srcset="hero/s11-176.webp 176w, hero/s11-256.webp 256w, hero/s11.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s15-176.webp" srcset="hero/s15-176.webp 176w, hero/s15-256.webp 256w, hero/s15.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s19-176.webp" srcset="hero/s19-176.webp 176w, hero/s19-256.webp 256w, hero/s19.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s23-176.webp" srcset="hero/s23-176.webp 176w, hero/s23-256.webp 256w, hero/s23.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s27-176.webp" srcset="hero/s27-176.webp 176w, hero/s27-256.webp 256w, hero/s27.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s31-176.webp" srcset="hero/s31-176.webp 176w, hero/s31-256.webp 256w, hero/s31.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s35-176.webp" srcset="hero/s35-176.webp 176w, hero/s35-256.webp 256w, hero/s35.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s39-176.webp" srcset="hero/s39-176.webp 176w, hero/s39-256.webp 256w, hero/s39.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s05-176.webp" srcset="hero/s05-176.webp 176w, hero/s05-256.webp 256w, hero/s05.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s03-176.webp" srcset="hero/s03-176.webp 176w, hero/s03-256.webp 256w, hero/s03.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s07-176.webp" srcset="hero/s07-176.webp 176w, hero/s07-256.webp 256w, hero/s07.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s11-176.webp" srcset="hero/s11-176.webp 176w, hero/s11-256.webp 256w, hero/s11.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s15-176.webp" srcset="hero/s15-176.webp 176w, hero/s15-256.webp 256w, hero/s15.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s19-176.webp" srcset="hero/s19-176.webp 176w, hero/s19-256.webp 256w, hero/s19.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s23-176.webp" srcset="hero/s23-176.webp 176w, hero/s23-256.webp 256w, hero/s23.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s27-176.webp" srcset="hero/s27-176.webp 176w, hero/s27-256.webp 256w, hero/s27.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s31-176.webp" srcset="hero/s31-176.webp 176w, hero/s31-256.webp 256w, hero/s31.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s35-176.webp" srcset="hero/s35-176.webp 176w, hero/s35-256.webp 256w, hero/s35.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s39-176.webp" srcset="hero/s39-176.webp 176w, hero/s39-256.webp 256w, hero/s39.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s05-176.webp" srcset="hero/s05-176.webp 176w, hero/s05-256.webp 256w, hero/s05.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+            </div>
+            <div class="wall-col" style="--dur:70s">
+              <figure class="wall-tile"><img loading="lazy" src="hero/s04-176.webp" srcset="hero/s04-176.webp 176w, hero/s04-256.webp 256w, hero/s04.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s08-176.webp" srcset="hero/s08-176.webp 176w, hero/s08-256.webp 256w, hero/s08.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s12-176.webp" srcset="hero/s12-176.webp 176w, hero/s12-256.webp 256w, hero/s12.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s16-176.webp" srcset="hero/s16-176.webp 176w, hero/s16-256.webp 256w, hero/s16.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s20-176.webp" srcset="hero/s20-176.webp 176w, hero/s20-256.webp 256w, hero/s20.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s24-176.webp" srcset="hero/s24-176.webp 176w, hero/s24-256.webp 256w, hero/s24.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s28-176.webp" srcset="hero/s28-176.webp 176w, hero/s28-256.webp 256w, hero/s28.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s32-176.webp" srcset="hero/s32-176.webp 176w, hero/s32-256.webp 256w, hero/s32.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s36-176.webp" srcset="hero/s36-176.webp 176w, hero/s36-256.webp 256w, hero/s36.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s40-176.webp" srcset="hero/s40-176.webp 176w, hero/s40-256.webp 256w, hero/s40.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s11-176.webp" srcset="hero/s11-176.webp 176w, hero/s11-256.webp 256w, hero/s11.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s04-176.webp" srcset="hero/s04-176.webp 176w, hero/s04-256.webp 256w, hero/s04.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s08-176.webp" srcset="hero/s08-176.webp 176w, hero/s08-256.webp 256w, hero/s08.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s12-176.webp" srcset="hero/s12-176.webp 176w, hero/s12-256.webp 256w, hero/s12.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s16-176.webp" srcset="hero/s16-176.webp 176w, hero/s16-256.webp 256w, hero/s16.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s20-176.webp" srcset="hero/s20-176.webp 176w, hero/s20-256.webp 256w, hero/s20.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s24-176.webp" srcset="hero/s24-176.webp 176w, hero/s24-256.webp 256w, hero/s24.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s28-176.webp" srcset="hero/s28-176.webp 176w, hero/s28-256.webp 256w, hero/s28.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s32-176.webp" srcset="hero/s32-176.webp 176w, hero/s32-256.webp 256w, hero/s32.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s36-176.webp" srcset="hero/s36-176.webp 176w, hero/s36-256.webp 256w, hero/s36.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s40-176.webp" srcset="hero/s40-176.webp 176w, hero/s40-256.webp 256w, hero/s40.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s11-176.webp" srcset="hero/s11-176.webp 176w, hero/s11-256.webp 256w, hero/s11.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s04-176.webp" srcset="hero/s04-176.webp 176w, hero/s04-256.webp 256w, hero/s04.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s08-176.webp" srcset="hero/s08-176.webp 176w, hero/s08-256.webp 256w, hero/s08.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s12-176.webp" srcset="hero/s12-176.webp 176w, hero/s12-256.webp 256w, hero/s12.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s16-176.webp" srcset="hero/s16-176.webp 176w, hero/s16-256.webp 256w, hero/s16.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s20-176.webp" srcset="hero/s20-176.webp 176w, hero/s20-256.webp 256w, hero/s20.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s24-176.webp" srcset="hero/s24-176.webp 176w, hero/s24-256.webp 256w, hero/s24.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s28-176.webp" srcset="hero/s28-176.webp 176w, hero/s28-256.webp 256w, hero/s28.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s32-176.webp" srcset="hero/s32-176.webp 176w, hero/s32-256.webp 256w, hero/s32.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s36-176.webp" srcset="hero/s36-176.webp 176w, hero/s36-256.webp 256w, hero/s36.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s40-176.webp" srcset="hero/s40-176.webp 176w, hero/s40-256.webp 256w, hero/s40.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+              <figure class="wall-tile"><img loading="lazy" src="hero/s11-176.webp" srcset="hero/s11-176.webp 176w, hero/s11-256.webp 256w, hero/s11.webp 320w" sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+            </div>
+          </div>
+        </div>
+        <div class="hv-sparks">
+          <i style="--x:12%;--d:9s;--t:0s;--s:3px"></i>
+          <i style="--x:22%;--d:12s;--t:2s;--s:2px"></i>
+          <i style="--x:31%;--d:10s;--t:5s;--s:3px"></i>
+          <i style="--x:44%;--d:14s;--t:1s;--s:2px"></i>
+          <i style="--x:55%;--d:11s;--t:4s;--s:3px"></i>
+          <i style="--x:63%;--d:9s;--t:7s;--s:2px"></i>
+          <i style="--x:72%;--d:13s;--t:3s;--s:3px"></i>
+          <i style="--x:81%;--d:10s;--t:6s;--s:2px"></i>
+          <i style="--x:88%;--d:12s;--t:2s;--s:3px"></i>
+          <i style="--x:38%;--d:15s;--t:8s;--s:2px"></i>
+          <i style="--x:50%;--d:8s;--t:9s;--s:2px"></i>
+          <i style="--x:68%;--d:11s;--t:11s;--s:3px"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap rule"></div>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Everything you need,<br>in one app.</h2>
+        <p class="lede">Install the Reboot Launcher, pick a season, and you are in a lobby in minutes. No setup guides, no fiddling with settings.</p>
+      </div>
+
+      <div class="features">
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
+          <h3>Play or host</h3>
+          <p>Join a friend's lobby, or start your own and invite people. Both live in the same window.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="6"/></svg>
+          <h3>Friends join from anywhere</h3>
+          <p>The launcher opens the door on your home network for you, so people outside your house can join without you touching your router.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
+          <h3>Switch seasons any time</h3>
+          <p>Keep as many seasons installed as you like and jump between them from a dropdown.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="m8 10 2 2-2 2M12 14h4"/></svg>
+          <h3>No account needed</h3>
+          <p>Pick a name and play. Nothing connects to Epic, and there is nothing to sign up for.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/><path d="m9 12 2 2 4-4"/></svg>
+          <h3>Free and open source</h3>
+          <p>No price, no paid tiers, no ads. Everything behind it is public on GitHub for anyone to read.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-5-6-5M12 19h8"/></svg>
+          <h3>Runs everywhere</h3>
+          <p>Windows, Linux and macOS. Same app, same seasons, same lobbies, whatever you play on.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap rule"></div>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Three steps to a lobby.</h2>
+        <p class="lede">You bring the game, the launcher does the rest.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <span class="n">1</span>
+          <h3>Get the game</h3>
+          <p>Pick a season in the launcher and it downloads the build from our mirror for you. Want to see what exists or grab one by hand? The whole list opens right here, from any season below.</p>
+        </div>
+        <div class="step">
+          <span class="n">2</span>
+          <h3>Install the launcher</h3>
+          <p>Download it with the button above and open it. It sets everything up the first time you run it and keeps itself up to date.</p>
+        </div>
+        <div class="step">
+          <span class="n">3</span>
+          <h3>Host or join</h3>
+          <p>Start a lobby and share it with your friends, or join one someone else is hosting. Then jump on the bus.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap rule"></div>
+
+  <!-- The modal's dialog only exists once builds.js has run, so #builds needs a static home
+       or the link is dead without JS. The reel is where browsing happens anyway. -->
+  <span id="builds" aria-hidden="true"></span>
+  <section id="seasons" class="seasons-section">
+    <div class="seasons-backdrop" aria-hidden="true">
+      <img class="backdrop-a" src="seasons/s05-blur.webp" alt="" width="64" height="36" loading="lazy" decoding="async" fetchpriority="low">
+      <img class="backdrop-b" alt="" width="64" height="36" decoding="async" fetchpriority="low">
+    </div>
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Pick your season.<br>Most of them just work.</h2>
+        <p class="lede">Every season from Chapter 1 and Chapter 2 plays great. The very first two seasons and the ones around the jump to Chapter 3 work with a few rough edges. Everything from Chapter 3 onward is there to try, but still experimental. Pick any one to see every build we know of.</p>
+        <div class="legend">
+          <span class="stable">Plays great</span>
+          <span class="partial">Works, with a few rough edges</span>
+          <span class="unstable">Experimental, expect bugs</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="reel-group" data-chapter="0">
+      <div class="wrap reel-head">
+        <h3>Outside the chapters</h3>
+        <div class="reel-nav">
+          <button class="reel-btn reel-prev" type="button" aria-label="Previous, Outside the chapters">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <button class="reel-btn reel-next" type="button" aria-label="Next, Outside the chapters">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reel" role="group" tabindex="0" aria-label="Builds outside the chapters, scroll sideways">
+          <a class="film unstable" href="#season-pre" data-season="0" aria-haspopup="dialog" data-img="seasons/s00-blur.webp" aria-label="Online Tests, alpha builds, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s00-480.webp" srcset="seasons/s00-320.webp 320w, seasons/s00-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num">OT</span>
+              <span class="film-title">Online Tests</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-99" data-season="99" aria-haspopup="dialog" data-img="seasons/s99-blur.webp" aria-label="Internal builds, dev builds, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s99-480.webp" srcset="seasons/s99-320.webp 320w, seasons/s99-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num">DEV</span>
+              <span class="film-title">Internal builds</span>
+            </div>
+          </a>
+        <div class="reel-end" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="reel-group" data-chapter="1">
+      <div class="wrap reel-head">
+        <h3>Chapter 1</h3>
+        <div class="reel-nav">
+          <button class="reel-btn reel-prev" type="button" aria-label="Previous seasons, Chapter 1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <button class="reel-btn reel-next" type="button" aria-label="Next seasons, Chapter 1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reel" role="group" tabindex="0" aria-label="Chapter 1 seasons, scroll sideways">
+          <a class="film partial" href="#season-1" data-season="1" aria-haspopup="dialog" data-img="seasons/s01-blur.webp" aria-label="Season 1, First Steps, works with a few rough edges. See its builds">
+            <div class="film-art"><img src="seasons/s01-480.webp" srcset="seasons/s01-320.webp 320w, seasons/s01-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>1</span>
+              <span class="film-title">First Steps</span>
+            </div>
+          </a>
+          <a class="film partial" href="#season-2" data-season="2" aria-haspopup="dialog" data-img="seasons/s02-blur.webp" aria-label="Season 2, Fort Knights, works with a few rough edges. See its builds">
+            <div class="film-art"><img src="seasons/s02-480.webp" srcset="seasons/s02-320.webp 320w, seasons/s02-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>2</span>
+              <span class="film-title">Fort Knights</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-3" data-season="3" aria-haspopup="dialog" data-img="seasons/s03-blur.webp" aria-label="Season 3, Meteor Strike, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s03-480.webp" srcset="seasons/s03-320.webp 320w, seasons/s03-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>3</span>
+              <span class="film-title">Meteor Strike</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-4" data-season="4" aria-haspopup="dialog" data-img="seasons/s04-blur.webp" aria-label="Season 4, Brace for Impact, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s04-480.webp" srcset="seasons/s04-320.webp 320w, seasons/s04-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>4</span>
+              <span class="film-title">Brace for Impact</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-5" data-season="5" aria-haspopup="dialog" data-img="seasons/s05-blur.webp" aria-label="Season 5, Worlds Collide, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s05-480.webp" srcset="seasons/s05-320.webp 320w, seasons/s05-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>5</span>
+              <span class="film-title">Worlds Collide</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-6" data-season="6" aria-haspopup="dialog" data-img="seasons/s06-blur.webp" aria-label="Season 6, Darkness Rises, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s06-480.webp" srcset="seasons/s06-320.webp 320w, seasons/s06-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>6</span>
+              <span class="film-title">Darkness Rises</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-7" data-season="7" aria-haspopup="dialog" data-img="seasons/s07-blur.webp" aria-label="Season 7, You Better Watch Out, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s07-480.webp" srcset="seasons/s07-320.webp 320w, seasons/s07-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>7</span>
+              <span class="film-title">You Better Watch Out</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-8" data-season="8" aria-haspopup="dialog" data-img="seasons/s08-blur.webp" aria-label="Season 8, X Marks the Spot, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s08-480.webp" srcset="seasons/s08-320.webp 320w, seasons/s08-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>8</span>
+              <span class="film-title">X Marks the Spot</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-9" data-season="9" aria-haspopup="dialog" data-img="seasons/s09-blur.webp" aria-label="Season 9, The Future Is Yours, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s09-480.webp" srcset="seasons/s09-320.webp 320w, seasons/s09-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>9</span>
+              <span class="film-title">The Future Is Yours</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-10" data-season="10" aria-haspopup="dialog" data-img="seasons/s10-blur.webp" aria-label="Season X, Out of Time, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s10-480.webp" srcset="seasons/s10-320.webp 320w, seasons/s10-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>X</span>
+              <span class="film-title">Out of Time</span>
+            </div>
+          </a>
+        <div class="reel-end" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="reel-group" data-chapter="2">
+      <div class="wrap reel-head">
+        <h3>Chapter 2</h3>
+        <div class="reel-nav">
+          <button class="reel-btn reel-prev" type="button" aria-label="Previous seasons, Chapter 2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <button class="reel-btn reel-next" type="button" aria-label="Next seasons, Chapter 2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reel" role="group" tabindex="0" aria-label="Chapter 2 seasons, scroll sideways">
+          <a class="film stable" href="#season-11" data-season="11" aria-haspopup="dialog" data-img="seasons/s11-blur.webp" aria-label="Season 11, New World, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s11-480.webp" srcset="seasons/s11-320.webp 320w, seasons/s11-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>11</span>
+              <span class="film-title">New World</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-12" data-season="12" aria-haspopup="dialog" data-img="seasons/s12-blur.webp" aria-label="Season 12, Top Secret, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s12-480.webp" srcset="seasons/s12-320.webp 320w, seasons/s12-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>12</span>
+              <span class="film-title">Top Secret</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-13" data-season="13" aria-haspopup="dialog" data-img="seasons/s13-blur.webp" aria-label="Season 13, Splashdown!, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s13-480.webp" srcset="seasons/s13-320.webp 320w, seasons/s13-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>13</span>
+              <span class="film-title">Splashdown!</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-14" data-season="14" aria-haspopup="dialog" data-img="seasons/s14-blur.webp" aria-label="Season 14, Nexus War, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s14-480.webp" srcset="seasons/s14-320.webp 320w, seasons/s14-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>14</span>
+              <span class="film-title">Nexus War</span>
+            </div>
+          </a>
+          <a class="film stable" href="#season-15" data-season="15" aria-haspopup="dialog" data-img="seasons/s15-blur.webp" aria-label="Season 15, Zero Point, plays great. See its builds">
+            <div class="film-art"><img src="seasons/s15-480.webp" srcset="seasons/s15-320.webp 320w, seasons/s15-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>15</span>
+              <span class="film-title">Zero Point</span>
+            </div>
+          </a>
+          <a class="film partial" href="#season-16" data-season="16" aria-haspopup="dialog" data-img="seasons/s16-blur.webp" aria-label="Season 16, Primal, works with a few rough edges. See its builds">
+            <div class="film-art"><img src="seasons/s16-480.webp" srcset="seasons/s16-320.webp 320w, seasons/s16-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>16</span>
+              <span class="film-title">Primal</span>
+            </div>
+          </a>
+          <a class="film partial" href="#season-17" data-season="17" aria-haspopup="dialog" data-img="seasons/s17-blur.webp" aria-label="Season 17, Invasion, works with a few rough edges. See its builds">
+            <div class="film-art"><img src="seasons/s17-480.webp" srcset="seasons/s17-320.webp 320w, seasons/s17-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>17</span>
+              <span class="film-title">Invasion</span>
+            </div>
+          </a>
+          <a class="film partial" href="#season-18" data-season="18" aria-haspopup="dialog" data-img="seasons/s18-blur.webp" aria-label="Season 18, Cubed, works with a few rough edges. See its builds">
+            <div class="film-art"><img src="seasons/s18-480.webp" srcset="seasons/s18-320.webp 320w, seasons/s18-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>18</span>
+              <span class="film-title">Cubed</span>
+            </div>
+          </a>
+        <div class="reel-end" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="reel-group" data-chapter="3">
+      <div class="wrap reel-head">
+        <h3>Chapter 3</h3>
+        <div class="reel-nav">
+          <button class="reel-btn reel-prev" type="button" aria-label="Previous seasons, Chapter 3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <button class="reel-btn reel-next" type="button" aria-label="Next seasons, Chapter 3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reel" role="group" tabindex="0" aria-label="Chapter 3 seasons, scroll sideways">
+          <a class="film partial" href="#season-19" data-season="19" aria-haspopup="dialog" data-img="seasons/s19-blur.webp" aria-label="Season 19, Flipped, works with a few rough edges. See its builds">
+            <div class="film-art"><img src="seasons/s19-480.webp" srcset="seasons/s19-320.webp 320w, seasons/s19-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>19</span>
+              <span class="film-title">Flipped</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-20" data-season="20" aria-haspopup="dialog" data-img="seasons/s20-blur.webp" aria-label="Season 20, Resistance, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s20-480.webp" srcset="seasons/s20-320.webp 320w, seasons/s20-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>20</span>
+              <span class="film-title">Resistance</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-21" data-season="21" aria-haspopup="dialog" data-img="seasons/s21-blur.webp" aria-label="Season 21, Vibin&#x27;, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s21-480.webp" srcset="seasons/s21-320.webp 320w, seasons/s21-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>21</span>
+              <span class="film-title">Vibin&#x27;</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-22" data-season="22" aria-haspopup="dialog" data-img="seasons/s22-blur.webp" aria-label="Season 22, Paradise, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s22-480.webp" srcset="seasons/s22-320.webp 320w, seasons/s22-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>22</span>
+              <span class="film-title">Paradise</span>
+            </div>
+          </a>
+        <div class="reel-end" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="reel-group" data-chapter="4">
+      <div class="wrap reel-head">
+        <h3>Chapter 4</h3>
+        <div class="reel-nav">
+          <button class="reel-btn reel-prev" type="button" aria-label="Previous seasons, Chapter 4">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <button class="reel-btn reel-next" type="button" aria-label="Next seasons, Chapter 4">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reel" role="group" tabindex="0" aria-label="Chapter 4 seasons, scroll sideways">
+          <a class="film unstable" href="#season-23" data-season="23" aria-haspopup="dialog" data-img="seasons/s23-blur.webp" aria-label="Season 23, A New Beginning, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s23-480.webp" srcset="seasons/s23-320.webp 320w, seasons/s23-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>23</span>
+              <span class="film-title">A New Beginning</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-24" data-season="24" aria-haspopup="dialog" data-img="seasons/s24-blur.webp" aria-label="Season 24, Mega, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s24-480.webp" srcset="seasons/s24-320.webp 320w, seasons/s24-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>24</span>
+              <span class="film-title">Mega</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-25" data-season="25" aria-haspopup="dialog" data-img="seasons/s25-blur.webp" aria-label="Season 25, Wilds, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s25-480.webp" srcset="seasons/s25-320.webp 320w, seasons/s25-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>25</span>
+              <span class="film-title">Wilds</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-26" data-season="26" aria-haspopup="dialog" data-img="seasons/s26-blur.webp" aria-label="Season 26, Last Resort, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s26-480.webp" srcset="seasons/s26-320.webp 320w, seasons/s26-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>26</span>
+              <span class="film-title">Last Resort</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-27" data-season="27" aria-haspopup="dialog" data-img="seasons/s27-blur.webp" aria-label="Season 27, Fortnite OG, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s27-480.webp" srcset="seasons/s27-320.webp 320w, seasons/s27-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>27</span>
+              <span class="film-title">Fortnite OG</span>
+            </div>
+          </a>
+        <div class="reel-end" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="reel-group" data-chapter="5">
+      <div class="wrap reel-head">
+        <h3>Chapter 5</h3>
+        <div class="reel-nav">
+          <button class="reel-btn reel-prev" type="button" aria-label="Previous seasons, Chapter 5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <button class="reel-btn reel-next" type="button" aria-label="Next seasons, Chapter 5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reel" role="group" tabindex="0" aria-label="Chapter 5 seasons, scroll sideways">
+          <a class="film unstable" href="#season-28" data-season="28" aria-haspopup="dialog" data-img="seasons/s28-blur.webp" aria-label="Season 28, Underground, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s28-480.webp" srcset="seasons/s28-320.webp 320w, seasons/s28-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>28</span>
+              <span class="film-title">Underground</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-29" data-season="29" aria-haspopup="dialog" data-img="seasons/s29-blur.webp" aria-label="Season 29, Myths &amp; Mortals, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s29-480.webp" srcset="seasons/s29-320.webp 320w, seasons/s29-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>29</span>
+              <span class="film-title">Myths &amp; Mortals</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-30" data-season="30" aria-haspopup="dialog" data-img="seasons/s30-blur.webp" aria-label="Season 30, Wrecked, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s30-480.webp" srcset="seasons/s30-320.webp 320w, seasons/s30-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>30</span>
+              <span class="film-title">Wrecked</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-31" data-season="31" aria-haspopup="dialog" data-img="seasons/s31-blur.webp" aria-label="Season 31, Absolute Doom, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s31-480.webp" srcset="seasons/s31-320.webp 320w, seasons/s31-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>31</span>
+              <span class="film-title">Absolute Doom</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-32" data-season="32" aria-haspopup="dialog" data-img="seasons/s32-blur.webp" aria-label="Season 32, Chapter 2 Remix, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s32-480.webp" srcset="seasons/s32-320.webp 320w, seasons/s32-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>32</span>
+              <span class="film-title">Chapter 2 Remix</span>
+            </div>
+          </a>
+        <div class="reel-end" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="reel-group" data-chapter="6">
+      <div class="wrap reel-head">
+        <h3>Chapter 6</h3>
+        <div class="reel-nav">
+          <button class="reel-btn reel-prev" type="button" aria-label="Previous seasons, Chapter 6">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <button class="reel-btn reel-next" type="button" aria-label="Next seasons, Chapter 6">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reel" role="group" tabindex="0" aria-label="Chapter 6 seasons, scroll sideways">
+          <a class="film unstable" href="#season-33" data-season="33" aria-haspopup="dialog" data-img="seasons/s33-blur.webp" aria-label="Season 33, Hunters, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s33-480.webp" srcset="seasons/s33-320.webp 320w, seasons/s33-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>33</span>
+              <span class="film-title">Hunters</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-34" data-season="34" aria-haspopup="dialog" data-img="seasons/s34-blur.webp" aria-label="Season 34, Lawless, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s34-480.webp" srcset="seasons/s34-320.webp 320w, seasons/s34-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>34</span>
+              <span class="film-title">Lawless</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-35" data-season="35" aria-haspopup="dialog" data-img="seasons/s35-blur.webp" aria-label="Season 35, Galactic Battle, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s35-480.webp" srcset="seasons/s35-320.webp 320w, seasons/s35-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>35</span>
+              <span class="film-title">Galactic Battle</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-36" data-season="36" aria-haspopup="dialog" data-img="seasons/s36-blur.webp" aria-label="Season 36, Super, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s36-480.webp" srcset="seasons/s36-320.webp 320w, seasons/s36-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>36</span>
+              <span class="film-title">Super</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-37" data-season="37" aria-haspopup="dialog" data-img="seasons/s37-blur.webp" aria-label="Season 37, Shock &#x27;N Awesome, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s37-480.webp" srcset="seasons/s37-320.webp 320w, seasons/s37-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>37</span>
+              <span class="film-title">Shock &#x27;N Awesome</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-38" data-season="38" aria-haspopup="dialog" data-img="seasons/s38-blur.webp" aria-label="Season 38, The Simpsons, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s38-480.webp" srcset="seasons/s38-320.webp 320w, seasons/s38-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>38</span>
+              <span class="film-title">The Simpsons</span>
+            </div>
+          </a>
+        <div class="reel-end" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="reel-group" data-chapter="7">
+      <div class="wrap reel-head">
+        <h3>Chapter 7</h3>
+        <div class="reel-nav">
+          <button class="reel-btn reel-prev" type="button" aria-label="Previous seasons, Chapter 7">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <button class="reel-btn reel-next" type="button" aria-label="Next seasons, Chapter 7">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reel" role="group" tabindex="0" aria-label="Chapter 7 seasons, scroll sideways">
+          <a class="film unstable" href="#season-39" data-season="39" aria-haspopup="dialog" data-img="seasons/s39-blur.webp" aria-label="Season 39, Pacific Break, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s39-480.webp" srcset="seasons/s39-320.webp 320w, seasons/s39-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>39</span>
+              <span class="film-title">Pacific Break</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-40" data-season="40" aria-haspopup="dialog" data-img="seasons/s40-blur.webp" aria-label="Season 40, Showdown, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s40-480.webp" srcset="seasons/s40-320.webp 320w, seasons/s40-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>40</span>
+              <span class="film-title">Showdown</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-41" data-season="41" aria-haspopup="dialog" data-img="seasons/s41-blur.webp" aria-label="Season 41, Runners, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s41-480.webp" srcset="seasons/s41-320.webp 320w, seasons/s41-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>41</span>
+              <span class="film-title">Runners</span>
+            </div>
+          </a>
+          <a class="film unstable" href="#season-42" data-season="42" aria-haspopup="dialog" data-img="seasons/s42-blur.webp" aria-label="Season 42, Override, experimental. See its builds">
+            <div class="film-art"><img src="seasons/s42-480.webp" srcset="seasons/s42-320.webp 320w, seasons/s42-480.webp 480w" sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+            <div class="film-cap">
+              <span class="film-num"><small>S</small>42</span>
+              <span class="film-title">Override</span>
+            </div>
+          </a>
+        <div class="reel-end" aria-hidden="true"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap rule"></div>
+
+  <section id="code">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Open source,<br>top to bottom.</h2>
+        <p class="lede">Every line of code behind Project Reboot is public on GitHub: the app you install, the game engine, the backend, and the matchmaker. Nothing is hidden, so anyone can read exactly what runs on their machine and contribute new features.</p>
+      </div>
+      <div class="repos">
+        <a class="repo" href="https://github.com/Auties00/Reboot-Launcher" target="_blank" rel="noopener">
+          <span class="path"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.9 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>Auties00 / Reboot-Launcher</span>
+          <h3>The launcher</h3>
+          <p>The app you download. It looks after your seasons, runs your lobbies, and connects you to your friends.</p>
+        </a>
+        <a class="repo" href="https://github.com/Milxnor/Project-Reboot-3.0" target="_blank" rel="noopener">
+          <span class="path"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.9 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>Milxnor / Project-Reboot-3.0</span>
+          <h3>The game server</h3>
+          <p>The engine that brings an old season back to life and runs the match. Made for Seasons 3 to 15, with more on the way.</p>
+        </a>
+        <a class="repo" href="https://github.com/Lawin0129/LawinServer" target="_blank" rel="noopener">
+          <span class="path"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.9 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>Lawin0129 / LawinServer</span>
+          <h3>The backend</h3>
+          <p>LawinServer V1. Stands in for Epic's servers so the game can log you in, load your locker, and get you to the lobby without an account.</p>
+        </a>
+        <a class="repo" href="https://github.com/Lawin0129/FortMatchmaker" target="_blank" rel="noopener">
+          <span class="path"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.9 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>Lawin0129 / FortMatchmaker</span>
+          <h3>The matchmaker</h3>
+          <p>The Lawin matchmaker. When you press play, it is what puts you and your friends into the same match.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap rule"></div>
+
+  <section id="faq">
+    <div class="wrap faq-grid">
+      <div class="faq-side">
+        <h2>Before you drop.</h2>
+        <p class="lede">Quick answers to the things people ask most. Anything else, ask in the Discord and someone will point you the right way.</p>
+        <a class="btn btn-ghost" href="https://discord.gg/rebootmp" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.6 5.6A16 16 0 0 0 15.7 4.4l-.5 1a15 15 0 0 0-6.4 0l-.5-1a16 16 0 0 0-3.9 1.2C2 9.3 1.3 12.9 1.6 16.5a16 16 0 0 0 4.8 2.4l1-1.6a10 10 0 0 1-1.6-.8l.4-.3a11.5 11.5 0 0 0 11.6 0l.4.3a10 10 0 0 1-1.6.8l1 1.6a16 16 0 0 0 4.8-2.4c.4-4.1-.7-7.7-2.8-10.9ZM8.7 14.3c-.9 0-1.7-.9-1.7-2s.7-2 1.7-2 1.7.9 1.7 2-.8 2-1.7 2Zm6.6 0c-.9 0-1.7-.9-1.7-2s.7-2 1.7-2 1.7.9 1.7 2-.8 2-1.7 2Z"/></svg>
+          <span>Ask on Discord</span>
+        </a>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item is-open">
+          <h3>
+            <button class="faq-q" type="button" id="faq-q1" aria-expanded="true" aria-controls="faq-a1">
+              <span class="faq-t">Is it free?</span>
+              <span class="faq-i" aria-hidden="true"></span>
+            </button>
+          </h3>
+          <div class="faq-a" id="faq-a1" role="region" aria-labelledby="faq-q1">
+            <div class="faq-a-inner"><p>Yes, completely. No price, no accounts to buy, no paid extras.</p></div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <h3>
+            <button class="faq-q" type="button" id="faq-q2" aria-expanded="false" aria-controls="faq-a2">
+              <span class="faq-t">Do I need an Epic Games account?</span>
+              <span class="faq-i" aria-hidden="true"></span>
+            </button>
+          </h3>
+          <div class="faq-a" id="faq-a2" role="region" aria-labelledby="faq-q2">
+            <div class="faq-a-inner"><p>No. Pick any name you like and play. Nothing connects to Epic's servers.</p></div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <h3>
+            <button class="faq-q" type="button" id="faq-q3" aria-expanded="false" aria-controls="faq-a3">
+              <span class="faq-t">Where do old Fortnite builds come from?</span>
+              <span class="faq-i" aria-hidden="true"></span>
+            </button>
+          </h3>
+          <div class="faq-a" id="faq-a3" role="region" aria-labelledby="faq-q3">
+            <div class="faq-a-inner"><p>From our own build mirror. The launcher downloads the right build for a season automatically, and you can see <a href="#builds">the whole list</a> right here: every build we know about on Windows, Android and iOS, including the lost ones we are paying a bounty for.</p></div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <h3>
+            <button class="faq-q" type="button" id="faq-q4" aria-expanded="false" aria-controls="faq-a4">
+              <span class="faq-t">Can I play with friends who are not at my place?</span>
+              <span class="faq-i" aria-hidden="true"></span>
+            </button>
+          </h3>
+          <div class="faq-a" id="faq-a4" role="region" aria-labelledby="faq-q4">
+            <div class="faq-a-inner"><p>Yes. Host a lobby and share your address with them. The launcher opens the door on your network for you. If your router does not play along, the Discord has a quick fix.</p></div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <h3>
+            <button class="faq-q" type="button" id="faq-q5" aria-expanded="false" aria-controls="faq-a5">
+              <span class="faq-t">Does it work on Mac or Linux?</span>
+              <span class="faq-i" aria-hidden="true"></span>
+            </button>
+          </h3>
+          <div class="faq-a" id="faq-a5" role="region" aria-labelledby="faq-q5">
+            <div class="faq-a-inner"><p>Yes. The launcher runs on Windows, Linux and macOS, and it works the same way on all three.</p></div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <h3>
+            <button class="faq-q" type="button" id="faq-q6" aria-expanded="false" aria-controls="faq-a6">
+              <span class="faq-t">Is this affiliated with Epic Games?</span>
+              <span class="faq-i" aria-hidden="true"></span>
+            </button>
+          </h3>
+          <div class="faq-a" id="faq-a6" role="region" aria-labelledby="faq-q6">
+            <div class="faq-a-inner"><p>No. Project Reboot is made by fans and has no connection to Epic Games. Fortnite is a trademark of Epic Games, Inc.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="#top" aria-label="Project Reboot home">
+          <img src="logo.webp" alt="" width="30" height="30" decoding="async">
+          Project Reboot
+        </a>
+        <p>Old Fortnite, brought back by fans. Host a lobby, invite your friends, and play the seasons you miss. On Windows, Linux and macOS.</p>
+      </div>
+      <nav class="footer-col" aria-label="Get it">
+        <h4>Get it</h4>
+        <a href="https://github.com/Auties00/Reboot-Launcher/releases/latest" target="_blank" rel="noopener">Latest release</a>
+        <a href="https://github.com/Auties00/Reboot-Launcher/releases" target="_blank" rel="noopener">All releases</a>
+        <a href="#builds">Browse builds</a>
+        <a href="#how">How to play</a>
+        <a href="#seasons">Season support</a>
+      </nav>
+      <nav class="footer-col" aria-label="Source code">
+        <h4>Under the hood</h4>
+        <a href="https://github.com/Auties00/Reboot-Launcher" target="_blank" rel="noopener">The launcher</a>
+        <a href="https://github.com/Milxnor/Project-Reboot-3.0" target="_blank" rel="noopener">The game engine</a>
+        <a href="https://github.com/Lawin0129/LawinServer" target="_blank" rel="noopener">The backend</a>
+        <a href="https://github.com/Lawin0129/FortMatchmaker" target="_blank" rel="noopener">The matchmaker</a>
+      </nav>
+      <nav class="footer-col" aria-label="Community">
+        <h4>Community</h4>
+        <a href="https://discord.gg/rebootmp" target="_blank" rel="noopener">Discord</a>
+        <a href="https://github.com/Auties00/Reboot-Launcher/issues" target="_blank" rel="noopener">Found a bug in the app?</a>
+        <a href="https://github.com/Milxnor/Project-Reboot-3.0/issues" target="_blank" rel="noopener">Found a bug in a match?</a>
+      </nav>
+    </div>
+  </div>
+  <div class="footer-mark" aria-hidden="true">Reboot</div>
+</footer>
+
+<script>
+  // Header actions (Discord + Download): collapsed while the hero's buttons are on screen,
+  // then slide in once those scroll under the header.
+  (() => {
+    const actions = document.getElementById('nav-actions');
+    const inner = actions && actions.querySelector('.nav-actions-inner');
+    const heroCta = document.getElementById('hero-cta');
+    if (!actions || !inner || !heroCta || !('IntersectionObserver' in window)) return;
+
+    const measure = () => actions.style.setProperty('--actions-w', inner.offsetWidth + 'px');
+    measure();
+    if ('ResizeObserver' in window) new ResizeObserver(measure).observe(inner);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+
+    // Set the initial state without animating it.
+    actions.classList.add('no-anim', 'is-hidden');
+    requestAnimationFrame(() => requestAnimationFrame(() => actions.classList.remove('no-anim')));
+
+    new IntersectionObserver(([entry]) => {
+      actions.classList.toggle('is-hidden', entry.isIntersecting);
+    }, { rootMargin: '-64px 0px 0px 0px', threshold: 0 }).observe(heroCta);
+  })();
+
+  // Season reels: one per chapter. The card nearest the middle of a reel is "in focus";
+  // the last reel you touched paints its focused art as the blurred backdrop for the section.
+  (() => {
+    const reels = Array.from(document.querySelectorAll('.reel'));
+    if (!reels.length) return;
+    // Passing behavior:'smooth' in JS overrides the CSS scroll-behavior rule,
+    // so reduced motion has to be honoured explicitly here.
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const scrollEase = reduceMotion ? 'auto' : 'smooth';
+    const layers = [document.querySelector('.backdrop-a'), document.querySelector('.backdrop-b')];
+    let active = 0, current = null;
+
+    const setBackdrop = (src) => {
+      if (!layers[0] || !src || src === current) return;
+      current = src;
+      const show = layers[1 - active], hide = layers[active];
+      show.src = src;
+      const go = () => { show.classList.add('on'); hide.classList.remove('on'); };
+      if (show.complete && show.naturalWidth) go(); else show.onload = go;
+      active = 1 - active;
+    };
+
+    reels.forEach((reel, index) => {
+      const group = reel.closest('.reel-group');
+      const films = Array.from(reel.querySelectorAll('.film'));
+      const prev = group.querySelector('.reel-prev');
+      const next = group.querySelector('.reel-next');
+      let raf = 0, focused = null, touched = false;
+
+      const update = (paint) => {
+        raf = 0;
+        const r = reel.getBoundingClientRect();
+        const mid = r.left + r.width / 2;
+        let best = null, bestD = Infinity;
+        for (const f of films) {
+          const b = f.getBoundingClientRect();
+          const d = Math.abs(b.left + b.width / 2 - mid);
+          if (d < bestD) { bestD = d; best = f; }
+        }
+        films.forEach(f => f.classList.toggle('is-focus', f === best));
+        focused = best;
+        if (paint && best) setBackdrop(best.dataset.img);
+        const max = reel.scrollWidth - reel.clientWidth;
+        if (prev) prev.disabled = reel.scrollLeft <= 4;
+        if (next) next.disabled = reel.scrollLeft >= max - 4;
+      };
+      const schedule = (paint) => { if (!raf) raf = requestAnimationFrame(() => update(paint)); };
+      // Snap correction on first layout (and every lazy image landing) makes each reel fire a
+      // scroll event, which would repaint the backdrop once per reel (nine fetches) before
+      // anybody has touched it. Only a reel someone has touched paints on scroll.
+      const touch = () => { touched = true; };
+      for (const ev of ['pointerdown', 'wheel', 'touchstart', 'keydown', 'focusin']) reel.addEventListener(ev, touch, { passive: true });
+      group.addEventListener('click', (e) => { if (e.target.closest('.reel-prev,.reel-next')) touched = true; });
+      reel.addEventListener('scroll', () => schedule(touched), { passive: true });
+      window.addEventListener('resize', () => schedule(false));
+      films.forEach(f => f.addEventListener('mouseenter', () => setBackdrop(f.dataset.img)));
+      reel.addEventListener('mouseleave', () => focused && setBackdrop(focused.dataset.img));
+
+      const step = () => (films[0].getBoundingClientRect().width + 16) * 3;
+      prev && prev.addEventListener('click', () => reel.scrollBy({ left: -step(), behavior: scrollEase }));
+      next && next.addEventListener('click', () => reel.scrollBy({ left: step(), behavior: scrollEase }));
+
+      // Mouse drag to scroll (touch already scrolls natively).
+      let dragX = 0, dragLeft = 0, dragging = false, moved = false;
+      reel.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        dragging = true; moved = false; dragX = e.clientX; dragLeft = reel.scrollLeft;
+        reel.classList.add('dragging');
+      });
+      window.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - dragX;
+        if (Math.abs(dx) > 3) moved = true;
+        reel.scrollLeft = dragLeft - dx;
+      });
+      window.addEventListener('pointerup', () => {
+        if (!dragging) return;
+        dragging = false; reel.classList.remove('dragging');
+        if (moved) reel.scrollTo({ left: reel.scrollLeft, behavior: scrollEase });
+      });
+      // A drag must not open the card that happened to be under the cursor.
+      reel.addEventListener('click', (e) => { if (moved) { e.preventDefault(); moved = false; } }, true);
+
+      update(index === 0);
+    });
+  })();
+
+  // FAQ accordion: one answer open at a time.
+  (() => {
+    const items = Array.from(document.querySelectorAll('.faq-item'));
+    items.forEach(item => {
+      const btn = item.querySelector('.faq-q');
+      btn.addEventListener('click', () => {
+        const open = item.classList.contains('is-open');
+        items.forEach(i => { i.classList.remove('is-open'); i.querySelector('.faq-q').setAttribute('aria-expanded', 'false'); });
+        if (!open) { item.classList.add('is-open'); btn.setAttribute('aria-expanded', 'true'); }
+      });
+    });
+  })();
+
+  // Nav: light the link for the section currently in view.
+  (() => {
+    const links = [...document.querySelectorAll('.nav-links a[href^="#"]')];
+    if (!links.length || !('IntersectionObserver' in window)) return;
+    const map = new Map();
+    for (const a of links) {
+      const el = document.querySelector(a.getAttribute('href'));
+      if (el) map.set(el, a);
+    }
+    if (!map.size) return;
+    const seen = new Set();
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) e.isIntersecting ? seen.add(e.target) : seen.delete(e.target);
+      for (const a of links) a.classList.remove('is-current');
+      for (const [el, a] of map) if (seen.has(el)) { a.classList.add('is-current'); break; }
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    for (const el of map.keys()) io.observe(el);
+  })();
+
+  // Hero wall: tilt it gently with the cursor and pause the drift off screen.
+  (() => {
+    const visual = document.getElementById('hero-visual');
+    const wall = document.getElementById('wall');
+    if (!visual || !wall) return;
+    const hero = visual.closest('.hero') || visual;
+    // The tiles are marked lazy only so that hiding the wall under a URL-opened dialog cancels
+    // their requests; wherever the wall is on stage they load eagerly, exactly as before, so
+    // the drift never walks an unfetched tile into the mask.
+    const eager = () => { for (const img of wall.querySelectorAll('img')) img.loading = 'eager'; };
+    if (!document.documentElement.classList.contains('bl-deep')) eager();
+    else document.addEventListener('close', (e) => {
+      if (e.target && e.target.id === 'bl-dialog') { document.documentElement.classList.remove('bl-deep'); eager(); }
+    }, true);   // close does not bubble; capture on document still sees it
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce && window.matchMedia('(pointer: fine)').matches) {
+      hero.addEventListener('mousemove', (e) => {
+        const r = hero.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        wall.style.setProperty('--ty', (px * 8) + 'deg');
+        wall.style.setProperty('--tx', (-py * 6) + 'deg');
+      });
+      hero.addEventListener('mouseleave', () => {
+        wall.style.setProperty('--ty', '0deg');
+        wall.style.setProperty('--tx', '0deg');
+      });
+    }
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([entry]) => {
+        visual.classList.toggle('is-idle', !entry.isIntersecting);
+      }, { threshold: 0.05 }).observe(visual);
+    }
+  })();
+
+  // Builds modal, entirely off the critical path: dialog, stylesheet, code and catalogue
+  // are all fetched the first time somebody shows intent.
+  (() => {
+    if (!window.HTMLDialogElement || !HTMLDialogElement.prototype.showModal) return;
+    const OPENERS = '.film[data-season], a[href="#builds"]';
+    let pending, mod;
+
+    const sheet = () => new Promise((done) => {
+      const l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = '/builds.css';
+      l.onload = () => done(true); l.onerror = () => done(false);
+      document.head.appendChild(l);
+    });
+
+    // ??= is the dedupe: hovering six cards in a row produces exactly one request set.
+    // Chaining the four would cost a round trip for nothing, and availability is not
+    // awaited at all: the modal must open on the click frame.
+    const warm = () => (pending ??= {
+      code: import('/builds.js'),
+      data: fetch('/builds.json').then(r => r.json()),
+      live: fetch('/api/availability', AbortSignal.timeout ? { signal: AbortSignal.timeout(4000) } : undefined)
+              .then(r => r.ok ? r.json() : Promise.reject(0)).catch(() => null),
+      css: sheet(),
+    });
+
+    const retry = () => { const p = pending; pending = undefined; const n = warm();
+                          n.code = p.code; n.data = p.data; n.css = p.css; return n.live; };
+
+    const open = (season, opener) => {
+      const p = warm();
+      // The card that was tapped pulses until the modal is ready to open on it.
+      if (opener) opener.classList.add('is-loading');
+      const done = () => { if (opener) opener.classList.remove('is-loading'); };
+      Promise.all([p.code, p.data, p.css]).then(([m, data, styled]) => {
+        done();
+        (mod = m).open({ data, live: p.live, season, opener, styled, retry });
+      }, () => { done(); pending = undefined; });
+    };
+
+    const hit = (e) => e.target.closest && e.target.closest(OPENERS);
+    const sure = (e) => { if (hit(e)) warm(); };
+
+    // Cards slide under a parked cursor while the page scrolls, and Chrome raises pointerover
+    // for that exactly as it does for a deliberate hover, so wheeling past the reel would
+    // spend 61 KB on somebody who never stopped. Focus and touch mean it, and skip the dwell.
+    // Scroll does not bubble, so a reel scrolling sideways never reaches window: capture on
+    // document sees both the page and every reel.
+    let dwell;
+    const cancel = () => clearTimeout(dwell);
+    document.addEventListener('pointerover', (e) => { cancel(); if (hit(e)) dwell = setTimeout(warm, 90); });
+    document.addEventListener('pointerout', cancel);
+    document.addEventListener('scroll', cancel, { capture: true, passive: true });
+    document.addEventListener('focusin', sure);
+    document.addEventListener('touchstart', sure, { passive: true });
+
+    document.addEventListener('click', (e) => {
+      // The reel cancels a drag in CAPTURE phase (see the reels IIFE above), so bail on an
+      // already-prevented click or every mouse drag pops the modal. Modifier clicks are left
+      // alone: the card's href is #season-N, so the new tab opens on the right season.
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = hit(e);
+      if (!a) return;
+      e.preventDefault();
+      open(a.dataset.season ? +a.dataset.season : null, a);
+    });
+
+    const HASH = /^#(?:builds|season-(\d+|pre))$/;
+    const fromHash = () => {
+      const m = HASH.exec(location.hash);
+      if (m) open(m[1] === 'pre' ? 0 : (m[1] ? +m[1] : null), null);
+    };
+    fromHash();
+    addEventListener('hashchange', () => { if (!mod || !mod.isOpen()) fromHash(); });
+  })();
+</script>
+</body>
+</html>

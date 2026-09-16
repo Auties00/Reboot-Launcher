@@ -1,0 +1,450 @@
+/* ---------- Builds modal, "the launcher" ---------- */
+/* Fetched on intent, never on the critical path. Two panes like a desktop store: the season
+   list on the left, the chosen season as a page on the right. Every colour is a :root token
+   or a wash of one; the only additions are white hairlines that read as glass edges rather
+   than as a new hue. The page has no --ink-4, so the one extra step of grey lives here.
+   Section order: shell, sidebar, canvas/hero, detail, cards, facets, banner, live region,
+   scroll lock, responsive, motion (reduced-motion last, so it wins). */
+
+/* ---------- Shell ---------- */
+.bl {
+  --bl-ink-4: #52708A;
+  --bl-edge: rgba(255, 255, 255, 0.04);
+  --bl-side: 296px;
+  --bl-pad: 48px;
+  width: min(1220px, 100vw - 2 * var(--gutter));
+  height: min(820px, 100dvh - 2 * var(--gutter));
+  max-width: none; max-height: none;
+  padding: 0; border: 0;
+  overflow: hidden;
+  grid-template-columns: var(--bl-side) minmax(0, 1fr);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.45;
+  background: var(--panel);
+  border-radius: 22px;
+  box-shadow: 0 40px 120px -20px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+/* Affordable only because showModal() freezes the page under it: the compositor blurs a
+   static picture once. */
+.bl::backdrop {
+  background: rgba(4, 10, 18, 0.62);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  overscroll-behavior: contain;
+}
+/* The grid only exists while the dialog is open: an unconditional display on a <dialog>
+   beats the UA's dialog:not([open]) { display: none } and leaves the closed launcher laid
+   out at the end of the document, its controls still in the page's Tab order. */
+.bl[open] { display: grid; }
+.bl:not([open]) { display: none !important; }
+/* Anything that toggles through the hidden attribute wins over its own display value. This
+   bit v2 (a display:grid row stayed painted while hidden); one rule closes the class. */
+.bl [hidden] { display: none !important; }
+.bl button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.bl button, .bl input { -webkit-tap-highlight-color: transparent; }
+.bl :is(a, button, input, [tabindex]):focus-visible { outline: 2px solid var(--storm); outline-offset: 2px; }
+.bl p { margin: 0; }
+.bl-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* Every platform logo, once, as <symbol>s the chips <use>. Never painted itself. */
+.bl-sprite { position: absolute; width: 0; height: 0; }
+
+/* ---------- Sidebar ---------- */
+.bl-side {
+  position: relative;
+  display: flex; flex-direction: column;
+  min-height: 0;
+  background: var(--ground-2);
+  border-right: 1px solid var(--bl-edge);
+}
+/* The head: the pane's title, and on a phone the close button beside it. */
+.bl-side-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: none; padding: 22px 20px 8px; }
+.bl-side-t { margin: 0; font-family: var(--display); font-style: italic; font-weight: 900; font-size: 26px; line-height: 1; letter-spacing: 0.01em; text-transform: uppercase; color: var(--ink); }
+
+/* No top padding: Chrome insets a sticky child by the scroller's padding, so any padding
+   here would be a strip above the stuck chapter header that rows scroll through. The room at
+   the top is a spacer that scrolls away under the header instead. */
+.bl-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px 18px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.bl-list::before { content: ""; display: block; height: 12px; }
+.bl-list::-webkit-scrollbar { width: 8px; }
+.bl-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; border: 2px solid var(--ground-2); }
+.bl-chap {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; justify-content: space-between;
+  padding: 14px 10px 8px;
+  background: var(--ground-2);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bl-ink-4);
+}
+.bl-chap b { font-weight: 600; color: var(--ink-3); }
+.bl-srow {
+  position: relative;
+  display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: center;
+  width: 100%; padding: 7px 10px;
+  border-radius: 12px; text-align: left;
+}
+.bl-srow:hover { background: rgba(255, 255, 255, 0.035); }
+.bl-srow[aria-current="true"] { background: var(--panel-2); box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.035); }
+.bl-srow:focus-visible { outline-offset: -2px; }
+/* The 320 art, lazily; the tile paints as --panel-2 until it arrives. The season tag sits
+   over a corner darkening so it reads on any key art. */
+.bl-th { position: relative; isolation: isolate; width: 64px; height: 36px; overflow: hidden; border-radius: 7px; background: var(--panel-2); }   /* isolate: the tag must never paint over the sticky chapter header */
+.bl-th img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+.bl-th img.is-in { opacity: 1; }
+.bl-tx { min-width: 0; display: flex; flex-direction: column; }
+.bl-nm { font-weight: 600; font-size: 14px; line-height: 1.25; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bl-ft { margin-top: 2px; font-size: 12px; line-height: 1.3; color: var(--ink-3); white-space: nowrap; }
+/* Nothing mirrored: the art goes grey so the eye skips it, the line says why. Only ever
+   set from a confirmed live answer; an unverified season is never dimmed. */
+.bl-srow.is-dead .bl-th img { filter: saturate(0.15) brightness(0.55); }
+.bl-srow.is-dead .bl-nm { color: var(--ink-3); }
+.bl-srow.is-dead .bl-ft { color: var(--bl-ink-4); }
+.bl-srow.is-dead[aria-current="true"] .bl-nm { color: var(--ink-2); }
+/* ---------- Canvas and hero ---------- */
+/* padding: 0 is load-bearing: the canvas is a <section>, and the page styles sections.
+   The canvas itself never scrolls: it is a fixed header over a scroller. */
+.bl-canvas { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 0; overflow: hidden; background: var(--panel); }
+.bl-head { position: relative; flex: none; z-index: 2; overflow: hidden; }
+.bl-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.bl-scroll::-webkit-scrollbar { width: 10px; }
+.bl-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; border: 3px solid var(--panel); }
+/* The art fills the header exactly and the header is as tall as its words, so the first
+   card sits right under the answer. The blur is already in memory from the reel and paints
+   at once; the 640 fades in over it when it lands. --bl-pull is the overscroll: a scale
+   from the top edge, so a pull grows the picture downward into the pane and it springs
+   back when let go. */
+.bl-hero { position: absolute; inset: 0; overflow: hidden; pointer-events: none; transform: scale(calc(1 + var(--bl-pull, 0) / 800)); transform-origin: 50% 0; transition: transform var(--t-land) var(--e-drop); }
+.bl-head.is-pulling :is(.bl-hero, .bl-headin) { transition: none; }
+.bl-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; transform-origin: 50% 0; }
+.bl-wash { opacity: 0.42; }
+.bl-art { opacity: 0; transform: scale(1.04); filter: saturate(1.05); }
+.bl-hero.is-in .bl-art { opacity: 0.42; transform: none; }
+.bl-hero::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(14, 31, 48, 0.25) 0%, rgba(14, 31, 48, 0.6) 40%, var(--panel) 92%),
+    linear-gradient(90deg, rgba(14, 31, 48, 0.85) 0%, rgba(14, 31, 48, 0.2) 45%, rgba(14, 31, 48, 0.5) 100%);
+}
+.bl-hero.no-art { display: none; }
+/* The buttons float over the art in the header's top corners. */
+.bl-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; justify-content: space-between; padding: 16px 20px 0; pointer-events: none; }
+.bl-topbar > * { pointer-events: auto; }
+.bl-iconbtn, .bl-back {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 38px; border-radius: 12px;
+  color: var(--ink-2);
+  background: rgba(6, 17, 28, 0.55);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.bl-iconbtn { width: 38px; }
+.bl-close { margin-left: auto; }   /* stays right when the Back control is not shown */
+.bl-close-side { display: none; }   /* the list screen's own close: phone only */
+.bl-iconbtn:hover, .bl-back:hover { background: rgba(6, 17, 28, 0.85); color: var(--ink); }
+.bl-iconbtn svg { width: 16px; height: 16px; }
+.bl-back { display: none; gap: 6px; padding: 0 14px 0 10px; font-weight: 600; font-size: 13px; }
+.bl-back svg { width: 14px; height: 14px; }
+
+/* ---------- Detail ---------- */
+.bl-headin { position: relative; z-index: 1; max-width: 960px; padding: 88px var(--bl-pad) 24px; }
+.bl-detail { position: relative; max-width: 960px; padding: 14px var(--bl-pad) 56px; }
+.bl-eye { font-family: var(--body); font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5); }
+.bl-eye span { color: var(--ink-3); }
+.bl-title {
+  margin: 8px 0 18px;
+  font-family: var(--display); font-style: italic; font-weight: 900;
+  font-size: 76px; line-height: 0.92; letter-spacing: 0.005em; text-transform: uppercase;
+  color: var(--ink); text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45); text-wrap: balance;
+}
+/* (0,3,0), to out-rank the generic .bl :is(…[tabindex]):focus-visible rule above: the title
+   takes focus on open so the season is announced, but a heading is not a control. */
+.bl .bl-title:focus-visible { outline: 0; }
+.bl-answer { max-width: 620px; font-size: 18px; line-height: 1.45; color: var(--ink-2); text-wrap: pretty; }
+.bl-play { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); }
+.bl-play::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--tone, var(--ink-3)); box-shadow: 0 0 12px var(--tone, transparent); }
+.bl-play.stable { --tone: var(--stable); } .bl-play.partial { --tone: var(--partial); } .bl-play.unstable { --tone: var(--unstable); }
+
+/* ---------- Cards ---------- */
+.bl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.bl-card {
+  position: relative;
+  padding: 14px 16px 14px 18px;
+  border-radius: 16px; background: var(--panel-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 30px -18px rgba(0, 0, 0, 0.8);
+}
+.bl-card:hover { background: #152D43; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px -18px rgba(0, 0, 0, 0.9); }
+.bl-card:focus-visible { outline-offset: 0; }
+/* The four fates. Same size, same row, but each fate keeps its own surface: a raised panel
+   with the one cyan action, a quiet flat panel (a copy exists elsewhere, or the mirror could
+   not be asked), or a dashed outline with nothing to press (no copy is known anywhere). */
+.bl-card.is-unavailable, .bl-card.is-unknown { background: rgba(255, 255, 255, 0.025); box-shadow: none; }
+.bl-card.is-unavailable:hover, .bl-card.is-unknown:hover { background: rgba(255, 255, 255, 0.04); box-shadow: none; }
+.bl-card.is-unavailable .bl-v, .bl-card.is-unknown .bl-v { color: var(--ink-2); }
+.bl-card.is-missing { background: transparent; box-shadow: inset 0 0 0 1px transparent; outline: 1px dashed rgba(127, 157, 178, 0.35); outline-offset: -1px; }
+.bl-card.is-missing:hover { background: rgba(255, 255, 255, 0.02); box-shadow: none; }
+.bl-card.is-missing .bl-v { color: var(--ink-3); }
+.bl-card.is-missing .bl-meta { color: var(--ink-3); }
+.bl-card-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.bl-id { min-width: 0; }
+.bl-v { font-family: var(--display); font-style: italic; font-weight: 900; font-size: 36px; line-height: 0.9; letter-spacing: 0.01em; color: var(--ink); }
+/* The subtitle is the changelist, always, in mono; "CL unknown" holds the line when there
+   is none, so every card has the same two rows. */
+.bl-meta { margin-top: 5px; font-size: 12px; color: var(--bl-ink-4); }
+.bl-meta code { white-space: nowrap; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.01em; color: var(--ink-3); }
+.bl-card.is-available .bl-meta code { color: var(--ink-2); }
+.bl-nocl { white-space: nowrap; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.01em; color: var(--bl-ink-4); }
+/* One control per card, a split button: one rounded enclosure that carries the state (its
+   ring and tint) holding two presses: the action, two lines deep (the word, and beneath it
+   the platform in fine print), and a chevron that opens the platform menu. A short hairline
+   inside the shape divides them, stopping clear of the top and bottom, so the whole still reads
+   as one object; each half lights on its own under the pointer. The action half is one width
+   whatever the word, so a column of cards lines up. Cyan and a link only when the copy is on
+   the mirror; a plain ring when a copy is known elsewhere; dashed when none is; dotted while
+   the mirror is being asked. */
+.bl-act { position: relative; display: inline-flex; flex: none; }
+.bl-split { position: relative; display: inline-flex; align-items: stretch; height: 44px; border-radius: 12px; background: rgba(255, 255, 255, 0.03); }
+.bl-split::before { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(127, 157, 178, 0.3); pointer-events: none; }
+.bl-split.is-available { background: rgba(63, 208, 255, 0.1); }
+.bl-split.is-available::before { box-shadow: inset 0 0 0 1px rgba(63, 208, 255, 0.4); }
+.bl-split.is-missing { background: transparent; }
+.bl-split.is-missing::before { box-shadow: none; outline: 1px dashed rgba(127, 157, 178, 0.45); outline-offset: -1px; }
+.bl-split.is-unknown::before { box-shadow: none; outline: 1px dotted rgba(127, 157, 178, 0.55); outline-offset: -1px; }
+.bl-go { display: inline-flex; align-items: center; gap: 9px; width: 120px; padding: 0 8px 0 12px; border-radius: 12px 0 0 12px; color: var(--ink-3); text-decoration: none; text-align: left; }
+.bl-go > svg { flex: none; width: 14px; height: 14px; }
+.bl-t { display: flex; flex-direction: column; line-height: 1.15; white-space: nowrap; }
+.bl-t b { font-size: 13px; font-weight: 700; letter-spacing: 0.01em; }
+.bl-t small { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; opacity: 0.8; }
+.bl-t .bl-logo { flex: none; width: 10px; height: 10px; }
+.bl-go.is-available { color: var(--storm); }
+a.bl-go:hover { background: var(--storm); color: #04121C; }
+span.bl-go { cursor: default; }
+.bl-sel { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 30px; border-radius: 0 12px 12px 0; color: var(--ink-3); }
+.bl-sel::before { content: ""; position: absolute; left: 0; top: 11px; bottom: 11px; width: 1px; background: rgba(127, 157, 178, 0.35); pointer-events: none; }
+.bl-split.is-available .bl-sel { color: var(--storm); }
+.bl-split.is-available .bl-sel::before { background: rgba(63, 208, 255, 0.45); }
+button.bl-sel:hover, .bl-sel[aria-expanded="true"] { color: var(--ink); background: rgba(255, 255, 255, 0.08); }
+.bl-split.is-available button.bl-sel:hover, .bl-split.is-available .bl-sel[aria-expanded="true"] { color: var(--ink); background: rgba(63, 208, 255, 0.22); }
+.bl-sel[aria-expanded="true"] .bl-chev { transform: rotate(180deg); }
+.bl-chev { flex: none; width: 11px; height: 11px; opacity: 0.75; }
+/* The menu: every platform the version existed on, each with its fate on the right. It
+   hangs under the pill, right-aligned, and flips upward near the bottom of the pane. */
+.bl-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 6;
+  min-width: 240px; padding: 6px;
+  border-radius: 12px; background: #17324A;
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.bl-menu.is-up { top: auto; bottom: calc(100% + 6px); }
+.bl-mi { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 8px; color: var(--ink-2); font-size: 13px; font-weight: 500; text-align: left; text-decoration: none; white-space: nowrap; }
+.bl-mi .bl-logo { width: 13px; height: 13px; flex: none; }
+.bl-mi:hover, .bl-mi:focus-visible { color: var(--ink); background: rgba(255, 255, 255, 0.06); outline: 0; }
+.bl-mi[aria-checked="true"] { color: var(--ink); background: rgba(63, 208, 255, 0.1); }
+.bl-mi[aria-checked="true"]:hover, .bl-mi[aria-checked="true"]:focus-visible { background: rgba(63, 208, 255, 0.16); }
+.bl-mn { flex: 1 1 auto; display: inline-flex; align-items: baseline; gap: 6px; }
+.bl-mn small { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; color: var(--ink-3); }
+.bl-mn .bl-arm { padding-left: 6px; border-left: 1px solid rgba(127, 157, 178, 0.35); }
+.bl-ms { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--bl-ink-4); }
+.bl-mi.available .bl-logo, .bl-mi.available .bl-ms { color: var(--storm); }
+.bl-mi.missing { color: var(--ink-3); }
+.bl-mi.missing .bl-logo { opacity: 0.55; }
+/* Shimmer: a soft block with a light sweeping across it, moved by transform only, so 40 of
+   them cost the compositor and nothing else. It stands in for exactly the things the mirror
+   decides (the action and the platform chips) and for nothing the catalogue already knows. */
+.bl-skel { position: relative; overflow: hidden; color: transparent; background: rgba(255, 255, 255, 0.06); box-shadow: none; outline: 0; pointer-events: none; }
+.bl-skel::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09), transparent); animation: bl-shimmer 1.3s ease-in-out infinite; }
+.bl-split.bl-skel { width: 150px; box-shadow: none; }
+.bl-skel::before { content: none; }
+.bl-card.is-loading { cursor: default; }
+/* The error block, in the grid's place. */
+.bl-error { margin: 8px 0 24px; max-width: 560px; padding: 22px 24px; border-radius: 16px; background: rgba(255, 138, 91, 0.06); box-shadow: inset 0 0 0 1px rgba(255, 138, 91, 0.35); color: var(--ink-2); font-size: 14px; line-height: 1.5; }
+.bl-error-t { margin: 0 0 6px; font-family: var(--display); font-style: italic; font-weight: 800; text-transform: uppercase; font-size: 22px; letter-spacing: 0.02em; color: var(--ink); }
+.bl-error p { margin: 0; }
+.bl-error .btn { margin-top: 14px; min-height: 36px; padding: 0 16px; font-size: 15px; color: var(--storm); background: rgba(63, 208, 255, 0.12); border-color: rgba(63, 208, 255, 0.35); }
+.bl-error .btn:hover { background: var(--storm); color: #04121C; }
+.bl-card.is-flash { background: #1E3B55; }
+
+/* ---------- Facets (search hits) ---------- */
+/* The platform logo, as the pill and the menu draw it. */
+.bl-logo { width: 10px; height: 10px; flex: none; fill: currentColor; }
+
+/* ---------- Banner ---------- */
+/* Only ever exists after a failed check, and only on the phone's list screen; the canvas is
+   off stage and inert there, so the retry inside .bl-error would be unreachable. */
+.bl-banner {
+  position: relative; z-index: 2;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 138, 91, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 138, 91, 0.35);
+  font-size: 13px; line-height: 1.5; color: var(--ink-2);
+}
+.bl-banner > span { flex: 1 1 320px; }
+.bl-banner .bl-retry { font-size: 15px; padding: 9px 14px 8px 12px; }
+/* On the phone's list screen the banner sits under the search, above the rows. */
+.bl-side > .bl-banner { flex: none; margin: 6px 12px 4px; }
+
+/* ---------- Live region ---------- */
+.bl-say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Scroll lock ---------- */
+/* The page keeps its scrollbar's width as padding so nothing behind the dialog shifts. */
+html.bl-lock { overflow: hidden; padding-right: var(--bl-sbw, 0px); }
+/* And it stops moving. The hero's drift and sparks pause off screen (.is-idle, from an
+   IntersectionObserver), but a dialog over an on-screen hero never trips that observer, so
+   sixteen infinite animations kept ticking under the backdrop, and the blur above is
+   costed as a one-shot over a still page. They resume on close from where they stopped. */
+html.bl-lock .hero-visual .wall-col, html.bl-lock .hero-visual .hv-sparks i { animation-play-state: paused; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1000px) {
+  .bl { --bl-side: 260px; --bl-pad: 32px; }
+  .bl-title { font-size: 64px; }
+}
+/* Phone: a navigation stack. The list is the first screen; a season slides the page in
+   over it, and the Back control (or browser Back) slides it out. Whichever screen is off
+   stage is inert, so the tab order matches what is on it. */
+@media (max-width: 760px) {
+  .bl { --bl-pad: 20px; width: 100vw; height: 100dvh; border-radius: 0; grid-template-columns: minmax(0, 1fr); box-shadow: none; }
+  /* The dialog covers the viewport exactly: blurring a page nobody can see is pure GPU cost
+     on every frame of the push slide. */
+  .bl::backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--ground); }
+  .bl-side { border-right: 0; padding-top: env(safe-area-inset-top); }
+  .bl-side-head { padding: 12px 10px 6px 20px; }
+  .bl-side-t { font-size: 28px; }
+  .bl-close-side { display: inline-flex; flex: none; }
+  .bl-list { padding: 0 8px 24px; }
+  .bl-list::before { height: 4px; }
+  .bl-srow { padding: 8px 10px; }
+  /* The page's shadow is transparent while it waits off stage (a 60px shadow would bleed back
+     over the list's right edge) and fades in with the slide. */
+  .bl-canvas { position: absolute; inset: 0; transform: translateX(100%); padding-top: env(safe-area-inset-top); box-shadow: -30px 0 60px rgba(0, 0, 0, 0); }
+  .bl.is-pushed .bl-canvas { transform: none; box-shadow: -30px 0 60px rgba(0, 0, 0, 0.5); }
+  .bl.is-pushed .bl-side { transform: translateX(-10%); }
+  .bl-back { display: inline-flex; }
+  .bl-title { font-size: 54px; }
+  .bl-answer { font-size: 16px; }
+  .bl-grid { grid-template-columns: minmax(0, 1fr); }
+  .bl-card { padding: 14px 14px 14px 16px; }
+  .bl-v { font-size: 34px; }
+  .bl-split.bl-skel { width: 130px; }
+  .bl-menu { min-width: 224px; }
+  .bl-detail { padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
+  .bl-mi { min-height: 44px; }
+}
+@media (max-width: 400px) {
+  .bl-card .bl-meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+
+/* ---------- Motion ---------- */
+/* One score, four beats and a tempo. The page's tokens are the beats: --t-tap a press, --t-ui
+   a cut (a thing changes state and stays), --t-move a dissolve (content replaces content),
+   --t-land an arrival (something big lands); and --t-drift, the page's one long note, is the
+   art's push-in. The tempo is a 70ms bar: the open is a title sequence in which the shell (bar
+   0), the rail (bar 1), the title card (bar 2) and the cards (bar 3) each enter on their own
+   bar, staggered a fraction of a bar apart (rows 14ms, cards 21ms, menu rows and answers
+   12ms). Every later change is a cut (the DOM swaps on the click frame, nothing waits) whose
+   arrival is scored by the same rules from bar 0 (the cues below), so a season page always
+   enters the way it entered the first time, only sooner. --el resumes a cascade a live
+   rebuild interrupts (a negative delay: "you are already this far in"), so the mirror's answer
+   can land mid-cascade without a half-faded row snapping back to solid. Every arrival is one
+   keyframe, bl-arrive, aimed by --dx/--dy (and --s for a thing that grows from a corner);
+   every exit is bl-out or bl-gone, never an entrance run in reverse, which does not restart.
+   Only transform, opacity and clip-path move; the paint transitions this sheet always had (a
+   pill's fill, a row's highlight) stay as they were. */
+.bl { --cue-rail: 0ms; --cue-title: 0ms; --cue-cards: 35ms; --el: 0ms; --dx: 0px; --dy: 8px; --s: 1; }
+.bl.is-opening { --cue-rail: 70ms; --cue-title: 140ms; --cue-cards: 210ms; }
+
+@keyframes bl-in      { from { opacity: 0; transform: translateY(12px) scale(.96); } }
+@keyframes bl-out     { to   { opacity: 0; transform: translateY(6px) scale(.98); } }
+@keyframes bl-fade    { from { opacity: 0; } }
+@keyframes bl-gone    { to   { opacity: 0; } }
+@keyframes bl-arrive  { from { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(var(--s)); } }
+@keyframes bl-wipe    { from { clip-path: inset(-24px 100% -24px -24px); transform: translateX(-6px); } to { clip-path: inset(-24px); } }
+@keyframes bl-push    { from { transform: scale(1.06); } }
+@keyframes bl-sent    { 45% { transform: translateY(5px); opacity: 0; } 46% { transform: translateY(-5px); } }
+@keyframes bl-shimmer { to { transform: translateX(100%); } }
+
+/* Bar 0, the curtain. The shell grows from the poster that was tapped (open() writes its
+   transform-origin; a shared link grows from the middle) while the backdrop dissolves in.
+   Closing is the same shot backwards on the dissolve beat, and the dialog only closes once it
+   has gone (closeModal). */
+.bl[open] { animation: bl-in var(--t-land) var(--e-drop); }
+.bl[open]::backdrop { animation: bl-fade var(--t-move) ease; }
+.bl.is-closing { animation: bl-out var(--t-move) var(--e-storm) forwards; pointer-events: none; }
+.bl.is-closing::backdrop { animation: bl-gone var(--t-move) ease forwards; }
+
+/* Bar 1, the rail. The rows slide in along the rail's own axis, fourteen of them a fifth of
+   a bar apart, counted from the row you came in on (cascade() numbers them); the head
+   is the one fixed thing. A rebuild inside a state (the live answer, a retry) is a plain cut. The tile
+   leans in on hover as the posters on the page do. */
+.bl-list { --dx: -10px; --dy: 0px; }
+.bl-list.is-fresh > * { animation: bl-arrive var(--t-move) var(--e-drop) calc(var(--el) + var(--cue-rail) + min(var(--i, 0), 13) * 14ms) backwards; }
+.bl-th img { transition: transform var(--t-move) var(--e-snap), filter var(--t-move), opacity var(--t-ui); }
+.bl-srow:hover .bl-th img { transform: scale(1.06); }
+
+/* Bar 2, the title card. The eyebrow rises, the name wipes on left to right at one speed (a
+   long name takes longer to say), the playability line follows a bar later. The art is a
+   dip-to-panel dissolve with a slow push-in from the top edge (the same scale the overscroll
+   pull makes by hand) and the 640 lands the same way whether or not its bytes were already
+   in memory. The words ride the pull a fifth as far as the picture (two planes) and both
+   spring back on the landing beat (the hero's rule is in the canvas section). */
+.bl-headin.is-fresh :is(.bl-eye, .bl-answer) { animation: bl-arrive var(--t-move) var(--e-drop) calc(var(--el) + var(--cue-title) + var(--o, 0ms)) backwards; }
+.bl-headin.is-fresh .bl-title { animation: bl-wipe var(--t-land) var(--e-snap) calc(var(--el) + var(--cue-title) + 35ms) backwards; }
+.bl-answer { --o: 70ms; }
+.bl-wash, .bl-hero.is-in .bl-art { animation: bl-fade var(--t-move) ease, bl-push var(--t-drift) var(--e-drop); }
+.bl-headin { transform: translateY(calc(var(--bl-pull, 0) * .18px)); transition: transform var(--t-land) var(--e-drop); }
+
+/* Bar 3, the cards, a third of a bar apart in release order (a two-column grid reads as a
+   diagonal), twelve of them, the rest at once and below the fold. The pill is the one part
+   the mirror decides: it shimmers as a wave while the question is out, then the answers land
+   as a ripple down the grid (.is-answer, set by applyLive for the ripple's length); a
+   platform pick swaps the pill the same way, at once. The error card and the phone banner
+   arrive on the cards' cue. A search hit lands under a storm ring that blooms and decays on
+   its own layer (a pseudo-element's shadow, only its opacity moves) and a card whose menu
+   is open stacks above its neighbours, so a menu opened mid-cascade is never trapped. */
+.bl-detail.is-fresh .bl-card { animation: bl-arrive var(--t-move) var(--e-drop) calc(var(--el) + var(--cue-cards) + min(var(--i, 0), 12) * 21ms) backwards; }
+.bl-act { --dx: 6px; --dy: 0px; }
+.bl-card:not(.is-loading) .bl-act { animation: bl-arrive var(--t-ui) var(--e-drop) backwards; }
+.bl-detail.is-answer .bl-act { animation-delay: calc(min(var(--i, 0), 12) * 12ms); }
+.bl-skel::after { animation-delay: calc(min(var(--i, 0), 12) * 90ms - 1100ms); }
+.bl-error, .bl-banner { animation: bl-arrive var(--t-move) var(--e-drop) var(--cue-cards) backwards; }
+.bl-card { transition: background var(--t-ui), box-shadow var(--t-ui); }
+.bl-card:has(.bl-menu) { z-index: 1; }
+.bl-card.is-flash::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: 0 0 0 2px var(--storm), 0 0 28px var(--storm-glow); animation: bl-gone 1.6s var(--e-storm) forwards; }
+
+/* Presses and the split pill. A press is one tap beat toward the thumb; a label that is not a
+   control does not press. On a download the arrow drops out of the pill and re-enters from
+   above: the file has left. */
+.bl-srow, .bl-iconbtn, .bl-back, .bl-go, .bl-sel, .bl-mi { transition: background var(--t-ui), color var(--t-ui), transform var(--t-tap) var(--e-snap); }
+a.bl-go:active, button.bl-sel:active, .bl-iconbtn:active, .bl-back:active { transform: translateY(1px) scale(.97); }
+.bl-go.is-sent > svg { animation: bl-sent var(--t-move) var(--e-snap); }
+.bl-chev { transition: transform var(--t-ui) var(--e-snap); }
+/* The menu unfolds from the pill's corner (the bottom one when it flips up), its rows a sixth
+   of a bar apart; it leaves on the cut beat and cannot be pressed while it goes. */
+.bl-menu { --dx: 0px; --dy: -6px; --s: .96; transform-origin: 100% 0; animation: bl-arrive var(--t-ui) var(--e-drop); }
+.bl-menu.is-up { --dy: 6px; transform-origin: 100% 100%; }
+.bl-mi { --dy: 6px; animation: bl-arrive var(--t-ui) var(--e-drop) calc(var(--i, 0) * 12ms) backwards; }
+.bl-menu.is-out { animation: bl-out var(--t-ui) var(--e-storm) forwards; pointer-events: none; }
+
+/* Phone, the stack. A page lands (--t-land on --e-drop: most of the travel in the first
+   200ms, then the settle) and leaves on the dissolve beat; the list dims under it through a
+   scrim that only changes opacity, above the sticky headers. The page's own cascade waits
+   three bars so it starts once the slide has mostly landed, except at open, when there is no
+   slide (is-pushed is set before showModal). */
+@media (max-width: 760px) {
+  .bl-canvas, .bl-side { transition: transform var(--t-move) var(--e-snap), box-shadow var(--t-move) var(--e-snap); }
+  .bl.is-pushed :is(.bl-canvas, .bl-side) { transition: transform var(--t-land) var(--e-drop), box-shadow var(--t-land) var(--e-drop); }
+  .bl-side::after { content: ""; position: absolute; inset: 0; z-index: 4; background: rgba(6, 17, 28, .55); opacity: 0; pointer-events: none; transition: opacity var(--t-move) var(--e-snap); }
+  .bl.is-pushed .bl-side::after { opacity: 1; }
+  .bl.is-pushed:not(.is-opening) { --cue-title: 210ms; --cue-cards: 245ms; }
+}
+
+/* Reduced motion: nothing moves, nothing is parked, nothing waits. No fill mode survives, so
+   every element sits at its resting values from its first frame; the spotlight ring is simply
+   on until spotlight() clears it; the menu and the dialog simply go (closeMenu and closeModal
+   skip their exits); the pull is refused (canPull). */
+@media (prefers-reduced-motion: reduce) {
+  .bl, .bl *, .bl ::before, .bl ::after, .bl::backdrop { animation: none !important; transition: none !important; }
+  .bl-skel::after { transform: none; }
+}

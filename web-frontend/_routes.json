@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "include": [
+    "/*"
+  ],
+  "exclude": [
+    "/",
+    "/index.html",
+    "/404.html",
+    "/robots.txt",
+    "/favicon.png",
+    "/logo.webp",
+    "/logo.png",
+    "/builds.json",
+    "/builds.css",
+    "/builds.js",
+    "/README.md",
+    "/wrangler.toml",
+    "/fonts/*",
+    "/hero/*",
+    "/seasons/*"
+  ]
+}
