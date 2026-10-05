@@ -1,0 +1,8 @@
+section { padding-block: clamp(44px, 6vw, 76px); }
+.section-head {
+  display: grid;
+  gap: 12px;
+  margin-bottom: clamp(24px, 3.2vw, 36px);
+  max-width: 720px;
+}
+.rule { border-top: 1px solid var(--line); }

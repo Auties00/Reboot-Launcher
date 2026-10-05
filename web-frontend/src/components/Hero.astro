@@ -1,0 +1,25 @@
+---
+import HeroWall from './HeroWall.astro';
+import Icon from './Icon.astro';
+import { LINKS } from '../data/site';
+---
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>Drop back<br>into <span class="storm-word">old</span><br>Fortnite.</h1>
+      <p class="lede">Project Reboot brings the old seasons of Fortnite back. Host a lobby for you and your friends, or join one, with a launcher that takes care of everything. On Windows, Linux and macOS.</p>
+      <div class="cta-row" id="hero-cta">
+        <a class="btn btn-gold btn-lg" id="hero-download" href={LINKS.releases} target="_blank" rel="noopener">
+          <Icon name="download" class="btn-arrow" />
+          <span>Download Launcher</span>
+        </a>
+        <a class="btn btn-ghost btn-lg" href={LINKS.discord} target="_blank" rel="noopener">
+          <Icon name="discord" />
+          <span>Join the Discord</span>
+        </a>
+      </div>
+    </div>
+
+    <HeroWall />
+  </div>
+</section>

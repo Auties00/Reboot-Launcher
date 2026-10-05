@@ -1,0 +1,38 @@
+---
+import Brand from './Brand.astro';
+import Icon from './Icon.astro';
+import { LINKS, NAV_LINKS } from '../data/site';
+---
+<a class="skip-link" href="#top">Skip to content</a>
+<header class="nav">
+  <div class="wrap nav-inner">
+    <Brand />
+    <div class="nav-right">
+      <nav aria-label="Primary">
+        <ul class="nav-links">
+          {NAV_LINKS.map(({ href, label }) => <li><a href={href}>{label}</a></li>)}
+        </ul>
+      </nav>
+      <div class="nav-actions" id="nav-actions">
+        <div class="nav-actions-inner">
+          <a class="btn btn-ghost btn-square" href={LINKS.discord} target="_blank" rel="noopener" aria-label="Join the Discord" title="Join the Discord">
+            <Icon name="discord" />
+          </a>
+          <a class="btn btn-gold" href={LINKS.releases} target="_blank" rel="noopener" aria-label="Download the launcher" title="Download the launcher">
+            <Icon name="download" class="btn-arrow" />
+            <span>Download</span>
+          </a>
+        </div>
+      </div>
+      {/* Collapsed from the first frame, before the deferred script runs. */}
+      <script is:inline>if ('IntersectionObserver' in window) document.getElementById('nav-actions').classList.add('no-anim', 'is-hidden');</script>
+    </div>
+  </div>
+</header>
+
+<script>
+  import { initNavActions, initNavSpy } from '../scripts/nav';
+
+  initNavActions();
+  initNavSpy();
+</script>

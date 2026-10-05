@@ -1,0 +1,39 @@
+.repos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.repo {
+  display: grid;
+  gap: 14px;
+  padding: 26px 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+.repo:hover { border-color: var(--storm); transform: translateY(-2px); }
+.repo .path {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.repo .path svg { width: 16px; height: 16px; }
+/* Narrow cards break at " / ", never inside a repo name. */
+.repo .path-name { white-space: nowrap; }
+.repo h3 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  font-size: 30px;
+  line-height: 1;
+}
+.repo p { color: var(--ink-2); font-size: 15px; }
+@media (max-width: 760px) {
+  .repos { grid-template-columns: 1fr; }
+}

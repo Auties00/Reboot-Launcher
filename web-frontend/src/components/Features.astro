@@ -1,0 +1,32 @@
+---
+import Icon from './Icon.astro';
+import SectionHead from './SectionHead.astro';
+import type { IconName } from '../data/icons';
+
+const FEATURES: { icon: IconName; title: string; text: string }[] = [
+  { icon: 'monitor', title: 'Play or host', text: "Join a friend's lobby, or start your own and invite people. Both live in the same window." },
+  { icon: 'crosshair', title: 'Friends join from anywhere', text: 'The launcher opens the door on your home network for you, so people outside your house can join without you touching your router.' },
+  { icon: 'list', title: 'Switch seasons any time', text: 'Keep as many seasons installed as you like and jump between them from a dropdown.' },
+  { icon: 'terminal', title: 'No account needed', text: 'Pick a name and play. Nothing connects to Epic, and there is nothing to sign up for.' },
+  { icon: 'shield', title: 'Free and open source', text: 'No price, no paid tiers, no ads. Everything behind it is public on GitHub for anyone to read.' },
+  { icon: 'prompt', title: 'Runs everywhere', text: 'Windows, Linux and macOS. Same app, same seasons, same lobbies, whatever you play on.' },
+];
+---
+<section id="features">
+  <div class="wrap">
+    <SectionHead
+      title="Everything you need,<br>in one app."
+      lede="Install the Reboot Launcher, pick a season, and you are in a lobby in minutes. No setup guides, no fiddling with settings."
+    />
+
+    <div class="features">
+      {FEATURES.map(({ icon, title, text }) => (
+        <div class="feature">
+          <Icon name={icon} />
+          <h3>{title}</h3>
+          <p>{text}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,51 @@
+---
+import Brand from './Brand.astro';
+import { LINKS, REPOS, repoUrl } from '../data/site';
+
+const COLUMNS = [
+  {
+    heading: 'Get it',
+    label: 'Get it',
+    links: [
+      { href: LINKS.latestRelease, text: 'Latest release' },
+      { href: LINKS.releases, text: 'All releases' },
+      { href: '#builds', text: 'Browse builds' },
+      { href: '#how', text: 'How to play' },
+      { href: '#seasons', text: 'Season support' },
+    ],
+  },
+  {
+    heading: 'Under the hood',
+    label: 'Source code',
+    links: REPOS.map((repo) => ({ href: repoUrl(repo), text: repo.footer })),
+  },
+  {
+    heading: 'Community',
+    label: 'Community',
+    links: [
+      { href: LINKS.discord, text: 'Discord' },
+      { href: LINKS.launcherIssues, text: 'Found a bug in the app?' },
+      { href: LINKS.gameServerIssues, text: 'Found a bug in a match?' },
+    ],
+  },
+];
+
+const external = (href: string) => (href.startsWith('#') ? {} : { target: '_blank', rel: 'noopener' });
+---
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <Brand />
+        <p>Old Fortnite, brought back by fans. Host a lobby, invite your friends, and play the seasons you miss. On Windows, Linux and macOS.</p>
+      </div>
+      {COLUMNS.map(({ heading, label, links }) => (
+        <nav class="footer-col" aria-label={label}>
+          <h4>{heading}</h4>
+          {links.map(({ href, text }) => <a href={href} {...external(href)}>{text}</a>)}
+        </nav>
+      ))}
+    </div>
+  </div>
+  <div class="footer-mark" aria-hidden="true">Reboot</div>
+</footer>

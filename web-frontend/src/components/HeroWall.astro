@@ -1,0 +1,37 @@
+---
+import { SPARKS, WALL_COLUMNS, WALL_REPEAT } from '../data/heroWall';
+import { sparkRiseKeyframes, stepsFor } from '../lib/motion';
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const columns = WALL_COLUMNS.map(({ duration, seasons }) => ({
+  style: `--dur:${duration}s;--steps:${stepsFor(duration)}`,
+  tiles: Array.from({ length: WALL_REPEAT }, () => seasons).flat().map((n) => `/hero/s${pad2(n)}`),
+}));
+---
+<style is:inline set:html={sparkRiseKeyframes('hv-rise')} />
+<div class="hero-visual" id="hero-visual" aria-hidden="true">
+  <div class="hv-glow"></div>
+  <div class="wall-clip">
+    <div class="wall" id="wall">
+      {/* Tiles are lazy only so a deep-linked dialog cancels them; scripts/heroWall.ts makes them eager otherwise. */}
+      {columns.map(({ style, tiles }) => (
+        <div class="wall-col" style={style}>
+          {tiles.map((art) => (
+            <figure class="wall-tile"><img loading="lazy" src={`${art}-176.webp`} srcset={`${art}-176.webp 176w, ${art}-256.webp 256w, ${art}.webp 320w`} sizes="(max-width: 860px) 109px, 127px" alt="" width="320" height="180" decoding="async" fetchpriority="low"></figure>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+  <div class="hv-sparks">
+    {SPARKS.map(({ x, duration, delay, size }) => (
+      <i style={`--x:${x}%;--d:${duration}s;--n:${duration};--t:${delay}s;--s:${size}px`}></i>
+    ))}
+  </div>
+</div>
+
+<script>
+  import { initHeroWall } from '../scripts/heroWall';
+
+  initHeroWall();
+</script>

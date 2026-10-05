@@ -1,0 +1,24 @@
+---
+import SectionHead from './SectionHead.astro';
+
+const STEPS = [
+  { title: 'Get the game', text: 'Pick a season in the launcher and it downloads the build from our mirror for you. Want to see what exists or grab one by hand? The whole list opens right here, from any season below.' },
+  { title: 'Install the launcher', text: 'Download it with the button above and open it. It sets everything up the first time you run it and keeps itself up to date.' },
+  { title: 'Host or join', text: 'Start a lobby and share it with your friends, or join one someone else is hosting. Then jump on the bus.' },
+];
+---
+<section id="how">
+  <div class="wrap">
+    <SectionHead title="Three steps to a lobby." lede="You bring the game, the launcher does the rest." />
+
+    <div class="steps">
+      {STEPS.map(({ title, text }, i) => (
+        <div class="step">
+          <span class="n">{i + 1}</span>
+          <h3>{title}</h3>
+          <p>{text}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

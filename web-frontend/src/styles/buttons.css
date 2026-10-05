@@ -1,0 +1,48 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 20px;
+  line-height: 1;
+  padding: 15px 24px 14px 22px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transform: skewX(-6deg);
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+.btn > * { transform: skewX(6deg); }
+.btn:hover { transform: skewX(-6deg) translateY(-2px); }
+.btn-gold {
+  color: #04202C;
+  background: linear-gradient(180deg, #5EDCFF 0%, #34CCFB 100%);
+  box-shadow: 0 8px 24px rgba(63, 208, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 0 rgba(4, 32, 44, 0.18);
+}
+.btn-gold:hover {
+  background: linear-gradient(180deg, #74E3FF 0%, #3FD0FF 100%);
+  box-shadow: 0 12px 30px rgba(63, 208, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(4, 32, 44, 0.18);
+}
+.btn-ghost {
+  color: var(--ink);
+  background: rgba(63, 208, 255, 0.08);
+  border-color: var(--line-strong);
+}
+.btn-ghost:hover { background: rgba(63, 208, 255, 0.16); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+
+.btn-lg {
+  min-height: 60px;
+  padding: 0 28px 0 22px;
+  gap: 12px;
+  font-size: 21px;
+}
+.btn-arrow { transition: transform 200ms cubic-bezier(.2,.7,.2,1); }
+.btn:hover .btn-arrow { transform: skewX(6deg) translateY(2px); }
+@media (max-width: 480px) {
+  .btn-lg { min-height: 54px; padding: 0 20px 0 22px; font-size: 19px; }
+}

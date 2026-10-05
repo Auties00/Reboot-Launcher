@@ -1,0 +1,49 @@
+---
+import Icon from './Icon.astro';
+import { LINKS } from '../data/site';
+
+const FAQ = [
+  { q: 'Is it free?', a: 'Yes, completely. No price, no accounts to buy, no paid extras.' },
+  { q: 'Do I need an Epic Games account?', a: "No. Pick any name you like and play. Nothing connects to Epic's servers." },
+  { q: 'Where do old Fortnite builds come from?', a: 'From our own build mirror. The launcher downloads the right build for a season automatically, and you can see <a href="#builds">the whole list</a> right here: every build we know about on Windows, Android and iOS, including the lost ones we are paying a bounty for.' },
+  { q: 'Can I play with friends who are not at my place?', a: 'Yes. Host a lobby and share your address with them. The launcher opens the door on your network for you. If your router does not play along, the Discord has a quick fix.' },
+  { q: 'Does it work on Mac or Linux?', a: 'Yes. The launcher runs on Windows, Linux and macOS, and it works the same way on all three.' },
+  { q: 'Is this affiliated with Epic Games?', a: 'No. Project Reboot is made by fans and has no connection to Epic Games. Fortnite is a trademark of Epic Games, Inc.' },
+];
+---
+<section id="faq">
+  <div class="wrap faq-grid">
+    <div class="faq-side">
+      <h2>Before you drop.</h2>
+      <p class="lede">Quick answers to the things people ask most. Anything else, ask in the Discord and someone will point you the right way.</p>
+      <a class="btn btn-ghost" href={LINKS.discord} target="_blank" rel="noopener">
+        <Icon name="discord" />
+        <span>Ask on Discord</span>
+      </a>
+    </div>
+    <div class="faq-list">
+      {FAQ.map(({ q, a }, i) => {
+        const open = i === 0, n = i + 1;
+        return (
+          <div class:list={['faq-item', { 'is-open': open }]}>
+            <h3>
+              <button class="faq-q" type="button" id={`faq-q${n}`} aria-expanded={open ? 'true' : 'false'} aria-controls={`faq-a${n}`}>
+                <span class="faq-t">{q}</span>
+                <span class="faq-i" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <div class="faq-a" id={`faq-a${n}`} role="region" aria-labelledby={`faq-q${n}`}>
+              <div class="faq-a-inner"><p set:html={a} /></div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<script>
+  import { initFaq } from '../scripts/faq';
+
+  initFaq();
+</script>

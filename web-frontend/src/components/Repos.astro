@@ -1,0 +1,22 @@
+---
+import Icon from './Icon.astro';
+import SectionHead from './SectionHead.astro';
+import { REPOS, repoUrl } from '../data/site';
+---
+<section id="code">
+  <div class="wrap">
+    <SectionHead
+      title="Open source,<br>top to bottom."
+      lede="Every line of code behind Project Reboot is public on GitHub: the app you install, the game engine, the backend, and the matchmaker. Nothing is hidden, so anyone can read exactly what runs on their machine and contribute new features."
+    />
+    <div class="repos">
+      {REPOS.map((repo) => (
+        <a class="repo" href={repoUrl(repo)} target="_blank" rel="noopener">
+          <span class="path"><Icon name="github" /><span>{repo.owner} / <span class="path-name">{repo.name}</span></span></span>
+          <h3>{repo.title}</h3>
+          <p>{repo.blurb}</p>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

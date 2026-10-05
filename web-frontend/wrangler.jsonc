@@ -1,0 +1,8 @@
+// @astrojs/cloudflare adds the entry point and assets binding and writes the deploy config to dist/server.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "project-reboot-site",
+  "compatibility_date": "2026-09-01",
+  "routes": [{ "pattern": "rebootfn.org", "custom_domain": true }],
+  "observability": { "enabled": true }
+}

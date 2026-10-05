@@ -1,0 +1,195 @@
+.seasons-section { position: relative; overflow: hidden; }
+.seasons-section > .wrap { position: relative; z-index: 2; }
+.seasons-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.seasons-backdrop img {
+  position: absolute;
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  object-fit: cover;
+  filter: blur(56px) saturate(1.35);
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+.seasons-backdrop img.on { opacity: 0.4; }
+.seasons-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--ground) 0%, rgba(6, 17, 28, 0.6) 30%, rgba(6, 17, 28, 0.5) 70%, var(--ground) 100%);
+}
+
+.reel-group {
+  position: relative;
+  z-index: 1;
+  margin-top: clamp(26px, 3.5vw, 40px);
+  --bleed: max(var(--gutter), calc((100vw - var(--wrap)) / 2 + var(--gutter)));
+  --film-w: clamp(216px, 24vw, 312px);
+}
+.reel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+.reel-head h3 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.reel-nav { display: flex; gap: 8px; }
+.reel-btn {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: rgba(63, 208, 255, 0.06);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, opacity 200ms ease;
+}
+.reel-btn svg { width: 20px; height: 20px; }
+.reel-btn:hover { background: rgba(63, 208, 255, 0.16); border-color: var(--storm); }
+.reel-btn[disabled] { opacity: 0.3; cursor: default; }
+.reel-btn[disabled]:hover { background: rgba(63, 208, 255, 0.06); border-color: var(--line-strong); }
+/* Gives the two-poster reel just enough overflow to snap like the others. */
+.reel-group[data-chapter="0"] .reel::after { content: ""; flex: none; width: max(0px, calc(100% - 2 * var(--film-w) + 8px)); }
+
+.reel {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  padding: 12px var(--bleed) 10px;
+  scroll-padding-inline: var(--bleed);
+  scrollbar-width: none;
+  cursor: grab;
+}
+.reel::-webkit-scrollbar { display: none; }
+.reel:focus-visible { outline: 2px solid var(--storm); outline-offset: -2px; }
+.reel.dragging { cursor: grabbing; scroll-snap-type: none; }
+.reel-end { flex: none; width: 1px; }
+
+.film {
+  --tone: var(--stable);
+  --halo: 86, 211, 107;
+  flex: none;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  width: var(--film-w);
+  scroll-snap-align: start;
+}
+.film.partial { --tone: var(--partial); --halo: 180, 156, 255; }
+.film.unstable { --tone: var(--unstable); --halo: 255, 138, 91; }
+.film-art {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow:
+    0 0 0 1px rgba(var(--halo), 0.55),
+    0 0 18px rgba(var(--halo), 0.14),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: transform 320ms cubic-bezier(.2,.7,.2,1), box-shadow 320ms ease;
+}
+.film-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .film.is-loading .film-art img { animation: film-wait 0.9s ease-in-out infinite; }
+  @keyframes film-wait { 50% { opacity: 0.45; } }
+}
+.film-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 700ms cubic-bezier(.2,.7,.2,1);
+}
+.film:hover .film-art, .film.is-focus .film-art {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 1.5px rgba(var(--halo), 0.95),
+    0 0 26px rgba(var(--halo), 0.45),
+    0 14px 34px rgba(0, 0, 0, 0.45);
+}
+.film:hover .film-art img { transform: scale(1.05); }
+.film-cap {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 2px 0;
+  min-width: 0;
+}
+.film-num {
+  flex: none;
+  font-family: var(--display);
+  font-weight: 900;
+  font-style: italic;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--tone);
+}
+.film-num small { font-size: 15px; margin-right: 1px; opacity: 0.85; }
+.film-title {
+  font-family: var(--display);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.legend span::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  background: var(--tone);
+}
+.legend .stable { --tone: var(--stable); }
+.legend .partial { --tone: var(--partial); }
+.legend .unstable { --tone: var(--unstable); }
+
+@media (prefers-reduced-motion: reduce) {
+  .film-art, .film-art img, .seasons-backdrop img { transition: none; }
+  .film:hover .film-art img { transform: none; }
+}

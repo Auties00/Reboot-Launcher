@@ -1,0 +1,34 @@
+---
+import SeasonReel from './SeasonReel.astro';
+import SectionHead from './SectionHead.astro';
+import { REELS } from '../data/reels';
+import { TONE_LABEL, type Tone } from '../data/tones';
+
+const LEGEND: Tone[] = ['stable', 'partial', 'unstable'];
+---
+{/* Gives #builds links a target when the modal script never runs. */}
+<span id="builds" aria-hidden="true"></span>
+<section id="seasons" class="seasons-section">
+  <div class="seasons-backdrop" aria-hidden="true">
+    <img class="backdrop-a" src="/seasons/s05-blur.webp" alt="" width="64" height="36" loading="lazy" decoding="async" fetchpriority="low">
+    <img class="backdrop-b" alt="" width="64" height="36" decoding="async" fetchpriority="low">
+  </div>
+  <div class="wrap">
+    <SectionHead
+      title="Pick your season.<br>Most of them just work."
+      lede="Every season from Chapter 1 and Chapter 2 plays great. The very first two seasons and the ones around the jump to Chapter 3 work with a few rough edges. Everything from Chapter 3 onward is there to try, but still experimental. Pick any one to see every build we know of."
+    >
+      <div class="legend">
+        {LEGEND.map((tone) => <span class={tone}>{TONE_LABEL[tone]}</span>)}
+      </div>
+    </SectionHead>
+  </div>
+
+  {REELS.map((reel) => <SeasonReel reel={reel} />)}
+</section>
+
+<script>
+  import { initReels } from '../scripts/reels';
+
+  initReels();
+</script>

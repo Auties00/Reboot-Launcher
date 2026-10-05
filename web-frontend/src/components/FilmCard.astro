@@ -1,0 +1,17 @@
+---
+import { filmAria, type Film } from '../data/reels';
+
+interface Props {
+  film: Film;
+}
+
+const { film } = Astro.props;
+const art = `/${film.art}`;
+---
+<a class={`film ${film.tone}`} href={film.href} data-season={film.season} aria-haspopup="dialog" data-img={`${art}-blur.webp`} aria-label={filmAria(film)}>
+  <div class="film-art"><img src={`${art}-480.webp`} srcset={`${art}-320.webp 320w, ${art}-480.webp 480w`} sizes="(max-width: 900px) 216px, (min-width: 1300px) 312px, 24vw" alt="" width="640" height="360" loading="lazy" decoding="async"></div>
+  <div class="film-cap">
+    <span class="film-num">{film.prefix && <small>{film.prefix}</small>}{film.tag}</span>
+    <span class="film-title">{film.title}</span>
+  </div>
+</a>

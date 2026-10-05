@@ -1,0 +1,43 @@
+---
+import '../styles/global.css';
+import { SITE } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = SITE.title, description = SITE.description } = Astro.props;
+
+const PRELOAD_FONTS = [
+  '/fonts/barlow-condensed-900-italic-v2.woff2',
+  '/fonts/barlow-condensed-800-italic-v2.woff2',
+  '/fonts/figtree-variable-v2.woff2',
+];
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title}</title>
+  <meta name="description" content={description}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={SITE.ogDescription}>
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content={SITE.themeColor}>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  {PRELOAD_FONTS.map((href) => <link rel="preload" as="font" type="font/woff2" crossorigin href={href}>)}
+  {/* Blocking on purpose: skips the smooth scroll to a #fragment and, under a deep-linked dialog, the wall's tile requests. */}
+  <script is:inline>
+    if (/^#(?:builds|season-(?:\d+|pre))$/.test(location.hash)) document.documentElement.classList.add('bl-deep');
+    if (location.hash) {
+      document.documentElement.style.scrollBehavior = 'auto';
+      addEventListener('load', () => { document.documentElement.style.scrollBehavior = ''; }, { once: true });
+    }
+  </script>
+</head>
+<body>
+  <slot />
+</body>
+</html>

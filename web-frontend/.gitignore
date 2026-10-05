@@ -1,0 +1,14 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# local Cloudflare state (wrangler pages dev)
+.wrangler/
+
+# logs and environment
+npm-debug.log*
+.env
+.env.*

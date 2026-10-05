@@ -1,0 +1,28 @@
+---
+import FilmCard from './FilmCard.astro';
+import Icon from './Icon.astro';
+import type { Reel } from '../data/reels';
+
+interface Props {
+  reel: Reel;
+}
+
+const { reel } = Astro.props;
+---
+<div class="reel-group" data-chapter={reel.chapter}>
+  <div class="wrap reel-head">
+    <h3>{reel.heading}</h3>
+    <div class="reel-nav">
+      <button class="reel-btn reel-prev" type="button" aria-label={reel.prevLabel}>
+        <Icon name="prev" />
+      </button>
+      <button class="reel-btn reel-next" type="button" aria-label={reel.nextLabel}>
+        <Icon name="next" />
+      </button>
+    </div>
+  </div>
+  <div class="reel" role="group" tabindex="0" aria-label={reel.reelLabel}>
+    {reel.films.map((film) => <FilmCard film={film} />)}
+    <div class="reel-end" aria-hidden="true"></div>
+  </div>
+</div>

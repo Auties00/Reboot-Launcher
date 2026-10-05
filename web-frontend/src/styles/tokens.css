@@ -1,0 +1,36 @@
+:root {
+  --ground: #06111C;
+  --ground-2: #0A1826;
+  --panel: #0E1F30;
+  --panel-2: #13293D;
+  --line: #1E3548;
+  --line-strong: #2B4A62;
+  --ink: #EEF7FC;
+  --ink-2: #BFD6E4;
+  --ink-3: #7F9DB2;
+  --storm: #3FD0FF;
+  --storm-deep: #0E9BD1;
+  --storm-glow: rgba(63, 208, 255, 0.35);
+  --gold: #FFB13B;
+  --gold-deep: #FF7A1A;
+  --gold-ink: #2A1500;
+  --stable: #56D36B;
+  --partial: #B49CFF;
+  --unstable: #FF8A5B;
+  --none: #3A5468;
+  --display: "Barlow Condensed", "Display Fallback", "Arial Narrow", Impact, sans-serif;
+  --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --wrap: 1120px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --radius: 6px;
+  --e-drop: cubic-bezier(.16,.84,.28,1);
+  --e-snap: cubic-bezier(.2,.7,.2,1);
+  --e-storm: cubic-bezier(.65,0,.35,1);
+  --t-tap: 90ms;
+  --t-ui: 180ms;
+  --t-move: 320ms;
+  --t-land: 620ms;
+  --t-drift: 1200ms;
+  color-scheme: dark;
+}

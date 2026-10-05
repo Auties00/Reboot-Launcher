@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BuildsModal from '../components/BuildsModal.astro';
+import Faq from '../components/Faq.astro';
+import Features from '../components/Features.astro';
+import Footer from '../components/Footer.astro';
+import Hero from '../components/Hero.astro';
+import Nav from '../components/Nav.astro';
+import Repos from '../components/Repos.astro';
+import Rule from '../components/Rule.astro';
+import Seasons from '../components/Seasons.astro';
+import Steps from '../components/Steps.astro';
+---
+<BaseLayout>
+  <Nav />
+  <main id="top">
+    <Hero />
+    <Rule />
+    <Features />
+    <Rule />
+    <Steps />
+    <Rule />
+    <Seasons />
+    <Rule />
+    <Repos />
+    <Rule />
+    <Faq />
+  </main>
+  <Footer />
+  <BuildsModal />
+</BaseLayout>

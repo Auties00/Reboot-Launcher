@@ -1,0 +1,25 @@
+{
+  "name": "project-reboot-site",
+  "private": true,
+  "type": "module",
+  "description": "rebootfn.org: the Project Reboot landing page and its builds modal, deployed as a Cloudflare Worker.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "check": "astro check"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "astro": "^7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/cloudflare": "^14.3.3",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.147.0"
+  }
+}

@@ -1,0 +1,100 @@
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(6, 17, 28, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  height: 64px;
+  contain: layout style;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-family: var(--display);
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  font-size: 24px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.brand img { width: 30px; height: 30px; display: block; filter: drop-shadow(0 0 8px rgba(64, 214, 255, 0.45)); }
+.nav-links {
+  display: flex;
+  gap: 28px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.nav-links a {
+  text-decoration: none;
+  color: var(--ink-2);
+  font-weight: 500;
+  font-size: 15px;
+}
+.nav-links a:hover { color: var(--ink); }
+.nav .btn { font-size: 17px; padding: 11px 18px 10px 14px; gap: 8px; }
+.nav .btn-gold svg { width: 18px; height: 18px; }
+.nav-right {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.nav-actions {
+  /* --actions-w is measured by scripts/nav.ts so the width can animate. */
+  width: var(--actions-w, auto);
+  flex: none;
+  transition: width 420ms cubic-bezier(.22,.9,.28,1);
+}
+.nav-actions-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 28px;
+  width: max-content;
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 260ms ease 140ms, transform 420ms cubic-bezier(.22,.9,.28,1);
+}
+.nav-actions.is-hidden { width: 0; }
+.nav-actions.is-hidden .nav-actions-inner {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(18px);
+  transition: opacity 160ms ease, transform 420ms cubic-bezier(.22,.9,.28,1), visibility 0s linear 420ms;
+}
+.nav-actions.no-anim, .nav-actions.no-anim .nav-actions-inner { transition: none !important; }
+@media (max-width: 760px) {
+  .nav-actions-inner { padding-left: 0; }
+}
+.nav .btn-square {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  justify-content: center;
+}
+.nav .btn-square svg { width: 22px; height: 22px; }
+/* The full bar needs ~910px; below that the actions go compact. */
+@media (max-width: 920px) {
+  .nav .btn-square { display: none; }
+  .nav .btn-gold { width: 42px; height: 42px; padding: 0; justify-content: center; gap: 0; }
+  .nav .btn-gold span { display: none; }
+  .nav .btn-gold svg { width: 20px; height: 20px; }
+}
+@media (max-width: 760px) {
+  .nav-links { display: none; }
+}
+@media (max-width: 340px) {
+  .nav .brand { font-size: 20px; }
+}

@@ -1,0 +1,148 @@
+@media (prefers-reduced-motion: no-preference) {
+  .hero h1    { animation: boot-rise var(--t-land) var(--e-drop) 60ms backwards; }
+  .hero .lede { animation: boot-rise 560ms var(--e-drop) 150ms backwards; }
+  #hero-cta .btn:nth-child(1) { animation: boot-cta 520ms var(--e-drop) 220ms backwards; }
+  #hero-cta .btn:nth-child(2) { animation: boot-cta 520ms var(--e-drop) 290ms backwards; }
+  .wall-clip   { animation: boot-iris 900ms var(--e-drop) 80ms backwards; }
+  .hv-glow     { animation: boot-bloom 800ms var(--e-drop) 120ms backwards; }
+  /* On the 1/60 s step grid the sparks share (700ms and whole-second --t are too). */
+  .wall-col    { animation-delay: calc(16s / 60); }
+  .hv-sparks i { animation-delay: calc(var(--t) + 700ms); }
+}
+/* No `to` frame: each animation comes to rest on the element's own style. */
+@keyframes boot-rise  { from { transform: translate3d(0, 14px, 0); } }
+@keyframes boot-cta   { from { transform: skewX(-6deg) translate3d(0, 10px, 0); } }
+@keyframes boot-iris  { from { transform: scale(.90) rotate(-2deg); } }
+@keyframes boot-bloom { from { opacity: 0; transform: scale(.72); } }
+
+/* The sweep translates past the edge; clipped here rather than on an ancestor of the sticky nav. */
+.rule { position: relative; overflow-x: clip; }
+.rule::after {
+  content: "";
+  position: absolute;
+  top: -1px; left: var(--gutter);
+  width: 30%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--storm) 45%, #BFEFFF 50%, var(--storm) 55%, transparent);
+  opacity: 0;
+  transform: translateX(-110%);
+  pointer-events: none;
+}
+.features { position: relative; }
+.features::after {
+  content: "";
+  position: absolute;
+  inset: -25% -45%;
+  z-index: 3;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translate3d(-38%, 0, 0);
+  background: linear-gradient(105deg, transparent 38%, rgba(63,208,255,.12) 46%, rgba(191,239,255,.26) 50%, rgba(63,208,255,.12) 54%, transparent 62%);
+}
+@keyframes sweep-line {
+  0%   { transform: translateX(-110%); opacity: 0; }
+  20%,80% { opacity: 1; }
+  100% { transform: translateX(340%); opacity: 0; }
+}
+@keyframes sweep-band {
+  0%   { transform: translate3d(-38%,0,0); opacity: 0; }
+  25%,75% { opacity: 1; }
+  100% { transform: translate3d(38%,0,0); opacity: 0; }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .rule::after {
+      animation: sweep-line linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+    .features::after {
+      animation: sweep-band linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 55%;
+    }
+    .reel { perspective: 1150px; }
+    .film {
+      animation: coverflow linear both;
+      animation-timeline: view(inline);
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+@keyframes coverflow {
+  0%   { transform: rotateY(14deg) translateZ(-30px); }
+  50%  { transform: rotateY(0deg) translateZ(0px); }
+  100% { transform: rotateY(-14deg) translateZ(-30px); }
+}
+
+.btn:active { transform: skewX(-6deg) translateY(0) scale(.97); transition-duration: var(--t-tap); }
+.btn-gold { position: relative; overflow: hidden; }
+.btn-gold::after {
+  content: "";
+  position: absolute;
+  top: -40%; bottom: -40%; left: 0; width: 26%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  transform: translateX(-300%) skewX(14deg);
+  pointer-events: none;
+}
+.btn-gold:hover::after { animation: btn-sheen 640ms var(--e-storm); }
+@keyframes btn-sheen { to { transform: translateX(520%) skewX(14deg); } }
+
+.nav-links a { position: relative; transition: color var(--t-ui) ease; }
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -7px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--storm);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform var(--t-ui) var(--e-snap), opacity var(--t-ui) ease;
+}
+.nav-links a:hover::after,
+.nav-links a.is-current::after { opacity: 1; transform: scaleX(1); }
+.nav-links a.is-current { color: var(--ink); }
+
+.reel-btn { transition: background var(--t-ui) ease, border-color var(--t-ui) ease, opacity var(--t-move) ease, transform var(--t-ui) var(--e-snap); }
+.reel-btn:active { transform: scale(.9); }
+.reel-btn svg { transition: transform var(--t-move) var(--e-drop); }
+.reel-prev:hover svg { transform: translateX(-3px); }
+.reel-next:hover svg { transform: translateX(3px); }
+
+.faq-item { position: relative; }
+.faq-item::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--storm), rgba(63,208,255,0));
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+  transition: transform 340ms var(--e-drop);
+}
+.faq-item.is-open::before { transform: scaleY(1); }
+.faq-i { transition: transform 280ms var(--e-drop); }
+.faq-item.is-open .faq-i { transform: rotate(180deg); }
+.faq-item.is-open .faq-i::after { transform: translate(-50%, -50%) scaleY(0); }
+/* Safe at 0: closed answers sit in a 0fr row, and the first item ships open. */
+.faq-a-inner p { opacity: 0; transform: translate3d(0,-6px,0); transition: opacity 200ms ease, transform 300ms var(--e-drop); }
+.faq-item.is-open .faq-a-inner p { opacity: 1; transform: none; transition-delay: 90ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero h1, .hero .lede, #hero-cta .btn, .wall-clip, .hv-glow { animation: none; }
+  .rule::after, .features::after { display: none; }
+  .film { animation: none; }
+  .btn-gold:hover::after { animation: none; }
+  .faq-item::before, .faq-i, .reel-btn, .reel-btn svg, .nav-links a::after { transition: none; }
+  .faq-a-inner p { opacity: 1; transform: none; transition: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-actions, .nav-actions-inner, .nav-actions.is-hidden .nav-actions-inner { transition: none; }
+  .btn, .btn-arrow, .repo { transition: none; }
+  .btn:hover, .repo:hover { transform: skewX(-6deg); }
+  .repo:hover { transform: none; }
+}

@@ -1,0 +1,38 @@
+# Fixed names that never change in place.
+/hero/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+/seasons/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+/logo.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/logo.webp
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon.png
+  Cache-Control: public, max-age=31536000, immutable
+
+# Content-hashed build output.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+# Always revalidated, but a repeat visit may paint from a stale copy.
+/
+  Cache-Control: public, max-age=0, s-maxage=60, stale-while-revalidate=86400
+
+/index.html
+  Cache-Control: public, max-age=0, s-maxage=60, stale-while-revalidate=86400
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin

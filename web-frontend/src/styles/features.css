@@ -1,0 +1,29 @@
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  /* Shows through the 1px gaps as dividers. */
+  background: var(--line);
+}
+.feature {
+  background: var(--ground-2);
+  padding: 26px 24px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.feature svg { width: 26px; height: 26px; color: var(--storm); }
+.feature h3 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  font-size: 24px;
+  line-height: 1;
+}
+.feature p { color: var(--ink-2); font-size: 15px; }
+@media (max-width: 900px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .features { grid-template-columns: 1fr; } }

@@ -1,0 +1,34 @@
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.step {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 26px 24px 28px;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 12px;
+}
+.step .n {
+  font-family: var(--display);
+  font-weight: 900;
+  font-style: italic;
+  font-size: 54px;
+  line-height: 0.9;
+  color: var(--storm);
+}
+.step h3 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  font-size: 28px;
+  line-height: 1;
+}
+.step p { color: var(--ink-2); font-size: 15px; }
+@media (max-width: 860px) {
+  .steps { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,39 @@
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: italic;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-800-italic-v2.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: italic;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-900-italic-v2.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("/fonts/figtree-variable-v2.woff2") format("woff2");
+}
+@font-face {
+  /* Subset to A-Z a-z 0-9 -./,:&'()#+_ (widen it if new copy needs more). */
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-500-subset.woff2") format("woff2");
+}
+
+@font-face {
+  /* Metrics-matched to Barlow Condensed: without it the swap reflowed the headline by 116px. */
+  font-family: "Display Fallback";
+  src: local("Arial Narrow"), local("Helvetica Neue Condensed"), local("Arial");
+  size-adjust: 75%;
+  ascent-override: 90%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
