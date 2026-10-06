@@ -1,5 +1,6 @@
 #include "edge/edge.hpp"
 
+#include <pthread.h>
 #include <unistd.h>
 
 #include <chrono>
@@ -16,6 +17,9 @@
 namespace sb::edge {
 
 namespace {
+
+// Thread names show up in perf, top and core dumps; Linux allows 15 characters.
+void name_thread(const std::string& name) { pthread_setname_np(pthread_self(), name.substr(0, 15).c_str()); }
 
 QUIC_STATUS QUIC_API listener_cb(HQUIC, void* ctx, QUIC_LISTENER_EVENT* ev) {
     if (ev->Type != QUIC_LISTENER_EVENT_NEW_CONNECTION) return QUIC_STATUS_SUCCESS;
@@ -99,10 +103,24 @@ void Edge::start() {
 
     open_quic();
 
-    replica_thread_ = std::jthread([this](std::stop_token st) { replica_->run(st); });
-    for (auto& w : search_) search_threads_.emplace_back([w = w.get()](std::stop_token st) { w->run(st); });
-    prober_thread_ = std::jthread([this](std::stop_token st) { prober_->run(st); });
-    for (auto& s : shards_) shard_threads_.emplace_back([s = s.get()](std::stop_token st) { s->run(st); });
+    replica_thread_ = std::jthread([this](std::stop_token st) {
+        name_thread("sb-replica");
+        replica_->run(st);
+    });
+    for (std::size_t i = 0; i < search_.size(); ++i)
+        search_threads_.emplace_back([w = search_[i].get(), i](std::stop_token st) {
+            name_thread("sb-search-" + std::to_string(i));
+            w->run(st);
+        });
+    prober_thread_ = std::jthread([this](std::stop_token st) {
+        name_thread("sb-prober");
+        prober_->run(st);
+    });
+    for (std::size_t i = 0; i < shards_.size(); ++i)
+        shard_threads_.emplace_back([s = shards_[i].get(), i](std::stop_token st) {
+            name_thread("sb-shard-" + std::to_string(i));
+            s->run(st);
+        });
     if (backbone_->clustered())
         lease_thread_ = std::jthread([this](std::stop_token st) {
             while (!st.stop_requested()) {
@@ -124,7 +142,10 @@ void Edge::start() {
     start_listener();
 
     admin_ = std::make_unique<ops::AdminServer>(cfg_.admin_listen, [this](std::string_view p) { return admin(p); });
-    admin_thread_ = std::jthread([this](std::stop_token st) { admin_->run(st); });
+    admin_thread_ = std::jthread([this](std::stop_token st) {
+        name_thread("sb-admin");
+        admin_->run(st);
+    });
 
     running_ = true;
     ready_ = true;

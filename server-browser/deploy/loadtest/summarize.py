@@ -55,8 +55,11 @@ handoff = delta_percentile(ramp_b, end_b, 0.99)
 
 lat = s['latency_us']
 ms = lambda us: f'{us / 1000:.1f}'
-per_core = s['patches_per_s'] / cpu if cpu == cpu and cpu > 0 else float('nan')
+# Scenarios without updates have no latency samples and nothing per delivery.
+client = f"{ms(lat['p50'])} / {ms(lat['p99'])} ms" if lat.get('samples') else '—'
+server = f'≤ {handoff * 1000:.1f} ms' if handoff == handoff else '—'
+per_core = f"{s['patches_per_s'] / cpu:,.0f}" if s['patches_per_s'] and cpu == cpu and cpu > 0 else '—'
 print(f"| {label} | {s['hosts']} | {s['browsers']} × {s['subs']} | {s['updates_per_s']:.0f} | {s['patches_per_s']:,.0f} | "
-      f"{ms(lat['p50'])} / {ms(lat['p99'])} ms | ≤ {handoff * 1000:.1f} ms | {cpu:.2f} cores | {s.get('loadgen_cpu_cores', 0):.2f} cores | {per_core:,.0f} | "
+      f"{client} | {server} | {cpu:.2f} cores | {s.get('loadgen_cpu_cores', 0):.2f} cores | {per_core} | "
       f"{rss / 2**20:,.0f} MiB | {rss / conns / 1024 if conns else 0:.0f} KiB ({conns:,.0f}) | "
       f"{flush / max(1, direct + flush):.1%} | {syncs:,.0f} | {s['errors']} |")
