@@ -62,13 +62,14 @@ private:
 
 // Lock-free, fixed-memory rate table shared by all threads (used on the accept path).
 // Keys hash into buckets; collisions only make limits stricter, never looser for the caller.
-// Each cell packs 16-bit tokens (x16 fixed point) with a 48-bit millisecond timestamp.
+// Each cell packs 24-bit tokens (x4 fixed point, bursts up to 4M) with a 40-bit millisecond
+// timestamp (wraps after ~34 years of uptime).
 class AtomicRateTable {
 public:
     AtomicRateTable(std::size_t cells_pow2, RateSpec spec)
         : mask_(cells_pow2 - 1), spec_(spec), cells_(std::make_unique<std::atomic<u64>[]>(cells_pow2)) {
         SB_ASSERT((cells_pow2 & mask_) == 0);
-        SB_ASSERT(spec.burst * kScale < 0xFFFF);
+        SB_ASSERT(u64{spec.burst} * kScale < (u64{1} << 24));
     }
 
     bool take(u64 key_hash, u64 now_ms) noexcept {
@@ -78,7 +79,7 @@ public:
         const u64 now = now_ms & kTsMask;
         const u64 rate = spec_.per_second_micro * kScale;  // fixed-point tokens per 1e9 ms
         for (;;) {
-            u64 tokens = cur >> 48;
+            u64 tokens = cur >> 40;
             u64 ts = cur & kTsMask;
             if (cur == 0) {  // never-used cell starts full
                 tokens = cap;
@@ -96,14 +97,14 @@ public:
                 ts += added * 1'000'000'000 / rate;
             }
             if (tokens < kScale) return false;
-            const u64 next = ((tokens - kScale) << 48) | ts;
+            const u64 next = ((tokens - kScale) << 40) | ts;
             if (cell.compare_exchange_weak(cur, next, std::memory_order_relaxed)) return true;
         }
     }
 
 private:
-    static constexpr u64 kScale = 16;
-    static constexpr u64 kTsMask = (u64{1} << 48) - 1;
+    static constexpr u64 kScale = 4;
+    static constexpr u64 kTsMask = (u64{1} << 40) - 1;
     const std::size_t mask_;
     const RateSpec spec_;
     std::unique_ptr<std::atomic<u64>[]> cells_;

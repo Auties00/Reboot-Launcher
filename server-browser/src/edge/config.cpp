@@ -155,6 +155,8 @@ void validate(const EdgeConfig& c) {
     if (c.registry.ttl_ms <= c.registry.heartbeat_ms) fail("registry.ttl_ms must exceed heartbeat_ms");
     if (c.limits.max_subscriptions == 0 || c.limits.max_subscriptions > 16) fail("limits.max_subscriptions must be 1..16");
     if (c.limits.max_unsent_datagrams == 0) fail("limits.max_unsent_datagrams must be positive");
+    for (u32 b : {c.limits.conn_per_ip_burst, c.limits.conn_per_subnet_burst, c.limits.join_burst})
+        if (b == 0 || b > 4'000'000) fail("limits: connection and join bursts must be in 1..4000000");
     if (c.backbone.kind != "inproc" && c.backbone.kind != "nats") fail("backbone.kind must be inproc or nats");
     if (c.backbone.kind == "nats" && c.backbone.urls.empty()) fail("backbone.urls required for nats");
     if (!c.tls.self_signed && (c.tls.cert_file.empty() || c.tls.key_file.empty()))
