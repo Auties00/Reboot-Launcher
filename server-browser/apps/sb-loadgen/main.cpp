@@ -10,6 +10,7 @@
 #include <bit>
 #include <chrono>
 #include <csignal>
+#include <cstdlib>
 #include <cstdio>
 #include <memory>
 #include <mutex>
@@ -171,10 +172,11 @@ int main(int argc, char** argv) {
     const u64 features = no_datagrams ? wire::feature::zstd : wire::feature::datagrams | wire::feature::zstd;
 
     // ---- hosts -------------------------------------------------------------------------------
+    // The client is declared last so it is destroyed first: its callbacks use the other members.
     struct HostState {
-        std::unique_ptr<client::Client> c;
         std::atomic<bool> ready{false};
         u32 players = 0;
+        std::unique_ptr<client::Client> c;
     };
     std::vector<std::unique_ptr<HostState>> host_states;
     host_states.reserve(hosts);
@@ -220,12 +222,21 @@ int main(int argc, char** argv) {
         std::this_thread::sleep_for(ramp_gap);
     }
 
+    // Hosts heartbeat from their own thread so a long browser ramp cannot expire them.
+    std::jthread heartbeats([&](std::stop_token stop) {
+        while (!stop.stop_requested()) {
+            for (auto& h : host_states)
+                if (h->ready) h->c->heartbeat();
+            for (int i = 0; i < 20 && !stop.stop_requested(); ++i) std::this_thread::sleep_for(100ms);
+        }
+    });
+
     // ---- browsers ----------------------------------------------------------------------------
     struct BrowserState {
-        std::unique_ptr<client::Client> c;
         bool sampled = false;
         std::mutex mu;
         std::vector<std::pair<u32, client::ViewMirror>> mirrors;  // view id -> mirror (sampled only)
+        std::unique_ptr<client::Client> c;
     };
     std::vector<std::unique_ptr<BrowserState>> browser_states;
     browser_states.reserve(browsers);
@@ -309,7 +320,6 @@ int main(int argc, char** argv) {
     const double tick_s = 0.01;
     double update_budget = 0, join_budget = 0, query_budget = 0;
     std::size_t next_host = 0;
-    auto next_hb = start;
     while (!g_stop && std::chrono::steady_clock::now() - start < std::chrono::seconds(duration)) {
         const auto tick_start = std::chrono::steady_clock::now();
         update_budget += update_rate * hosts * tick_s;
@@ -332,11 +342,6 @@ int main(int argc, char** argv) {
         while (query_budget >= 1 && !browser_states.empty()) {
             query_budget -= 1;
             browser_states[rng() % browser_states.size()]->c->query(wire::ViewSpec{.sort = wire::Sort::name}, "load", 20);
-        }
-        if (tick_start >= next_hb) {
-            for (auto& h : host_states)
-                if (h->ready) h->c->heartbeat();
-            next_hb = tick_start + 3s;
         }
         if (tick_start >= next_report) {
             const double secs = std::chrono::duration<double>(tick_start - last).count();
@@ -388,13 +393,16 @@ int main(int argc, char** argv) {
     }
 
     std::printf("closing %zu connections\n", host_states.size() + browser_states.size());
+    std::fflush(stdout);
+    heartbeats = {};
     for (auto& b : browser_states) b->c->close();
     for (auto& h : host_states) {
         h->c->host_unregister();
         h->c->close();
     }
-    std::this_thread::sleep_for(500ms);
-    browser_states.clear();
-    host_states.clear();
-    return st.errors.load() > 0 ? 3 : 0;
+    // Give the close frames a moment to leave, then exit without tearing down tens of thousands of
+    // clients one by one; the edge reaps anything that did not hear the close by idle timeout.
+    std::this_thread::sleep_for(2s);
+    std::fflush(nullptr);
+    std::_Exit(st.errors.load() > 0 ? 3 : 0);
 }

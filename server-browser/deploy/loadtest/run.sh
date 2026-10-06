@@ -54,7 +54,7 @@ report="$out/report.md"
 scenario() {  # scenario LABEL HOSTS RATE BROWSERS SUBS DURATION
     local label="$1" hosts="$2" rate="$3" browsers="$4" subs="$5" duration="$6"
     start_edge
-    docker run --rm --network host --user "$(id -u):$(id -g)" --ulimit nofile=1048576:1048576 -v "$out:/out" \
+    docker run --rm --name "sb-loadgen-$label" --network host --user "$(id -u):$(id -g)" --ulimit nofile=1048576:1048576 -v "$out:/out" \
         --entrypoint /usr/local/bin/sb-loadgen "$image" \
         -s 127.0.0.1:4433 --hosts "$hosts" --update-rate "$rate" --browsers "$browsers" --subs "$subs" \
         --window 50 --duration "$duration" --ramp 2000 --sample 0.05 --report 10 \
@@ -69,7 +69,14 @@ scenario() {  # scenario LABEL HOSTS RATE BROWSERS SUBS DURATION
     ) > "$out/$label.samples" &
     local sampler=$!
     local ramp_done=""
+    # Ramp, run and teardown together never take this long; past it the load generator is stuck.
+    local deadline=$(( $(date +%s) + duration + browsers / 2000 + 300 ))
     while kill -0 "$lg" 2>/dev/null; do
+        if [ "$(date +%s)" -gt "$deadline" ]; then
+            echo "$label: load generator did not finish, killing it" >&2
+            docker kill "sb-loadgen-$label" >/dev/null 2>&1 || true
+            break
+        fi
         if [ -z "$ramp_done" ] && grep -q "ramp complete" "$out/$label.log" 2>/dev/null; then
             ramp_done="$(date +%s.%N)"
             curl -s http://127.0.0.1:9100/metrics > "$out/$label.ramp.metrics"
