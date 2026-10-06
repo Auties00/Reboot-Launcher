@@ -1,0 +1,4 @@
+build/
+vcpkg_installed/
+.cache/
+fuzz/corpus-*/

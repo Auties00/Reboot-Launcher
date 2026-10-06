@@ -1,0 +1,5 @@
+# rbsb.Subscribe
+req_id: 7
+sub_id: 1
+view { bucket: 4101 password: NO_PASSWORD region: EUROPE sort: PLAYERS }
+window: 200

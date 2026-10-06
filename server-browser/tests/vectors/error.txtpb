@@ -1,0 +1,5 @@
+# rbsb.Error
+req_id: 4294967295
+code: RATE_LIMITED
+message: "slow down"
+retry_after_ms: 1500

@@ -1,0 +1,3 @@
+# rbsb.ResolveResult
+req_id: 9
+details { entry { handle: 5 id: "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05" name: "Hidden" flags: 12 } description: "Private lobby" updated_ms: 42 }

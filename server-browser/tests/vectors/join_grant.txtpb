@@ -1,0 +1,6 @@
+# rbsb.JoinGrant
+req_id: 3
+address: "\xc0\x63\xd8\x2a"
+port: 7777
+ticket: "\xde\xad\xbe\xef"
+expires_ms: 1759651260000

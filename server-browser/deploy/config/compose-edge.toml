@@ -1,0 +1,26 @@
+# Edge configuration used by deploy/compose.yaml (development cluster).
+[edge]
+listen = "[::]:4433"
+shards = 2
+search_workers = 1
+drain_delay_ms = 2000
+drain_spread_ms = 5000
+
+[admin]
+listen = "0.0.0.0:9100"
+
+[log]
+level = "info"
+json = false
+
+[tls]
+self_signed = true
+
+[registry]
+probe = false            # containers cannot reach hosts' game ports in this setup
+max_hosts_per_ip = 1000  # every container talks from the same bridge address
+
+[backbone]
+kind = "nats"
+urls = ["nats://nats-1:4222", "nats://nats-2:4222", "nats://nats-3:4222"]
+replicas = 3

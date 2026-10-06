@@ -1,0 +1,77 @@
+# Production edge configuration. Every key is optional; the values shown are the defaults
+# unless marked otherwise.
+
+[edge]
+# id = 0                    # unique per edge; 0 derives a stable id from hostname + listen
+listen = "[::]:443"
+shards = 0                  # 0 = one per core minus two (MsQuic and fan-out share each shard thread)
+search_workers = 2
+drain_delay_ms = 10000      # time for DNS health checks to drop the edge before GoAway
+drain_spread_ms = 30000     # clients reconnect at a random point within this window
+# geoip_db = "/var/lib/GeoIP/GeoLite2-Country.mmdb"   # enables region tagging
+
+[admin]
+listen = "127.0.0.1:9100"   # /metrics, /healthz, /readyz; keep it private
+
+[log]
+level = "info"
+json = true
+
+[tls]
+cert = "/etc/letsencrypt/live/sb.rebootfn.org/fullchain.pem"   # required
+key = "/etc/letsencrypt/live/sb.rebootfn.org/privkey.pem"      # required (ECDSA P-256)
+ticket_key_file = "/etc/sb/ticket.key"   # 48-80 random bytes, identical on every edge
+retry_key_file = "/etc/sb/retry.key"     # >= 32 random bytes, identical on every edge
+
+[secrets]
+pepper_file = "/etc/sb/pepper"           # >= 32 random bytes, identical on every edge; never rotate silently
+ticket_file = "/etc/sb/join-ticket.key"  # >= 32 random bytes, shared with game servers that verify tickets
+
+[limits]
+conn_per_ip_per_sec = 10
+conn_per_ip_burst = 40
+conn_per_subnet_per_sec = 100
+conn_per_subnet_burst = 400
+query_per_sec = 10
+query_burst = 20
+join_per_min = 5
+join_burst = 5
+host_update_per_sec = 4
+host_update_burst = 8
+max_subscriptions = 8
+max_unsent_datagrams = 4    # direct sends per connection before coalescing kicks in
+stall_timeout_ms = 30000
+
+[quic]
+idle_timeout_ms = 60000
+host_keepalive_ms = 3000
+initial_window_packets = 20
+max_worker_queue_delay_us = 20000
+ecn = true
+xdp = false                 # MsQuic XDP datapath; needs a supported NIC and kernel
+
+[registry]
+max_entries = 1048576
+ring_capacity = 65536
+heartbeat_ms = 10000
+ttl_ms = 30000
+grace_ms = 15000
+persist_interval_ms = 1000
+probe_interval_ms = 300000
+max_hosts_per_ip = 4
+probe = true
+zstd = true
+windows = [50, 200]
+max_query_limit = 100
+
+[backbone]
+kind = "nats"               # "inproc" for a single node
+urls = ["tls://nats-1.internal:4222", "tls://nats-2.internal:4222", "tls://nats-3.internal:4222"]
+stream = "SB_REG"
+subject_prefix = "sb"
+lease_bucket = "SB_EDGES"
+replicas = 3
+lease_ttl_ms = 10000
+tls_ca = "/etc/sb/nats-ca.pem"
+tls_cert = "/etc/sb/nats-client.pem"
+tls_key = "/etc/sb/nats-client.key"

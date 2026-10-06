@@ -1,0 +1,6 @@
+{
+  "name": "openssl",
+  "version": "3.5.0",
+  "description": "Uses the system OpenSSL (>= 3.5) so MsQuic and the service share one TLS library.",
+  "supports": "linux"
+}

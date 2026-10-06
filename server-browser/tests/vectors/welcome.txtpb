@@ -1,0 +1,5 @@
+# rbsb.Welcome
+edge_id: 1311768467463790320
+features: 3
+server_time_ms: 1759651200000
+limits { heartbeat_ms: 10000 ttl_ms: 30000 max_subscriptions: 8 max_window: 200 max_query_limit: 100 host_update_burst: 8 host_update_per_sec: 4 }

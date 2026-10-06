@@ -1,0 +1,301 @@
+// Reboot server browser protocol, ALPN "rbsb/1".
+//
+// Normative wire schema. The C++ service does not use libprotobuf: its codec is generated from
+// the structs in src/wire/messages.hpp, whose field numbers are declaration order + 1.
+// tests/vectors holds protoc-encoded golden messages that both sides must reproduce byte for byte.
+// Rules: fields are append-only; never renumber or reuse a field number.
+//
+// Transport (see docs/PROTOCOL.md):
+//   control  - first client-opened bidirectional stream, frames in both directions
+//   snapshot - server-opened unidirectional stream carrying exactly one Snapshot frame
+//   datagram - QUIC DATAGRAM frames: Delta (server->client), HostHeartbeat (client->server)
+// frame := quic_varint type | quic_varint length | message bytes   (types in FrameType)
+
+syntax = "proto3";
+
+package rbsb;
+
+enum FrameType {
+  FRAME_NONE = 0;
+  HELLO = 1;
+  SUBSCRIBE = 2;
+  UNSUBSCRIBE = 3;
+  QUERY = 4;
+  RESOLVE = 5;
+  JOIN = 6;
+  HOST_REGISTER = 7;
+  HOST_UPDATE = 8;
+  HOST_UNREGISTER = 9;
+  WELCOME = 32;
+  SUB_OPEN = 33;
+  QUERY_RESULT = 34;
+  RESOLVE_RESULT = 35;
+  JOIN_GRANT = 36;
+  HOST_REGISTERED = 37;
+  ACK = 38;
+  ERROR = 39;
+  GO_AWAY = 40;
+  HOST_STATUS = 41;
+  SNAPSHOT = 48;
+  SNAPSHOT_ZSTD = 49;  // payload: varint raw_length, then zstd-compressed Snapshot
+  DELTA = 64;
+  HOST_HEARTBEAT = 65;
+}
+
+enum Role {
+  ROLE_UNKNOWN = 0;
+  BROWSER = 1;
+  HOST = 2;
+}
+
+enum Sort {
+  PLAYERS = 0;  // players desc, then created_ms desc, then handle asc
+  NEWEST = 1;   // created_ms desc, then handle asc
+  NAME = 2;     // case-folded name asc (bytewise), then handle asc
+}
+
+enum PasswordFilter {
+  ANY = 0;
+  NO_PASSWORD = 1;
+  PASSWORD_ONLY = 2;
+}
+
+enum Region {
+  REGION_ALL = 0;  // "unknown" on an entry, "all" in a ViewSpec
+  AFRICA = 1;
+  ANTARCTICA = 2;
+  ASIA = 3;
+  EUROPE = 4;
+  NORTH_AMERICA = 5;
+  OCEANIA = 6;
+  SOUTH_AMERICA = 7;
+}
+
+enum ErrorCode {
+  ERROR_UNKNOWN = 0;
+  BAD_REQUEST = 1;
+  UNSUPPORTED = 2;
+  RATE_LIMITED = 3;
+  NOT_FOUND = 4;
+  WRONG_PASSWORD = 5;
+  UNAUTHORIZED = 6;
+  UNREACHABLE = 7;
+  LIMIT_EXCEEDED = 8;
+  CONFLICT = 9;
+  INTERNAL = 10;
+  UNAVAILABLE = 11;
+}
+
+enum GoAwayReason {
+  SHUTDOWN = 0;
+  OVERLOAD = 1;
+  REBALANCE = 2;
+}
+
+// Feature bits for Hello.features / Welcome.features.
+//   1 = datagrams (deltas and heartbeats over DATAGRAM frames; otherwise a delta uni stream)
+//   2 = zstd      (snapshots may be sent as SNAPSHOT_ZSTD)
+
+// Entry flags (ListEntry.flags): 1 has_password, 2 reachable, 4 online, 8 hidden.
+// Version bucket: 0 = all (ViewSpec only), 1 = unparseable, else 2 + major * 1024 + minor.
+
+message Hello {
+  Role role = 1;
+  uint32 proto_minor = 2;
+  string client_version = 3;
+  uint64 features = 4;
+}
+
+message Limits {
+  uint32 heartbeat_ms = 1;
+  uint32 ttl_ms = 2;
+  uint32 max_subscriptions = 3;
+  uint32 max_window = 4;
+  uint32 max_query_limit = 5;
+  uint32 host_update_burst = 6;
+  uint32 host_update_per_sec = 7;
+}
+
+message Welcome {
+  uint64 edge_id = 1;
+  uint32 proto_minor = 2;
+  uint64 features = 3;
+  uint64 server_time_ms = 4;
+  Limits limits = 5;
+}
+
+message Ack {
+  uint32 req_id = 1;
+}
+
+message Error {
+  uint32 req_id = 1;
+  ErrorCode code = 2;
+  string message = 3;
+  uint32 retry_after_ms = 4;
+}
+
+message GoAway {
+  GoAwayReason reason = 1;
+  uint32 reconnect_after_ms = 2;
+}
+
+message ViewSpec {
+  uint32 bucket = 1;
+  PasswordFilter password = 2;
+  Region region = 3;
+  Sort sort = 4;
+}
+
+message ListEntry {
+  uint64 handle = 1;   // edge-local compact id used by patches; stable per connection
+  bytes id = 2;        // 16-byte UUID
+  string name = 3;
+  string author = 4;
+  string version = 5;
+  uint32 bucket = 6;
+  uint32 players = 7;
+  uint32 max_players = 8;
+  uint32 flags = 9;
+  Region region = 10;
+  uint64 created_ms = 11;
+}
+
+message Subscribe {
+  uint32 req_id = 1;
+  uint32 sub_id = 2;
+  ViewSpec view = 3;
+  uint32 window = 4;  // top-K size: 50 or 200
+}
+
+message SubOpen {
+  uint32 req_id = 1;
+  uint32 sub_id = 2;
+  uint32 view_id = 3;
+  uint32 window = 4;
+}
+
+message Unsubscribe {
+  uint32 sub_id = 1;
+}
+
+// Per-field sequencing: a client keeps one sequence number per field group of each entry
+// (players+max_players, flags, name) plus one for membership. A field is applied only if
+// vseq is greater than the group's sequence; `entry` and `removed` update every group.
+message Patch {
+  uint64 handle = 1;
+  uint64 vseq = 2;
+  bool removed = 3;
+  optional ListEntry entry = 4;
+  optional uint32 players = 5;
+  optional uint32 max_players = 6;
+  optional uint32 flags = 7;
+  optional string name = 8;
+}
+
+message Delta {
+  uint32 view_id = 1;
+  repeated Patch patches = 2;
+}
+
+message Snapshot {
+  uint32 view_id = 1;
+  uint64 vseq = 2;  // patches with vseq <= this are already reflected
+  uint32 total = 3; // entries in the whole view, not just the window
+  repeated ListEntry entries = 4;
+}
+
+message Query {
+  uint32 req_id = 1;
+  ViewSpec view = 2;
+  string text = 3;
+  uint32 limit = 4;
+  bytes cursor = 5;
+}
+
+message QueryResult {
+  uint32 req_id = 1;
+  repeated ListEntry entries = 2;
+  bytes next_cursor = 3;  // empty when there are no more results
+  uint32 total = 4;
+}
+
+message Resolve {
+  uint32 req_id = 1;
+  bytes id = 2;
+}
+
+message EntryDetails {
+  ListEntry entry = 1;
+  string description = 2;
+  uint64 updated_ms = 3;
+}
+
+message ResolveResult {
+  uint32 req_id = 1;
+  optional EntryDetails details = 2;
+}
+
+message Join {
+  uint32 req_id = 1;
+  bytes id = 2;
+  optional string password = 3;
+}
+
+message JoinGrant {
+  uint32 req_id = 1;
+  bytes address = 2;  // 4 or 16 bytes, network order
+  uint32 port = 3;
+  bytes ticket = 4;
+  uint64 expires_ms = 5;
+}
+
+message HostRegister {
+  uint32 req_id = 1;
+  bytes id = 2;
+  optional bytes token = 3;  // 32 bytes; absent on the first registration of id
+  string name = 4;
+  string description = 5;
+  string version = 6;
+  string author = 7;
+  uint32 game_port = 8;
+  optional string password = 9;
+  uint32 max_players = 10;
+  bool hidden = 11;
+  uint32 players = 12;
+}
+
+message HostRegistered {
+  uint32 req_id = 1;
+  optional bytes token = 2;  // 32 bytes, only on the first registration of id; store it
+  uint64 handle = 3;
+  uint32 heartbeat_ms = 4;
+  uint32 ttl_ms = 5;
+  bytes observed_address = 6;
+}
+
+message HostUpdate {
+  uint32 req_id = 1;  // 0: no Ack wanted
+  optional string name = 2;
+  optional string description = 3;
+  optional string version = 4;
+  optional string author = 5;
+  optional uint32 game_port = 6;
+  optional string password = 7;  // empty removes the password
+  optional uint32 max_players = 8;
+  optional bool hidden = 9;
+  optional uint32 players = 10;
+}
+
+message HostUnregister {
+  uint32 req_id = 1;
+}
+
+message HostHeartbeat {
+  uint32 seq = 1;
+}
+
+message HostStatus {
+  bool reachable = 1;
+  uint32 probe_failures = 2;
+}

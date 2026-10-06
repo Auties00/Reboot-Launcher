@@ -1,0 +1,5 @@
+# rbsb.Hello
+role: BROWSER
+proto_minor: 0
+client_version: "reboot-launcher/11.0.0"
+features: 3

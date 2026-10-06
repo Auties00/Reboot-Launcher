@@ -1,0 +1,70 @@
+name: server-browser
+
+on:
+  push:
+    paths: ["server-browser/**", ".github/workflows/server-browser.yml"]
+  pull_request:
+    paths: ["server-browser/**", ".github/workflows/server-browser.yml"]
+  schedule:
+    - cron: "17 3 * * *"  # nightly: longer fuzzing and a load smoke test
+  workflow_dispatch:
+
+concurrency:
+  group: server-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: GCC 16 build, unit and integration tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and test
+        uses: docker/build-push-action@v6
+        with:
+          context: server-browser
+          file: server-browser/deploy/docker/Dockerfile
+          target: test
+          cache-from: type=gha,scope=sb-test
+          cache-to: type=gha,mode=max,scope=sb-test
+
+  sanitize:
+    name: Clang ASan/UBSan, PFR codec path, fuzz smoke
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: server-browser
+          file: server-browser/deploy/docker/Dockerfile
+          target: sanitize
+          cache-from: type=gha,scope=sb-sanitize
+          cache-to: type=gha,mode=max,scope=sb-sanitize
+
+  image:
+    name: Runtime image
+    runs-on: ubuntu-24.04
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: server-browser
+          file: server-browser/deploy/docker/Dockerfile
+          target: runtime
+          tags: server-browser/sb-edge:ci
+          load: true
+          cache-from: type=gha,scope=sb-test
+      - name: Load smoke test (single edge, 2k browsers, 200 hosts)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          docker run -d --name edge --network host \
+            -v "$PWD/server-browser/deploy/config/loadtest.toml:/etc/sb/edge.toml:ro" server-browser/sb-edge:ci
+          sleep 3
+          docker run --rm --network host --entrypoint /usr/local/bin/sb-loadgen server-browser/sb-edge:ci \
+            -s 127.0.0.1:4433 --hosts 200 --update-rate 2 --browsers 2000 --subs 2 --duration 60 --ramp 1000 --sample 0.1
+          curl -s http://127.0.0.1:9100/metrics | grep -E '^sb_(delivery_seconds_bucket|ring_stalls|datagrams)' | head -50
+          docker logs edge | tail -50

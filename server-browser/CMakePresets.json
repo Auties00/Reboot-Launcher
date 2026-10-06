@@ -1,0 +1,29 @@
+{
+  "version": 8,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": { "VCPKG_TARGET_TRIPLET": "x64-linux", "MsQuic_ROOT": "/opt/msquic" }
+    },
+    { "name": "gcc-release", "inherits": "base", "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "CMAKE_CXX_COMPILER": "g++", "CMAKE_C_COMPILER": "gcc", "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON" } },
+    { "name": "gcc-debug", "inherits": "base", "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "CMAKE_CXX_COMPILER": "g++", "CMAKE_C_COMPILER": "gcc" } },
+    { "name": "clang-asan", "inherits": "base", "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "CMAKE_CXX_COMPILER": "clang++", "CMAKE_C_COMPILER": "clang", "SB_SANITIZE": "address,undefined", "SB_USE_MIMALLOC": "OFF", "SB_BUILD_FUZZ": "ON" } },
+    { "name": "clang-tsan", "inherits": "base", "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "CMAKE_CXX_COMPILER": "clang++", "CMAKE_C_COMPILER": "clang", "SB_SANITIZE": "thread", "SB_USE_MIMALLOC": "OFF" } }
+  ],
+  "buildPresets": [
+    { "name": "gcc-release", "configurePreset": "gcc-release" },
+    { "name": "gcc-debug", "configurePreset": "gcc-debug" },
+    { "name": "clang-asan", "configurePreset": "clang-asan" },
+    { "name": "clang-tsan", "configurePreset": "clang-tsan" }
+  ],
+  "testPresets": [
+    { "name": "gcc-release", "configurePreset": "gcc-release", "output": { "outputOnFailure": true } },
+    { "name": "gcc-debug", "configurePreset": "gcc-debug", "output": { "outputOnFailure": true } },
+    { "name": "clang-asan", "configurePreset": "clang-asan", "output": { "outputOnFailure": true } },
+    { "name": "clang-tsan", "configurePreset": "clang-tsan", "output": { "outputOnFailure": true } }
+  ]
+}

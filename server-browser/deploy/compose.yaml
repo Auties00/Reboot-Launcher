@@ -1,0 +1,35 @@
+# Three NATS JetStream nodes and three edges on one machine: the M4 cluster in miniature.
+#   docker compose -f deploy/compose.yaml up --build
+#   sb-cli -k -s 127.0.0.1:4431 browse        # edge 1
+#   sb-cli -k -s 127.0.0.1:4432 host --simulate   # edge 2: changes show up on edge 1 in real time
+name: server-browser
+
+x-nats: &nats
+  image: nats:2.15
+  command: ["-c", "/etc/nats/nats.conf"]
+  volumes: ["./nats/nats.conf:/etc/nats/nats.conf:ro"]
+
+x-edge: &edge
+  build: { context: .., dockerfile: deploy/docker/Dockerfile, target: runtime }
+  image: server-browser/sb-edge:dev
+  depends_on: [nats-1, nats-2, nats-3]
+  volumes: ["./config/compose-edge.toml:/etc/sb/edge.toml:ro"]
+  cap_add: [NET_BIND_SERVICE]
+
+services:
+  nats-1: { <<: *nats, hostname: nats-1, environment: { NATS_NAME: nats-1 } }
+  nats-2: { <<: *nats, hostname: nats-2, environment: { NATS_NAME: nats-2 } }
+  nats-3: { <<: *nats, hostname: nats-3, environment: { NATS_NAME: nats-3 } }
+
+  edge-1:
+    <<: *edge
+    command: ["--config", "/etc/sb/edge.toml", "--edge-id", "1"]
+    ports: ["4431:4433/udp", "9101:9100/tcp"]
+  edge-2:
+    <<: *edge
+    command: ["--config", "/etc/sb/edge.toml", "--edge-id", "2"]
+    ports: ["4432:4433/udp", "9102:9100/tcp"]
+  edge-3:
+    <<: *edge
+    command: ["--config", "/etc/sb/edge.toml", "--edge-id", "3"]
+    ports: ["4433:4433/udp", "9103:9100/tcp"]

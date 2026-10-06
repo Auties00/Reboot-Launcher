@@ -1,0 +1,6 @@
+# rbsb.Snapshot
+view_id: 2
+vseq: 18446744073709551615
+total: 2
+entries { handle: 1 id: "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01" name: "A" author: "x" version: "1.7.2" bucket: 1033 players: 1 max_players: 16 flags: 6 region: NORTH_AMERICA created_ms: 1 }
+entries { handle: 2 id: "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" name: "A very long server name that pushes the nested entry past one hundred twenty seven bytes!!" author: "someone-with-a-long-name" version: "34.10" bucket: 34828 players: 0 max_players: 0 flags: 0 region: REGION_ALL created_ms: 0 }

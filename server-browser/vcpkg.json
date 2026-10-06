@@ -1,0 +1,24 @@
+{
+  "name": "server-browser",
+  "version": "0.1.0",
+  "description": "Real-time QUIC server browser service",
+  "dependencies": [
+    "boost-headers",
+    "boost-container",
+    "boost-pfr",
+    "boost-unordered",
+    "roaring",
+    "zstd",
+    "tomlplusplus",
+    "cli11",
+    {
+      "name": "mimalloc",
+      "features": [
+        "override"
+      ]
+    },
+    "cnats",
+    "catch2",
+    "libmaxminddb"
+  ]
+}

@@ -1,0 +1,9 @@
+# rbsb.Delta
+view_id: 300
+patches { handle: 17 vseq: 99999 players: 0 }
+patches { handle: 18 vseq: 100000 removed: true }
+patches { handle: 19 vseq: 100001 name: "Late Game \xF0\x9F\x8E\xAE" flags: 3 max_players: 100 }
+patches {
+  handle: 20 vseq: 100002
+  entry { handle: 20 id: "\x01\x23\x45\x67\x89\xab\xcd\xef\x01\x23\x45\x67\x89\xab\xcd\xef" name: "Arena" author: "auties" version: "4.5" bucket: 4101 players: 12 max_players: 100 flags: 7 region: EUROPE created_ms: 1759651200123 }
+}

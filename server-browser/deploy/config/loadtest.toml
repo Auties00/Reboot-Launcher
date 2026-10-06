@@ -1,0 +1,35 @@
+# Edge configuration for sb-loadgen runs: every client comes from a handful of addresses, so the
+# per-address limits are lifted. Never use this in production.
+[edge]
+listen = "[::]:4433"
+drain_delay_ms = 0
+drain_spread_ms = 2000
+
+[admin]
+listen = "127.0.0.1:9100"
+
+[log]
+level = "info"
+json = false
+
+[tls]
+self_signed = true
+
+[limits]
+conn_per_ip_per_sec = 1000000
+conn_per_ip_burst = 1000000
+conn_per_subnet_per_sec = 1000000
+conn_per_subnet_burst = 1000000
+query_per_sec = 1000
+query_burst = 1000
+join_per_min = 100000
+join_burst = 10000
+host_update_per_sec = 100
+host_update_burst = 100
+
+[registry]
+probe = false
+max_hosts_per_ip = 10000000
+
+[backbone]
+kind = "inproc"
