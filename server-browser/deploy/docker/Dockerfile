@@ -50,7 +50,7 @@ RUN --mount=type=cache,target=/root/.cache/vcpkg \
 # ---- test: unit + integration (inproc and a local NATS JetStream) ------------------------------
 FROM build AS test
 RUN (nats-server -js -sd /tmp/js -p 4222 >/tmp/nats.log 2>&1 &) \
-    && sleep 1 && SB_NATS_URL=nats://127.0.0.1:4222 ctest --preset gcc-release --output-on-failure
+    && sleep 1 && SB_TEST_LOGS=1 SB_NATS_URL=nats://127.0.0.1:4222 ctest --preset gcc-release --output-on-failure
 
 # ---- sanitizers and fuzzing (Clang: Boost.PFR codec path, libFuzzer) -------------------------
 FROM deps AS sanitize
@@ -65,7 +65,7 @@ RUN --mount=type=cache,target=/root/.cache/vcpkg \
     cmake --preset clang-asan -DVCPKG_INSTALLED_DIR=/opt/vcpkg_installed \
     && cmake --build --preset clang-asan -- -k 0 \
     && (nats-server -js -sd /tmp/js -p 4222 >/tmp/nats.log 2>&1 &) && sleep 1 \
-    && SB_NATS_URL=nats://127.0.0.1:4222 ctest --preset clang-asan --output-on-failure \
+    && SB_TEST_LOGS=1 SB_NATS_URL=nats://127.0.0.1:4222 ctest --preset clang-asan --output-on-failure \
     && for f in fuzz_messages fuzz_framer fuzz_mirror; do \
            ./build/clang-asan/fuzz/$f -max_total_time=60 -rss_limit_mb=4096 || exit 1; \
        done

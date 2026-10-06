@@ -3,6 +3,7 @@
 // Process-level test harness: spawns real sb-edge binaries and talks to them over QUIC.
 
 #include <chrono>
+#include <cstdio>
 #include <condition_variable>
 #include <deque>
 #include <functional>
@@ -76,7 +77,13 @@ public:
                     return out;
                 }
             }
-            if (cv_.wait_until(lk, deadline) == std::cv_status::timeout) return std::nullopt;
+            if (cv_.wait_until(lk, deadline) == std::cv_status::timeout) {
+                for (const auto& e : events_)
+                    if (auto* err = std::get_if<wire::Error>(&e))
+                        std::fprintf(stderr, "pending error %u for req %u: %s\n", static_cast<unsigned>(err->code), err->req_id,
+                                     err->message.c_str());
+                return std::nullopt;
+            }
         }
     }
 

@@ -75,6 +75,7 @@ EdgeProcess::EdgeProcess(EdgeOptions o) {
         << "[tls]\nself_signed = true\n"
         << "[limits]\nconn_per_ip_per_sec = 10000\nconn_per_ip_burst = 10000\nconn_per_subnet_per_sec = 10000\n"
         << "conn_per_subnet_burst = 10000\nquery_per_sec = 1000\nquery_burst = 1000\njoin_per_min = 600\njoin_burst = 100\n"
+        << "host_update_per_sec = 10000\nhost_update_burst = 10000\n"
         << "[registry]\nprobe = false\nmax_hosts_per_ip = 100000\ngrace_ms = 2000\nttl_ms = 3000\nheartbeat_ms = 1000\n"
         << "[backbone]\nkind = \"" << o.backbone << "\"\nreplicas = 1\nlease_ttl_ms = 2000\n";
     if (!o.nats.empty()) {
@@ -113,6 +114,12 @@ EdgeProcess::~EdgeProcess() {
     if (pid_ > 0) {
         ::kill(pid_, SIGINT);
         if (!wait_exit(10s)) kill();
+    }
+    if (std::getenv("SB_TEST_LOGS")) {
+        std::ifstream f(log_path_);
+        std::string line;
+        std::printf("---- sb-edge %s ----\n", log_path_.c_str());
+        while (std::getline(f, line)) std::printf("%s\n", line.c_str());
     }
     std::remove(config_path_.c_str());
 }

@@ -63,8 +63,14 @@ Client::Client(ClientRuntime& rt, Options opts) : rt_(rt), api_(rt.api()), opts_
 
 Client::~Client() {
     close();
-    // ConnectionClose blocks until MsQuic finished delivering events for this connection.
-    if (conn_) api_->ConnectionClose(conn_);
+    if (conn_) {
+        // Closing the handle before the shutdown completes would drop the connection silently,
+        // leaving the server to discover it only through the idle timeout.
+        std::unique_lock lk(done_mu_);
+        done_cv_.wait_for(lk, std::chrono::seconds(2), [&] { return shutdown_done_; });
+        lk.unlock();
+        api_->ConnectionClose(conn_);
+    }
 }
 
 void Client::connect() {
@@ -249,6 +255,11 @@ QUIC_STATUS QUIC_API Client::conn_cb(HQUIC, void* ctx, QUIC_CONNECTION_EVENT* ev
             break;
         case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE:
             self->state_.store(State::closed);
+            {
+                std::lock_guard lk(self->done_mu_);
+                self->shutdown_done_ = true;
+            }
+            self->done_cv_.notify_all();
             {
                 std::lock_guard lk(self->send_mu_);
                 self->control_ = nullptr;

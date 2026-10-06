@@ -718,6 +718,7 @@ void Shard::on_stream_event(Conn& c, HQUIC stream, void* sctx_raw, QUIC_STREAM_E
 }
 
 void Shard::on_shutdown_complete(Conn& c) {
+    log::debug("conn {:x} closed (role {}, host handle {})", packed(c), static_cast<unsigned>(c.role), c.host_handle);
     drop_subscriptions(c);
     if (c.host_handle) {
         ctx_.replica.post(index_, packed(c), HostGoneReq{.handle = c.host_handle, .draining = ctx_.draining.load(std::memory_order_relaxed)});
@@ -790,6 +791,7 @@ void Shard::send_raw(Conn& c, std::vector<u8> bytes) {
 }
 
 void Shard::send_error(Conn& c, u32 req_id, wire::ErrorCode code, std::string_view msg, u32 retry_ms) {
+    log::debug("conn {:x}: error {} for req {}: {}", packed(c), static_cast<unsigned>(code), req_id, msg);
     send(c, wire::Error{.req_id = req_id, .code = code, .message = std::string(msg), .retry_after_ms = retry_ms});
 }
 
@@ -1142,6 +1144,7 @@ void Shard::handle_reply(u64 conn, const ReplyPayload& payload) {
                 send_error(c, 0, wire::ErrorCode::conflict, "entry taken over by another connection");
                 close(c, 2, "superseded");
             } else if constexpr (std::is_same_v<T, wire::Error>) {
+                log::debug("conn {:x}: error {} for req {}: {}", conn, static_cast<unsigned>(r.code), r.req_id, r.message);
                 if (c.host_pending && !c.host_handle) c.host_pending = false;
                 send(c, r);
             } else {

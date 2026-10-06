@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include "core/time.hpp"
+#include "ops/log.hpp"
 #include "wire/frame.hpp"
 
 namespace sb::registry {
@@ -678,6 +679,7 @@ void Replica::write_record(const Record& r, const backbone::ReplicatedRecord& rr
 }
 
 void Replica::write_tombstone(const Record& r, PendingOp op) {
+    log::debug("tombstoning {} (expected seq {})", r.id.to_string(), r.stream_seq);
     const u64 id = next_op_++;
     op.id = r.id;
     pending_.emplace(id, std::move(op));
@@ -830,7 +832,11 @@ void Replica::on(u16 shard, u64 conn, HostUnregisterReq& r, u64 now_ms) {
 
 void Replica::on(u16 shard, u64 conn, HostGoneReq& r, u64 now_ms) {
     Record* rec = owned_by(r.handle, shard, conn);
-    if (!rec) return;
+    if (!rec) {
+        log::debug("host gone for handle {} ignored: not owned by shard {} conn {:x}", r.handle, shard, conn);
+        return;
+    }
+    log::debug("host {} gone{}", rec->id.to_string(), r.draining ? " (draining)" : "");
     rec->shard = kNoShard;
     rec->conn = 0;
     if (rec->online && !r.draining) {
@@ -956,6 +962,7 @@ void Replica::on(u16, u64, BackboneAck& r, u64 now_ms) {
     PendingOp& op = it->second;
     if (!r.ok) {
         stats_.lifecycle_conflicts.fetch_add(1, std::memory_order_relaxed);
+        log::debug("lifecycle write for {} rejected (kind {})", op.id.to_string(), static_cast<int>(op.kind));
         if (op.kind == PendingOp::Kind::reg || op.kind == PendingOp::Kind::update || op.kind == PendingOp::Kind::unregister)
             reply_error(op.shard, op.conn, op.req_id, wire::ErrorCode::conflict, "concurrent update, retry", 100);
         // Retry reaping once the competing write has been applied.
@@ -1028,6 +1035,7 @@ void Replica::finish_op(PendingOp& op, u64) {
 }
 
 void Replica::on(u16, u64, BackboneEdgeDown& r, u64 now_ms) {
+    log::info("edge {:016x} down{}", r.edge_id, r.reap ? "; reaping its entries" : "");
     std::vector<u32> orphans;
     for (auto& [id, h] : by_id_)
         if (records_[h]->owner_edge == r.edge_id) orphans.push_back(h);

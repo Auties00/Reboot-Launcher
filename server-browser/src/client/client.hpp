@@ -7,6 +7,8 @@
 // Request methods are thread-safe.
 
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -122,6 +124,9 @@ private:
     std::atomic<u32> next_sub_{1};
     std::atomic<u32> heartbeat_seq_{0};
     std::mutex send_mu_;
+    std::mutex done_mu_;
+    std::condition_variable done_cv_;
+    bool shutdown_done_ = false;
     std::vector<std::vector<u8>> queued_;  // frames sent before the control stream existed
 };
 
