@@ -15,7 +15,12 @@ out="$(realpath "$out")"
 # perf runs as root; leave nothing the artifact upload cannot read.
 trap 'sudo rm -f "$out"/*.perf.data; sudo chown -R "$(id -u):$(id -g)" "$out"' EXIT
 cores="$(nproc)"
-shards="${SHARDS:-$(( cores > 2 ? cores / 2 : 1 ))}"
+# One shard per four cores: the load generator needs most of the machine to absorb what a shard
+# sends. With half the cores it fell behind, and MsQuic's client receive queues grew until the
+# kernel killed it. Per-core figures do not depend on the shard count.
+shards="${SHARDS:-$(( cores >= 8 ? cores / 4 : 1 ))}"
+# The load generator may use 60% of memory and no swap, so a runaway fails fast and alone.
+loadgen_mem="$(awk '/MemTotal/ { printf "%dk", $2 * 0.6 }' /proc/meminfo)"
 profile="${PROFILE-fanout-max fanout-max-40k}"
 
 sudo sysctl -q -w net.core.rmem_max=67108864 net.core.wmem_max=67108864 \
@@ -57,7 +62,7 @@ start_profile() {  # start_profile LABEL; sets the caller's perf_pid
 # Must run while the edge container exists: perf resolves its symbols through the container's root.
 # Best effort in a subshell: a perf failure costs this profile, never the run; errors go to .perf.log.
 profile_report() {  # profile_report LABEL
-    ( set +e +o pipefail; profile_report_body "$1" ) 2>> "$out/$1.perf.log"
+    ( set +e +o pipefail; profile_report_body "$1" ) 2>> "$out/$1.perf.log" || true
     sudo rm -f "$out/$1.perf.data"  # hundreds of MB; the report, folded stacks and flame graph are kept
 }
 
@@ -127,7 +132,7 @@ scenario() {  # scenario LABEL HOSTS RATE BROWSERS SUBS DURATION
     local label="$1" hosts="$2" rate="$3" browsers="$4" subs="$5" duration="$6"
     sudo dmesg -C 2>/dev/null || true  # so $label.oom holds only this scenario's kills
     start_edge
-    docker run --rm --name "sb-loadgen-$label" --network host --user "$(id -u):$(id -g)" --ulimit nofile=1048576:1048576 -v "$out:/out" \
+    docker run --rm --name "sb-loadgen-$label" --memory "$loadgen_mem" --memory-swap "$loadgen_mem" --network host --user "$(id -u):$(id -g)" --ulimit nofile=1048576:1048576 -v "$out:/out" \
         --entrypoint /usr/local/bin/sb-loadgen "$image" \
         -s 127.0.0.1:4433 --hosts "$hosts" --update-rate "$rate" --browsers "$browsers" --subs "$subs" \
         --window 50 --duration "$duration" --ramp 2000 --sample 0.05 --report 10 \
