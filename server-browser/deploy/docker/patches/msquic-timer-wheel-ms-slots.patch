@@ -1,0 +1,18 @@
+MsQuic's timer wheel slots are one second wide, and an update walks its slot's sorted list.
+Every connection's next timer (loss detection, pacing, ACK delay) lies within about a second, so
+nearly all connections share one or two slots and each send walks thousands of entries: 25-28% of
+sb-edge CPU at 20k-40k connections per shard. One-millisecond slots spread the same timers over the
+wheel (which already grows to one slot per 32 connections), keeping lists short. Each slot stays
+sorted and expiry scans every slot, so correctness does not depend on the slot width.
+--- a/src/core/timer_wheel.c
++++ b/src/core/timer_wheel.c
+@@ -63,8 +63,8 @@
+ //
+ // Helper to get the slot index for a given time.
+ //
+ #define TIME_TO_SLOT_INDEX(TimerWheel, TimeUs) \
+-    ((US_TO_MS(TimeUs) / 1000) % (TimerWheel)->SlotCount)
++    (US_TO_MS(TimeUs) % (TimerWheel)->SlotCount)
+
+ _IRQL_requires_max_(PASSIVE_LEVEL)
+ QUIC_STATUS

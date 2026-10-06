@@ -355,9 +355,16 @@ void Shard::fanout(Frame* f) {
     if (f->view_id < view_subs_.size()) {
         const u32 cap_dgram = ctx_.cfg.limits.max_unsent_datagrams;
         const u32 cap_stream = ctx_.cfg.limits.max_stream_inflight;
-        for (SlotHandle h : view_subs_[f->view_id]) {
-            Conn* c = conn_of(h.pack());
-            if (!c || c->closing) continue;
+        const auto& subs = view_subs_[f->view_id];
+        const std::size_t n = subs.size();
+        for (std::size_t i = 0; i < n; ++i) {
+            // Subscribers are scattered across the heap: fetch a few ahead to overlap the misses.
+            if (i + 4 < n) {
+                __builtin_prefetch(subs[i + 4]);
+                __builtin_prefetch(reinterpret_cast<const char*>(subs[i + 4]) + 64);
+            }
+            Conn* c = subs[i];
+            if (c->closing) continue;
             const u32 cap = c->use_stream ? cap_stream : cap_dgram;
             const bool can_send = c->use_stream ? c->delta_stream != nullptr : (c->dgram_enabled && f->buf.length <= c->max_dgram);
             if (can_send && c->dirty.empty() && c->unsent + c->batch_pending < cap) {
@@ -796,12 +803,11 @@ void Shard::drop_subscriptions(Conn& c) {
         if (!s.view_id) continue;
         auto& vec = view_subs_[s.view_id];
         const u32 pos = s.pos;
-        const SlotHandle moved = vec.back();
+        Conn* moved = vec.back();
         vec[pos] = moved;
         vec.pop_back();
         if (pos < vec.size())
-            if (Conn* o = conn_of(moved.pack()))
-                if (Sub* os = find_sub_by_view(*o, s.view_id)) os->pos = pos;
+            if (Sub* os = find_sub_by_view(*moved, s.view_id)) os->pos = pos;
         ctx_.replica.post(index_, packed(c), UnsubscribeReq{.view_id = s.view_id});
     }
     c.subs.clear();
@@ -1010,12 +1016,11 @@ void Shard::on_unsubscribe(Conn& c, const wire::Unsubscribe& m) {
         if (s.sub_id != m.sub_id) continue;
         if (s.view_id) {
             auto& vec = view_subs_[s.view_id];
-            const SlotHandle moved = vec.back();
+            Conn* moved = vec.back();
             vec[s.pos] = moved;
             vec.pop_back();
             if (s.pos < vec.size())
-                if (Conn* o = conn_of(moved.pack()))
-                    if (Sub* os = find_sub_by_view(*o, s.view_id)) os->pos = s.pos;
+                if (Sub* os = find_sub_by_view(*moved, s.view_id)) os->pos = s.pos;
             c.dirty.erase_view(s.view_id);
             ctx_.replica.post(index_, packed(c), UnsubscribeReq{.view_id = s.view_id});
         }
@@ -1162,7 +1167,7 @@ void Shard::handle_reply(u64 conn, const ReplyPayload& payload) {
                 if (r.view_id >= view_vseq_.size()) view_vseq_.resize(r.view_id + 64, 0);
                 view_vseq_[r.view_id] = std::max(view_vseq_[r.view_id], r.vseq);
                 s->pos = static_cast<u32>(view_subs_[r.view_id].size());
-                view_subs_[r.view_id].push_back(c.self);
+                view_subs_[r.view_id].push_back(&c);
                 send(c, wire::SubOpen{.req_id = r.req_id, .sub_id = r.sub_id, .view_id = r.view_id, .window = r.window});
                 send_snapshot(c, r.snapshot);
             } else if constexpr (std::is_same_v<T, JoinReply>) {

@@ -142,8 +142,23 @@ struct Sub {
 };
 
 // Owned by its home shard; MsQuic callbacks arriving on another shard are forwarded.
-struct Conn {
+// Cache-line aligned: fan-out reads the fields up to `dirty` for every subscriber of every change.
+struct alignas(64) Conn {
+    // datagram fan-out
+    bool closing = false;
+    bool dgram_enabled = false;
+    bool use_stream = false;     // fallback: deltas on a server-opened uni stream
+    bool in_ready = false;
+    u16 max_dgram = 0;
+    u32 unsent = 0;              // sends handed to MsQuic that have not left yet
+    u32 batch_pending = 0;
     HQUIC h = nullptr;
+    HQUIC delta_stream = nullptr;
+    DirtySet dirty;
+    u64 last_progress_ms = 0;
+    inplace_vector<Sub, 16> subs;
+    u32 syncs_pending = 0;
+
     SlotHandle self;
     u16 home = 0;
     std::atomic<bool> moved{false};
@@ -153,25 +168,11 @@ struct Conn {
 
     wire::Role role = wire::Role::unknown;
     bool hello = false;
-    bool closing = false;
     u64 features = 0;
 
     HQUIC control = nullptr;
     wire::StreamFramer framer{16 * 1024};
     u32 control_backlog = 0;  // bytes handed to MsQuic not yet completed
-
-    // datagram fan-out
-    bool dgram_enabled = false;
-    bool use_stream = false;     // fallback: deltas on a server-opened uni stream
-    HQUIC delta_stream = nullptr;
-    u16 max_dgram = 0;
-    u32 unsent = 0;              // sends handed to MsQuic that have not left yet
-    u32 batch_pending = 0;
-    u64 last_progress_ms = 0;
-    inplace_vector<Sub, 16> subs;
-    DirtySet dirty;
-    bool in_ready = false;
-    u32 syncs_pending = 0;
 
     TokenBucket query_rate;
     TokenBucket update_rate;
@@ -280,7 +281,9 @@ private:
     BroadcastRing<registry::RingEvent*>::Consumer& consumer_;
 
     SlotMap<std::unique_ptr<Conn>> conns_;
-    std::vector<std::vector<SlotHandle>> view_subs_;  // view id -> subscribers on this shard
+    // view id -> subscribers on this shard; entries leave in drop_subscriptions/on_unsubscribe
+    // before their Conn is freed.
+    std::vector<std::vector<Conn*>> view_subs_;
     std::vector<u64> view_vseq_;                       // latest vseq seen per view
     FlatMap<registry::Frame*, u32> frame_refs_;        // outstanding local sends per frame
     std::vector<std::pair<Conn*, registry::Frame*>> pending_;

@@ -20,6 +20,14 @@ sudo sysctl -q -w net.core.rmem_max=67108864 net.core.wmem_max=67108864 \
     net.core.rmem_default=4194304 net.core.wmem_default=4194304 \
     net.core.netdev_max_backlog=250000 net.ipv4.ip_local_port_range="10240 65535" \
     fs.file-max=4194304 fs.nr_open=4194304 >/dev/null
+# Production edges never track the QUIC port (README, "Kernel and NIC tuning"); on loopback both
+# directions cross both hooks.
+for chain in PREROUTING OUTPUT; do
+    for dir in --dport --sport; do
+        sudo iptables -t raw -C "$chain" -p udp "$dir" 4433 -j NOTRACK 2>/dev/null ||
+            sudo iptables -t raw -I "$chain" -p udp "$dir" 4433 -j NOTRACK || true
+    done
+done
 
 perf=""
 flamegraph="$out/.flamegraph"

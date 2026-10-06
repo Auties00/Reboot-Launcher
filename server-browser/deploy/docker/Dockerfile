@@ -19,8 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -fsSL "https://github.com/nats-io/nats-server/releases/download/${NATS_VERSION}/nats-server-${NATS_VERSION}-linux-amd64.tar.gz" \
         | tar xz -C /tmp && mv /tmp/nats-server-*/nats-server /usr/local/bin/ && rm -rf /tmp/nats-server-*
 # vcpkg's msquic port predates app-owned execution (2.5+), so MsQuic is built here against the
-# system OpenSSL 3.5, the same library the service links.
+# system OpenSSL 3.5, the same library the service links. deploy/docker/patches explains each patch.
+COPY deploy/docker/patches /src/patches
 RUN git clone --depth 1 --branch ${MSQUIC_VERSION} https://github.com/microsoft/msquic /src/msquic \
+    && git -C /src/msquic apply /src/patches/msquic-*.patch \
     && git -C /src/msquic submodule update --init --depth 1 submodules/clog \
     && cmake -S /src/msquic -B /src/msquic/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
         -DQUIC_TLS_LIB=openssl -DQUIC_USE_EXTERNAL_OPENSSL=ON -DQUIC_BUILD_SHARED=ON \
