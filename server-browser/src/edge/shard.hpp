@@ -27,6 +27,9 @@ namespace sb::edge {
 
 class GeoIp;
 
+// Pseudo-handle marking a WindowSync in flush and repair bookkeeping (real handles are far smaller).
+inline constexpr u32 kSyncHandle = ~u32{0};
+
 // Everything a shard needs from the process; immutable after startup except where atomic.
 struct EdgeContext {
     const EdgeConfig& cfg;
@@ -64,7 +67,7 @@ struct ShardStats {
     ops::Counter dirty_marks;
     ops::Counter repairs;
     ops::Counter snapshots;
-    ops::Counter resnapshots;
+    ops::Counter window_syncs;
     ops::Counter ctrl_frames_in;
     ops::Counter ctrl_frames_out;
     ops::Counter rate_limited;
@@ -78,7 +81,8 @@ struct ShardStats {
 class Shard;
 
 // Per-connection latest-value-wins set of (view, entry) pairs whose current state still has to
-// reach the client. Bounded by the subscribed windows (overflow triggers a resnapshot).
+// reach the client. Bounded by the subscribed windows: past 2x window, removals collapse into a
+// WindowSync.
 class DirtySet {
 public:
     [[nodiscard]] static constexpr u64 key(u32 view_id, u32 handle) noexcept { return (u64{view_id} << 32) | handle; }
@@ -94,6 +98,18 @@ public:
             if (static_cast<u32>(it->first >> 32) == view_id) it = erase_it(it);
             else ++it;
         }
+    }
+    template <class Keep>
+    void retain_view(u32 view_id, Keep&& keep) {
+        for (auto it = map_.begin(); it != map_.end();) {
+            if (static_cast<u32>(it->first >> 32) == view_id && !keep(static_cast<u32>(it->first))) it = erase_it(it);
+            else ++it;
+        }
+    }
+    [[nodiscard]] std::size_t count_view(u32 view_id) const {
+        std::size_t n = 0;
+        for (const auto& [k, m] : map_) n += static_cast<u32>(k >> 32) == view_id;
+        return n;
     }
     [[nodiscard]] bool empty() const noexcept { return map_.empty(); }
     [[nodiscard]] std::size_t size() const noexcept { return map_.size(); }
@@ -122,9 +138,7 @@ struct Sub {
     u32 window = 0;
     u32 pos = 0;  // index in Shard::view_subs_[view_id]
     u32 dirty = 0;
-    bool resyncing = false;
-    bool overflow = false;  // marks dropped; a snapshot is owed
-    u64 last_resync_ms = 0;
+    bool sync_pending = false;  // removals collapsed into one WindowSync not yet sent
 };
 
 // Owned by its home shard; MsQuic callbacks arriving on another shard are forwarded.
@@ -157,7 +171,7 @@ struct Conn {
     inplace_vector<Sub, 16> subs;
     DirtySet dirty;
     bool in_ready = false;
-    u32 snapshots_inflight = 0;
+    u32 syncs_pending = 0;
 
     TokenBucket query_rate;
     TokenBucket update_rate;
@@ -244,8 +258,8 @@ private:
     void release_frame(registry::Frame* f);
     void close(Conn& c, u64 app_error, std::string_view reason);
     void drop_subscriptions(Conn& c);
-    void request_resync(Conn& c, Sub& s);
-    void maybe_resync(Conn& c, Sub& s);
+    void begin_sync(Conn& c, Sub& s);
+    void requeue(Conn& c, u64 key, u8 mask);
     [[nodiscard]] Sub* find_sub_by_view(Conn& c, u32 view_id) noexcept;
     [[nodiscard]] Conn* conn_of(u64 packed) noexcept;
     [[nodiscard]] u64 packed(const Conn& c) const noexcept { return c.self.pack(); }

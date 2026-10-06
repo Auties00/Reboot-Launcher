@@ -39,16 +39,32 @@ public:
         have_snapshot_ = true;
         auto pending = std::move(buffered_);
         buffered_.clear();
+        if (pending_sync_) apply_sync(*pending_sync_);
+        pending_sync_.reset();
         for (const auto& p : pending) apply(p);
     }
 
     void on_delta(const wire::Delta& d) {
-        for (const auto& p : d.patches) {
-            if (!have_snapshot_) {
+        if (!have_snapshot_) {
+            if (d.sync) pending_sync_ = *d.sync;  // only the newest matters
+            for (const auto& p : d.patches)
                 if (buffered_.size() < max_buffered_) buffered_.push_back(p);
-                continue;
-            }
-            apply(p);
+            return;
+        }
+        if (d.sync) apply_sync(*d.sync);
+        for (const auto& p : d.patches) apply(p);
+    }
+
+    // Everything not listed left the window, unless the client already knows something newer.
+    void apply_sync(const wire::WindowSync& s) {
+        if (s.vseq <= floor_) return;
+        std::vector<u64> members(s.handles);
+        std::sort(members.begin(), members.end());
+        for (auto& [h, it] : items_) {
+            if (!it.present || it.seq_member >= s.vseq) continue;
+            if (std::binary_search(members.begin(), members.end(), h)) continue;
+            it.present = false;
+            raise_all(it, s.vseq);
         }
     }
 
@@ -169,6 +185,7 @@ private:
 
     FlatMap<u64, Item> items_;
     std::vector<wire::Patch> buffered_;
+    std::optional<wire::WindowSync> pending_sync_;
     std::size_t max_buffered_;
     u64 floor_ = 0;
     u32 total_ = 0;

@@ -193,9 +193,17 @@ message Patch {
   optional string name = 8;
 }
 
+// Membership of a view's window at vseq: entries the client holds that are not listed, and whose
+// membership sequence is below vseq, are removed. Sent when a connection fell behind.
+message WindowSync {
+  uint64 vseq = 1;
+  repeated uint64 handles = 2;
+}
+
 message Delta {
   uint32 view_id = 1;
   repeated Patch patches = 2;
+  optional WindowSync sync = 3;  // apply before the patches of the same frame
 }
 
 message Snapshot {

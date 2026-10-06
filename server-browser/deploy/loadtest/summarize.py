@@ -50,13 +50,13 @@ conns = max((x[3] for x in samples), default=0)
 
 direct = end_m.get('sb_datagrams_direct_total', 0) - ramp_m.get('sb_datagrams_direct_total', 0)
 flush = end_m.get('sb_datagrams_flush_total', 0) - ramp_m.get('sb_datagrams_flush_total', 0)
-resnap = end_m.get('sb_resnapshots_total', 0) - ramp_m.get('sb_resnapshots_total', 0)
+syncs = end_m.get('sb_window_syncs_total', 0) - ramp_m.get('sb_window_syncs_total', 0)
 handoff = delta_percentile(ramp_b, end_b, 0.99)
 
 lat = s['latency_us']
 ms = lambda us: f'{us / 1000:.1f}'
 per_core = s['patches_per_s'] / cpu if cpu == cpu and cpu > 0 else float('nan')
 print(f"| {label} | {s['hosts']} | {s['browsers']} × {s['subs']} | {s['updates_per_s']:.0f} | {s['patches_per_s']:,.0f} | "
-      f"{ms(lat['p50'])} / {ms(lat['p99'])} ms | ≤ {handoff * 1000:.1f} ms | {cpu:.2f} cores | {per_core:,.0f} | "
+      f"{ms(lat['p50'])} / {ms(lat['p99'])} ms | ≤ {handoff * 1000:.1f} ms | {cpu:.2f} cores | {s.get('loadgen_cpu_cores', 0):.2f} cores | {per_core:,.0f} | "
       f"{rss / 2**20:,.0f} MiB | {rss / conns / 1024 if conns else 0:.0f} KiB ({conns:,.0f}) | "
-      f"{flush / max(1, direct + flush):.1%} | {resnap:,.0f} | {s['errors']} |")
+      f"{flush / max(1, direct + flush):.1%} | {syncs:,.0f} | {s['errors']} |")

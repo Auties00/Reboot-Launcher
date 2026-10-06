@@ -1,0 +1,4 @@
+# rbsb.Delta
+view_id: 7
+patches { handle: 3 vseq: 500 players: 9 }
+sync { vseq: 500 handles: [3, 17, 300, 70000] }

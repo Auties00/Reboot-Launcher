@@ -124,6 +124,13 @@ public:
     }
     void post(u16 shard, u64 conn, ReplicaPayload p) { post(new ReplicaMsg(shard, conn, std::move(p))); }
 
+    static constexpr u32 kMaxViews = 1u << 16;
+
+    // Latest window membership of a view; same lifetime rules as pub().
+    [[nodiscard]] const WindowList* window(u32 view_id) const noexcept {
+        return view_id < kMaxViews ? window_table_[view_id].load(std::memory_order_acquire) : nullptr;
+    }
+
     // Latest published state of an entry; safe from ring consumers (see BroadcastRing).
     [[nodiscard]] const PubEntry* pub(u32 handle) const noexcept {
         return handle < cfg_.max_entries ? pub_table_[handle].load(std::memory_order_acquire) : nullptr;
@@ -196,6 +203,7 @@ private:
     void attach_initial_members(View& v);
     std::shared_ptr<const SnapshotBlob> snapshot_of(View& v);
     void republish(Record& r, RingEvent& ev, bool fields_changed);
+    void republish_window(View& v, RingEvent& ev);
 
     void reply(u16 shard, u64 conn, ReplyPayload p);
     void reply_error(u16 shard, u64 conn, u32 req_id, wire::ErrorCode code, std::string msg, u32 retry_ms = 0);
@@ -233,6 +241,7 @@ private:
     std::vector<std::unique_ptr<Record>> records_;  // indexed by handle
     std::vector<std::unique_ptr<RecordTimers>> timers_;
     std::unique_ptr<std::atomic<const PubEntry*>[]> pub_table_;
+    std::unique_ptr<std::atomic<const WindowList*>[]> window_table_;
     std::deque<u32> free_handles_;
     u32 next_handle_ = 1;
     FlatMap<Uuid, u32, UuidHash> by_id_;

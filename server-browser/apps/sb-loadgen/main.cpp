@@ -3,6 +3,8 @@
 
 #include <CLI/CLI.hpp>
 
+#include <sys/resource.h>
+
 #include <array>
 #include <atomic>
 #include <bit>
@@ -86,6 +88,13 @@ struct Stats {
     LatencyHistogram total;    // whole steady state
     std::atomic<bool> steady{false};
 };
+
+double cpu_seconds() {
+    rusage ru{};
+    ::getrusage(RUSAGE_SELF, &ru);
+    return static_cast<double>(ru.ru_utime.tv_sec + ru.ru_stime.tv_sec) +
+           static_cast<double>(ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) / 1e6;
+}
 
 Uuid host_uuid(u32 i, u32 run) {
     Uuid u;
@@ -293,6 +302,7 @@ int main(int argc, char** argv) {
     const auto start = std::chrono::steady_clock::now();
     const u64 base_patches = st.patches.load(), base_deltas = st.deltas.load(), base_updates = st.updates_sent.load();
     st.steady = true;
+    const double cpu0 = cpu_seconds();
     auto next_report = start + std::chrono::seconds(report);
     auto last = start;
     u64 last_deltas = 0, last_patches = 0, last_updates = 0;
@@ -357,6 +367,7 @@ int main(int argc, char** argv) {
     const double patches_s = static_cast<double>(st.patches.load() - base_patches) / secs;
     const double deltas_s = static_cast<double>(st.deltas.load() - base_deltas) / secs;
     const double updates_s = static_cast<double>(st.updates_sent.load() - base_updates) / secs;
+    const double own_cpu = (cpu_seconds() - cpu0) / secs;
     auto pct = [&](double p) { return static_cast<unsigned long long>(st.total.percentile(p)); };
     std::printf("steady state %.0fs: updates/s=%.0f deltas/s=%.0f patches/s=%.0f latency(us) p50=%llu p90=%llu p99=%llu p99.9=%llu\n",
                 secs, updates_s, deltas_s, patches_s, pct(50), pct(90), pct(99), pct(99.9));
@@ -366,11 +377,11 @@ int main(int argc, char** argv) {
                          "{\"label\":\"%s\",\"hosts\":%u,\"browsers\":%u,\"subs\":%u,\"window\":%u,\"update_rate\":%.3f,"
                          "\"connected\":%llu,\"registered\":%llu,\"errors\":%llu,\"closed\":%llu,\"seconds\":%.1f,"
                          "\"updates_per_s\":%.0f,\"deltas_per_s\":%.0f,\"patches_per_s\":%.0f,\"snapshots\":%llu,"
-                         "\"latency_us\":{\"samples\":%llu,\"p50\":%llu,\"p90\":%llu,\"p99\":%llu,\"p999\":%llu,\"max\":%llu}}\n",
+                         "\"loadgen_cpu_cores\":%.2f,\"latency_us\":{\"samples\":%llu,\"p50\":%llu,\"p90\":%llu,\"p99\":%llu,\"p999\":%llu,\"max\":%llu}}\n",
                          label.c_str(), hosts, browsers, subs, window, update_rate,
                          static_cast<unsigned long long>(st.connected.load()), static_cast<unsigned long long>(st.registered.load()),
                          static_cast<unsigned long long>(st.errors.load()), static_cast<unsigned long long>(st.closed.load()), secs,
-                         updates_s, deltas_s, patches_s, static_cast<unsigned long long>(st.snapshots.load()),
+                         updates_s, deltas_s, patches_s, static_cast<unsigned long long>(st.snapshots.load()), own_cpu,
                          static_cast<unsigned long long>(st.total.count()), pct(50), pct(90), pct(99), pct(99.9), pct(100));
             std::fclose(f);
         }

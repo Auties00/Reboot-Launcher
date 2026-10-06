@@ -24,7 +24,6 @@ struct SubscribeReq {
     u32 sub_id = 0;
     wire::ViewSpec spec;
     u32 window = 0;
-    bool resync = false;  // existing subscription asking for a fresh snapshot; no new subscriber
 };
 
 struct UnsubscribeReq {
@@ -132,7 +131,6 @@ struct SubscribeReply {
     u32 view_id = 0;
     u32 window = 0;
     u64 vseq = 0;
-    bool resync = false;
     std::shared_ptr<const SnapshotBlob> snapshot;
 };
 
@@ -175,6 +173,7 @@ struct RingEvent {
     bool text_changed = false;      // name, author or id changed (search reindex)
     std::vector<Frame*> frames;
     std::vector<const PubEntry*> retired;
+    std::vector<const WindowList*> retired_windows;
 
     // reply (only the target shard acts on it); for drain events `conn` carries the phase
     u16 target = kNoShard;

@@ -24,6 +24,9 @@ struct Harness {
     u64 now = 1'000'000;
     std::vector<ReplyPayload> replies;  // replies addressed to shard 0, in order
     std::map<u32, client::ViewMirror> mirrors;  // view id -> client state
+    std::map<u32, client::ViewMirror> lagging;  // same views, but receiving only 1 frame in 10
+    std::map<u32, u64> max_vseq;                // latest frame sequence seen per view
+    std::mt19937 drop_rng{99};
     std::set<u32> subscribed;
     u64 frames_seen = 0;
 
@@ -69,6 +72,8 @@ struct Harness {
                                                        REQUIRE(wire::decode_frame(fv, d));
                                                        REQUIRE(d.view_id == f->view_id);
                                                        mirrors[d.view_id].on_delta(d);
+                                                       max_vseq[d.view_id] = std::max(max_vseq[d.view_id], f->vseq);
+                                                       if (drop_rng() % 10 == 0) lagging[d.view_id].on_delta(d);
                                                        return true;
                                                    });
                     REQUIRE(ok);
@@ -85,6 +90,8 @@ struct Harness {
                     });
                     REQUIRE(ok);
                     mirrors[sr->view_id].on_snapshot(snap);
+                    lagging[sr->view_id].on_snapshot(snap);
+                    max_vseq[sr->view_id] = std::max(max_vseq[sr->view_id], snap.vseq);
                 }
                 replies.push_back(*ev->reply);
             }
@@ -234,6 +241,35 @@ TEST_CASE("windowed views converge under random churn", "[replica]") {
                 CHECK(got[i].name == want.entries[i].name);
                 CHECK(got[i].flags == want.entries[i].flags);
             }
+
+            // The published window list is exactly the first page.
+            const WindowList* wl = h.rep.window(view_id);
+            REQUIRE(wl);
+            std::vector<u32> members(wl->handles.begin(), wl->handles.end()), expect;
+            for (const auto& e : want.entries) expect.push_back(static_cast<u32>(e.handle));
+            std::sort(members.begin(), members.end());
+            std::sort(expect.begin(), expect.end());
+            CHECK(members == expect);
+
+            // A client that lost 90% of frames catches up from one WindowSync plus the current
+            // values of the members, which is what a shard sends a lagging connection.
+            auto& lag = h.lagging[view_id];
+            wire::Delta catchup{.view_id = view_id};
+            const u64 vseq = h.max_vseq[view_id];
+            catchup.sync = wire::WindowSync{.vseq = vseq, .handles = {wl->handles.begin(), wl->handles.end()}};
+            for (u32 handle : wl->handles) {
+                wire::Patch& p = catchup.patches.emplace_back();
+                p.handle = handle;
+                p.vseq = vseq;
+                h.rep.pub(handle)->to_list_entry(p.entry.emplace());
+            }
+            lag.on_delta(catchup);
+            const auto caught = lag.sorted(spec.sort);
+            REQUIRE(caught.size() == want.entries.size());
+            for (std::size_t i = 0; i < caught.size(); ++i) {
+                CHECK(caught[i].handle == want.entries[i].handle);
+                CHECK(caught[i].players == want.entries[i].players);
+            }
         }
     }
 }
@@ -260,6 +296,13 @@ TEST_CASE("mirrors converge with lost and reordered patches plus repair", "[repl
     m.apply({.handle = 8, .vseq = 21, .entry = wire::ListEntry{.handle = 8, .name = "c", .players = 3}});
     m.apply({.handle = 8, .vseq = 21, .entry = wire::ListEntry{.handle = 8, .name = "c", .players = 3}});
     CHECK(m.size() == 1);
+    // A window sync removes members it does not list, but never something newer than itself.
+    m.apply({.handle = 9, .vseq = 30, .entry = wire::ListEntry{.handle = 9, .name = "d"}});
+    m.apply_sync({.vseq = 25, .handles = {7}});
+    CHECK_FALSE(m.find(8));
+    CHECK(m.find(9));  // inserted at 30, after the sync's 25
+    m.apply({.handle = 8, .vseq = 24, .entry = wire::ListEntry{.handle = 8, .name = "late"}});
+    CHECK_FALSE(m.find(8));  // older than the sync that removed it
 }
 
 TEST_CASE("keyset paging walks every entry exactly once in order", "[replica]") {

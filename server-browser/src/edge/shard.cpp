@@ -308,8 +308,6 @@ void Shard::sweep(u64 now_ms) {
         } else if (c.unsent > 0 && now_ms - c.last_progress_ms > lim.stall_timeout_ms) {
             stats_.stalls.inc();
             close(c, 4, "stalled");
-        } else {
-            for (Sub& s : c.subs) maybe_resync(c, s);
         }
     });
 }
@@ -420,27 +418,31 @@ Sub* Shard::find_sub_by_view(Conn& c, u32 view_id) noexcept {
 
 void Shard::mark_dirty(Conn& c, u32 view_id, u32 handle, u8 mask) {
     Sub* s = find_sub_by_view(c, view_id);
-    // While a snapshot is pending, it will carry the current state of this view.
-    if (!s || s->resyncing || s->overflow) return;
-    stats_.dirty_marks.inc();
-    if (c.dirty.mark(view_id, handle, mask) && ++s->dirty > 2 * s->window) {
-        // Too far behind to replay changes: drop them and send one snapshot instead.
-        s->overflow = true;
-        s->dirty = 0;
-        c.dirty.erase_view(view_id);
-        maybe_resync(c, *s);
-        return;
+    if (!s) return;
+    if (s->sync_pending) {
+        // The pending WindowSync already carries removals; only members still need their values.
+        const PubEntry* p = ctx_.replica.pub(handle);
+        if (!p || !p->in_view(view_id)) return;
     }
+    stats_.dirty_marks.inc();
+    if (c.dirty.mark(view_id, handle, mask) && ++s->dirty > 2 * s->window) begin_sync(c, *s);
     if (c.unsent == 0) schedule_flush(c);
 }
 
-void Shard::maybe_resync(Conn& c, Sub& s) {
-    // At most one snapshot in flight per connection and one per subscription every cooldown:
-    // a congested client must not be buried under snapshots it cannot drain either.
-    constexpr u64 kCooldownMs = 2000;
-    if (!s.overflow || s.resyncing || c.closing || c.snapshots_inflight > 0) return;
-    if (s.last_resync_ms && now_ms_ - s.last_resync_ms < kCooldownMs) return;
-    request_resync(c, s);
+void Shard::begin_sync(Conn& c, Sub& s) {
+    // Too many distinct changes queued for this view: replace every removal with one membership
+    // list, which bounds the dirty set by the window size.
+    if (!s.sync_pending) {
+        s.sync_pending = true;
+        ++c.syncs_pending;
+        stats_.window_syncs.inc();
+    }
+    c.dirty.retain_view(s.view_id, [&](u32 handle) {
+        const PubEntry* p = ctx_.replica.pub(handle);
+        return p && p->in_view(s.view_id);
+    });
+    s.dirty = static_cast<u32>(c.dirty.count_view(s.view_id));
+    if (c.unsent == 0) schedule_flush(c);
 }
 
 void Shard::schedule_flush(Conn& c) {
@@ -462,19 +464,22 @@ bool Shard::flush_ready() {
     return true;
 }
 
-void Shard::request_resync(Conn& c, Sub& s) {
-    // Too far behind: a cached snapshot is cheaper than replaying every change.
-    s.resyncing = true;
-    s.overflow = false;
-    s.last_resync_ms = now_ms_;
-    s.dirty = 0;
-    c.dirty.erase_view(s.view_id);
-    stats_.resnapshots.inc();
-    ctx_.replica.post(index_, packed(c), SubscribeReq{.req_id = 0, .sub_id = s.sub_id, .spec = s.spec, .window = s.window, .resync = true});
+void Shard::requeue(Conn& c, u64 key, u8 mask) {
+    const u32 view = static_cast<u32>(key >> 32);
+    Sub* s = find_sub_by_view(c, view);
+    if (!s) return;
+    if (static_cast<u32>(key) == kSyncHandle) {
+        if (!s->sync_pending) {
+            s->sync_pending = true;
+            ++c.syncs_pending;
+        }
+        return;
+    }
+    if (c.dirty.mark(view, static_cast<u32>(key), mask)) ++s->dirty;
 }
 
 void Shard::flush(Conn& c) {
-    if (c.closing || c.dirty.empty()) return;
+    if (c.closing || (c.dirty.empty() && c.syncs_pending == 0)) return;
     const u32 cap = c.use_stream ? ctx_.cfg.limits.max_stream_inflight : ctx_.cfg.limits.max_unsent_datagrams;
     if (c.unsent >= cap) return;  // resumed when a send completes
     std::size_t limit;
@@ -516,7 +521,7 @@ void Shard::flush(Conn& c) {
         out = wire::Writer(limit);
         if (QUIC_FAILED(st)) {
             stats_.dgram_failed.inc();
-            for (auto [k, m] : fs->items) c.dirty.mark(static_cast<u32>(k >> 32), static_cast<u32>(k), m);
+            for (auto [k, m] : fs->items) requeue(c, k, m);
             delete fs;
             return false;
         }
@@ -525,13 +530,42 @@ void Shard::flush(Conn& c) {
         return c.unsent < cap;
     };
 
+    // Window syncs first: they remove what left the window, the patches below fill in members.
+    bool budget = true;
+    for (Sub& s : c.subs) {
+        if (!s.sync_pending || !budget) continue;
+        const WindowList* w = ctx_.replica.window(s.view_id);
+        wire::Delta d{.view_id = s.view_id};
+        auto& sync = d.sync.emplace();
+        sync.vseq = s.view_id < view_vseq_.size() ? view_vseq_[s.view_id] : 0;
+        if (w) sync.handles.assign(w->handles.begin(), w->handles.end());
+        pw.clear();
+        wire::encode_frame(pw, d, wire::LenWidth::two);
+        if (pw.size() > limit) continue;  // cannot happen with windows of a few hundred entries
+        close_frame();
+        if (out.size() + pw.size() > limit && !emit()) {
+            budget = false;
+            continue;
+        }
+        out.put(pw.view());
+        items.emplace_back((u64{s.view_id} << 32) | kSyncHandle, u8{0});
+        s.sync_pending = false;
+        --c.syncs_pending;
+    }
+    if (!budget) {
+        // Out of send budget before the patches: everything taken stays queued.
+        for (const auto& [key, mask] : scratch_dirty_) requeue(c, key, mask);
+        for (auto [k, m] : items) requeue(c, k, m);
+        return;
+    }
+
     std::size_t i = 0;
     for (; i < scratch_dirty_.size(); ++i) {
         const auto [key, mask] = scratch_dirty_[i];
         const u32 view = static_cast<u32>(key >> 32);
         const u32 handle = static_cast<u32>(key);
         Sub* s = find_sub_by_view(c, view);
-        if (!s || s->resyncing) continue;
+        if (!s) continue;
 
         wire::Patch p{.handle = handle, .vseq = view < view_vseq_.size() ? view_vseq_[view] : 0};
         const PubEntry* pub = ctx_.replica.pub(handle);
@@ -574,21 +608,19 @@ void Shard::flush(Conn& c) {
         emit();
     } else {
         // Out of send budget: keep the rest dirty for the next completion.
-        for (; i < scratch_dirty_.size(); ++i) {
-            const auto [key, mask] = scratch_dirty_[i];
-            if (Sub* s = find_sub_by_view(c, static_cast<u32>(key >> 32)); s && !s->resyncing && !s->overflow) {
-                c.dirty.mark(static_cast<u32>(key >> 32), static_cast<u32>(key), mask);
-                ++s->dirty;
-            }
-        }
-        for (auto [k, m] : items) c.dirty.mark(static_cast<u32>(k >> 32), static_cast<u32>(k), m);
+        for (; i < scratch_dirty_.size(); ++i) requeue(c, scratch_dirty_[i].first, scratch_dirty_[i].second);
+        for (auto [k, m] : items) requeue(c, k, m);
     }
 }
 
 void Shard::repair(Conn& c, void* ctx, bool flush_ctx) {
     stats_.repairs.inc();
     if (flush_ctx) {
-        for (auto [k, m] : static_cast<FlushSend*>(ctx)->items) mark_dirty(c, static_cast<u32>(k >> 32), static_cast<u32>(k), m);
+        for (auto [k, m] : static_cast<FlushSend*>(ctx)->items) {
+            if (static_cast<u32>(k) == kSyncHandle) requeue(c, k, m);  // resend the current membership
+            else mark_dirty(c, static_cast<u32>(k >> 32), static_cast<u32>(k), m);
+        }
+        if (c.unsent == 0) schedule_flush(c);
     } else {
         const auto* f = static_cast<Frame*>(ctx);
         for (const FrameItem& it : f->items) mark_dirty(c, f->view_id, it.handle, it.mask);
@@ -717,8 +749,6 @@ void Shard::on_stream_event(Conn& c, HQUIC stream, void* sctx_raw, QUIC_STREAM_E
                 if (!c.dirty.empty()) schedule_flush(c);
             } else {
                 delete static_cast<SnapSend*>(ctx);
-                if (c.snapshots_inflight > 0) --c.snapshots_inflight;
-                for (Sub& s : c.subs) maybe_resync(c, s);
             }
             break;
         }
@@ -834,7 +864,6 @@ void Shard::send_snapshot(Conn& c, std::shared_ptr<const SnapshotBlob> blob) {
         delete sc;
         return;
     }
-    ++c.snapshots_inflight;
     stats_.snapshots.inc();
 }
 
@@ -1111,7 +1140,7 @@ void Shard::handle_reply(u64 conn, const ReplyPayload& payload) {
     Conn* cp = conn_of(conn);
     if (!cp || cp->closing) {
         // Keep subscriber counts exact even if the connection vanished meanwhile.
-        if (auto* sr = std::get_if<SubscribeReply>(&payload); sr && !sr->resync)
+        if (auto* sr = std::get_if<SubscribeReply>(&payload))
             ctx_.replica.post(index_, conn, UnsubscribeReq{.view_id = sr->view_id});
         return;
     }
@@ -1124,14 +1153,7 @@ void Shard::handle_reply(u64 conn, const ReplyPayload& payload) {
                 for (Sub& x : c.subs)
                     if (x.sub_id == r.sub_id) s = &x;
                 if (!s) {
-                    if (!r.resync) ctx_.replica.post(index_, conn, UnsubscribeReq{.view_id = r.view_id});
-                    return;
-                }
-                if (s->view_id && s->view_id == r.view_id) {  // resync
-                    s->resyncing = false;
-                    s->dirty = 0;
-                    c.dirty.erase_view(r.view_id);
-                    send_snapshot(c, r.snapshot);
+                    ctx_.replica.post(index_, conn, UnsubscribeReq{.view_id = r.view_id});
                     return;
                 }
                 s->view_id = r.view_id;

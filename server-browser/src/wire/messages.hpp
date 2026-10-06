@@ -155,9 +155,18 @@ struct Patch {
     std::optional<std::string> name;
 };
 
+// The complete membership of a view's window at `vseq`. Entries the client holds that are not
+// listed (and not newer than vseq) left the window. Sent instead of per-entry removals when a
+// connection fell behind, so catching up costs a few bytes per member rather than a snapshot.
+struct WindowSync {
+    u64 vseq = 0;
+    std::vector<u64> handles;
+};
+
 struct Delta {
     u32 view_id = 0;
     std::vector<Patch> patches;
+    std::optional<WindowSync> sync;  // applied before the patches of the same frame
 };
 
 struct Snapshot {

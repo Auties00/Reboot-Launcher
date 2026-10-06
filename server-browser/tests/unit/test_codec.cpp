@@ -77,6 +77,10 @@ TEST_CASE("codec matches protoc golden vectors", "[codec]") {
                                                 .created_ms = 1759651200123ULL}});
     check_golden("delta", delta);
 
+    check_golden("delta_sync", Delta{.view_id = 7,
+                                     .patches = {{.handle = 3, .vseq = 500, .players = 9u}},
+                                     .sync = WindowSync{.vseq = 500, .handles = {3, 17, 300, 70000}}});
+
     Snapshot snap{.view_id = 2, .vseq = ~u64{0}, .total = 2};
     snap.entries.push_back({.handle = 1,
                             .id = uuid_from({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}),

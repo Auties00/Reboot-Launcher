@@ -381,7 +381,7 @@ std::string Edge::metrics() {
     shard_counter("sb_dirty_marks_total", "Autocorked entry changes", &ShardStats::dirty_marks);
     shard_counter("sb_repairs_total", "Loss repairs scheduled", &ShardStats::repairs);
     shard_counter("sb_snapshots_total", "Snapshots sent", &ShardStats::snapshots);
-    shard_counter("sb_resnapshots_total", "Subscriptions resynced from a snapshot", &ShardStats::resnapshots);
+    shard_counter("sb_window_syncs_total", "Lagging subscriptions caught up with a membership list", &ShardStats::window_syncs);
     shard_counter("sb_control_frames_in_total", "Control frames received", &ShardStats::ctrl_frames_in);
     shard_counter("sb_control_frames_out_total", "Control frames sent", &ShardStats::ctrl_frames_out);
     shard_counter("sb_rate_limited_total", "Requests rejected by rate limits", &ShardStats::rate_limited);

@@ -47,8 +47,8 @@ report="$out/report.md"
     echo "Machine: $cores vCPU, $(awk '/MemTotal/ { printf "%.1f GiB", $2 / 1048576 }' /proc/meminfo); edge shards: $shards;"
     echo "edge and load generator share the machine. Edge figures are sampled during the steady state."
     echo
-    echo "| scenario | hosts | browsers × subs | updates/s | deliveries/s | client p50 / p99 | server handoff p99 | edge CPU | deliveries per core-s | edge RSS | RSS per conn | autocorked | resnapshots | errors |"
-    echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
+    echo "| scenario | hosts | browsers × subs | updates/s | deliveries/s | client p50 / p99 | server handoff p99 | edge CPU | loadgen CPU | deliveries per edge core-s | edge RSS | RSS per conn | autocorked | window syncs | errors |"
+    echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
 } > "$report"
 
 scenario() {  # scenario LABEL HOSTS RATE BROWSERS SUBS DURATION
@@ -97,5 +97,6 @@ scenario idle-conns     100  0.2    40000    1      45
     echo "  in-process clock, so it includes the load generator's own queueing on this shared machine."
     echo "- server handoff: replica mutation → datagram handed to MsQuic, from the edge's histogram."
     echo "- autocorked: share of datagrams built from dirty sets because the connection was still busy."
+    echo "- window syncs: lagging subscriptions caught up with a membership list instead of replaying removals."
 } >> "$report"
 cat "$report"

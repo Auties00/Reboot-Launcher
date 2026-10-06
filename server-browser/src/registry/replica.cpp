@@ -80,7 +80,8 @@ Replica::Replica(ReplicaConfig cfg, backbone::Backbone& backbone)
     : cfg_(std::move(cfg)),
       backbone_(backbone),
       ring_(cfg_.ring_capacity),
-      pub_table_(std::make_unique<std::atomic<const PubEntry*>[]>(cfg_.max_entries)) {
+      pub_table_(std::make_unique<std::atomic<const PubEntry*>[]>(cfg_.max_entries)),
+      window_table_(std::make_unique<std::atomic<const WindowList*>[]>(kMaxViews)) {
     SB_ASSERT(cfg_.max_entries > 1);
     SB_ASSERT(!cfg_.windows.empty());
     std::sort(cfg_.windows.begin(), cfg_.windows.end());
@@ -94,9 +95,11 @@ Replica::~Replica() {
     while (MpscNode* n = inbox_.pop()) delete static_cast<ReplicaMsg*>(n);
     for (auto& [seq, ev] : in_flight_) {
         for (const PubEntry* p : ev->retired) delete p;
+        for (const WindowList* w : ev->retired_windows) delete w;
         delete ev;
     }
     for (u32 h = 0; h < cfg_.max_entries; ++h) delete pub_table_[h].load(std::memory_order_relaxed);
+    for (u32 v = 0; v < kMaxViews; ++v) delete window_table_[v].load(std::memory_order_relaxed);
 }
 
 // ---- event loop ------------------------------------------------------------------------------
@@ -160,6 +163,7 @@ void Replica::reclaim() {
     while (!in_flight_.empty() && in_flight_.front().first < min) {
         RingEvent* ev = in_flight_.front().second;
         for (const PubEntry* p : ev->retired) delete p;
+        for (const WindowList* w : ev->retired_windows) delete w;
         delete ev;
         in_flight_.pop_front();
     }
@@ -248,6 +252,7 @@ View& Replica::view_for(const wire::ViewSpec& spec, u32 window) {
     const u64 pk = partition_of(spec);
     const u64 vk = view_key(pk, spec.sort, window);
     if (auto it = view_ids_.find(vk); it != view_ids_.end()) return *views_[it->second];
+    SB_ASSERT(views_.size() < kMaxViews);
     auto v = std::make_unique<View>();
     v->id = static_cast<u32>(views_.size());
     v->pkey = pk;
@@ -263,10 +268,21 @@ View& Replica::view_for(const wire::ViewSpec& spec, u32 window) {
     return *views_.back();
 }
 
+void Replica::republish_window(View& v, RingEvent& ev) {
+    SortTree& t = v.part->trees[static_cast<int>(v.sort)];
+    auto* w = new WindowList();
+    w->vseq = v.vseq;
+    w->handles.reserve(std::min<std::size_t>(v.window, t.size()));
+    u32 n = 0;
+    for (auto it = t.begin(); it.valid() && n < v.window; ++it, ++n) w->handles.push_back(it->handle);
+    if (const WindowList* old = window_table_[v.id].exchange(w, std::memory_order_acq_rel)) ev.retired_windows.push_back(old);
+}
+
 void Replica::attach_initial_members(View& v) {
     SortTree& t = v.part->trees[static_cast<int>(v.sort)];
-    if (t.empty()) return;
     auto* ev = new RingEvent();
+    republish_window(v, *ev);
+    if (t.empty()) return publish_event(ev);
     u32 n = 0;
     for (auto it = t.begin(); it.valid() && n < v.window; ++it, ++n) {
         Record& r = *records_[it->handle];
@@ -492,6 +508,10 @@ void Replica::mutate(Record& r, u64 now_ms, F&& change, bool deleting) {
         while (j < intents.size() && intents[j].view_id == intents[i].view_id) ++j;
         View& v = *views_[intents[i].view_id];
         const u64 vseq = ++v.vseq;
+        bool membership_changed = false;
+        for (std::size_t k = i; k < j; ++k)
+            if (intents[k].kind != Intent::partial) membership_changed = true;
+        if (membership_changed) republish_window(v, *ev);
         if (v.subscribers > 0 && cfg_.num_shards > 0) {
             wire::Delta d{.view_id = v.id};
             inplace_vector<FrameItem, 2> items;
@@ -542,14 +562,13 @@ void Replica::on(u16 shard, u64 conn, SubscribeReq& r, u64) {
             break;
         }
     View& v = view_for(r.spec, window);
-    if (!r.resync) ++v.subscribers;
+    ++v.subscribers;
     reply(shard, conn,
           SubscribeReply{.req_id = r.req_id,
                          .sub_id = r.sub_id,
                          .view_id = v.id,
                          .window = window,
                          .vseq = v.vseq,
-                         .resync = r.resync,
                          .snapshot = snapshot_of(v)});
 }
 

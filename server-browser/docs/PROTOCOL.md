@@ -131,7 +131,14 @@ Partial fields may arrive for an entry the client does not have (its full entry 
 - Replace the whole view with the snapshot entries, setting all sequences to `snapshot.vseq`.
 - Set `floor = snapshot.vseq`.
 - Replay patches that arrived before the snapshot, applying only those above the floor. Patches can overtake the snapshot because they travel on different channels, so buffer deltas for a `view_id` until its first snapshot arrives.
-- The server may send a fresh snapshot for an existing subscription at any time; for example, the client fell behind and catching up from a snapshot is cheaper. Treat it the same way.
+- The server may send a fresh snapshot for an existing subscription at any time. Treat it the same way.
+
+**On `Delta.sync` (`WindowSync{vseq, handles}`):** a client that fell behind is not sent every removal it missed. Instead, a delta carries the complete list of handles in the window at `vseq`. Apply it before that frame's patches:
+
+- every present entry that is **not** listed and whose `seq_member < vseq` is removed, raising all four sequences to `vseq`;
+- listed entries are kept; the patches that follow carry current values for members that changed or that the client may lack.
+
+Buffer a sync that arrives before the view's first snapshot like patches (only the newest one matters).
 
 The window holds at most `window` present entries once the client has caught up. In between, extra entries may briefly show; sort and truncate when displaying.
 
@@ -205,7 +212,7 @@ The window holds at most `window` present entries once the client has caught up.
 - Enable QUIC datagram reception, allow at least 8 server-opened unidirectional streams, and set the ALPN to `rbsb/1`.
 - Validate the server certificate.
 - Keep one control stream. Assign `req_id` values and match responses by them.
-- Buffer deltas until a view's snapshot arrives. Apply patches with per-field sequences. Accept a fresh snapshot at any time.
+- Buffer deltas until a view's snapshot arrives. Apply window syncs, then patches, with per-field sequences. Accept a fresh snapshot at any time.
 - Connect only while the browser screen is open, or while hosting. Idle connections cost the server memory and buy nothing.
 - On `GoAway` or a lost connection, reconnect with exponential backoff and jitter, then resubscribe. Hosts re-register with their token.
 - Hosts: persist `(id, token)`, heartbeat over datagrams, and push player counts as they change.

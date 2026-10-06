@@ -79,7 +79,7 @@ Requests that must be ordered with mutations (subscribe, which needs snapshot pl
    - **Idle connection** (no unsent datagram): `DatagramSend(shared frame)`. Zero copy, because `SendBufferingEnabled = 0` and frames are refcounted per shard (one atomic per shard, not per send). Frames for the same connection in one batch use `QUIC_SEND_FLAG_DELAY_SEND`, so MsQuic packs them into one packet.
    - **Busy connection:** mark `(view, entry, fields)` in its dirty set. When MsQuic reports the previous datagram as SENT, the shard flushes the dirty set as one datagram built from current values.
 4. Lost datagrams (`LOST_SUSPECT` / `LOST_DISCARDED`) re-mark their entries dirty, so repairs always carry current values. Patches carry per-field sequence numbers, so reordering and duplication are harmless (see PROTOCOL.md).
-5. A connection whose dirty set grows past 2 × window gets a fresh cached snapshot instead. Memory per slow client is bounded by its windows.
+5. When a busy connection's dirty set for a view grows past 2 × window (window churn produces a stream of entries leaving), the shard drops every pending removal and owes the client one `WindowSync`: the handles currently in the window, about 3 bytes each. The client removes everything not listed, and the remaining dirty entries (all window members) carry the new values. Memory per slow client is bounded by its windows, and catching up costs a few hundred bytes instead of a snapshot. (An earlier design resent a snapshot here; the load test showed it turning congestion into a snapshot storm.)
 
 ## Replication
 

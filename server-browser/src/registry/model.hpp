@@ -222,6 +222,13 @@ struct Frame {
     }
 };
 
+// Immutable membership of one view's window, published for shards that must tell a lagging
+// client which entries are still in the window (WindowSync).
+struct WindowList {
+    u64 vseq = 0;
+    std::vector<u32> handles;
+};
+
 // Encoded snapshot frame for one (view, vseq), shared by every subscriber that asks for it.
 struct SnapshotBlob {
     u32 view_id = 0;

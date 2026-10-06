@@ -109,7 +109,7 @@ Entries are tagged with the continent of the address their host connects from, w
 | `sb_connections_browser`, `sb_connections_host` | per shard; uneven shards point at RSS problems |
 | `sb_datagrams_direct_total` vs `sb_datagrams_flush_total` | flushes rising means clients or the network can't keep up (autocork engaging) |
 | `sb_datagrams_lost_total`, `sb_repairs_total` | network loss |
-| `sb_resnapshots_total` | clients falling more than two windows behind |
+| `sb_window_syncs_total` | lagging subscriptions caught up with a membership list; rising means clients or their networks cannot keep up |
 | `sb_ring_stalls_total` | a shard can't keep up with the replica: add cores or edges |
 | `sb_lifecycle_conflicts_total` | concurrent registrations of the same id |
 | `sb_rate_limited_total`, `sb_connections_rejected_total` | abuse, or limits that are too tight |
