@@ -12,6 +12,8 @@ image="${IMAGE:-server-browser/sb-edge:ci}"
 here="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "$out"
 out="$(realpath "$out")"
+# perf runs as root; leave nothing the artifact upload cannot read.
+trap 'sudo rm -f "$out"/*.perf.data; sudo chown -R "$(id -u):$(id -g)" "$out"' EXIT
 cores="$(nproc)"
 shards="${SHARDS:-$(( cores > 2 ? cores / 2 : 1 ))}"
 profile="${PROFILE-fanout-max fanout-max-40k}"
@@ -53,22 +55,28 @@ start_profile() {  # start_profile LABEL; sets the caller's perf_pid
 }
 
 # Must run while the edge container exists: perf resolves its symbols through the container's root.
+# Best effort in a subshell: a perf failure costs this profile, never the run; errors go to .perf.log.
 profile_report() {  # profile_report LABEL
+    ( set +e +o pipefail; profile_report_body "$1" ) 2>> "$out/$1.perf.log"
+    sudo rm -f "$out/$1.perf.data"  # hundreds of MB; the report, folded stacks and flame graph are kept
+}
+
+profile_report_body() {
     local data="$out/$1.perf.data"
     sudo test -s "$data" || return 0
     local rep=(sudo "$perf" report -i "$data" --stdio -q)
     {
         echo "# $1: sb-edge CPU profile (cpu-clock, 499 Hz, 20 s of steady state)"
-        echo; echo "## By thread"; "${rep[@]}" --no-children --sort comm -g none 2>/dev/null | head -20
-        echo; echo "## By shared object"; "${rep[@]}" --no-children --sort dso -g none 2>/dev/null | head -20
+        echo; echo "## By thread"; "${rep[@]}" --no-children --sort comm -g none | head -20
+        echo; echo "## By shared object"; "${rep[@]}" --no-children --sort dso -g none | head -20
         echo; echo "## Hottest functions (self time)"
-        "${rep[@]}" --no-children --sort dso,sym -g none --percent-limit 0.3 2>/dev/null | head -80
+        "${rep[@]}" --no-children --sort dso,sym -g none --percent-limit 0.3 | head -80
         echo; echo "## Shard threads, inclusive time"
         "${rep[@]}" --children --comms "$(printf 'sb-shard-%s,' $(seq 0 $((shards - 1))) | sed 's/,$//')" \
-            --sort sym -g none --percent-limit 2 2>/dev/null | head -80
+            --sort sym -g none --percent-limit 2 | head -80
         echo; echo "## Callers of libc and the kernel (who pays for copies, locks and syscalls)"
         "${rep[@]}" --no-children --dsos libc.so.6,'[kernel.kallsyms]' --sort dso -g caller,2,callee,function \
-            --percent-limit 2 2>/dev/null | head -120
+            --percent-limit 2 | head -120
         # Hot instructions of our hottest functions: shows which loads miss and which branch costs.
         "${rep[@]}" --no-children --dsos sb-edge --sort sym -g none -F sym 2>/dev/null |
             sed -n 's/^ *\[\.\] //p' | head -4 | while IFS= read -r sym; do
@@ -81,7 +89,6 @@ profile_report() {  # profile_report LABEL
         sudo "$perf" script -i "$data" 2>/dev/null | "$flamegraph/stackcollapse-perf.pl" > "$out/$1.folded"
         "$flamegraph/flamegraph.pl" --title "sb-edge: $1" "$out/$1.folded" > "$out/$1.flamegraph.svg"
     fi
-    sudo rm -f "$data"  # hundreds of MB; the report, folded stacks and flame graph are kept
 }
 
 # Source addresses on loopback so each one has its own ephemeral port range.
