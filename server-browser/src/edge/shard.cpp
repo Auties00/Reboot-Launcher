@@ -1031,7 +1031,8 @@ void Shard::on_host_register(Conn& c, wire::HostRegister& m) {
     security::random_bytes(r.new_token);
     r.new_token_hash = security::sha256(r.new_token);
     r.addr = c.addr;
-    r.region = ctx_.geoip ? ctx_.geoip->lookup(c.addr) : wire::Region::all;
+    const auto geo = ctx_.geoip.load(std::memory_order_acquire);
+    r.region = geo ? geo->lookup(c.addr) : wire::Region::all;
     c.host_id = m.id;
     r.msg = std::move(m);
     c.host_pending = true;

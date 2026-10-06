@@ -35,7 +35,7 @@ RestrictNamespaces=yes
 LockPersonality=yes
 MemoryDenyWriteExecute=yes
 SystemCallArchitectures=native
-ReadOnlyPaths=/etc/sb /etc/letsencrypt
+ReadOnlyPaths=/etc/sb /etc/letsencrypt /var/lib/sb/geoip
 
 [Install]
 WantedBy=multi-user.target

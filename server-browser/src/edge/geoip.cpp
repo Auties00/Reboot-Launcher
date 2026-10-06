@@ -3,11 +3,10 @@
 #include <cstring>
 #include <stdexcept>
 
-#if __has_include(<maxminddb.h>)
+#if SB_HAVE_MAXMINDDB
 #include <arpa/inet.h>
 #include <maxminddb.h>
 #include <netinet/in.h>
-#define SB_HAVE_MAXMINDDB 1
 #endif
 
 namespace sb::edge {
@@ -31,11 +30,19 @@ GeoIp::~GeoIp() {
 
 wire::Region GeoIp::lookup(const IpAddr& addr) const noexcept {
     if (!impl_) return wire::Region::all;
-    sockaddr_in6 sa{};
-    sa.sin6_family = AF_INET6;
-    std::memcpy(&sa.sin6_addr, addr.bytes.data(), 16);
+    // IPv4 goes in as AF_INET: databases are not required to alias the IPv4-mapped range.
+    sockaddr_storage ss{};
+    if (addr.is_v4()) {
+        auto* sa = reinterpret_cast<sockaddr_in*>(&ss);
+        sa->sin_family = AF_INET;
+        std::memcpy(&sa->sin_addr, addr.bytes.data() + 12, 4);
+    } else {
+        auto* sa = reinterpret_cast<sockaddr_in6*>(&ss);
+        sa->sin6_family = AF_INET6;
+        std::memcpy(&sa->sin6_addr, addr.bytes.data(), 16);
+    }
     int err = 0;
-    MMDB_lookup_result_s res = MMDB_lookup_sockaddr(&impl_->db, reinterpret_cast<const sockaddr*>(&sa), &err);
+    MMDB_lookup_result_s res = MMDB_lookup_sockaddr(&impl_->db, reinterpret_cast<const sockaddr*>(&ss), &err);
     if (err != MMDB_SUCCESS || !res.found_entry) return wire::Region::all;
     MMDB_entry_data_s data{};
     if (MMDB_get_value(&res.entry, &data, "continent", "code", nullptr) != MMDB_SUCCESS || !data.has_data ||

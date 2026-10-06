@@ -8,7 +8,7 @@ shards = 0                  # 0 = one per core minus two (MsQuic and fan-out sha
 search_workers = 2
 drain_delay_ms = 10000      # time for DNS health checks to drop the edge before GoAway
 drain_spread_ms = 30000     # clients reconnect at a random point within this window
-# geoip_db = "/var/lib/GeoIP/GeoLite2-Country.mmdb"   # enables region tagging
+geoip_db = "/var/lib/sb/geoip/dbip-country-lite.mmdb"  # region tagging; refreshed by sb-geoip-update.timer
 
 [admin]
 listen = "127.0.0.1:9100"   # /metrics, /healthz, /readyz; keep it private
@@ -48,7 +48,6 @@ host_keepalive_ms = 3000
 initial_window_packets = 20
 max_worker_queue_delay_us = 20000
 ecn = true
-xdp = false                 # MsQuic XDP datapath; needs a supported NIC and kernel
 
 [registry]
 max_entries = 1048576

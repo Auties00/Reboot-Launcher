@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh the server browser GeoIP database (DB-IP Country Lite)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/update-geoip.sh /var/lib/sb/geoip
+# Make running edges pick up the new file without dropping connections.
+ExecStartPost=/bin/systemctl --no-block reload sb-edge.service

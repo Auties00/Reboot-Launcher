@@ -1,0 +1,11 @@
+[Unit]
+Description=Monthly GeoIP database refresh for sb-edge
+
+[Timer]
+# DB-IP publishes on the 1st; Persistent catches up on a run missed while the host was down.
+OnCalendar=*-*-03 04:00:00
+Persistent=true
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target

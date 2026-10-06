@@ -1,0 +1,36 @@
+name: server-browser load test
+
+on:
+  workflow_dispatch:
+  push:
+    paths: ["server-browser/deploy/loadtest/**", ".github/workflows/server-browser-load.yml"]
+  schedule:
+    - cron: "41 4 * * 0"  # weekly
+
+jobs:
+  load:
+    name: Load scenarios on one runner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: server-browser
+          file: server-browser/deploy/docker/Dockerfile
+          target: runtime
+          tags: server-browser/sb-edge:ci
+          load: true
+          cache-from: type=gha,scope=sb-test
+      - name: Run scenarios
+        run: bash server-browser/deploy/loadtest/run.sh loadtest-out
+      - name: Publish report
+        if: always()
+        run: cat loadtest-out/report.md >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loadtest
+          path: loadtest-out

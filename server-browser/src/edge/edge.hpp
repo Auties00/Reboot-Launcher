@@ -30,7 +30,8 @@ public:
     // Graceful: leave DNS rotation, GoAway every client, wait for them to move, then stop.
     void drain();
     void stop();
-    void reload_certificate();
+    // SIGHUP: fresh certificate and GeoIP database for new connections; nothing is dropped.
+    void reload();
 
     [[nodiscard]] ops::HttpResponse admin(std::string_view path);
     [[nodiscard]] std::string metrics();
@@ -56,7 +57,6 @@ private:
 
     std::unique_ptr<backbone::Backbone> backbone_;
     std::unique_ptr<registry::Replica> replica_;
-    std::unique_ptr<GeoIp> geoip_;
     std::unique_ptr<EdgeContext> ctx_;
     std::vector<std::unique_ptr<Shard>> shards_;
     std::vector<Shard*> shard_ptrs_;

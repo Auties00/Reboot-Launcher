@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
             sigwait(&set, &sig);
             if (sig == SIGHUP) {
                 sb::ops::sd_notify("RELOADING=1");
-                edge.reload_certificate();
+                edge.reload();
                 sb::ops::sd_notify("READY=1");
                 continue;
             }

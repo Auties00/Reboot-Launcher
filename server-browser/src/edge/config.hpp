@@ -52,7 +52,6 @@ struct QuicTuning {
     u16 peer_unidi_streams = 0;
     u16 retry_memory_percent = 20;
     bool ecn = true;
-    bool xdp = false;
 };
 
 struct BackboneConfig {

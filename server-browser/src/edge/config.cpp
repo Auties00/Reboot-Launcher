@@ -115,7 +115,7 @@ EdgeConfig load_config(const std::string& path) {
     read(t, "quic.stream_recv_window", q.stream_recv_window);
     read(t, "quic.retry_memory_percent", q.retry_memory_percent);
     read(t, "quic.ecn", q.ecn);
-    read(t, "quic.xdp", q.xdp);
+    if (t.at_path("quic.xdp")) throw std::runtime_error("quic.xdp: MsQuic has no XDP datapath on Linux (see docs/OPERATIONS.md)");
 
     auto& b = c.backbone;
     read(t, "backbone.kind", b.kind);

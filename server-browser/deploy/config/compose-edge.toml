@@ -6,6 +6,8 @@ search_workers = 1
 drain_delay_ms = 2000
 drain_spread_ms = 5000
 
+geoip_db = "/usr/share/sb/geoip/dbip-country-lite.mmdb"
+
 [admin]
 listen = "0.0.0.0:9100"
 

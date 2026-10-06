@@ -16,7 +16,8 @@ if(SB_BUILD_NET)
   add_executable(sb_integration_tests
     integration/harness.cpp
     integration/test_edge.cpp
-    integration/test_cluster.cpp)
+    integration/test_cluster.cpp
+    integration/test_geoip.cpp)
   target_link_libraries(sb_integration_tests PRIVATE sb_net Catch2::Catch2WithMain)
   target_compile_definitions(sb_integration_tests PRIVATE
     SB_EDGE_BIN="$<TARGET_FILE:sb-edge>")

@@ -139,7 +139,7 @@ CMake probes each feature (`cmake/SbFeatures.cmake`), and `std::execution` is no
 ## Performance notes
 
 - **Per mutation:** O(log n) tree updates for each of up to 24 trees, plus at most about 48 frame encodes. The replica handles tens of thousands of mutations per second on one core.
-- **Per delivery:** one `DatagramSend` of a shared buffer. The kernel and crypto path, about 1.5–3 µs per packet, dominates. XDP (`quic.xdp`) and a NIC with enough RSS queues raise the per-core ceiling.
+- **Per delivery:** one `DatagramSend` of a shared buffer. The kernel and crypto path, about 1.5–3 µs per packet, dominates. MsQuic's epoll datapath already batches receives with `recvmmsg` and uses UDP GSO for sends and GRO for receives; beyond that the per-core ceiling rises with NIC RSS queues and IRQ affinity (see "Datapath" in OPERATIONS.md for why XDP and io_uring are not options).
 - **Memory per idle browser** is small: one `Conn`, one control stream, and a dirty set that is empty until the connection falls behind. Snapshots are shared buffers, cached per (view, vseq).
 - **Handshakes:**
   - ECDSA P-256 certificates;

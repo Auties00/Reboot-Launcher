@@ -16,7 +16,7 @@ target_link_libraries(sb_core
   PRIVATE sb_warnings)
 
 if(SB_BUILD_NET)
-  find_package(maxminddb CONFIG QUIET)
+  find_package(maxminddb CONFIG REQUIRED)
   add_library(sb_net STATIC
     backbone/factory.cpp
     client/client.cpp
@@ -33,7 +33,6 @@ if(SB_BUILD_NET)
   endif()
   target_compile_definitions(sb_net PUBLIC SB_WITH_NATS=$<BOOL:${SB_WITH_NATS}>)
   target_link_libraries(sb_net PUBLIC sb_core MsQuic::MsQuic tomlplusplus::tomlplusplus PRIVATE sb_warnings)
-  if(maxminddb_FOUND)
-    target_link_libraries(sb_net PRIVATE maxminddb::maxminddb)
-  endif()
+  target_link_libraries(sb_net PRIVATE maxminddb::maxminddb)
+  target_compile_definitions(sb_net PRIVATE SB_HAVE_MAXMINDDB=1)
 endif()

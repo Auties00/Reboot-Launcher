@@ -39,7 +39,7 @@ struct EdgeContext {
     AtomicRateTable join_rate;
     security::Digest pepper{};
     std::vector<u8> ticket_key;
-    const GeoIp* geoip = nullptr;
+    std::atomic<std::shared_ptr<const GeoIp>> geoip;  // swapped on reload
     std::atomic<bool> draining{false};
     std::atomic<u64> next_search{0};
 

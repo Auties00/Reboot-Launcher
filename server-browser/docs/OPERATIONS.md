@@ -76,7 +76,28 @@ Apply `deploy/sysctl/99-sb-edge.conf`. Then:
 - **Interrupt coalescing:** `ethtool -C <if> adaptive-rx off rx-usecs 8`, and `echo 2 > /sys/class/net/<if>/napi_defer_hard_irqs`, `echo 50000 > /sys/class/net/<if>/gro_flush_timeout`. Larger values add latency.
 - **CPU:** shallow C-states on the shard cores (`cpupower idle-set -D 10`) and the performance governor.
 - **NUMA:** on two-socket machines, run one sb-edge per socket (`numactl --cpunodebind=N --membind=N`), each with its own IP. The replica is small enough to duplicate.
-- **XDP:** with a supported NIC, `quic.xdp = true` moves UDP I/O to MsQuic's AF_XDP datapath for a large packets-per-second gain.
+
+### Datapath
+
+sb-edge uses MsQuic's epoll datapath, which batches receives with `recvmmsg`, segments sends with UDP GSO and coalesces receives with UDP GRO. The two faster-looking alternatives were evaluated against MsQuic 2.6.2 and ruled out:
+
+- **XDP:** MsQuic's XDP datapath exists only for Windows (xdp-for-windows); its documentation states it does not support Linux XDP. The `quic.xdp` option was removed, and a config that still sets it is rejected at startup.
+- **io_uring:** MsQuic can be built with an io_uring datapath, but with it the public `QUIC_EVENTQ` type becomes an opaque internal structure, so an application cannot drive it from its own execution loop. sb-edge depends on app-owned execution (one loop per shard runs both MsQuic and fan-out), so io_uring would mean giving that up for MsQuic-managed workers plus a cross-thread hop per send, which costs more than it saves.
+
+The remaining levers are the ones above: RSS queues per shard, IRQ affinity, interrupt coalescing and enough edges.
+
+## GeoIP
+
+Entries are tagged with the continent of the address their host connects from, which feeds the region filter in views. The database is DB-IP "IP to Country Lite" (MaxMind MMDB format, CC BY 4.0, attribution "IP Geolocation by DB-IP"; no account needed):
+
+- `deploy/geoip/update-geoip.sh [dir]` downloads the current month's file and atomically replaces `dir/dbip-country-lite.mmdb`.
+- `deploy/systemd/sb-geoip-update.timer` runs it monthly and then `systemctl reload sb-edge`. SIGHUP swaps the database in without dropping connections.
+- The container image ships the database at `/usr/share/sb/geoip/dbip-country-lite.mmdb` (refreshed on every image build).
+- Without `edge.geoip_db`, every entry's region is unknown (0), so it appears only in "all regions" views.
+
+## Load testing
+
+`deploy/loadtest/run.sh` starts one edge and drives four scenarios with `sb-loadgen` on the same machine, then writes a Markdown report (deliveries per second, end-to-end latency percentiles, edge CPU and RSS, autocork ratio). The `server-browser load test` workflow runs it on a GitHub runner weekly and on demand; results land in the job summary. Because edge and load generator share one small machine, those numbers are a lower bound. For capacity planning, run `sb-loadgen` from separate machines against a production-sized edge.
 
 ## Metrics
 

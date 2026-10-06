@@ -5,6 +5,7 @@
 #include <chrono>
 #include <fstream>
 #include <iterator>
+#include <sstream>
 
 #include "backbone/factory.hpp"
 #include "core/hash.hpp"
@@ -72,11 +73,12 @@ void Edge::start() {
 
     backbone_ = backbone::make_backbone(cfg_.backbone, cfg_.edge_id);
     replica_ = std::make_unique<registry::Replica>(cfg_.registry, *backbone_);
-    geoip_ = std::make_unique<GeoIp>(cfg_.geoip_db);
-
     ctx_ = std::make_unique<EdgeContext>(cfg_, *replica_);
     ctx_->api = api_;
-    ctx_->geoip = geoip_->loaded() ? geoip_.get() : nullptr;
+    if (!cfg_.geoip_db.empty()) {
+        ctx_->geoip.store(std::make_shared<const GeoIp>(cfg_.geoip_db));
+        log::info("region tagging from {}", cfg_.geoip_db);
+    }
     const auto pepper = read_secret(cfg_.secrets.pepper_file, 32, "password pepper");
     std::copy_n(security::sha256(pepper).begin(), 32, ctx_->pepper.begin());
     ctx_->ticket_key = read_secret(cfg_.secrets.ticket_file, 32, "join ticket key");
@@ -184,10 +186,6 @@ HQUIC Edge::make_configuration() {
     s.StreamRecvWindowDefault = q.stream_recv_window;
     s.IsSet.MigrationEnabled = 1;
     s.MigrationEnabled = 0;  // keeps every connection on its shard
-    if (q.xdp) {
-        s.IsSet.XdpEnabled = 1;
-        s.XdpEnabled = 1;
-    }
     const QUIC_BUFFER alpn{static_cast<u32>(wire::kAlpn.size()), reinterpret_cast<u8*>(const_cast<char*>(wire::kAlpn.data()))};
     HQUIC conf = nullptr;
     quic::check(api_->ConfigurationOpen(registration_, &alpn, 1, &s, sizeof(s), nullptr, &conf), "ConfigurationOpen");
@@ -242,7 +240,15 @@ void Edge::start_listener() {
     if (QUIC_SUCCEEDED(api_->GetParam(listener_, QUIC_PARAM_LISTENER_LOCAL_ADDRESS, &len, &bound))) port_ = QuicAddrGetPort(&bound);
 }
 
-void Edge::reload_certificate() {
+void Edge::reload() {
+    if (!cfg_.geoip_db.empty()) {
+        try {
+            ctx_->geoip.store(std::make_shared<const GeoIp>(cfg_.geoip_db));
+            log::info("GeoIP database reloaded");
+        } catch (const std::exception& e) {
+            log::error("GeoIP reload failed, keeping the current database: {}", e.what());
+        }
+    }
     // New connections pick up the fresh configuration; existing ones keep the one they started with.
     try {
         HQUIC fresh = make_configuration();
@@ -323,8 +329,42 @@ void Edge::stop() {
     log::info("edge stopped");
 }
 
+namespace {
+
+// Resident set size and CPU time of this process, for capacity planning.
+std::pair<u64, double> process_usage() {
+    u64 rss = 0;
+    double cpu = 0;
+    if (std::ifstream st("/proc/self/statm"); st) {
+        u64 pages = 0;
+        st >> pages >> pages;
+        rss = pages * static_cast<u64>(::sysconf(_SC_PAGESIZE));
+    }
+    if (std::ifstream st("/proc/self/stat"); st) {
+        std::string line;
+        std::getline(st, line);
+        // Fields after the parenthesised command name; utime and stime are fields 14 and 15.
+        std::istringstream in(line.substr(line.rfind(')') + 2));
+        std::string field;
+        u64 utime = 0, stime = 0;
+        for (int i = 3; i <= 15 && in >> field; ++i) {
+            if (i == 14) utime = std::stoull(field);
+            if (i == 15) stime = std::stoull(field);
+        }
+        cpu = static_cast<double>(utime + stime) / static_cast<double>(::sysconf(_SC_CLK_TCK));
+    }
+    return {rss, cpu};
+}
+
+}  // namespace
+
 std::string Edge::metrics() {
     ops::Exposition x;
+    const auto [rss, cpu] = process_usage();
+    x.family("sb_process_resident_bytes", "gauge", "Resident set size");
+    x.sample("sb_process_resident_bytes", "", rss);
+    x.family("sb_process_cpu_seconds_total", "counter", "User plus system CPU time");
+    x.sample("sb_process_cpu_seconds_total", "", cpu);
     auto shard_counter = [&](const char* name, const char* help, ops::Counter ShardStats::*field, const char* type = "counter") {
         x.family(name, type, help);
         for (auto& s : shards_) x.sample(name, "shard=\"" + std::to_string(s->index()) + "\"", (s->stats().*field).get());

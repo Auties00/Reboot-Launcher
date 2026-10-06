@@ -82,7 +82,9 @@ struct Stats {
     std::atomic<u64> joins_ok{0};
     std::atomic<u64> queries_ok{0};
     std::atomic<u64> goaways{0};
-    LatencyHistogram latency;
+    LatencyHistogram latency;  // reset every report
+    LatencyHistogram total;    // whole steady state
+    std::atomic<bool> steady{false};
 };
 
 Uuid host_uuid(u32 i, u32 run) {
@@ -121,6 +123,7 @@ int main(int argc, char** argv) {
     double update_rate = 1.0, sample = 0.05, join_rate = 0, query_rate = 0;
     u32 run_id = static_cast<u32>(std::random_device{}());
     bool insecure = true, no_datagrams = false;
+    std::string summary_path, label = "loadgen";
     app.add_option("-s,--server", servers, "edge addresses (browsers and hosts are spread across them)");
     app.add_option("--hosts", hosts, "host connections, one entry each");
     app.add_option("--update-rate", update_rate, "player-count updates per second per host");
@@ -136,6 +139,8 @@ int main(int argc, char** argv) {
     app.add_option("--report", report, "seconds between reports");
     app.add_option("--run-id", run_id, "namespace for host ids (reuse to re-register the same entries)");
     app.add_flag("--no-datagrams", no_datagrams, "force the stream fallback");
+    app.add_option("--summary", summary_path, "write a JSON summary of the steady state to this file");
+    app.add_option("--label", label, "scenario name for the summary");
     app.add_flag("!--secure", insecure, "validate certificates");
     CLI11_PARSE(app, argc, argv);
     std::signal(SIGINT, [](int) { g_stop = true; });
@@ -245,7 +250,10 @@ int main(int argc, char** argv) {
                         const u32 h = host_index(it->entry.id);
                         if (h >= hosts) continue;
                         const u64 sent = log.when(h, *p.players);
-                        if (sent && now > sent && now - sent < 10'000'000'000ull) st.latency.record((now - sent) / 1000);
+                        if (sent && now > sent && now - sent < 10'000'000'000ull) {
+                            st.latency.record((now - sent) / 1000);
+                            if (st.steady.load(std::memory_order_relaxed)) st.total.record((now - sent) / 1000);
+                        }
                     }
                 }
             } else if (auto* s = std::get_if<client::SnapshotEvent>(&e)) {
@@ -280,7 +288,10 @@ int main(int argc, char** argv) {
                 static_cast<unsigned long long>(st.registered.load()));
 
     // ---- steady state ------------------------------------------------------------------------
+    std::this_thread::sleep_for(2s);  // let the last handshakes and snapshots settle
     const auto start = std::chrono::steady_clock::now();
+    const u64 base_patches = st.patches.load(), base_deltas = st.deltas.load(), base_updates = st.updates_sent.load();
+    st.steady = true;
     auto next_report = start + std::chrono::seconds(report);
     auto last = start;
     u64 last_deltas = 0, last_patches = 0, last_updates = 0;
@@ -338,6 +349,30 @@ int main(int argc, char** argv) {
             next_report = tick_start + std::chrono::seconds(report);
         }
         std::this_thread::sleep_until(tick_start + std::chrono::milliseconds(10));
+    }
+
+    st.steady = false;
+    const double secs = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    const double patches_s = static_cast<double>(st.patches.load() - base_patches) / secs;
+    const double deltas_s = static_cast<double>(st.deltas.load() - base_deltas) / secs;
+    const double updates_s = static_cast<double>(st.updates_sent.load() - base_updates) / secs;
+    auto pct = [&](double p) { return static_cast<unsigned long long>(st.total.percentile(p)); };
+    std::printf("steady state %.0fs: updates/s=%.0f deltas/s=%.0f patches/s=%.0f latency(us) p50=%llu p90=%llu p99=%llu p99.9=%llu\n",
+                secs, updates_s, deltas_s, patches_s, pct(50), pct(90), pct(99), pct(99.9));
+    if (!summary_path.empty()) {
+        if (FILE* f = std::fopen(summary_path.c_str(), "w")) {
+            std::fprintf(f,
+                         "{\"label\":\"%s\",\"hosts\":%u,\"browsers\":%u,\"subs\":%u,\"window\":%u,\"update_rate\":%.3f,"
+                         "\"connected\":%llu,\"registered\":%llu,\"errors\":%llu,\"closed\":%llu,\"seconds\":%.1f,"
+                         "\"updates_per_s\":%.0f,\"deltas_per_s\":%.0f,\"patches_per_s\":%.0f,\"snapshots\":%llu,"
+                         "\"latency_us\":{\"samples\":%llu,\"p50\":%llu,\"p90\":%llu,\"p99\":%llu,\"p999\":%llu,\"max\":%llu}}\n",
+                         label.c_str(), hosts, browsers, subs, window, update_rate,
+                         static_cast<unsigned long long>(st.connected.load()), static_cast<unsigned long long>(st.registered.load()),
+                         static_cast<unsigned long long>(st.errors.load()), static_cast<unsigned long long>(st.closed.load()), secs,
+                         updates_s, deltas_s, patches_s, static_cast<unsigned long long>(st.snapshots.load()),
+                         static_cast<unsigned long long>(st.total.count()), pct(50), pct(90), pct(99), pct(99.9), pct(100));
+            std::fclose(f);
+        }
     }
 
     std::printf("closing %zu connections\n", host_states.size() + browser_states.size());

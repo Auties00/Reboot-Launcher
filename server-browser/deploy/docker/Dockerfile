@@ -31,6 +31,11 @@ RUN git clone https://github.com/microsoft/vcpkg /opt/vcpkg && git -C /opt/vcpkg
     && /opt/vcpkg/bootstrap-vcpkg.sh -disableMetrics
 ENV VCPKG_ROOT=/opt/vcpkg PATH=/opt/vcpkg:$PATH LD_LIBRARY_PATH=/opt/msquic/lib
 
+# ---- GeoIP: DB-IP Country Lite (CC BY 4.0, MaxMind format, no account needed) -----------------
+FROM toolchain AS geoip
+COPY deploy/geoip/update-geoip.sh /usr/local/bin/update-geoip.sh
+RUN sh /usr/local/bin/update-geoip.sh /usr/share/sb/geoip
+
 # ---- dependencies (cached separately from sources) --------------------------------------------
 FROM toolchain AS deps
 WORKDIR /src/server-browser
@@ -49,6 +54,8 @@ RUN --mount=type=cache,target=/root/.cache/vcpkg \
 
 # ---- test: unit + integration (inproc and a local NATS JetStream) ------------------------------
 FROM build AS test
+COPY --from=geoip /usr/share/sb/geoip /usr/share/sb/geoip
+ENV SB_GEOIP_DB=/usr/share/sb/geoip/dbip-country-lite.mmdb
 RUN (nats-server -js -sd /tmp/js -p 4222 >/tmp/nats.log 2>&1 &) \
     && sleep 1 && SB_TEST_LOGS=1 SB_NATS_URL=nats://127.0.0.1:4222 ctest --preset gcc-release --output-on-failure
 
@@ -73,6 +80,7 @@ RUN --mount=type=cache,target=/root/.cache/vcpkg \
 # ---- runtime ---------------------------------------------------------------------------------
 FROM gcr.io/distroless/cc-debian13 AS runtime
 COPY --from=toolchain /opt/msquic/lib/libmsquic.so* /usr/lib/
+COPY --from=geoip /usr/share/sb/geoip /usr/share/sb/geoip
 COPY --from=build /src/server-browser/build/gcc-release/apps/sb-edge /usr/local/bin/sb-edge
 COPY --from=build /src/server-browser/build/gcc-release/apps/sb-cli /usr/local/bin/sb-cli
 COPY --from=build /src/server-browser/build/gcc-release/apps/sb-loadgen /usr/local/bin/sb-loadgen
