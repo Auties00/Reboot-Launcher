@@ -14,6 +14,7 @@
 #include "core/slot_map.hpp"
 #include "core/timer_wheel.hpp"
 #include "core/waker.hpp"
+#include "edge/dirty_set.hpp"
 #include "edge/config.hpp"
 #include "ops/metrics.hpp"
 #include "quic/msquic.hpp"
@@ -80,57 +81,6 @@ struct ShardStats {
 
 class Shard;
 struct FlushSend;
-
-// Per-connection latest-value-wins set of (view, entry) pairs whose current state still has to
-// reach the client. Bounded by the subscribed windows: past 2x window, removals collapse into a
-// WindowSync.
-class DirtySet {
-public:
-    [[nodiscard]] static constexpr u64 key(u32 view_id, u32 handle) noexcept { return (u64{view_id} << 32) | handle; }
-
-    // Returns true if the pair was not dirty before.
-    bool mark(u32 view_id, u32 handle, u8 mask) {
-        auto [it, inserted] = map_.try_emplace(key(view_id, handle), mask);
-        if (!inserted) it->second |= mask;
-        return inserted;
-    }
-    void erase_view(u32 view_id) {
-        for (auto it = map_.begin(); it != map_.end();) {
-            if (static_cast<u32>(it->first >> 32) == view_id) it = erase_it(it);
-            else ++it;
-        }
-    }
-    template <class Keep>
-    void retain_view(u32 view_id, Keep&& keep) {
-        for (auto it = map_.begin(); it != map_.end();) {
-            if (static_cast<u32>(it->first >> 32) == view_id && !keep(static_cast<u32>(it->first))) it = erase_it(it);
-            else ++it;
-        }
-    }
-    [[nodiscard]] std::size_t count_view(u32 view_id) const {
-        std::size_t n = 0;
-        for (const auto& [k, m] : map_) n += static_cast<u32>(k >> 32) == view_id;
-        return n;
-    }
-    [[nodiscard]] bool empty() const noexcept { return map_.empty(); }
-    [[nodiscard]] std::size_t size() const noexcept { return map_.size(); }
-
-    // Moves every pair out, sorted by view so a flush can build one Delta per view.
-    void take_sorted(std::vector<std::pair<u64, u8>>& out) {
-        out.assign(map_.begin(), map_.end());
-        map_.clear();
-        std::sort(out.begin(), out.end());
-    }
-
-private:
-    template <class It>
-    It erase_it(It it) {
-        auto next = std::next(it);
-        map_.erase(it);
-        return next;
-    }
-    FlatMap<u64, u8> map_;
-};
 
 struct Sub {
     u32 sub_id = 0;

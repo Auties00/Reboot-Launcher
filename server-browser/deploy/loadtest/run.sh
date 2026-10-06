@@ -83,8 +83,8 @@ profile_report_body() {
         "${rep[@]}" --no-children --dsos libc.so.6,'[kernel.kallsyms]' --sort dso -g caller,2,callee,function \
             --percent-limit 2 | head -120
         # Hot instructions of our hottest functions: shows which loads miss and which branch costs.
-        "${rep[@]}" --no-children --dsos sb-edge --sort sym -g none -F sym 2>/dev/null |
-            sed -n 's/^ *\[\.\] //p' | head -4 | while IFS= read -r sym; do
+        "${rep[@]}" --no-children --dsos sb-edge --sort sym -g none 2>/dev/null |
+            sed -n 's/^ *[0-9.]*% *\[\.\] //p' | grep '^sb::' | head -4 | while IFS= read -r sym; do
                 echo; echo "## Annotated: $sym (instructions at >= 1% of the function)"
                 sudo "$perf" annotate -i "$data" --stdio -s "$sym" 2>/dev/null |
                     awk -F: '$1 ~ /^ *[0-9]+\.[0-9]+ *$/ && $1 + 0 >= 1' | sort -rn | head -25

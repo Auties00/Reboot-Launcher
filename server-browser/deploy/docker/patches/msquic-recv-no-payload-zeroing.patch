@@ -1,0 +1,58 @@
+MsQuic's pool allocator zeroes every block it hands out, and the epoll receive path takes a
+receive block for every recvmmsg call, including the last one of each wakeup that only returns
+EAGAIN. With UDP GRO a block carries a 64 KB payload buffer, so every small ACK a client sends
+cost a 64 KB memset: about 11% of sb-edge CPU in the fan-out load test. recvmmsg overwrites the
+payload, so only the block header and the per-packet descriptors actually handed up need zeroing;
+those are exactly the bytes anyone reads, so behaviour is unchanged.
+diff --git a/src/platform/datapath_epoll.c b/src/platform/datapath_epoll.c
+index 7aaa7b0..f27cc43 100644
+--- a/src/platform/datapath_epoll.c
++++ b/src/platform/datapath_epoll.c
+@@ -1693,6 +1693,7 @@ CxPlatSocketContextRecvComplete(
+         while (Offset < RecvMsgHdr[CurrentMessage].msg_len &&
+                IoBlock->RefCount < CXPLAT_MAX_IO_BATCH_SIZE) {
+             IoBlock->RefCount++;
++            CxPlatZeroMemory(Datagram, SocketContext->DatapathPartition->Datapath->RecvBlockStride);
+             Datagram->IoBlock = IoBlock;
+ 
+             CXPLAT_RECV_DATA* RecvData = &Datagram->Data;
+@@ -1765,7 +1766,7 @@ CxPlatSocketReceiveCoalesced(
+     do {
+         uint32_t RetryCount = 0;
+         do {
+-            IoBlock = CxPlatPoolAlloc(&DatapathPartition->RecvBlockPool);
++            IoBlock = CxPlatPoolAllocUninitialized(&DatapathPartition->RecvBlockPool);
+         } while (IoBlock == NULL && ++RetryCount < 10);
+         if (IoBlock == NULL) {
+             QuicTraceEvent(
+@@ -1776,7 +1777,11 @@ CxPlatSocketReceiveCoalesced(
+             goto Exit;
+         }
+ 
+-        CxPlatZeroMemory(&IoBlock->Route, sizeof(CXPLAT_ROUTE));
++        //
++        // Zero only the block header: per-packet descriptors are zeroed as they
++        // are used and recvmmsg overwrites the payload buffer (64 KB with GRO).
++        //
++        CxPlatZeroMemory(IoBlock, sizeof(DATAPATH_RX_IO_BLOCK));
+         IoBlock->Route.State = RouteResolved;
+ 
+         struct msghdr* MsgHdr = &RecvMsgHdr.msg_hdr;
+@@ -1839,7 +1844,7 @@ CxPlatSocketReceiveMessages(
+ 
+             DATAPATH_RX_IO_BLOCK* IoBlock;
+             do {
+-                IoBlock = CxPlatPoolAlloc(&DatapathPartition->RecvBlockPool);
++                IoBlock = CxPlatPoolAllocUninitialized(&DatapathPartition->RecvBlockPool);
+             } while (IoBlock == NULL && ++RetryCount < 10);
+             if (IoBlock == NULL) {
+                 QuicTraceEvent(
+@@ -1851,7 +1856,7 @@ CxPlatSocketReceiveMessages(
+             }
+ 
+             IoBlocks[i] = IoBlock;
+-            CxPlatZeroMemory(&IoBlock->Route, sizeof(CXPLAT_ROUTE));
++            CxPlatZeroMemory(IoBlock, sizeof(DATAPATH_RX_IO_BLOCK));
+             IoBlock->Route.State = RouteResolved;
+ 
+             struct msghdr* MsgHdr = &RecvMsgHdr[i].msg_hdr;

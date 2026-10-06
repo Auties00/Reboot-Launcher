@@ -5,6 +5,7 @@ add_executable(sb_unit_tests
   unit/test_btree.cpp
   unit/test_codec.cpp
   unit/test_core.cpp
+  unit/test_dirty_set.cpp
   unit/test_replica.cpp
   unit/test_search.cpp
   unit/test_validation.cpp)

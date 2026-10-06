@@ -361,9 +361,12 @@ void Shard::fanout(Frame* f) {
         const std::size_t n = subs.size();
         for (std::size_t i = 0; i < n; ++i) {
             // Subscribers are scattered across the heap: fetch a few ahead to overlap the misses.
+            // Three lines cover the send state, the inline dirty set and the first subscriptions.
             if (i + 4 < n) {
-                __builtin_prefetch(subs[i + 4]);
-                __builtin_prefetch(reinterpret_cast<const char*>(subs[i + 4]) + 64);
+                const char* next = reinterpret_cast<const char*>(subs[i + 4]);
+                __builtin_prefetch(next);
+                __builtin_prefetch(next + 64);
+                __builtin_prefetch(next + 128);
             }
             Conn* c = subs[i];
             if (c->closing) continue;
