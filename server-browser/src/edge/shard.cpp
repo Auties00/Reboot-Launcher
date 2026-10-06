@@ -162,7 +162,9 @@ void Shard::bind_execution(QUIC_EXECUTION_CONFIG& cfg) {
     epoll_event ev{};
     ev.events = EPOLLIN | EPOLLET;
     ev.data.ptr = &wake_sqe_->sqe;
-    SB_ASSERT(::epoll_ctl(epfd_, EPOLL_CTL_ADD, waker_.fd(), &ev) == 0);
+    // Contract predicates see locals as const, so keep the side effect outside.
+    const int rc = ::epoll_ctl(epfd_, EPOLL_CTL_ADD, waker_.fd(), &ev);
+    SB_ASSERT(rc == 0);
     cfg.IdealProcessor = ctx_.cfg.cpu_offset + index_;
     cfg.EventQ = &epfd_;
 }

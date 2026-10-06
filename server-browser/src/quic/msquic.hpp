@@ -44,7 +44,7 @@ inline void check(QUIC_STATUS st, const char* what) {
 // Process-wide MsQuic API table.
 class Library {
 public:
-    Library() { check(MsQuicOpenVersion(QUIC_API_VERSION_2, &api_), "MsQuicOpenVersion"); }
+    Library() { check(MsQuicOpen2(&api_), "MsQuicOpen2"); }
     ~Library() {
         if (api_) MsQuicClose(api_);
     }
