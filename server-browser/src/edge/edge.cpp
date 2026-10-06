@@ -105,7 +105,11 @@ void Edge::start() {
         lease_thread_ = std::jthread([this](std::stop_token st) {
             while (!st.stop_requested()) {
                 backbone_->heartbeat_lease(cfg_.edge_id);
-                for (int i = 0; i < 30 && !st.stop_requested(); ++i) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                // Renew well within the lease TTL so a live edge never looks dead.
+                const auto every = std::chrono::milliseconds(std::max<u32>(100, cfg_.backbone.lease_ttl_ms / 3));
+                const auto until = std::chrono::steady_clock::now() + every;
+                while (!st.stop_requested() && std::chrono::steady_clock::now() < until)
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
         });
 

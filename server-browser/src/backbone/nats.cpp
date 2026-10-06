@@ -265,6 +265,7 @@ void NatsBackbone::watch_leases(std::stop_token stop) {
             std::set<u64> now;
             for (int i = 0; i < keys.Count; ++i) now.insert(std::strtoull(keys.Keys[i], nullptr, 16));
             kvKeysList_Destroy(&keys);
+            now.insert(edge_id_);  // this edge is alive by definition, even between renewals
             if (!first) {
                 for (u64 dead : live_edges_) {
                     if (now.contains(dead) || dead == edge_id_) continue;
