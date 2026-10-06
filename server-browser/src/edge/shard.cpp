@@ -308,6 +308,8 @@ void Shard::sweep(u64 now_ms) {
         } else if (c.unsent > 0 && now_ms - c.last_progress_ms > lim.stall_timeout_ms) {
             stats_.stalls.inc();
             close(c, 4, "stalled");
+        } else {
+            for (Sub& s : c.subs) maybe_resync(c, s);
         }
     });
 }
@@ -418,13 +420,27 @@ Sub* Shard::find_sub_by_view(Conn& c, u32 view_id) noexcept {
 
 void Shard::mark_dirty(Conn& c, u32 view_id, u32 handle, u8 mask) {
     Sub* s = find_sub_by_view(c, view_id);
-    if (!s || s->resyncing) return;
+    // While a snapshot is pending, it will carry the current state of this view.
+    if (!s || s->resyncing || s->overflow) return;
     stats_.dirty_marks.inc();
     if (c.dirty.mark(view_id, handle, mask) && ++s->dirty > 2 * s->window) {
-        request_resync(c, *s);
+        // Too far behind to replay changes: drop them and send one snapshot instead.
+        s->overflow = true;
+        s->dirty = 0;
+        c.dirty.erase_view(view_id);
+        maybe_resync(c, *s);
         return;
     }
     if (c.unsent == 0) schedule_flush(c);
+}
+
+void Shard::maybe_resync(Conn& c, Sub& s) {
+    // At most one snapshot in flight per connection and one per subscription every cooldown:
+    // a congested client must not be buried under snapshots it cannot drain either.
+    constexpr u64 kCooldownMs = 2000;
+    if (!s.overflow || s.resyncing || c.closing || c.snapshots_inflight > 0) return;
+    if (s.last_resync_ms && now_ms_ - s.last_resync_ms < kCooldownMs) return;
+    request_resync(c, s);
 }
 
 void Shard::schedule_flush(Conn& c) {
@@ -449,6 +465,8 @@ bool Shard::flush_ready() {
 void Shard::request_resync(Conn& c, Sub& s) {
     // Too far behind: a cached snapshot is cheaper than replaying every change.
     s.resyncing = true;
+    s.overflow = false;
+    s.last_resync_ms = now_ms_;
     s.dirty = 0;
     c.dirty.erase_view(s.view_id);
     stats_.resnapshots.inc();
@@ -558,7 +576,7 @@ void Shard::flush(Conn& c) {
         // Out of send budget: keep the rest dirty for the next completion.
         for (; i < scratch_dirty_.size(); ++i) {
             const auto [key, mask] = scratch_dirty_[i];
-            if (Sub* s = find_sub_by_view(c, static_cast<u32>(key >> 32)); s && !s->resyncing) {
+            if (Sub* s = find_sub_by_view(c, static_cast<u32>(key >> 32)); s && !s->resyncing && !s->overflow) {
                 c.dirty.mark(static_cast<u32>(key >> 32), static_cast<u32>(key), mask);
                 ++s->dirty;
             }
@@ -699,6 +717,8 @@ void Shard::on_stream_event(Conn& c, HQUIC stream, void* sctx_raw, QUIC_STREAM_E
                 if (!c.dirty.empty()) schedule_flush(c);
             } else {
                 delete static_cast<SnapSend*>(ctx);
+                if (c.snapshots_inflight > 0) --c.snapshots_inflight;
+                for (Sub& s : c.subs) maybe_resync(c, s);
             }
             break;
         }
@@ -814,6 +834,7 @@ void Shard::send_snapshot(Conn& c, std::shared_ptr<const SnapshotBlob> blob) {
         delete sc;
         return;
     }
+    ++c.snapshots_inflight;
     stats_.snapshots.inc();
 }
 

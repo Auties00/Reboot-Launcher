@@ -228,7 +228,8 @@ int main(int argc, char** argv) {
         raw->sampled = std::uniform_real_distribution<double>(0, 1)(rng) < sample;
         const Endpoint& ep = eps[(i + 1) % eps.size()];  // cross-edge when several servers are given
         client::Client::Options o{.host = ep.host, .port = ep.port, .role = wire::Role::browser, .features = features,
-                                  .client_version = "sb-loadgen", .local_address = pick_source()};
+                                  .client_version = "sb-loadgen", .local_address = pick_source(),
+                                  .decode_deltas = raw->sampled};
         o.on_event = [&, raw, i](client::Event& e) {
             if (std::holds_alternative<client::Connected>(e)) {
                 st.connected.fetch_add(1);
@@ -236,7 +237,7 @@ int main(int argc, char** argv) {
                     raw->c->subscribe(wire::ViewSpec{.bucket = buckets[(i + s) % 4], .sort = wire::Sort::players}, window);
             } else if (auto* d = std::get_if<client::DeltaEvent>(&e)) {
                 st.deltas.fetch_add(1, std::memory_order_relaxed);
-                st.patches.fetch_add(d->delta.patches.size(), std::memory_order_relaxed);
+                st.patches.fetch_add(d->patch_count, std::memory_order_relaxed);
                 if (!raw->sampled) return;
                 const u64 now = mono_ns();
                 std::lock_guard lk(raw->mu);

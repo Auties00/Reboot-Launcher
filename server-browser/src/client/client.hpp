@@ -58,8 +58,10 @@ struct SnapshotEvent {
     wire::Snapshot snapshot;
 };
 struct DeltaEvent {
-    wire::Delta delta;
+    wire::Delta delta;  // empty when the client was created with decode_deltas = false
     bool via_datagram = true;
+    u32 view_id = 0;
+    u32 patch_count = 0;
 };
 
 using Event = std::variant<Connected, wire::Welcome, wire::SubOpen, SnapshotEvent, DeltaEvent, wire::QueryResult,
@@ -75,6 +77,7 @@ public:
         u64 features = wire::feature::datagrams | wire::feature::zstd;
         std::string client_version = "sb-client/0.1";
         std::optional<IpAddr> local_address;  // source address (load generation)
+        bool decode_deltas = true;            // false: only count patches (load generation)
         std::function<void(Event&)> on_event;
     };
 

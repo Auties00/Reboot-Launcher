@@ -195,7 +195,28 @@ void Client::on_frame(const wire::FrameView& f, bool datagram) {
         }
         case FrameType::delta: {
             DeltaEvent e{.via_datagram = datagram};
-            if (wire::decode_frame(f, e.delta)) emit(Event(std::move(e)));
+            if (opts_.decode_deltas) {
+                if (!wire::decode_frame(f, e.delta)) break;
+                e.view_id = e.delta.view_id;
+                e.patch_count = static_cast<u32>(e.delta.patches.size());
+            } else {
+                // Walk the top-level fields only: view_id (1) and one length-delimited patch each (2).
+                wire::Reader r(f.payload);
+                while (r.ok() && !r.empty()) {
+                    const u64 key = r.varint();
+                    if ((key & 7) == 0) {
+                        const u64 v = r.varint();
+                        if ((key >> 3) == 1) e.view_id = static_cast<u32>(v);
+                    } else if ((key & 7) == 2) {
+                        (void)r.bytes(r.varint());
+                        if ((key >> 3) == 2) ++e.patch_count;
+                    } else {
+                        r.fail();
+                    }
+                }
+                if (!r.ok()) break;
+            }
+            emit(Event(std::move(e)));
             break;
         }
         default: break;

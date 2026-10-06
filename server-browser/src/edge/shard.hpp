@@ -123,6 +123,8 @@ struct Sub {
     u32 pos = 0;  // index in Shard::view_subs_[view_id]
     u32 dirty = 0;
     bool resyncing = false;
+    bool overflow = false;  // marks dropped; a snapshot is owed
+    u64 last_resync_ms = 0;
 };
 
 // Owned by its home shard; MsQuic callbacks arriving on another shard are forwarded.
@@ -155,6 +157,7 @@ struct Conn {
     inplace_vector<Sub, 16> subs;
     DirtySet dirty;
     bool in_ready = false;
+    u32 snapshots_inflight = 0;
 
     TokenBucket query_rate;
     TokenBucket update_rate;
@@ -242,6 +245,7 @@ private:
     void close(Conn& c, u64 app_error, std::string_view reason);
     void drop_subscriptions(Conn& c);
     void request_resync(Conn& c, Sub& s);
+    void maybe_resync(Conn& c, Sub& s);
     [[nodiscard]] Sub* find_sub_by_view(Conn& c, u32 view_id) noexcept;
     [[nodiscard]] Conn* conn_of(u64 packed) noexcept;
     [[nodiscard]] u64 packed(const Conn& c) const noexcept { return c.self.pack(); }
