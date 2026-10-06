@@ -363,12 +363,13 @@ void Shard::fanout(Frame* f) {
             // Subscribers are scattered across the heap: fetch a few ahead to overlap the misses.
             // Three lines cover the send state, the inline dirty set and the first subscriptions.
             if (i + 4 < n) {
-                const char* next = reinterpret_cast<const char*>(subs[i + 4]);
+                const SubRef& ahead = subs[i + 4];
+                const char* next = reinterpret_cast<const char*>(ahead.conn);
                 __builtin_prefetch(next);
                 __builtin_prefetch(next + 64);
-                __builtin_prefetch(next + 128);
+                __builtin_prefetch(ahead.conn->subs.data() + ahead.sub);
             }
-            Conn* c = subs[i];
+            Conn* c = subs[i].conn;
             if (c->closing) continue;
             const u32 cap = c->use_stream ? cap_stream : cap_dgram;
             const bool can_send = c->use_stream ? c->delta_stream != nullptr : (c->dgram_enabled && f->buf.length <= c->max_dgram);
@@ -378,7 +379,8 @@ void Shard::fanout(Frame* f) {
                 ++local;
             } else {
                 // Autocork: the connection is busy, remember what changed and send current values later.
-                for (const FrameItem& it : f->items) mark_dirty(*c, f->view_id, it.handle, it.mask);
+                Sub& sub = c->subs[subs[i].sub];
+                for (const FrameItem& it : f->items) mark_dirty(*c, sub, it.handle, it.mask);
             }
         }
     }
@@ -446,15 +448,17 @@ Sub* Shard::find_sub_by_view(Conn& c, u32 view_id) noexcept {
 }
 
 void Shard::mark_dirty(Conn& c, u32 view_id, u32 handle, u8 mask) {
-    Sub* s = find_sub_by_view(c, view_id);
-    if (!s) return;
-    if (s->sync_pending) {
+    if (Sub* s = find_sub_by_view(c, view_id)) mark_dirty(c, *s, handle, mask);
+}
+
+void Shard::mark_dirty(Conn& c, Sub& s, u32 handle, u8 mask) {
+    if (s.sync_pending) {
         // The pending WindowSync already carries removals; only members still need their values.
         const PubEntry* p = ctx_.replica.pub(handle);
-        if (!p || !p->in_view(view_id)) return;
+        if (!p || !p->in_view(s.view_id)) return;
     }
     stats_.dirty_marks.inc();
-    if (c.dirty.mark(view_id, handle, mask) && ++s->dirty > 2 * s->window) begin_sync(c, *s);
+    if (c.dirty.mark(s.view_id, handle, mask) && ++s.dirty > 2 * s.window) begin_sync(c, s);
     if (c.unsent == 0) schedule_flush(c);
 }
 
@@ -839,11 +843,10 @@ void Shard::drop_subscriptions(Conn& c) {
         if (!s.view_id) continue;
         auto& vec = view_subs_[s.view_id];
         const u32 pos = s.pos;
-        Conn* moved = vec.back();
+        const SubRef moved = vec.back();
         vec[pos] = moved;
         vec.pop_back();
-        if (pos < vec.size())
-            if (Sub* os = find_sub_by_view(*moved, s.view_id)) os->pos = pos;
+        if (pos < vec.size()) moved.conn->subs[moved.sub].pos = pos;
         ctx_.replica.post(index_, packed(c), UnsubscribeReq{.view_id = s.view_id});
     }
     c.subs.clear();
@@ -1052,15 +1055,20 @@ void Shard::on_unsubscribe(Conn& c, const wire::Unsubscribe& m) {
         if (s.sub_id != m.sub_id) continue;
         if (s.view_id) {
             auto& vec = view_subs_[s.view_id];
-            Conn* moved = vec.back();
+            const SubRef moved = vec.back();
             vec[s.pos] = moved;
             vec.pop_back();
-            if (s.pos < vec.size())
-                if (Sub* os = find_sub_by_view(*moved, s.view_id)) os->pos = s.pos;
+            if (s.pos < vec.size()) moved.conn->subs[moved.sub].pos = s.pos;
             c.dirty.erase_view(s.view_id);
             ctx_.replica.post(index_, packed(c), UnsubscribeReq{.view_id = s.view_id});
         }
-        c.subs[i] = c.subs.back();
+        // The last Sub moves into slot i: repoint its index entry.
+        const std::size_t last = c.subs.size() - 1;
+        if (i != last) {
+            c.subs[i] = c.subs[last];
+            const Sub& m = c.subs[i];
+            if (m.view_id) view_subs_[m.view_id][m.pos].sub = static_cast<u32>(i);
+        }
         c.subs.pop_back();
         return;
     }
@@ -1203,7 +1211,7 @@ void Shard::handle_reply(u64 conn, const ReplyPayload& payload) {
                 if (r.view_id >= view_vseq_.size()) view_vseq_.resize(r.view_id + 64, 0);
                 view_vseq_[r.view_id] = std::max(view_vseq_[r.view_id], r.vseq);
                 s->pos = static_cast<u32>(view_subs_[r.view_id].size());
-                view_subs_[r.view_id].push_back(&c);
+                view_subs_[r.view_id].push_back({&c, static_cast<u32>(s - c.subs.data())});
                 send(c, wire::SubOpen{.req_id = r.req_id, .sub_id = r.sub_id, .view_id = r.view_id, .window = r.window});
                 send_snapshot(c, r.snapshot);
             } else if constexpr (std::is_same_v<T, JoinReply>) {

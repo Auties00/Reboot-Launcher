@@ -205,6 +205,7 @@ private:
     void send_error(Conn& c, u32 req_id, wire::ErrorCode code, std::string_view msg, u32 retry_ms = 0);
     void send_snapshot(Conn& c, std::shared_ptr<const registry::SnapshotBlob> blob);
     void mark_dirty(Conn& c, u32 view_id, u32 handle, u8 mask);
+    void mark_dirty(Conn& c, Sub& s, u32 handle, u8 mask);
     void schedule_flush(Conn& c);
     void flush(Conn& c);
     void release_frame(registry::Frame* f);
@@ -234,9 +235,15 @@ private:
     BroadcastRing<registry::RingEvent*>::Consumer& consumer_;
 
     SlotMap<std::unique_ptr<Conn>> conns_;
+    // A subscriber of a view: its Conn and the index of the Sub in conn->subs, so fan-out never
+    // scans subs (whose size field sits past 640 bytes of inline storage, a sure cache miss).
+    struct SubRef {
+        Conn* conn;
+        u32 sub;
+    };
     // view id -> subscribers on this shard; entries leave in drop_subscriptions/on_unsubscribe
     // before their Conn is freed.
-    std::vector<std::vector<Conn*>> view_subs_;
+    std::vector<std::vector<SubRef>> view_subs_;
     std::vector<u64> view_vseq_;                       // latest vseq seen per view
     FlatMap<registry::Frame*, u32> frame_refs_;        // outstanding local sends per frame
     std::vector<std::pair<Conn*, registry::Frame*>> pending_;

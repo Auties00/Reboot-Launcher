@@ -86,7 +86,7 @@ profile_report_body() {
         "${rep[@]}" --no-children --dsos sb-edge --sort sym -g none 2>/dev/null |
             sed -n 's/^ *[0-9.]*% *\[\.\] //p' | grep '^sb::' | head -4 | while IFS= read -r sym; do
                 echo; echo "## Annotated: $sym (instructions at >= 1% of the function)"
-                sudo "$perf" annotate -i "$data" --stdio -s "$sym" 2>/dev/null |
+                sudo "$perf" annotate -i "$data" --stdio -s "$sym" |
                     awk -F: '$1 ~ /^ *[0-9]+\.[0-9]+ *$/ && $1 + 0 >= 1' | sort -rn | head -25
             done
     } > "$out/$1.profile.txt"

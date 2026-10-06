@@ -385,6 +385,7 @@ CMake probes each feature (`cmake/SbFeatures.cmake`), and `std::execution` is no
 - **Per mutation:** O(log n) tree updates for each of up to 24 trees, plus at most about 48 frame encodes. The replica handles tens of thousands of mutations per second on one core.
 - **Per delivery:** one `DatagramSend` of a shared buffer. The kernel and crypto path, about 1.5–3 µs per packet, dominates. MsQuic's epoll datapath already batches receives with `recvmmsg` and uses UDP GSO for sends and GRO for receives; beyond that the per-core ceiling rises with NIC RSS queues and IRQ affinity (see [Datapath](#datapath) for why XDP and io_uring are not options).
 - **MsQuic timer wheel:** stock MsQuic sorts connection timers into one-second slots, so with tens of thousands of connections every send walked a long list (about a quarter of edge CPU in the load test). The build patches the slots to one millisecond (`deploy/docker/patches`).
+- **MsQuic receive buffers:** stock MsQuic zeroes every pooled receive block, which with UDP GRO includes a 64 KB payload buffer, once per `recvmmsg`: every client ACK cost a 64 KB `memset` (about 11% of edge CPU). The build patches it to zero only the bytes that are read.
 - **Memory per idle browser** is about 100 KiB, almost all of it MsQuic and TLS connection state. Our own per-connection state is a small struct and a dirty set that stays empty until the connection falls behind. Snapshots are shared buffers, cached per (view, vseq).
 - **Handshakes:**
   - ECDSA P-256 certificates;

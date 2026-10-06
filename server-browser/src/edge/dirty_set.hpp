@@ -91,7 +91,7 @@ public:
     }
 
 private:
-    void spill() {
+    [[gnu::noinline]] void spill() {
         for (u8 i = 0; i < n_; ++i) map_.emplace(keys_[i], masks_[i]);
         n_ = 0;
         spilled_ = true;
