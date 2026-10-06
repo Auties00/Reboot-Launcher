@@ -41,7 +41,7 @@ end_m, end_b = metrics(f'{out}/{label}.metrics')
 start, stop = ramp_done + 2, ramp_done + 2 + duration
 samples = []
 for line in open(f'{out}/{label}.samples'):
-    t, cpu, rss, browsers, hosts = (float(x) for x in line.split())
+    t, cpu, rss, browsers, hosts = (float(x) for x in line.split()[:5])
     if start <= t <= stop:
         samples.append((t, cpu, rss, browsers + hosts))
 cpu = (samples[-1][1] - samples[0][1]) / (samples[-1][0] - samples[0][0]) if len(samples) >= 2 else float('nan')

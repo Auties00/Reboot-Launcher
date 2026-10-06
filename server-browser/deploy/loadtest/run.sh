@@ -107,6 +107,7 @@ report="$out/report.md"
 
 scenario() {  # scenario LABEL HOSTS RATE BROWSERS SUBS DURATION
     local label="$1" hosts="$2" rate="$3" browsers="$4" subs="$5" duration="$6"
+    sudo dmesg -C 2>/dev/null || true  # so $label.oom holds only this scenario's kills
     start_edge
     docker run --rm --name "sb-loadgen-$label" --network host --user "$(id -u):$(id -g)" --ulimit nofile=1048576:1048576 -v "$out:/out" \
         --entrypoint /usr/local/bin/sb-loadgen "$image" \
@@ -114,10 +115,11 @@ scenario() {  # scenario LABEL HOSTS RATE BROWSERS SUBS DURATION
         --window 50 --duration "$duration" --ramp 2000 --sample 0.05 --report 10 \
         --label "$label" --summary "/out/$label.json" "${binds[@]}" > "$out/$label.log" 2>&1 &
     local lg=$!
-    # Edge samples while the load generator runs: time, cpu seconds, rss, browsers, hosts.
+    # Edge samples while the load generator runs: time, cpu seconds, rss, browsers, hosts, and the
+    # machine's available memory and swap in use (kiB), since edge and load generator share it.
     (
         while kill -0 "$lg" 2>/dev/null; do
-            echo "$(date +%s.%N) $(metric sb_process_cpu_seconds_total) $(metric sb_process_resident_bytes) $(metric sb_connections_browser) $(metric sb_connections_host)"
+            echo "$(date +%s.%N) $(metric sb_process_cpu_seconds_total) $(metric sb_process_resident_bytes) $(metric sb_connections_browser) $(metric sb_connections_host)"                 "$(awk '/MemAvailable/ { a = $2 } /SwapTotal/ { t = $2 } /SwapFree/ { f = $2 } END { print a, t - f }' /proc/meminfo)"
             sleep 2
         done
     ) > "$out/$label.samples" &
@@ -144,8 +146,11 @@ scenario() {  # scenario LABEL HOSTS RATE BROWSERS SUBS DURATION
         fi
         sleep 1
     done
-    wait "$lg" || true
+    local status=0
+    wait "$lg" || status=$?
     wait "$sampler" || true
+    echo "load generator exit status: $status" >> "$out/$label.log"
+    sudo dmesg 2>/dev/null | grep -iE "out of memory|oom-kill|killed process" > "$out/$label.oom" || true
     cat "$out/$label.log"
     curl -s http://127.0.0.1:9100/metrics > "$out/$label.metrics"
     docker logs sb-load-edge > "$out/$label.edge.log" 2>&1
@@ -154,7 +159,8 @@ scenario() {  # scenario LABEL HOSTS RATE BROWSERS SUBS DURATION
         profile_report "$label"
     fi
     docker rm -f sb-load-edge >/dev/null
-    python3 "$here/summarize.py" "$out" "$label" "${ramp_done:-0}" "$duration" >> "$report"
+    python3 "$here/summarize.py" "$out" "$label" "${ramp_done:-0}" "$duration" >> "$report" ||
+        echo "| $label | did not finish: load generator exit status $status (see $label.log, $label.oom) |" >> "$report"
 }
 
 # fanout-max-40k doubles fanout-max's browsers and nothing else: compare their profiles.
