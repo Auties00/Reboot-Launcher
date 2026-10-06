@@ -98,7 +98,7 @@ report="$out/report.md"
 {
     echo "## sb-edge load test"
     echo
-    echo "Machine: $cores vCPU, $(awk '/MemTotal/ { printf "%.1f GiB", $2 / 1048576 }' /proc/meminfo); edge shards: $shards;"
+    echo "Machine: $(awk -F": " '/model name/ { print $2; exit }' /proc/cpuinfo), $cores vCPU, $(awk '/MemTotal/ { printf "%.1f GiB", $2 / 1048576 }' /proc/meminfo); edge shards: $shards;"
     echo "edge and load generator share the machine. Edge figures are sampled during the steady state."
     echo
     echo "| scenario | hosts | browsers × subs | updates/s | deliveries/s | client p50 / p99 | server handoff p99 | edge CPU | loadgen CPU | deliveries per edge core-s | edge RSS | RSS per conn | autocorked | window syncs | errors |"
