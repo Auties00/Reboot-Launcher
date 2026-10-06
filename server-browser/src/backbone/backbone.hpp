@@ -1,6 +1,6 @@
 #pragma once
 
-// Cluster replication. Two paths (docs/ARCHITECTURE.md):
+// Cluster replication. Two paths (README.md, "Replication"):
 //   lifecycle - durable, totally ordered, compare-and-set per entry (JetStream subject reg.e.<uuid>)
 //   soft      - fire-and-forget fan-out of latest-value-wins changes (core NATS live.<uuid>)
 // Every delivery lands in the replica inbox as a ReplicaMsg, including the edge's own lifecycle

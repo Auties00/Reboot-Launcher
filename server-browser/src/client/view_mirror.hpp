@@ -1,7 +1,7 @@
 #pragma once
 
 // Client-side state of one subscribed view: the reference implementation of the delta rules
-// in docs/PROTOCOL.md. Datagrams may be lost, duplicated or reordered; applying snapshots and
+// in README.md ("Applying deltas"). Datagrams may be lost, duplicated or reordered; applying snapshots and
 // patches through this class always converges to the server's window.
 
 #include <algorithm>

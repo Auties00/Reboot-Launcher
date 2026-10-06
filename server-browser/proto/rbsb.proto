@@ -5,7 +5,7 @@
 // tests/vectors holds protoc-encoded golden messages that both sides must reproduce byte for byte.
 // Rules: fields are append-only; never renumber or reuse a field number.
 //
-// Transport (see docs/PROTOCOL.md):
+// Transport (see README.md, "Protocol"):
 //   control  - first client-opened bidirectional stream, frames in both directions
 //   snapshot - server-opened unidirectional stream carrying exactly one Snapshot frame
 //   datagram - QUIC DATAGRAM frames: Delta (server->client), HostHeartbeat (client->server)
