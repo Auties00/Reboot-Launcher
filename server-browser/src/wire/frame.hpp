@@ -18,8 +18,7 @@ enum class LenWidth : u8 { two = 2, four = 4 };
 template <class T>
 void encode_frame(Writer& w, const T& msg, LenWidth width = LenWidth::four) {
     w.quic_varint(static_cast<u64>(frame_type_v<T>));
-    const std::size_t at = w.size();
-    w.raw().resize(at + static_cast<std::size_t>(width));
+    const std::size_t at = w.skip(static_cast<std::size_t>(width));
     encode(w, msg);
     const std::size_t len = w.size() - at - static_cast<std::size_t>(width);
     u8* p = w.data() + at;

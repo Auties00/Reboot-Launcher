@@ -42,11 +42,12 @@ if [ -n "$profile" ]; then
     fi
 fi
 
-# Samples the edge on CPU for 20 s: call stacks are unwound from DWARF, so no frame pointers needed.
+# Samples the edge on CPU for 20 s. sb-edge and MsQuic keep frame pointers, so stacks unwind
+# through them; a frame missing from a leaf in libc (built without) shows its caller's caller.
 start_profile() {  # start_profile LABEL; sets the caller's perf_pid
     local pid
     pid="$(docker inspect -f '{{.State.Pid}}' sb-load-edge)"
-    sudo "$perf" record -q -e cpu-clock -F 499 --call-graph dwarf,8192 -p "$pid" \
+    sudo "$perf" record -q -e cpu-clock -F 499 --call-graph fp -p "$pid" \
         -o "$out/$1.perf.data" -- sleep 20 > "$out/$1.perf.log" 2>&1 &
     perf_pid=$!
 }
@@ -65,6 +66,16 @@ profile_report() {  # profile_report LABEL
         echo; echo "## Shard threads, inclusive time"
         "${rep[@]}" --children --comms "$(printf 'sb-shard-%s,' $(seq 0 $((shards - 1))) | sed 's/,$//')" \
             --sort sym -g none --percent-limit 2 2>/dev/null | head -80
+        echo; echo "## Callers of libc and the kernel (who pays for copies, locks and syscalls)"
+        "${rep[@]}" --no-children --dsos libc.so.6,'[kernel.kallsyms]' --sort dso -g caller,2,callee,function \
+            --percent-limit 2 2>/dev/null | head -120
+        # Hot instructions of our hottest functions: shows which loads miss and which branch costs.
+        "${rep[@]}" --no-children --dsos sb-edge --sort sym -g none -F sym 2>/dev/null |
+            sed -n 's/^ *\[\.\] //p' | head -4 | while IFS= read -r sym; do
+                echo; echo "## Annotated: $sym (instructions at >= 1% of the function)"
+                sudo "$perf" annotate -i "$data" --stdio -s "$sym" 2>/dev/null |
+                    awk -F: '$1 ~ /^ *[0-9]+\.[0-9]+ *$/ && $1 + 0 >= 1' | sort -rn | head -25
+            done
     } > "$out/$1.profile.txt"
     if [ -x "$flamegraph/flamegraph.pl" ]; then
         sudo "$perf" script -i "$data" 2>/dev/null | "$flamegraph/stackcollapse-perf.pl" > "$out/$1.folded"

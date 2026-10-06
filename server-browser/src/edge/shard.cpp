@@ -19,6 +19,14 @@ using namespace registry;
 
 thread_local Shard* Shard::current = nullptr;
 
+// Per-connection coalesced datagram (or delta-stream chunk) built from current values. Pooled per
+// shard: the buffers keep their capacity between sends.
+struct FlushSend {
+    QUIC_BUFFER qb{};
+    std::vector<u8> bytes;
+    std::vector<std::pair<u64, u8>> items;  // (view << 32 | handle, mask) for loss repair
+};
+
 namespace {
 
 constexpr std::uintptr_t kFlushTag = 1;
@@ -40,13 +48,6 @@ struct CtrlSend {
 struct SnapSend {
     QUIC_BUFFER qb{};
     std::shared_ptr<const SnapshotBlob> blob;
-};
-
-// Per-connection coalesced datagram (or delta-stream chunk) built from current values.
-struct FlushSend {
-    QUIC_BUFFER qb{};
-    std::vector<u8> bytes;
-    std::vector<std::pair<u64, u8>> items;  // (view << 32 | handle, mask) for loss repair
 };
 
 void* tag_flush(FlushSend* f) { return reinterpret_cast<void*>(reinterpret_cast<std::uintptr_t>(f) | kFlushTag); }
@@ -149,6 +150,7 @@ Shard::Shard(EdgeContext& ctx, u16 index, std::vector<Shard*>& all)
 
 Shard::~Shard() {
     while (MpscNode* n = mailbox_.pop()) delete static_cast<ShardMsg*>(n);
+    for (FlushSend* fs : flush_pool_) delete fs;
     if (epfd_ >= 0) ::close(epfd_);
 }
 
@@ -417,6 +419,23 @@ void Shard::release_frame(Frame* f) {
     }
 }
 
+FlushSend* Shard::acquire_flush() {
+    if (flush_pool_.empty()) return new FlushSend();
+    FlushSend* fs = flush_pool_.back();
+    flush_pool_.pop_back();
+    return fs;
+}
+
+void Shard::release_flush(FlushSend* fs) {
+    // Bounded so a burst of in-flight sends does not stay allocated forever.
+    if (flush_pool_.size() >= 4096) {
+        delete fs;
+        return;
+    }
+    fs->items.clear();
+    flush_pool_.push_back(fs);
+}
+
 Sub* Shard::find_sub_by_view(Conn& c, u32 view_id) noexcept {
     for (Sub& s : c.subs)
         if (s.view_id == view_id) return &s;
@@ -501,9 +520,21 @@ void Shard::flush(Conn& c) {
     c.dirty.take_sorted(scratch_dirty_);
     for (Sub& s : c.subs) s.dirty = 0;
 
-    wire::Writer out(limit);
-    wire::Writer pw(256);
-    std::vector<std::pair<u64, u8>> items;
+    FlushSend* fs = acquire_flush();
+    wire::Writer out(std::move(fs->bytes), limit);
+    // Every exit returns the spare send (and the buffer `out` borrowed from it) to the pool.
+    struct SpareGuard {
+        Shard& sh;
+        FlushSend*& fs;
+        wire::Writer& out;
+        ~SpareGuard() {
+            fs->bytes = out.take();
+            sh.release_flush(fs);
+        }
+    } spare{*this, fs, out};
+    wire::Writer& pw = patch_scratch_;
+    auto& items = flush_items_;
+    items.clear();
     u32 cur_view = 0;
     std::size_t frame_at = 0;
     auto close_frame = [&] {
@@ -513,23 +544,25 @@ void Shard::flush(Conn& c) {
         out.data()[frame_at + 3] = static_cast<u8>(len);
         cur_view = 0;
     };
+    // Hands the datagram built so far to MsQuic and starts the next one in a pooled send.
     auto emit = [&]() -> bool {
         close_frame();
         if (out.size() == 0) return true;
-        auto* fs = new FlushSend();
-        fs->bytes = out.take();
-        fs->items = std::move(items);
+        FlushSend* sent = fs;
+        sent->bytes = out.take();
+        sent->qb.Buffer = sent->bytes.data();
+        sent->qb.Length = static_cast<u32>(sent->bytes.size());
+        sent->items.assign(items.begin(), items.end());
         items.clear();
-        fs->qb.Buffer = fs->bytes.data();
-        fs->qb.Length = static_cast<u32>(fs->bytes.size());
+        fs = acquire_flush();
+        out = wire::Writer(std::move(fs->bytes), limit);
         const QUIC_STATUS st = c.use_stream
-                                   ? api_->StreamSend(c.delta_stream, &fs->qb, 1, QUIC_SEND_FLAG_NONE, tag_flush(fs))
-                                   : api_->DatagramSend(c.h, &fs->qb, 1, QUIC_SEND_FLAG_NONE, tag_flush(fs));
-        out = wire::Writer(limit);
+                                   ? api_->StreamSend(c.delta_stream, &sent->qb, 1, QUIC_SEND_FLAG_NONE, tag_flush(sent))
+                                   : api_->DatagramSend(c.h, &sent->qb, 1, QUIC_SEND_FLAG_NONE, tag_flush(sent));
         if (QUIC_FAILED(st)) {
             stats_.dgram_failed.inc();
-            for (auto [k, m] : fs->items) requeue(c, k, m);
-            delete fs;
+            for (auto [k, m] : sent->items) requeue(c, k, m);
+            release_flush(sent);
             return false;
         }
         if (c.unsent++ == 0) c.last_progress_ms = now_ms_;
@@ -636,7 +669,7 @@ void Shard::repair(Conn& c, void* ctx, bool flush_ctx) {
 
 void Shard::finish_send(Conn& c, void* ctx, bool flush_ctx) {
     (void)c;
-    if (flush_ctx) delete static_cast<FlushSend*>(ctx);
+    if (flush_ctx) release_flush(static_cast<FlushSend*>(ctx));
     else release_frame(static_cast<Frame*>(ctx));
 }
 

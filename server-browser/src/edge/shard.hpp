@@ -79,6 +79,7 @@ struct ShardStats {
 };
 
 class Shard;
+struct FlushSend;
 
 // Per-connection latest-value-wins set of (view, entry) pairs whose current state still has to
 // reach the client. Bounded by the subscribed windows: past 2x window, removals collapse into a
@@ -257,6 +258,8 @@ private:
     void schedule_flush(Conn& c);
     void flush(Conn& c);
     void release_frame(registry::Frame* f);
+    FlushSend* acquire_flush();
+    void release_flush(FlushSend* fs);
     void close(Conn& c, u64 app_error, std::string_view reason);
     void drop_subscriptions(Conn& c);
     void begin_sync(Conn& c, Sub& s);
@@ -289,6 +292,9 @@ private:
     std::vector<std::pair<Conn*, registry::Frame*>> pending_;
     std::vector<SlotHandle> ready_;
     std::vector<std::pair<u64, u8>> scratch_dirty_;
+    std::vector<std::pair<u64, u8>> flush_items_;  // items of the datagram being built
+    wire::Writer patch_scratch_{256};
+    std::vector<FlushSend*> flush_pool_;
     TimerWheel wheel_{100};
     u64 last_sweep_ms_ = 0;
     u64 now_ms_ = 0;

@@ -233,3 +233,32 @@ TEST_CASE("datagram frames use two-byte lengths", "[codec]") {
     }));
     CHECK(frames == 1);
 }
+
+TEST_CASE("writer grows, reuses recycled buffers and hands them back", "[codec]") {
+    Writer w(4);
+    for (u32 i = 0; i < 1000; ++i) w.varint(i * 977u);
+    w.put(std::string_view("tail"));
+    Reader r(w.view());
+    for (u32 i = 0; i < 1000; ++i) CHECK(r.varint() == i * 977u);
+    CHECK(r.remaining() == 4);
+
+    Bytes taken = w.take();
+    CHECK(w.size() == 0);
+    const std::size_t cap = taken.capacity();
+    const u8* storage = taken.data();
+    Writer again(std::move(taken), 16);
+    again.put(u8{7});
+    CHECK(again.size() == 1);
+    CHECK(again.data() == storage);  // recycled allocation, not a new one
+    CHECK(again.view()[0] == 7);
+    const Bytes out = again.take();
+    CHECK(out.size() == 1);
+    CHECK(out.capacity() == cap);
+
+    Writer g;
+    g.put(std::string_view("abef"));
+    g.insert_gap(2, 2);
+    g.data()[2] = 'c';
+    g.data()[3] = 'd';
+    CHECK(std::string_view(reinterpret_cast<const char*>(g.data()), g.size()) == "abcdef");
+}

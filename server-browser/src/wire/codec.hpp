@@ -150,10 +150,8 @@ void encode_nested(Writer& w, const T& msg) {
     encode(w, msg);
     const std::size_t len = w.size() - at - 1;
     const std::size_t vs = varint_size(len);
-    auto& raw = w.raw();
-    if (vs > 1) {
-        raw.insert(raw.begin() + static_cast<std::ptrdiff_t>(at + 1), vs - 1, u8{0});
-    }
+    if (vs > 1) w.insert_gap(at + 1, vs - 1);
+    u8* raw = w.data();
     u64 v = len;
     for (std::size_t i = 0; i < vs; ++i) {
         raw[at + i] = static_cast<u8>((v & 0x7F) | (i + 1 < vs ? 0x80 : 0));

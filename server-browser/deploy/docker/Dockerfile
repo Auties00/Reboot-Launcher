@@ -28,6 +28,7 @@ RUN git clone --depth 1 --branch ${MSQUIC_VERSION} https://github.com/microsoft/
         -DQUIC_TLS_LIB=openssl -DQUIC_USE_EXTERNAL_OPENSSL=ON -DQUIC_BUILD_SHARED=ON \
         -DQUIC_BUILD_TOOLS=OFF -DQUIC_BUILD_TEST=OFF -DQUIC_BUILD_PERF=OFF -DQUIC_ENABLE_LOGGING=OFF \
         -DQUIC_EMBED_GIT_HASH=OFF -DCMAKE_INSTALL_PREFIX=/opt/msquic \
+        -DCMAKE_C_FLAGS="-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer" \
     && cmake --build /src/msquic/build && cmake --install /src/msquic/build && rm -rf /src/msquic
 RUN git clone https://github.com/microsoft/vcpkg /opt/vcpkg && git -C /opt/vcpkg checkout ${VCPKG_COMMIT} \
     && /opt/vcpkg/bootstrap-vcpkg.sh -disableMetrics
