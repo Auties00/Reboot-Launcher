@@ -1,6 +1,7 @@
 #include "harness.hpp"
 
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <spawn.h>

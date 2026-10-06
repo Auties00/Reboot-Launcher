@@ -1,6 +1,7 @@
 # sb_core: portable logic (wire, registry, search, security, inproc backbone). No MsQuic.
 add_library(sb_core STATIC
   backbone/inproc.cpp
+  core/contracts.cpp
   ops/log.cpp
   registry/replica.cpp
   registry/search.cpp
