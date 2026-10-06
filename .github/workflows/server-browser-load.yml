@@ -3,7 +3,7 @@ name: server-browser load test
 on:
   workflow_dispatch:
   push:
-    paths: ["server-browser/deploy/loadtest/**", ".github/workflows/server-browser-load.yml"]
+    paths: ["server-browser/deploy/loadtest/**", "server-browser/deploy/docker/**", ".github/workflows/server-browser-load.yml"]
   schedule:
     - cron: "41 4 * * 0"  # weekly
 

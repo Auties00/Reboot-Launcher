@@ -51,6 +51,16 @@ RUN --mount=type=cache,target=/root/.cache/vcpkg \
     cmake --preset gcc-release -DVCPKG_INSTALLED_DIR=/opt/vcpkg_installed \
         -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc" \
     && cmake --build --preset gcc-release -- -k 0
+# Collect every shared library the binaries and MsQuic need (libatomic from GCC 16, OpenSSL,
+# libnuma, ...) except glibc itself, so the runtime image does not depend on what its base ships.
+RUN mkdir -p /opt/sb-runtime/lib \
+    && for f in build/gcc-release/apps/sb-edge build/gcc-release/apps/sb-cli build/gcc-release/apps/sb-loadgen \
+                /opt/msquic/lib/libmsquic.so; do ldd "$f"; done \
+       | awk '$3 ~ /^\// { print $3 }' | sort -u \
+       | grep -vE '/(libc|libm|libdl|librt|libpthread|ld-linux[^/]*)\.so' \
+       | xargs -r -I{} cp -L {} /opt/sb-runtime/lib/ \
+    && cp -L /opt/msquic/lib/libmsquic.so* /opt/sb-runtime/lib/ \
+    && ls /opt/sb-runtime/lib
 
 # ---- test: unit + integration (inproc and a local NATS JetStream) ------------------------------
 FROM build AS test
@@ -79,12 +89,16 @@ RUN --mount=type=cache,target=/root/.cache/vcpkg \
 
 # ---- runtime ---------------------------------------------------------------------------------
 FROM gcr.io/distroless/cc-debian13 AS runtime
-COPY --from=toolchain /opt/msquic/lib/libmsquic.so* /usr/lib/
+COPY --from=build /opt/sb-runtime/lib /usr/local/lib/sb
+ENV LD_LIBRARY_PATH=/usr/local/lib/sb
 COPY --from=geoip /usr/share/sb/geoip /usr/share/sb/geoip
 COPY --from=build /src/server-browser/build/gcc-release/apps/sb-edge /usr/local/bin/sb-edge
 COPY --from=build /src/server-browser/build/gcc-release/apps/sb-cli /usr/local/bin/sb-cli
 COPY --from=build /src/server-browser/build/gcc-release/apps/sb-loadgen /usr/local/bin/sb-loadgen
 USER nonroot
 EXPOSE 443/udp 9100/tcp
+# Fail the image build if anything is still unresolved (distroless has no shell, so check by running).
+RUN ["/usr/local/bin/sb-edge", "--help"]
+RUN ["/usr/local/bin/sb-loadgen", "--help"]
 ENTRYPOINT ["/usr/local/bin/sb-edge"]
 CMD ["--config", "/etc/sb/edge.toml"]
