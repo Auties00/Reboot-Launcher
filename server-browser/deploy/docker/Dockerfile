@@ -45,7 +45,7 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/vcpkg \
     cmake --preset gcc-release -DVCPKG_INSTALLED_DIR=/opt/vcpkg_installed \
         -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc" \
-    && cmake --build --preset gcc-release
+    && cmake --build --preset gcc-release -- -k 0
 
 # ---- test: unit + integration (inproc and a local NATS JetStream) ------------------------------
 FROM build AS test
@@ -55,7 +55,7 @@ RUN (nats-server -js -sd /tmp/js -p 4222 >/tmp/nats.log 2>&1 &) \
 # ---- sanitizers and fuzzing (Clang: Boost.PFR codec path, libFuzzer) -------------------------
 FROM deps AS sanitize
 ARG LLVM_VERSION=21
-RUN apt-get update && apt-get install -y --no-install-recommends lsb-release wget gnupg software-properties-common \
+RUN apt-get update && apt-get install -y --no-install-recommends lsb-release wget gnupg \
     && wget -qO- https://apt.llvm.org/llvm.sh | bash -s -- ${LLVM_VERSION} \
     && ln -sf /usr/bin/clang-${LLVM_VERSION} /usr/local/bin/clang \
     && ln -sf /usr/bin/clang++-${LLVM_VERSION} /usr/local/bin/clang++ \
@@ -63,7 +63,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends lsb-release wge
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/vcpkg \
     cmake --preset clang-asan -DVCPKG_INSTALLED_DIR=/opt/vcpkg_installed \
-    && cmake --build --preset clang-asan \
+    && cmake --build --preset clang-asan -- -k 0 \
     && (nats-server -js -sd /tmp/js -p 4222 >/tmp/nats.log 2>&1 &) && sleep 1 \
     && SB_NATS_URL=nats://127.0.0.1:4222 ctest --preset clang-asan --output-on-failure \
     && for f in fuzz_messages fuzz_framer fuzz_mirror; do \

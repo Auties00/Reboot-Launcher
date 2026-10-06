@@ -24,7 +24,8 @@ namespace detail {
     return v;
 }
 [[nodiscard]] inline u64 mum(u64 a, u64 b) noexcept {
-    const auto r = static_cast<unsigned __int128>(a) * b;
+    __extension__ using u128 = unsigned __int128;
+    const auto r = static_cast<u128>(a) * b;
     return static_cast<u64>(r) ^ static_cast<u64>(r >> 64);
 }
 }  // namespace detail
