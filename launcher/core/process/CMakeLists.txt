@@ -1,0 +1,16 @@
+reboot_add_package(process
+  SOURCES
+    src/built_env.cpp
+    src/child_channel.cpp
+    src/child_reply.cpp
+    src/child_supervisor.cpp
+    src/env_builder.cpp
+    src/line_reader.cpp
+    src/log_string.cpp
+    src/messages.cpp
+    src/orphan_reaper.cpp
+    src/process_spec.cpp
+    src/windows_command_line.cpp
+    src/wiping_launch.cpp
+  PUBLIC_DEPS
+    reboot::storage)

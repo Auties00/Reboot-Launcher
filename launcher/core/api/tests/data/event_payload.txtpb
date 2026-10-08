@@ -1,0 +1,13 @@
+# proto-file: reboot/api/v1/events.proto
+# proto-message: reboot.api.v1.EventPayload
+log_line {
+  entry {
+    seq: 1
+    unix_ms: 1700000000123
+    level: LOG_LEVEL_WARN
+    category: LOG_CATEGORY_HOST
+    session { uuid: "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020" }
+    text: "bound 7777"
+  }
+  dropped: 2
+}

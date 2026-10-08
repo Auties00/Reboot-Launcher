@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/backend.proto";
+import "reboot/api/v1/browser.proto";
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+import "reboot/api/v1/secrets.proto";
+import "reboot/api/v1/sessions.proto";
+
+// Mirrors reboot::UserRequestKind, in order.
+enum UserRequestKind {
+  USER_REQUEST_KIND_NEEDS_SECRET = 0;
+  USER_REQUEST_KIND_CONFIRM_JOIN = 1;
+  USER_REQUEST_KIND_NEEDS_JOIN_PASSWORD = 2;
+  USER_REQUEST_KIND_AUTO_SERVER_CONSENT = 3;
+  USER_REQUEST_KIND_CONFIRM_UNENCRYPTED_UPSTREAM = 4;
+  USER_REQUEST_KIND_ACCOUNT_RENAME_CONFLICT = 5;
+  USER_REQUEST_KIND_ROSETTA_INSTALL = 6;
+  USER_REQUEST_KIND_AGENT_REQUIRES_APPROVAL = 7;
+  USER_REQUEST_KIND_CHOOSE_VERSION = 8;
+  USER_REQUEST_KIND_CONFIRM_UNTESTED = 9;
+  USER_REQUEST_KIND_CONFIRM_STOP_SESSIONS = 10;
+}
+
+// Mirrors reboot::RequestResolution.
+enum RequestResolution {
+  REQUEST_RESOLUTION_ANSWERED = 0;
+  // Its operation ended or was cancelled first.
+  REQUEST_RESOLUTION_WITHDRAWN = 1;
+}
+
+message NeedsSecretPrompt {
+  SecretTarget target = 1;
+}
+
+message ConfirmJoinPrompt {
+  ServerEntry server = 1;
+}
+
+message NeedsJoinPasswordPrompt {
+  ServerEntry server = 1;
+  // The previous password was wrong.
+  bool retry = 2;
+}
+
+message AutoServerConsentPrompt {
+  GameVersion version = 1;
+}
+
+message ConfirmUnencryptedUpstreamPrompt {
+  string origin = 1;
+}
+
+message AccountRenameConflictPrompt {
+  string account_id = 1;
+  string display_name = 2;
+  string conflicting_account_id = 3;
+}
+
+message RosettaInstallPrompt {}
+
+message AgentRequiresApprovalPrompt {}
+
+message ChooseVersionPrompt {
+  Path build_root = 1;
+  // What the detector read, if anything; empty when nothing was found.
+  string detected = 2;
+  repeated GameVersion candidates = 3;
+}
+
+message ConfirmUntestedPrompt {
+  GameVersion version = 1;
+  GameRole role = 2;
+  RunnerKind runner = 3;
+  repeated Diagnostic reasons = 4;
+}
+
+message ConfirmStopSessionsPrompt {
+  repeated SessionSummary sessions = 1;
+}
+
+message RequestPrompt {
+  oneof prompt {
+    NeedsSecretPrompt needs_secret = 1;
+    ConfirmJoinPrompt confirm_join = 2;
+    NeedsJoinPasswordPrompt needs_join_password = 3;
+    AutoServerConsentPrompt auto_server_consent = 4;
+    ConfirmUnencryptedUpstreamPrompt confirm_unencrypted_upstream = 5;
+    AccountRenameConflictPrompt account_rename_conflict = 6;
+    RosettaInstallPrompt rosetta_install = 7;
+    AgentRequiresApprovalPrompt agent_requires_approval = 8;
+    ChooseVersionPrompt choose_version = 9;
+    ConfirmUntestedPrompt confirm_untested = 10;
+    ConfirmStopSessionsPrompt confirm_stop_sessions = 11;
+  }
+}
+
+message Decision {
+  bool accept = 1;
+  // Apply the same answer to this subject from now on.
+  bool remember = 2;
+}
+
+message RequestAnswer {
+  oneof answer {
+    Decision decision = 1;
+    // ChooseVersion.
+    GameVersion version = 2;
+    // AccountRenameConflict; ASK is refused.
+    RenameConflict rename = 3;
+    // NeedsSecret and NeedsJoinPassword, after rb_secret_put stored the secret.
+    bool secret_provided = 4;
+  }
+}
+
+message UserActionRequired {
+  uint64 request_id = 1;
+  UserRequestKind kind = 2;
+  optional uint64 op_id = 3;
+  optional SessionId session = 4;
+  RequestPrompt prompt = 5;
+}
+
+message UserActionResolved {
+  uint64 request_id = 1;
+  RequestResolution resolution = 2;
+}
+
+message RequestsPendingRequest {}
+
+message RequestsPendingResponse {
+  repeated UserActionRequired requests = 1;
+}
+
+// The first valid answer wins; later ones get requests.already_resolved.
+message RequestsRespondRequest {
+  uint64 request_id = 1;
+  RequestAnswer answer = 2;
+}
+
+message RequestsRespondResponse {}
+
+// Questions the engine asks a human.
+service Requests {
+  option (service_info) = {id: 21};
+
+  rpc Pending(RequestsPendingRequest) returns (RequestsPendingResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Respond(RequestsRespondRequest) returns (RequestsRespondResponse) {
+    option (method_info) = {id: 2};
+  }
+}

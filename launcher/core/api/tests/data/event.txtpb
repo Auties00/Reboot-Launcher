@@ -1,0 +1,7 @@
+# proto-file: reboot/api/v1/common.proto
+# proto-message: reboot.api.v1.Event
+kind: EVENT_KIND_LOG_LINE
+epoch: 3
+seq: 1000
+session: "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020"
+payload: "\372\001\000"

@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "revision": 4,
+  "values": {
+    "client.game_culture": "system",
+    "play.custom_args": "",
+    "play.custom_auth_dll": null,
+    "play.env": "",
+    "play.verbose_wine_log": false,
+    "backend.target": {
+      "kind": "embedded",
+      "local": {
+        "host": "127.0.0.1",
+        "port": 3551
+      }
+    },
+    "backend.allow_lan": false,
+    "backend.console_key": "F8",
+    "host.update_policy": "after_match",
+    "host.listing": "unlisted",
+    "updates.channel": "stable",
+    "updates.auto_check": true,
+    "ui.language": "system",
+    "ui.theme": "system"
+  }
+}

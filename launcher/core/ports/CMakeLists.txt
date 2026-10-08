@@ -1,0 +1,5 @@
+add_library(reboot_ports INTERFACE)
+add_library(reboot::ports ALIAS reboot_ports)
+target_include_directories(reboot_ports INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(reboot_ports INTERFACE reboot::foundation reboot::contracts)
+_reboot_record_target(reboot_ports foundation)

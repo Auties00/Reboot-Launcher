@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+enum VersionSource {
+  VERSION_SOURCE_PE_STRING = 0;
+  VERSION_SOURCE_CHANGELIST_MAP = 1;
+  VERSION_SOURCE_RAW_SCAN = 2;
+  VERSION_SOURCE_CATALOG = 3;
+  VERSION_SOURCE_USER = 4;
+}
+
+enum RemoveFiles {
+  REMOVE_FILES_KEEP = 0;
+  REMOVE_FILES_TRASH = 1;
+  REMOVE_FILES_DELETE = 2;
+}
+
+enum LibraryChange {
+  LIBRARY_CHANGE_ADDED = 0;
+  LIBRARY_CHANGE_UPDATED = 1;
+  LIBRARY_CHANGE_REMOVED = 2;
+  LIBRARY_CHANGE_SELECTION_CHANGED = 3;
+}
+
+message Build {
+  BuildId id = 1;
+  string name = 2;
+  // The build root, never Binaries\Win64.
+  Path root = 3;
+  GameVersion version = 4;
+  optional uint32 changelist = 5;
+  VersionSource version_source = 6;
+  optional string catalog_entry = 7;
+  uint64 added_unix_ms = 8;
+  // False when the layout no longer resolves on disk.
+  bool present = 9;
+}
+
+message LibraryListRequest {}
+
+message LibraryListResponse {
+  repeated Build builds = 1;
+  optional BuildId selected_client = 2;
+  optional BuildId selected_host = 3;
+}
+
+message LibraryGetRequest {
+  BuildId id = 1;
+}
+
+message LibraryGetResponse {
+  Build build = 1;
+}
+
+message LibrarySelectRequest {
+  GameRole role = 1;
+  // Absent clears the selection.
+  optional BuildId id = 2;
+}
+
+message LibrarySelectResponse {}
+
+// Absent fields keep their value.
+message LibraryUpdateRequest {
+  BuildId id = 1;
+  optional string name = 2;
+  optional GameVersion version = 3;
+  optional uint32 changelist = 4;
+}
+
+message LibraryUpdateResponse {
+  Build build = 1;
+}
+
+// Detects the version at `root`; files of another confirmed version are refused.
+message LibraryRelocateRequest {
+  BuildId id = 1;
+  Path root = 2;
+  RunningPolicy running_policy = 3;
+}
+
+message LibraryRelocateResponse {
+  Build build = 1;
+}
+
+// Without a version the import asks ChooseVersion when detection is not conclusive.
+message LibraryImportRequest {
+  Path path = 1;
+  string name = 2;
+  optional GameVersion version = 3;
+  optional uint32 changelist = 4;
+}
+
+message LibraryImportResponse {
+  Build build = 1;
+}
+
+message LibraryRemoveRequest {
+  BuildId id = 1;
+  RemoveFiles files = 2;
+  RunningPolicy running_policy = 3;
+}
+
+message LibraryRemoveResponse {}
+
+message LibraryChanged {
+  LibraryChange change = 1;
+  optional BuildId build = 2;
+}
+
+// Installed builds and the per-role selection.
+service Library {
+  option (service_info) = {id: 3};
+
+  rpc List(LibraryListRequest) returns (LibraryListResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Get(LibraryGetRequest) returns (LibraryGetResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc Select(LibrarySelectRequest) returns (LibrarySelectResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc Update(LibraryUpdateRequest) returns (LibraryUpdateResponse) {
+    option (method_info) = {id: 4};
+  }
+  rpc Relocate(LibraryRelocateRequest) returns (LibraryRelocateResponse) {
+    option (method_info) = {
+      id: 5
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_ITEM_COUNT
+    };
+  }
+  rpc Import(LibraryImportRequest) returns (LibraryImportResponse) {
+    option (method_info) = {
+      id: 6
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_ITEM_COUNT
+    };
+  }
+  rpc Remove(LibraryRemoveRequest) returns (LibraryRemoveResponse) {
+    option (method_info) = {
+      id: 7
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_ITEM_COUNT
+    };
+  }
+}

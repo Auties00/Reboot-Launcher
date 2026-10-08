@@ -1,0 +1,87 @@
+#include <catch2/catch_message.hpp>
+#include <catch2/catch_test_macros.hpp>
+
+#include <string_view>
+
+#include "engine_socket_path.hpp"
+#include "messages.hpp"
+
+using reboot::ArgSpec;
+using reboot::Diagnostic;
+using reboot::MessageSpec;
+using reboot::NativePath;
+using reboot::Result;
+using reboot::os_linux::ipc::check_engine_socket_path;
+using reboot::os_linux::ipc::engine_socket_path;
+
+namespace {
+
+const NativePath kRuntimeBase{"/run/user/1000"};
+constexpr std::string_view kHash = "0123456789abcdef";
+constexpr std::string_view kExpected = "/run/user/1000/reboot-launcher/0123456789abcdef.sock";
+
+const MessageSpec* find_spec(std::string_view id) {
+    for (const MessageSpec* spec : reboot::message_registry())
+        if (spec->id == id) return spec;
+    return nullptr;
+}
+
+void check_rejected(const NativePath& runtime_base, std::string_view endpoint_name) {
+    INFO(endpoint_name);
+    const Result<NativePath> result = check_engine_socket_path(runtime_base, endpoint_name);
+    REQUIRE_FALSE(result);
+    CHECK(result.error().is(reboot::posix::kEndpointUntrusted));
+    REQUIRE(result.error().causes.size() == 1);
+    CHECK(result.error().causes.front().is(reboot::os_linux::ipc::kEndpointOutsideRuntimeDir));
+}
+
+}  // namespace
+
+TEST_CASE("the socket sits in reboot-launcher under the runtime base", "[engine_socket_path]") {
+    CHECK(engine_socket_path(kRuntimeBase, kHash).string() == kExpected);
+    CHECK(engine_socket_path(NativePath{"/run/user/1000/"}, kHash).string() == kExpected);
+    CHECK(engine_socket_path(NativePath{"/tmp/reboot-launcher-1000"}, kHash).string() ==
+          "/tmp/reboot-launcher-1000/reboot-launcher/0123456789abcdef.sock");
+    CHECK(engine_socket_path(NativePath{}, kHash).empty());
+}
+
+TEST_CASE("exactly the expected socket path is accepted", "[engine_socket_path]") {
+    const Result<NativePath> result = check_engine_socket_path(kRuntimeBase, kExpected);
+    REQUIRE(result);
+    CHECK(result->string() == kExpected);
+}
+
+TEST_CASE("any other socket path is untrusted", "[engine_socket_path]") {
+    check_rejected(kRuntimeBase, "");
+    check_rejected(kRuntimeBase, "/run/user/1000/reboot-launcher/0123456789abcdef");
+    check_rejected(kRuntimeBase, "/run/user/1000/reboot-launcher/0123456789abcdef.socket");
+    check_rejected(kRuntimeBase, "/run/user/1000/other/0123456789abcdef.sock");
+    check_rejected(kRuntimeBase, "/run/user/1001/reboot-launcher/0123456789abcdef.sock");
+    check_rejected(kRuntimeBase, "/tmp/reboot-launcher-1000/reboot-launcher/0123456789abcdef.sock");
+    check_rejected(kRuntimeBase, "/run/user/1000/reboot-launcher/../reboot-launcher/0123456789abcdef.sock");
+    check_rejected(kRuntimeBase, "/run/user/1000/reboot-launcher/sub/0123456789abcdef.sock");
+    check_rejected(kRuntimeBase, "/run/user/1000/reboot-launcher/..sock");
+    check_rejected(kRuntimeBase, "/run/user/1000/reboot-launcher/.sock");
+    check_rejected(kRuntimeBase, "/run/user/1000/reboot-launcher/0123456789ABCDEF.sock");
+    check_rejected(kRuntimeBase, "reboot-launcher/0123456789abcdef.sock");
+}
+
+TEST_CASE("an empty runtime base rejects every path", "[engine_socket_path]") {
+    check_rejected(NativePath{}, "");
+    check_rejected(NativePath{}, "/reboot-launcher/0123456789abcdef.sock");
+    check_rejected(NativePath{}, "reboot-launcher/0123456789abcdef.sock");
+}
+
+TEST_CASE("the untrusted cause names every placeholder of its message", "[engine_socket_path]") {
+    const Result<NativePath> result = check_engine_socket_path(kRuntimeBase, "/tmp/x.sock");
+    REQUIRE_FALSE(result);
+    REQUIRE(result.error().causes.size() == 1);
+    const Diagnostic& cause = result.error().causes.front();
+    const MessageSpec* spec = find_spec(cause.id);
+    REQUIRE(spec != nullptr);
+    CHECK(cause.args.size() == spec->args.size());
+    for (const ArgSpec& arg : spec->args) {
+        INFO(arg.name);
+        CHECK(cause.find_arg(arg.name) != nullptr);
+    }
+}

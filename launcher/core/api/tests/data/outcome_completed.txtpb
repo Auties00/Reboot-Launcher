@@ -1,0 +1,5 @@
+# proto-file: reboot/api/v1/common.proto
+# proto-message: reboot.api.v1.Outcome
+op_id: 300
+method_id: 720903
+completed: ""

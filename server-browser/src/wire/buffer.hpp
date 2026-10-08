@@ -124,7 +124,7 @@ private:
     void ensure(std::size_t n) {
         if (buf_.size() - n_ < n) [[unlikely]] grow(n);
     }
-    [[gnu::noinline]] void grow(std::size_t n) { buf_.resize(std::max({buf_.size() * 2, n_ + n, std::size_t{64}})); }
+    SB_NOINLINE void grow(std::size_t n) { buf_.resize(std::max({buf_.size() * 2, n_ + n, std::size_t{64}})); }
 
     std::vector<u8> buf_;
     std::size_t n_ = 0;

@@ -1,0 +1,7 @@
+# proto-file: reboot/api/v1/settings.proto
+# proto-message: reboot.api.v1.SettingsPatchRequest
+expected_revision: 12
+changes { key: "host.listing" value { text: "listed" } }
+changes { key: "host.max_players" value { integer: -3 } is_default: true }
+changes { key: "play.auto_server" value { flag: false } }
+reset_keys: "ui.language"

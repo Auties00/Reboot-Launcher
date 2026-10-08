@@ -1,0 +1,48 @@
+{
+  "name": "reboot-launcher",
+  "version": "0.1.0",
+  "description": "Reboot Launcher core, engine and client library",
+  "dependencies": [
+    "boost-headers",
+    "boost-asio",
+    "boost-beast",
+    "boost-json",
+    "boost-pfr",
+    "boost-container",
+    "boost-unordered",
+    "openssl",
+    {
+      "name": "curl",
+      "default-features": false,
+      "features": [ "ssl" ]
+    },
+    {
+      "$comment": "Linux builds MsQuic from source against the system OpenSSL, as server-browser does",
+      "name": "msquic",
+      "platform": "!linux"
+    },
+    {
+      "name": "libarchive",
+      "default-features": false,
+      "features": [ "bzip2", "lzma", "zstd" ]
+    },
+    "miniupnpc",
+    "libnatpmp",
+    "catch2",
+    {
+      "name": "velopack",
+      "platform": "windows | osx"
+    }
+  ],
+  "features": {
+    "schema-tools": {
+      "description": "protoc for the reboot_api_generate and reboot_api_check targets",
+      "dependencies": [
+        {
+          "name": "protobuf",
+          "host": true
+        }
+      ]
+    }
+  }
+}

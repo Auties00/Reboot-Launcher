@@ -1,0 +1,148 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+import "reboot/api/v1/support.proto";
+
+enum SessionKind {
+  SESSION_KIND_PLAY = 0;
+  SESSION_KIND_HOST = 1;
+}
+
+enum SessionPhase {
+  SESSION_PHASE_PREPARING = 0;
+  SESSION_PHASE_LAUNCHING = 1;
+  SESSION_PHASE_LOADING = 2;
+  SESSION_PHASE_RUNNING = 3;
+  SESSION_PHASE_STOPPING = 4;
+  SESSION_PHASE_ENDED = 5;
+}
+
+enum LeaseKind {
+  // The session survives every UI.
+  LEASE_KIND_ENGINE = 0;
+  // The session stops when the connection that set the lease closes.
+  LEASE_KIND_CLIENT = 1;
+}
+
+enum ProcessRole {
+  PROCESS_ROLE_GAME = 0;
+  PROCESS_ROLE_COMPANION = 1;
+  PROCESS_ROLE_GAME_SERVER = 2;
+  PROCESS_ROLE_WINHOST = 3;
+}
+
+enum EndReason {
+  END_REASON_STOPPED = 0;
+  END_REASON_EXITED = 1;
+  END_REASON_CRASHED = 2;
+  END_REASON_FAILED = 3;
+  END_REASON_ENGINE_SHUTDOWN = 4;
+  END_REASON_LEASE_ENDED = 5;
+}
+
+// Frozen with the bootstrap subset: fields are only ever appended.
+message SessionSummary {
+  SessionId id = 1;
+  SessionKind kind = 2;
+  SessionPhase phase = 3;
+  // The play session a linked auto-server belongs to.
+  optional SessionId parent = 4;
+  uint64 started_unix_ms = 5;
+  // The build or host profile name.
+  string label = 6;
+}
+
+message SessionProcess {
+  ProcessRole role = 1;
+  uint32 pid = 2;
+}
+
+message SessionDetail {
+  LeaseKind lease = 1;
+  optional BuildId build = 2;
+  GameVersion version = 3;
+  RunnerKind runner = 4;
+  NetMode net_mode = 5;
+  SupportTier tier = 6;
+  optional HostProfileId profile = 7;
+  repeated SessionProcess processes = 8;
+  // Problems that did not end the session.
+  repeated Diagnostic degraded = 9;
+}
+
+// Frozen with the bootstrap subset.
+message SessionsListRequest {}
+
+// Frozen with the bootstrap subset.
+message SessionsListResponse {
+  repeated SessionSummary sessions = 1;
+}
+
+message SessionsGetRequest {
+  SessionId id = 1;
+}
+
+message SessionsGetResponse {
+  SessionSummary summary = 1;
+  SessionDetail detail = 2;
+}
+
+message SessionsSetLeaseRequest {
+  SessionId id = 1;
+  LeaseKind lease = 2;
+}
+
+message SessionsSetLeaseResponse {}
+
+// Frozen with the bootstrap subset.
+message SessionsStopRequest {
+  SessionId id = 1;
+  // Time between the graceful request and the kill; 0 means the default.
+  uint32 grace_ms = 2;
+}
+
+// Frozen with the bootstrap subset.
+message SessionsStopResponse {}
+
+message SessionStateChanged {
+  SessionSummary session = 1;
+}
+
+message SessionSpawned {
+  ProcessRole role = 1;
+  uint32 pid = 2;
+}
+
+message SessionDegraded {
+  Diagnostic reason = 1;
+}
+
+message SessionEnded {
+  EndReason reason = 1;
+  optional sint32 exit_code = 2;
+  optional Diagnostic error = 3;
+}
+
+// Play and host sessions, whatever started them.
+service Sessions {
+  option (service_info) = {id: 12};
+
+  rpc List(SessionsListRequest) returns (SessionsListResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Get(SessionsGetRequest) returns (SessionsGetResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc SetLease(SessionsSetLeaseRequest) returns (SessionsSetLeaseResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc Stop(SessionsStopRequest) returns (SessionsStopResponse) {
+    option (method_info) = {
+      id: 4
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+}

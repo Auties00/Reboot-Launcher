@@ -1,0 +1,200 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+enum BackendKind {
+  // The bundled reboot-backend, supervised by the engine.
+  BACKEND_KIND_EMBEDDED = 0;
+  BACKEND_KIND_LOCAL = 1;
+  BACKEND_KIND_REMOTE = 2;
+}
+
+enum BackendState {
+  BACKEND_STATE_STOPPED = 0;
+  BACKEND_STATE_STARTING = 1;
+  BACKEND_STATE_RUNNING = 2;
+  BACKEND_STATE_STOPPING = 3;
+  BACKEND_STATE_RESTARTING = 4;
+  BACKEND_STATE_FAILED = 5;
+}
+
+enum AccountKind {
+  ACCOUNT_KIND_PLAYER = 0;
+  ACCOUNT_KIND_HOST = 1;
+}
+
+enum RenameConflict {
+  // Raise AccountRenameConflict.
+  RENAME_CONFLICT_ASK = 0;
+  RENAME_CONFLICT_KEEP_EXISTING = 1;
+  RENAME_CONFLICT_REPLACE = 2;
+}
+
+enum XmppUnavailableReason {
+  // A LegacyFixed session under Wine: 127.0.0.1:80 is bound only on Windows, so the custom auth
+  // DLL's XMPP has no server.
+  XMPP_UNAVAILABLE_REASON_THIRD_PARTY_AUTH_DLL = 0;
+}
+
+message BackendTarget {
+  BackendKind kind = 1;
+  // The upstream URL for Local and Remote; empty for Embedded.
+  string origin = 2;
+}
+
+message BackendAccount {
+  string account_id = 1;
+  string display_name = 2;
+  AccountKind kind = 3;
+  uint64 last_login_unix_ms = 4;
+}
+
+message BackendStatusRequest {}
+
+message BackendStatusResponse {
+  BackendTarget target = 1;
+  BackendState state = 2;
+  // Kept running by the user, not only by sessions.
+  bool pinned = 3;
+  uint32 leases = 4;
+  optional uint32 http_port = 5;
+  string version = 6;
+  bool allow_lan = 7;
+  optional Diagnostic last_error = 8;
+}
+
+message BackendDataDirRequest {}
+
+message BackendDataDirResponse {
+  Path path = 1;
+}
+
+message BackendSetTargetRequest {
+  BackendTarget target = 1;
+  RunningPolicy running_policy = 2;
+}
+
+message BackendSetTargetResponse {}
+
+message BackendAccountsListRequest {}
+
+message BackendAccountsListResponse {
+  repeated BackendAccount accounts = 1;
+}
+
+message BackendStartRequest {
+  // Keep it running after the last session ends.
+  bool pin = 1;
+}
+
+message BackendStartResponse {
+  uint32 http_port = 1;
+}
+
+message BackendStopRequest {}
+
+message BackendStopResponse {}
+
+message BackendAccountsResetRequest {
+  string account_id = 1;
+}
+
+message BackendAccountsResetResponse {}
+
+message BackendAccountsDeleteRequest {
+  string account_id = 1;
+}
+
+message BackendAccountsDeleteResponse {}
+
+message BackendAccountsPruneRequest {
+  // Accounts with no login for this many days.
+  uint32 older_than_days = 1;
+  AccountKind kind = 2;
+}
+
+message BackendAccountsPruneResponse {
+  uint32 removed = 1;
+}
+
+message BackendAccountsRenameRequest {
+  string account_id = 1;
+  string display_name = 2;
+  RenameConflict on_conflict = 3;
+}
+
+message BackendAccountsRenameResponse {
+  string account_id = 1;
+}
+
+message BackendStateChanged {
+  BackendState state = 1;
+  optional uint32 http_port = 2;
+  optional Diagnostic error = 3;
+}
+
+// After every account op and backend start that reloaded the list.
+message BackendAccountsChanged {
+  repeated BackendAccount accounts = 1;
+}
+
+message XmppUnavailable {
+  XmppUnavailableReason reason = 1;
+}
+
+// The backend target, its process and its accounts.
+service Backend {
+  option (service_info) = {id: 13};
+
+  rpc Status(BackendStatusRequest) returns (BackendStatusResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc DataDir(BackendDataDirRequest) returns (BackendDataDirResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc SetTarget(BackendSetTargetRequest) returns (BackendSetTargetResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc AccountsList(BackendAccountsListRequest) returns (BackendAccountsListResponse) {
+    option (method_info) = {id: 4};
+  }
+  rpc Start(BackendStartRequest) returns (BackendStartResponse) {
+    option (method_info) = {
+      id: 5
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc Stop(BackendStopRequest) returns (BackendStopResponse) {
+    option (method_info) = {
+      id: 6
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc AccountsReset(BackendAccountsResetRequest) returns (BackendAccountsResetResponse) {
+    option (method_info) = {
+      id: 7
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc AccountsDelete(BackendAccountsDeleteRequest) returns (BackendAccountsDeleteResponse) {
+    option (method_info) = {
+      id: 8
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc AccountsPrune(BackendAccountsPruneRequest) returns (BackendAccountsPruneResponse) {
+    option (method_info) = {
+      id: 9
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc AccountsRename(BackendAccountsRenameRequest) returns (BackendAccountsRenameResponse) {
+    option (method_info) = {
+      id: 10
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+}

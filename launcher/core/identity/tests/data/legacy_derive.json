@@ -1,0 +1,17 @@
+{
+  "source": "wt-1009 common/lib/src/util/game.dart:202-206,286-297",
+  "cases": [
+    { "username": "", "has_password": false, "auth_login": "Player@projectreboot.dev", "password": "placeholder" },
+    { "username": "Player", "has_password": false, "auth_login": "Player@projectreboot.dev", "password": "placeholder" },
+    { "username": "Host", "has_password": false, "auth_login": "Host@projectreboot.dev", "password": "placeholder" },
+    { "username": "John Doe", "has_password": false, "auth_login": "JohnDoe@projectreboot.dev", "password": "placeholder" },
+    { "username": "john@example.com", "has_password": false, "auth_login": "johnexamplecom@projectreboot.dev", "password": "placeholder" },
+    { "username": "Jöhn_99", "has_password": false, "auth_login": "Jhn99@projectreboot.dev", "password": "placeholder" },
+    { "username": "!!!", "has_password": false, "auth_login": "Player@projectreboot.dev", "password": "placeholder" },
+    { "username": "   ", "has_password": false, "auth_login": "Player@projectreboot.dev", "password": "placeholder" },
+    { "username": "Bob-a1b2c3", "has_password": false, "auth_login": "Boba1b2c3@projectreboot.dev", "password": "placeholder" },
+    { "username": "john@example.com", "has_password": true, "auth_login": "john@example.com", "password": "user_password" },
+    { "username": "John Doe", "has_password": true, "auth_login": "John Doe", "password": "user_password" },
+    { "username": "", "has_password": true, "auth_login": "", "password": "user_password" }
+  ]
+}

@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+enum EngineOrigin {
+  ENGINE_ORIGIN_ON_DEMAND = 0;
+  ENGINE_ORIGIN_SERVICE_MANAGER = 1;
+  ENGINE_ORIGIN_FOREGROUND = 2;
+}
+
+enum EnginePhase {
+  ENGINE_PHASE_RUNNING = 0;
+  ENGINE_PHASE_DRAINING = 1;
+  ENGINE_PHASE_SHUTTING_DOWN = 2;
+  ENGINE_PHASE_UPDATING = 3;
+}
+
+// Mirrors contracts::ipc::StorageMode.
+enum StorageMode {
+  STORAGE_MODE_READ_WRITE = 0;
+  // A store has a newer schema than this build.
+  STORAGE_MODE_READ_ONLY = 1;
+  STORAGE_MODE_IN_MEMORY = 2;
+}
+
+enum HostOs {
+  HOST_OS_WINDOWS = 0;
+  HOST_OS_MACOS = 1;
+  HOST_OS_LINUX = 2;
+}
+
+enum DrainReason {
+  DRAIN_REASON_UPDATE = 0;
+  DRAIN_REASON_USER_STOP = 1;
+  DRAIN_REASON_REPLACE = 2;
+}
+
+enum ShutdownWhen {
+  SHUTDOWN_WHEN_NOW = 0;
+  SHUTDOWN_WHEN_IDLE = 1;
+}
+
+// Frozen with the bootstrap subset: fields are only ever appended.
+message EngineStatusRequest {}
+
+// Frozen with the bootstrap subset.
+message EngineStatusResponse {
+  string engine_build = 1;
+  uint64 epoch = 2;
+  uint32 pid = 3;
+  EngineOrigin origin = 4;
+  EnginePhase phase = 5;
+  uint32 sessions = 6;
+  uint32 operations = 7;
+}
+
+message EngineInfoRequest {}
+
+message EngineInfoResponse {
+  string engine_build = 1;
+  SemVer app_version = 2;
+  HostOs os = 3;
+  string os_version = 4;
+  Path image_path = 5;
+  Path data_root = 6;
+  StorageMode storage_mode = 7;
+  bool secrets_available = 8;
+  // The engine build's reboot.api.v1 fingerprint; a facade whose RB_SCHEMA_FINGERPRINT differs
+  // decodes other payloads than the engine sends.
+  string schema_fingerprint = 9;
+}
+
+// Engine.operations lists every live op a client started, so another UI can attach and cancel it.
+message OperationSummary {
+  uint64 op_id = 1;
+  uint32 method_id = 2;
+  // The encoded request message of `method_id`, such as which entry an install downloads.
+  bytes request = 3;
+  bool detached = 4;
+  optional SessionId session = 5;
+  uint64 started_unix_ms = 6;
+  // The last coalesced progress; absent before the first.
+  optional Progress progress = 7;
+}
+
+// Not in the bootstrap subset: `request` only decodes with this build's schema.
+message EngineOperationsRequest {}
+
+message EngineOperationsResponse {
+  repeated OperationSummary operations = 1;
+}
+
+// Frozen with the bootstrap subset.
+message EngineDrainRequest {
+  DrainReason reason = 1;
+}
+
+// Frozen with the bootstrap subset.
+message EngineDrainResponse {}
+
+// Frozen with the bootstrap subset.
+message EngineShutdownRequest {
+  ShutdownWhen when = 1;
+}
+
+// Frozen with the bootstrap subset.
+message EngineShutdownResponse {}
+
+// Frozen with the bootstrap subset.
+message EngineRestartWhenIdleRequest {}
+
+// Frozen with the bootstrap subset.
+message EngineRestartWhenIdleResponse {}
+
+message OpStarted {
+  OperationSummary operation = 1;
+}
+
+message StorageModeChanged {
+  // The store, such as "settings" or "host-profiles".
+  string document = 1;
+  StorageMode mode = 2;
+  // The write error while in memory.
+  optional Diagnostic reason = 3;
+}
+
+message EngineState {
+  EnginePhase phase = 1;
+  uint32 sessions = 2;
+  uint32 operations = 3;
+}
+
+// Engine lifetime and the frozen bootstrap calls.
+service Engine {
+  option (service_info) = {id: 1};
+
+  rpc Status(EngineStatusRequest) returns (EngineStatusResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Info(EngineInfoRequest) returns (EngineInfoResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc Drain(EngineDrainRequest) returns (EngineDrainResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc Shutdown(EngineShutdownRequest) returns (EngineShutdownResponse) {
+    option (method_info) = {id: 4};
+  }
+  rpc RestartWhenIdle(EngineRestartWhenIdleRequest) returns (EngineRestartWhenIdleResponse) {
+    option (method_info) = {id: 5};
+  }
+  rpc Operations(EngineOperationsRequest) returns (EngineOperationsResponse) {
+    option (method_info) = {id: 6};
+  }
+}

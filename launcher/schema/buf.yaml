@@ -1,0 +1,17 @@
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+  except:
+    # Zero values are real defaults that mirror the C++ enums (ArgKind, ErrorKind, LogLevel).
+    - ENUM_ZERO_VALUE_SUFFIX
+    # Service names double as the request-name prefix: Library.List takes LibraryListRequest.
+    - SERVICE_SUFFIX
+  # The contiguity rule (field number = declaration index + 1, oneof members consecutive) is
+  # enforced by protoc-gen-reboot-cpp, which `buf generate` runs; buf has no built-in rule for it.
+breaking:
+  # Checked against the last release tag by core/api/tools/check_schema.py.
+  use:
+    - FILE

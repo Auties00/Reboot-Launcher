@@ -1,0 +1,8 @@
+{
+  "name": "velopack",
+  "version": "1.2.161",
+  "description": "Velopack's C library, from the prebuilt velopack_libc release",
+  "homepage": "https://github.com/velopack/velopack",
+  "license": "MIT",
+  "supports": "(windows & x64 & !uwp & static) | (osx & static)"
+}

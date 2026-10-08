@@ -1,0 +1,32 @@
+{
+  "source": "final/logging-redaction.json section 10 (CI gate), with the secret set of credential-security section 7 and the _consistency launch-secret resolution",
+  "registered_secrets": {
+    "client.password": "canary-client-pass-5d1e",
+    "host.account_password": "canary-host-account-pass-a07c",
+    "host.join_password": "canary-join-pass-39bf",
+    "remote_account.password": "canary-remote-account-pass-93e1",
+    "rbsb.host_token": "canary-rbsb-host-token-e4f2",
+    "join_grant.ticket": "canary-join-grant-ticket-8b60",
+    "launch.ticket": "canary-launch-ticket-c4d9",
+    "front.session_key": "canary-front-session-key-0f6a"
+  },
+  "contexts": [
+    "login against https://backend.example with password {remote_account.password}",
+    "remembered remote account password {remote_account.password} stored in the keychain",
+    "host profile account_password={host.account_password}",
+    "join password \"{host.join_password}\" shared with players",
+    "client password {client.password}",
+    "rbsb Authorization: Bearer {rbsb.host_token}",
+    "JoinGrant ticket={join_grant.ticket}",
+    "FortniteClient-Win64-Shipping.exe -AUTH_LOGIN=acct -AUTH_TYPE=epic -AUTH_PASSWORD={launch.ticket} -epicapp=Fortnite",
+    "front redeemed launch ticket {launch.ticket}",
+    "POST http://127.0.0.1:49152/s/{front.session_key}/account/api/oauth/token 200",
+    "spawn env REBOOT_ENDPOINT=http://127.0.0.1:49152 REBOOT_SESSION={front.session_key}"
+  ],
+  "free_text_args": [
+    { "input": "-AUTH_PASSWORD=canary-unquoted-arg-71aa -log", "masked_value": "canary-unquoted-arg-71aa" },
+    { "input": "-AUTH_PASSWORD=\"canary quoted arg 2c93\" -log", "masked_value": "canary quoted arg 2c93" }
+  ],
+  "public_constants_kept": ["caldera", "fltoken", "Rebooted"],
+  "absent_from": ["every file under logs/", "every LogRing read", "every entry of a LogExporter archive"]
+}

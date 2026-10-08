@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+enum SupportTier {
+  SUPPORT_TIER_UNKNOWN = 0;
+  // A logged pass for exactly these inputs.
+  SUPPORT_TIER_TESTED = 1;
+  SUPPORT_TIER_UNTESTED = 2;
+  SUPPORT_TIER_BLOCKED = 3;
+}
+
+enum SupportProvider {
+  SUPPORT_PROVIDER_OURS = 0;
+  // A custom auth DLL; always Untested.
+  SUPPORT_PROVIDER_CUSTOM = 1;
+}
+
+message VersionRef {
+  GameVersion version = 1;
+  optional uint32 changelist = 2;
+}
+
+message SupportQueryRequest {
+  oneof subject {
+    BuildId build = 1;
+    VersionRef version = 2;
+  }
+  GameRole role = 3;
+  // Absent: the runner this OS uses for the role.
+  optional RunnerKind runner = 4;
+}
+
+message SupportQueryResponse {
+  SupportTier tier = 1;
+  SupportProvider provider = 2;
+  GameVersion version = 3;
+  // Why the tier is not Tested.
+  repeated Diagnostic reasons = 4;
+}
+
+// Support tiers per version, role and runner.
+service Support {
+  option (service_info) = {id: 6};
+
+  rpc Query(SupportQueryRequest) returns (SupportQueryResponse) {
+    option (method_info) = {id: 1};
+  }
+}

@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+// Mirrors reboot::LogLevel.
+enum LogLevel {
+  LOG_LEVEL_TRACE = 0;
+  LOG_LEVEL_DEBUG = 1;
+  LOG_LEVEL_INFO = 2;
+  LOG_LEVEL_WARN = 3;
+  LOG_LEVEL_ERROR = 4;
+}
+
+// Mirrors reboot::LogCategory.
+enum LogCategory {
+  LOG_CATEGORY_ENGINE = 0;
+  LOG_CATEGORY_IPC = 1;
+  LOG_CATEGORY_NET = 2;
+  LOG_CATEGORY_STORAGE = 3;
+  LOG_CATEGORY_BUILDS = 4;
+  LOG_CATEGORY_PLAY = 5;
+  LOG_CATEGORY_HOST = 6;
+  LOG_CATEGORY_BACKEND = 7;
+  LOG_CATEGORY_GAME_OUTPUT = 8;
+  LOG_CATEGORY_WINE = 9;
+  LOG_CATEGORY_BROWSER = 10;
+  LOG_CATEGORY_UPDATE = 11;
+  LOG_CATEGORY_CLIENT = 12;
+  LOG_CATEGORY_UI = 13;
+}
+
+// Text is redacted before it leaves the engine.
+message LogEntry {
+  uint64 seq = 1;
+  uint64 unix_ms = 2;
+  LogLevel level = 3;
+  LogCategory category = 4;
+  optional SessionId session = 5;
+  string text = 6;
+}
+
+message LogFilter {
+  LogLevel min_level = 1;
+  // Empty matches every category.
+  repeated LogCategory categories = 2;
+  optional SessionId session = 3;
+}
+
+message LogsReadRequest {
+  // 0 starts at the oldest retained entry.
+  uint64 cursor = 1;
+  uint32 limit = 2;
+  LogFilter filter = 3;
+}
+
+message LogsReadResponse {
+  repeated LogEntry entries = 1;
+  uint64 next_cursor = 2;
+  // Entries that rotated out between cursor and the first returned entry.
+  uint64 skipped = 3;
+}
+
+message LogsExportRequest {
+  Path destination = 1;
+  bool include_crash_dumps = 2;
+}
+
+message LogsExportResponse {
+  Path bundle = 1;
+  uint64 size_bytes = 2;
+}
+
+message LogLine {
+  LogEntry entry = 1;
+  // Lines this subscription dropped since the previous one it received.
+  uint64 dropped = 2;
+}
+
+// Reading and exporting redacted logs.
+service Logs {
+  option (service_info) = {id: 20};
+
+  rpc Read(LogsReadRequest) returns (LogsReadResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Export(LogsExportRequest) returns (LogsExportResponse) {
+    option (method_info) = {
+      id: 2
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_ITEM_COUNT
+    };
+  }
+}

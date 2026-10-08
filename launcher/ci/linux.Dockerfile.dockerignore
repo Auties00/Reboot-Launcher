@@ -1,0 +1,9 @@
+*
+!launcher
+!server-browser
+launcher/build
+launcher/vcpkg_installed
+launcher/core/api/tools/protoc-gen-reboot-cpp/target
+server-browser/build
+server-browser/vcpkg_installed
+server-browser/.cache

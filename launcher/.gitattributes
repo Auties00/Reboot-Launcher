@@ -1,0 +1,6 @@
+# Goldens and generated code are compared byte for byte, so checkouts keep LF on every OS.
+* text=auto eol=lf
+*.bin binary
+*.dll binary
+*.sig binary
+core/testing/fuzz/corpus/** binary

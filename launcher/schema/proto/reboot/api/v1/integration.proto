@@ -1,0 +1,190 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+// Mirrors ports::IntegrationKind.
+enum IntegrationItem {
+  INTEGRATION_ITEM_URL_SCHEME = 0;
+  INTEGRATION_ITEM_AUTOSTART = 1;
+  // How clients start the engine: systemd user units, the on-demand task or the login agent.
+  INTEGRATION_ITEM_ENGINE_AGENT = 2;
+  INTEGRATION_ITEM_DESKTOP_ENTRY = 3;
+}
+
+enum IntegrationState {
+  INTEGRATION_STATE_ABSENT = 0;
+  INTEGRATION_STATE_INSTALLED = 1;
+  // Ours, but turned off in the OS by the user, who keeps that choice.
+  INTEGRATION_STATE_DISABLED = 2;
+  // Ours, waiting for the user to allow it in macOS Login Items.
+  INTEGRATION_STATE_AWAITING_APPROVAL = 3;
+  // Points at another install or app; never overwritten or removed.
+  INTEGRATION_STATE_FOREIGN = 4;
+  // Ours, but for an older copy or with other arguments.
+  INTEGRATION_STATE_STALE = 5;
+  // This OS or install has no such entry.
+  INTEGRATION_STATE_UNSUPPORTED = 6;
+  // Inspection failed; `detail` says why.
+  INTEGRATION_STATE_UNKNOWN = 7;
+}
+
+enum PrerequisiteState {
+  PREREQUISITE_STATE_UNKNOWN = 0;
+  PREREQUISITE_STATE_MET = 1;
+  PREREQUISITE_STATE_MISSING = 2;
+  PREREQUISITE_STATE_DEGRADED = 3;
+}
+
+enum PurgeScope {
+  // OS registrations only.
+  PURGE_SCOPE_INTEGRATION = 0;
+  PURGE_SCOPE_CACHES = 1;
+  PURGE_SCOPE_ALL_DATA = 2;
+}
+
+message IntegrationStatusEntry {
+  IntegrationItem item = 1;
+  IntegrationState state = 2;
+  optional Diagnostic detail = 3;
+  // The user removed it, so the engine does not add it back.
+  bool declined = 4;
+  // What the entry runs or points at, as the OS reports it.
+  string target = 5;
+}
+
+message Prerequisite {
+  // Stable, such as "mac.rosetta" or "linux.vulkan".
+  string id = 1;
+  PrerequisiteState state = 2;
+  bool remediable = 3;
+  optional Diagnostic detail = 4;
+}
+
+message SecurityProduct {
+  string name = 1;
+  bool active = 2;
+}
+
+message IntegrationStatusRequest {}
+
+message IntegrationStatusResponse {
+  repeated IntegrationStatusEntry items = 1;
+}
+
+message IntegrationPrerequisitesRequest {}
+
+message IntegrationPrerequisitesResponse {
+  repeated Prerequisite prerequisites = 1;
+  // Named in quarantine remediation; empty outside Windows.
+  repeated SecurityProduct security_products = 2;
+}
+
+// https only.
+message IntegrationShellOpenUrlRequest {
+  string url = 1;
+}
+
+message IntegrationShellOpenUrlResponse {}
+
+message IntegrationShellOpenPathRequest {
+  Path path = 1;
+}
+
+message IntegrationShellOpenPathResponse {}
+
+message IntegrationShellRevealRequest {
+  Path path = 1;
+}
+
+message IntegrationShellRevealResponse {}
+
+message IntegrationApplyRequest {
+  repeated IntegrationItem items = 1;
+}
+
+message IntegrationApplyResponse {
+  repeated IntegrationStatusEntry items = 1;
+}
+
+message IntegrationRemoveRequest {
+  repeated IntegrationItem items = 1;
+}
+
+message IntegrationRemoveResponse {
+  repeated IntegrationStatusEntry items = 1;
+}
+
+message IntegrationRemediateRequest {
+  string prerequisite = 1;
+}
+
+message IntegrationRemediateResponse {
+  Prerequisite prerequisite = 1;
+}
+
+message IntegrationPurgeRequest {
+  PurgeScope scope = 1;
+  RunningPolicy running_policy = 2;
+}
+
+message IntegrationPurgeResponse {}
+
+// After apply, remove and a reconcile that changed anything.
+message IntegrationChanged {
+  repeated IntegrationStatusEntry items = 1;
+}
+
+// After a remediation.
+message PrerequisitesChanged {
+  repeated Prerequisite prerequisites = 1;
+}
+
+// OS integration, prerequisites and shell actions.
+service Integration {
+  option (service_info) = {id: 18};
+
+  rpc Status(IntegrationStatusRequest) returns (IntegrationStatusResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Prerequisites(IntegrationPrerequisitesRequest) returns (IntegrationPrerequisitesResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc ShellOpenUrl(IntegrationShellOpenUrlRequest) returns (IntegrationShellOpenUrlResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc ShellOpenPath(IntegrationShellOpenPathRequest) returns (IntegrationShellOpenPathResponse) {
+    option (method_info) = {id: 4};
+  }
+  rpc ShellReveal(IntegrationShellRevealRequest) returns (IntegrationShellRevealResponse) {
+    option (method_info) = {id: 5};
+  }
+  rpc Apply(IntegrationApplyRequest) returns (IntegrationApplyResponse) {
+    option (method_info) = {
+      id: 6
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc Remove(IntegrationRemoveRequest) returns (IntegrationRemoveResponse) {
+    option (method_info) = {
+      id: 7
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc Remediate(IntegrationRemediateRequest) returns (IntegrationRemediateResponse) {
+    option (method_info) = {
+      id: 8
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_BYTE_COUNT
+    };
+  }
+  rpc Purge(IntegrationPurgeRequest) returns (IntegrationPurgeResponse) {
+    option (method_info) = {
+      id: 9
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_ITEM_COUNT
+    };
+  }
+}

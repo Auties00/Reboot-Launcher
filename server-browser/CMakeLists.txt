@@ -7,6 +7,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+# The launcher consumes only the header-only wire codec, framer, core types and view mirror.
+option(SB_CLIENT_ONLY "Define only the header-only sb_contract target" OFF)
+if(SB_CLIENT_ONLY)
+  find_package(Boost REQUIRED CONFIG COMPONENTS headers pfr container unordered)
+  add_library(sb_contract INTERFACE)
+  target_include_directories(sb_contract INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+  target_link_libraries(sb_contract INTERFACE Boost::headers Boost::pfr Boost::container Boost::unordered)
+  return()
+endif()
+
 option(SB_BUILD_NET "Build the QUIC edge, client and apps (needs MsQuic)" ON)
 option(SB_WITH_NATS "Build the NATS backbone (needs cnats)" ON)
 option(SB_BUILD_TESTS "Build unit and integration tests" ON)

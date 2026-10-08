@@ -1,0 +1,411 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+enum Listing {
+  LISTING_UNLISTED = 0;
+  LISTING_LISTED = 1;
+}
+
+enum MatchEndAction {
+  MATCH_END_ACTION_RESTART = 0;
+  MATCH_END_ACTION_SHUTDOWN = 1;
+  MATCH_END_ACTION_NOTHING = 2;
+}
+
+enum HostPhase {
+  HOST_PHASE_PREPARING = 0;
+  HOST_PHASE_SPAWNING = 1;
+  HOST_PHASE_WAITING_FOR_LISTEN = 2;
+  HOST_PHASE_WAITING_FOR_READINESS = 3;
+  HOST_PHASE_MAPPING_PORTS = 4;
+  HOST_PHASE_PUBLISHING = 5;
+  HOST_PHASE_LIVE = 6;
+  // Readiness timed out; running but not published.
+  HOST_PHASE_LIVE_UNPUBLISHED = 7;
+  HOST_PHASE_RESTARTING = 8;
+  HOST_PHASE_DRAINING = 9;
+  HOST_PHASE_STOPPING = 10;
+  HOST_PHASE_STOPPED = 11;
+  HOST_PHASE_FAILED = 12;
+}
+
+enum HostUpdatePolicy {
+  // Drain, then update once the match ends or nobody is connected.
+  HOST_UPDATE_POLICY_AFTER_MATCH = 0;
+  // Keep running until the user stops the server.
+  HOST_UPDATE_POLICY_MANUAL = 1;
+}
+
+enum HostProfileChange {
+  HOST_PROFILE_CHANGE_ADDED = 0;
+  HOST_PROFILE_CHANGE_UPDATED = 1;
+  HOST_PROFILE_CHANGE_REMOVED = 2;
+  // A Host reset rewrote every profile.
+  HOST_PROFILE_CHANGE_RESET = 3;
+}
+
+enum SocketRole {
+  SOCKET_ROLE_GAME = 0;
+  SOCKET_ROLE_BEACON = 1;
+}
+
+enum Reachability {
+  REACHABILITY_UNKNOWN = 0;
+  REACHABILITY_AWAITING_PROBE = 1;
+  REACHABILITY_REACHABLE = 2;
+  REACHABILITY_UNREACHABLE = 3;
+}
+
+enum MappingProtocol {
+  MAPPING_PROTOCOL_UNMAPPED = 0;
+  MAPPING_PROTOCOL_UPNP = 1;
+  MAPPING_PROTOCOL_NAT_PMP = 2;
+}
+
+enum PublishState {
+  PUBLISH_STATE_UNPUBLISHED = 0;
+  PUBLISH_STATE_REGISTERING = 1;
+  PUBLISH_STATE_PUBLISHED = 2;
+  PUBLISH_STATE_FAILED = 3;
+}
+
+enum MatchState {
+  MATCH_STATE_LOBBY = 0;
+  MATCH_STATE_WARMUP = 1;
+  MATCH_STATE_IN_PROGRESS = 2;
+  MATCH_STATE_ENDING = 3;
+  MATCH_STATE_ENDED = 4;
+}
+
+message PortRange {
+  uint32 first = 1;
+  uint32 last = 2;
+}
+
+// The block holds one port per socket the game server declares.
+message PortPolicy {
+  oneof policy {
+    // The block starts here; a busy port fails the start.
+    uint32 pinned = 1;
+    // The lowest free block inside the range.
+    PortRange range = 2;
+  }
+}
+
+message StartPolicy {
+  oneof policy {
+    uint32 auto_at_players = 1;
+    bool manual = 2;
+  }
+}
+
+message MatchEndPolicy {
+  MatchEndAction action = 1;
+  uint32 delay_s = 2;
+}
+
+// At least one of address and account_id. Account ids are self-asserted, so a ban without an
+// address is evadable.
+message Ban {
+  // An IP address or CIDR block; bans match the address first.
+  optional string address = 1;
+  optional string account_id = 2;
+  string reason = 3;
+  uint64 created_unix_ms = 4;
+  // Absent: permanent.
+  optional uint64 expires_unix_ms = 5;
+}
+
+// A game version to host without an installed build; our game server needs no game files.
+message HostVersion {
+  GameVersion version = 1;
+  uint32 changelist = 2;
+}
+
+// The password is a secret: rb_secret_put with HOST_JOIN_PASSWORD and the profile id.
+message HostProfile {
+  HostProfileId id = 1;
+  // Refused with a conflict when stale on update.
+  uint64 revision = 2;
+  string name = 3;
+  // Absent with `version`: the library's host selection.
+  optional BuildId build = 4;
+  PortPolicy port = 5;
+  bool port_mapping = 6;
+  Listing listing = 7;
+  string server_name = 8;
+  string description = 9;
+  bool has_password = 10;
+  uint32 max_players = 11;
+  string playlist = 12;
+  StartPolicy start = 13;
+  uint32 tick_rate = 14;
+  MatchEndPolicy match_end = 15;
+  repeated string operator_cidrs = 16;
+  repeated Ban bans = 17;
+  // The profile Play uses for a linked auto-server.
+  bool auto_server = 18;
+  // Absent: the host.update_policy setting.
+  optional HostUpdatePolicy update_policy = 19;
+  // Never set together with `build`.
+  optional HostVersion version = 20;
+}
+
+// Applies to one start only.
+message HostOverrides {
+  optional Listing listing = 1;
+  optional uint32 port = 2;
+  optional BuildId build = 3;
+}
+
+message StartMatch {
+  uint32 countdown_s = 1;
+}
+
+message EndMatch {}
+
+message ResetMatch {}
+
+message KickPlayer {
+  // Player.player_id; account ids are self-asserted and may collide.
+  uint32 player_id = 1;
+  string reason = 2;
+}
+
+message SetBans {
+  repeated Ban bans = 1;
+}
+
+message SetOperators {
+  repeated string cidrs = 1;
+}
+
+message ConsoleCommand {
+  string text = 1;
+}
+
+message OperatorCommand {
+  oneof command {
+    StartMatch start_match = 1;
+    EndMatch end_match = 2;
+    ResetMatch reset = 3;
+    KickPlayer kick = 4;
+    SetBans set_bans = 5;
+    SetOperators set_operators = 6;
+    ConsoleCommand console = 7;
+  }
+}
+
+message BoundSocket {
+  SocketRole role = 1;
+  uint32 port = 2;
+}
+
+message MappedPort {
+  uint32 internal = 1;
+  uint32 external = 2;
+}
+
+message Placement {
+  string account_id = 1;
+  uint32 place = 2;
+}
+
+message MatchResult {
+  string reason = 1;
+  optional string winner = 2;
+  repeated Placement placements = 3;
+}
+
+// The account id is what the client claimed; the server does not verify it.
+message Player {
+  string account_id = 1;
+  string display_name = 2;
+  string address = 3;
+  // The server's id for this connection; KickPlayer takes it.
+  uint32 player_id = 4;
+}
+
+message HostProfilesListRequest {}
+
+message HostProfilesListResponse {
+  repeated HostProfile profiles = 1;
+}
+
+message HostProfilesCreateRequest {
+  // id and revision are assigned by the engine.
+  HostProfile profile = 1;
+}
+
+message HostProfilesCreateResponse {
+  HostProfile profile = 1;
+}
+
+message HostProfilesUpdateRequest {
+  HostProfile profile = 1;
+}
+
+message HostProfilesUpdateResponse {
+  HostProfile profile = 1;
+}
+
+message HostProfilesDeleteRequest {
+  HostProfileId id = 1;
+}
+
+message HostProfilesDeleteResponse {}
+
+message HostShareLinkRequest {
+  SessionId session = 1;
+}
+
+message HostShareLinkResponse {
+  string url = 1;
+  ServerId server = 2;
+}
+
+message HostCommandRequest {
+  SessionId session = 1;
+  OperatorCommand command = 2;
+}
+
+message HostCommandResponse {}
+
+message HostStartRequest {
+  HostProfileId profile = 1;
+  HostOverrides overrides = 2;
+  // The caller's environment at this launch, filtered as PlayRequest.environment is.
+  repeated EnvVar environment = 3;
+  // The running play session this server is for; set exactly with the auto profile, and the
+  // server stops with that session.
+  optional SessionId linked_to = 4;
+}
+
+// Sent once the game server is listening; publication continues in the session.
+message HostStartResponse {
+  SessionId session = 1;
+}
+
+message HostStatusRequest {
+  SessionId session = 1;
+}
+
+// Each member is the latest event of its kind, so a UI that attaches mid-session renders it as it
+// renders those events.
+message HostStatus {
+  HostPhaseChanged phase = 1;
+  // Absent before Listening and during a respawn.
+  optional HostListening listening = 2;
+  ReachabilityChanged reachability = 3;
+  PortMappingChanged mapping = 4;
+  PublishStateChanged publish = 5;
+  MatchEvent match = 6;
+  repeated Player players = 7;
+}
+
+message HostStatusResponse {
+  HostStatus status = 1;
+}
+
+message HostCancelMatchEndRequest {
+  SessionId session = 1;
+}
+
+message HostCancelMatchEndResponse {
+  // False when no match-end action was pending.
+  bool cancelled = 1;
+}
+
+message HostProfilesChanged {
+  HostProfileChange change = 1;
+  // Absent for RESET.
+  optional HostProfileId profile = 2;
+}
+
+message HostPhaseChanged {
+  HostPhase phase = 1;
+  optional Diagnostic reason = 2;
+}
+
+message HostListening {
+  repeated BoundSocket sockets = 1;
+}
+
+message ReachabilityChanged {
+  Reachability reachability = 1;
+  // As the server browser observed it.
+  string public_address = 2;
+}
+
+message PortMappingChanged {
+  MappingProtocol protocol = 1;
+  repeated MappedPort ports = 2;
+  uint32 lease_s = 3;
+  // Mapping failures never stop the host.
+  optional Diagnostic error = 4;
+}
+
+message PublishStateChanged {
+  PublishState state = 1;
+  optional ServerId server = 2;
+  bool hidden = 3;
+  optional Diagnostic error = 4;
+}
+
+message MatchEvent {
+  MatchState state = 1;
+  optional MatchResult result = 2;
+  // Set while the match-end timer runs.
+  optional uint64 restart_at_unix_ms = 3;
+}
+
+message PlayerEvent {
+  oneof change {
+    Player joined = 1;
+    Player left = 2;
+  }
+  uint32 player_count = 3;
+}
+
+// Host profiles and running our game server.
+service Host {
+  option (service_info) = {id: 11};
+
+  rpc ProfilesList(HostProfilesListRequest) returns (HostProfilesListResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc ProfilesCreate(HostProfilesCreateRequest) returns (HostProfilesCreateResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc ProfilesUpdate(HostProfilesUpdateRequest) returns (HostProfilesUpdateResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc ProfilesDelete(HostProfilesDeleteRequest) returns (HostProfilesDeleteResponse) {
+    option (method_info) = {id: 4};
+  }
+  rpc ShareLink(HostShareLinkRequest) returns (HostShareLinkResponse) {
+    option (method_info) = {id: 5};
+  }
+  rpc Command(HostCommandRequest) returns (HostCommandResponse) {
+    option (method_info) = {id: 6};
+  }
+  rpc Start(HostStartRequest) returns (HostStartResponse) {
+    option (method_info) = {
+      id: 7
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_ITEM_COUNT
+      disconnect: DISCONNECT_DETACHED
+    };
+  }
+  rpc Status(HostStatusRequest) returns (HostStatusResponse) {
+    option (method_info) = {id: 8};
+  }
+  // Stops the pending match-end action and leaves the server running.
+  rpc CancelMatchEnd(HostCancelMatchEndRequest) returns (HostCancelMatchEndResponse) {
+    option (method_info) = {id: 9};
+  }
+}

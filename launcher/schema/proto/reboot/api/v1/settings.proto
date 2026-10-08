@@ -1,0 +1,223 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+enum SettingGroup {
+  SETTING_GROUP_PLAY = 0;
+  SETTING_GROUP_HOST = 1;
+  SETTING_GROUP_BACKEND = 2;
+  SETTING_GROUP_APP = 3;
+}
+
+// Mirrors storage::ValueKind: the editor a key needs.
+enum SettingKind {
+  SETTING_KIND_BOOL = 0;
+  SETTING_KIND_TEXT = 1;
+  SETTING_KIND_OPTIONAL_PATH = 2;
+  // One of SettingDescriptor.choices.
+  SETTING_KIND_CHOICE = 3;
+  // One of Settings.console_keys.
+  SETTING_KIND_CONSOLE_KEY = 4;
+  SETTING_KIND_BACKEND_TARGET = 5;
+}
+
+// Mirrors reboot::Sensitivity: how much of the value logs and exports may show.
+enum Sensitivity {
+  SENSITIVITY_PUBLIC = 0;
+  SENSITIVITY_PERSONAL = 1;
+  SENSITIVITY_SECRET = 2;
+}
+
+// Where a native key event comes from.
+enum KeySource {
+  // A usage id on the USB HID Keyboard/Keypad page.
+  KEY_SOURCE_HID_USAGE = 0;
+  // A set 1 scancode, as WM_KEYDOWN and WinUI KeyStatus report it.
+  KEY_SOURCE_WINDOWS_SCANCODE = 1;
+  // NSEvent.keyCode.
+  KEY_SOURCE_MACOS_KEYCODE = 2;
+  // A linux/input-event-codes.h KEY_* code: the X11 or xkb keycode minus 8.
+  KEY_SOURCE_EVDEV = 3;
+}
+
+message SettingDescriptor {
+  string key = 1;
+  // The message id UIs label it with; settings search matches it too.
+  string label = 2;
+  SettingKind kind = 3;
+  // The persisted names CHOICE accepts, in display order.
+  repeated string choices = 4;
+  // The tab whose reset returns it to its default; absent when no reset does.
+  optional SettingGroup reset_group = 5;
+  Sensitivity sensitivity = 6;
+}
+
+// A console key a UE binding can use.
+message ConsoleKey {
+  // The Unreal key name stored in backend.console_key, such as "F8".
+  string name = 1;
+  // The key cap a picker shows, such as "`" or "Num 1"; not translated.
+  string label = 2;
+}
+
+message SettingValue {
+  oneof value {
+    bool flag = 1;
+    sint64 integer = 2;
+    string text = 3;
+    Path path = 4;
+  }
+}
+
+message Setting {
+  // A dotted key such as "host.listing".
+  string key = 1;
+  SettingValue value = 2;
+  bool is_default = 3;
+}
+
+message SettingSearchHit {
+  string key = 1;
+  uint32 score = 2;
+}
+
+message Language {
+  // A BCP-47 tag.
+  string tag = 1;
+  bool shipped = 2;
+}
+
+message SettingsSnapshotRequest {}
+
+message SettingsSnapshotResponse {
+  uint64 revision = 1;
+  repeated Setting settings = 2;
+}
+
+// Refused with a conflict when the document moved past expected_revision.
+message SettingsPatchRequest {
+  uint64 expected_revision = 1;
+  repeated Setting changes = 2;
+  // Keys returned to their defaults.
+  repeated string reset_keys = 3;
+}
+
+message SettingsPatchResponse {
+  uint64 revision = 1;
+}
+
+message SettingsResetRequest {
+  SettingGroup group = 1;
+  RunningPolicy running_policy = 2;
+}
+
+message SettingsResetResponse {
+  uint64 revision = 1;
+  repeated string reset_keys = 2;
+}
+
+message SettingsSearchRequest {
+  string text = 1;
+  // The UI language the text was typed in; empty means the engine's resolved language.
+  string language = 2;
+}
+
+message SettingsSearchResponse {
+  repeated SettingSearchHit hits = 1;
+}
+
+message SettingsFrontendStateGetRequest {
+  // "windows", "macos", "linux" or "cli".
+  string shell = 1;
+}
+
+// `state` is opaque to the engine.
+message SettingsFrontendStateGetResponse {
+  bytes state = 1;
+}
+
+message SettingsFrontendStatePutRequest {
+  string shell = 1;
+  bytes state = 2;
+}
+
+message SettingsFrontendStatePutResponse {}
+
+message SettingsLanguagesRequest {}
+
+message SettingsLanguagesResponse {
+  repeated Language languages = 1;
+  // "system" or a BCP-47 tag, kept even when that language is not shipped.
+  string selected = 2;
+  string resolved = 3;
+}
+
+message SettingsDescriptorsRequest {}
+
+// Every key, in display order.
+message SettingsDescriptorsResponse {
+  repeated SettingDescriptor descriptors = 1;
+}
+
+message SettingsConsoleKeysRequest {}
+
+message SettingsConsoleKeysResponse {
+  repeated ConsoleKey keys = 1;
+}
+
+// UIs capture a key natively and convert it here, so the tables exist once.
+message SettingsConsoleKeyFromNativeRequest {
+  KeySource source = 1;
+  uint32 code = 2;
+  // WINDOWS_SCANCODE: the 0xE0 prefix.
+  bool extended = 3;
+}
+
+message SettingsConsoleKeyFromNativeResponse {
+  // Absent for a key no console binding can use.
+  optional ConsoleKey key = 1;
+}
+
+message SettingsChanged {
+  uint64 revision = 1;
+  repeated string keys = 2;
+}
+
+// The settings registry and the opaque per-shell UI state.
+service Settings {
+  option (service_info) = {id: 2};
+
+  rpc Snapshot(SettingsSnapshotRequest) returns (SettingsSnapshotResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Patch(SettingsPatchRequest) returns (SettingsPatchResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc Reset(SettingsResetRequest) returns (SettingsResetResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc Search(SettingsSearchRequest) returns (SettingsSearchResponse) {
+    option (method_info) = {id: 4};
+  }
+  rpc FrontendStateGet(SettingsFrontendStateGetRequest) returns (SettingsFrontendStateGetResponse) {
+    option (method_info) = {id: 5};
+  }
+  rpc FrontendStatePut(SettingsFrontendStatePutRequest) returns (SettingsFrontendStatePutResponse) {
+    option (method_info) = {id: 6};
+  }
+  rpc Languages(SettingsLanguagesRequest) returns (SettingsLanguagesResponse) {
+    option (method_info) = {id: 7};
+  }
+  rpc Descriptors(SettingsDescriptorsRequest) returns (SettingsDescriptorsResponse) {
+    option (method_info) = {id: 8};
+  }
+  rpc ConsoleKeys(SettingsConsoleKeysRequest) returns (SettingsConsoleKeysResponse) {
+    option (method_info) = {id: 9};
+  }
+  rpc ConsoleKeyFromNative(SettingsConsoleKeyFromNativeRequest) returns (SettingsConsoleKeyFromNativeResponse) {
+    option (method_info) = {id: 10};
+  }
+}

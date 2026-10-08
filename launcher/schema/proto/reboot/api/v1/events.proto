@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/backend.proto";
+import "reboot/api/v1/browser.proto";
+import "reboot/api/v1/catalog.proto";
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/components.proto";
+import "reboot/api/v1/engine.proto";
+import "reboot/api/v1/guidance.proto";
+import "reboot/api/v1/host.proto";
+import "reboot/api/v1/identity.proto";
+import "reboot/api/v1/integration.proto";
+import "reboot/api/v1/join.proto";
+import "reboot/api/v1/library.proto";
+import "reboot/api/v1/logs.proto";
+import "reboot/api/v1/requests.proto";
+import "reboot/api/v1/secrets.proto";
+import "reboot/api/v1/sessions.proto";
+import "reboot/api/v1/settings.proto";
+import "reboot/api/v1/updates.proto";
+
+// Event.payload. Each member is named after its EventKind value; session and op ids live in the envelope.
+message EventPayload {
+  oneof payload {
+    Progress op_progress = 1;
+    Outcome op_completed = 2;
+    EngineState engine_state = 3;
+    SettingsChanged settings_changed = 4;
+    LibraryChanged library_changed = 5;
+    CatalogChanged catalog_changed = 6;
+    ComponentChanged component_changed = 7;
+    IdentityChanged identity_changed = 8;
+    SessionStateChanged session_state_changed = 9;
+    SessionSpawned session_spawned = 10;
+    SessionDegraded session_degraded = 11;
+    SessionEnded session_ended = 12;
+    HostPhaseChanged host_phase_changed = 13;
+    HostListening host_listening = 14;
+    ReachabilityChanged reachability_changed = 15;
+    PortMappingChanged port_mapping_changed = 16;
+    PublishStateChanged publish_state_changed = 17;
+    MatchEvent match_event = 18;
+    PlayerEvent player_event = 19;
+    BackendStateChanged backend_state_changed = 20;
+    XmppUnavailable xmpp_unavailable = 21;
+    BrowserConnectionChanged browser_connection_changed = 22;
+    ViewSnapshot view_snapshot = 23;
+    ViewDelta view_delta = 24;
+    JoinTargetChanged join_target_changed = 25;
+    UpdateAvailable update_available = 26;
+    UpdateStaged update_staged = 27;
+    EngineUpdating engine_updating = 28;
+    UpdateFailed update_failed = 29;
+    NoticeAdded notice_added = 30;
+    LogLine log_line = 31;
+    UserActionRequired user_action_required = 32;
+    UserActionResolved user_action_resolved = 33;
+    OpStarted op_started = 34;
+    HostProfilesChanged host_profiles_changed = 35;
+    BackendAccountsChanged backend_accounts_changed = 36;
+    NoticeRemoved notice_removed = 37;
+    OnboardingChanged onboarding_changed = 38;
+    IntegrationChanged integration_changed = 39;
+    PrerequisitesChanged prerequisites_changed = 40;
+    SecretStateChanged secret_state_changed = 41;
+    StorageModeChanged storage_mode_changed = 42;
+  }
+}

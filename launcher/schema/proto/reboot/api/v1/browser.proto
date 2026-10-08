@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+// Values match rbsb/1.
+enum Region {
+  REGION_ALL = 0;
+  REGION_AFRICA = 1;
+  REGION_ANTARCTICA = 2;
+  REGION_ASIA = 3;
+  REGION_EUROPE = 4;
+  REGION_NORTH_AMERICA = 5;
+  REGION_OCEANIA = 6;
+  REGION_SOUTH_AMERICA = 7;
+}
+
+enum PasswordFilter {
+  PASSWORD_FILTER_ANY = 0;
+  PASSWORD_FILTER_WITHOUT = 1;
+  PASSWORD_FILTER_ONLY = 2;
+}
+
+enum ServerSort {
+  SERVER_SORT_PLAYERS = 0;
+  SERVER_SORT_NEWEST = 1;
+  SERVER_SORT_NAME = 2;
+}
+
+enum ConnectionState {
+  CONNECTION_STATE_IDLE = 0;
+  CONNECTION_STATE_CONNECTING = 1;
+  CONNECTION_STATE_CONNECTED = 2;
+  CONNECTION_STATE_BACKOFF = 3;
+  CONNECTION_STATE_DRAINING = 4;
+  CONNECTION_STATE_UDP_BLOCKED = 5;
+}
+
+// Text fields come from strangers: sanitized, but render each one in its own isolated element.
+message ServerEntry {
+  ServerId id = 1;
+  string name = 2;
+  string author = 3;
+  string description = 4;
+  string version = 5;
+  uint32 bucket = 6;
+  uint32 players = 7;
+  uint32 max_players = 8;
+  Region region = 9;
+  bool has_password = 10;
+  bool reachable = 11;
+  bool online = 12;
+  uint64 created_unix_ms = 13;
+  // A library build whose version is in the entry's bucket.
+  optional BuildId compatible_build = 14;
+  // Published by this user; joining it is refused.
+  bool own = 15;
+}
+
+message ViewSpec {
+  // rbsb/1 bucket: 0 is every version, 1 is unparseable versions.
+  uint32 bucket = 1;
+  PasswordFilter password = 2;
+  Region region = 3;
+  ServerSort sort = 4;
+  // Rows kept live; the engine clamps it to the edge's limit.
+  uint32 window = 5;
+  // Free-text search; empty lists everything.
+  string text = 6;
+}
+
+message BrowserOpenViewRequest {
+  ViewSpec spec = 1;
+}
+
+message BrowserOpenViewResponse {
+  uint64 view_id = 1;
+}
+
+message BrowserUpdateViewRequest {
+  uint64 view_id = 1;
+  ViewSpec spec = 2;
+}
+
+message BrowserUpdateViewResponse {}
+
+message BrowserCloseViewRequest {
+  uint64 view_id = 1;
+}
+
+message BrowserCloseViewResponse {}
+
+message BrowserStateRequest {}
+
+message BrowserStateResponse {
+  ConnectionState state = 1;
+  repeated uint64 open_views = 2;
+  optional Diagnostic error = 3;
+}
+
+message BrowserResolveRequest {
+  ServerId server = 1;
+}
+
+message BrowserResolveResponse {
+  ServerEntry entry = 1;
+  // Unlisted: reachable only by id or link.
+  bool hidden = 2;
+}
+
+message BrowserConnectionChanged {
+  ConnectionState state = 1;
+  optional uint32 retry_in_ms = 2;
+  optional Diagnostic error = 3;
+}
+
+message ViewSnapshot {
+  uint64 view_id = 1;
+  uint32 total = 2;
+  uint32 offset = 3;
+  repeated ServerEntry rows = 4;
+  // The edge is unreachable; rows are the last known ones.
+  bool stale = 5;
+}
+
+// Replaces the whole window, so a newer delta supersedes an older one.
+message ViewDelta {
+  uint64 view_id = 1;
+  uint32 total = 2;
+  uint32 offset = 3;
+  repeated ServerEntry rows = 4;
+}
+
+// Live server-browser views over rbsb/1.
+service Browser {
+  option (service_info) = {id: 14};
+
+  rpc OpenView(BrowserOpenViewRequest) returns (BrowserOpenViewResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc UpdateView(BrowserUpdateViewRequest) returns (BrowserUpdateViewResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc CloseView(BrowserCloseViewRequest) returns (BrowserCloseViewResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc State(BrowserStateRequest) returns (BrowserStateResponse) {
+    option (method_info) = {id: 4};
+  }
+  rpc Resolve(BrowserResolveRequest) returns (BrowserResolveResponse) {
+    option (method_info) = {
+      id: 5
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+}

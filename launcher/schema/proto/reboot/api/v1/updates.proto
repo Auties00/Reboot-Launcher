@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+enum UpdatePhase {
+  UPDATE_PHASE_IDLE = 0;
+  UPDATE_PHASE_CHECKING = 1;
+  UPDATE_PHASE_AVAILABLE = 2;
+  UPDATE_PHASE_DOWNLOADING = 3;
+  UPDATE_PHASE_STAGED = 4;
+  // Staged; applies once nothing is live.
+  UPDATE_PHASE_WAITING_FOR_IDLE = 5;
+  UPDATE_PHASE_APPLYING = 6;
+  UPDATE_PHASE_FAILED = 7;
+}
+
+enum ApplyWhen {
+  APPLY_WHEN_IDLE = 0;
+  // Drains live sessions first, after ConfirmStopSessions.
+  APPLY_WHEN_NOW = 1;
+}
+
+message UpdateInfo {
+  SemVer version = 1;
+  uint64 size_bytes = 2;
+  string notes_url = 3;
+  // This build is below the manifest's min_supported, so new sessions are blocked.
+  bool required = 4;
+}
+
+message UpdatesStatusRequest {}
+
+message UpdatesStatusResponse {
+  SemVer current = 1;
+  UpdatePhase phase = 2;
+  optional UpdateInfo available = 3;
+  uint64 last_check_unix_ms = 4;
+  optional Diagnostic last_error = 5;
+}
+
+message UpdatesCheckRequest {}
+
+message UpdatesCheckResponse {
+  optional UpdateInfo available = 1;
+}
+
+message UpdatesApplyRequest {
+  ApplyWhen when = 1;
+}
+
+message UpdatesApplyResponse {}
+
+message UpdateAvailable {
+  UpdateInfo update = 1;
+}
+
+message UpdateStaged {
+  UpdateInfo update = 1;
+}
+
+// The engine is about to exit to apply; clients reconnect to the new build.
+message EngineUpdating {
+  SemVer version = 1;
+}
+
+message UpdateFailed {
+  Diagnostic error = 1;
+}
+
+// Launcher self-update.
+service Updates {
+  option (service_info) = {id: 16};
+
+  rpc Status(UpdatesStatusRequest) returns (UpdatesStatusResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Check(UpdatesCheckRequest) returns (UpdatesCheckResponse) {
+    option (method_info) = {
+      id: 2
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc Apply(UpdatesApplyRequest) returns (UpdatesApplyResponse) {
+    option (method_info) = {
+      id: 3
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_BYTE_COUNT
+      disconnect: DISCONNECT_DETACHED
+    };
+  }
+}

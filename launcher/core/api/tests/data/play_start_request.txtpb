@@ -1,0 +1,11 @@
+# proto-file: reboot/api/v1/play.proto
+# proto-message: reboot.api.v1.PlayStartRequest
+request {
+  build { uuid: "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020" }
+  target { address: "127.0.0.1:7777" }
+  auto_server: true
+  backend { kind: BACKEND_KIND_REMOTE origin: "https://backend.example" }
+  custom_args: "-log \"-name=a b\""
+  environment { name: "WAYLAND_DISPLAY" value: "wayland-1" }
+  environment { name: "LANG" value: "" }
+}

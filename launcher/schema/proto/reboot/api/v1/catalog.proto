@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+enum CatalogEntryStatus {
+  CATALOG_ENTRY_STATUS_AVAILABLE = 0;
+  CATALOG_ENTRY_STATUS_UNAVAILABLE = 1;
+  CATALOG_ENTRY_STATUS_WITHDRAWN = 2;
+}
+
+enum CatalogSource {
+  CATALOG_SOURCE_REMOTE = 0;
+  CATALOG_SOURCE_CACHE = 1;
+  CATALOG_SOURCE_BUNDLED = 2;
+}
+
+message CatalogEntry {
+  // Stable, such as "12.41".
+  string id = 1;
+  GameVersion version = 2;
+  optional uint32 changelist = 3;
+  string display_name = 4;
+  CatalogEntryStatus status = 5;
+  optional uint64 archive_size = 6;
+  optional uint64 installed_size = 7;
+  // A library build was installed from this entry.
+  bool installed = 8;
+}
+
+message CatalogListRequest {
+  bool include_unavailable = 1;
+  // Matches the id and display name; empty matches everything.
+  string text = 2;
+}
+
+message CatalogListResponse {
+  uint64 serial = 1;
+  uint64 generated_unix_ms = 2;
+  CatalogSource source = 3;
+  // Past its expiry; still used until a refresh succeeds.
+  bool expired = 4;
+  repeated CatalogEntry entries = 5;
+}
+
+message CatalogRefreshRequest {
+  // Fetch even when the cached copy has not expired.
+  bool force = 1;
+}
+
+message CatalogRefreshResponse {
+  uint64 serial = 1;
+  CatalogSource source = 2;
+}
+
+message CatalogChanged {
+  uint64 serial = 1;
+  CatalogSource source = 2;
+}
+
+// The signed catalog of downloadable builds.
+service Catalog {
+  option (service_info) = {id: 4};
+
+  rpc List(CatalogListRequest) returns (CatalogListResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Refresh(CatalogRefreshRequest) returns (CatalogRefreshResponse) {
+    option (method_info) = {
+      id: 2
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+}

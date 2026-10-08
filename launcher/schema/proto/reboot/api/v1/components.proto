@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+enum ComponentKind {
+  // Our client DLL set.
+  COMPONENT_KIND_PAYLOAD = 0;
+  // A Wine or Proton runtime and what it needs, for play on macOS and Linux.
+  COMPONENT_KIND_RUNTIME = 1;
+}
+
+enum ComponentState {
+  COMPONENT_STATE_MISSING = 0;
+  COMPONENT_STATE_INSTALLING = 1;
+  COMPONENT_STATE_INSTALLED = 2;
+  COMPONENT_STATE_UPDATE_AVAILABLE = 3;
+  // Failed verification or was quarantined; `problem` says which.
+  COMPONENT_STATE_BROKEN = 4;
+}
+
+// Mirrors components::RemediationStep: what the UI offers for a quarantined file. No step adds a
+// security-product exclusion.
+enum RemediationStep {
+  REMEDIATION_STEP_RESTORE_FROM_QUARANTINE = 0;
+  REMEDIATION_STEP_OPEN_SECURITY_CENTER = 1;
+  // The UI builds the command from ComponentProblem.file.
+  REMEDIATION_STEP_COPY_RESTORE_COMMAND = 2;
+  REMEDIATION_STEP_REPORT_FALSE_POSITIVE = 3;
+  REMEDIATION_STEP_EXPLAIN_SMART_APP_CONTROL = 4;
+}
+
+enum RecoveryState {
+  RECOVERY_STATE_REFETCHING = 0;
+  RECOVERY_STATE_RECOVERED = 1;
+  RECOVERY_STATE_REFETCH_FAILED = 2;
+}
+
+// A file that vanished or changed, usually quarantined by security software.
+message ComponentProblem {
+  // Names the security product when one was found.
+  Diagnostic reason = 1;
+  Path file = 2;
+  repeated RemediationStep remediation = 3;
+  RecoveryState recovery = 4;
+  optional Diagnostic refetch_error = 5;
+}
+
+message Component {
+  string id = 1;
+  ComponentKind kind = 2;
+  ComponentState state = 3;
+  string version = 4;
+  optional string available_version = 5;
+  uint64 size_bytes = 6;
+  // Pinned by a live session.
+  bool in_use = 7;
+  optional ComponentProblem problem = 8;
+}
+
+message ComponentsListRequest {}
+
+message ComponentsListResponse {
+  repeated Component components = 1;
+}
+
+message ComponentsEnsureRequest {
+  string id = 1;
+}
+
+message ComponentsEnsureResponse {
+  Component component = 1;
+}
+
+message ComponentsRemoveRequest {
+  string id = 1;
+}
+
+message ComponentsRemoveResponse {}
+
+message ComponentsRuntimeSetupRequest {
+  RunnerKind runner = 1;
+}
+
+message ComponentsRuntimeSetupResponse {
+  repeated Component components = 1;
+}
+
+message ComponentChanged {
+  Component component = 1;
+}
+
+// Downloadable payloads and play runtimes.
+service Components {
+  option (service_info) = {id: 7};
+
+  rpc List(ComponentsListRequest) returns (ComponentsListResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Ensure(ComponentsEnsureRequest) returns (ComponentsEnsureResponse) {
+    option (method_info) = {
+      id: 2
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_BYTE_COUNT
+      disconnect: DISCONNECT_DETACHED
+    };
+  }
+  rpc Remove(ComponentsRemoveRequest) returns (ComponentsRemoveResponse) {
+    option (method_info) = {
+      id: 3
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc RuntimeSetup(ComponentsRuntimeSetupRequest) returns (ComponentsRuntimeSetupResponse) {
+    option (method_info) = {
+      id: 4
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_BYTE_COUNT
+      disconnect: DISCONNECT_DETACHED
+    };
+  }
+}

@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/backend.proto";
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+import "reboot/api/v1/requests.proto";
+import "reboot/api/v1/support.proto";
+
+message PlayTarget {
+  oneof target {
+    ServerId server = 1;
+    // host:port, resolved and probed at start.
+    string address = 2;
+  }
+}
+
+message PlayRequest {
+  // Absent: the library's client selection.
+  optional BuildId build = 1;
+  // Absent: the Join target, or the linked auto-server when auto_server is set.
+  optional PlayTarget target = 2;
+  // Starts a linked, unlisted host for this client.
+  bool auto_server = 3;
+  // Absent: the configured backend target.
+  optional BackendTarget backend = 4;
+  // Extra game arguments with shell-style quoting.
+  string custom_args = 5;
+  // The caller's environment at this launch, so a long-lived connection never launches with a
+  // stale DISPLAY. Replaces the one captured at connect; empty keeps that. Names outside the
+  // engine's client allow-list (display, audio, D-Bus, locale) are dropped.
+  repeated EnvVar environment = 6;
+}
+
+message PlayPlanRequest {
+  PlayRequest request = 1;
+}
+
+// What start would do now; nothing is reserved.
+message PlayPlanResponse {
+  SupportTier tier = 1;
+  NetMode net_mode = 2;
+  RunnerKind runner = 3;
+  repeated Diagnostic blockers = 4;
+  repeated Diagnostic warnings = 5;
+  // Requests start is expected to raise.
+  repeated UserRequestKind questions = 6;
+}
+
+// Play needs the caller and the engine in the same OS session.
+message PlayStartRequest {
+  PlayRequest request = 1;
+}
+
+// Sent once the game logged in.
+message PlayStartResponse {
+  SessionId session = 1;
+}
+
+// Launching the game as a client.
+service Play {
+  option (service_info) = {id: 10};
+
+  rpc Plan(PlayPlanRequest) returns (PlayPlanResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Start(PlayStartRequest) returns (PlayStartResponse) {
+    option (method_info) = {
+      id: 2
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_ITEM_COUNT
+      disconnect: DISCONNECT_DETACHED
+    };
+  }
+}

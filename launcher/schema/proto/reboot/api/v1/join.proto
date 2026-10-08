@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/browser.proto";
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+message ServerTarget {
+  ServerId id = 1;
+  string name = 2;
+  string author = 3;
+}
+
+// What Play joins when its request names no target.
+message JoinTarget {
+  oneof target {
+    ServerTarget server = 1;
+    // host:port as the user typed it.
+    string address = 2;
+  }
+}
+
+message JoinParseAddressRequest {
+  string text = 1;
+}
+
+message JoinParseAddressResponse {
+  string host = 1;
+  uint32 port = 2;
+}
+
+message JoinTargetRequest {}
+
+message JoinTargetResponse {
+  // Absent: the local or linked auto-server.
+  optional JoinTarget target = 1;
+}
+
+message JoinSetCustomTargetRequest {
+  string address = 1;
+}
+
+message JoinSetCustomTargetResponse {
+  JoinTarget target = 1;
+}
+
+message JoinClearTargetRequest {}
+
+message JoinClearTargetResponse {}
+
+message JoinResolveLinkRequest {
+  // A reboot:// link or a bare server id.
+  string url = 1;
+}
+
+// Raises ConfirmJoin before it becomes the target.
+message JoinResolveLinkResponse {
+  ServerEntry server = 1;
+  bool hidden = 2;
+}
+
+message JoinGrantRequest {
+  ServerId server = 1;
+}
+
+message JoinGrantResponse {
+  ServerEntry server = 1;
+  // The granted IPv4 host:port.
+  string address = 2;
+}
+
+message JoinTargetChanged {
+  optional JoinTarget target = 1;
+}
+
+// What Play joins, and reboot:// links.
+service Join {
+  option (service_info) = {id: 15};
+
+  rpc ParseAddress(JoinParseAddressRequest) returns (JoinParseAddressResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc Target(JoinTargetRequest) returns (JoinTargetResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc SetCustomTarget(JoinSetCustomTargetRequest) returns (JoinSetCustomTargetResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc ClearTarget(JoinClearTargetRequest) returns (JoinClearTargetResponse) {
+    option (method_info) = {id: 4};
+  }
+  rpc ResolveLink(JoinResolveLinkRequest) returns (JoinResolveLinkResponse) {
+    option (method_info) = {
+      id: 5
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  // Joins as Play.start does, ConfirmJoin and password included, but only returns the address,
+  // for Copy IP while the backend is Local or Remote.
+  rpc Grant(JoinGrantRequest) returns (JoinGrantResponse) {
+    option (method_info) = {
+      id: 6
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+}

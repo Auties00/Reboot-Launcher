@@ -1,0 +1,9 @@
+# Run from launcher/schema. The C++ generator is a Rust tool, so cargo is the only prerequisite.
+version: v2
+inputs:
+  - directory: proto
+plugins:
+  # One invocation over every file, so the method table and dispatch see all services.
+  - local: ["cargo", "run", "--quiet", "--release", "--manifest-path", "../core/api/tools/protoc-gen-reboot-cpp/Cargo.toml", "--"]
+    out: ../core
+    strategy: all

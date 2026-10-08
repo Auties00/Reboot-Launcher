@@ -1,0 +1,23 @@
+# proto-file: reboot/api/v1/requests.proto
+# proto-message: reboot.api.v1.UserActionRequired
+request_id: 7
+kind: USER_REQUEST_KIND_CONFIRM_JOIN
+op_id: 5
+prompt {
+  confirm_join {
+    server {
+      id { uuid: "\377\376\375\374\373\372\371\370\367\366\365\364\363\362\361\360" }
+      name: "EU Solo"
+      author: "host"
+      version: "12.41"
+      bucket: 12329
+      players: 3
+      max_players: 100
+      region: REGION_EUROPE
+      has_password: true
+      reachable: true
+      online: true
+      created_unix_ms: 1700000000000
+    }
+  }
+}

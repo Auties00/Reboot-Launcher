@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "google/protobuf/descriptor.proto";
+
+// Schema metadata read by protoc-gen-reboot-cpp; no C++ is generated from this file.
+
+enum MethodKind {
+  METHOD_KIND_CALL = 0;
+  METHOD_KIND_OPERATION = 1;
+}
+
+enum ProgressUnit {
+  PROGRESS_UNIT_NO_PROGRESS = 0;
+  PROGRESS_UNIT_ITEM_COUNT = 1;
+  PROGRESS_UNIT_BYTE_COUNT = 2;
+}
+
+enum Disconnect {
+  DISCONNECT_BOUND_TO_CONNECTION = 0;
+  DISCONNECT_DETACHED = 1;
+}
+
+message ServiceInfo {
+  // The high 16 bits of every method_id in the service.
+  uint32 id = 1;
+}
+
+message MethodInfo {
+  // The low 16 bits of method_id; never reused.
+  uint32 id = 1;
+  MethodKind kind = 2;
+  ProgressUnit progress = 3;
+  // Applies when rb_start gets neither RB_START_DETACHED nor RB_START_BOUND.
+  Disconnect disconnect = 4;
+}
+
+extend google.protobuf.ServiceOptions {
+  ServiceInfo service_info = 50100;
+}
+
+extend google.protobuf.MethodOptions {
+  MethodInfo method_info = 50100;
+}
+
+extend google.protobuf.FieldOptions {
+  // A bytes field of exactly this many bytes; 16 maps to reboot::Uuid.
+  uint32 fixed_size = 50100;
+}

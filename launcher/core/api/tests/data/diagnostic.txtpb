@@ -1,0 +1,10 @@
+# proto-file: reboot/api/v1/common.proto
+# proto-message: reboot.api.v1.Diagnostic
+id: "play.wrong_session"
+args { name: "session" kind: ARG_KIND_STRING value: "console" }
+args { name: "attempts" kind: ARG_KIND_SIGNED value: "-5" }
+detail: "literal text"
+os_origin: OS_ERROR_ORIGIN_GUEST_WINDOWS
+os_code: -2147024891
+retryable: true
+kind: ERROR_KIND_CONFLICT

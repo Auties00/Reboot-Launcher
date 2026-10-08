@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/library.proto";
+import "reboot/api/v1/options.proto";
+
+message Volume {
+  Path root = 1;
+  string label = 2;
+  uint64 free_bytes = 3;
+  uint64 total_bytes = 4;
+  // Why the volume cannot hold the build; absent when it can.
+  optional Diagnostic problem = 5;
+}
+
+message InstallSuggestDestinationRequest {
+  string entry_id = 1;
+}
+
+message InstallSuggestDestinationResponse {
+  Path destination = 1;
+  string name = 2;
+  uint64 required_bytes = 3;
+  repeated Volume volumes = 4;
+}
+
+message InstallDiscardStagingRequest {
+  // The destination of a cancelled or failed install.
+  Path destination = 1;
+}
+
+message InstallDiscardStagingResponse {}
+
+message InstallDeleteUnregisteredRequest {
+  // A folder this engine run installed but could not add to the library.
+  Path folder = 1;
+}
+
+message InstallDeleteUnregisteredResponse {}
+
+message InstallInstallRequest {
+  string entry_id = 1;
+  Path destination = 2;
+  string name = 3;
+}
+
+message InstallInstallResponse {
+  Build build = 1;
+}
+
+// Downloading a catalog build into the library.
+service Install {
+  option (service_info) = {id: 5};
+
+  // An operation: a volume query can hang on a network or empty optical drive.
+  rpc SuggestDestination(InstallSuggestDestinationRequest) returns (InstallSuggestDestinationResponse) {
+    option (method_info) = {
+      id: 1
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc Install(InstallInstallRequest) returns (InstallInstallResponse) {
+    option (method_info) = {
+      id: 2
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_BYTE_COUNT
+      disconnect: DISCONNECT_DETACHED
+    };
+  }
+  // Drops the archive a cancelled or failed install kept for resuming.
+  rpc DiscardStaging(InstallDiscardStagingRequest) returns (InstallDiscardStagingResponse) {
+    option (method_info) = {
+      id: 3
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc DeleteUnregistered(InstallDeleteUnregisteredRequest) returns (InstallDeleteUnregisteredResponse) {
+    option (method_info) = {
+      id: 4
+      kind: METHOD_KIND_OPERATION
+      progress: PROGRESS_UNIT_ITEM_COUNT
+    };
+  }
+}

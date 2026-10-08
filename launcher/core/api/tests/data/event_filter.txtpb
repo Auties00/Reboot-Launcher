@@ -1,0 +1,5 @@
+# proto-file: reboot/api/v1/common.proto
+# proto-message: reboot.api.v1.EventFilter
+kinds: [EVENT_KIND_OP_PROGRESS, EVENT_KIND_SESSION_ENDED, EVENT_KIND_LOG_LINE]
+session { uuid: "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020" }
+op_id: 0

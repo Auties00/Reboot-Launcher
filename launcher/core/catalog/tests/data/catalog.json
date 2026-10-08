@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "serial": 42,
+  "generated_unix_ms": 1790000000000,
+  "expires_unix_ms": 1792592000000,
+  "entries": [
+    {
+      "id": "12.41",
+      "version": "12.41",
+      "changelist": 12905909,
+      "display_name": "Fortnite 12.41",
+      "url": "https://builds.example/windows-12.41.zip",
+      "format": "7z",
+      "container": "zip_stored",
+      "archive_size": 24000000000,
+      "installed_size": 61000000000,
+      "sha256": "00112233445566778899aabbccddeeff00112233445566778899AABBCCDDEEFF",
+      "availability": "available"
+    },
+    {
+      "id": "6.10.1",
+      "version": "6.10.1",
+      "url": "https://builds.example/windows-6.10.1.rar",
+      "format": "rar",
+      "container": "none",
+      "archive_size": 9000000000,
+      "availability": "available"
+    },
+    {
+      "id": "cert",
+      "version": "3.5",
+      "aliases": ["3.50.1", "Cert"],
+      "url": "https://builds.example/windows-3.50.1.zip",
+      "format": "zip",
+      "container": "none",
+      "archive_size": 7000000000,
+      "availability": "unavailable"
+    },
+    {
+      "id": "6.1.1",
+      "version": "6.1.1",
+      "url": "https://builds.example/windows-6.1.1.rar",
+      "format": "rar",
+      "container": "none",
+      "archive_size": 8000000000,
+      "availability": "available",
+      "future_field": true
+    }
+  ],
+  "flag_ranges": [
+    {
+      "first": "1.7.2",
+      "last": "9.30",
+      "flags": {
+        "boot_inject": { "native": "early_bird_apc", "wine": "after_resume" },
+        "xmpp": { "support": "supported", "transport": "websocket" },
+        "hotfix_delivery": "serve"
+      }
+    },
+    {
+      "first": "9.40",
+      "last": "10.40",
+      "flags": { "hotfix_delivery": "withhold" }
+    },
+    {
+      "first": "11.0",
+      "last": "30.10",
+      "flags": {
+        "boot_inject": { "native": "early_bird_apc", "umu": "after_resume", "mac_runtime": "proxy_import" },
+        "auth_exchangecode": true,
+        "hotfix_delivery": "serve",
+        "openssl_ia32cap": true
+      }
+    }
+  ]
+}

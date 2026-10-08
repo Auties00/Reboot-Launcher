@@ -1,0 +1,19 @@
+# proto-file: reboot/api/v1/host.proto
+# proto-message: reboot.api.v1.HostProfilesCreateRequest
+profile {
+  id { uuid: "\377\376\375\374\373\372\371\370\367\366\365\364\363\362\361\360" }
+  revision: 9
+  name: "Default"
+  port { range { first: 7777 last: 7786 } }
+  port_mapping: true
+  listing: LISTING_LISTED
+  server_name: "Reboot"
+  description: "Ünïcode"
+  max_players: 100
+  playlist: "Playlist_DefaultSolo"
+  start { auto_at_players: 2 }
+  tick_rate: 30
+  match_end { action: MATCH_END_ACTION_SHUTDOWN delay_s: 10 }
+  operator_cidrs: ["10.0.0.0/8", "::1/128"]
+  bans { address: "203.0.113.7" account_id: "cheater" created_unix_ms: 1700000000000 }
+}

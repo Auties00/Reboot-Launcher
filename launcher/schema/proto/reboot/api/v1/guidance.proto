@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+// Mirrors reboot::Severity.
+enum NoticeLevel {
+  NOTICE_LEVEL_INFO = 0;
+  NOTICE_LEVEL_WARNING = 1;
+  NOTICE_LEVEL_ERROR = 2;
+}
+
+// A message id and its args, which UIs render from their own catalog.
+message MessageText {
+  string id = 1;
+  repeated DiagnosticArg args = 2;
+}
+
+message NoticeKey {
+  // Stable, such as "unlisted_live".
+  string kind = 1;
+  // Set for a notice about one session.
+  optional SessionId session = 2;
+}
+
+// Integration.remediate(prerequisite).
+message RemediatePrerequisiteAction {
+  string prerequisite = 1;
+}
+
+// Catalog.list, then Install.install.
+message InstallBuildAction {}
+
+// Library.import.
+message ImportBuildAction {}
+
+// Identity.set_display_name(role).
+message EditDisplayNameAction {
+  GameRole role = 1;
+}
+
+// Settings.patch of host.listing, then Host.profiles_update of the built-in default profile's listing.
+message SetDefaultHostListingAction {
+  bool listed = 1;
+}
+
+// Host.profiles_update of `profile` with listing LISTED.
+message ListHostProfileAction {
+  HostProfileId profile = 1;
+}
+
+// Host.share_link(session), copied by the UI.
+message CopyShareLinkAction {
+  SessionId session = 1;
+}
+
+// Integration.shell_open_url of the Guidance.links entry with this id.
+message OpenAppLinkAction {
+  string link = 1;
+}
+
+// A button; the UI makes the calls its action names, the engine never does.
+message SuggestedAction {
+  // The button's message id.
+  string label = 1;
+  oneof action {
+    RemediatePrerequisiteAction remediate_prerequisite = 2;
+    InstallBuildAction install_build = 3;
+    ImportBuildAction import_build = 4;
+    EditDisplayNameAction edit_display_name = 5;
+    SetDefaultHostListingAction set_default_host_listing = 6;
+    ListHostProfileAction list_host_profile = 7;
+    CopyShareLinkAction copy_share_link = 8;
+    OpenAppLinkAction open_app_link = 9;
+  }
+}
+
+// An info bar that stays until dismissed or until its condition ends.
+message Notice {
+  NoticeKey key = 1;
+  NoticeLevel level = 2;
+  MessageText title = 3;
+  MessageText body = 4;
+  repeated SuggestedAction actions = 5;
+  uint64 created_unix_ms = 6;
+  bool dismissible = 7;
+}
+
+message OnboardingState {
+  repeated string steps = 1;
+  string current = 2;
+  bool finished = 3;
+  bool skipped = 4;
+}
+
+message Link {
+  // Stable, such as "bug_report" or "port_forwarding".
+  string id = 1;
+  string url = 2;
+}
+
+message GuidanceNoticesListRequest {}
+
+message GuidanceNoticesListResponse {
+  repeated Notice notices = 1;
+}
+
+message GuidanceNoticesDismissRequest {
+  NoticeKey key = 1;
+}
+
+message GuidanceNoticesDismissResponse {}
+
+message GuidanceOnboardingStateRequest {}
+
+message GuidanceOnboardingStateResponse {
+  OnboardingState state = 1;
+}
+
+message GuidanceOnboardingAdvanceRequest {
+  // The step the user finished; a stale step is refused.
+  string step = 1;
+  // The answer for a step that asks one, such as the host listing choice.
+  string choice = 2;
+}
+
+message GuidanceOnboardingAdvanceResponse {
+  OnboardingState state = 1;
+  // What the chosen choice asks the UI to do.
+  optional SuggestedAction action = 2;
+}
+
+message GuidanceOnboardingSkipRequest {}
+
+message GuidanceOnboardingSkipResponse {
+  OnboardingState state = 1;
+}
+
+message GuidanceLinksRequest {}
+
+message GuidanceLinksResponse {
+  repeated Link links = 1;
+}
+
+message NoticeAdded {
+  Notice notice = 1;
+}
+
+// Dismissed, or its condition ended.
+message NoticeRemoved {
+  NoticeKey key = 1;
+}
+
+message OnboardingChanged {
+  OnboardingState state = 1;
+}
+
+// Notices, onboarding and help links.
+service Guidance {
+  option (service_info) = {id: 19};
+
+  rpc NoticesList(GuidanceNoticesListRequest) returns (GuidanceNoticesListResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc NoticesDismiss(GuidanceNoticesDismissRequest) returns (GuidanceNoticesDismissResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc OnboardingState(GuidanceOnboardingStateRequest) returns (GuidanceOnboardingStateResponse) {
+    option (method_info) = {id: 3};
+  }
+  rpc OnboardingAdvance(GuidanceOnboardingAdvanceRequest) returns (GuidanceOnboardingAdvanceResponse) {
+    option (method_info) = {id: 4};
+  }
+  rpc OnboardingSkip(GuidanceOnboardingSkipRequest) returns (GuidanceOnboardingSkipResponse) {
+    option (method_info) = {id: 5};
+  }
+  rpc Links(GuidanceLinksRequest) returns (GuidanceLinksResponse) {
+    option (method_info) = {id: 6};
+  }
+}

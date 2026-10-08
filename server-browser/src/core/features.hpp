@@ -31,10 +31,18 @@ namespace sb::detail {
 #define SB_DASSERT(...) static_cast<void>(0)
 #endif
 
+// The launcher builds these headers with MSVC.
+#if defined(_MSC_VER) && !defined(__clang__)
+#define SB_LIKELY(x) (x)
+#define SB_UNLIKELY(x) (x)
+#define SB_NOINLINE __declspec(noinline)
+#define SB_ALWAYS_INLINE __forceinline
+#else
 #define SB_LIKELY(x) __builtin_expect(!!(x), 1)
 #define SB_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define SB_NOINLINE __attribute__((noinline))
 #define SB_ALWAYS_INLINE inline __attribute__((always_inline))
+#endif
 
 namespace sb {
 inline constexpr std::size_t kCacheLine = 64;

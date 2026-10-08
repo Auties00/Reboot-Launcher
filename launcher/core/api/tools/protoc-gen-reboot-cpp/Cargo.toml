@@ -1,0 +1,13 @@
+[package]
+name = "protoc-gen-reboot-cpp"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Generates the C++ side of reboot.api.v1 from the launcher/schema protos"
+license = "GPL-3.0-or-later"
+publish = false
+
+[dependencies]
+prost = "0.14"
+prost-reflect = "0.16"
+prost-types = "0.14"

@@ -1,0 +1,29 @@
+#pragma once
+
+#include "reboot/foundation/diag.hpp"
+
+namespace reboot::compat::msg {
+
+REBOOT_MESSAGE_DECL(kRunnerUnsupported);
+REBOOT_MESSAGE_DECL(kNoRuntime);
+REBOOT_MESSAGE_DECL(kRuntimeSetupRequired);
+REBOOT_MESSAGE_DECL(kRuntimeSetupRunning);
+REBOOT_MESSAGE_DECL(kRuntimeInUse);
+REBOOT_MESSAGE_DECL(kRuntimeSetupFailed);
+REBOOT_MESSAGE_DECL(kRosettaMissing);
+REBOOT_MESSAGE_DECL(kRosettaDeclined);
+REBOOT_MESSAGE_DECL(kNoPrefix);
+REBOOT_MESSAGE_DECL(kPrefixBusy);
+REBOOT_MESSAGE_DECL(kPrefixFailed);
+REBOOT_MESSAGE_DECL(kPrefixBackupFailed);
+REBOOT_MESSAGE_DECL(kVcRuntimeFailed);
+REBOOT_MESSAGE_DECL(kPeMalformed);
+REBOOT_MESSAGE_DECL(kDosdevicesUnreadable);
+REBOOT_MESSAGE_DECL(kPathNotMapped);
+REBOOT_MESSAGE_DECL(kPathNotUtf8);
+REBOOT_MESSAGE_DECL(kSessionNotStaged);
+REBOOT_MESSAGE_DECL(kSessionAlreadyStaged);
+REBOOT_MESSAGE_DECL(kRunnerSpawnFailed);
+REBOOT_MESSAGE_DECL(kRunnerExited);
+
+}  // namespace reboot::compat::msg

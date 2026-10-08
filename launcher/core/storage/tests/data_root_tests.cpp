@@ -1,0 +1,40 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include "reboot/foundation/paths.hpp"
+#include "reboot/storage/data_root.hpp"
+#include "reboot/testing/fake_platform_paths.hpp"
+#include "reboot/testing/in_memory_file_system.hpp"
+
+using namespace reboot;
+using namespace reboot::storage;
+
+TEST_CASE("the data root is created owner-only and missing bundled files are listed", "[storage][data_root]") {
+    testing::FakePlatformPaths paths;
+    testing::InMemoryFileSystem fs;
+    const AppLayout layout(DataRoot{paths.default_data_root(), false}, paths);
+    InstallLayout install{.install_dir = paths.exe_dir(),
+                          .backend_exe = paths.exe_dir() / "reboot-backend",
+                          .game_server_exe = paths.exe_dir() / "reboot-game-server",
+                          .backend_content_dir = paths.exe_dir() / "backend",
+                          .bundled_catalog = paths.exe_dir() / "catalog.json",
+                          .bundled_manifest = paths.exe_dir() / "manifest.json"};
+    fs.write_text(install.bundled_catalog, "{}");
+
+    const Result<DataRootReport> report = prepare_data_root(layout, install, paths, fs);
+    REQUIRE(report);
+    CHECK(report->mode == StorageMode::ReadWrite);
+    CHECK(fs.owner_only(layout.frontend_dir()));
+    CHECK(fs.owner_only(layout.state_file().parent_path()));
+    CHECK(report->missing_install_files.size() == 4);
+}
+
+TEST_CASE("a data root inside the Velopack package is refused", "[storage][data_root]") {
+    testing::FakePlatformPaths paths;
+    paths.set_velopack_package_dir(paths.default_data_root().parent_path());
+    testing::InMemoryFileSystem fs;
+    const AppLayout layout(DataRoot{paths.default_data_root(), false}, paths);
+
+    const Result<DataRootReport> report = prepare_data_root(layout, InstallLayout{}, paths, fs);
+    REQUIRE_FALSE(report);
+    CHECK(report.error().id == "storage.root_inside_package");
+}

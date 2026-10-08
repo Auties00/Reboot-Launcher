@@ -1,0 +1,7 @@
+# x64-windows-static, except MsQuic: it ships app-local as a DLL and its port refuses static linkage.
+set(VCPKG_TARGET_ARCHITECTURE x64)
+set(VCPKG_CRT_LINKAGE static)
+set(VCPKG_LIBRARY_LINKAGE static)
+if(PORT STREQUAL "msquic")
+  set(VCPKG_LIBRARY_LINKAGE dynamic)
+endif()

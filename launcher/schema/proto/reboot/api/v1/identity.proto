@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/common.proto";
+import "reboot/api/v1/options.proto";
+
+message IdentityProfile {
+  GameRole role = 1;
+  string display_name = 2;
+  // What the game logs in as; derived from display_name and unique per role.
+  string account_id = 3;
+  bool is_default = 4;
+}
+
+message IdentityGetRequest {}
+
+message IdentityGetResponse {
+  repeated IdentityProfile profiles = 1;
+}
+
+message IdentitySetDisplayNameRequest {
+  GameRole role = 1;
+  string display_name = 2;
+}
+
+message IdentitySetDisplayNameResponse {
+  IdentityProfile profile = 1;
+}
+
+message IdentityResetRequest {
+  GameRole role = 1;
+}
+
+message IdentityResetResponse {
+  IdentityProfile profile = 1;
+}
+
+message IdentityChanged {
+  IdentityProfile profile = 1;
+}
+
+// Display names and account ids per role.
+service Identity {
+  option (service_info) = {id: 8};
+
+  rpc Get(IdentityGetRequest) returns (IdentityGetResponse) {
+    option (method_info) = {id: 1};
+  }
+  rpc SetDisplayName(IdentitySetDisplayNameRequest) returns (IdentitySetDisplayNameResponse) {
+    option (method_info) = {id: 2};
+  }
+  rpc Reset(IdentityResetRequest) returns (IdentityResetResponse) {
+    option (method_info) = {id: 3};
+  }
+}

@@ -1,0 +1,229 @@
+syntax = "proto3";
+
+package reboot.api.v1;
+
+import "reboot/api/v1/options.proto";
+
+message SessionId {
+  bytes uuid = 1 [(fixed_size) = 16];
+}
+
+message BuildId {
+  bytes uuid = 1 [(fixed_size) = 16];
+}
+
+message HostProfileId {
+  bytes uuid = 1 [(fixed_size) = 16];
+}
+
+message ServerId {
+  bytes uuid = 1 [(fixed_size) = 16];
+}
+
+// UTF-16LE on Windows and raw bytes elsewhere, so it round-trips; `display` is for messages only.
+message Path {
+  string display = 1;
+  bytes native = 2;
+}
+
+message SemVer {
+  uint32 major = 1;
+  uint32 minor = 2;
+  uint32 patch = 3;
+  string pre = 4;
+}
+
+// The changelist travels beside it, never inside it.
+message GameVersion {
+  uint32 major = 1;
+  uint32 minor = 2;
+  optional uint32 patch = 3;
+}
+
+enum GameRole {
+  GAME_ROLE_CLIENT = 0;
+  GAME_ROLE_HOST = 1;
+}
+
+// Mirrors ports::RunnerKind.
+enum RunnerKind {
+  RUNNER_KIND_NATIVE = 0;
+  RUNNER_KIND_UMU = 1;
+  RUNNER_KIND_WINE = 2;
+  // The launcher-built Wine runtime on macOS.
+  RUNNER_KIND_MAC_RUNTIME = 3;
+}
+
+// What a change does when it affects live sessions.
+enum RunningPolicy {
+  RUNNING_POLICY_REFUSE = 0;
+  RUNNING_POLICY_STOP_SESSIONS = 1;
+}
+
+enum NetMode {
+  NET_MODE_PER_SESSION = 0;
+  // A custom auth DLL: the backend at 127.0.0.1:3551, plus :80 on Windows, one session at a time.
+  NET_MODE_LEGACY_FIXED = 1;
+}
+
+// Mirrors the alternatives of reboot::Arg, in order.
+enum ArgKind {
+  ARG_KIND_STRING = 0;
+  ARG_KIND_SIGNED = 1;
+  ARG_KIND_UNSIGNED = 2;
+  ARG_KIND_BOOL = 3;
+  ARG_KIND_MILLIS = 4;
+  ARG_KIND_PATH = 5;
+  ARG_KIND_SEM_VER = 6;
+}
+
+// Mirrors reboot::SystemError::Origin.
+enum OsErrorOrigin {
+  OS_ERROR_ORIGIN_HOST = 0;
+  OS_ERROR_ORIGIN_GUEST_WINDOWS = 1;
+}
+
+// Mirrors reboot::ErrorKind; drives the CLI exit code.
+enum ErrorKind {
+  ERROR_KIND_GENERIC = 0;
+  ERROR_KIND_INVALID_INPUT = 1;
+  ERROR_KIND_NOT_FOUND = 2;
+  ERROR_KIND_CONFLICT = 3;
+  ERROR_KIND_ENGINE_UNAVAILABLE = 4;
+  ERROR_KIND_UNSUPPORTED = 5;
+  ERROR_KIND_CANCELLED = 6;
+}
+
+message DiagnosticArg {
+  string name = 1;
+  ArgKind kind = 2;
+  string value = 3;
+}
+
+// Layout-identical to contracts::common::WireDiagnostic, so reboot_client passes it through.
+// UIs render `id` and `args` from their own message catalog.
+message Diagnostic {
+  string id = 1;
+  repeated DiagnosticArg args = 2;
+  // Literal text; never translated.
+  optional string detail = 3;
+  OsErrorOrigin os_origin = 4;
+  optional sint64 os_code = 5;
+  bool retryable = 6;
+  ErrorKind kind = 7;
+}
+
+// Mirrors reboot::CancelReason.
+enum CancelReason {
+  CANCEL_REASON_USER = 0;
+  CANCEL_REASON_DEADLINE = 1;
+  CANCEL_REASON_SHUTDOWN = 2;
+  CANCEL_REASON_DISCONNECT = 3;
+  CANCEL_REASON_SUPERSEDED = 4;
+}
+
+// The terminal state of an operation; rb_op_result returns it.
+message Outcome {
+  uint64 op_id = 1;
+  uint32 method_id = 2;
+  oneof result {
+    // The method's encoded response message.
+    bytes completed = 3;
+    Diagnostic failed = 4;
+    CancelReason cancelled = 5;
+    // The phase that ran out of time.
+    string timed_out = 6;
+  }
+}
+
+message EnvVar {
+  string name = 1;
+  string value = 2;
+}
+
+// Coalesced to 10 Hz per operation.
+message Progress {
+  uint64 op_id = 1;
+  uint32 method_id = 2;
+  // A stable id such as "install.downloading"; UIs translate it.
+  string phase = 3;
+  uint64 done = 4;
+  optional uint64 total = 5;
+  optional uint64 rate_per_s = 6;
+  optional uint32 eta_s = 7;
+  // Set while the operation waits on this UserActionRequired request.
+  optional uint64 awaiting_request = 8;
+}
+
+// Each value with a payload has the EventPayload member of the same name.
+enum EventKind {
+  EVENT_KIND_UNSPECIFIED = 0;
+  // Events were lost; re-read state before trusting later ones.
+  EVENT_KIND_RESYNC = 1;
+  EVENT_KIND_CONNECTION_LOST = 2;
+  // The envelope's epoch tells whether earlier ops and sessions survived.
+  EVENT_KIND_RECONNECTED = 3;
+  EVENT_KIND_OP_PROGRESS = 4;
+  EVENT_KIND_OP_COMPLETED = 5;
+  EVENT_KIND_ENGINE_STATE = 6;
+  EVENT_KIND_SETTINGS_CHANGED = 7;
+  EVENT_KIND_LIBRARY_CHANGED = 8;
+  EVENT_KIND_CATALOG_CHANGED = 9;
+  EVENT_KIND_COMPONENT_CHANGED = 10;
+  EVENT_KIND_IDENTITY_CHANGED = 11;
+  EVENT_KIND_SESSION_STATE_CHANGED = 12;
+  EVENT_KIND_SESSION_SPAWNED = 13;
+  EVENT_KIND_SESSION_DEGRADED = 14;
+  EVENT_KIND_SESSION_ENDED = 15;
+  EVENT_KIND_HOST_PHASE_CHANGED = 16;
+  EVENT_KIND_HOST_LISTENING = 17;
+  EVENT_KIND_REACHABILITY_CHANGED = 18;
+  EVENT_KIND_PORT_MAPPING_CHANGED = 19;
+  EVENT_KIND_PUBLISH_STATE_CHANGED = 20;
+  EVENT_KIND_MATCH_EVENT = 21;
+  EVENT_KIND_PLAYER_EVENT = 22;
+  EVENT_KIND_BACKEND_STATE_CHANGED = 23;
+  EVENT_KIND_XMPP_UNAVAILABLE = 24;
+  EVENT_KIND_BROWSER_CONNECTION_CHANGED = 25;
+  EVENT_KIND_VIEW_SNAPSHOT = 26;
+  EVENT_KIND_VIEW_DELTA = 27;
+  EVENT_KIND_JOIN_TARGET_CHANGED = 28;
+  EVENT_KIND_UPDATE_AVAILABLE = 29;
+  EVENT_KIND_UPDATE_STAGED = 30;
+  EVENT_KIND_ENGINE_UPDATING = 31;
+  EVENT_KIND_UPDATE_FAILED = 32;
+  EVENT_KIND_NOTICE_ADDED = 33;
+  EVENT_KIND_LOG_LINE = 34;
+  EVENT_KIND_USER_ACTION_REQUIRED = 35;
+  EVENT_KIND_USER_ACTION_RESOLVED = 36;
+  // Any client started an op; Engine.operations lists the live ones.
+  EVENT_KIND_OP_STARTED = 37;
+  EVENT_KIND_HOST_PROFILES_CHANGED = 38;
+  EVENT_KIND_BACKEND_ACCOUNTS_CHANGED = 39;
+  EVENT_KIND_NOTICE_REMOVED = 40;
+  EVENT_KIND_ONBOARDING_CHANGED = 41;
+  EVENT_KIND_INTEGRATION_CHANGED = 42;
+  EVENT_KIND_PREREQUISITES_CHANGED = 43;
+  EVENT_KIND_SECRET_STATE_CHANGED = 44;
+  EVENT_KIND_STORAGE_MODE_CHANGED = 45;
+}
+
+// rb_subscribe's filter.
+message EventFilter {
+  // Empty matches every kind.
+  repeated EventKind kinds = 1;
+  optional SessionId session = 2;
+  optional uint64 op_id = 3;
+}
+
+// Layout-identical to contracts::ipc::WireEvent; rb_events_next returns it.
+message Event {
+  EventKind kind = 1;
+  uint64 epoch = 2;
+  // Global within an epoch.
+  uint64 seq = 3;
+  optional bytes session = 4 [(fixed_size) = 16];
+  optional uint64 op_id = 5;
+  // An encoded EventPayload; empty for kinds without one.
+  bytes payload = 6;
+}
