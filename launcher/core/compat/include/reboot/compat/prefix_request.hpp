@@ -16,7 +16,8 @@ struct PrefixRequest {
     ports::RuntimeLayout layout;
     RuntimeId runtime;
     std::string runtime_version;
-    // EnvBuilder's daemon base and runner layers, for the prefix commands.
+    // The user's environment as the platform reports it, EnvBuilder's daemon base for the prefix
+    // commands; PrefixManager adds the runner layer.
     ports::EnvBlock env;
     // Host paths of every DLL loaded into the game: the injected boot DLL and each DLL it loads
     // with LoadLibraryW, the custom auth DLL included. Their imports decide VC++ seeding.

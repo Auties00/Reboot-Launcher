@@ -115,6 +115,7 @@ message SettingsResetRequest {
 }
 
 message SettingsResetResponse {
+  // 0 with STOP_SESSIONS while the sessions stop first; SettingsChanged follows the reset.
   uint64 revision = 1;
   repeated string reset_keys = 2;
 }

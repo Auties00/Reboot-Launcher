@@ -60,15 +60,10 @@ Result<MacRuntimeLayout> MacRuntimeLayout::resolve(const NativePath& runtime_dir
     return layout;
 }
 
-std::vector<std::pair<std::string, std::string>> MacRuntimeLayout::env() const {
-    return {{"WINEDLLOVERRIDES", std::string(kDllOverrides)}};
-}
-
 ports::RuntimeLayout MacRuntimeLayout::to_runtime_layout() const {
     ports::RuntimeLayout out;
     out.root = root;
     out.entry = wine;
-    out.env = env();
     return out;
 }
 

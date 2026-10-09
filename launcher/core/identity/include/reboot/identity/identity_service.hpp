@@ -44,6 +44,7 @@ public:
     // Takes both stores' reload hooks, so a hand edit is re-validated here.
     IdentityService(storage::DocumentStore<storage::AccountsDocument>& accounts,
                     storage::DocumentStore<BackendLoginsDocument>& logins, IRandom& random, EventBus& events);
+    ~IdentityService();
     IdentityService(const IdentityService&) = delete;
     IdentityService& operator=(const IdentityService&) = delete;
 
@@ -63,8 +64,9 @@ public:
 
     // The defaults when nothing is stored for `endpoint`.
     [[nodiscard]] BackendLogin backend_login(const HostPort& endpoint) const;
-    // One commit; storing the defaults removes the entry. Fails with identity.empty_remote_login
-    // or storage.read_only. Publishes the client record, whose effective_login may have changed.
+    // One commit; storing the defaults removes the entry, otherwise the stored entry's unknown
+    // members are kept. Fails with identity.empty_remote_login, storage.invalid_host or
+    // storage.read_only. Publishes the client record, whose effective_login may have changed.
     Result<BackendLogin> set_backend_login(BackendLogin login);
     // Play's input to plan_login, and with effective_login what every UI shows per role.
     [[nodiscard]] LoginTarget login_target(const storage::BackendTarget& backend, UpstreamFlavor flavor,

@@ -30,7 +30,7 @@ public:
     // pipe is AlreadyRunning; engine.lock is not probed, since Windows can only test it by taking it.
     // 1. CreateProcessW, detached and breaking away from any job, with engine_environment_block.
     //    ERROR_ACCESS_DENIED (no breakaway) moves to 2; other failures are platform.engine_spawn_failed.
-    // 2. Default root only: the on-demand task ports::engine_task_name(sid), if it runs `engine_exe`
+    // 2. Default root only: the on-demand task engine_task_name(sid), if it runs `engine_exe`
     //    least-privileged; AlreadyRunning while an instance runs, else RunEx in the caller's session.
     // 3. CannotDetach. Explorer's IShellDispatch2 is not tried; the autostart resolution allows that.
     // The step-2 MTA thread catches everything and reports internal.bug.

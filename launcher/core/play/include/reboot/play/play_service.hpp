@@ -6,6 +6,7 @@
 
 #include "reboot/backend/login_observed_event.hpp"
 #include "reboot/foundation/diag.hpp"
+#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 #include "reboot/play/display_context.hpp"
@@ -19,7 +20,6 @@ class EventBus;
 class Executor;
 class IRandom;
 class Redactor;
-class TimerService;
 class UserRequestRegistry;
 class WorkerPool;
 }  // namespace reboot
@@ -91,6 +91,10 @@ namespace reboot::host {
 class HostService;
 }
 
+namespace reboot::gameserver {
+class GameServerBinary;
+}
+
 namespace reboot::play {
 
 class MatchTargets;
@@ -127,6 +131,8 @@ struct PlayServiceDeps {
     browser::JoinService& join;
     browser::GameServerTarget& addresses;
     host::HostService& hosts;
+    // What the linked auto-server would run, for its host cell in the plan's verdict.
+    const gameserver::GameServerBinary& game_server;
     MatchTargets& match_targets;
     ports::IFileSystem& fs;
     ports::ISystemInfo& system;
@@ -137,13 +143,14 @@ struct PlayServiceDeps {
     EventBus& events;
     WorkerPool& workers;
     Executor& strand;
-    TimerService& timers;
 };
 
 struct PlayServiceOptions {
     SessionMatch session_match = SessionMatch::OsSession;
     // EnvBuilder's daemon base layer: the user's environment as the platform reports it.
     ports::EnvBlock daemon_env;
+    // WineSessionSetup::log_dir: the Proton log under Verbose Wine logging. Wine runners only.
+    NativePath wine_log_dir;
 };
 
 // Covers game-launch.orchestration, game-launch.arguments, game-launch.+10.

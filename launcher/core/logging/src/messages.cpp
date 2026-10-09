@@ -8,5 +8,7 @@ REBOOT_MESSAGE(kWriteFailed, "logging.write_failed", "Cannot write the log file 
 REBOOT_MESSAGE(kExportDestinationInvalid, "logging.export_destination_invalid",
                "The log export destination {path} must be an absolute .zip path outside the log folder");
 REBOOT_MESSAGE(kExportWriteFailed, "logging.export_write_failed", "Cannot write the log export {path}");
+REBOOT_MESSAGE(kExportReadFailed, "logging.export_read_failed", "Cannot read the log file {path} for the export");
+REBOOT_MESSAGE(kExportCancelled, "logging.export_cancelled", "The log export to {path} was cancelled");
 
 }  // namespace reboot::logging::msg

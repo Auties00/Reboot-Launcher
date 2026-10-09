@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "env_vars.hpp"
 #include "messages.hpp"
@@ -16,6 +17,17 @@ namespace reboot::os_linux::runner {
 namespace {
 
 constexpr std::string_view kFilesystemsRw = "PRESSURE_VESSEL_FILESYSTEMS_RW";
+// Relative to the GE-Proton root.
+constexpr std::string_view kProtonWineServer = "files/bin/wineserver";
+
+// Adds `dir` to what pressure-vessel shares read-write with the container.
+Result<void> expose(ports::EnvBlock& env, const NativePath& dir) {
+    const std::array<NativePath, 1> dirs{dir};
+    auto exposed = UmuInvocation::filesystems_rw(value_of(env, kFilesystemsRw), dirs);
+    if (!exposed) return std::unexpected(std::move(exposed.error()));
+    set_var(env, kFilesystemsRw, std::move(*exposed));
+    return {};
+}
 
 }  // namespace
 
@@ -56,12 +68,8 @@ Result<ports::ProcessLaunch> LinuxRunnerPlatform::runner_launch(const ports::Run
                                                                 const NativePath& winhost_exe, ports::EnvBlock base) {
     // string() is the native bytes on POSIX.
     set_var(base, "WINEPREFIX", prefix.string());
-    if (UmuInvocation::is_umu_layout(layout)) {
-        const std::array<NativePath, 1> winhost_dir{winhost_exe.parent_path()};
-        auto exposed = UmuInvocation::filesystems_rw(value_of(base, kFilesystemsRw), winhost_dir);
-        if (!exposed) return std::unexpected(std::move(exposed.error()));
-        set_var(base, kFilesystemsRw, std::move(*exposed));
-    }
+    if (UmuInvocation::is_umu_layout(layout))
+        if (auto exposed = expose(base, winhost_exe.parent_path()); !exposed) return std::unexpected(exposed.error());
 
     ports::ProcessLaunch launch;
     launch.exe = layout.entry;
@@ -73,12 +81,47 @@ Result<ports::ProcessLaunch> LinuxRunnerPlatform::runner_launch(const ports::Run
     return launch;
 }
 
-Result<void> LinuxRunnerPlatform::runtime_setup(const ports::RuntimeLayout& layout, CancelToken token) {
-    if (!UmuInvocation::is_umu_layout(layout)) return {};
+Result<ports::ProcessLaunch> LinuxRunnerPlatform::prefix_command(const ports::RuntimeLayout& layout,
+                                                                 const NativePath& prefix,
+                                                                 const ports::PrefixCommand& command,
+                                                                 ports::EnvBlock base) {
+    const bool umu = UmuInvocation::is_umu_layout(layout);
+    set_var(base, "WINEPREFIX", prefix.string());
+
+    ports::ProcessLaunch launch;
+    launch.exe = layout.entry;
+    launch.cwd = prefix.parent_path();
+    switch (command.verb) {
+        case ports::PrefixVerb::Boot:
+            launch.args = umu ? std::vector<std::string>{"createprefix"} : std::vector<std::string>{"wineboot", "-u"};
+            break;
+        case ports::PrefixVerb::KillServer:
+            // -k signals the server named in the prefix's lock file, which the container shares with the host.
+            launch.exe = layout.root / (umu ? kProtonWineServer : KronWineRunner::kWineServer);
+            launch.args = {"-k"};
+            break;
+        case ports::PrefixVerb::Run:
+            if (umu)
+                if (auto exposed = expose(base, command.exe.parent_path()); !exposed)
+                    return std::unexpected(exposed.error());
+            launch.args = {command.exe.string()};
+            launch.args.insert(launch.args.end(), command.args.begin(), command.args.end());
+            launch.cwd = command.exe.parent_path();
+            break;
+    }
+    launch.env = std::move(base);
+    launch.stdio = ports::StdioMode::Capture;
+    launch.own_group = true;
+    return launch;
+}
+
+Result<std::optional<std::string>> LinuxRunnerPlatform::runtime_setup(const ports::RuntimeLayout& layout,
+                                                                      CancelToken token) {
+    if (!UmuInvocation::is_umu_layout(layout)) return std::nullopt;
     const auto build = slr_setup_.run(layout, std::move(token));
     if (!build) return std::unexpected(build.error());
     REBOOT_LOG_INFO(Play, "Steam Linux Runtime {} {} is set up", build->runtime, build->version);
-    return {};
+    return build->runtime + " " + build->version;
 }
 
 std::optional<UserRequestKind> LinuxRunnerPlatform::pending_prerequisite() { return std::nullopt; }

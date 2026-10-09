@@ -28,14 +28,15 @@ public:
     // the version, extracted into versions/.staging-<random>, then renamed to versions/<v>.
     // Entries are refused (platform.update_entry_unsafe) when absolute, holding "..", a link
     // resolving outside the staging directory, or a device, FIFO or socket node; setuid, setgid
-    // and sticky bits are dropped. versions/<v> that neither link targets are removed first.
+    // and sticky bits are dropped. versions/<v> that neither link targets, other than the one the
+    // engine runs from, are removed first.
     // AppImage: copied to .<name>.update beside $APPIMAGE and made 0755. Nothing live changes.
     Result<void> stage(const NativePath& package) override;
     // Tarball: `previous` takes the current target, `current` the staged version, then the
     // version's bin/reboot-engine replaces the shim, each by renaming a fresh file over the old.
     // AppImage: the update is renamed over $APPIMAGE and run with "engine" before `args`.
     // Both dup2 the kept socket to fd 3, which clears FD_CLOEXEC, leave LISTEN_* as they are
-    // and execve with the engine's own environment. On failure every link is restored.
+    // and execve with the engine's own environment. On failure every link, and fd 3, is restored.
     Result<void> apply_and_restart(std::vector<std::string> args) override;
     // False in a container and for Dev installs, so updates runs UpdateMode::NotifyOnly.
     [[nodiscard]] bool supports_in_place() const override;
@@ -44,6 +45,8 @@ private:
     const XdgPaths& paths_;
     bool in_container_ = false;
     std::optional<posix::UniqueFd> inherited_socket_;
+    // Tarball: the version stage() left in versions/.
+    std::optional<std::string> staged_version_;
 };
 
 }  // namespace reboot::os_linux::platform

@@ -23,5 +23,9 @@ REBOOT_MESSAGE_DECL(kAuthFailure);
 REBOOT_MESSAGE_DECL(kCannotConnect);
 REBOOT_MESSAGE_DECL(kFeaturesDegraded);
 REBOOT_MESSAGE_DECL(kLinkedServerEnded);
+REBOOT_MESSAGE_DECL(kLinkedServerFailed);
+REBOOT_MESSAGE_DECL(kLaunchTimedOut);
+REBOOT_MESSAGE_DECL(kSessionStopping);
+REBOOT_MESSAGE_DECL(kInvalidAnswer);
 
 }  // namespace reboot::play::msg

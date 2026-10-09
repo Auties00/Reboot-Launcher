@@ -86,7 +86,8 @@ public:
     // (secrets.store_erase_failed, secrets.store_timed_out).
     void clear(const SecretTarget& target, UniqueFunction<void(Result<void>)> done);
 
-    // For engine services only. A copy, so it can travel to a worker; secrets.not_found when absent.
+    // For engine services only. A copy, so it can travel to a worker; secrets.not_found when absent,
+    // secrets.not_ready when absent while start() is loading.
     [[nodiscard]] Result<SecretBytes> provide(const SecretTarget& target) const;
 
     // JoinPassword only, for browser's JoinPasswordSource: hands the value over and drops it at once;

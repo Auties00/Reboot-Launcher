@@ -1,6 +1,8 @@
 #include "reboot/foundation/sha256.hpp"
 
+#include <algorithm>
 #include <bit>
+#include <cstddef>
 
 namespace reboot {
 
@@ -61,13 +63,19 @@ void Sha256::compress(const u8* block) noexcept {
 
 void Sha256::update(std::span<const u8> data) noexcept {
     total_bytes_ += data.size();
-    for (const u8 byte : data) {
-        block_[block_used_++] = byte;
-        if (block_used_ == block_.size()) {
-            compress(block_.data());
-            block_used_ = 0;
-        }
+    if (block_used_ != 0) {
+        const std::size_t take = std::min(data.size(), block_.size() - block_used_);
+        std::copy_n(data.begin(), take, block_.begin() + static_cast<std::ptrdiff_t>(block_used_));
+        block_used_ += take;
+        data = data.subspan(take);
+        if (block_used_ < block_.size()) return;
+        compress(block_.data());
+        block_used_ = 0;
     }
+    // Whole blocks are hashed in place, without the copy.
+    for (; data.size() >= block_.size(); data = data.subspan(block_.size())) compress(data.data());
+    std::ranges::copy(data, block_.begin());
+    block_used_ = data.size();
 }
 
 std::array<u8, 32> Sha256::finish() noexcept {

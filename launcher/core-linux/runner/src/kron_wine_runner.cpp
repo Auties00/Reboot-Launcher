@@ -30,15 +30,10 @@ Result<KronWineRunner> KronWineRunner::resolve(const NativePath& runtime_dir) {
     return KronWineRunner{*root, *root / kWineLoader};
 }
 
-std::vector<std::pair<std::string, std::string>> KronWineRunner::env() const {
-    return {{"WINEDLLOVERRIDES", std::string(kDllOverrides)}};
-}
-
 ports::RuntimeLayout KronWineRunner::to_runtime_layout() const {
     ports::RuntimeLayout out;
     out.root = root;
     out.entry = wine;
-    out.env = env();
     return out;
 }
 

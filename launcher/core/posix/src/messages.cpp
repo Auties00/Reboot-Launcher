@@ -16,5 +16,6 @@ REBOOT_MESSAGE(kPeerOtherUser, "posix.peer_other_user",
 REBOOT_MESSAGE(kEngineNotListening, "posix.engine_not_listening", "No engine is listening at {path}.");
 REBOOT_MESSAGE(kLockBusy, "posix.lock_busy", "{path} is locked by another process.");
 REBOOT_MESSAGE(kHeldFileChanged, "posix.held_file_changed", "{path} changed while it was held open.");
+REBOOT_MESSAGE(kEndpointInUse, "posix.endpoint_in_use", "Another engine is already listening at {path}.");
 
 }  // namespace reboot::posix

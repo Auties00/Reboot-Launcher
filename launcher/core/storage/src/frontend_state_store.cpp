@@ -1,6 +1,8 @@
 #include "reboot/storage/frontend_state_store.hpp"
 
+#include <algorithm>
 #include <deque>
+#include <optional>
 #include <string>
 #include <utility>
 #include <variant>
@@ -29,13 +31,13 @@ struct FrontendStateStore::Impl {
           strand(strand_executor),
           dir(std::move(directory)),
           mode(storage_mode),
-          waiters(strand_executor, "frontend") {}
+          puts(strand_executor, "frontend"),
+          flushes(strand_executor, "frontend") {}
 
     struct PendingWrite {
         ShellName shell;
         std::vector<u8> blob;
-        CancelToken cancel;
-        UniqueFunction<void(Result<void>)> done;
+        u64 waiter = 0;
     };
 
     ports::IFileSystem& fs;
@@ -43,11 +45,16 @@ struct FrontendStateStore::Impl {
     Executor& strand;
     NativePath dir;
     StorageMode mode;
+    // What each shell's file holds once the queued writes land.
     FlatMap<std::string, std::vector<u8>> cache;
     // One write at a time, so two puts for a shell land in order.
     std::deque<PendingWrite> writes;
     bool writing = false;
-    FlushWaiters waiters;
+    // The first write that failed since the queue was last empty, for the flushes waiting on it.
+    std::optional<Diagnostic> failure;
+    // A cancelled put ends only its wait; the write still goes out, so the cache stays true.
+    FlushWaiters puts;
+    FlushWaiters flushes;
     // Cancelled on destruction, so replies that arrive later never touch this object.
     CancelSource alive;
 
@@ -63,17 +70,16 @@ struct FrontendStateStore::Impl {
 void FrontendStateStore::Impl::write_next() {
     if (writes.empty()) {
         writing = false;
-        waiters.finish({});
+        const std::optional<Diagnostic> failed = std::exchange(failure, std::nullopt);
+        flushes.finish(failed ? Result<void>(std::unexpected(*failed)) : Result<void>{});
         return;
     }
     writing = true;
     PendingWrite next = std::move(writes.front());
     writes.pop_front();
-    const std::string document = document_name(next.shell);
     workers.submit<std::monostate>(
-        [&fs = fs, path = file(next.shell), blob = std::move(next.blob), document](
-            CancelToken cancel) -> Result<std::monostate> {
-            if (cancel.cancelled()) return std::unexpected(cancelled(document));
+        [&fs = fs, path = file(next.shell), blob = std::move(next.blob),
+         document = document_name(next.shell)](CancelToken) -> Result<std::monostate> {
             if (Result<void> written = fs.atomic_replace(path, blob, false); !written)
                 return make_diag(ErrorDomain::Storage, msg::kWriteFailed)
                     .arg("document", document)
@@ -82,11 +88,21 @@ void FrontendStateStore::Impl::write_next() {
                     .fail();
             return std::monostate{};
         },
-        next.cancel, strand,
-        [this, alive_token = alive.token(), done = std::move(next.done)](Result<std::monostate> written) mutable {
+        CancelToken{}, strand,
+        [this, alive_token = alive.token(), shell = next.shell.value, waiter = next.waiter](
+            Result<std::monostate> written) {
             if (alive_token.cancelled()) return;
-            if (written) done({});
-            else done(std::unexpected(std::move(written.error())));
+            if (written) {
+                puts.finish_one(waiter, {});
+            } else {
+                // Unless a newer put for the shell is queued, gets must see what the disk still holds.
+                const bool newer = std::ranges::any_of(writes, [&shell](const PendingWrite& queued) {
+                    return queued.shell.value == shell;
+                });
+                if (!newer) cache.erase(shell);
+                if (!failure) failure = written.error();
+                puts.finish_one(waiter, std::unexpected(std::move(written.error())));
+            }
             write_next();
         });
 }
@@ -146,7 +162,8 @@ void FrontendStateStore::put(const ShellName& shell, std::vector<u8> blob, Cance
         impl.reply(std::move(done), {});
         return;
     }
-    impl.writes.push_back(Impl::PendingWrite{shell, std::move(blob), std::move(cancel), std::move(done)});
+    const u64 waiter = impl.puts.add(cancel, std::move(done));
+    impl.writes.push_back(Impl::PendingWrite{shell, std::move(blob), waiter});
     if (!impl.writing) impl.write_next();
 }
 
@@ -156,7 +173,7 @@ void FrontendStateStore::flush(CancelToken cancel, UniqueFunction<void(Result<vo
         impl.reply(std::move(done), {});
         return;
     }
-    impl.waiters.add(cancel, std::move(done));
+    impl.flushes.add(cancel, std::move(done));
 }
 
 }  // namespace reboot::storage

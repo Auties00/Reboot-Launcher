@@ -2,10 +2,12 @@
 
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
+#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
@@ -30,6 +32,10 @@ public:
     void send(u64 stream_id, std::vector<u8> bytes, bool fin);
     void send_datagram(std::vector<u8> bytes);
     void close(std::optional<Diagnostic> error);
+
+    // Run on the client's thread as it sends, after the bytes are recorded, e.g. to answer at once.
+    void on_stream_data(UniqueFunction<void(u64 stream_id, std::span<const u8> bytes, bool fin)> handler);
+    void on_datagram(UniqueFunction<void(std::span<const u8> bytes)> handler);
 
     // Client-opened stream ids: 0, 4, 8 and so on, as QUIC numbers client bidirectional streams.
     [[nodiscard]] std::vector<u64> streams() const;

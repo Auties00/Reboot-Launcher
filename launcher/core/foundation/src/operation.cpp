@@ -24,6 +24,19 @@ Diagnostic op_not_found(OpId op) {
 
 }  // namespace
 
+namespace detail {
+
+struct OpAccess {
+    static bool settle(OperationBase& op, ErasedOutcome outcome) { return op.settle(std::move(outcome)); }
+    static void signal(OperationBase& op, CancelReason reason) { op.cancel_.cancel(reason); }
+    // Safe to destroy: the work has returned from its complete() and nothing is mid-completion.
+    static bool disposable(const OperationBase& op) {
+        return op.work_ended_.load(std::memory_order_acquire) && op.done();
+    }
+};
+
+}  // namespace detail
+
 struct OpRegistry::Impl {
     struct Record {
         std::unique_ptr<OperationBase> op;
@@ -66,7 +79,10 @@ struct OpRegistry::Impl {
     void on_deadline(OpId id) {
         Record* record = find(id);
         if (record == nullptr || record->awaiting_user || record->op->done()) return;
-        time_out(*record->op, record->last_progress.phase);
+        OperationBase& op = *record->op;
+        // The outcome is decided before the work hears of it, so the reason it sees is final.
+        if (detail::OpAccess::settle(op, TimedOut{record->last_progress.phase}))
+            detail::OpAccess::signal(op, CancelReason::Deadline);
     }
 
     void publish_progress(Record& record) {
@@ -79,18 +95,26 @@ struct OpRegistry::Impl {
     void erase_if_released(OpId id) {
         const auto it = records.find(id);
         if (it == records.end() || !it->second.outcome || !it->second.attached.empty()) return;
+        retire(it);
+    }
+
+    void retire(std::map<OpId, Record>::iterator it) {
         // Destroyed after the erase: its timers and the operation must not see a half-erased map.
         Record removed = std::move(it->second);
         records.erase(it);
+        std::erase_if(orphans,
+                      [](const std::unique_ptr<OperationBase>& op) { return detail::OpAccess::disposable(*op); });
+        if (!detail::OpAccess::disposable(*removed.op)) orphans.push_back(std::move(removed.op));
     }
 
     IClock& clock;
     TimerService& timers;
     EventBus& events;
-    // Set by OpRegistry, whose friendship with OperationBase a nested type does not portably share.
-    UniqueFunction<void(OperationBase&, std::string)> time_out;
     u64 next_id = 1;
     std::map<OpId, Record> records;
+    // Outcomes already dropped whose work still holds its Operation<T>&.
+    std::vector<std::unique_ptr<OperationBase>> orphans;
+    OpRegistry::OutcomeHook outcome_hook;
 };
 
 OperationBase::~OperationBase() = default;
@@ -106,6 +130,12 @@ void OperationBase::awaiting_user(RequestId request) {
 }
 
 bool OperationBase::complete_erased(ErasedOutcome outcome) {
+    const bool settled = settle(std::move(outcome));
+    work_ended_.store(true, std::memory_order_release);
+    return settled;
+}
+
+bool OperationBase::settle(ErasedOutcome outcome) {
     State expected = State::Pending;
     if (!state_.compare_exchange_strong(expected, State::Completing, std::memory_order_acq_rel)) return false;
     registry_.on_completed(*this, std::move(outcome));
@@ -114,12 +144,7 @@ bool OperationBase::complete_erased(ErasedOutcome outcome) {
 }
 
 OpRegistry::OpRegistry(IClock& clock, TimerService& timers, EventBus& events)
-    : impl_(std::make_unique<Impl>(clock, timers, events)) {
-    impl_->time_out = [](OperationBase& op, std::string phase) {
-        op.complete_erased(TimedOut{std::move(phase)});
-        op.cancel_.cancel(CancelReason::Deadline);
-    };
-}
+    : impl_(std::make_unique<Impl>(clock, timers, events)) {}
 
 OpRegistry::~OpRegistry() = default;
 
@@ -156,10 +181,9 @@ Result<void> OpRegistry::cancel(OpId op, CancelReason reason) {
     Impl::Record* record = impl_->find(op);
     if (record == nullptr) return std::unexpected(op_not_found(op));
     OperationBase& operation = *record->op;
-    if (operation.done()) return {};
-    // The outcome is decided before the work hears of it, so the reason it sees is final.
-    operation.complete_erased(Cancelled{reason});
-    operation.cancel_.cancel(reason);
+    // The outcome is decided before the work hears of it, so the reason it sees is final. An op
+    // already settled, or settling right now, keeps its outcome and its token.
+    if (detail::OpAccess::settle(operation, Cancelled{reason})) detail::OpAccess::signal(operation, reason);
     return {};
 }
 
@@ -243,19 +267,19 @@ void OpRegistry::on_awaiting_user(OperationBase& op, RequestId request) {
     impl_->publish_progress(*record);
 }
 
+void OpRegistry::set_outcome_hook(OutcomeHook hook) { impl_->outcome_hook = std::move(hook); }
+
 void OpRegistry::on_completed(OperationBase& op, ErasedOutcome outcome) {
     Impl::Record* record = impl_->find(op.id());
     if (record == nullptr) return;
     record->deadline_timer.cancel();
     record->progress_timer.cancel();
     record->progress_pending = false;
+    if (impl_->outcome_hook) impl_->outcome_hook(op.id(), op.kind(), record->session, outcome);
     record->outcome = outcome;
     record->retention_timer =
         impl_->timers.after(kRetention, [impl = impl_.get(), id = op.id()] {
-            const auto it = impl->records.find(id);
-            if (it == impl->records.end()) return;
-            Impl::Record removed = std::move(it->second);
-            impl->records.erase(it);
+            if (const auto it = impl->records.find(id); it != impl->records.end()) impl->retire(it);
         });
     impl_->events.publish(EventKind::OpCompleted, OpCompletedEvent{op.id(), op.kind(), std::move(outcome)},
                           EventScope{record->session, op.id(), {}});

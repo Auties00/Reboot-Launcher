@@ -13,7 +13,7 @@
 namespace reboot::api {
 
 // Changes with every change to the schema's payloads or methods; Engine.info reports the engine's.
-inline constexpr std::string_view kSchemaFingerprint = "5c1fb4d99550f274";
+inline constexpr std::string_view kSchemaFingerprint = "0a4a6eaa9ef739b7";
 
 inline constexpr u32 kEngineStatus = 0x00010001;
 inline constexpr u32 kEngineInfo = 0x00010002;
@@ -65,6 +65,8 @@ inline constexpr u32 kHostCommand = 0x000b0006;
 inline constexpr u32 kHostStart = 0x000b0007;
 inline constexpr u32 kHostStatus = 0x000b0008;
 inline constexpr u32 kHostCancelMatchEnd = 0x000b0009;
+inline constexpr u32 kHostIdentityExport = 0x000b000a;
+inline constexpr u32 kHostIdentityImport = 0x000b000b;
 inline constexpr u32 kSessionsList = 0x000c0001;
 inline constexpr u32 kSessionsGet = 0x000c0002;
 inline constexpr u32 kSessionsSetLease = 0x000c0003;
@@ -114,7 +116,7 @@ inline constexpr u32 kRequestsPending = 0x00150001;
 inline constexpr u32 kRequestsRespond = 0x00150002;
 
 // Sorted by id.
-inline constexpr std::array<MethodSpec, 97> kMethods{{
+inline constexpr std::array<MethodSpec, 99> kMethods{{
     MethodSpec{
         .id = kEngineStatus,
         .service = "reboot.api.v1.Engine",
@@ -614,6 +616,26 @@ inline constexpr std::array<MethodSpec, 97> kMethods{{
         .progress = ProgressUnit::NoProgress,
         .request_type = "reboot.api.v1.HostCancelMatchEndRequest",
         .response_type = "reboot.api.v1.HostCancelMatchEndResponse",
+    },
+    MethodSpec{
+        .id = kHostIdentityExport,
+        .service = "reboot.api.v1.Host",
+        .name = "host.identity_export",
+        .kind = MethodKind::Operation,
+        .default_disconnect = ::reboot::DisconnectPolicy::BoundToConnection,
+        .progress = ProgressUnit::NoProgress,
+        .request_type = "reboot.api.v1.HostIdentityExportRequest",
+        .response_type = "reboot.api.v1.HostIdentityExportResponse",
+    },
+    MethodSpec{
+        .id = kHostIdentityImport,
+        .service = "reboot.api.v1.Host",
+        .name = "host.identity_import",
+        .kind = MethodKind::Operation,
+        .default_disconnect = ::reboot::DisconnectPolicy::BoundToConnection,
+        .progress = ProgressUnit::NoProgress,
+        .request_type = "reboot.api.v1.HostIdentityImportRequest",
+        .response_type = "reboot.api.v1.HostIdentityImportResponse",
     },
     MethodSpec{
         .id = kSessionsList,

@@ -21,7 +21,8 @@ struct HostMetadata {
     bool operator==(const HostMetadata&) const = default;
 };
 
-// sanitize_display_text on each field, then the name, description and author are cut on a code
+// sanitize_display_text on each field with tabs as spaces (the edge refuses control characters),
+// then the name, description and author are cut on a code
 // point boundary to their field_limits.hpp limits. Fails with
 // publish.server_name_empty when nothing of the name is left, and publish.max_players_too_high
 // above kMaxPlayerLimit.

@@ -118,6 +118,13 @@ TEST_CASE("SecretTarget carries a typed scope", "[golden]") {
     check_golden("secrets_state_request", state);
 }
 
+TEST_CASE("HostIdentityImportRequest matches protoc", "[golden]") {
+    api::HostIdentityImportRequest request;
+    request.profile = api::HostProfileId{ascending()};
+    request.source = api::Path{"D:/exports/vps", api::Bytes{'D', ':', '/', 'e', 'x', 'p', 'o', 'r', 't', 's', '/', 'v', 'p', 's'}};
+    check_golden("host_identity_import_request", request);
+}
+
 TEST_CASE("HostProfilesCreateRequest matches protoc", "[golden]") {
     api::HostProfilesCreateRequest create;
     api::HostProfile& profile = create.profile;

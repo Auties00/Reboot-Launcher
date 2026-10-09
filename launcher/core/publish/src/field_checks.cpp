@@ -1,5 +1,7 @@
 #include "field_checks.hpp"
 
+#include <algorithm>
+
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/publish/field_limits.hpp"
@@ -8,6 +10,8 @@ namespace reboot::publish {
 
 std::string fit_text(std::string_view text, std::size_t max_bytes) {
     std::string out = sanitize_display_text(text);
+    // sanitize_display_text keeps tabs, but the edge refuses every control character.
+    std::ranges::replace(out, '\t', ' ');
     if (out.size() <= max_bytes) return out;
     std::size_t end = max_bytes;
     while (end > 0 && (static_cast<u8>(out[end]) & 0xC0) == 0x80) --end;

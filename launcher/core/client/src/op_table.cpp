@@ -4,9 +4,9 @@
 
 namespace reboot::client {
 
-void OpTable::track(u64 op_id, u32 method_id) {
+bool OpTable::track(u64 op_id, u32 method_id) {
     std::lock_guard lock(mutex_);
-    ops_.try_emplace(op_id, Entry{method_id, std::nullopt});
+    return ops_.try_emplace(op_id, Entry{method_id, std::nullopt}).second;
 }
 
 bool OpTable::complete(u64 op_id, std::vector<u8> outcome) {

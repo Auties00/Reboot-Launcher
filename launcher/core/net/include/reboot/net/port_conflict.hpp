@@ -11,7 +11,8 @@
 
 namespace reboot::net {
 
-// InUse is EADDRINUSE; AccessDenied is EACCES (a reserved or excluded port range).
+// InUse is EADDRINUSE, or EACCES on a port someone holds; AccessDenied is EACCES on a port nobody
+// holds (a reserved or excluded port range).
 enum class PortConflictKind : u8 { InUse, AccessDenied };
 
 // Becomes net.port_busy{port, protocol, owner, owned_by_us}, net.port_held_by_system or

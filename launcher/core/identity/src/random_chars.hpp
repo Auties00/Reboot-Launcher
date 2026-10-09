@@ -17,7 +17,7 @@ namespace reboot::identity {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
 }
 
-// Every byte outside [A-Za-z0-9] removed, as 10.0.9's sanitiser did.
+// Every byte outside [A-Za-z0-9] removed.
 [[nodiscard]] std::string keep_ascii_alnum(std::string_view text);
 
 }  // namespace reboot::identity

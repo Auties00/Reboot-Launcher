@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -126,6 +127,29 @@ TEST_CASE("an OsSignal shutdown with every step hanging still reaches the flush 
     for (const ShutdownStepReport& step : report->steps) CHECK(step.outcome == StepOutcome::TimedOut);
 }
 
+TEST_CASE("a done called from the step's expiry callback does not record the step twice") {
+    Fixture f;
+    std::optional<CancelRegistration> registration;
+    f.coordinator.set_action(ShutdownStep::Unpublish, [&](const ShutdownStepContext& context, StepDone done) {
+        registration = context.expired.on_cancel([done = std::move(done)](CancelReason) mutable {
+            Diagnostic error;
+            error.id = "publish.unregister_cancelled";
+            done(std::unexpected(error));
+        });
+    });
+    f.completes(ShutdownStep::UnmapPorts);
+    f.completes(ShutdownStep::FlushLogs);
+    std::optional<ShutdownReport> report;
+    f.coordinator.run(ShutdownCause::Requested, [&](const ShutdownReport& done) { report = done; });
+    f.runtime.run_until_idle();
+    f.runtime.advance(step_budget(ShutdownStep::Unpublish, ShutdownCause::Requested));
+    REQUIRE(report);
+    REQUIRE(report->steps.size() == kShutdownStepCount);
+    for (std::size_t i = 0; i < kShutdownStepCount; ++i) CHECK(report->steps[i].step == static_cast<ShutdownStep>(i));
+    CHECK(report->steps[static_cast<std::size_t>(ShutdownStep::Unpublish)].outcome == StepOutcome::TimedOut);
+    CHECK(f.ran == std::vector{ShutdownStep::UnmapPorts, ShutdownStep::FlushLogs});
+}
+
 TEST_CASE("run is idempotent and the first cause wins") {
     Fixture f;
     f.completes(ShutdownStep::RefuseNew);
@@ -141,4 +165,97 @@ TEST_CASE("run is idempotent and the first cause wins") {
     CHECK(causes.size() == 2);
     f.runtime.run_until_idle();
     CHECK(causes.size() == 3);
+}
+
+TEST_CASE("a failed step keeps its diagnostic and the next step still runs") {
+    Fixture f;
+    f.coordinator.set_action(ShutdownStep::Unpublish, [](const ShutdownStepContext&, StepDone done) {
+        Diagnostic error;
+        error.id = "publish.unregister_failed";
+        done(std::unexpected(error));
+    });
+    f.completes(ShutdownStep::UnmapPorts);
+    std::optional<ShutdownReport> report;
+    f.coordinator.run(ShutdownCause::Requested, [&](const ShutdownReport& done) { report = done; });
+    f.runtime.run_until_idle();
+    REQUIRE(report);
+    const ShutdownStepReport& failed = report->steps[static_cast<std::size_t>(ShutdownStep::Unpublish)];
+    CHECK(failed.outcome == StepOutcome::Failed);
+    REQUIRE(failed.error);
+    CHECK(failed.error->id == "publish.unregister_failed");
+    CHECK(report->steps[static_cast<std::size_t>(ShutdownStep::UnmapPorts)].outcome == StepOutcome::Completed);
+}
+
+TEST_CASE("an action set after run is ignored") {
+    Fixture f;
+    std::optional<ShutdownReport> report;
+    f.coordinator.run(ShutdownCause::Requested, [&](const ShutdownReport& done) { report = done; });
+    f.completes(ShutdownStep::RefuseNew);
+    f.runtime.run_until_idle();
+    REQUIRE(report);
+    CHECK(f.ran.empty());
+    CHECK(report->steps.front().outcome == StepOutcome::Skipped);
+}
+
+TEST_CASE("once the total ran out later steps are skipped, but the flush steps keep their own budget") {
+    Fixture f;
+    // Blocks the strand past the whole total before it returns, as a stalled step would.
+    f.coordinator.set_action(ShutdownStep::RefuseNew, [&f](const ShutdownStepContext&, StepDone done) {
+        f.runtime.clock().advance(total_shutdown_budget(ShutdownCause::Requested));
+        done(Result<void>{});
+    });
+    f.completes(ShutdownStep::Unpublish);
+    std::optional<std::chrono::milliseconds> flush_budget;
+    f.coordinator.set_action(ShutdownStep::FlushStores, [&](const ShutdownStepContext& context, StepDone done) {
+        flush_budget = context.budget;
+        done(Result<void>{});
+    });
+    f.completes(ShutdownStep::FlushLogs);
+    std::optional<ShutdownReport> report;
+    f.coordinator.run(ShutdownCause::Requested, [&](const ShutdownReport& done) { report = done; });
+    f.runtime.run_until_idle();
+    REQUIRE(report);
+    CHECK(report->steps[0].elapsed == total_shutdown_budget(ShutdownCause::Requested));
+    CHECK(report->steps[static_cast<std::size_t>(ShutdownStep::Unpublish)].outcome == StepOutcome::Skipped);
+    CHECK(report->steps[static_cast<std::size_t>(ShutdownStep::FlushStores)].outcome == StepOutcome::Completed);
+    CHECK(report->steps[static_cast<std::size_t>(ShutdownStep::FlushLogs)].outcome == StepOutcome::Completed);
+    CHECK(flush_budget == step_budget(ShutdownStep::FlushStores, ShutdownCause::Requested));
+}
+
+TEST_CASE("a step's budget is cut to what is left of the total") {
+    Fixture f;
+    const auto total = total_shutdown_budget(ShutdownCause::OsSignal);
+    f.coordinator.set_action(ShutdownStep::RefuseNew, [&f, total](const ShutdownStepContext&, StepDone done) {
+        f.runtime.clock().advance(total - 200ms);
+        done(Result<void>{});
+    });
+    std::optional<ShutdownStepContext> unpublish;
+    f.coordinator.set_action(ShutdownStep::Unpublish, [&](const ShutdownStepContext& context, StepDone done) {
+        unpublish = context;
+        done(Result<void>{});
+    });
+    std::optional<ShutdownReport> report;
+    f.coordinator.run(ShutdownCause::OsSignal, [&](const ShutdownReport& done) { report = done; });
+    f.runtime.run_until_idle();
+    REQUIRE(unpublish);
+    CHECK(unpublish->cause == ShutdownCause::OsSignal);
+    CHECK(unpublish->budget == 200ms);
+    CHECK_FALSE(unpublish->expired.cancelled());
+}
+
+TEST_CASE("destroying the coordinator mid-run ignores its posted step and a late done") {
+    reboot::testing::DeterministicRuntime runtime;
+    auto coordinator = std::make_unique<ShutdownCoordinator>(runtime.clock(), runtime.timers(), runtime.strand());
+    StepDone held;
+    coordinator->set_action(ShutdownStep::RefuseNew,
+                            [&](const ShutdownStepContext&, StepDone done) { held = std::move(done); });
+    bool reported = false;
+    coordinator->run(ShutdownCause::Requested, [&](const ShutdownReport&) { reported = true; });
+    runtime.run_until_idle();
+    REQUIRE(held);
+    coordinator.reset();
+    held(Result<void>{});
+    runtime.run_until_idle();
+    runtime.advance(30s);
+    CHECK_FALSE(reported);
 }

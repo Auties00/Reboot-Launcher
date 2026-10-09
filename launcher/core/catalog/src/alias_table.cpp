@@ -29,10 +29,14 @@ AliasTable::AliasTable() : AliasTable(for_catalog(Catalog{})) {}
 
 AliasTable AliasTable::for_catalog(const Catalog& catalog) {
     std::vector<std::pair<std::string, AliasMatch>> names;
+    const auto add = [&](std::string_view name, const CatalogEntry& entry, AliasSource source) {
+        // A blank name could only ever match a blank query.
+        if (const std::string_view key = trim(name); !key.empty())
+            names.emplace_back(ascii_lower(key), AliasMatch{entry.id, entry.version, source});
+    };
     for (const auto& entry : catalog.entries) {
-        names.emplace_back(ascii_lower(entry.id), AliasMatch{entry.id, entry.version, AliasSource::CatalogId});
-        for (const auto& alias : entry.aliases)
-            names.emplace_back(ascii_lower(alias), AliasMatch{entry.id, entry.version, AliasSource::CatalogAlias});
+        add(entry.id, entry, AliasSource::CatalogId);
+        for (const auto& alias : entry.aliases) add(alias, entry, AliasSource::CatalogAlias);
     }
 
     // Stable, so among equal names and sources the first in catalog order wins.

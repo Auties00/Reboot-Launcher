@@ -8,7 +8,7 @@
 
 namespace reboot::browser {
 
-// Installed is 10.0.9's "playable" filter: one bucket per installed build.
+// Installed lists only servers an installed build can join: one bucket per installed build.
 enum class VersionScope : u8 { All, Installed };
 
 // Capabilities: server-browser.browse.

@@ -17,6 +17,7 @@ REBOOT_MESSAGE_DECL(kNoDisplay);
 REBOOT_MESSAGE_DECL(kUrlNotHttps);
 REBOOT_MESSAGE_DECL(kPathNotAbsolute);
 REBOOT_MESSAGE_DECL(kShellFailed);
+REBOOT_MESSAGE_DECL(kShellCancelled);
 
 REBOOT_MESSAGE_DECL(kUnknownPrerequisite);
 REBOOT_MESSAGE_DECL(kPrerequisiteNotRemediable);

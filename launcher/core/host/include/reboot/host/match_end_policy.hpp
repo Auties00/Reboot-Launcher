@@ -10,7 +10,7 @@ namespace reboot::host {
 
 enum class MatchEndAction : u8 { Restart, Shutdown, None };
 
-// 10.x waited a fixed 10 s; the delay is the cancellable Restarting window.
+// The delay is the cancellable Restarting window.
 inline constexpr std::chrono::seconds kDefaultMatchEndDelay{10};
 inline constexpr std::chrono::seconds kMaxMatchEndDelay{600};
 

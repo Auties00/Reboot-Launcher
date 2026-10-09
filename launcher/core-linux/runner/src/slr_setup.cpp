@@ -25,15 +25,19 @@ namespace fs = std::filesystem;
 constexpr std::string_view kProtonPrefix = "pfx";
 constexpr std::string_view kProtonWineServer = "files/bin/wineserver";
 
-// Whole lines of one output stream, for the Wine log.
+// Whole lines of one output stream, for the Wine log; a line is split at kMaxLine bytes.
 class OutputLines {
 public:
+    static constexpr std::size_t kMaxLine = 4096;
+
     void feed(std::span<const u8> bytes) {
         for (const u8 byte : bytes) {
-            if (byte == '\n')
+            if (byte == '\n') {
                 emit();
-            else
-                partial_.push_back(static_cast<char>(byte));
+                continue;
+            }
+            partial_.push_back(static_cast<char>(byte));
+            if (partial_.size() >= kMaxLine) emit();
         }
     }
     void finish() {
@@ -62,6 +66,7 @@ struct Watch {
 
 struct Finished {
     ports::ChildExit exit;
+    // Only when the cancel killed the child; an exit seen first stands.
     bool cancelled = false;
 };
 
@@ -109,7 +114,25 @@ Result<Finished> run_to_exit(ports::IProcessLauncher& processes, const ports::Pr
     }
     watch->out.finish();
     watch->err.finish();
-    return Finished{*watch->exit, watch->cancelled};
+    return Finished{*watch->exit, killed};
+}
+
+// Proton's wineserver lingers a few seconds after umu-run exits; the scratch prefix is ours alone.
+void stop_wineserver(ports::IProcessLauncher& processes, const ports::EnvBlock& base, const NativePath& proton_root,
+                     const NativePath& scratch, const NativePath& cwd) {
+    ports::ProcessLaunch stop;
+    stop.exe = proton_root / kProtonWineServer;
+    stop.args = {"-k"};
+    stop.env = base;
+    // string() is the native bytes on POSIX.
+    set_var(stop.env, "WINEPREFIX", (scratch / kProtonPrefix).string());
+    stop.cwd = cwd;
+    if (auto stopped = run_to_exit(processes, stop, CancelToken{}); !stopped)
+        REBOOT_LOG_DEBUG(Play, "wineserver -k for the setup prefix did not run: {}", stopped.error().id);
+}
+
+Result<SlrBuild> setup_cancelled() {
+    return make_diag(ErrorDomain::Platform, kSlrSetupCancelled).kind(ErrorKind::Cancelled).fail();
 }
 
 }  // namespace
@@ -118,6 +141,7 @@ SlrSetup::SlrSetup(ports::IProcessLauncher& processes, ports::EnvBlock base, Nat
     : processes_(processes), base_(std::move(base)), folders_(std::move(folders)) {}
 
 Result<SlrBuild> SlrSetup::run(const ports::RuntimeLayout& layout, CancelToken token) {
+    if (token.cancelled()) return setup_cancelled();
     const NativePath scratch = folders_ / kScratchPrefix;
     std::error_code error;
     fs::remove_all(scratch, error);
@@ -143,21 +167,12 @@ Result<SlrBuild> SlrSetup::run(const ports::RuntimeLayout& layout, CancelToken t
     setup.scope_name = std::string(kScopeName);
     const auto finished = run_to_exit(processes_, setup, token);
 
-    // Proton's wineserver lingers a few seconds after umu-run exits; the prefix is ours alone.
-    ports::ProcessLaunch stop;
-    stop.exe = layout.root / kProtonWineServer;
-    stop.args = {"-k"};
-    stop.env = base_;
-    set_var(stop.env, "WINEPREFIX", (scratch / kProtonPrefix).string());
-    stop.cwd = folders_;
-    if (auto stopped = run_to_exit(processes_, stop, CancelToken{}); !stopped)
-        REBOOT_LOG_DEBUG(Play, "wineserver -k for the setup prefix did not run: {}", stopped.error().id);
+    if (finished) stop_wineserver(processes_, base_, layout.root, scratch, folders_);
     fs::remove_all(scratch, error);
     if (error) REBOOT_LOG_WARN(Play, "{} could not be removed after the runtime setup", display_utf8(scratch));
 
     if (!finished) return make_diag(ErrorDomain::Platform, kSlrSetupNotStarted).cause(finished.error()).fail();
-    if (finished->cancelled)
-        return make_diag(ErrorDomain::Platform, kSlrSetupCancelled).kind(ErrorKind::Cancelled).fail();
+    if (finished->cancelled) return setup_cancelled();
     if (finished->exit.signal)
         return make_diag(ErrorDomain::Platform, kSlrSetupKilled).arg("signal", *finished->exit.signal).fail();
     if (finished->exit.code != 0)

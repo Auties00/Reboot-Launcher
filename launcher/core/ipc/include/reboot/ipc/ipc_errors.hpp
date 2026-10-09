@@ -24,6 +24,8 @@ REBOOT_MESSAGE_DECL(kUnknownOp);
 // {frame_type}
 REBOOT_MESSAGE_DECL(kProtocolError);
 REBOOT_MESSAGE_DECL(kRevealRefused);
+// {size}, {limit}: a message whose frame would exceed kIpcFrameCap.
+REBOOT_MESSAGE_DECL(kMessageTooLarge);
 
 // ErrorKind::EngineUnavailable.
 REBOOT_MESSAGE_DECL(kConnectionLost);

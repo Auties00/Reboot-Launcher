@@ -1,0 +1,7 @@
+# proto-file: reboot/api/v1/host.proto
+# proto-message: reboot.api.v1.HostIdentityImportRequest
+profile { uuid: "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020" }
+source {
+  display: "D:/exports/vps"
+  native: "D:/exports/vps"
+}

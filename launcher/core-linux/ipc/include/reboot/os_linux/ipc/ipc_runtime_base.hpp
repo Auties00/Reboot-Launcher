@@ -15,7 +15,7 @@ struct IpcRuntimeBase {
     bool from_xdg_runtime_dir = false;
 };
 
-// `xdg_runtime_dir` when it is absolute, otherwise /tmp/reboot-launcher-<uid>.
+// `xdg_runtime_dir`, lexically normal, when it is absolute; otherwise /tmp/reboot-launcher-<uid>.
 [[nodiscard]] IpcRuntimeBase resolve_ipc_runtime_base(std::optional<std::string_view> xdg_runtime_dir, u32 uid);
 
 // resolve_ipc_runtime_base over this process's $XDG_RUNTIME_DIR. Must equal

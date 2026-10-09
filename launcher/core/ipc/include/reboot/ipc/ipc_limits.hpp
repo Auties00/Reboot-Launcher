@@ -24,4 +24,8 @@ inline constexpr std::chrono::milliseconds kReconnectBackoffMax{5000};
 // How often a waiting client re-checks state/update-in-progress and retries connect.
 inline constexpr std::chrono::milliseconds kConnectPollInterval{200};
 
+// A state/update-in-progress older than this is left from a failed update and no longer holds
+// clients back from starting an engine.
+inline constexpr std::chrono::seconds kUpdateMarkerTimeout{120};
+
 }  // namespace reboot::ipc

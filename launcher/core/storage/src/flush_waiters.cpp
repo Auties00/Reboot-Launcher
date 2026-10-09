@@ -20,15 +20,16 @@ FlushWaiters::~FlushWaiters() {
     alive_.cancel(CancelReason::Shutdown);
 }
 
-void FlushWaiters::add(const CancelToken& cancel, UniqueFunction<void(Result<void>)> done) {
+u64 FlushWaiters::add(const CancelToken& cancel, UniqueFunction<void(Result<void>)> done) {
     const u64 id = next_id_++;
     CancelRegistration registration =
         cancel.on_cancel([&strand = strand_, this, id, alive = alive_.token()](CancelReason) {
             strand.post([this, id, alive] {
-                if (!alive.cancelled()) this->cancel(id);
+                if (!alive.cancelled()) finish_one(id, std::unexpected(cancelled(document_)));
             });
         });
     waiters_.push_back(Waiter{id, std::move(done), std::move(registration)});
+    return id;
 }
 
 void FlushWaiters::finish(const Result<void>& result) {
@@ -39,12 +40,13 @@ void FlushWaiters::finish(const Result<void>& result) {
     }
 }
 
-void FlushWaiters::cancel(u64 id) {
+void FlushWaiters::finish_one(u64 id, Result<void> result) {
     const auto found = std::ranges::find(waiters_, id, &Waiter::id);
     if (found == waiters_.end()) return;
-    UniqueFunction<void(Result<void>)> done = std::move(found->done);
+    Waiter waiter = std::move(*found);
     waiters_.erase(found);
-    done(std::unexpected(cancelled(document_)));
+    waiter.registration.reset();
+    waiter.done(std::move(result));
 }
 
 }  // namespace reboot::storage

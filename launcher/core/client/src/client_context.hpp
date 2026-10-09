@@ -31,7 +31,7 @@ class IClock;
 }  // namespace reboot
 
 namespace reboot::ports {
-class IFileSystem;
+class IFileRevisionReader;
 class IPlatformPaths;
 }  // namespace reboot::ports
 
@@ -48,10 +48,12 @@ struct ClientDeps {
     ports::ICallerContextProbe& caller;
     const ports::IPlatformPaths& paths;
     // IpcClient's update-marker check.
-    ports::IFileSystem& files;
+    ports::IFileRevisionReader& files;
     IClock& clock;
-    // Runs connect rounds, call deadlines and wakes; a ManualExecutor in tests.
+    // Runs call and wait deadlines and wakes; a ManualExecutor in tests.
     Executor& executor;
+    // Runs IpcClient's connect rounds, which may block in the engine starter for seconds.
+    Executor& link_executor;
     // The calling user, whose engine endpoint is named after it.
     ports::PeerIdentity self;
     // REBOOT_LAUNCHER_HOME when set.
@@ -85,15 +87,17 @@ public:
     // No `detached` value means the method's default disconnect policy.
     void start(u32 method, std::span<const u8> request, std::optional<bool> detached,
                UniqueFunction<void(CallResult<u64>)> done);
+    // As put_secret, refused outside Full compatibility.
     void reveal_secret(std::span<const u8> target, UniqueFunction<void(CallResult<SecretBytes>)> done);
 
     [[nodiscard]] Result<void> attach(u64 op_id);
-    // ipc.unknown_op unless the op is attached here.
+    // ipc.unknown_op unless the op is attached here; nothing is sent once the op has ended.
     [[nodiscard]] Result<void> cancel(u64 op_id);
     [[nodiscard]] Result<OpState> op_state(u64 op_id) const;
     [[nodiscard]] Result<void> release(u64 op_id);
 
-    // ipc.too_many_subscriptions past kMaxSubscriptions.
+    // ipc.too_many_subscriptions past kMaxSubscriptions; ipc.version_mismatch outside Full
+    // compatibility, since the engine drops such a Subscribe unanswered.
     [[nodiscard]] Result<u64> subscribe(std::span<const u8> filter);
     // Waits for a caller blocked on it and for a running wake.
     [[nodiscard]] Result<void> unsubscribe(u64 sub_id);
@@ -103,6 +107,7 @@ public:
     // Posts the wake to the executor when events are already queued; an unknown sub is ignored.
     void set_wake(u64 sub_id, WakeCallback wake);
 
+    // ipc.version_mismatch outside Full compatibility, since the engine drops such a SecretPut.
     [[nodiscard]] Result<void> put_secret(std::span<const u8> target, std::span<const u8> secret);
     void log_write(LogLevel level, std::string_view utf8);
 
@@ -115,12 +120,14 @@ private:
 
     [[nodiscard]] static contracts::ipc::CallerContext to_wire(const ports::CallerContext& caller);
     [[nodiscard]] Result<void> check_method(u32 method) const;
+    // client.closed, or ipc.version_mismatch naming `frame_type` outside Full compatibility.
+    [[nodiscard]] Result<void> check_full(u64 frame_type) const;
     // Opens a call and sends `frame`, failing the call if the write fails; no id when refused.
     template <class Frame>
     std::optional<u64> send_call(Frame frame, AnswerDone done);
 
-    // Every subscription follows an op from the moment it is tracked.
-    void track_op(u64 op_id, u32 method_id);
+    // Every subscription follows an op from the moment it is tracked; false when already tracked.
+    bool track_op(u64 op_id, u32 method_id);
     void on_event_batch(contracts::ipc::EventBatch batch);
     void on_resync(u64 sub_id);
     // Records the outcome once and hands its OpCompleted to every following subscription.
@@ -128,6 +135,7 @@ private:
     void fail_pending_ops(const Diagnostic& reason);
     void push_local_to_all(contracts::ipc::WireEvent event);
     void resubscribe_all();
+    void close_subscriptions();
     // Runs the wake and sends Credit for `effects`, with no lock held.
     void apply(u64 sub_id, const PushEffects& effects);
     void send_credit(u64 sub_id, u32 n);

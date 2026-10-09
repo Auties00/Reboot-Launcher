@@ -22,6 +22,7 @@ public:
     Result<void> restrict_to_owner(const NativePath& path) override;
     Result<ports::HeldFile> open_deny_write(const NativePath& path) override;
     Result<ports::FileRevision> revision(const NativePath& path) override;
+    Result<ports::SharedRead> read_shared(const NativePath& path, u64 offset, std::size_t max_bytes) override;
     Result<void> create_dirs_owner_only(const NativePath& path) override;
     Result<void> remove_tree(const NativePath& path) override;
 

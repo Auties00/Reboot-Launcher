@@ -19,6 +19,8 @@ enum class SessionsErrorCode : u8 {
     ParentNotLive,
     // Stopping and Ended are entered only through the stop path.
     InvalidTransition,
+    // The driver overran grace + kStopKillMargin; the registry ended the session itself.
+    StopOverran,
 };
 
 struct SessionsError {

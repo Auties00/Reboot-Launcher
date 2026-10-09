@@ -38,6 +38,7 @@ An id leaves this list only when code that implements it cites it.
 | `packaging-distribution.installer` | 10.x Windows installer and the OS state it writes | Its install, registry entries, URL scheme and Defender exclusion are left alone. Our installer is phase 4. |
 | `packaging-distribution.+61` | 10.x branch topology and which code is released | Process note about the old repository; no code. |
 | `packaging-distribution.+90` | CLI never shipped in 10.0.9 | No 10.x CLI store to import; no code. |
+| `server-browser.+89` | Squatting risk for server ids reused from 10.x hosts | No 10.x id is imported: every host profile gets a fresh `uuid_v4` server id, so there is no public id for anyone to register first. |
 
 ## Backend internals (owner decision 7, phase 2)
 
@@ -48,6 +49,7 @@ Core sees only the backend process contract (`core/contracts`).
 | `auth-backend.lawinserver` | Bundled LawinServer backend | Phase 2 backend program. |
 | `auth-backend.lawinserver-version-routing` | Per-build routing on the User-Agent; CloudStorage path traversal | Phase 2 backend internals. |
 | `auth-backend.+15` | CloudStorage hotfixes and HTTP contract details | Phase 2 backend internals. |
+| `cloudstorage-hotfix-content` (decision) | Check of the CloudStorage overrides in `data/backend/CloudStorage` (ignored or invalid files) | Phase 2: the backend reads and judges its own overrides. Core only opens the folder (`backend::BackendDirectory`). |
 
 ## Dropped features
 

@@ -84,8 +84,8 @@ public:
     // For a session that will not launch after all.
     void discard(SessionId session) noexcept;
 
-    // compat.session_not_staged, compat.path_not_mapped, compat.runner_spawn_failed, or the
-    // game_channel error of opening the peer.
+    // compat.session_not_staged, compat.path_not_mapped (or path_not_utf8), compat.path_not_exposable
+    // under Umu, compat.runner_spawn_failed, or the game_channel error of opening the peer.
     Result<std::unique_ptr<ports::IGameSession>> launch(const ports::SessionLaunch& launch,
                                                         UniqueFunction<void(ports::SessionHostEvent)> on_event) override;
 

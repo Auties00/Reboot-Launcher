@@ -20,6 +20,7 @@ REBOOT_MESSAGE(kNoDisplay, "integration.no_display",
 REBOOT_MESSAGE(kUrlNotHttps, "integration.url_not_https", "Only https links can be opened");
 REBOOT_MESSAGE(kPathNotAbsolute, "integration.path_not_absolute", "{path} is not an absolute path");
 REBOOT_MESSAGE(kShellFailed, "integration.shell_failed", "{target} cannot be opened");
+REBOOT_MESSAGE(kShellCancelled, "integration.shell_cancelled", "Opening {target} was cancelled");
 
 REBOOT_MESSAGE(kUnknownPrerequisite, "integration.unknown_prerequisite", "{id} is not a known prerequisite");
 REBOOT_MESSAGE(kPrerequisiteNotRemediable, "integration.prerequisite_not_remediable",

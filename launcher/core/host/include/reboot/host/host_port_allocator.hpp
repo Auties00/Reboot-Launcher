@@ -11,6 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/host/port_block.hpp"
 #include "reboot/host/port_policy.hpp"
+#include "reboot/net/our_process.hpp"
 
 namespace reboot {
 class Executor;
@@ -30,7 +31,7 @@ struct BlockRequest {
     // Auto only: search above this block, after the server failed to listen on it.
     std::optional<PortBlock> after;
     // The engine's live children, so a port held by one of them is reported as ours.
-    std::vector<u32> our_pids;
+    std::vector<net::OurProcess> ours;
 };
 
 // Capabilities: hosting.game-server-port.
@@ -50,12 +51,13 @@ public:
     HostPortAllocator(const HostPortAllocator&) = delete;
     HostPortAllocator& operator=(const HostPortAllocator&) = delete;
 
-    // Replaces a block the session already holds. Fails synchronously on size 0 or an invalid
-    // policy. `done` runs on the strand exactly once; a cancel fails it with ErrorKind::Cancelled.
+    // Replaces a block the session already holds. Fails synchronously on size 0, an invalid policy
+    // or a block that cannot exist (host.block_out_of_range, host.reserved_port). Otherwise `done`
+    // runs on the strand exactly once; a cancel fails it with host.cancelled.
     Result<void> reserve(BlockRequest request, CancelToken token, UniqueFunction<void(Result<PortBlock>)> done);
 
     // Preflights the session's current block again before a respawn on it.
-    Result<void> recheck(SessionId session, std::vector<u32> our_pids, CancelToken token,
+    Result<void> recheck(SessionId session, std::vector<net::OurProcess> ours, CancelToken token,
                          UniqueFunction<void(Result<PortBlock>)> done);
 
     void release(SessionId session);

@@ -32,6 +32,9 @@ struct MissingAsset {
 
 [[nodiscard]] NativePath bundled_asset_path(const InstallLayout& install, BundledAsset asset);
 
+// components.bundled_asset_missing.
+[[nodiscard]] Diagnostic to_diagnostic(const MissingAsset& missing);
+
 // Capabilities: packaging-distribution.assets.
 // Blocking; runs on the WorkerPool. Empty when the install is complete.
 [[nodiscard]] Result<std::vector<MissingAsset>> find_missing_assets(ports::IFileSystem& fs,

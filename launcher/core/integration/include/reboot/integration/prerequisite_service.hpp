@@ -35,14 +35,28 @@ public:
     void check(CancelToken token, UniqueFunction<void(std::vector<Prerequisite>)> done);
 
     // OpKind::Generic, 10 min, re-checked; the call is the consent, so compat's RosettaInstall is the only request.
+    // Completes with the re-checked Prerequisite. A remedy that only opens settings never ends in
+    // StillMissing; one already met is not run again. A second call for an id in progress joins it,
+    // and one after a cancel waits until the cancelled remedy has returned.
     Result<OpHandle> start_remediate(PrerequisiteId id, DisconnectPolicy policy);
 
 private:
+    struct Remediation {
+        PrerequisiteId id{};
+        OpHandle handle;
+        // Listed until its remedy returns, even once the op was cancelled.
+        Operation<Prerequisite>* op = nullptr;
+    };
+
+    void submit(const Remediation& remediation);
+    void start_waiting(PrerequisiteId id);
+
     ports::IPrerequisiteProbe& probe_;
     WorkerPool& workers_;
     Executor& strand_;
     OpRegistry& ops_;
     EventBus& events_;
+    std::vector<Remediation> running_;
 };
 
 }  // namespace reboot::integration

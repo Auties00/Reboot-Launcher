@@ -16,6 +16,7 @@ REBOOT_MESSAGE(kUnknownOp, "ipc.unknown_op", "There is no operation {op}.");
 REBOOT_MESSAGE(kProtocolError, "ipc.protocol_error",
                "The engine connection received an unexpected frame {frame_type}.");
 REBOOT_MESSAGE(kRevealRefused, "ipc.reveal_refused", "Only the host join password can be read back.");
+REBOOT_MESSAGE(kMessageTooLarge, "ipc.message_too_large", "A message of {size} bytes is over the {limit} byte limit.");
 
 REBOOT_MESSAGE(kConnectionLost, "ipc.connection_lost", "The connection to the engine was lost.");
 REBOOT_MESSAGE(kEngineClosed, "ipc.engine_closed", "The engine closed the connection ({reason}).");

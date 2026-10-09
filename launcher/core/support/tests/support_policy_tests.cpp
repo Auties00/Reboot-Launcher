@@ -349,3 +349,94 @@ TEST_CASE("every reason converts to its own support diagnostic") {
     CHECK(to_diagnostic(SupportReason::ExternalBackend, query).is(msg::kExternalBackend));
     CHECK(to_diagnostic(SupportReason::AboveVersionCapOptedIn, query).is(msg::kAboveVersionCapOptedIn));
 }
+
+TEST_CASE("an opted-in build in an above-cap cell keeps the cell's evidence") {
+    EvidenceRecord record = play_record(EvidenceResult::Pass, 10);
+    record.cell.range = range(version(31, 0), version(31, 10));
+    record.version = version(31, 0);
+    const SupportPolicy policy(windows_inputs({record}));
+
+    SupportQuery query = play_query(version(31, 0));
+    query.imported = true;
+    query.above_cap_opt_in = true;
+    const SupportVerdict verdict = policy.evaluate(query);
+    CHECK(verdict.tier == SupportTier::Untested);
+    CHECK(verdict.reasons == std::vector{SupportReason::AboveVersionCapOptedIn});
+    REQUIRE(verdict.cell);
+    CHECK(verdict.cell->evidence);
+
+    query.above_cap_opt_in = false;
+    CHECK(policy.evaluate(query).reasons == std::vector{SupportReason::AboveVersionCap});
+}
+
+TEST_CASE("an opted-in build is rated by its best cell, not by the cell's own cap reason") {
+    // A wide cell with only stale evidence, then an above-cap cell with a pass.
+    PlayCellInputs old_dll = current_play_inputs();
+    old_dll.client_dll_sha256 = digest(2);
+    EvidenceRecord wide = play_record(EvidenceResult::Pass, 10, old_dll);
+    wide.cell.range = range(version(30, 0), version(31, 10));
+    wide.version = version(31, 0);
+    EvidenceRecord above = play_record(EvidenceResult::Pass, 10);
+    above.cell.range = range(version(31, 0), version(31, 10));
+    above.version = version(31, 0);
+    const SupportPolicy policy(windows_inputs({wide, above}));
+
+    SupportQuery query = play_query(version(31, 0));
+    query.imported = true;
+    query.above_cap_opt_in = true;
+    const SupportVerdict verdict = policy.evaluate(query);
+    CHECK(verdict.reasons == std::vector{SupportReason::AboveVersionCapOptedIn});
+    REQUIRE(verdict.cell);
+    CHECK(verdict.cell->key.range == above.cell.range);
+    CHECK(verdict.cell->evidence);
+}
+
+TEST_CASE("a host query on a Wine runner falls in no Native cell") {
+    const SupportPolicy policy(windows_inputs({host_record(EvidenceResult::Pass, 10)}));
+    SupportQuery wine = host_query(version(8, 51));
+    wine.runner = RunnerKind::Wine;
+    const SupportVerdict verdict = policy.evaluate(wine);
+    CHECK(verdict.tier == SupportTier::Blocked);
+    CHECK_FALSE(verdict.cell);
+}
+
+TEST_CASE("the auto server's host side runs natively with our own DLL and backend") {
+    SupportInputs inputs = windows_inputs({host_record(EvidenceResult::Pass, 10)});
+    inputs.os = ManifestOs::Linux;
+    inputs.runners = {{.runner = RunnerKind::Umu, .runtime_id = "ge-proton-10"}};
+    inputs.evidence.front().os = ManifestOs::Linux;
+    const SupportPolicy policy(std::move(inputs));
+
+    SupportQuery play = play_query(version(8, 51));
+    play.runner = RunnerKind::Umu;
+    play.custom_auth_dll = true;
+    play.embedded_backend = false;
+    play.server = server();
+    const AutoServerVerdict verdict = policy.evaluate_with_auto_server(play);
+    CHECK(verdict.host.tier == SupportTier::Tested);
+    CHECK(verdict.host.provider == SupportProvider::Ours);
+    CHECK(verdict.play.tier == SupportTier::Untested);
+    CHECK(verdict.tier == SupportTier::Untested);
+}
+
+TEST_CASE("cells without a described server block the host evidence cells") {
+    const SupportPolicy policy(windows_inputs({host_record(EvidenceResult::Pass, 10)}));
+    const std::vector<SupportCell> cells = policy.cells(std::nullopt);
+    REQUIRE(cells.size() == 1);
+    CHECK(cells[0].tier == SupportTier::Blocked);
+    CHECK(cells[0].reasons == std::vector{SupportReason::GameServerUnavailable});
+    CHECK_FALSE(cells[0].evidence);
+}
+
+TEST_CASE("check_not_blocked lists the other Blocked reasons as causes") {
+    SupportInputs inputs = windows_inputs();
+    inputs.runners.clear();
+    const SupportPolicy policy(std::move(inputs));
+    SupportQuery query = play_query(version(31, 0));
+    query.custom_auth_dll = true;
+    const Result<void> blocked = check_not_blocked(query, policy.evaluate(query));
+    REQUIRE_FALSE(blocked);
+    CHECK(blocked.error().is(msg::kAboveVersionCap));
+    REQUIRE(blocked.error().causes.size() == 1);
+    CHECK(blocked.error().causes[0].is(msg::kRunnerUnavailable));
+}

@@ -59,11 +59,33 @@ Result<ports::ProcessLaunch> FakeRunnerPlatform::runner_launch(const ports::Runt
     return launch;
 }
 
-Result<void> FakeRunnerPlatform::runtime_setup(const ports::RuntimeLayout&, CancelToken) {
+Result<ports::ProcessLaunch> FakeRunnerPlatform::prefix_command(const ports::RuntimeLayout& layout,
+                                                                const NativePath& prefix,
+                                                                const ports::PrefixCommand& command,
+                                                                ports::EnvBlock base) {
+    if (auto error = faults_.take(RunnerOperation::PrefixCommand)) return std::unexpected(std::move(*error));
+    ports::ProcessLaunch launch;
+    launch.exe = layout.entry;
+    switch (command.verb) {
+        case ports::PrefixVerb::Boot: launch.args = {"wineboot", "-u"}; break;
+        case ports::PrefixVerb::KillServer: launch.args = {"wineserver", "-k"}; break;
+        case ports::PrefixVerb::Run:
+            launch.args = {utf8_of(command.exe)};
+            launch.args.insert(launch.args.end(), command.args.begin(), command.args.end());
+            launch.cwd = command.exe.parent_path();
+            break;
+    }
+    launch.env = std::move(base);
+    launch.env.vars.emplace_back("WINEPREFIX", utf8_of(prefix));
+    launch.stdio = ports::StdioMode::Capture;
+    return launch;
+}
+
+Result<std::optional<std::string>> FakeRunnerPlatform::runtime_setup(const ports::RuntimeLayout&, CancelToken) {
     if (auto error = faults_.take(RunnerOperation::RuntimeSetup)) return std::unexpected(std::move(*error));
     const std::scoped_lock lock(mutex_);
     ++runtime_setups_;
-    return {};
+    return setup_build_;
 }
 
 std::optional<UserRequestKind> FakeRunnerPlatform::pending_prerequisite() {
@@ -84,6 +106,11 @@ void FakeRunnerPlatform::set_layout(ports::RunnerKind kind, ports::RuntimeLayout
 void FakeRunnerPlatform::set_pending_prerequisite(std::optional<UserRequestKind> kind) {
     const std::scoped_lock lock(mutex_);
     pending_ = kind;
+}
+
+void FakeRunnerPlatform::set_setup_build(std::optional<std::string> build) {
+    const std::scoped_lock lock(mutex_);
+    setup_build_ = std::move(build);
 }
 
 std::vector<NativePath> FakeRunnerPlatform::post_extracted() const {

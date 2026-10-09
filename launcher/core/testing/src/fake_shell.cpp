@@ -35,6 +35,11 @@ Result<void> FakeShell::reveal(const NativePath& path) {
 
 Result<void> FakeShell::trash(const NativePath& path) {
     if (auto error = faults_.take(ShellOperation::Trash)) return std::unexpected(std::move(*error));
+    if (fs_ != nullptr) {
+        // Trashing something that is not there fails, as the OS recycle bin refuses it.
+        if (auto found = fs_->revision(path); !found) return std::unexpected(std::move(found.error()));
+        if (auto removed = fs_->remove_tree(path); !removed) return removed;
+    }
     const std::scoped_lock lock(mutex_);
     trashed_.push_back(path);
     return {};

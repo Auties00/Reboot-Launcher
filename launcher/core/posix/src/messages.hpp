@@ -18,5 +18,7 @@ REBOOT_MESSAGE_DECL(kEngineNotListening);
 // ErrorKind::Conflict.
 REBOOT_MESSAGE_DECL(kLockBusy);
 REBOOT_MESSAGE_DECL(kHeldFileChanged);
+// ErrorKind::Conflict.
+REBOOT_MESSAGE_DECL(kEndpointInUse);
 
 }  // namespace reboot::posix

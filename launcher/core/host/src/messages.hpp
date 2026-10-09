@@ -33,6 +33,16 @@ REBOOT_MESSAGE_DECL(kNotHostSession);
 REBOOT_MESSAGE_DECL(kServerNotRunning);
 REBOOT_MESSAGE_DECL(kNotListening);
 REBOOT_MESSAGE_DECL(kBuildAndVersion);
+REBOOT_MESSAGE_DECL(kBlockInUse);
+REBOOT_MESSAGE_DECL(kCancelled);
+REBOOT_MESSAGE_DECL(kUntestedDeclined);
+REBOOT_MESSAGE_DECL(kInvalidAnswer);
+REBOOT_MESSAGE_DECL(kListenFailed);
+REBOOT_MESSAGE_DECL(kServerExited);
+REBOOT_MESSAGE_DECL(kServerFatal);
+REBOOT_MESSAGE_DECL(kServerUnresponsive);
+REBOOT_MESSAGE_DECL(kProfileMemberInvalid);
+REBOOT_MESSAGE_DECL(kDuplicateProfile);
 REBOOT_MESSAGE_DECL(kSecondAutoServerUnpublished);
 
 }  // namespace reboot::host::msg

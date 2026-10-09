@@ -58,7 +58,8 @@ public:
                  std::is_invocable_r_v<R, std::decay_t<F>&, Args...>)
     UniqueFunction(F&& f) {
         using D = std::decay_t<F>;
-        if constexpr (std::is_pointer_v<D> || std::is_member_pointer_v<D>) {
+        // A function reference is never null, and GCC rejects comparing one with -Werror.
+        if constexpr (std::is_pointer_v<std::remove_cvref_t<F>> || std::is_member_pointer_v<std::remove_cvref_t<F>>) {
             if (f == nullptr) return;
         }
         if constexpr (kStoredInline<D>) {

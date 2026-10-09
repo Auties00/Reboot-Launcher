@@ -1,0 +1,13 @@
+{
+  "cases": [
+    { "name": "", "auth_login": "Player@projectreboot.dev" },
+    { "name": "Player", "auth_login": "Player@projectreboot.dev" },
+    { "name": "Host", "auth_login": "Host@projectreboot.dev" },
+    { "name": "John Doe", "auth_login": "JohnDoe@projectreboot.dev" },
+    { "name": "john@example.com", "auth_login": "johnexamplecom@projectreboot.dev" },
+    { "name": "Jöhn_99", "auth_login": "Jhn99@projectreboot.dev" },
+    { "name": "!!!", "auth_login": "Player@projectreboot.dev" },
+    { "name": "   ", "auth_login": "Player@projectreboot.dev" },
+    { "name": "Bob-a1b2c3", "auth_login": "Boba1b2c3@projectreboot.dev" }
+  ]
+}

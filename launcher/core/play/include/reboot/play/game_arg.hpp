@@ -30,7 +30,7 @@ struct FixedGameArg {
     bool secret = false;
 };
 
-// The literals 10.0.9 passed on every launch (common/lib/src/util/game.dart:222), byte for byte.
+// Fixed literals the game checks on every launch, byte for byte.
 inline constexpr std::string_view kFlToken = "3db3ba5dcbd2e16703f3978d";
 inline constexpr std::string_view kCalderaToken =
     "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9."
@@ -40,7 +40,7 @@ inline constexpr std::string_view kCalderaToken =
     "VAWQB67RTxhiWOxx7DBjnzDnXyyEnX7OljJm-j2d88G_WgwQ9wrE6lwMEHZHjBd1ISJdUO1UVUqkfLdU5nofBQ";
 
 // Covers game-launch.arguments, game-launch.+10.
-// The tokens every play launch starts with, in 10.0.9's order. -caldera is masked in logs as
+// The tokens every play launch starts with, in this order. -caldera is masked in logs as
 // game-launch.arguments requires, though the literal is public.
 inline constexpr std::array<FixedGameArg, 9> kFixedGameArgs{{
     {"-epicapp", "Fortnite"},

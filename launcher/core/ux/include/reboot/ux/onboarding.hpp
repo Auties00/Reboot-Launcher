@@ -75,6 +75,9 @@ public:
     Result<OnboardingView> exit(const OnboardingContext& context);
 
 private:
+    // Writes `record` through the store, then publishes OnboardingChanged.
+    Result<OnboardingView> commit(OnboardingRecord record, const OnboardingContext& context);
+
     IGuidanceStateStore& store_;
     EventBus& events_;
 };

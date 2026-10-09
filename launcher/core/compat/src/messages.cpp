@@ -29,5 +29,14 @@ REBOOT_MESSAGE(kSessionNotStaged, "compat.session_not_staged", "Session {session
 REBOOT_MESSAGE(kSessionAlreadyStaged, "compat.session_already_staged", "Session {session} already has a Wine setup");
 REBOOT_MESSAGE(kRunnerSpawnFailed, "compat.runner_spawn_failed", "Cannot start the {runner} runner");
 REBOOT_MESSAGE(kRunnerExited, "compat.runner_exited", "The {runner} runner exited before the game did");
+REBOOT_MESSAGE(kWinhostFatal, "compat.winhost_fatal", "The Wine host of the game failed at step {step}");
+REBOOT_MESSAGE(kPathNotExposable, "compat.path_not_exposable",
+               "{path} cannot be shared with the Steam Linux Runtime because its name contains a colon");
+REBOOT_MESSAGE(kNoVcRedist, "compat.no_vc_redist", "The release manifest selects no Visual C++ runtime");
+REBOOT_MESSAGE(kCancelled, "compat.cancelled", "Preparing the {runner} runner was cancelled");
+REBOOT_MESSAGE(kAnswerInvalid, "compat.answer_invalid", "The answer does not fit the question it was given for");
+REBOOT_MESSAGE(kRecordsNotList, "compat.records_not_list", "The {member} of the runner state is not a list");
+REBOOT_MESSAGE(kRecordInvalid, "compat.record_invalid", "A record of the runner state is incomplete");
+REBOOT_MESSAGE(kRecordDuplicate, "compat.record_duplicate", "The runner state records {name} twice");
 
 }  // namespace reboot::compat::msg

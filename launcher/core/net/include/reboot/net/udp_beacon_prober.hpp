@@ -21,8 +21,8 @@ namespace reboot::net {
 
 class IDatagramConnector;
 
-// An attempt resends at each offset in `resend_at` until a reply or `attempt_timeout`; a lost
-// datagram costs a resend, not a whole attempt.
+// An attempt resends at each offset in `resend_at` until a reply, a refusal or `attempt_timeout`;
+// a lost datagram costs a resend, not a whole attempt.
 struct ProbePolicy {
     u32 attempts = 3;
     std::chrono::milliseconds attempt_timeout = std::chrono::seconds{2};
@@ -42,7 +42,7 @@ struct ProbeResult {
 };
 
 // Capabilities: matchmaking-networking.udp-ping.
-// Sends contracts::game_server::kRbsbProbe, the old launcher's 25-byte game-server ping, over a
+// Sends contracts::game_server::kRbsbProbe, the 25-byte probe every game port answers, over a
 // connected datagram channel, so only replies from the target count; any reply is Alive.
 // Strand-only: the resend schedule runs on TimerService and the RTT comes from IClock.
 class UdpBeaconProber {

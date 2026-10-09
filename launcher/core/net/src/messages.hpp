@@ -16,6 +16,8 @@ REBOOT_MESSAGE_DECL(kPlainHttpNeedsConsent);
 REBOOT_MESSAGE_DECL(kHttpsDowngradeRefused);
 REBOOT_MESSAGE_DECL(kTransportFailed);
 REBOOT_MESSAGE_DECL(kRequestUnbounded);
+REBOOT_MESSAGE_DECL(kRequestCancelled);
+REBOOT_MESSAGE_DECL(kHttpUnavailable);
 
 REBOOT_MESSAGE_DECL(kInsufficientSpace);
 REBOOT_MESSAGE_DECL(kRangeNotHonored);
@@ -24,14 +26,17 @@ REBOOT_MESSAGE_DECL(kDownloadSizeMismatch);
 REBOOT_MESSAGE_DECL(kDownloadHttpStatus);
 REBOOT_MESSAGE_DECL(kDownloadWriteFailed);
 REBOOT_MESSAGE_DECL(kDownloadAttemptsExhausted);
+REBOOT_MESSAGE_DECL(kDownloadCancelled);
 
 REBOOT_MESSAGE_DECL(kAddressInvalid);
 REBOOT_MESSAGE_DECL(kHostNotFound);
 REBOOT_MESSAGE_DECL(kNoIpv4Address);
 REBOOT_MESSAGE_DECL(kResolveTimeout);
 REBOOT_MESSAGE_DECL(kResolveFailed);
+REBOOT_MESSAGE_DECL(kResolveCancelled);
 
 REBOOT_MESSAGE_DECL(kProbePolicyInvalid);
+REBOOT_MESSAGE_DECL(kUdpSocketFailed);
 
 REBOOT_MESSAGE_DECL(kPortBusy);
 REBOOT_MESSAGE_DECL(kPortHeldBySystem);
@@ -48,5 +53,7 @@ REBOOT_MESSAGE_DECL(kQuicUnavailable);
 REBOOT_MESSAGE_DECL(kQuicConnectFailed);
 REBOOT_MESSAGE_DECL(kQuicNoIpv4);
 REBOOT_MESSAGE_DECL(kQuicUdpBlocked);
+REBOOT_MESSAGE_DECL(kQuicConnectionLost);
+REBOOT_MESSAGE_DECL(kQuicStreamUnknown);
 
 }  // namespace reboot::net

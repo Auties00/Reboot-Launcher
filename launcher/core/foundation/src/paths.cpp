@@ -1,5 +1,6 @@
 #include "reboot/foundation/paths.hpp"
 
+#include <algorithm>
 #include <concepts>
 #include <system_error>
 #include <vector>
@@ -40,6 +41,17 @@ std::vector<u8> hashed_bytes(const String& native) {
         return {utf8.begin(), utf8.end()};
     } else {
         return {native.begin(), native.end()};
+    }
+}
+
+// Windows compares names case-insensitively; ASCII folding covers the names the OS hands us.
+template <class String>
+bool same_name(const String& a, const String& b) {
+    if constexpr (kWide<String>) {
+        const auto fold = [](wchar_t c) { return c >= L'A' && c <= L'Z' ? static_cast<wchar_t>(c - L'A' + L'a') : c; };
+        return std::ranges::equal(a, b, {}, fold, fold);
+    } else {
+        return a == b;
     }
 }
 
@@ -106,10 +118,21 @@ bool is_inside(const NativePath& child, const NativePath& parent) {
     for (const NativePath& part : normal_parent) {
         // A trailing separator normalises to an empty last element, which matches anything.
         if (part.empty()) break;
-        if (child_it == normal_child.end() || *child_it != part) return false;
+        if (child_it == normal_child.end() || !same_name(child_it->native(), part.native())) return false;
         ++child_it;
     }
     return true;
+}
+
+std::optional<NativePath> velopack_root_of(const NativePath& exe_dir) {
+    NativePath current = exe_dir.lexically_normal();
+    if (!current.has_filename()) current = current.parent_path();
+    if (!same_name(current.filename().native(), NativePath("current").native())) return std::nullopt;
+    const NativePath root = current.parent_path();
+    std::error_code error;
+    if (!std::filesystem::is_regular_file(root / "Update.exe", error)) return std::nullopt;
+    if (!std::filesystem::is_regular_file(current / "sq.version", error)) return std::nullopt;
+    return root;
 }
 
 }  // namespace reboot

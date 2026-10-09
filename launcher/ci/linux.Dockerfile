@@ -49,11 +49,13 @@ RUN --mount=type=cache,target=/root/.cache/vcpkg \
 RUN cmake --build --preset ${PRESET} -- -k 0; echo $? > /tmp/build.rc
 RUN cmake --build --preset ${PRESET} --target dag_check; echo $? > /tmp/dag.rc
 
-# ---- test: unit, contract and conformance suites, as a regular user ------------------------------
+# ---- test: unit, contract and conformance suites, then the CI gates, as a regular user -----------
+# The gates here are message catalog completeness and the secret grep; Linux has no Velopack package.
 FROM build AS test
 ARG PRESET
 RUN useradd --create-home ci && chown -R ci /src/launcher/build
 USER ci
-RUN ctest --preset ${PRESET} --no-tests=error; test=$?; \
-    echo "build: $(cat /tmp/build.rc), dag_check: $(cat /tmp/dag.rc), ctest: $test"; \
-    [ "$(cat /tmp/build.rc)" = 0 ] && [ "$(cat /tmp/dag.rc)" = 0 ] && [ "$test" = 0 ]
+RUN ctest --preset ${PRESET} --no-tests=error -LE gate; test=$?; \
+    ctest --preset ${PRESET} --no-tests=error -L gate; gates=$?; \
+    echo "build: $(cat /tmp/build.rc), dag_check: $(cat /tmp/dag.rc), ctest: $test, gates: $gates"; \
+    [ "$(cat /tmp/build.rc)" = 0 ] && [ "$(cat /tmp/dag.rc)" = 0 ] && [ "$test" = 0 ] && [ "$gates" = 0 ]

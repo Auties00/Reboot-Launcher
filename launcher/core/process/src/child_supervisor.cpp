@@ -69,6 +69,8 @@ struct ChildSupervisor::Impl {
     std::optional<ChildRecord> spawned;
     // Cancelled when the generation ends; posted I/O callbacks check it before touching anything.
     CancelSource generation_alive;
+    // Cancelled by the destructor, so a posted not-running answer is dropped with the supervisor.
+    CancelSource supervisor_alive;
     // Set once the child is being ended on purpose; its exit reports this cause.
     std::optional<ChildExitCause> ending;
     std::optional<Diagnostic> ending_error;
@@ -286,7 +288,9 @@ struct ChildSupervisor::Impl {
                       UniqueFunction<void(Result<ReplyFrame>)> done) {
         if (state != ChildState::Running || !open()) {
             Diagnostic error = make_diag(ErrorDomain::Process, msg::kChildNotRunning).arg("program", program).build();
-            strand.post([done = std::move(done), error = std::move(error)]() mutable { done(std::unexpected(std::move(error))); });
+            strand.post([alive = supervisor_alive.token(), done = std::move(done), error = std::move(error)]() mutable {
+                if (!alive.cancelled()) done(std::unexpected(std::move(error)));
+            });
             return;
         }
         pending.emplace(req_id, PendingRequest{request_type, reply_type, std::move(done)});
@@ -342,15 +346,20 @@ struct ChildSupervisor::Impl {
         child.reset();
         ending.reset();
         ending_error.reset();
-        fail_pending();
+        FlatMap<u64, PendingRequest> gone = std::move(pending);
+        pending.clear();
 
         decide_after(info);
+        // After decide_after, so a callback that calls stop() is not undone by it.
+        fail_pending(gone);
+        if (info.after == AfterExit::Restarting && state == ChildState::Stopped) {
+            info.after = AfterExit::Stopped;
+            info.restart_delay = {};
+        }
         observer.on_exit(info);
     }
 
-    void fail_pending() {
-        FlatMap<u64, PendingRequest> gone = std::move(pending);
-        pending.clear();
+    void fail_pending(FlatMap<u64, PendingRequest>& gone) {
         for (auto& [req_id, request] : gone)
             request.done(make_diag(ErrorDomain::Process, msg::kChildGone)
                              .arg("program", program)
@@ -461,6 +470,7 @@ ChildSupervisor::ChildSupervisor(ports::IProcessLauncher& launcher, Executor& st
 ChildSupervisor::~ChildSupervisor() {
     Impl& impl = *impl_;
     impl.generation_alive.cancel(CancelReason::Shutdown);
+    impl.supervisor_alive.cancel(CancelReason::Shutdown);
     for (ChildReply* reply : impl.replies) reply->supervisor_ = nullptr;
     impl.replies.clear();
     if (!impl.child) return;

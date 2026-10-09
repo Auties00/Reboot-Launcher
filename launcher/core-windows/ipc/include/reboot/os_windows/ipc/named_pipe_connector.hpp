@@ -19,7 +19,8 @@ public:
 
     // Opened with SECURITY_IDENTIFICATION so the engine can identify this client but never act as it.
     // No pipe is platform.engine_not_listening and busy past `deadline` platform.pipe_connect_timed_out,
-    // both EngineUnavailable so the client may autostart. Nothing is written before verify_server;
+    // both EngineUnavailable so the client may autostart. A pipe this user may not open is
+    // ipc.endpoint_untrusted caused by platform.pipe_access_denied. Nothing is written before verify_server;
     // its warning is only logged, since the engine reports its own elevation.
     Result<std::unique_ptr<ports::IByteStream>> connect(std::string_view endpoint_name,
                                                         std::chrono::milliseconds deadline) override;

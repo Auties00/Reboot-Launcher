@@ -15,6 +15,8 @@ enum class SpawnStep : u8 {
     CreateCompanion,
     Inject,
     Resume,
+    // Starting a pipe-reader or exit-wait thread.
+    Watch,
 };
 
 struct SpawnError {

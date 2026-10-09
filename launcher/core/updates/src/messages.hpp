@@ -17,6 +17,7 @@ REBOOT_MESSAGE_DECL(kNotApplied);
 REBOOT_MESSAGE_DECL(kSelfTestFailed);
 REBOOT_MESSAGE_DECL(kGaveUp);
 REBOOT_MESSAGE_DECL(kStopDeclined);
+REBOOT_MESSAGE_DECL(kAnswerInvalid);
 REBOOT_MESSAGE_DECL(kMarkerMalformed);
 
 }  // namespace reboot::updates::msg

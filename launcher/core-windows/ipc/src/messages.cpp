@@ -2,7 +2,7 @@
 
 namespace reboot::os_windows::ipc {
 
-// Belongs to the foundation, which does not declare it yet; core/posix defines it off Windows.
+// core/ipc registers the same id; this package may not reach it.
 REBOOT_MESSAGE(kEndpointUntrusted, "ipc.endpoint_untrusted", "The engine endpoint is not trusted.");
 REBOOT_MESSAGE(kIpcCallFailed, "platform.ipc_call_failed", "{call} failed.");
 REBOOT_MESSAGE(kIpcCallFailedOnPath, "platform.ipc_call_failed_on_path", "{call} failed on {path}.");

@@ -9,25 +9,48 @@
 #include <sys/stat.h>
 #include <system_error>
 #include <thread>
-#include <unistd.h>
 #include <utility>
 
+#include "messages.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/posix/posix_error.hpp"
 #include "socket_fds.hpp"
 #include "socket_stream.hpp"
+#include "unistd.hpp"
 #include "unix_endpoint_checks.hpp"
 
 namespace reboot::posix {
 
 namespace {
 
+// After an accept error such as EMFILE the socket stays readable, so polling it again at once would spin.
+constexpr int kAcceptBackoffMs = 100;
+
+// A socket that still accepts a connection belongs to a live listener; anything else is stale.
+[[nodiscard]] Result<void> remove_stale_socket(const NativePath& socket_path) {
+    struct stat info {};
+    if (::lstat(socket_path.c_str(), &info) != 0) {
+        if (errno == ENOENT) return {};
+        return std::unexpected(call_failed("lstat", errno, socket_path));
+    }
+    if (S_ISSOCK(info.st_mode)) {
+        auto probe = make_unix_stream_socket();
+        if (!probe) return std::unexpected(std::move(probe.error()));
+        const int error = connect_unix(probe->get(), socket_path);
+        // EAGAIN is a full backlog on Linux, EINPROGRESS a pending connect elsewhere.
+        if (error == 0 || error == EAGAIN || error == EINPROGRESS)
+            return make_diag(ErrorDomain::Posix, kEndpointInUse).arg("path", socket_path).kind(ErrorKind::Conflict).fail();
+        if (error != ECONNREFUSED && error != ENOENT) return std::unexpected(call_failed("connect", error, socket_path));
+    }
+    if (::unlink(socket_path.c_str()) != 0 && errno != ENOENT)
+        return std::unexpected(call_failed("unlink", errno, socket_path));
+    return {};
+}
+
 [[nodiscard]] Result<UniqueFd> bind_listening_socket(const NativePath& socket_path) {
     auto socket = make_unix_stream_socket();
     if (!socket) return std::unexpected(std::move(socket.error()));
-    // Only the EngineLock holder gets here, so whatever sits at the path is stale.
-    if (::unlink(socket_path.c_str()) != 0 && errno != ENOENT)
-        return std::unexpected(call_failed("unlink", errno, socket_path));
+    if (auto removed = remove_stale_socket(socket_path); !removed) return std::unexpected(std::move(removed.error()));
     if (const int error = bind_unix(socket->get(), socket_path); error != 0)
         return std::unexpected(call_failed("bind", error, socket_path));
     // bind honours the umask; the 0700 directory keeps the socket private until this chmod.
@@ -50,7 +73,8 @@ struct UnixSocketListenerBase::Impl {
     explicit Impl(PeerCredentialCheck check) noexcept : peer_check(std::move(check)) {}
 
     void run();
-    void accept_pending();
+    // False after an accept error, so the caller backs off before polling the socket again.
+    [[nodiscard]] bool accept_pending();
     void stop() noexcept;
 
     PeerCredentialCheck peer_check;
@@ -119,19 +143,25 @@ void UnixSocketListenerBase::close() { impl_->stop(); }
 
 void UnixSocketListenerBase::Impl::run() {
     try {
+        bool backing_off = false;
         for (;;) {
             {
                 const std::lock_guard lock{mutex};
                 if (stopping) return;
             }
             std::array<pollfd, 2> fds{pollfd{.fd = wake->read_fd(), .events = POLLIN, .revents = 0},
-                                      pollfd{.fd = listen_fd.get(), .events = POLLIN, .revents = 0}};
-            if (::poll(fds.data(), fds.size(), -1) < 0) {
+                                      pollfd{.fd = backing_off ? -1 : listen_fd.get(), .events = POLLIN, .revents = 0}};
+            const int ready = ::poll(fds.data(), fds.size(), backing_off ? kAcceptBackoffMs : -1);
+            if (ready < 0) {
                 if (errno == EINTR) continue;
                 throw std::system_error(errno, std::generic_category(), "poll");
             }
             if (fds[0].revents != 0) wake->drain();
-            if (fds[1].revents != 0) accept_pending();
+            if (backing_off) {
+                if (ready == 0) backing_off = false;
+                continue;
+            }
+            if (fds[1].revents != 0) backing_off = !accept_pending();
         }
     } catch (...) {
         try {
@@ -141,14 +171,14 @@ void UnixSocketListenerBase::Impl::run() {
     }
 }
 
-void UnixSocketListenerBase::Impl::accept_pending() {
+bool UnixSocketListenerBase::Impl::accept_pending() {
     for (;;) {
         auto accepted = accept_unix_stream(listen_fd.get());
         if (!accepted) {
             REBOOT_LOG_WARN(Ipc, "accept on the engine socket failed: {}", accepted.error().id);
-            return;
+            return false;
         }
-        if (!accepted->valid()) return;
+        if (!accepted->valid()) return true;
         auto identity = peer_check.verify(accepted->get());
         if (!identity) {
             REBOOT_LOG_WARN(Ipc, "closed an engine socket peer: {}", identity.error().id);

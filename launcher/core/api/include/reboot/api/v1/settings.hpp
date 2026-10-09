@@ -168,6 +168,7 @@ struct SettingsResetRequest {
 };
 
 struct SettingsResetResponse {
+    // 0 with STOP_SESSIONS while the sessions stop first; SettingsChanged follows the reset.
     u64 revision = 0;
     std::vector<std::string> reset_keys;
 

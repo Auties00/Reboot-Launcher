@@ -25,5 +25,6 @@ REBOOT_MESSAGE_DECL(kNotRunning);
 REBOOT_MESSAGE_DECL(kStoppedBeforeStart);
 REBOOT_MESSAGE_DECL(kCommandNotDeclared);
 REBOOT_MESSAGE_DECL(kCommandTimeout);
+REBOOT_MESSAGE_DECL(kCacheEntryInvalid);
 
 }  // namespace reboot::gameserver::msg

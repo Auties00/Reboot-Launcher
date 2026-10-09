@@ -68,6 +68,8 @@ StateDocument StateDocument::read(const json::object& values, std::vector<ValueI
                          return enum_from_json<ports::IntegrationKind>(raw);
                      });
     reader.read_optional("last_run_version", document.last_run_version, semver_from_json);
+    reader.read_optional("last_update_check", document.last_update_check, time_from_json);
+    reader.read_optional("announced_update", document.announced_update, semver_from_json);
     document.unknown = reader.unknown();
     return document;
 }
@@ -98,6 +100,8 @@ json::object StateDocument::write() const {
     out.emplace("upstream_tls", std::move(upstream_json));
     out.emplace("declined_integrations", std::move(declined_json));
     if (last_run_version) out.emplace("last_run_version", semver_to_json(*last_run_version));
+    if (last_update_check) out.emplace("last_update_check", time_to_json(*last_update_check));
+    if (announced_update) out.emplace("announced_update", semver_to_json(*announced_update));
     append_unknown(out, unknown);
     return out;
 }

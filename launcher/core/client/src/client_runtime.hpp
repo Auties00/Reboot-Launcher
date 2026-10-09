@@ -6,40 +6,43 @@
 #include <thread>
 
 #include "client_context.hpp"
+#include "connect_settings.hpp"
+#include "reboot/client.h"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/ports/file_system.hpp"
-#include "reboot/ports/ipc.hpp"
 #include "reboot/ports/platform_services.hpp"
 
 namespace reboot::client {
 
-// Covers no capability ids. The OS ports, clock and executor thread one rb_ctx runs on.
+// Covers no capability ids. The OS ports, clock and executor threads one rb_ctx runs on.
 class ClientRuntime {
 public:
-    // ports::make_client_platform() and REBOOT_LAUNCHER_HOME; starts the executor thread.
+    // ports::make_client_platform() and REBOOT_LAUNCHER_HOME; starts the executor threads.
     [[nodiscard]] static Result<std::unique_ptr<ClientRuntime>> create();
+    // internal.bug when a port is missing.
+    [[nodiscard]] static Result<std::unique_ptr<ClientRuntime>> create(ports::ClientPlatform platform);
 
     ClientRuntime(const ClientRuntime&) = delete;
     ClientRuntime& operator=(const ClientRuntime&) = delete;
     ~ClientRuntime();
 
     [[nodiscard]] ClientDeps deps();
-    // Joins the executor thread; tasks still queued never run.
+    // Joins the executor threads; tasks still queued never run.
     void stop();
 
 private:
     // Reads REBOOT_LAUNCHER_HOME once.
-    ClientRuntime(ports::ClientPlatform platform, std::unique_ptr<ports::IFileSystem> files, ports::PeerIdentity self);
+    explicit ClientRuntime(ports::ClientPlatform platform);
 
     ports::ClientPlatform platform_;
-    std::unique_ptr<ports::IFileSystem> files_;
-    const ports::PeerIdentity self_;
     const std::optional<std::string> launcher_home_;
     SystemClock clock_;
     Strand executor_;
+    // Apart from executor_, so a blocked connect round delays no deadline or wake.
+    Strand link_executor_;
     std::thread executor_thread_;
+    std::thread link_thread_;
 };
 
 }  // namespace reboot::client
@@ -49,3 +52,11 @@ struct rb_ctx {
     std::unique_ptr<reboot::client::ClientRuntime> runtime;
     std::unique_ptr<reboot::client::ClientContext> context;
 };
+
+namespace reboot::client {
+
+// rb_ctx_create once the options are read: builds the context on `runtime` and waits for connect.
+// The status and rb_last_error are rb_ctx_create's.
+[[nodiscard]] rb_status open_context(std::unique_ptr<ClientRuntime> runtime, ConnectSettings settings, rb_ctx** out);
+
+}  // namespace reboot::client

@@ -1,3 +1,5 @@
+#include "win32.hpp"  // first: sets _WIN32_WINNT before any std header pulls in <windows.h>
+
 #include "remote_injector.hpp"
 
 #include <array>
@@ -99,7 +101,7 @@ std::expected<void, InjectError> RemoteInjector::prepare(const InjectSpec& spec,
 
     const auto digest = hash_file(file.get());
     if (!digest) return fail(InjectStep::Integrity, digest.error());
-    if (!digests_equal(*digest, spec.sha256)) return fail(InjectStep::Integrity, ERROR_ACCESS_DENIED);
+    if (!digests_equal(*digest, spec.sha256)) return fail(InjectStep::Integrity, ERROR_INVALID_IMAGE_HASH);
 
     // Full byte length of the UTF-16 path plus its terminator; VirtualAllocEx zero-fills, so the
     // written run stays NUL-terminated even if the copy stops at the path bytes.
@@ -127,8 +129,9 @@ std::expected<InjectedDll, InjectError> RemoteInjector::queue_early(const Inject
 
     auto loader = reinterpret_cast<PAPCFUNC>(load_library_w());
     if (loader == nullptr) {
+        const DWORD code = GetLastError();
         VirtualFreeEx(process_, result.remote_path, 0, MEM_RELEASE);
-        return fail(InjectStep::ResolveLoader, GetLastError());
+        return fail(InjectStep::ResolveLoader, code);
     }
     if (QueueUserAPC(loader, thread, reinterpret_cast<ULONG_PTR>(result.remote_path)) == 0) {
         const DWORD code = GetLastError();
@@ -138,39 +141,52 @@ std::expected<InjectedDll, InjectError> RemoteInjector::queue_early(const Inject
     return result;  // remote_path stays live until the APC runs and the load is confirmed
 }
 
-std::expected<InjectedDll, InjectError> RemoteInjector::load_now(const InjectSpec& spec) {
-    InjectedDll result;
-    if (auto prepared = prepare(spec, result); !prepared) return std::unexpected(prepared.error());
+std::expected<void, InjectError> RemoteInjector::load_now(const InjectSpec& spec, std::chrono::milliseconds timeout,
+                                                          InjectedDll& out) {
+    if (auto prepared = prepare(spec, out); !prepared) return std::unexpected(prepared.error());
 
     auto loader = reinterpret_cast<LPTHREAD_START_ROUTINE>(load_library_w());
     if (loader == nullptr) {
-        VirtualFreeEx(process_, result.remote_path, 0, MEM_RELEASE);
-        return fail(InjectStep::ResolveLoader, GetLastError());
+        const DWORD code = GetLastError();
+        VirtualFreeEx(process_, out.remote_path, 0, MEM_RELEASE);
+        out.remote_path = nullptr;
+        out.remote_size = 0;
+        return fail(InjectStep::ResolveLoader, code);
     }
 
     // CreateRemoteThread returns NULL on failure, not -1.
-    UniqueHandle remote_thread(CreateRemoteThread(process_, nullptr, 0, loader, result.remote_path, 0, nullptr));
+    UniqueHandle remote_thread(CreateRemoteThread(process_, nullptr, 0, loader, out.remote_path, 0, nullptr));
     if (!remote_thread) {
         const DWORD code = GetLastError();
-        VirtualFreeEx(process_, result.remote_path, 0, MEM_RELEASE);
+        VirtualFreeEx(process_, out.remote_path, 0, MEM_RELEASE);
+        out.remote_path = nullptr;
+        out.remote_size = 0;
         return fail(InjectStep::CreateThread, code);
     }
 
-    const DWORD waited = WaitForSingleObject(remote_thread.get(), 30'000);
+    const DWORD waited = WaitForSingleObject(remote_thread.get(), wait_millis(timeout));
     if (waited != WAIT_OBJECT_0) {
-        const DWORD code = waited == WAIT_FAILED ? GetLastError() : WAIT_TIMEOUT;
-        VirtualFreeEx(process_, result.remote_path, 0, MEM_RELEASE);
-        return fail(InjectStep::WaitThread, code);
+        // The thread may still be reading the path, so the buffer stays until the process ends.
+        return fail(InjectStep::WaitThread, waited == WAIT_FAILED ? GetLastError() : WAIT_TIMEOUT);
     }
 
-    DWORD exit_code = 0;  // low 32 bits of the remote HMODULE; 0 means LoadLibraryW failed
+    DWORD exit_code = 0;  // low 32 bits of the remote HMODULE
     const bool got_exit = GetExitCodeThread(remote_thread.get(), &exit_code) != 0;
-    VirtualFreeEx(process_, result.remote_path, 0, MEM_RELEASE);
-    result.remote_path = nullptr;
-    result.remote_size = 0;
-    if (!got_exit) return fail(InjectStep::WaitThread, GetLastError());
-    if (exit_code == 0) return fail(InjectStep::RemoteLoad, ERROR_MOD_NOT_FOUND);
-    return result;
+    const DWORD exit_error = got_exit ? 0 : GetLastError();
+    VirtualFreeEx(process_, out.remote_path, 0, MEM_RELEASE);
+    out.remote_path = nullptr;
+    out.remote_size = 0;
+    if (!got_exit) return fail(InjectStep::WaitThread, exit_error);
+    // A 64-bit module base can have zero low bits, so a zero exit code is checked against the module list.
+    if (exit_code == 0 && !module_loaded(process_, out.base_name))
+        return fail(InjectStep::RemoteLoad, ERROR_MOD_NOT_FOUND);
+    return {};
+}
+
+DWORD wait_millis(std::chrono::milliseconds timeout) noexcept {
+    if (timeout.count() <= 0) return 0;
+    if (timeout.count() >= static_cast<std::chrono::milliseconds::rep>(INFINITE)) return INFINITE - 1;
+    return static_cast<DWORD>(timeout.count());
 }
 
 }  // namespace reboot::os_windows::win32session

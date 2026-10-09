@@ -35,12 +35,12 @@ struct LoginPlan {
 // - Embedded: <account_id>@projectreboot.dev.
 // - With a remote_login: that login.
 // - Reboot upstream without: <account_id>@projectreboot.dev.
-// - ThirdParty without: legacy_derive(display_name), the bare name 10.0.9 sent.
+// - ThirdParty without: third_party_login(display_name).
 [[nodiscard]] std::string effective_login(const AccountRecord& record, const LoginTarget& target);
 
 // Capabilities: profile-identity.credentials, profile-identity.+47, auth-backend.lawinserver-xmpp.
-// Play only, so `record` is the client's; the host's is an internal.bug. 10.0.9 sent epic to every
-// build, so epic is the fallback wherever exchangecode cannot be used.
+// Play only, so `record` is the client's; the host's is an internal.bug. Every build takes epic, so
+// it is the fallback wherever exchangecode cannot be used.
 // - Embedded: exchangecode when the build takes it, otherwise epic; BackendMinted.
 // - Reboot upstream with remote_login: exchangecode builds get RemotePasswordExchange, others epic
 //   with FrontTicket{SwapForStoredPassword}.

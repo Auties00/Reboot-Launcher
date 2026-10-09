@@ -7,6 +7,11 @@ REBOOT_MESSAGE(kDisplayNameTooShort, "identity.display_name_too_short",
 REBOOT_MESSAGE(kDisplayNameTooLong, "identity.display_name_too_long", "A player name can have at most {max} characters");
 REBOOT_MESSAGE(kDisplayNameInvalidCharacter, "identity.display_name_invalid_character",
                "A player name can only contain the letters A to Z and digits");
+REBOOT_MESSAGE(kBackendLoginsNotList, "identity.backend_logins_not_list", "The saved backend logins are not a list");
+REBOOT_MESSAGE(kBackendLoginWithoutEndpoint, "identity.backend_login_without_endpoint",
+               "A saved backend login names no backend");
+REBOOT_MESSAGE(kDuplicateBackendLogin, "identity.duplicate_backend_login",
+               "The {backend} backend has more than one saved login; the first one is used");
 REBOOT_MESSAGE(kEmptyRemoteLogin, "identity.empty_remote_login", "The login for the {backend} backend is empty");
 REBOOT_MESSAGE(kLegacyArgvNeedsCustomAuthDll, "identity.legacy_argv_needs_custom_auth_dll",
                "Passing the password on the command line needs a custom authentication DLL");

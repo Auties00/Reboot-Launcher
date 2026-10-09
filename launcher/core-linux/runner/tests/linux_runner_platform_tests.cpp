@@ -37,7 +37,6 @@ reboot::ports::RuntimeLayout wine_layout() {
     reboot::ports::RuntimeLayout layout;
     layout.root = NativePath{"/rt"};
     layout.entry = NativePath{"/rt/bin/wine"};
-    layout.env = {{"WINEDLLOVERRIDES", "winemenubuilder.exe=d"}};
     return layout;
 }
 
@@ -108,4 +107,50 @@ TEST_CASE("a Wine runtime needs no setup", "[linux_runner_platform]") {
 TEST_CASE("Linux raises no prerequisite request", "[linux_runner_platform]") {
     Fixture fixture;
     CHECK_FALSE(fixture.platform.pending_prerequisite());
+}
+
+TEST_CASE("a Wine prefix boots through wineboot and stops through its wineserver", "[linux_runner_platform]") {
+    Fixture fixture;
+    const auto boot = fixture.platform.prefix_command(wine_layout(), NativePath{"/data/prefixes/wine"},
+                                                      {reboot::ports::PrefixVerb::Boot, {}, {}}, {});
+    REQUIRE(boot);
+    CHECK(boot->exe == NativePath{"/rt/bin/wine"});
+    CHECK(boot->args == std::vector<std::string>{"wineboot", "-u"});
+    CHECK(boot->cwd == NativePath{"/data/prefixes"});
+    CHECK(boot->env.vars == EnvVars{{"WINEPREFIX", "/data/prefixes/wine"}});
+
+    const auto kill = fixture.platform.prefix_command(wine_layout(), NativePath{"/data/prefixes/wine"},
+                                                      {reboot::ports::PrefixVerb::KillServer, {}, {}}, {});
+    REQUIRE(kill);
+    CHECK(kill->exe == NativePath{"/rt/bin/wineserver"});
+    CHECK(kill->args == std::vector<std::string>{"-k"});
+}
+
+TEST_CASE("an umu prefix is built by umu and runs programs from exposed directories", "[linux_runner_platform]") {
+    Fixture fixture;
+    const auto boot = fixture.platform.prefix_command(umu_layout(), NativePath{"/data/prefixes/umu"},
+                                                      {reboot::ports::PrefixVerb::Boot, {}, {}}, {});
+    REQUIRE(boot);
+    CHECK(boot->exe == NativePath{"/rt/umu/umu-run"});
+    CHECK(boot->args == std::vector<std::string>{"createprefix"});
+
+    const auto kill = fixture.platform.prefix_command(umu_layout(), NativePath{"/data/prefixes/umu"},
+                                                      {reboot::ports::PrefixVerb::KillServer, {}, {}}, {});
+    REQUIRE(kill);
+    CHECK(kill->exe == NativePath{"/rt/ge-proton/files/bin/wineserver"});
+
+    const reboot::ports::PrefixCommand run{reboot::ports::PrefixVerb::Run, NativePath{"/data/vc/vc_redist.x64.exe"},
+                                           {"/install", "/quiet"}};
+    const auto launch = fixture.platform.prefix_command(umu_layout(), NativePath{"/data/prefixes/umu"}, run, {});
+    REQUIRE(launch);
+    CHECK(launch->args == std::vector<std::string>{"/data/vc/vc_redist.x64.exe", "/install", "/quiet"});
+    CHECK(launch->cwd == NativePath{"/data/vc"});
+    CHECK(launch->env.vars == EnvVars{{"WINEPREFIX", "/data/prefixes/umu"}, {"PRESSURE_VESSEL_FILESYSTEMS_RW", "/data/vc"}});
+}
+
+TEST_CASE("a Wine runtime setup reports no build", "[linux_runner_platform]") {
+    Fixture fixture;
+    const auto build = fixture.platform.runtime_setup(wine_layout(), {});
+    REQUIRE(build);
+    CHECK_FALSE(build->has_value());
 }

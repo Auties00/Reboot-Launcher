@@ -13,7 +13,7 @@ namespace reboot::backend {
 
 inline constexpr Port kDefaultBackendPort = storage::kDefaultBackendPort;
 
-// Without a scheme, https is tried before http, as 10.0.9's ping did.
+// Without a scheme, https is tried before http.
 struct BackendUrl {
     std::optional<net::UrlScheme> scheme;
     std::string host;

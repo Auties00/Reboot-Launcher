@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 
 #include "reboot/contracts/ipc.hpp"
@@ -16,6 +17,7 @@
 
 namespace reboot {
 class EventBus;
+class Subscription;
 class TimerService;
 }  // namespace reboot
 
@@ -48,7 +50,10 @@ struct EngineLifecycleDeps {
     EngineOrigin origin{};
     EngineActivityProbe& activity;
     sessions::SessionRegistry& sessions;
+    const OpRegistry& ops;
     sessions::ShutdownCoordinator& shutdown;
+    // HostService::drain; host may not be reached from here, since HostService is built after.
+    UniqueFunction<void(sessions::ShutdownCause, UniqueFunction<void()>)> drain_hosts;
     // restart_when_idle records the origin here, so a client-started successor stays resident.
     storage::DocumentStore<storage::ResumeDocument>& resume;
     EventBus& events;
@@ -73,6 +78,8 @@ public:
 
     [[nodiscard]] EnginePhase phase() const noexcept { return phase_; }
     [[nodiscard]] EngineOrigin origin() const noexcept { return deps_.origin; }
+    // The engine is ending with EngineExit::Restart, for an update or restart_when_idle.
+    [[nodiscard]] bool restarting() const noexcept { return pending_exit_ == EngineExit::Restart; }
 
     // engine.shutting_down once draining or shutting down.
     [[nodiscard]] Result<void> admit_new_work() const;
@@ -98,8 +105,10 @@ public:
     void set_on_change(UniqueFunction<void()> on_change) override;
 
 private:
+    void publish_state();
     void set_phase(EnginePhase phase);
     void on_activity_changed();
+    void on_update_failed();
     Result<void> exit_when_idle(sessions::ShutdownCause cause, EngineExit exit);
     void run_shutdown(sessions::ShutdownCause cause, EngineExit exit);
 
@@ -109,6 +118,9 @@ private:
     std::optional<DrainReason> draining_;
     std::optional<EngineExit> pending_exit_;
     UniqueFunction<void()> update_listener_;
+    std::optional<EngineStateEvent> published_;
+    // A failed update ends its drain: the engine keeps running this version.
+    std::shared_ptr<Subscription> update_failures_;
 };
 
 }  // namespace reboot::engine

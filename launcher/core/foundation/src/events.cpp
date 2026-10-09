@@ -82,6 +82,21 @@ std::shared_ptr<Subscription> EventBus::subscribe(EventFilter filter, std::size_
 void EventBus::dispatch(EventEnvelope event) {
     event.epoch = epoch_;
     event.seq = next_seq_++;
+    if (dispatching_) {
+        deferred_.push_back(std::move(event));
+        return;
+    }
+    dispatching_ = true;
+    deliver(event);
+    while (!deferred_.empty()) {
+        const EventEnvelope next = std::move(deferred_.front());
+        deferred_.pop_front();
+        deliver(next);
+    }
+    dispatching_ = false;
+}
+
+void EventBus::deliver(const EventEnvelope& event) {
     std::erase_if(subscriptions_, [](const std::weak_ptr<Subscription>& weak) { return weak.expired(); });
     // A notify callback may subscribe, so iterate over a snapshot.
     const std::vector<std::weak_ptr<Subscription>> targets = subscriptions_;

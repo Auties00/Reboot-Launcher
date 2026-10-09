@@ -1,10 +1,11 @@
 #include "reboot/foundation/cancel.hpp"
 
 #include <atomic>
+#include <condition_variable>
 #include <map>
 #include <mutex>
+#include <thread>
 #include <utility>
-#include <vector>
 
 namespace reboot {
 
@@ -14,10 +15,14 @@ struct CancelState {
     static constexpr int kNotCancelled = -1;
 
     std::mutex mutex;
+    std::condition_variable callback_done;
     // The reason is published here, by CAS, before any callback runs.
     std::atomic<int> reason{kNotCancelled};
     u64 next_id = 1;
     std::map<u64, UniqueFunction<void(CancelReason)>> callbacks;
+    // The registration whose callback the cancelling thread is running, 0 when none.
+    u64 running = 0;
+    std::thread::id canceller;
 };
 
 }  // namespace detail
@@ -44,10 +49,13 @@ void CancelRegistration::reset() {
     // Taken out under the lock and destroyed after it, in case the callback owns a registration.
     UniqueFunction<void(CancelReason)> removed;
     {
-        const std::lock_guard lock(state_->mutex);
+        std::unique_lock lock(state_->mutex);
         if (const auto it = state_->callbacks.find(id_); it != state_->callbacks.end()) {
             removed = std::move(it->second);
             state_->callbacks.erase(it);
+        } else if (state_->running == id_ && state_->canceller != std::this_thread::get_id()) {
+            // Once reset returns the callback has finished, so its captures may be destroyed.
+            state_->callback_done.wait(lock, [&] { return state_->running != id_; });
         }
     }
     state_.reset();
@@ -86,17 +94,26 @@ CancelSource::CancelSource() : state_(std::make_shared<detail::CancelState>()) {
 CancelToken CancelSource::token() const { return CancelToken(state_); }
 
 bool CancelSource::cancel(CancelReason reason) {
-    std::vector<UniqueFunction<void(CancelReason)>> callbacks;
-    {
-        const std::lock_guard lock(state_->mutex);
-        int expected = detail::CancelState::kNotCancelled;
-        if (!state_->reason.compare_exchange_strong(expected, static_cast<int>(reason), std::memory_order_acq_rel))
-            return false;
-        callbacks.reserve(state_->callbacks.size());
-        for (auto& entry : state_->callbacks) callbacks.push_back(std::move(entry.second));
-        state_->callbacks.clear();
+    // A callback may destroy this source, so the loop holds the state itself.
+    const std::shared_ptr<detail::CancelState> state = state_;
+    std::unique_lock lock(state->mutex);
+    int expected = detail::CancelState::kNotCancelled;
+    if (!state->reason.compare_exchange_strong(expected, static_cast<int>(reason), std::memory_order_acq_rel))
+        return false;
+    state->canceller = std::this_thread::get_id();
+    // One at a time, so a registration reset before its turn never runs.
+    while (!state->callbacks.empty()) {
+        const auto next = state->callbacks.begin();
+        state->running = next->first;
+        UniqueFunction<void(CancelReason)> callback = std::move(next->second);
+        state->callbacks.erase(next);
+        lock.unlock();
+        callback(reason);
+        callback = nullptr;
+        lock.lock();
+        state->running = 0;
+        state->callback_done.notify_all();
     }
-    for (auto& callback : callbacks) callback(reason);
     return true;
 }
 

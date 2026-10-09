@@ -6,8 +6,7 @@
 namespace reboot::game_channel {
 namespace {
 
-// 10.0.9's constants (common/lib/src/constant/game.dart); its one "cannot connect" list is split
-// into AuthFailure and CannotConnect.
+// Lines the game itself prints; refused logins and an unreachable backend are told apart.
 constexpr std::array<std::string_view, 1> kShutdown{"FOnlineSubsystemGoogleCommon::Shutdown()"};
 constexpr std::array<std::string_view, 1> kCriticalError{"Critical error"};
 constexpr std::array<std::string_view, 1> kTruncatedRead{"when 0 bytes remain"};

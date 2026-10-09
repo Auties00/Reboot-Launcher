@@ -6,7 +6,8 @@
 namespace reboot::os_linux::ipc {
 
 IpcRuntimeBase resolve_ipc_runtime_base(std::optional<std::string_view> xdg_runtime_dir, u32 uid) {
-    if (xdg_runtime_dir && xdg_runtime_dir->starts_with('/')) return {NativePath{*xdg_runtime_dir}, true};
+    if (xdg_runtime_dir && xdg_runtime_dir->starts_with('/'))
+        return {NativePath{*xdg_runtime_dir}.lexically_normal(), true};
     return {NativePath{"/tmp/reboot-launcher-" + std::to_string(uid)}, false};
 }
 

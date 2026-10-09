@@ -21,6 +21,8 @@ struct AccountRecord {
     std::string display_name;
     // [a-z0-9]{6}.
     std::string tag;
+    // Members this build does not know, kept for the newer engine that wrote them.
+    boost::json::object unknown;
 
     bool operator==(const AccountRecord&) const = default;
 };

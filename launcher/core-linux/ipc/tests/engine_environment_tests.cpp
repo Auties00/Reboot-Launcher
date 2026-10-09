@@ -92,11 +92,14 @@ TEST_CASE("only the allowed variables of the client reach the engine", "[engine_
           }));
 }
 
-TEST_CASE("relative XDG directories and empty values are dropped", "[engine_environment]") {
+TEST_CASE("relative directories and empty values are dropped", "[engine_environment]") {
     const std::vector<std::string_view> inherited{"XDG_RUNTIME_DIR=run/user/1000", "XDG_CONFIG_HOME=.config", "LANG=",
                                                   "TMPDIR=/tmp"};
     CHECK(engine_environment(inherited, kInputs, kDefaultRoot) ==
           with_prefix({"TMPDIR=/tmp", "PATH=/usr/local/bin:/usr/bin:/bin"}));
+    const std::vector<std::string_view> relative_tmp{"TMPDIR=tmp"};
+    CHECK(engine_environment(relative_tmp, kInputs, kDefaultRoot) ==
+          with_prefix({"PATH=/usr/local/bin:/usr/bin:/bin"}));
 }
 
 TEST_CASE("the first of a name wins, even when it is dropped", "[engine_environment]") {

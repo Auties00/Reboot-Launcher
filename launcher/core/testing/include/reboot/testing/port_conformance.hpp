@@ -39,8 +39,9 @@ struct ConformanceEnv {
     std::chrono::milliseconds budget{5000};
 };
 
-// Roots are absolute and lexically normal, the data root differs from the exe dir and is never
-// inside the Velopack package dir, and velopack_package_dir is set exactly for Velopack installs.
+// Roots are absolute and lexically normal (the IPC runtime base may be empty where the endpoint is
+// no socket), the data root differs from the exe dir and is never inside the Velopack package dir,
+// and velopack_package_dir is set for Velopack installs and only for them or macOS app bundles.
 [[nodiscard]] ConformanceReport run_platform_paths_conformance(const ports::IPlatformPaths& paths);
 
 struct FileSystemConformanceHooks {
@@ -67,6 +68,7 @@ struct FileSystemConformanceHooks {
 [[nodiscard]] ConformanceReport run_secret_store_conformance(ports::ISecretStore& store, IRandom& random);
 
 // Launches the suite needs; each OS package writes them with its own shell (cmd.exe or /bin/sh).
+// The suite sets each launch's stdio, and the environment and working directory of the marker one.
 struct ProcessConformanceSubject {
     ports::ProcessLaunch exits_with_7;
     // Copies stdin to stdout until EOF, then exits 0.
@@ -92,12 +94,14 @@ struct SessionHostConformanceSubject {
     ports::SessionLaunch launch;
     // A DLL to inject after launch; the inject check is skipped without one.
     std::optional<ports::InjectEntry> probe_dll;
+    // Whether the pid a Spawned event named still runs; the destroyed-session check is skipped without it.
+    UniqueFunction<bool(u32 pid)> process_exists;
 };
 
 // Spawned{Game} after launch, nothing runs before resume, Injected for the probe DLL, Exited with
 // the game's code, stop() ending the tree within its grace, and a destroyed session ending it too.
 [[nodiscard]] ConformanceReport run_session_host_conformance(ports::ISessionHost& host,
-                                                             const SessionHostConformanceSubject& subject,
+                                                             SessionHostConformanceSubject subject,
                                                              const ConformanceEnv& env);
 
 struct RunnerConformanceSubject {

@@ -8,6 +8,12 @@
 
 namespace reboot::process {
 
+namespace {
+
+[[nodiscard]] char upper_ascii(char c) { return c >= 'a' && c <= 'z' ? static_cast<char>(c - 'a' + 'A') : c; }
+
+}  // namespace
+
 BuiltEnv::BuiltEnv(BuiltEnv&& other) noexcept
     : syntax_(other.syntax_),
       vars_(std::move(other.vars_)),
@@ -56,9 +62,19 @@ SecretBytes BuiltEnv::windows_block() const {
         block.push_back(static_cast<u8>(unit & 0xFF));
         block.push_back(static_cast<u8>(unit >> 8));
     };
+    // A POSIX-syntax block is sorted case-sensitively; Windows wants case-insensitive order.
+    std::vector<const std::pair<std::string, std::string>*> ordered;
+    ordered.reserve(vars_.vars.size());
+    for (const auto& var : vars_.vars) ordered.push_back(&var);
+    std::ranges::stable_sort(ordered, [](const auto* a, const auto* b) {
+        return std::ranges::lexicographical_compare(a->first, b->first, [](char x, char y) {
+            return upper_ascii(x) < upper_ascii(y);
+        });
+    });
     std::string entry;
     entry.reserve(longest);
-    for (const auto& [name, value] : vars_.vars) {
+    for (const auto* var : ordered) {
+        const auto& [name, value] = *var;
         entry.assign(name).append(1, '=').append(value);
         std::u16string wide = utf8_to_utf16(entry);
         for (const char16_t unit : wide) append(unit);

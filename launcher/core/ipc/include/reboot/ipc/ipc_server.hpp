@@ -50,6 +50,8 @@ struct IpcServerDeps {
 
 // Covers no capability ids; the engine end of the private IPC. Strand-only.
 // A Subscribe the engine cannot register is logged and dropped; the connection stays up.
+// Subscribe, SecretPut and SecretReveal carry reboot.api.v1 bytes, so BootstrapOnly gets
+// ipc.version_mismatch for them. A Reply or OpResult over kIpcFrameCap becomes ipc.message_too_large.
 class IpcServer {
 public:
     IpcServer(IpcServerDeps deps, EngineHello hello);

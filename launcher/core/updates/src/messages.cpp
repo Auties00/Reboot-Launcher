@@ -20,6 +20,7 @@ REBOOT_MESSAGE(kSelfTestFailed, "updates.self_test_failed",
                "Launcher {version} failed its startup check (attempt {attempt} of {max_attempts})");
 REBOOT_MESSAGE(kGaveUp, "updates.gave_up", "Launcher {version} failed its startup check {attempts} times");
 REBOOT_MESSAGE(kStopDeclined, "updates.stop_declined", "The update will install once running sessions end");
+REBOOT_MESSAGE(kAnswerInvalid, "updates.answer_invalid", "That answer does not settle the question");
 REBOOT_MESSAGE(kMarkerMalformed, "updates.marker_malformed", "The update marker has a malformed {field}");
 
 }  // namespace reboot::updates::msg

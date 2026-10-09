@@ -25,5 +25,12 @@ REBOOT_MESSAGE_DECL(kNoRemediation);
 REBOOT_MESSAGE_DECL(kUpdateNotifyOnly);
 REBOOT_MESSAGE_DECL(kUpdatePackageInvalid);
 REBOOT_MESSAGE_DECL(kUpdateEntryUnsafe);
+REBOOT_MESSAGE_DECL(kUpdateNotStaged);
+// ErrorKind::Conflict.
+REBOOT_MESSAGE_DECL(kLockBusy);
+REBOOT_MESSAGE_DECL(kHelperTimeout);
+REBOOT_MESSAGE_DECL(kDnsFailed);
+// ErrorKind::Cancelled.
+REBOOT_MESSAGE_DECL(kDnsCancelled);
 
 }  // namespace reboot::os_linux::platform

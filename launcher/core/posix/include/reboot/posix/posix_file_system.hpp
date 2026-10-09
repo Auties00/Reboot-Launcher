@@ -24,8 +24,8 @@ public:
     PosixFileSystem(SyncFd sync_file, SyncFd sync_directory) noexcept
         : sync_file_(std::move(sync_file)), sync_directory_(std::move(sync_directory)) {}
 
-    // A 0600 temp file beside the target, sync_file, a hard-linked <target>.bak when asked,
-    // rename over the target, then sync_directory.
+    // A 0600 temp file beside the target, sync_file, a hard-linked <target>.bak when asked and a
+    // previous file exists, rename over the target, then sync_directory.
     Result<void> atomic_replace(const NativePath& target, std::span<const u8> bytes, bool keep_backup) override;
     Result<std::vector<u8>> read_all(const NativePath& path) override;
     // flock on a 0600 lock file, created when missing. The lock belongs to the open file
@@ -39,6 +39,8 @@ public:
     // boundary: payload verification and injection staging rely on the 0700 data directory.
     Result<ports::HeldFile> open_deny_write(const NativePath& path) override;
     Result<ports::FileRevision> revision(const NativePath& path) override;
+    // pread on an O_RDONLY fd, which never blocks a writer, rename or unlink.
+    Result<ports::SharedRead> read_shared(const NativePath& path, u64 offset, std::size_t max_bytes) override;
     // Missing components are created 0700; existing ones are left as they are.
     Result<void> create_dirs_owner_only(const NativePath& path) override;
     // A missing path is success.
@@ -47,6 +49,12 @@ public:
 private:
     SyncFd sync_file_;
     SyncFd sync_directory_;
+};
+
+// Covers no capability ids; IFileRevisionReader over stat, for reboot_client.
+class PosixFileRevisionReader final : public ports::IFileRevisionReader {
+public:
+    Result<ports::FileRevision> revision(const NativePath& path) override;
 };
 
 }  // namespace reboot::posix

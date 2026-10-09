@@ -13,7 +13,8 @@
 namespace reboot::testing {
 
 // What a game-control peer reads from its environment before it connects: REBOOT_CTL,
-// REBOOT_CTL_TOKEN (64 hex digits), REBOOT_SESSION and REBOOT_ROLE.
+// REBOOT_CTL_TOKEN (43 unpadded base64url characters as the engine issues it, or 64 hex digits),
+// REBOOT_SESSION and REBOOT_ROLE.
 struct GameControlBootstrap {
     Endpoint engine;
     std::array<u8, 32> token{};

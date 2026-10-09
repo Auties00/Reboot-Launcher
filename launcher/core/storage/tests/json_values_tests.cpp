@@ -7,9 +7,11 @@ static_assert(reboot::storage::PersistedEnum<reboot::contracts::backend::Account
 static_assert(reboot::storage::PersistedEnum<reboot::ports::IntegrationKind>);
 
 #include <chrono>
+#include <concepts>
 #include <span>
 #include <string>
 
+#include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <catch2/catch_test_macros.hpp>
 
@@ -83,4 +85,39 @@ TEST_CASE("the combined mode is the most restricted one", "[storage][json]") {
     const LoadReport reports[] = {LoadReport{}, read_only, in_memory};
     CHECK(combined_mode(reports) == StorageMode::InMemory);
     CHECK(combined_mode(std::span(reports, 2)) == StorageMode::ReadOnly);
+}
+
+TEST_CASE("a path that is not valid Unicode is stored as its native bytes", "[storage][json]") {
+    NativePath path = testing::default_fake_root();
+    if constexpr (std::same_as<NativePath::value_type, wchar_t>)
+        path /= std::wstring{L'b', L'a', L'd', wchar_t(0xD800)};
+    else
+        path /=std::string("bad\xff");
+
+    const json::value stored = path_to_json(path);
+    REQUIRE(stored.is_object());
+    CHECK(stored.as_object().contains("native"));
+    const Result<NativePath> decoded = path_from_json(stored);
+    REQUIRE(decoded);
+    CHECK(decoded->native() == path.native());
+
+    for (const json::value& bad : {json::value(json::object{{"native", "!!!!"}}), json::value(json::object{}),
+                                   json::value("")}) {
+        const Result<NativePath> refused = path_from_json(bad);
+        REQUIRE_FALSE(refused);
+        CHECK(refused.error().id == "storage.invalid_path");
+    }
+}
+
+TEST_CASE("a stored path with an embedded NUL is refused", "[storage][json]") {
+    constexpr char kTruncated[] = "/opt/game/evil.exe\0.dll";
+    const Result<NativePath> text = path_from_json(json::value(json::string_view(kTruncated, sizeof kTruncated - 1)));
+    REQUIRE_FALSE(text);
+    CHECK(text.error().id == "storage.invalid_path");
+
+    // The native form of "a\0b": UTF-16LE on Windows, bytes elsewhere.
+    const char* native = std::same_as<NativePath::value_type, wchar_t> ? "YQAAAGIA" : "YQBi";
+    const Result<NativePath> encoded = path_from_json(json::object{{"native", native}});
+    REQUIRE_FALSE(encoded);
+    CHECK(encoded.error().id == "storage.invalid_path");
 }

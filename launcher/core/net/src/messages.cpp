@@ -17,6 +17,8 @@ REBOOT_MESSAGE(kHttpsDowngradeRefused, "net.https_downgrade_refused",
 REBOOT_MESSAGE(kTransportFailed, "net.transport_failed", "The transfer from {host} failed");
 REBOOT_MESSAGE(kRequestUnbounded, "net.request_unbounded",
                "A request to {host} has no connect timeout, or neither a total timeout nor a stall limit");
+REBOOT_MESSAGE(kRequestCancelled, "net.request_cancelled", "The request to {host} was cancelled");
+REBOOT_MESSAGE(kHttpUnavailable, "net.http_unavailable", "HTTP could not be started on this computer");
 
 REBOOT_MESSAGE(kInsufficientSpace, "net.insufficient_space",
                "{file} needs {needed} bytes, but its volume has only {available} free");
@@ -29,6 +31,7 @@ REBOOT_MESSAGE(kDownloadHttpStatus, "net.download_http_status", "{host} answered
 REBOOT_MESSAGE(kDownloadWriteFailed, "net.download_write_failed", "Could not write the download to {file}");
 REBOOT_MESSAGE(kDownloadAttemptsExhausted, "net.download_attempts_exhausted",
                "The download from {host} failed {attempts} times in a row");
+REBOOT_MESSAGE(kDownloadCancelled, "net.download_cancelled", "The download from {host} was cancelled");
 
 REBOOT_MESSAGE(kAddressInvalid, "net.address_invalid",
                "{address} is not a valid host, host:port or [IPv6]:port address");
@@ -36,9 +39,11 @@ REBOOT_MESSAGE(kHostNotFound, "net.host_not_found", "{address} could not be foun
 REBOOT_MESSAGE(kNoIpv4Address, "net.no_ipv4_address", "{address} has no IPv4 address");
 REBOOT_MESSAGE(kResolveTimeout, "net.resolve_timeout", "Looking up {address} took longer than {limit}");
 REBOOT_MESSAGE(kResolveFailed, "net.resolve_failed", "Could not look up {address}");
+REBOOT_MESSAGE(kResolveCancelled, "net.resolve_cancelled", "Looking up {address} was cancelled");
 
 REBOOT_MESSAGE(kProbePolicyInvalid, "net.probe_policy_invalid",
                "A probe needs a non-zero port, at least one attempt and a timeout");
+REBOOT_MESSAGE(kUdpSocketFailed, "net.udp_socket_failed", "Could not open a UDP socket to {endpoint}");
 
 REBOOT_MESSAGE(kPortBusy, "net.port_busy", "{protocol} port {port} is already in use by {owner}");
 REBOOT_MESSAGE(kPortHeldBySystem, "net.port_held_by_system",
@@ -59,5 +64,7 @@ REBOOT_MESSAGE(kQuicUnavailable, "net.quic_unavailable", "QUIC could not be star
 REBOOT_MESSAGE(kQuicConnectFailed, "net.quic_connect_failed", "Could not open a QUIC connection to {host}");
 REBOOT_MESSAGE(kQuicNoIpv4, "net.quic_no_ipv4", "This computer has no IPv4 connection, which hosting requires");
 REBOOT_MESSAGE(kQuicUdpBlocked, "net.quic_udp_blocked", "UDP traffic to {host} appears to be blocked");
+REBOOT_MESSAGE(kQuicConnectionLost, "net.quic_connection_lost", "The QUIC connection to {host} was lost");
+REBOOT_MESSAGE(kQuicStreamUnknown, "net.quic_stream_unknown", "QUIC stream {stream} to {host} is not open");
 
 }  // namespace reboot::net

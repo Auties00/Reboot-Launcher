@@ -10,15 +10,15 @@ namespace reboot::game_channel {
 
 enum class LegacyMarker : u8 { LoginCompleted, Shutdown, CorruptBuild, AuthFailure, CannotConnect };
 
-// Plain substrings, as 10.0.9 matched them: every one must occur somewhere in the line.
+// Plain substrings: every one must occur somewhere in the line.
 struct MarkerPattern {
     LegacyMarker marker{};
     std::span<const std::string_view> substrings;
 };
 
 // Covers game-launch.output-monitoring.
-// Versioned marker data owned by the core. The first matching pattern wins, keeping 10.0.9's
-// priority: Shutdown, CorruptBuild, AuthFailure, CannotConnect, then LoginCompleted.
+// Versioned marker data owned by the core. The first matching pattern wins, so the end of a session
+// outranks its progress: Shutdown, CorruptBuild, AuthFailure, CannotConnect, then LoginCompleted.
 struct LifecycleMarkers {
     u32 version = 0;
     std::span<const MarkerPattern> patterns;

@@ -17,7 +17,7 @@ const MessageSpec* find_spec(const std::string& id) {
 }  // namespace
 
 TEST_CASE("every host error names each placeholder of its message", "[host]") {
-    for (u8 i = 0; i <= static_cast<u8>(HostErrorCode::BuildAndVersion); ++i) {
+    for (u8 i = 0; i <= static_cast<u8>(HostErrorCode::ServerUnresponsive); ++i) {
         const Diagnostic diag = to_diagnostic(HostError{.code = static_cast<HostErrorCode>(i)});
         INFO(diag.id);
         CHECK(diag.domain == ErrorDomain::Host);

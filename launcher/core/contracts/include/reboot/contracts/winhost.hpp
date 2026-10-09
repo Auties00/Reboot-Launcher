@@ -55,6 +55,10 @@ struct SpawnGame {
     std::vector<InjectSpec> inject;
     // ports::SessionLaunch::park, mapped into the prefix.
     std::vector<Bytes> park_utf16;
+    // Session wait bounds, already scaled by the engine for the runner: one DLL load (a waited
+    // remote load, or an early-bird load showing up after resume), and the killed Job emptying.
+    u32 inject_timeout_ms = 0;
+    u32 drain_timeout_ms = 0;
 };
 
 struct WhWelcome {

@@ -68,7 +68,7 @@ def allowed_os_deps(name):
     allowed = set(FOUNDATION) | {name}
     if name.startswith("reboot_os_macos") or name.startswith("reboot_os_linux"):
         allowed.add("reboot_posix")
-    if name in ("reboot_os_windows_platform", "reboot-winhost"):
+    if name in ("reboot_os_windows_platform", "reboot_os_windows_winhost", "reboot-winhost"):
         allowed.add("reboot_os_windows_win32session")
     return allowed
 

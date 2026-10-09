@@ -44,6 +44,8 @@ public:
     [[nodiscard]] const NativePath& data_home() const noexcept { return data_home_; }
     [[nodiscard]] const NativePath& cache_home() const noexcept { return cache_home_; }
     [[nodiscard]] const NativePath& state_home() const noexcept { return state_home_; }
+    // $XDG_RUNTIME_DIR when it is absolute; systemd's user manager listens under it.
+    [[nodiscard]] const std::optional<NativePath>& runtime_dir() const noexcept { return runtime_dir_; }
     [[nodiscard]] u32 uid() const noexcept { return uid_; }
     // pw_name of the effective uid.
     [[nodiscard]] const std::string& user_name() const noexcept { return user_name_; }

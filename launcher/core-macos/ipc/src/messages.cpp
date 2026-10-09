@@ -16,5 +16,8 @@ REBOOT_MESSAGE(kAgentKickstartFailed, "platform.agent_kickstart_failed",
                "launchd could not start the engine agent {label}.");
 REBOOT_MESSAGE(kAgentKickstartTimedOut, "platform.agent_kickstart_timed_out",
                "launchd did not start the engine agent {label} within {deadline}.");
+REBOOT_MESSAGE(kHomeUnavailable, "platform.ipc_home_unavailable", "The home directory of uid {uid} could not be read.");
+REBOOT_MESSAGE(kImageUnresolved, "platform.ipc_image_unresolved",
+               "The location of the Reboot Launcher client library could not be read.");
 
 }  // namespace reboot::os_macos::ipc

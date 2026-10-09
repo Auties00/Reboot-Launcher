@@ -1,5 +1,7 @@
 #include "reboot/os_macos/runner/dxmt_wine_runner_platform.hpp"
 
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <sys/xattr.h>
 
 #include <cerrno>
@@ -21,12 +23,40 @@ constexpr const char* kQuarantineAttribute = "com.apple.quarantine";
 // Rosetta 2's translation daemon; it exists only once Rosetta is installed.
 constexpr std::string_view kRosettaDaemon = "/Library/Apple/usr/libexec/oahd";
 
+int remove_quarantine(const NativePath& path) {
+    return ::removexattr(path.c_str(), kQuarantineAttribute, XATTR_NOFOLLOW) == 0 ? 0 : errno;
+}
+
+// Removing an xattr needs write access, so a read-only entry we own gets owner write meanwhile.
+int remove_quarantine_read_only(const NativePath& path) {
+    struct stat info {};
+    if (::lstat(path.c_str(), &info) != 0) return errno;
+    if (S_ISLNK(info.st_mode) || (info.st_mode & S_IWUSR) != 0) return EACCES;
+    const auto mode = static_cast<mode_t>(info.st_mode & 07777);
+    if (::fchmodat(AT_FDCWD, path.c_str(), static_cast<mode_t>(mode | S_IWUSR), AT_SYMLINK_NOFOLLOW) != 0)
+        return EACCES;
+    const int removed = remove_quarantine(path);
+    if (::fchmodat(AT_FDCWD, path.c_str(), mode, AT_SYMLINK_NOFOLLOW) != 0 && (removed == 0 || removed == ENOATTR))
+        return errno;
+    return removed;
+}
+
 // ENOATTR: never set. ENOTSUP: the volume has no xattrs.
 Result<void> strip_quarantine(const NativePath& path) {
-    if (::removexattr(path.c_str(), kQuarantineAttribute, XATTR_NOFOLLOW) == 0) return {};
-    const int error = errno;
-    if (error == ENOATTR || error == ENOTSUP) return {};
-    return make_diag(ErrorDomain::Platform, kQuarantineStripFailed).arg("path", path).os(posix::errno_error(error)).fail();
+    int error = remove_quarantine(path);
+    if (error == EACCES) error = remove_quarantine_read_only(path);
+    if (error == 0 || error == ENOATTR || error == ENOTSUP) return {};
+    return make_diag(ErrorDomain::Platform, kQuarantineStripFailed)
+        .arg("path", path)
+        .os(posix::errno_error(error))
+        .kind(error == ENOENT ? ErrorKind::NotFound : ErrorKind::Generic)
+        .fail();
+}
+
+void set_prefix(ports::EnvBlock& env, const NativePath& prefix) {
+    std::erase_if(env.vars, [](const auto& var) { return var.first == "WINEPREFIX"; });
+    // string() is the native bytes on POSIX.
+    env.vars.emplace_back("WINEPREFIX", prefix.string());
 }
 
 bool rosetta_installed() {
@@ -72,9 +102,7 @@ Result<ports::ProcessLaunch> DxmtWineRunnerPlatform::runner_launch(const ports::
                                                                    const NativePath& prefix,
                                                                    const NativePath& winhost_exe,
                                                                    ports::EnvBlock base) {
-    std::erase_if(base.vars, [](const auto& var) { return var.first == "WINEPREFIX"; });
-    // string() is the native bytes on POSIX.
-    base.vars.emplace_back("WINEPREFIX", prefix.string());
+    set_prefix(base, prefix);
 
     ports::ProcessLaunch launch;
     launch.exe = layout.entry;
@@ -86,7 +114,36 @@ Result<ports::ProcessLaunch> DxmtWineRunnerPlatform::runner_launch(const ports::
     return launch;
 }
 
-Result<void> DxmtWineRunnerPlatform::runtime_setup(const ports::RuntimeLayout&, CancelToken) { return {}; }
+Result<ports::ProcessLaunch> DxmtWineRunnerPlatform::prefix_command(const ports::RuntimeLayout& layout,
+                                                                    const NativePath& prefix,
+                                                                    const ports::PrefixCommand& command,
+                                                                    ports::EnvBlock base) {
+    set_prefix(base, prefix);
+
+    ports::ProcessLaunch launch;
+    launch.exe = layout.entry;
+    launch.cwd = prefix.parent_path();
+    switch (command.verb) {
+        case ports::PrefixVerb::Boot: launch.args = {"wineboot", "-u"}; break;
+        case ports::PrefixVerb::KillServer:
+            launch.exe = layout.root / MacRuntimeLayout::kWineServer;
+            launch.args = {"-k"};
+            break;
+        case ports::PrefixVerb::Run:
+            launch.args = {command.exe.string()};
+            launch.args.insert(launch.args.end(), command.args.begin(), command.args.end());
+            launch.cwd = command.exe.parent_path();
+            break;
+    }
+    launch.env = std::move(base);
+    launch.stdio = ports::StdioMode::Capture;
+    launch.own_group = true;
+    return launch;
+}
+
+Result<std::optional<std::string>> DxmtWineRunnerPlatform::runtime_setup(const ports::RuntimeLayout&, CancelToken) {
+    return std::nullopt;
+}
 
 std::optional<UserRequestKind> DxmtWineRunnerPlatform::pending_prerequisite() {
     if (cpu_ == HostCpu::AppleSilicon && !rosetta_installed()) return UserRequestKind::RosettaInstall;

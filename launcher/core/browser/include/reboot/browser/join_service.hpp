@@ -57,8 +57,8 @@ public:
     [[nodiscard]] Result<void> join(JoinRequest request, OperationBase& op, std::optional<SessionId> session,
                                     UniqueFunction<void(Result<JoinOutcome>)> done);
 
-    // An Operation<JoinOutcome> that only returns the granted address, for 10.0.9's "Copy IP" when
-    // the backend is not embedded. Fails synchronously like join().
+    // An Operation<JoinOutcome> that only returns the granted address, for "Copy IP" when the
+    // backend is not embedded. Fails synchronously like join().
     [[nodiscard]] Result<OpHandle> start_join(JoinRequest request, DisconnectPolicy policy);
 
 private:

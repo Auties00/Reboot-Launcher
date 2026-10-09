@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <optional>
 #include <vector>
 
@@ -8,6 +9,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
+#include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 #include "reboot/integration/entry_status.hpp"
 #include "reboot/integration/integration_kind.hpp"
@@ -30,7 +32,8 @@ namespace reboot::integration {
 
 // Covers os-integration.url-protocol and os-integration.+36.
 // Strand-only; entries are read each time, Foreign ones never touched, and `done` runs on the strand.
-// Apply, remove and a reconcile that changed anything publish IntegrationChanged.
+// Apply, remove and reconcile run one at a time; apply, remove and a reconcile that changed anything
+// publish IntegrationChanged.
 class IntegrationService {
 public:
     IntegrationService(ports::IIntegrationRegistrar& registrar, storage::DocumentStore<storage::StateDocument>& state,
@@ -41,16 +44,37 @@ public:
 
     void status(CancelToken token, UniqueFunction<void(std::vector<EntryStatus>)> done);
 
-    // OpKind::Generic with each kind's EntryStatus, a failure in its `detail`; clears the declined flags.
+    // OpKind::Generic completing with std::vector<EntryStatus>, one per named kind, a failure in its
+    // `detail`; clears the declined flags. integration.no_items for an empty list.
     Result<OpHandle> start_apply(std::vector<IntegrationKind> kinds, DisconnectPolicy policy);
 
     // As start_apply, removing only entries of ours and setting their declined flags.
     Result<OpHandle> start_remove(std::vector<IntegrationKind> kinds, DisconnectPolicy policy);
 
     // After the endpoint opens; nullopt once `running` ran, which is recorded even if a write fails.
+    // A cancelled pass records nothing and also ends with nullopt.
     void reconcile(SemVer running, CancelToken token, UniqueFunction<void(std::optional<ReconcileReport>)> done);
 
 private:
+    enum class JobKind : u8 { Apply, Remove, Reconcile };
+
+    struct Job {
+        JobKind kind{};
+        std::vector<IntegrationKind> kinds;
+        Operation<std::vector<EntryStatus>>* op = nullptr;
+        SemVer running;
+        CancelToken token;
+        UniqueFunction<void(std::optional<ReconcileReport>)> reconciled;
+    };
+
+    Result<OpHandle> start_change(JobKind kind, std::vector<IntegrationKind> kinds, DisconnectPolicy policy);
+    void enqueue(Job job);
+    void run_next();
+    void finish_job();
+    void run_change(Job job);
+    void run_reconcile(Job job);
+    void fill_declined(std::vector<EntryStatus>& entries) const;
+
     ports::IIntegrationRegistrar& registrar_;
     storage::DocumentStore<storage::StateDocument>& state_;
     WorkerPool& workers_;
@@ -58,6 +82,8 @@ private:
     OpRegistry& ops_;
     EventBus& events_;
     IntegrationTargets targets_;
+    std::deque<Job> queue_;
+    bool busy_ = false;
 };
 
 }  // namespace reboot::integration

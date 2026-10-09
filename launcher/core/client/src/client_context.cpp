@@ -43,6 +43,14 @@ struct Overloaded : F... {
     return make_diag(ErrorDomain::Ipc, ipc::kUnknownSubscription).arg("sub", sub_id).kind(ErrorKind::NotFound);
 }
 
+[[nodiscard]] Diagnostic version_mismatch(u64 method, const std::string& engine_build) {
+    return make_diag(ErrorDomain::Ipc, ipc::kVersionMismatch)
+        .arg("method", method)
+        .arg("engine_build", engine_build)
+        .kind(ErrorKind::Unsupported)
+        .build();
+}
+
 template <class Frame>
 [[nodiscard]] Diagnostic unexpected_answer() {
     return make_diag(ErrorDomain::Ipc, ipc::kProtocolError).arg("frame_type", contract_frame_type_v<Frame>);
@@ -83,8 +91,8 @@ Result<std::unique_ptr<ClientContext>> ClientContext::create(ClientDeps deps, Co
     };
 
     std::unique_ptr<ClientContext> context{new ClientContext(std::move(deps))};
-    ipc::IpcClientDeps link_deps{context->deps_.connector, context->deps_.starter, context->deps_.files,
-                                 context->deps_.clock,     context->deps_.executor, *context};
+    ipc::IpcClientDeps link_deps{context->deps_.connector, context->deps_.starter,       context->deps_.files,
+                                 context->deps_.clock,     context->deps_.link_executor, *context};
     context->link_ = std::make_unique<ipc::IpcClient>(link_deps, std::move(options));
     return context;
 }
@@ -120,8 +128,7 @@ void ClientContext::close() {
     }
     if (link_) link_->close();
     calls_.fail_all(closed_diag());
-    std::lock_guard lock(subs_mutex_);
-    for (auto& [sub_id, sub] : subs_) sub->close();
+    close_subscriptions();
 }
 
 void ClientContext::call(u32 method, std::span<const u8> request, std::chrono::milliseconds timeout,
@@ -164,6 +171,10 @@ void ClientContext::start(u32 method, std::span<const u8> request, std::optional
 }
 
 void ClientContext::reveal_secret(std::span<const u8> target, UniqueFunction<void(CallResult<SecretBytes>)> done) {
+    if (auto allowed = check_full(contract_frame_type_v<wire::SecretReveal>); !allowed) {
+        done(std::unexpected(local_failure(allowed.error())));
+        return;
+    }
     wire::SecretReveal frame{0, wire::Bytes(target.begin(), target.end())};
     send_call(std::move(frame), [done = std::move(done)](Result<Answer> answer) mutable {
         auto payload = reply_payload(std::move(answer));
@@ -177,16 +188,20 @@ Result<void> ClientContext::attach(u64 op_id) {
         std::lock_guard lock(link_mutex_);
         if (closed_) return std::unexpected(closed_diag());
     }
-    track_op(op_id, 0);
+    const bool tracked = track_op(op_id, 0);
     if (auto sent = link_->send(wire::Attach{op_id}); !sent) {
-        static_cast<void>(release(op_id));
+        // An op tracked before this call stays attached.
+        if (tracked) static_cast<void>(release(op_id));
         return sent;
     }
     return {};
 }
 
 Result<void> ClientContext::cancel(u64 op_id) {
-    if (std::holds_alternative<OpUnknown>(ops_.state(op_id))) return std::unexpected(unknown_op(op_id));
+    const OpState state = ops_.state(op_id);
+    if (std::holds_alternative<OpUnknown>(state)) return std::unexpected(unknown_op(op_id));
+    // An ended op has nothing to cancel, even while no link is up.
+    if (!std::holds_alternative<OpPending>(state)) return {};
     return link_->send(wire::Cancel{op_id});
 }
 
@@ -215,6 +230,8 @@ Result<u64> ClientContext::subscribe(std::span<const u8> filter) {
     {
         std::lock_guard link_lock(link_mutex_);
         if (closed_) return std::unexpected(closed_diag());
+        if (hello_.compatibility != wire::Compatibility::Full)
+            return std::unexpected(version_mismatch(contract_frame_type_v<wire::Subscribe>, hello_.engine_build));
         link = link_generation_;
     }
     if (subs_.size() >= wire::kMaxSubscriptions)
@@ -289,6 +306,7 @@ void ClientContext::set_wake(u64 sub_id, WakeCallback wake) {
 }
 
 Result<void> ClientContext::put_secret(std::span<const u8> target, std::span<const u8> secret) {
+    if (auto allowed = check_full(contract_frame_type_v<wire::SecretPut>); !allowed) return allowed;
     return link_->send_secret_put(target, SecretBytes{std::vector<u8>(secret.begin(), secret.end())});
 }
 
@@ -329,8 +347,7 @@ void ClientContext::on_lost(const Diagnostic& reason, ipc::LinkLoss loss) {
         std::lock_guard lock(link_mutex_);
         closed_ = true;
     }
-    std::lock_guard lock(subs_mutex_);
-    for (auto& [sub_id, sub] : subs_) sub->close();
+    close_subscriptions();
 }
 
 void ClientContext::on_reconnected(const ipc::Handshake& handshake) {
@@ -359,6 +376,11 @@ void ClientContext::on_reconnected(const ipc::Handshake& handshake) {
         // The engine replays the OpResult of an op that ended meanwhile.
         for (const PendingOp& op : ops_.pending()) static_cast<void>(link_->send(wire::Attach{op.op_id}));
     }
+    // Another build drops every Subscribe, so the subscriptions end once drained.
+    if (handshake.hello.compatibility != wire::Compatibility::Full) {
+        close_subscriptions();
+        return;
+    }
     resubscribe_all();
     // Events published while the link was down are gone.
     push_local_to_all(library_event(ApiEventKind::Resync, handshake.hello.epoch));
@@ -368,11 +390,15 @@ Result<void> ClientContext::check_method(u32 method) const {
     std::lock_guard lock(link_mutex_);
     if (closed_) return std::unexpected(closed_diag());
     if (!ipc::allows_method(hello_.compatibility, method))
-        return make_diag(ErrorDomain::Ipc, ipc::kVersionMismatch)
-            .arg("method", method)
-            .arg("engine_build", hello_.engine_build)
-            .kind(ErrorKind::Unsupported)
-            .fail();
+        return std::unexpected(version_mismatch(method, hello_.engine_build));
+    return {};
+}
+
+Result<void> ClientContext::check_full(u64 frame_type) const {
+    std::lock_guard lock(link_mutex_);
+    if (closed_) return std::unexpected(closed_diag());
+    if (hello_.compatibility != wire::Compatibility::Full)
+        return std::unexpected(version_mismatch(frame_type, hello_.engine_build));
     return {};
 }
 
@@ -385,10 +411,11 @@ std::optional<u64> ClientContext::send_call(Frame frame, AnswerDone done) {
     return req_id;
 }
 
-void ClientContext::track_op(u64 op_id, u32 method_id) {
+bool ClientContext::track_op(u64 op_id, u32 method_id) {
     std::lock_guard lock(subs_mutex_);
-    ops_.track(op_id, method_id);
+    if (!ops_.track(op_id, method_id)) return false;
     for (auto& [sub_id, sub] : subs_) sub->follow(op_id);
+    return true;
 }
 
 void ClientContext::on_event_batch(wire::EventBatch batch) {
@@ -465,6 +492,11 @@ void ClientContext::push_local_to_all(wire::WireEvent event) {
 void ClientContext::resubscribe_all() {
     std::lock_guard lock(subs_mutex_);
     for (auto& [sub_id, sub] : subs_) static_cast<void>(link_->send(wire::Subscribe{sub_id, sub->filter()}));
+}
+
+void ClientContext::close_subscriptions() {
+    std::lock_guard lock(subs_mutex_);
+    for (auto& [sub_id, sub] : subs_) sub->close();
 }
 
 void ClientContext::apply(u64 sub_id, const PushEffects& effects) {

@@ -19,7 +19,7 @@ struct ExtractRequest {
     NativePath destination;
 };
 
-// The total is absent where the format lists entry sizes only as it goes (RAR).
+// The total is known only for ZIP, whose central directory lists every size before any data.
 struct ExtractProgress {
     u64 entries_done = 0;
     u64 bytes_done = 0;

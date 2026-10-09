@@ -14,7 +14,7 @@ class Executor;
 
 namespace reboot::storage {
 
-// Strand-only. Flush callbacks; a cancelled one gets storage.cancelled at once while writes go on.
+// Strand-only. Write completion callbacks; a cancelled one gets storage.cancelled at once while writes go on.
 class FlushWaiters {
 public:
     FlushWaiters(Executor& strand, std::string document) : strand_(strand), document_(std::move(document)) {}
@@ -22,8 +22,11 @@ public:
     FlushWaiters(const FlushWaiters&) = delete;
     FlushWaiters& operator=(const FlushWaiters&) = delete;
 
-    void add(const CancelToken& cancel, UniqueFunction<void(Result<void>)> done);
+    // Returns the id finish_one() takes.
+    u64 add(const CancelToken& cancel, UniqueFunction<void(Result<void>)> done);
     void finish(const Result<void>& result);
+    // Does nothing for a waiter already finished or cancelled.
+    void finish_one(u64 id, Result<void> result);
 
 private:
     struct Waiter {
@@ -31,8 +34,6 @@ private:
         UniqueFunction<void(Result<void>)> done;
         CancelRegistration registration;
     };
-
-    void cancel(u64 id);
 
     Executor& strand_;
     std::string document_;

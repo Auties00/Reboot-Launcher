@@ -717,7 +717,7 @@ impl<'a> Generator<'a> {
              std::optional<::reboot::DisconnectPolicy> disconnect);",
             "",
             "// Encodes the value an operation completed with: the method's response message, or an empty",
-            "// any (Operation<void>) when that message has no fields.",
+            "// any (Operation<void>) when that message has no fields. Anything else is the engine's bug.",
             "[[nodiscard]] ::reboot::Result<Bytes> encode_op_result(u32 method_id, const std::any& value);",
             "",
         ].map(str::to_owned));
@@ -819,7 +819,7 @@ impl<'a> Generator<'a> {
         }
         out.extend([
             "        default:",
-            "            return std::unexpected(method_error(msg::kUnknownMethod, method_id));",
+            "            return std::unexpected(::reboot::internal_bug(\"api.encode_op_result\"));",
             "    }",
             "}", "",
         ].map(str::to_owned));

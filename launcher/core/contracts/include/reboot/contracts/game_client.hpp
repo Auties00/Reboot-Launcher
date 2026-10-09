@@ -117,6 +117,25 @@ struct Fatal {
 };
 REBOOT_CONTRACT_FRAME(Fatal, 0x418)
 
+// Map travel began; the session reports no hang until TravelEnded.
+struct TravelStarted {};
+REBOOT_CONTRACT_FRAME(TravelStarted, 0x419)
+
+struct TravelEnded {};
+REBOOT_CONTRACT_FRAME(TravelEnded, 0x41A)
+
+// The game entered the match at `address`, as TestJoin asked.
+struct Joined {
+    std::string address;
+};
+REBOOT_CONTRACT_FRAME(Joined, 0x41B)
+
+// The match connection dropped; `reason` is the game's own network failure text.
+struct Disconnected {
+    std::string reason;
+};
+REBOOT_CONTRACT_FRAME(Disconnected, 0x41C)
+
 // engine -> DLL requests; TestJoin and TestQuit only when test_mode is set.
 
 struct GcShutdown {

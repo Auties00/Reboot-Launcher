@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -48,6 +49,10 @@ struct StateDocument {
     std::vector<ports::IntegrationKind> declined_integrations;
     // Integration is reconciled at startup when this differs from the running version.
     std::optional<SemVer> last_run_version;
+    // When updates last checked the release manifest.
+    std::optional<std::chrono::system_clock::time_point> last_update_check;
+    // The version a NotifyOnly install last announced, so each one is announced once.
+    std::optional<SemVer> announced_update;
     boost::json::object unknown;
 
     [[nodiscard]] static StateDocument read(const boost::json::object& values, std::vector<ValueIssue>& issues);

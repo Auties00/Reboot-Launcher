@@ -16,7 +16,8 @@ namespace reboot::components {
 // security software. Only Missing and AccessDenied ask ISecurityProductProbe.
 // - Missing: ErrorKind::NotFound.
 // - InUse: ErrorKind::Conflict, or a host sharing or lock violation (a scanner or a leftover game).
-// - AccessDenied: a host access-denied code (ERROR_ACCESS_DENIED, EACCES, EPERM).
+// - AccessDenied: an access-denied code (ERROR_ACCESS_DENIED, EACCES, EPERM), or a scanner's block
+//   (ERROR_VIRUS_INFECTED, ERROR_VIRUS_DELETED).
 // - ReadFailed: any other open or read failure.
 // - Mismatch: the bytes read do not hash to the expected digest.
 enum class HoldFailureKind : u8 { Missing, AccessDenied, InUse, ReadFailed, Mismatch };

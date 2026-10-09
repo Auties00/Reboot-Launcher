@@ -1,4 +1,7 @@
+#include <any>
+#include <chrono>
 #include <optional>
+#include <string>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -119,4 +122,55 @@ TEST_CASE("a failed stop fails the op and resets nothing", "[storage][reset]") {
     CHECK(failed->error.id == "storage.reset_stop_failed");
     CHECK(f.records_reset.empty());
     CHECK(f.settings.snapshot().values.host.listing == HostListing::Listed);
+}
+
+TEST_CASE("a reset after stop with nothing running completes at once", "[storage][reset]") {
+    Fixture f;
+    const Result<OpHandle> handle = f.service.start_reset_after_stop(ResetGroup::Host, DisconnectPolicy::Detached);
+    REQUIRE(handle);
+    CHECK_FALSE(f.stopped);
+    const std::optional<ErasedOutcome> outcome = f.runtime.ops().outcome(handle->id());
+    REQUIRE(outcome);
+    const auto* completed = std::get_if<Completed<std::any>>(&*outcome);
+    REQUIRE(completed != nullptr);
+    CHECK(std::any_cast<ResetReport>(completed->value).keys ==
+          std::vector<std::string>{"host.update_policy", "host.listing"});
+    CHECK(f.settings.snapshot().values.host.listing == HostListing::Unlisted);
+}
+
+TEST_CASE("blockers that start again while the rest stop fail the reset", "[storage][reset]") {
+    Fixture f;
+    f.blockers.backend_running = true;
+    const Result<OpHandle> handle = f.service.start_reset_after_stop(ResetGroup::Host, DisconnectPolicy::Detached);
+    REQUIRE(handle);
+    f.stop_done({});
+
+    const std::optional<ErasedOutcome> outcome = f.runtime.ops().outcome(handle->id());
+    REQUIRE(outcome);
+    const Failed* failed = std::get_if<Failed>(&*outcome);
+    REQUIRE(failed != nullptr);
+    CHECK(failed->error.id == "storage.reset_blocked");
+    CHECK(f.records_reset.empty());
+    CHECK(f.settings.snapshot().values.host.listing == HostListing::Listed);
+}
+
+TEST_CASE("a reset whose op timed out while stopping resets nothing", "[storage][reset]") {
+    Fixture f;
+    f.blockers.sessions.push_back(SessionId{});
+    const Result<OpHandle> handle = f.service.start_reset_after_stop(ResetGroup::Host, DisconnectPolicy::Detached);
+    REQUIRE(handle);
+    f.runtime.advance(default_deadline(OpKind::Generic) + std::chrono::seconds{1});
+    CHECK(f.stop_token.cancelled());
+    const std::optional<ErasedOutcome> timed_out = f.runtime.ops().outcome(handle->id());
+    REQUIRE(timed_out);
+    CHECK(std::holds_alternative<TimedOut>(*timed_out));
+
+    // The stop finishes anyway, after the op already ended.
+    f.blockers = {};
+    f.stop_done({});
+    CHECK(f.records_reset.empty());
+    CHECK(f.settings.snapshot().values.host.listing == HostListing::Listed);
+    const std::optional<ErasedOutcome> outcome = f.runtime.ops().outcome(handle->id());
+    REQUIRE(outcome);
+    CHECK(std::holds_alternative<TimedOut>(*outcome));
 }

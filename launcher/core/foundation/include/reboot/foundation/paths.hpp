@@ -81,7 +81,11 @@ struct InstallLayout {
 // `dev_override` points at a build tree during development.
 [[nodiscard]] InstallLayout locate_install(const ports::IPlatformPaths& paths, std::optional<NativePath> dev_override);
 
-// Lexical, on normalised absolute paths; a path is inside itself.
+// Lexical, on normalised absolute paths, ignoring ASCII case on Windows; a path is inside itself.
 [[nodiscard]] bool is_inside(const NativePath& child, const NativePath& parent);
+
+// Velopack's Windows layout: `exe_dir` is <root>\current holding sq.version, beside <root>\Update.exe.
+// Returns <root>, the package dir that must never hold the data root.
+[[nodiscard]] std::optional<NativePath> velopack_root_of(const NativePath& exe_dir);
 
 }  // namespace reboot

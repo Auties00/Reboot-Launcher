@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "reboot/foundation/cancel.hpp"
@@ -33,7 +34,13 @@ public:
     Result<ports::ProcessLaunch> runner_launch(const ports::RuntimeLayout& layout, const NativePath& prefix,
                                                const NativePath& winhost_exe, ports::EnvBlock base) override;
 
-    Result<void> runtime_setup(const ports::RuntimeLayout& layout, CancelToken token) override;
+    // Boot runs `wine wineboot -u`, KillServer the runtime's `wineserver -k`, Run `wine <exe> <args>`;
+    // each adds only WINEPREFIX to `base`.
+    Result<ports::ProcessLaunch> prefix_command(const ports::RuntimeLayout& layout, const NativePath& prefix,
+                                                const ports::PrefixCommand& command, ports::EnvBlock base) override;
+
+    // Nothing to set up on macOS.
+    Result<std::optional<std::string>> runtime_setup(const ports::RuntimeLayout& layout, CancelToken token) override;
 
     // Blocking stat of the Rosetta daemon, so callers run it on a worker.
     [[nodiscard]] std::optional<UserRequestKind> pending_prerequisite() override;

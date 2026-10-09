@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <span>
 
@@ -38,11 +39,21 @@
 
 namespace reboot {
 class EventBus;
+class Executor;
+class IClock;
 class OpRegistry;
 class UserRequestRegistry;
+class WorkerPool;
+struct InstallLayout;
+class AppLayout;
 }  // namespace reboot
 
+namespace reboot::ports {
+class ISecurityProductProbe;
+}
+
 namespace reboot::logging {
+class ErrorRouter;
 class LogExporter;
 class LogRing;
 }  // namespace reboot::logging
@@ -100,6 +111,14 @@ namespace reboot::sessions {
 class SessionRegistry;
 }
 
+namespace reboot::gameserver {
+class GameServerBinary;
+}
+
+namespace reboot::publish {
+class HostIdentityStore;
+}
+
 namespace reboot::play {
 class PlayService;
 }
@@ -114,6 +133,7 @@ class DeepLinkService;
 class GameServerTarget;
 class IOwnServers;
 class JoinService;
+class ServerList;
 }  // namespace reboot::browser
 
 namespace reboot::updates {
@@ -141,8 +161,14 @@ struct ApiRouterDeps {
     EventBus& events;
     OpRegistry& ops;
     UserRequestRegistry& requests;
+    Executor& strand;
+    WorkerPool& workers;
+    const IClock& clock;
+    const AppLayout& layout;
     logging::LogRing& log_ring;
     logging::LogExporter& log_exporter;
+    // Background failures are listed as notices and acknowledged by dismissing them.
+    logging::ErrorRouter& errors;
     storage::Settings& settings;
     const storage::SettingsRegistry& settings_registry;
     storage::FrontendStateStore& frontend_state;
@@ -165,7 +191,10 @@ struct ApiRouterDeps {
     sessions::SessionRegistry& sessions;
     play::PlayService& play;
     host::HostService& hosts;
+    publish::HostIdentityStore& host_identities;
+    const gameserver::GameServerBinary& game_server;
     browser::BrowserSession& browser;
+    browser::ServerList& views;
     browser::JoinService& join;
     browser::DeepLinkService& deep_links;
     browser::GameServerTarget& addresses;
@@ -176,11 +205,15 @@ struct ApiRouterDeps {
     integration::PrerequisiteService& prerequisites;
     integration::PurgeService& purge;
     integration::ShellService& shell;
+    ports::ISecurityProductProbe& security;
 };
 
 // Capabilities: none. Strand-only; the only place domain types, events and UserRequest payloads
 // become reboot.api.v1 messages.
-// - Play's display comes from the connection's Hello, never from the request.
+// - Play's display comes from the connection's Hello, unless the request carries the caller's
+//   environment for this launch.
+// - Calls answer at once: what a service reads off the strand (integration status, prerequisites,
+//   a shell's frontend state) is kept up to date here, and is engine.not_ready until first read.
 // - Each started op's method id is kept, so its Outcome carries that method's response; its
 //   request is kept too, for Engine.operations and the OpStarted event.
 // - EventKind::ForegroundHint is no API event, so encode_event skips it.
@@ -272,6 +305,8 @@ public:
     Result<OpHandle> start(const api::CallContext& context, const api::HostStartRequest& request, DisconnectPolicy disconnect) override;
     Result<api::HostStatusResponse> status(const api::CallContext& context, const api::HostStatusRequest& request) override;
     Result<api::HostCancelMatchEndResponse> cancel_match_end(const api::CallContext& context, const api::HostCancelMatchEndRequest& request) override;
+    Result<OpHandle> start_identity_export(const api::CallContext& context, const api::HostIdentityExportRequest& request, DisconnectPolicy disconnect) override;
+    Result<OpHandle> start_identity_import(const api::CallContext& context, const api::HostIdentityImportRequest& request, DisconnectPolicy disconnect) override;
     // Identity
     Result<api::IdentityGetResponse> get(const api::CallContext& context, const api::IdentityGetRequest& request) override;
     Result<api::IdentitySetDisplayNameResponse> set_display_name(const api::CallContext& context, const api::IdentitySetDisplayNameRequest& request) override;
@@ -342,15 +377,19 @@ public:
     Result<OpHandle> start_apply(const api::CallContext& context, const api::UpdatesApplyRequest& request, DisconnectPolicy disconnect) override;
 
 private:
+    struct State;
+
     [[nodiscard]] api::Handlers handlers() noexcept;
     // Records the op for encode_outcome and Engine.operations, and publishes OpStarted.
     Result<OpHandle> started(Result<OpHandle> handle, u32 method_id, std::span<const u8> request,
                              DisconnectPolicy disconnect);
+    [[nodiscard]] u32 method_of(OpId op) const noexcept;
 
     ApiRouterDeps deps_;
     // Each live connection's Hello, which outlives the calls made on it.
     FlatMap<ConnectionId, ipc::ConnectionInfo> connections_;
     FlatMap<OpId, StartedOp> started_ops_;
+    std::unique_ptr<State> state_;
 };
 
 }  // namespace reboot::engine

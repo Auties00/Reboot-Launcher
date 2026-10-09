@@ -3,6 +3,7 @@
 #include <map>
 #include <mutex>
 #include <optional>
+#include <string>
 
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
@@ -24,6 +25,8 @@ public:
     Result<void> remove(ports::IntegrationKind kind) override;
 
     void set_state(ports::IntegrationKind kind, ports::IntegrationState state);
+    // What status reports in `detail` while the kind is not Absent, such as its command or owner.
+    void set_detail(ports::IntegrationKind kind, std::string detail);
     // The exe the kind was last applied for.
     [[nodiscard]] std::optional<NativePath> applied_exe(ports::IntegrationKind kind) const;
     [[nodiscard]] FaultPlan<RegistrarOperation>& faults() noexcept { return faults_; }
@@ -36,6 +39,7 @@ private:
 
     mutable std::mutex mutex_;
     std::map<ports::IntegrationKind, Entry> entries_;
+    std::map<ports::IntegrationKind, std::string> details_;
     FaultPlan<RegistrarOperation> faults_;
 };
 

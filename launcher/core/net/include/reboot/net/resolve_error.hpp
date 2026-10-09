@@ -9,7 +9,7 @@
 
 namespace reboot::net {
 
-enum class ResolveErrorCode : u8 { InvalidAddress, NotFound, NoIpv4Address, Timeout, Failed };
+enum class ResolveErrorCode : u8 { InvalidAddress, NotFound, NoIpv4Address, Timeout, Failed, Cancelled };
 
 struct ResolveError {
     ResolveErrorCode code = ResolveErrorCode::Failed;

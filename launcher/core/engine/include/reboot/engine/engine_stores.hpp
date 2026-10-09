@@ -9,6 +9,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/gameserver/describe_cache_document.hpp"
 #include "reboot/host/host_profiles_document.hpp"
+#include "reboot/identity/backend_logins_document.hpp"
 #include "reboot/storage/accounts_document.hpp"
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/library_document.hpp"
@@ -55,6 +56,7 @@ public:
     storage::DocumentStore<storage::SettingsDocument> settings;
     storage::DocumentStore<storage::LibraryDocument> library;
     storage::DocumentStore<storage::AccountsDocument> accounts;
+    storage::DocumentStore<identity::BackendLoginsDocument> backend_logins;
     storage::DocumentStore<host::HostProfilesDocument> host_profiles;
     storage::DocumentStore<storage::StateDocument> state;
     storage::DocumentStore<storage::RuntimeDocument> runtime;

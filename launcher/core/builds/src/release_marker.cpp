@@ -4,12 +4,15 @@
 #include <cstddef>
 #include <string_view>
 #include <system_error>
+#include <utility>
+
+#include "release_marker_scan.hpp"
 
 namespace reboot::builds {
 
 namespace {
 
-constexpr std::string_view kMarker = "++Fortnite+Release-";
+constexpr std::string_view kMarker = kReleaseMarkerText;
 // u32 has at most 10 decimal digits.
 constexpr std::size_t kMaxClDigits = 10;
 
@@ -90,10 +93,15 @@ private:
 
 }  // namespace
 
-std::optional<ReleaseMarker> find_release_marker(std::span<const u8> utf16le) {
+std::optional<MarkerMatch> find_release_marker_from(std::span<const u8> utf16le, std::size_t first) {
     const std::size_t marker_bytes = kMarker.size() * 2;
-    for (std::size_t offset = 0; offset + marker_bytes <= utf16le.size(); ++offset)
-        if (auto marker = match_at(utf16le, offset)) return marker;
+    for (std::size_t offset = first; offset + marker_bytes <= utf16le.size(); ++offset)
+        if (auto marker = match_at(utf16le, offset)) return MarkerMatch{.marker = std::move(*marker), .offset = offset};
+    return std::nullopt;
+}
+
+std::optional<ReleaseMarker> find_release_marker(std::span<const u8> utf16le) {
+    if (auto match = find_release_marker_from(utf16le, 0)) return std::move(match->marker);
     return std::nullopt;
 }
 

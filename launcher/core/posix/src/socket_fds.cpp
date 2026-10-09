@@ -6,10 +6,10 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <unistd.h>
 #include <utility>
 
 #include "reboot/posix/posix_error.hpp"
+#include "unistd.hpp"
 
 namespace reboot::posix {
 

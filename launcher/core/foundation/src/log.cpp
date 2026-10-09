@@ -4,6 +4,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <deque>
+#include <functional>
 #include <map>
 #include <mutex>
 #include <shared_mutex>
@@ -20,20 +21,14 @@ namespace {
 constexpr std::string_view kMask = "***";
 constexpr std::string_view kPasswordKey = "-AUTH_PASSWORD=";
 constexpr std::size_t kMinSecretBytes = 4;
+// Warn and above never drop; past this many budgets their producers wait for the writer.
+constexpr std::size_t kHardCapBudgets = 2;
 
-// Longest first, so a secret that contains another is masked whole.
-struct LongestFirst {
-    bool operator()(const std::string& a, const std::string& b) const {
-        return a.size() != b.size() ? a.size() > b.size() : a < b;
-    }
-};
+using Span = std::pair<std::size_t, std::size_t>;
 
-void mask_password_values(std::string& text) {
-    for (std::size_t at = 0; at + kPasswordKey.size() <= text.size();) {
-        if (!iequals_ascii(std::string_view(text).substr(at, kPasswordKey.size()), kPasswordKey)) {
-            ++at;
-            continue;
-        }
+void password_spans(std::string_view text, std::vector<Span>& spans) {
+    for (std::size_t at = 0; at + kPasswordKey.size() <= text.size(); ++at) {
+        if (!iequals_ascii(text.substr(at, kPasswordKey.size()), kPasswordKey)) continue;
         std::size_t start = at + kPasswordKey.size();
         std::size_t end = start;
         if (start < text.size() && text[start] == '"') {
@@ -42,12 +37,14 @@ void mask_password_values(std::string& text) {
         } else {
             while (end < text.size() && text[end] != ' ' && text[end] != '\t' && text[end] != '\r' && text[end] != '\n') ++end;
         }
-        if (end > start) text.replace(start, end - start, kMask);
-        at = start + (end > start ? kMask.size() : 0);
+        if (end > start) spans.emplace_back(start, end);
+        at = end - 1;
     }
 }
 
+// Warn and above never drop, whatever their category.
 bool droppable(const LogRecord& record) {
+    if (record.level >= LogLevel::Warn) return false;
     return record.category == LogCategory::GameOutput || record.category == LogCategory::Wine ||
            record.level <= LogLevel::Debug;
 }
@@ -58,6 +55,7 @@ struct LoggerState {
     std::mutex mutex;
     std::condition_variable wake;
     std::condition_variable flushed;
+    std::condition_variable drained;
     std::deque<LogRecord> queue;
     std::size_t queue_bytes = 0;
     std::size_t byte_budget = 0;
@@ -125,6 +123,7 @@ struct LoggerState {
             const u64 flush_target = flush_requested;
             const bool exit = stopping;
             lock.unlock();
+            drained.notify_all();
 
             if (lost != 0)
                 batch.insert(batch.begin(), LogRecord{std::chrono::system_clock::now(), LogLevel::Warn, LogCategory::Engine,
@@ -145,11 +144,14 @@ LoggerState& state() {
     return instance;
 }
 
+// A sink that logs runs on the writer, which must never wait for itself.
+bool on_writer(const LoggerState& s) { return s.writer.get_id() == std::this_thread::get_id(); }
+
 }  // namespace
 
 struct Redactor::Impl {
     mutable std::shared_mutex mutex;
-    std::map<std::string, std::size_t, LongestFirst> secrets;
+    std::map<std::string, std::size_t, std::less<>> secrets;
 };
 
 Redactor::Redactor() : impl_(std::make_unique<Impl>()) {}
@@ -170,16 +172,33 @@ void Redactor::remove_secret(std::span<const u8> value) {
 }
 
 std::string Redactor::apply(std::string_view text) const {
-    std::string out(text);
+    // Matches are found on the original text and merged, so overlapping secrets leave no
+    // unmasked part and a mask never forms a new match.
+    std::vector<Span> spans;
     {
         const std::shared_lock lock(impl_->mutex);
         for (const auto& entry : impl_->secrets) {
             const std::string& secret = entry.first;
-            for (std::size_t at = out.find(secret); at != std::string::npos; at = out.find(secret, at + kMask.size()))
-                out.replace(at, secret.size(), kMask);
+            for (std::size_t at = text.find(secret); at != std::string_view::npos; at = text.find(secret, at + 1))
+                spans.emplace_back(at, at + secret.size());
         }
     }
-    mask_password_values(out);
+    password_spans(text, spans);
+    if (spans.empty()) return std::string(text);
+
+    std::ranges::sort(spans);
+    std::string out;
+    out.reserve(text.size());
+    std::size_t copied = 0;
+    for (std::size_t i = 0; i < spans.size();) {
+        const std::size_t begin = spans[i].first;
+        std::size_t end = spans[i].second;
+        for (++i; i < spans.size() && spans[i].first < end; ++i) end = std::max(end, spans[i].second);
+        out.append(text.substr(copied, begin - copied));
+        out.append(kMask);
+        copied = end;
+    }
+    out.append(text.substr(copied));
     return out;
 }
 
@@ -220,7 +239,7 @@ void Logger::write(LogLevel level, LogCategory category, std::optional<SessionId
     LogRecord record{std::chrono::system_clock::now(), level, category, session, std::move(text)};
     const std::size_t bytes = cost(record);
     {
-        const std::lock_guard lock(s.mutex);
+        std::unique_lock lock(s.mutex);
         if (!s.started || s.stopping) return;
         if (s.queue_bytes + bytes > s.byte_budget) {
             if (droppable(record)) {
@@ -240,6 +259,10 @@ void Logger::write(LogLevel level, LogCategory category, std::optional<SessionId
                 ++s.dropped;
                 return;
             }
+            if (!on_writer(s))
+                s.drained.wait(lock, [&] {
+                    return s.stopping || s.queue.empty() || s.queue_bytes + bytes <= s.byte_budget * kHardCapBudgets;
+                });
         }
         s.queue_bytes += bytes;
         s.queue.push_back(std::move(record));
@@ -250,7 +273,7 @@ void Logger::write(LogLevel level, LogCategory category, std::optional<SessionId
 void Logger::flush() {
     LoggerState& s = state();
     std::unique_lock lock(s.mutex);
-    if (!s.started || s.stopping) return;
+    if (!s.started || s.stopping || on_writer(s)) return;
     const u64 ticket = ++s.flush_requested;
     s.wake.notify_one();
     // The writer settles every requested flush before it exits, so this returns even during shutdown.
@@ -258,5 +281,52 @@ void Logger::flush() {
 }
 
 void Logger::shutdown() { state().stop(); }
+
+namespace {
+
+// Bounded, so a writer stuck inside a sink cannot hold the terminate path forever.
+template <class Mutex>
+bool lock_for_terminate(std::unique_lock<Mutex>& lock) {
+    for (int attempt = 0; attempt < 100; ++attempt) {
+        if (lock.try_lock()) return true;
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    }
+    return false;
+}
+
+}  // namespace
+
+void Logger::drain_for_terminate(LogCategory category, std::string text) noexcept {
+    try {
+        LoggerState& s = state();
+        std::vector<LogRecord> batch;
+        {
+            std::unique_lock lock(s.mutex, std::defer_lock);
+            if (lock_for_terminate(lock)) {
+                batch.assign(std::make_move_iterator(s.queue.begin()), std::make_move_iterator(s.queue.end()));
+                s.queue.clear();
+                s.queue_bytes = 0;
+                if (const u64 lost = std::exchange(s.dropped, 0); lost != 0)
+                    batch.insert(batch.begin(), LogRecord{std::chrono::system_clock::now(), LogLevel::Warn, LogCategory::Engine,
+                                                          std::nullopt, std::format("{} log records were dropped", lost)});
+            }
+        }
+        s.drained.notify_all();
+        batch.push_back(LogRecord{std::chrono::system_clock::now(), LogLevel::Error, category, std::nullopt, std::move(text)});
+        // The writer may have died inside a sink, still holding the sinks' lock.
+        if (on_writer(s)) return;
+        std::unique_lock sinks_lock(s.sinks_mutex, std::defer_lock);
+        if (!lock_for_terminate(sinks_lock)) return;
+        for (LogRecord& record : batch) record.text = s.redactor.apply(record.text);
+        for (const auto& sink : s.sinks) {
+            try {
+                sink->write(batch);
+                sink->flush();
+            } catch (...) {
+            }
+        }
+    } catch (...) {
+    }
+}
 
 }  // namespace reboot

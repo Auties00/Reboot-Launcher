@@ -62,6 +62,8 @@ public:
     BackendService& operator=(const BackendService&) = delete;
 
     [[nodiscard]] const BackendState& state() const noexcept;
+    // The live leases that belong to a session; BackendState::leases counts maintenance ones too.
+    [[nodiscard]] u32 session_leases() const noexcept;
 
     // Backend.SetTarget and settings changes. With no lease it applies now: a running backend is
     // stopped and started again on the new config if pinned. With a session lease, Refuse fails

@@ -64,7 +64,7 @@ struct Handlers {
 [[nodiscard]] ::reboot::Result<::reboot::OpHandle> dispatch_start(const Handlers& handlers, const CallContext& context, u32 method_id, std::span<const u8> request, std::optional<::reboot::DisconnectPolicy> disconnect);
 
 // Encodes the value an operation completed with: the method's response message, or an empty
-// any (Operation<void>) when that message has no fields.
+// any (Operation<void>) when that message has no fields. Anything else is the engine's bug.
 [[nodiscard]] ::reboot::Result<Bytes> encode_op_result(u32 method_id, const std::any& value);
 
 }  // namespace reboot::api

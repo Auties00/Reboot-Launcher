@@ -2,4 +2,10 @@
 # types and no domain package.
 reboot_add_package(ipc
   SOURCES
-    src/messages.cpp)
+    src/endpoint.cpp
+    src/ipc_client.cpp
+    src/ipc_codec.cpp
+    src/ipc_connection.cpp
+    src/ipc_server.cpp
+    src/messages.cpp
+    src/outbound_budget.cpp)

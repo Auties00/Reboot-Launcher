@@ -38,8 +38,9 @@ public:
     // A shell with nothing stored gets an empty blob. `done` runs on the strand.
     void get(const ShellName& shell, CancelToken cancel, UniqueFunction<void(Result<std::vector<u8>>)> done);
     // storage.frontend_state_too_large or _not_json; else `done` runs once the blob is on disk.
+    // Cancelling ends only the wait.
     void put(const ShellName& shell, std::vector<u8> blob, CancelToken cancel, UniqueFunction<void(Result<void>)> done);
-    // `done` runs on the strand once every accepted put is on disk.
+    // `done` runs on the strand once every accepted put is on disk, or with the first write error.
     void flush(CancelToken cancel, UniqueFunction<void(Result<void>)> done);
 
 private:

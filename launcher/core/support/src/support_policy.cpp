@@ -24,6 +24,14 @@ void add_key(std::vector<SupportCellKey>& keys, const SupportCellKey& key) {
     if (std::ranges::find(keys, key) == keys.end()) keys.push_back(key);
 }
 
+// The query's own cap rule replaces the cell's, so the cell's cap reason does not rank it either.
+[[nodiscard]] SupportTier rank(const SupportCell& cell) noexcept {
+    SupportTier tier = SupportTier::Tested;
+    for (const SupportReason reason : cell.reasons)
+        if (reason != SupportReason::AboveVersionCap) tier = worst(tier, reason_tier(reason));
+    return tier;
+}
+
 [[nodiscard]] bool covered_by(const HostInputs& server, const GameVersion& version, std::optional<Changelist> cl) {
     return std::ranges::any_of(server.ranges, [&](const VersionRange& range) { return range.contains(version, cl); });
 }
@@ -117,19 +125,22 @@ SupportVerdict SupportPolicy::evaluate(const SupportQuery& query) const {
             if (record.os == inputs_.os && record.cell.role == query.role && record.cell.runner == query.runner &&
                 record.cell.range.contains(*query.version, query.cl))
                 add_key(keys, record.cell);
-        if (host && query.server)
+        if (host && query.server && query.runner == ports::RunnerKind::Native)
             for (const VersionRange& range : query.server->ranges)
                 if (range.contains(*query.version, query.cl))
                     add_key(keys, {.range = range, .role = SupportRole::Host, .runner = ports::RunnerKind::Native});
 
         for (const SupportCellKey& key : keys) {
             SupportCell cell = rate_cell(key, query.server);
-            if (!verdict.cell || cell.tier < verdict.cell->tier) verdict.cell = std::move(cell);
+            if (!verdict.cell || rank(cell) < rank(*verdict.cell)) verdict.cell = std::move(cell);
         }
-        if (verdict.cell)
-            for (const SupportReason reason : verdict.cell->reasons) add_reason(verdict.reasons, reason);
-        else
+        if (verdict.cell) {
+            for (const SupportReason reason : verdict.cell->reasons)
+                // The query's own cap rule already applied, with its opt-in.
+                if (reason != SupportReason::AboveVersionCap) add_reason(verdict.reasons, reason);
+        } else {
             add_reason(verdict.reasons, SupportReason::NoEvidence);
+        }
     }
 
     verdict.tier = settle(verdict.reasons);

@@ -35,6 +35,7 @@ Diagnostic to_diagnostic(const SessionsError& error) {
                 .arg("to", phase_text(error.to))
                 .kind(ErrorKind::Conflict)
                 .build();
+        case SessionsErrorCode::StopOverran: return diag(msg::kStopOverran).build();
     }
     return internal_bug("sessions_error.to_diagnostic");
 }

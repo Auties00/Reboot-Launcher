@@ -54,8 +54,9 @@ RequestId UserRequestRegistry::ask(UserRequestKind kind, std::any payload, std::
                                    UniqueFunction<Result<void>(const std::any& answer)> on_answer, CancelToken token) {
     const RequestId id{impl_->next_id++};
     UserRequest request{id, kind, std::move(payload), op, session};
-    impl_->events.publish(EventKind::UserActionRequired, request, EventScope{session, op, {}});
-    impl_->entries.emplace(id, Impl::Entry{std::move(request), std::move(on_answer), {}});
+    // Pending before it is announced, so an answer prompted by the event finds it.
+    impl_->entries.emplace(id, Impl::Entry{request, std::move(on_answer), {}});
+    impl_->events.publish(EventKind::UserActionRequired, std::move(request), EventScope{session, op, {}});
 
     // Runs at once when the token is already cancelled, which withdraws the request just raised.
     CancelRegistration withdrawal = token.on_cancel([impl = impl_.get(), id](CancelReason) { impl->withdraw(id); });

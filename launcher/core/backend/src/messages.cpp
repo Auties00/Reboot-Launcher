@@ -21,5 +21,9 @@ REBOOT_MESSAGE(kExchangeCodeFailed, "backend.exchange_code_failed",
                "{origin} did not issue a login code (status {status})");
 REBOOT_MESSAGE(kReconfiguring, "backend.reconfiguring", "The backend is switching to new settings; try again shortly");
 REBOOT_MESSAGE(kRemoteAddressMissing, "backend.remote_address_missing", "No remote backend address is set");
+REBOOT_MESSAGE(kCancelled, "backend.cancelled", "Waiting for the backend was cancelled");
+REBOOT_MESSAGE(kStoppedBeforeReady, "backend.stopped_before_ready", "The backend was stopped before it was ready");
+REBOOT_MESSAGE(kAnswerInvalid, "backend.answer_invalid", "That answer does not settle the question");
+REBOOT_MESSAGE(kPathNotUtf8, "backend.path_not_utf8", "{path} cannot be passed to the backend");
 
 }  // namespace reboot::backend::msg

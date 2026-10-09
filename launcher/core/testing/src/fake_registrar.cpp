@@ -10,7 +10,11 @@ Result<ports::IntegrationStatus> FakeRegistrar::status(ports::IntegrationKind ki
     if (auto error = faults_.take(RegistrarOperation::Status)) return std::unexpected(std::move(*error));
     const std::scoped_lock lock(mutex_);
     const auto it = entries_.find(kind);
-    return ports::IntegrationStatus{kind, it == entries_.end() ? ports::IntegrationState::Absent : it->second.state, {}};
+    const ports::IntegrationState state = it == entries_.end() ? ports::IntegrationState::Absent : it->second.state;
+    const auto detail = details_.find(kind);
+    if (state == ports::IntegrationState::Absent || detail == details_.end())
+        return ports::IntegrationStatus{kind, state, {}};
+    return ports::IntegrationStatus{kind, state, detail->second};
 }
 
 Result<void> FakeRegistrar::apply(ports::IntegrationKind kind, const NativePath& exe) {
@@ -30,6 +34,11 @@ Result<void> FakeRegistrar::remove(ports::IntegrationKind kind) {
 void FakeRegistrar::set_state(ports::IntegrationKind kind, ports::IntegrationState state) {
     const std::scoped_lock lock(mutex_);
     entries_[kind].state = state;
+}
+
+void FakeRegistrar::set_detail(ports::IntegrationKind kind, std::string detail) {
+    const std::scoped_lock lock(mutex_);
+    details_.insert_or_assign(kind, std::move(detail));
 }
 
 std::optional<NativePath> FakeRegistrar::applied_exe(ports::IntegrationKind kind) const {

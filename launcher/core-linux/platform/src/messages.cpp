@@ -33,5 +33,10 @@ REBOOT_MESSAGE(kUpdatePackageInvalid, "platform.update_package_invalid",
                "The update package {path} does not hold exactly one version directory.");
 REBOOT_MESSAGE(kUpdateEntryUnsafe, "platform.update_entry_unsafe",
                "The update package {path} holds an unsafe entry {entry}.");
+REBOOT_MESSAGE(kUpdateNotStaged, "platform.update_not_staged", "No update has been staged.");
+REBOOT_MESSAGE(kLockBusy, "platform.lock_busy", "{path} is locked by another process.");
+REBOOT_MESSAGE(kHelperTimeout, "platform.helper_timeout", "{program} did not finish within {deadline}.");
+REBOOT_MESSAGE(kDnsFailed, "platform.dns_failed", "{host} could not be resolved.");
+REBOOT_MESSAGE(kDnsCancelled, "platform.dns_cancelled", "Resolving {host} was cancelled.");
 
 }  // namespace reboot::os_linux::platform

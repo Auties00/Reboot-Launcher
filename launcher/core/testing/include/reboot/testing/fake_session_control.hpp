@@ -19,6 +19,8 @@ class FakeSessionHost;
 // Covers no capability ids (decision testing-strategy).
 // The test's side of one session launched through FakeSessionHost. Events reach the engine through
 // `io`, and nothing after it destroyed its IGameSession; inject and resume consult the host's faults.
+// A successful inject() reports Injected; stop() records its grace and ends a running game with
+// kJobKillExitCode, as the Job kill would.
 class FakeSessionControl {
 public:
     FakeSessionControl(FakeSessionHost& host, Executor& io, ports::SessionLaunch launch,

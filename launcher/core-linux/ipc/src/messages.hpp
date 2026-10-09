@@ -4,8 +4,11 @@
 
 namespace reboot::posix {
 
-// Registered once by core/posix, whose public headers do not declare it; this binds to that object.
+// Registered once by core/posix, whose public headers do not declare them; these bind to those objects.
 REBOOT_MESSAGE_DECL(kEndpointUntrusted);
+REBOOT_MESSAGE_DECL(kNotADirectory);
+REBOOT_MESSAGE_DECL(kDirectoryNotPrivate);
+REBOOT_MESSAGE_DECL(kEngineNotListening);
 
 }  // namespace reboot::posix
 

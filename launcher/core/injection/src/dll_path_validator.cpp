@@ -29,14 +29,16 @@ constexpr u16 kImageFileDll = 0x2000;
            (static_cast<u32>(image[offset + 2]) << 16) | (static_cast<u32>(image[offset + 3]) << 24);
 }
 
+// Compares native units: converting to UTF-8 throws on Windows for an unpaired surrogate.
 [[nodiscard]] bool has_dll_extension(const NativePath& path) {
-    constexpr std::u8string_view kDll = u8".dll";
-    const std::u8string extension = path.extension().u8string();
+    using Unit = NativePath::value_type;
+    constexpr std::string_view kDll = ".dll";
+    const NativePath::string_type extension = path.extension().native();
     if (extension.size() != kDll.size()) return false;
     for (std::size_t i = 0; i < extension.size(); ++i) {
-        const char8_t c = extension[i];
-        const char8_t lower = c >= u8'A' && c <= u8'Z' ? static_cast<char8_t>(c - u8'A' + u8'a') : c;
-        if (lower != kDll[i]) return false;
+        const Unit c = extension[i];
+        const Unit lower = c >= Unit{'A'} && c <= Unit{'Z'} ? static_cast<Unit>(c - Unit{'A'} + Unit{'a'}) : c;
+        if (lower != static_cast<Unit>(kDll[i])) return false;
     }
     return true;
 }

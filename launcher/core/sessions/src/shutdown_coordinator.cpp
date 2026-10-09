@@ -37,6 +37,14 @@ struct ShutdownCoordinator::State {
     u64 attempt = 0;
     CancelSource expiry;
     TimerHandle step_timer;
+    // Cancelled by the destructor, so a posted step or a late `done` finds no state to touch.
+    CancelSource alive;
+
+    void post(UniqueFunction<void()> task) {
+        strand.post([alive = alive.token(), task = std::move(task)]() mutable {
+            if (!alive.cancelled()) task();
+        });
+    }
 
     void run_step() {
         if (step == kShutdownStepCount) return finish();
@@ -52,12 +60,13 @@ struct ShutdownCoordinator::State {
         expiry = CancelSource();
         step_timer = timers.after(budget, [this, this_attempt] {
             if (this_attempt != attempt) return;
-            expiry.cancel(CancelReason::Deadline);
+            // Recorded first, so a `done` the action calls from its expiry callback is ignored.
             record(StepOutcome::TimedOut, std::nullopt, since(clock, step_started_at));
+            expiry.cancel(CancelReason::Deadline);
         });
         action(ShutdownStepContext{.cause = *cause, .budget = budget, .expired = expiry.token()},
-               [this, this_attempt](Result<void> result) {
-                   if (this_attempt != attempt) return;
+               [this, alive = alive.token(), this_attempt](Result<void> result) {
+                   if (alive.cancelled() || this_attempt != attempt) return;
                    if (result) record(StepOutcome::Completed, std::nullopt, since(clock, step_started_at));
                    else record(StepOutcome::Failed, std::move(result.error()), since(clock, step_started_at));
                });
@@ -72,7 +81,7 @@ struct ShutdownCoordinator::State {
                                                   .error = std::move(error),
                                                   .elapsed = elapsed});
         ++step;
-        strand.post([this] { run_step(); });
+        post([this] { run_step(); });
     }
 
     void finish() {
@@ -100,9 +109,10 @@ ShutdownCoordinator::ShutdownCoordinator(IClock& clock, TimerService& timers, Ex
                                            .step_started_at = {},
                                            .attempt = 0,
                                            .expiry = {},
-                                           .step_timer = {}})) {}
+                                           .step_timer = {},
+                                           .alive = {}})) {}
 
-ShutdownCoordinator::~ShutdownCoordinator() = default;
+ShutdownCoordinator::~ShutdownCoordinator() { state_->alive.cancel(CancelReason::Shutdown); }
 
 void ShutdownCoordinator::set_action(ShutdownStep step, ShutdownAction action) {
     if (state_->cause) return;
@@ -116,7 +126,7 @@ void ShutdownCoordinator::run(ShutdownCause cause, UniqueFunction<void(const Shu
     state_->cause = cause;
     state_->report.cause = cause;
     state_->started_at = state_->clock.steady_now();
-    state_->strand.post([state = state_.get()] { state->run_step(); });
+    state_->post([state = state_.get()] { state->run_step(); });
 }
 
 bool ShutdownCoordinator::started() const noexcept { return state_->cause.has_value(); }

@@ -32,6 +32,7 @@ public:
     [[nodiscard]] std::unique_ptr<ports::ChildProcess> make_handle();
 
     [[nodiscard]] u32 pid() const noexcept { return pid_; }
+    [[nodiscard]] std::chrono::system_clock::time_point created() const noexcept { return created_; }
     [[nodiscard]] const ports::ProcessLaunch& launch() const noexcept { return launch_; }
 
     // Nothing is delivered after exit().

@@ -52,7 +52,8 @@ private:
 };
 
 // The one process-wide service. A bounded MPSC queue feeds a single writer thread; when it is
-// full, GameOutput, Wine, Debug and Trace records drop first (counted). Warn and above never drop.
+// full, GameOutput, Wine, Debug and Trace records drop first (counted). Warn and above never drop;
+// past twice the budget their producers wait for the writer.
 class Logger {
 public:
     static void install(std::size_t byte_budget);
@@ -66,6 +67,9 @@ public:
     static void flush();
     // Drains the queue synchronously and stops the writer.
     static void shutdown();
+    // The std::terminate path: on the calling thread, writes the queue then one Error line to the sinks
+    // and flushes them, never waiting on the writer for long.
+    static void drain_for_terminate(LogCategory category, std::string text) noexcept;
 };
 
 }  // namespace reboot

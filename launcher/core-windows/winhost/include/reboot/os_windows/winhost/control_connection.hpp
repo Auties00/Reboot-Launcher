@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -73,6 +74,7 @@ private:
 
     std::uintptr_t socket_;
     std::mutex send_mutex_;
+    std::atomic<bool> shut_{false};
 };
 
 }  // namespace reboot::os_windows::winhost

@@ -62,9 +62,8 @@ inline constexpr std::chrono::milliseconds kUnregisterAckWait{2000};
 //   Superseded with a HostedElsewhere notice and stops publishing.
 // - BAD_REQUEST names the field; it is mapped to a known field id, never shown as the edge's text.
 // - An unreachable edge leaves the session running and "not listed" (Retrying).
-// Legacy parity: 10.0.9's published flag is the Registered phase; its startup discard is not needed
-// because the edge drops an entry once its connection closes (15 s grace); its dead republish is
-// replaced by live HostUpdate; its discoverable key is the Listing.
+// - Being published is the Registered phase. Nothing is discarded at startup: the edge drops an
+//   entry once its connection closes (15 s grace). Discoverability is the Listing.
 class HostPublisher {
 public:
     HostPublisher(ports::IQuicTransport& quic, HostIdentityStore& identities, IPublishNoticeSink& notices,

@@ -81,7 +81,8 @@ struct DownloadResult {
 // known, otherwise on the first response. Strand-only. The transport thread only copies body
 // chunks into a write queue that the WorkerPool drains, so a slow disk never stalls other
 // transfers. A queue past kDownloadWriteBacklog aborts the stream, and once it drains the download
-// resumes at the written offset without spending an attempt.
+// resumes at the written offset without spending an attempt. The part file is a plain file stream;
+// the sidecar goes through IFileSystem's atomic replace.
 class ResumableDownloader {
 public:
     ResumableDownloader(HttpClient& http, ports::IDiskInfo& disk, ports::IFileSystem& fs, WorkerPool& workers,

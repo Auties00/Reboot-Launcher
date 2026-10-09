@@ -8,6 +8,7 @@ REBOOT_MESSAGE_DECL(kInvalidEndpointOverride);
 REBOOT_MESSAGE_DECL(kOffline);
 REBOOT_MESSAGE_DECL(kServiceDown);
 REBOOT_MESSAGE_DECL(kEdgeUnreachable);
+REBOOT_MESSAGE_DECL(kUdpBlocked);
 REBOOT_MESSAGE_DECL(kRequestInvalid);
 REBOOT_MESSAGE_DECL(kRequestUnsupported);
 REBOOT_MESSAGE_DECL(kEdgeInternalError);
@@ -29,8 +30,11 @@ REBOOT_MESSAGE_DECL(kJoinVersionMismatch);
 REBOOT_MESSAGE_DECL(kTooManyJoinAttempts);
 REBOOT_MESSAGE_DECL(kUnsupportedAddressFamily);
 REBOOT_MESSAGE_DECL(kJoinRefused);
+REBOOT_MESSAGE_DECL(kInvalidAnswer);
+REBOOT_MESSAGE_DECL(kJoinPasswordMissing);
 REBOOT_MESSAGE_DECL(kInvalidLink);
 REBOOT_MESSAGE_DECL(kLinkNotFound);
 REBOOT_MESSAGE_DECL(kTargetUnreachable);
+REBOOT_MESSAGE_DECL(kAddressCheckCancelled);
 
 }  // namespace reboot::browser

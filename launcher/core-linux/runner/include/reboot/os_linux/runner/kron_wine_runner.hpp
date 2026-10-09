@@ -1,9 +1,6 @@
 #pragma once
 
-#include <string>
 #include <string_view>
-#include <utility>
-#include <vector>
 
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
@@ -18,8 +15,6 @@ struct KronWineRunner {
     static constexpr std::string_view kWineLoader = "bin/wine";
     static constexpr std::string_view kWineServer = "bin/wineserver";
     static constexpr std::string_view kWindowsDllDir = "lib/wine/x86_64-windows";
-    // Keeps Wine from writing .desktop launchers and MIME entries into the user's menus.
-    static constexpr std::string_view kDllOverrides = "winemenubuilder.exe=d";
 
     NativePath root;
     NativePath wine;
@@ -28,9 +23,7 @@ struct KronWineRunner {
     // platform.linux_runtime_read_failed.
     [[nodiscard]] static Result<KronWineRunner> resolve(const NativePath& runtime_dir);
 
-    // WINEDLLOVERRIDES=kDllOverrides.
-    [[nodiscard]] std::vector<std::pair<std::string, std::string>> env() const;
-
+    // No variables of its own: compat's runner layer sets WINEDLLOVERRIDES for every Wine runner.
     [[nodiscard]] ports::RuntimeLayout to_runtime_layout() const;
 };
 

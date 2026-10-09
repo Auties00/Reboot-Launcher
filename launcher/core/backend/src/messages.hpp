@@ -20,6 +20,10 @@ REBOOT_MESSAGE_DECL(kRemoteLoginFailed);
 REBOOT_MESSAGE_DECL(kExchangeCodeFailed);
 REBOOT_MESSAGE_DECL(kReconfiguring);
 REBOOT_MESSAGE_DECL(kRemoteAddressMissing);
+REBOOT_MESSAGE_DECL(kCancelled);
+REBOOT_MESSAGE_DECL(kStoppedBeforeReady);
+REBOOT_MESSAGE_DECL(kAnswerInvalid);
+REBOOT_MESSAGE_DECL(kPathNotUtf8);
 
 }  // namespace reboot::backend::msg
 

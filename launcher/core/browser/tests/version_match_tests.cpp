@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <fstream>
@@ -10,6 +9,7 @@
 #include "reboot/browser/version_match.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/version.hpp"
+#include "registry/validation.hpp"
 
 using namespace reboot;
 using namespace reboot::browser;
@@ -22,7 +22,7 @@ struct GoldenBucket {
 };
 
 std::vector<GoldenBucket> read_golden() {
-    std::ifstream stream(std::string(REBOOT_BROWSER_TEST_DATA) + "/legacy_version_buckets.txt");
+    std::ifstream stream(std::string(REBOOT_BROWSER_TEST_DATA) + "/catalog_version_buckets.txt");
     REQUIRE(stream);
     std::vector<GoldenBucket> out;
     for (std::string line; std::getline(stream, line);) {
@@ -41,42 +41,28 @@ GameVersion version(std::string_view text) {
     return *parsed;
 }
 
-bool contains(const std::vector<u32>& buckets, u32 bucket) {
-    return std::ranges::find(buckets, bucket) != buckets.end();
-}
-
 }  // namespace
 
-// server-browser-migration §5: every version 10.0.9 knew lands in the bucket the edge computes.
-TEST_CASE("every 10.0.9 catalog and CL-map version maps to its golden bucket", "[browser]") {
+// Every version our catalog names lands in the bucket the edge computes for that string.
+TEST_CASE("every catalog version maps to its golden bucket", "[browser]") {
     const auto golden = read_golden();
-    REQUIRE(golden.size() == 127);
+    REQUIRE(golden.size() == 116);
     for (const auto& row : golden) {
         INFO(row.version);
         const GameVersion parsed = version(row.version);
+        CHECK(sb::registry::version_bucket(row.version) == row.bucket);
         CHECK(parsed.bucket() == row.bucket);
-        CHECK(buckets_for(parsed).front() == row.bucket);
+        CHECK(buckets_for(parsed) == std::vector<u32>{row.bucket});
     }
 }
 
-TEST_CASE("an aliased build also subscribes to its other spelling's bucket", "[browser]") {
-    const auto five = buckets_for(version("5.01"));
-    CHECK(contains(five, version("5.01").bucket()));
-    CHECK(contains(five, version("5.0.1").bucket()));
-
-    const auto six = buckets_for(version("6.0.2"));
-    CHECK(contains(six, version("6.02").bucket()));
-    CHECK(contains(six, version("6.0.2").bucket()));
-
-    CHECK(buckets_for(version("8.51")).size() == 1);
-}
-
-TEST_CASE("versions match exactly or through the two 10.x aliases", "[browser]") {
+TEST_CASE("versions match exactly", "[browser]") {
     CHECK(same_game_version("8.51", version("8.51")));
-    CHECK(same_game_version("5.01", version("5.0.1")));
-    CHECK(same_game_version("5.0.1", version("5.01")));
-    CHECK(same_game_version("6.02", version("6.0.2")));
+    CHECK(same_game_version("5.01", version("5.1")));
     CHECK_FALSE(same_game_version("8.50", version("8.51")));
-    CHECK_FALSE(same_game_version("5.10", version("5.0.1")));
+    CHECK_FALSE(same_game_version("8.51.1", version("8.51")));
+    CHECK_FALSE(same_game_version("5.0.1", version("5.01")));
+    CHECK_FALSE(same_game_version("6.0.2", version("6.02")));
     CHECK_FALSE(same_game_version("Cert", version("8.51")));
+    CHECK_FALSE(same_game_version("12.41-CL-12905909", version("12.41")));
 }

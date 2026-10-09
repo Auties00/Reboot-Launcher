@@ -55,6 +55,8 @@ public:
     void send(const T& message) {
         write(IpcCodec::encode(message));
     }
+    // A frame IpcCodec::encode produced.
+    void send_frame(contracts::ipc::Bytes frame);
     // The Reply to a SecretReveal; its frame is wiped once written.
     void reply_secret(u64 req_id, SecretBytes secret);
     // Ends one outstanding Call or Start.
@@ -77,7 +79,9 @@ public:
     void close(contracts::ipc::GoodbyeReason reason);
 
 private:
+    void deliver(ClientMessage message);
     void write(contracts::ipc::Bytes frame);
+    void report_closed();
 
     struct Impl;
     std::unique_ptr<Impl> impl_;

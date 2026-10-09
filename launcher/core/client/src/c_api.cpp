@@ -78,20 +78,7 @@ rb_status rb_ctx_create(const rb_ctx_options* options, rb_ctx** out) noexcept {
         if (!settings) return fail(settings.error());
         auto runtime = ClientRuntime::create();
         if (!runtime) return fail(runtime.error());
-        auto context = ClientContext::create((*runtime)->deps(), std::move(*settings));
-        if (!context) return fail(context.error());
-
-        CompletionLatch<Result<Connected>> latch;
-        (*context)->connect([&latch](Result<Connected> connected) { latch.set(std::move(connected)); });
-        Result<Connected> connected = latch.wait();
-        if (!connected) {
-            (*context)->close();
-            (*runtime)->stop();
-            return fail(connected.error());
-        }
-        if (connected->image_warning) set_last_error(reboot::contracts::common::to_wire(*connected->image_warning));
-        *out = new rb_ctx{std::move(*runtime), std::move(*context)};
-        return RB_OK;
+        return open_context(std::move(*runtime), std::move(*settings), out);
     });
 }
 

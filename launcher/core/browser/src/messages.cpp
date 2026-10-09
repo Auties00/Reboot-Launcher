@@ -7,6 +7,8 @@ REBOOT_MESSAGE(kInvalidEndpointOverride, "browser.invalid_endpoint_override",
 REBOOT_MESSAGE(kOffline, "browser.offline", "This computer appears to be offline");
 REBOOT_MESSAGE(kServiceDown, "browser.service_down", "The server browser at {host} is down");
 REBOOT_MESSAGE(kEdgeUnreachable, "browser.edge_unreachable", "Could not connect to the server browser at {host}");
+REBOOT_MESSAGE(kUdpBlocked, "browser.udp_blocked",
+               "The server browser at {host} answers over HTTPS, but its UDP traffic appears to be blocked");
 
 REBOOT_MESSAGE(kRequestInvalid, "browser.request_invalid", "The server browser rejected a request from this launcher");
 REBOOT_MESSAGE(kRequestUnsupported, "browser.request_unsupported",
@@ -17,7 +19,7 @@ REBOOT_MESSAGE(kRateLimited, "browser.rate_limited",
                "Too many requests to the server browser; try again in {retry_after}");
 REBOOT_MESSAGE(kNotConnected, "browser.not_connected", "The server browser is not connected yet");
 REBOOT_MESSAGE(kConnectionLost, "browser.connection_lost", "The connection to the server browser was lost");
-REBOOT_MESSAGE(kRequestTimeout, "browser.request_timeout", "The server browser did not answer within {limit}");
+REBOOT_MESSAGE(kRequestTimeout, "browser.request_timeout", "The server browser did not answer in time");
 REBOOT_MESSAGE(kRequestCancelled, "browser.request_cancelled", "The request to the server browser was cancelled");
 
 REBOOT_MESSAGE(kInvalidViewSpec, "browser.invalid_view_spec", "The server list filter is not valid: {field}");
@@ -36,11 +38,14 @@ REBOOT_MESSAGE(kTooManyJoinAttempts, "browser.too_many_join_attempts",
 REBOOT_MESSAGE(kUnsupportedAddressFamily, "browser.unsupported_address_family",
                "{address} is reachable only over IPv6, which the game cannot use");
 REBOOT_MESSAGE(kJoinRefused, "browser.join_refused", "Joining the server was cancelled");
+REBOOT_MESSAGE(kInvalidAnswer, "browser.invalid_answer", "This answer does not fit the question that was asked");
+REBOOT_MESSAGE(kJoinPasswordMissing, "browser.join_password_missing", "No password was entered for this server");
 
 REBOOT_MESSAGE(kInvalidLink, "browser.invalid_link", "{link} is not a server link");
 REBOOT_MESSAGE(kLinkNotFound, "browser.link_not_found", "This link leads to no server: the server is gone");
 
 REBOOT_MESSAGE(kTargetUnreachable, "browser.target_unreachable",
                "{address} did not answer; the server may be offline or may not answer probes");
+REBOOT_MESSAGE(kAddressCheckCancelled, "browser.address_check_cancelled", "Checking {address} was cancelled");
 
 }  // namespace reboot::browser

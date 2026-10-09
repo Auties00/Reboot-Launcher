@@ -69,6 +69,9 @@ struct ComponentStoreDeps {
 //   Only a file still missing, unreadable or mismatched is re-fetched and published as a
 //   ComponentChangedEvent carrying a ComponentProblem; a file in use raises none.
 // - ISecurityProductProbe is asked only for a missing or access-denied file.
+// - An index.json of a newer schema leaves the store read-only for the run: it fetches what it
+//   needs, but collects, removes and rewrites nothing (start_remove fails with
+//   components.store_failed).
 class ComponentStore {
 public:
     ComponentStore(ComponentStoreDeps deps, const AppLayout& layout);

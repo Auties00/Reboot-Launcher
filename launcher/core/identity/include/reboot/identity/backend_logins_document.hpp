@@ -26,7 +26,8 @@ struct EnumNames<identity::CredentialPolicy> {
 namespace reboot::identity {
 
 // Capabilities: profile-identity.credentials.
-// data/backend-logins.json, a storage::Document. An entry equal to the defaults is not kept.
+// data/backend-logins.json, a storage::Document. An entry equal to the defaults, with no unknown
+// members, is not kept.
 struct BackendLoginsDocument {
     static constexpr std::string_view kName = "backend-logins";
     static constexpr u32 kSchema = 1;
@@ -34,8 +35,8 @@ struct BackendLoginsDocument {
     std::vector<BackendLogin> logins;
     boost::json::object unknown;
 
-    // An entry with a bad endpoint, an empty login or an endpoint already read is dropped with a
-    // ValueIssue.
+    // An entry with a bad endpoint, a bad or empty login or an endpoint already read is dropped
+    // with a ValueIssue; a bad policy reads as Ticket with one.
     [[nodiscard]] static BackendLoginsDocument read(const boost::json::object& values,
                                                     std::vector<storage::ValueIssue>& issues);
     [[nodiscard]] boost::json::object write() const;

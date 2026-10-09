@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "reboot/foundation/cancel.hpp"
+#include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/function.hpp"
@@ -33,11 +34,13 @@ struct FakeHttpResponse {
 };
 
 // Covers no capability ids (decision testing-strategy).
-// IHttpTransport over canned responses posted to `deliver_on` on manual time; on_done runs exactly
-// once per perform(), and an unrouted request fails with testing.no_http_route.
+// IHttpTransport over canned responses posted to `deliver_on` on `clock`'s time; on_done runs exactly
+// once per perform(), and an unrouted request fails with testing.no_http_route. A request's
+// connect_timeout bounds the delay, total_timeout the whole answer and its StallPolicy a stalled body,
+// failing with the net.connect_timeout, net.request_timeout and net.transfer_stalled the real one uses.
 class FakeHttpTransport final : public ports::IHttpTransport {
 public:
-    explicit FakeHttpTransport(Executor& deliver_on);
+    FakeHttpTransport(Executor& deliver_on, const IClock& clock);
     ~FakeHttpTransport() override;
     FakeHttpTransport(const FakeHttpTransport&) = delete;
     FakeHttpTransport& operator=(const FakeHttpTransport&) = delete;

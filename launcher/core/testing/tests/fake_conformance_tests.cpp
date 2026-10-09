@@ -51,6 +51,14 @@ TEST_CASE("FakePlatformPaths passes the platform paths suite", "[testing][confor
     paths.set_install_kind(ports::InstallKind::Velopack);
     paths.set_velopack_package_dir(paths.base() / "velopack");
     require_passed(run_platform_paths_conformance(paths));
+
+    paths.set_install_kind(ports::InstallKind::AppBundle);
+    require_passed(run_platform_paths_conformance(paths));
+    paths.set_install_kind(ports::InstallKind::Portable);
+    CHECK_FALSE(run_platform_paths_conformance(paths).passed());
+    paths.set_install_kind(ports::InstallKind::Velopack);
+    paths.set_velopack_package_dir(std::nullopt);
+    CHECK_FALSE(run_platform_paths_conformance(paths).passed());
 }
 
 TEST_CASE("FakeSecretStore passes the secret store suite", "[testing][conformance]") {

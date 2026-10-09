@@ -2,11 +2,14 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 #include <variant>
 
@@ -30,6 +33,7 @@ using reboot::os_linux::runner::SlrBuild;
 using reboot::os_linux::runner::SlrSetup;
 using reboot::os_linux::runner::UmuInvocation;
 using reboot::ports::RunnerKind;
+using namespace std::chrono_literals;
 
 namespace {
 
@@ -40,6 +44,7 @@ constexpr std::string_view kFakeUmuRun = R"(#!/bin/sh
 echo "runtime update $UMU_RUNTIME_UPDATE"
 [ "$#" -eq 1 ] && [ -z "$1" ] || exit 9
 [ "$UMU_RUNTIME_UPDATE" = 1 ] && [ -d "$WINEPREFIX" ] || exit 8
+: > "$UMU_FOLDERS_PATH/started"
 [ -n "$FAKE_SLEEP" ] && exec sleep 30
 mkdir -p "$UMU_FOLDERS_PATH/steamrt3"
 printf 'depot\t0.20240806.99006\t-\t-\n' > "$UMU_FOLDERS_PATH/steamrt3/VERSIONS.txt"
@@ -193,9 +198,35 @@ TEST_CASE("a cancelled setup kills umu-run", "[runner_conformance]") {
     reboot::os_linux::platform::PidfdProcessLauncher processes{std::nullopt};
     SlrSetup setup{processes, base_env(std::pair{"FAKE_SLEEP", "1"}), dir.path() / "folders"};
     reboot::CancelSource cancel;
-    cancel.cancel(reboot::CancelReason::User);
 
-    const auto build = setup.run(layout, cancel.token());
+    auto running = std::async(std::launch::async, [&] { return setup.run(layout, cancel.token()); });
+    const auto give_up = std::chrono::steady_clock::now() + 10s;
+    while (!fs::exists(dir.path() / "folders" / "started") && std::chrono::steady_clock::now() < give_up)
+        std::this_thread::sleep_for(10ms);
+    REQUIRE(fs::exists(dir.path() / "folders" / "started"));
+    cancel.cancel(reboot::CancelReason::User);
+    // The fake sleeps 30 s, so only the kill ends it this soon.
+    REQUIRE(running.wait_for(10s) == std::future_status::ready);
+
+    const auto build = running.get();
     REQUIRE_FALSE(build);
     CHECK(build.error().is(reboot::os_linux::runner::kSlrSetupCancelled));
+    CHECK_FALSE(fs::exists(dir.path() / "folders" / SlrSetup::kScratchPrefix));
+}
+
+TEST_CASE("a tool manifest that is a directory is a read failure", "[runner_conformance]") {
+    const auto dir = scratch();
+    fs::create_directories(dir.path() / "proton" / "toolmanifest.vdf");
+    const auto build = SlrBuild::read(dir.path() / "proton", dir.path() / "folders");
+    REQUIRE_FALSE(build);
+    CHECK(build.error().is(reboot::os_linux::runner::kRuntimeReadFailed));
+}
+
+TEST_CASE("a dangling symlink in a runtime is no read failure", "[runner_conformance]") {
+    const auto dir = scratch();
+    fs::create_directories(dir.path() / "wine");
+    fs::create_symlink(dir.path() / "gone", dir.path() / "wine" / "dangling");
+    const auto runner = KronWineRunner::resolve(dir.path() / "wine");
+    REQUIRE_FALSE(runner);
+    CHECK(runner.error().is(reboot::os_linux::runner::kWineMissing));
 }

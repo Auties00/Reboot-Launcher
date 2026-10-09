@@ -23,6 +23,8 @@ namespace {
 [[nodiscard]] u16 port_value(const HostError& error) { return error.port ? error.port->value : u16{0}; }
 
 [[nodiscard]] Diagnostic finish(const HostError& error, DiagBuilder&& builder, ErrorKind kind) {
+    if (error.os_error) std::move(builder).os(*error.os_error);
+    if (error.detail) std::move(builder).detail(*error.detail);
     if (error.cause) std::move(builder).cause(*error.cause);
     return std::move(builder).kind(kind).build();
 }
@@ -103,6 +105,17 @@ Diagnostic to_diagnostic(const HostError& error) {
             return finish(error, diag(msg::kNotListening).arg("session", session_text(error)).retryable(),
                           ErrorKind::Conflict);
         case BuildAndVersion: return finish(error, diag(msg::kBuildAndVersion), ErrorKind::InvalidInput);
+        case BlockInUse:
+            return finish(error, diag(msg::kBlockInUse).arg("port", port_value(error)).retryable(), ErrorKind::Conflict);
+        case Cancelled: return finish(error, diag(msg::kCancelled), ErrorKind::Cancelled);
+        case UntestedDeclined: return finish(error, diag(msg::kUntestedDeclined), ErrorKind::Cancelled);
+        case InvalidAnswer: return finish(error, diag(msg::kInvalidAnswer), ErrorKind::InvalidInput);
+        case ListenFailed:
+            return finish(error, diag(msg::kListenFailed).arg("port", port_value(error)), ErrorKind::Conflict);
+        case ServerExited:
+            return finish(error, diag(msg::kServerExited).arg("code", error.exit_code.value_or(0)), ErrorKind::Generic);
+        case ServerFatal: return finish(error, diag(msg::kServerFatal).arg("code", error.name), ErrorKind::Generic);
+        case ServerUnresponsive: return finish(error, diag(msg::kServerUnresponsive), ErrorKind::Generic);
     }
     return internal_bug("host_error.to_diagnostic");
 }

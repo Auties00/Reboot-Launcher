@@ -90,6 +90,15 @@ private:
     std::vector<std::string> known_;
 };
 
+// required() for a record whose unknown members are kept: the member counts as known.
+template <class Decode>
+[[nodiscard]] auto required(MemberReader& reader, std::string_view name, Decode&& decode)
+    -> decltype(decode(std::declval<const boost::json::value&>())) {
+    const boost::json::value* raw = reader.find(name);
+    if (raw == nullptr) return std::unexpected(missing_member(name));
+    return decode(*raw);
+}
+
 // Adds the members of `unknown` that `out` does not already have.
 void append_unknown(boost::json::object& out, const boost::json::object& unknown);
 

@@ -174,10 +174,14 @@ public:
 
 private:
     void dispatch(EventEnvelope event);
+    void deliver(const EventEnvelope& event);
 
     EngineEpoch epoch_;
     u64 next_seq_ = 1;
     std::vector<std::weak_ptr<Subscription>> subscriptions_;
+    // Events published from a notify callback wait here, so every queue receives seq in order.
+    std::deque<EventEnvelope> deferred_;
+    bool dispatching_ = false;
 };
 
 }  // namespace reboot

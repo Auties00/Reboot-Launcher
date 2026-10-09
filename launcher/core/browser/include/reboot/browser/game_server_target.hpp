@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 #include <optional>
 #include <string_view>
 
@@ -51,6 +52,7 @@ public:
 
     GameServerTarget(net::AddressResolver& resolver, net::UdpBeaconProber& prober, OpRegistry& ops, EventBus& events,
                      std::optional<JoinTarget> loaded, Persist persist);
+    ~GameServerTarget();
     GameServerTarget(const GameServerTarget&) = delete;
     GameServerTarget& operator=(const GameServerTarget&) = delete;
 
@@ -73,6 +75,10 @@ private:
     // Cancels a pending start_set_custom with Superseded, so a slower lookup cannot land last.
     void supersede_pending();
     void adopt(std::optional<JoinTarget> target);
+    // Resolves to the first IPv4 address, hands it to `resolved`, then probes it unless local.
+    [[nodiscard]] Result<void> check(const HostPort& address, CancelToken token,
+                                     UniqueFunction<void(const Endpoint&)> resolved,
+                                     UniqueFunction<void(Result<CheckedAddress>)> done);
 
     net::AddressResolver& resolver_;
     net::UdpBeaconProber& prober_;
@@ -81,6 +87,8 @@ private:
     Persist persist_;
     std::optional<JoinTarget> current_;
     std::optional<OpId> pending_set_;
+    // Cleared on destruction; resolver and prober callbacks that arrive later do nothing.
+    std::shared_ptr<GameServerTarget*> self_;
 };
 
 }  // namespace reboot::browser

@@ -18,12 +18,15 @@ public:
 
     // %LOCALAPPDATA%\Reboot Launcher.
     [[nodiscard]] NativePath default_data_root() const override;
+    // <data root>\cache.
     [[nodiscard]] NativePath default_cache_root() const override;
+    // <data root>\logs.
     [[nodiscard]] NativePath default_logs_root() const override;
     // Always empty: the engine endpoint is a named pipe.
     [[nodiscard]] NativePath ipc_runtime_base() const override;
     // reboot_client.dll's directory, where reboot-engine.exe ships, not the host exe's.
     [[nodiscard]] NativePath exe_dir() const override;
+    // Velopack when velopack_root_of(exe_dir) finds the layout, Portable otherwise.
     [[nodiscard]] ports::InstallKind install_kind() const override;
     [[nodiscard]] std::optional<NativePath> velopack_package_dir() const override;
 

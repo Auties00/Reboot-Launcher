@@ -52,6 +52,26 @@ TEST_CASE("fit_metadata cuts long text on a code point boundary", "[publish]") {
     CHECK(fitted->author.size() == kMaxAuthorBytes);
 }
 
+TEST_CASE("fit_metadata and fit_patch send no tab, which the edge refuses", "[publish]") {
+    HostMetadata metadata = valid_metadata();
+    metadata.name = "Reboot\tserver";
+    metadata.description = "Arena\tEU";
+    metadata.author = "Host\t1";
+    const auto fitted = fit_metadata(std::move(metadata));
+    REQUIRE(fitted);
+    CHECK(fitted->name == "Reboot server");
+    CHECK(fitted->description == "Arena EU");
+    CHECK(fitted->author == "Host 1");
+
+    MetadataPatch patch;
+    patch.name = "New\tname";
+    patch.description = "\t";
+    const auto patched = fit_patch(std::move(patch));
+    REQUIRE(patched);
+    CHECK(*patched->name == "New name");
+    CHECK(*patched->description == " ");
+}
+
 TEST_CASE("fit_metadata refuses an empty name and too many players", "[publish]") {
     HostMetadata unnamed = valid_metadata();
     unnamed.name.clear();

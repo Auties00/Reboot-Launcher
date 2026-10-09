@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "reboot/engine/engine_command_line.hpp"
+#include "reboot/ports/ipc.hpp"
 #include "reboot/ports/platform_services.hpp"
 
 namespace reboot::engine {
@@ -11,7 +12,11 @@ namespace reboot::engine {
 // data root exits 0. state/spawn.lock belongs to the clients, and the engine never takes it.
 class EngineHost {
 public:
-    EngineHost(EngineCommandLine command_line, ports::PlatformServices platform);
+    // `platform.ipc_listener` is required. `self` is the user the endpoint is named after.
+    // `self_test` reaches the engine's own endpoint for a pending update's self-test; without
+    // one that self-test fails, and the update is retried or rolled back.
+    EngineHost(EngineCommandLine command_line, ports::PlatformServices platform, ports::PeerIdentity self,
+               std::unique_ptr<ports::IIpcConnector> self_test);
     ~EngineHost();
     EngineHost(const EngineHost&) = delete;
     EngineHost& operator=(const EngineHost&) = delete;

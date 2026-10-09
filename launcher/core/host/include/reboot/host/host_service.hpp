@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "reboot/foundation/diag.hpp"
@@ -88,6 +89,8 @@ struct HostServiceOptions {
     ReadinessPolicy readiness;
     // Between Shutdown{grace} and the kill, for a stop and for a respawn.
     std::chrono::milliseconds stop_grace = default_deadline(OpKind::GracefulStop);
+    // Published for a profile with an empty server name; the engine passes the localized default.
+    std::string default_server_name;
 };
 
 struct HostServiceDeps {

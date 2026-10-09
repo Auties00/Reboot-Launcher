@@ -18,5 +18,7 @@ REBOOT_MESSAGE_DECL(kAgentRegisterFailed);
 REBOOT_MESSAGE_DECL(kAgentRegisterTimedOut);
 REBOOT_MESSAGE_DECL(kAgentKickstartFailed);
 REBOOT_MESSAGE_DECL(kAgentKickstartTimedOut);
+REBOOT_MESSAGE_DECL(kHomeUnavailable);
+REBOOT_MESSAGE_DECL(kImageUnresolved);
 
 }  // namespace reboot::os_macos::ipc

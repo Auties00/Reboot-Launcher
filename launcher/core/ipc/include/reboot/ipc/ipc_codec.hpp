@@ -51,12 +51,17 @@ public:
     }
     [[nodiscard]] static contracts::ipc::Bytes encode(const ClientMessage& message);
     [[nodiscard]] static contracts::ipc::Bytes encode(const EngineMessage& message);
+    // False for a frame whose payload the receiving codec refuses as over kIpcFrameCap.
+    [[nodiscard]] static bool fits_frame_cap(std::span<const u8> frame) noexcept;
 
     // Secret frames are written into a buffer sized up front, so encoding never reallocates.
     [[nodiscard]] static SecretBytes encode_secret_put(std::span<const u8> target, const SecretBytes& secret);
     [[nodiscard]] static SecretBytes encode_secret_reply(u64 req_id, const SecretBytes& secret);
 
 private:
+    template <class Message, class Decode>
+    Result<std::vector<Message>> feed(std::span<const u8> bytes, Decode decode);
+
     Framer framer_;
     // Holds partial frames itself so the Framer never buffers a copy; consumed bytes are wiped.
     WipedBytes pending_;

@@ -27,6 +27,7 @@ enum class FsOperation : u8 {
     Revision,
     CreateDirsOwnerOnly,
     RemoveTree,
+    ReadShared,
 };
 
 // Covers no capability ids (decision testing-strategy).
@@ -50,12 +51,15 @@ public:
     Result<void> restrict_to_owner(const NativePath& path) override;
     Result<ports::HeldFile> open_deny_write(const NativePath& path) override;
     Result<ports::FileRevision> revision(const NativePath& path) override;
+    Result<ports::SharedRead> read_shared(const NativePath& path, u64 offset, std::size_t max_bytes) override;
     Result<void> create_dirs_owner_only(const NativePath& path) override;
     Result<void> remove_tree(const NativePath& path) override;
 
     // Setup and inspection. They create missing parents and ignore faults and locks.
     void write(const NativePath& path, std::span<const u8> bytes);
     void write_text(const NativePath& path, std::string_view text);
+    // Grows a file in place, keeping its id, as a writer holding it open does; creates it when missing.
+    void append(const NativePath& path, std::span<const u8> bytes);
     void make_dir(const NativePath& path);
     void make_symlink(const NativePath& link, const NativePath& target);
     [[nodiscard]] std::optional<std::vector<u8>> contents(const NativePath& path) const;

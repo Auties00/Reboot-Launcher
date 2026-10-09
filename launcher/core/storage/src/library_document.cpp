@@ -21,26 +21,74 @@ namespace {
     return name;
 }
 
+[[nodiscard]] Result<std::vector<NativePath>> paths_from_json(const json::value& raw) {
+    const json::array* array = raw.if_array();
+    if (array == nullptr) return std::unexpected(wrong_type("array"));
+    std::vector<NativePath> paths;
+    for (const json::value& element : *array) {
+        Result<NativePath> path = path_from_json(element);
+        if (!path) return std::unexpected(std::move(path.error()));
+        paths.push_back(std::move(*path));
+    }
+    return paths;
+}
+
+[[nodiscard]] json::array paths_to_json(const std::vector<NativePath>& paths) {
+    json::array out;
+    for (const NativePath& path : paths) out.emplace_back(path_to_json(path));
+    return out;
+}
+
+[[nodiscard]] Result<LibraryLayout> layout_from_json(const json::value& raw) {
+    Result<const json::object*> object = object_from_json(raw);
+    if (!object) return std::unexpected(std::move(object.error()));
+    Result<NativePath> shipping = required(**object, "shipping_exe", path_from_json);
+    if (!shipping) return std::unexpected(std::move(shipping.error()));
+    LibraryLayout layout{.shipping_exe = std::move(*shipping)};
+    std::vector<ValueIssue> issues;
+    MemberReader reader(**object, issues);
+    reader.read_optional("launcher_exe", layout.launcher_exe, path_from_json);
+    reader.read_optional("eac_exe", layout.eac_exe, path_from_json);
+    reader.read("crash_report_clients", layout.crash_report_clients, paths_from_json);
+    reader.read("aftermath_dlls", layout.aftermath_dlls, paths_from_json);
+    // A layout is only a cache of a walk, so a damaged one is dropped whole rather than half kept.
+    if (!issues.empty()) return std::unexpected(std::move(issues.front().reason));
+    return layout;
+}
+
+[[nodiscard]] json::object layout_to_json(const LibraryLayout& layout) {
+    json::object out;
+    out.emplace("shipping_exe", path_to_json(layout.shipping_exe));
+    if (layout.launcher_exe) out.emplace("launcher_exe", path_to_json(*layout.launcher_exe));
+    if (layout.eac_exe) out.emplace("eac_exe", path_to_json(*layout.eac_exe));
+    out.emplace("crash_report_clients", paths_to_json(layout.crash_report_clients));
+    out.emplace("aftermath_dlls", paths_to_json(layout.aftermath_dlls));
+    return out;
+}
+
 [[nodiscard]] Result<LibraryEntry> entry_from_json(const json::value& raw, const std::string& path,
                                                    std::vector<ValueIssue>& issues) {
     Result<const json::object*> object = object_from_json(raw);
     if (!object) return std::unexpected(std::move(object.error()));
-    Result<BuildId> id = required(**object, "id", id_from_json<BuildTag>);
+    MemberReader reader(**object, issues, path + ".");
+    Result<BuildId> id = required(reader, "id", id_from_json<BuildTag>);
     if (!id) return std::unexpected(std::move(id.error()));
-    Result<std::string> name = required(**object, "name", name_from_json);
+    Result<std::string> name = required(reader, "name", name_from_json);
     if (!name) return std::unexpected(std::move(name.error()));
-    Result<NativePath> root = required(**object, "root", path_from_json);
+    Result<NativePath> root = required(reader, "root", path_from_json);
     if (!root) return std::unexpected(std::move(root.error()));
 
     LibraryEntry entry{.id = *id, .name = std::move(*name), .root = std::move(*root)};
-    MemberReader reader(**object, issues, path + ".");
     reader.read_optional("version", entry.version, game_version_from_json);
     reader.read_optional("changelist", entry.changelist, [](const json::value& value) {
         return u32_from_json(value).transform([](u32 number) { return Changelist{number}; });
     });
+    reader.read_optional("version_source", entry.version_source, string_from_json);
     reader.read_optional("catalog_entry", entry.catalog_entry, string_from_json);
+    reader.read_optional("layout", entry.layout, layout_from_json);
     reader.read("added_at", entry.added_at, time_from_json);
     reader.read("needs_relocation", entry.needs_relocation, bool_from_json);
+    entry.unknown = reader.unknown();
     return entry;
 }
 
@@ -51,9 +99,12 @@ namespace {
     out.emplace("root", path_to_json(entry.root));
     if (entry.version) out.emplace("version", game_version_to_json(*entry.version));
     if (entry.changelist) out.emplace("changelist", entry.changelist->value);
+    if (entry.version_source) out.emplace("version_source", *entry.version_source);
     if (entry.catalog_entry) out.emplace("catalog_entry", *entry.catalog_entry);
+    if (entry.layout) out.emplace("layout", layout_to_json(*entry.layout));
     out.emplace("added_at", time_to_json(entry.added_at));
     out.emplace("needs_relocation", entry.needs_relocation);
+    append_unknown(out, entry.unknown);
     return out;
 }
 

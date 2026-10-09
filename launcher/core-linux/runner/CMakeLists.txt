@@ -9,14 +9,15 @@ reboot_add_package(os_linux/runner
     src/make_runner_platform.cpp
     src/messages.cpp
     src/runtime_files.cpp
+    src/runner_platform_port.cpp
     src/slr_build.cpp
     src/slr_setup.cpp
     src/umu_invocation.cpp
   DEPS
     reboot::posix)
 
-# Real-filesystem and real-process suite (runtime resolution, SLR build reading, the setup run
-# through PidfdProcessLauncher); runs on the Linux CI runner only.
+# Real-filesystem and real-process suite (runtime resolution, SLR build reading, the setup run through a scripted
+# umu-run and through PidfdProcessLauncher); runs on the Linux CI runner only.
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND REBOOT_BUILD_TESTS)
   file(GLOB conformance_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/conformance/*.cpp")
   if(conformance_sources)

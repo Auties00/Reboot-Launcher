@@ -5,7 +5,7 @@
 namespace reboot::browser {
 
 // The server ids this user publishes; the engine wires it to the host identities. Lists leave
-// them out and joins refuse them, as 10.0.9 did.
+// them out and joins refuse them.
 class IOwnServers {
 public:
     virtual ~IOwnServers() = default;

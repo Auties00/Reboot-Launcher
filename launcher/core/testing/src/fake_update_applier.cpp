@@ -10,6 +10,8 @@ namespace reboot::testing {
 
 Result<void> FakeUpdateApplier::stage(const NativePath& package) {
     if (auto error = faults_.take(UpdateApplierOperation::Stage)) return std::unexpected(std::move(*error));
+    if (fs_ != nullptr)
+        if (auto found = fs_->revision(package); !found) return std::unexpected(std::move(found.error()));
     const std::scoped_lock lock(mutex_);
     staged_ = package;
     return {};

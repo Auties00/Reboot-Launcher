@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <chrono>
 #include <optional>
 #include <span>
 #include <string>
@@ -115,4 +116,56 @@ TEST_CASE("the matrix report refuses what it cannot key evidence to") {
         R"("range":{"min":"8.0","max":"8.51"},"build":"8.51","version":"8.51","inputs":{"game_server_sha256":")" +
         std::string(kSha1) + R"("},"recorded_at":1,"status":"pass","log_ref":"h.log"})";
     CHECK(parse_matrix_report(bytes(report(host_on_wine))).error().is(msg::kMatrixReportMalformed));
+}
+
+TEST_CASE("a host row yields the game-server input on the Native runner") {
+    const std::string host_row =
+        std::string(R"({"role":"host","os":"windows","runtime":{"kind":"native"},)") +
+        R"("range":{"min":"8.0","max":"8.51","changelists":[{"first":1,"last":9}]},"build":"8.51","version":"8.51",)" +
+        R"("cl":5,"inputs":{"game_server_sha256":")" + std::string(kSha1) +
+        R"("},"recorded_at":1790000000,"status":"pass","log_ref":"h.log"})";
+    const Result<std::vector<EvidenceRecord>> records = parse_matrix_report(bytes(report(host_row)));
+    REQUIRE(records);
+    REQUIRE(records->size() == 1);
+    const EvidenceRecord& record = records->front();
+    CHECK(record.cell.role == SupportRole::Host);
+    CHECK(record.cell.runner == ports::RunnerKind::Native);
+    CHECK(record.cell.range.changelists == std::vector<ChangelistRange>{{.first = {1}, .last = {9}}});
+    CHECK(record.os == components::ManifestOs::Windows);
+    CHECK(record.recorded_at == std::chrono::system_clock::time_point(std::chrono::seconds(1790000000)));
+    const auto* inputs = std::get_if<HostCellInputs>(&record.inputs);
+    REQUIRE(inputs);
+    CHECK(inputs->game_server_sha256[31] == 1);
+}
+
+TEST_CASE("a recorded_at the clock cannot represent is malformed") {
+    std::string row = play_row("pass", kProton);
+    const std::string_view at = R"("recorded_at":1790000000)";
+    row.replace(row.find(at), at.size(), R"("recorded_at":18446744073709551615)");
+    CHECK(parse_matrix_report(bytes(report(row))).error().is(msg::kMatrixReportMalformed));
+}
+
+TEST_CASE("a range max with a patch ends at that patch") {
+    const VersionRange range{.min = {10, 40, u16{1}}, .max = {10, 40, u16{2}}, .changelists = {}};
+    CHECK(range.contains({10, 40, u16{2}}, std::nullopt));
+    CHECK_FALSE(range.contains({10, 40, u16{3}}, std::nullopt));
+    CHECK_FALSE(range.contains({10, 40, u16{0}}, std::nullopt));
+}
+
+TEST_CASE("a server range from a patch to a patchless max of the same major.minor is not inverted") {
+    const Result<HostInputs> inputs = host_inputs_from(components::Sha256Digest{}, description("10.40.3", "10.40"));
+    REQUIRE(inputs);
+    CHECK(inputs->ranges[0].contains({10, 40, u16{5}}, std::nullopt));
+    CHECK_FALSE(inputs->ranges[0].contains({10, 40, u16{2}}, std::nullopt));
+    CHECK(host_inputs_from(components::Sha256Digest{}, description("10.40.3", "10.40.2"))
+              .error()
+              .is(msg::kMalformedServerDescription));
+}
+
+TEST_CASE("a matrix-report digest must be lowercase hex") {
+    std::string row = play_row("pass", kProton);
+    std::string upper(kSha1);
+    upper.replace(0, 2, "AB");
+    row.replace(row.find(kSha1), kSha1.size(), upper);
+    CHECK(parse_matrix_report(bytes(report(row))).error().is(msg::kMatrixReportMalformed));
 }

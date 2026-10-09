@@ -9,6 +9,7 @@
 #include "reboot/catalog/catalog_entry.hpp"
 #include "reboot/catalog/catalog_source.hpp"
 #include "reboot/catalog/catalog_updated.hpp"
+#include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
@@ -41,6 +42,8 @@ class CatalogService {
 public:
     CatalogService(ICatalogSource& remote, ICatalogSource& bundled, OpRegistry& ops, EventBus& events,
                    const IClock& clock);
+    // Cancels a running or queued refresh; loads that finish later never reach this object.
+    ~CatalogService();
     CatalogService(const CatalogService&) = delete;
     CatalogService& operator=(const CatalogService&) = delete;
 
@@ -78,7 +81,7 @@ private:
     void load_initial();
     void revalidate();
     void finish(std::optional<Diagnostic> failure);
-    // Keeps the active copy when `loaded` has a lower serial.
+    // Keeps the active copy unless `loaded` has a higher serial.
     void activate(LoadedCatalog loaded);
     [[nodiscard]] CatalogUpdated describe(std::vector<Diagnostic> warnings) const;
 
@@ -92,6 +95,7 @@ private:
     AliasTable aliases_;
     std::optional<Refresh> running_;
     std::optional<Refresh> queued_;
+    CancelSource alive_;
 };
 
 }  // namespace reboot::catalog

@@ -29,6 +29,9 @@ public:
     [[nodiscard]] bool allows_connect(const UpstreamOrigin& target, const Endpoint& resolved,
                                       std::span<const Port> front_ports) const;
 
+    // A cloudstorage system file or a matchmaking ticket; the query is ignored.
+    [[nodiscard]] static bool learns_from(std::string_view path) noexcept;
+
     // XMPP ServerAddr from a cloudstorage system file, serviceUrl from a matchmaking ticket; returns the new ones.
     std::vector<UpstreamOrigin> learn(std::string_view path, std::span<const u8> decoded_body);
 

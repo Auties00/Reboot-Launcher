@@ -76,6 +76,8 @@ private:
     trust::SerialGuard& serials_;
     // The load in flight; ICatalogSource callers never overlap loads.
     std::unique_ptr<Load> load_;
+    // Cancelled on destruction, so replies that arrive later never touch this object.
+    CancelSource alive_;
 };
 
 }  // namespace reboot::catalog

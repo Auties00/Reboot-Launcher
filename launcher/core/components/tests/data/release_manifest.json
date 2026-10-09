@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "serial": 12,
+  "expires_unix_ms": 1792592000000,
+  "apps": [
+    {
+      "platform": { "os": "windows", "arch": "x64" },
+      "channel": "stable",
+      "version": "1.4.0",
+      "min_supported": "1.2.0",
+      "kind": "velopack",
+      "package": {
+        "urls": ["https://cdn.example/app/1.4.0/win-x64-full.nupkg", "https://mirror.example/app/1.4.0/win-x64-full.nupkg"],
+        "sha256": "00112233445566778899aabbccddeeff00112233445566778899AABBCCDDEEFF",
+        "size": 81234567
+      }
+    },
+    {
+      "platform": { "os": "linux", "arch": "x64" },
+      "channel": "beta",
+      "version": "1.5.0-beta.1",
+      "kind": "tarball",
+      "package": { "urls": ["https://cdn.example/app/1.5.0-beta.1/linux-x64.tar.zst"], "sha256": "1111111111111111111111111111111111111111111111111111111111111111", "size": 70000000 },
+      "downgrade_ok": true
+    },
+    {
+      "platform": { "os": "haiku", "arch": "x64" },
+      "channel": "stable",
+      "version": "1.4.0",
+      "kind": "tarball",
+      "package": { "urls": ["https://cdn.example/app/haiku.tar"], "sha256": "2222222222222222222222222222222222222222222222222222222222222222", "size": 1 }
+    }
+  ],
+  "payloads": [
+    {
+      "version": "3.1.0",
+      "payload_abi": 1,
+      "files": [
+        { "role": "client_dll", "urls": ["https://cdn.example/payload/3.1.0/rb_client.dll"], "sha256": "3333333333333333333333333333333333333333333333333333333333333333", "size": 1048576 },
+        { "role": "winhost", "urls": ["https://cdn.example/payload/3.1.0/reboot-winhost.exe"], "sha256": "4444444444444444444444444444444444444444444444444444444444444444", "size": 524288 },
+        { "role": "game_server_dll", "urls": ["https://cdn.example/payload/3.1.0/server.dll"], "sha256": "5555555555555555555555555555555555555555555555555555555555555555", "size": 1 }
+      ],
+      "origin": "ci"
+    }
+  ],
+  "runtimes": [
+    {
+      "id": "kron4ek-wine-10.0-x64",
+      "kind": "kron_wine",
+      "platform": { "os": "linux", "arch": "x64" },
+      "version": "10.0",
+      "archive": { "urls": ["https://cdn.example/runtime/kron4ek-10.0.tar.xz"], "sha256": "6666666666666666666666666666666666666666666666666666666666666666", "size": 90000000 },
+      "spike_passed_at": 1790000000000
+    },
+    {
+      "id": "vc-redist-14.44",
+      "kind": "vc_redist",
+      "version": "14.44.35211",
+      "archive": { "urls": ["https://cdn.example/runtime/vc_redist.zip"], "sha256": "7777777777777777777777777777777777777777777777777777777777777777", "size": 25000000 }
+    },
+    {
+      "id": "future-runtime",
+      "kind": "hyper_wine",
+      "platform": { "os": "linux", "arch": "x64" },
+      "version": "1",
+      "archive": { "urls": ["https://cdn.example/runtime/future.tar"], "sha256": "8888888888888888888888888888888888888888888888888888888888888888", "size": 1 }
+    }
+  ],
+  "endpoint": { "host": "sb.example.org", "port": 8443 }
+}

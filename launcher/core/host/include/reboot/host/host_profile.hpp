@@ -68,7 +68,7 @@ struct HostProfile {
 [[nodiscard]] HostProfile new_profile(HostProfileId id, std::string name, HostListing default_listing);
 
 // The built-in profile of the linked auto-server: Auto ports, always Unlisted, and no port
-// mapping, so starting a game never changes the router on its own (10.0.9 did map it).
+// mapping, so starting a game never changes the router on its own.
 [[nodiscard]] HostProfile auto_profile();
 
 // What a Host reset leaves of a profile: Unlisted, and for a built-in profile also an empty server

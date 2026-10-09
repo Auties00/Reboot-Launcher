@@ -24,9 +24,10 @@ public:
     UnixSocketListenerBase& operator=(const UnixSocketListenerBase&) = delete;
 
     // Creates the socket's directory 0700 and lstat-checks its owner and mode, checks the path
-    // against sun_path, unlinks a stale socket, then binds the socket 0600. The caller holds
-    // state/engine.lock (EngineLock), so no other engine serves this path. The socket and every
-    // accepted fd are close-on-exec, so no child inherits the endpoint.
+    // against sun_path, unlinks a stale socket, then binds the socket 0600. A socket that still
+    // accepts connections fails with posix.endpoint_in_use (ErrorKind::Conflict); the caller also
+    // holds state/engine.lock (EngineLock). The socket and every accepted fd are close-on-exec, so
+    // no child inherits the endpoint.
     Result<void> listen(std::string_view endpoint_name,
                         UniqueFunction<void(std::unique_ptr<ports::IByteStream>)> on_accept) override;
     // Stops accepting and unlinks a socket this listener bound; idempotent.

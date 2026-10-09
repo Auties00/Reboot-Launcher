@@ -22,8 +22,8 @@ struct PendingOp {
 // Covers no capability ids. Attached ops; each Outcome is stored once. Thread-safe.
 class OpTable {
 public:
-    // `method_id` is 0 for an op attached by id; tracking a tracked op keeps its entry.
-    void track(u64 op_id, u32 method_id);
+    // `method_id` is 0 for an op attached by id; tracking a tracked op keeps its entry and is false.
+    bool track(u64 op_id, u32 method_id);
     // False for an untracked or terminal op, so a replayed OpResult is ignored.
     [[nodiscard]] bool complete(u64 op_id, std::vector<u8> outcome);
     [[nodiscard]] OpState state(u64 op_id) const;

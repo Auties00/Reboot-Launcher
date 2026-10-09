@@ -5,6 +5,7 @@
 #include <cstring>
 #include <span>
 #include <string_view>
+#include <utility>
 
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
@@ -40,8 +41,10 @@ Result<ConnectSettings> read_connect_settings(const rb_ctx_options* options) {
     if (options->data_root != nullptr) {
         auto root = read_utf8(options->data_root, "data_root");
         if (!root) return std::unexpected(std::move(root.error()));
-        if (root->empty()) return std::unexpected(invalid("data_root"));
-        settings.data_root = NativePath{std::u8string{root->begin(), root->end()}};
+        NativePath path{std::u8string{root->begin(), root->end()}};
+        // A relative root would resolve against the client's directory here and the engine's there.
+        if (!path.is_absolute()) return std::unexpected(invalid("data_root"));
+        settings.data_root = std::move(path);
     }
     if (options->client_kind > RB_CLIENT_TEST) return std::unexpected(invalid("client_kind"));
     settings.client_kind = static_cast<contracts::ipc::ClientKind>(options->client_kind);

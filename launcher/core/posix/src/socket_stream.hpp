@@ -44,7 +44,8 @@ private:
     [[nodiscard]] bool run_once();
     void read_available();
     void fire_close_once();
-    // Sends without blocking; a failed send finishes the stream. Returns the bytes sent.
+    // Sends without blocking and returns the bytes sent. A peer that hung up only stops sending,
+    // so what it sent first is still read; any other failure finishes the stream.
     [[nodiscard]] std::size_t send_locked(std::span<const u8> bytes) noexcept;
     void flush_locked() noexcept;
     void finish_locked() noexcept;
@@ -55,10 +56,15 @@ private:
 
     std::mutex mutex_;
     std::vector<u8> outbound_;
+    // Bytes at the front of outbound_ already sent; compacted lazily, since a small socket buffer
+    // would otherwise move a large write once per send.
+    std::size_t outbound_sent_ = 0;
     UniqueFunction<void(std::span<const u8>)> on_read_;
     UniqueFunction<void()> on_close_;
     // Nothing more is read or sent; on_close is due.
     bool finished_ = false;
+    // A send hit EPIPE or ECONNRESET: writes are dropped while reading runs to EOF.
+    bool send_closed_ = false;
     bool close_fired_ = false;
     // The peer hung up before on_read was set, so the socket is not polled until it is.
     bool hung_up_ = false;

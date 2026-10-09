@@ -9,7 +9,8 @@
 namespace reboot::net {
 
 // System is pid 0 or 4 on Windows, such as http.sys holding :80. WineHost is wineserver holding
-// the port for a Windows process. Unknown is an owner that could not be classified.
+// the port for a Windows process. Unknown is an owner that could not be classified, such as pid 0
+// elsewhere, which POSIX inspectors report for another user's process.
 enum class PortOwnerClass : u8 { Ours, Foreign, System, WineHost, Unknown };
 
 struct PortOwnerInfo {

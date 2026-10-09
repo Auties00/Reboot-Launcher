@@ -88,3 +88,13 @@ TEST_CASE("only a loopback backend reaches this machine", "[front][policy][loop]
     CHECK(!remote.allows_connect(origin("ws://127.0.0.1:80"), at("0.0.0.0", 80), kFrontPorts));
     CHECK(!remote.allows_connect(origin("wss://elsewhere.example.com"), at("203.0.113.6", 443), kFrontPorts));
 }
+
+TEST_CASE("only system files and matchmaking tickets are read for origins", "[front][policy]") {
+    CHECK(UpstreamPolicy::learns_from(kSystemFile));
+    CHECK(UpstreamPolicy::learns_from(std::string(kTicketPath) + "?accountId=a"));
+    CHECK(!UpstreamPolicy::learns_from("/fortnite/api/cloudstorage/system/"));
+    CHECK(!UpstreamPolicy::learns_from("/fortnite/api/cloudstorage/user/a/ClientSettings.Sav"));
+    CHECK(!UpstreamPolicy::learns_from("/account/api/oauth/token"));
+    UpstreamPolicy policy(origin("http://127.0.0.1:3552"));
+    CHECK(policy.learn("/fortnite/api/cloudstorage/user/a", golden("lawin_default_engine.ini")).empty());
+}

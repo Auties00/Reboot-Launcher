@@ -15,7 +15,7 @@ namespace reboot::storage {
 // HelloAck.storage_mode. ReadOnly: written at a newer schema. InMemory: nothing reaches disk.
 using StorageMode = contracts::ipc::StorageMode;
 
-// Backup: the primary did not parse but <file>.bak did. Defaults: neither parsed.
+// Backup: the primary was missing or did not parse but <file>.bak did. Defaults: neither parsed.
 enum class LoadSource : u8 { Fresh, Primary, Backup, Defaults };
 
 // A stored value replaced by its default. `path` is a key id or a member path like "builds[3].root".

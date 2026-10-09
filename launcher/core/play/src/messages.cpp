@@ -26,5 +26,9 @@ REBOOT_MESSAGE(kAuthFailure, "play.auth_failure", "The game could not log in");
 REBOOT_MESSAGE(kCannotConnect, "play.cannot_connect", "The game could not reach the backend");
 REBOOT_MESSAGE(kFeaturesDegraded, "play.features_degraded", "Some launcher features did not load: {features}");
 REBOOT_MESSAGE(kLinkedServerEnded, "play.linked_server_ended", "The local game server stopped");
+REBOOT_MESSAGE(kLinkedServerFailed, "play.linked_server_failed", "The local game server for this game did not start");
+REBOOT_MESSAGE(kLaunchTimedOut, "play.launch_timed_out", "The game took too long to start");
+REBOOT_MESSAGE(kSessionStopping, "play.session_stopping", "The game session is already stopping");
+REBOOT_MESSAGE(kInvalidAnswer, "play.invalid_answer", "The answer to this question must be yes or no");
 
 }  // namespace reboot::play::msg

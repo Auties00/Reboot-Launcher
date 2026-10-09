@@ -60,11 +60,23 @@ struct FileRevision {
     bool operator==(const FileRevision&) const = default;
 };
 
-// Blocking; called from the WorkerPool.
-class IFileSystem {
-public:
-    virtual ~IFileSystem() = default;
+// `revision` is the opened file's, so its file_id names the file the bytes came from.
+struct SharedRead {
+    FileRevision revision;
+    std::vector<u8> bytes;
+};
 
+// The part of IFileSystem reboot_client needs, for the update marker. Blocking.
+class IFileRevisionReader {
+public:
+    virtual ~IFileRevisionReader() = default;
+
+    virtual Result<FileRevision> revision(const NativePath& path) = 0;
+};
+
+// Blocking; called from the WorkerPool.
+class IFileSystem : public IFileRevisionReader {
+public:
     // Temp file, full fsync, then replace. `keep_backup` leaves the previous file as <target>.bak.
     virtual Result<void> atomic_replace(const NativePath& target, std::span<const u8> bytes, bool keep_backup) = 0;
     virtual Result<std::vector<u8>> read_all(const NativePath& path) = 0;
@@ -72,7 +84,9 @@ public:
     virtual Result<FileLock> lock_exclusive(const NativePath& path, bool wait) = 0;
     virtual Result<void> restrict_to_owner(const NativePath& path) = 0;
     virtual Result<HeldFile> open_deny_write(const NativePath& path) = 0;
-    virtual Result<FileRevision> revision(const NativePath& path) = 0;
+    // Up to `max_bytes` from `offset`, through a handle that never stops another process writing,
+    // renaming or deleting the file; past the end it reads nothing.
+    virtual Result<SharedRead> read_shared(const NativePath& path, u64 offset, std::size_t max_bytes) = 0;
     virtual Result<void> create_dirs_owner_only(const NativePath& path) = 0;
     // Never follows links.
     virtual Result<void> remove_tree(const NativePath& path) = 0;

@@ -52,10 +52,24 @@ enum class HostErrorCode : u8 {
     NotListening,
     // A profile names both a build and a version to host.
     BuildAndVersion,
+    // A pinned block overlaps the block another host session holds.
+    BlockInUse,
+    // The start was cancelled before the server was listening.
+    Cancelled,
+    // The user declined ConfirmUntested.
+    UntestedDeclined,
+    // A ConfirmUntested answer that is not a bool.
+    InvalidAnswer,
+    // A pinned block the server could not bind.
+    ListenFailed,
+    // The server exited before it was listening.
+    ServerExited,
+    ServerFatal,
+    ServerUnresponsive,
 };
 
 // Only the members a code's message names are read: profile, session, name, port, range
-// (first, last), block_size, limit and address.
+// (first, last), block_size, limit, address and exit_code. ServerFatal names its code in `name`.
 struct HostError {
     HostErrorCode code = HostErrorCode::ProfileNotFound;
     std::optional<HostProfileId> profile;
@@ -67,6 +81,9 @@ struct HostError {
     std::optional<u32> limit;
     // InvalidOperatorAddress: the entry that did not parse.
     std::string address;
+    std::optional<i32> exit_code;
+    std::optional<SystemError> os_error;
+    std::optional<std::string> detail;
     std::optional<Diagnostic> cause;
 };
 

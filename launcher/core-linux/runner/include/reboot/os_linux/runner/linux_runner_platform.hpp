@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "reboot/foundation/cancel.hpp"
@@ -36,8 +37,14 @@ public:
     Result<ports::ProcessLaunch> runner_launch(const ports::RuntimeLayout& layout, const NativePath& prefix,
                                                const NativePath& winhost_exe, ports::EnvBlock base) override;
 
-    // Blocking SlrSetup::run for an umu layout; nothing for a Wine layout.
-    Result<void> runtime_setup(const ports::RuntimeLayout& layout, CancelToken token) override;
+    // Boot: `umu-run createprefix` for an umu layout, so umu and Proton build or upgrade the prefix;
+    // `wine wineboot -u` for a Wine layout. KillServer runs the runtime's own `wineserver -k`. Run
+    // exposes the exe's directory to pressure-vessel as runner_launch does winhost's.
+    Result<ports::ProcessLaunch> prefix_command(const ports::RuntimeLayout& layout, const NativePath& prefix,
+                                                const ports::PrefixCommand& command, ports::EnvBlock base) override;
+
+    // Blocking SlrSetup::run for an umu layout, reporting "<runtime> <version>"; nullopt for a Wine layout.
+    Result<std::optional<std::string>> runtime_setup(const ports::RuntimeLayout& layout, CancelToken token) override;
 
     // Always nullopt: no Linux prerequisite is answered through a user request.
     [[nodiscard]] std::optional<UserRequestKind> pending_prerequisite() override;

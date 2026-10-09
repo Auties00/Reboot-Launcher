@@ -63,7 +63,8 @@ public:
     GameServerProcess(ports::IProcessLauncher& launcher, ports::IFileSystem& fs, WorkerPool& workers,
                       Executor& strand, TimerService& timers, const IClock& clock, const AppLayout& layout,
                       GameServerLaunch launch, GameServerEventSink on_event, process::ChildRecordCallback record);
-    // Kills a live child at once, with no further events.
+    // Kills a live child at once, with no further events. Allowed from the sink or a request
+    // callback; the kill then runs on the strand once that delivery returns.
     ~GameServerProcess();
     GameServerProcess(const GameServerProcess&) = delete;
     GameServerProcess& operator=(const GameServerProcess&) = delete;

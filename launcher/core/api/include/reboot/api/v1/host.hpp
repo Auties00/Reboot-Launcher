@@ -513,6 +513,34 @@ struct HostCancelMatchEndResponse {
     bool operator==(const HostCancelMatchEndResponse&) const = default;
 };
 
+// Moves a profile's rbsb identity, and so its server id and share link, to another PC or VPS.
+struct HostIdentityExportRequest {
+    HostProfileId profile;
+    // A directory that does not exist yet; it is created readable by the owner only.
+    Path destination;
+
+    bool operator==(const HostIdentityExportRequest&) const = default;
+};
+
+struct HostIdentityExportResponse {
+    bool operator==(const HostIdentityExportResponse&) const = default;
+};
+
+// Replaces the profile's identity with one an export wrote; refused while the profile is hosting.
+struct HostIdentityImportRequest {
+    HostProfileId profile;
+    // The directory an export created.
+    Path source;
+
+    bool operator==(const HostIdentityImportRequest&) const = default;
+};
+
+struct HostIdentityImportResponse {
+    ServerId server;
+
+    bool operator==(const HostIdentityImportResponse&) const = default;
+};
+
 struct HostProfilesChanged {
     HostProfileChange change{};
     // Absent for RESET.
@@ -551,6 +579,10 @@ public:
     virtual ::reboot::Result<HostStatusResponse> status(const CallContext& context, const HostStatusRequest& request) = 0;
     // Stops the pending match-end action and leaves the server running.
     virtual ::reboot::Result<HostCancelMatchEndResponse> cancel_match_end(const CallContext& context, const HostCancelMatchEndRequest& request) = 0;
+    // Completes with HostIdentityExportResponse.
+    virtual ::reboot::Result<::reboot::OpHandle> start_identity_export(const CallContext& context, const HostIdentityExportRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    // Completes with HostIdentityImportResponse.
+    virtual ::reboot::Result<::reboot::OpHandle> start_identity_import(const CallContext& context, const HostIdentityImportRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace reboot::api

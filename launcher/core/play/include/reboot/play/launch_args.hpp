@@ -60,7 +60,8 @@ private:
 
 // Covers game-launch.arguments, game-launch.+10.
 // kFixedGameArgs, -AUTH_LOGIN, -AUTH_PASSWORD, -AUTH_TYPE, then `custom_args`; a repeated key
-// replaces the earlier token in place, as 10.0.9's case-insensitive map did.
+// replaces the earlier token's value in place, compared case-insensitively. An empty
+// `auth_password` is an internal.bug, and a reserved key in `custom_args` play.custom_args_reserved.
 [[nodiscard]] Result<LaunchArgs> build_launch_args(const identity::LoginPlan& login, const SecretString& auth_password,
                                                    std::string_view game_culture, std::vector<GameArg> custom_args);
 

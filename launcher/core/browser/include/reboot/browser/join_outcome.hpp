@@ -24,7 +24,7 @@ struct JoinOutcome {
     std::chrono::system_clock::time_point ticket_expires_at;
 };
 
-// Refused is the user declining ConfirmJoin or the password prompt.
+// Refused is the user declining ConfirmJoin; a password prompt is declined by cancelling the op.
 enum class JoinFailureCode : u8 {
     OwnServer,
     NotFound,

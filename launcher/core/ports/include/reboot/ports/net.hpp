@@ -95,6 +95,10 @@ struct QuicConnectOptions {
     std::string alpn;
     bool ipv4_only = false;
     std::optional<NativePath> ca_bundle;
+    // Dialled instead of resolving `host`, which stays the TLS server name.
+    std::optional<IpAddress> remote;
+    // Zero sends no keep-alives.
+    std::chrono::milliseconds keepalive{0};
 };
 
 // Callbacks run on MsQuic threads and must only post to the strand.

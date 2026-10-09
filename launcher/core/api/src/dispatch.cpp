@@ -253,6 +253,10 @@ template <class Response>
             return start(handlers.play, &IPlayHandler::start, context, method_id, request, policy);
         case kHostStart:
             return start(handlers.host, &IHostHandler::start, context, method_id, request, policy);
+        case kHostIdentityExport:
+            return start(handlers.host, &IHostHandler::start_identity_export, context, method_id, request, policy);
+        case kHostIdentityImport:
+            return start(handlers.host, &IHostHandler::start_identity_import, context, method_id, request, policy);
         case kSessionsStop:
             return start(handlers.sessions, &ISessionsHandler::start_stop, context, method_id, request, policy);
         case kBackendStart:
@@ -320,6 +324,10 @@ template <class Response>
             return encode_result<PlayStartResponse>(value);
         case kHostStart:
             return encode_result<HostStartResponse>(value);
+        case kHostIdentityExport:
+            return encode_result<HostIdentityExportResponse>(value);
+        case kHostIdentityImport:
+            return encode_result<HostIdentityImportResponse>(value);
         case kSessionsStop:
             return encode_result<SessionsStopResponse>(value);
         case kBackendStart:
@@ -355,7 +363,7 @@ template <class Response>
         case kLogsExport:
             return encode_result<LogsExportResponse>(value);
         default:
-            return std::unexpected(method_error(msg::kUnknownMethod, method_id));
+            return std::unexpected(::reboot::internal_bug("api.encode_op_result"));
     }
 }
 

@@ -16,6 +16,17 @@
 
 namespace reboot::storage {
 
+// The files a build's layout walk found, relative to its root.
+struct LibraryLayout {
+    NativePath shipping_exe;
+    std::optional<NativePath> launcher_exe;
+    std::optional<NativePath> eac_exe;
+    std::vector<NativePath> crash_report_clients;
+    std::vector<NativePath> aftermath_dlls;
+
+    bool operator==(const LibraryLayout&) const = default;
+};
+
 struct LibraryEntry {
     BuildId id;
     std::string name;
@@ -24,10 +35,16 @@ struct LibraryEntry {
     // Unset until detected, or when detection failed.
     std::optional<GameVersion> version;
     std::optional<Changelist> changelist;
+    // How builds settled the version, by its VersionSource name; unset with the version.
+    std::optional<std::string> version_source;
     std::optional<CatalogEntryId> catalog_entry;
+    // Absent until a layout walk ran at `root`.
+    std::optional<LibraryLayout> layout;
     std::chrono::system_clock::time_point added_at;
     // Imported from another OS or a missing drive; kept and shown, never dropped.
     bool needs_relocation = false;
+    // Members this build does not know, kept for the newer engine that wrote them.
+    boost::json::object unknown;
 
     bool operator==(const LibraryEntry&) const = default;
 };

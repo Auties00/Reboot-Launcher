@@ -43,7 +43,11 @@ Result<OpHandle> ResetService::start_reset_after_stop(ResetGroup group, Disconne
     op.progress(Progress{.phase = "stopping"});
     // The op's deadline cancels the token, so the stop answers well within the registry's retention.
     hooks_.stop_blockers(group, std::move(blockers), op.token(), [this, group, &op](Result<void> stopped) {
-        if (op.done()) return;
+        // Cancelled or timed out meanwhile: reset nothing, but complete so the registry can free the op.
+        if (op.done()) {
+            op.complete(Cancelled{});
+            return;
+        }
         if (!stopped) {
             op.complete(Failed{make_diag(ErrorDomain::Storage, msg::kResetStopFailed)
                                    .kind(ErrorKind::Conflict)

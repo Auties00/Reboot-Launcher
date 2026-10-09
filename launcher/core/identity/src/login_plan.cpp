@@ -3,7 +3,7 @@
 #include <cstddef>
 
 #include "messages.hpp"
-#include "reboot/identity/legacy_login.hpp"
+#include "reboot/identity/third_party_login.hpp"
 #include "reboot/storage/enum_names.hpp"
 
 namespace reboot::identity {
@@ -25,7 +25,7 @@ std::string effective_login(const AccountRecord& record, const LoginTarget& targ
     if (target.backend == storage::BackendKind::Embedded) return suffixed_account_id(record);
     if (target.remote_login) return *target.remote_login;
     if (target.flavor == UpstreamFlavor::Reboot) return suffixed_account_id(record);
-    return legacy_derive(record.display_name, false).auth_login;
+    return third_party_login(record.display_name);
 }
 
 Result<LoginPlan> plan_login(const AccountRecord& record, const LoginTarget& target, bool build_takes_exchangecode) {

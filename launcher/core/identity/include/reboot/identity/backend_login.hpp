@@ -3,6 +3,8 @@
 #include <optional>
 #include <string>
 
+#include <boost/json/object.hpp>
+
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
@@ -20,6 +22,8 @@ struct BackendLogin {
     // Login of a password-backed account; unset logs in as the account id.
     std::optional<std::string> login;
     CredentialPolicy policy = CredentialPolicy::Ticket;
+    // Members this build does not know, kept for the newer engine that wrote them.
+    boost::json::object unknown;
 
     bool operator==(const BackendLogin&) const = default;
 };

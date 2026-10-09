@@ -11,7 +11,7 @@
 
 namespace reboot::publish {
 
-// sanitize_display_text, then cut to `max_bytes` on a code point boundary.
+// sanitize_display_text with tabs as spaces, then cut to `max_bytes` on a code point boundary.
 [[nodiscard]] std::string fit_text(std::string_view text, std::size_t max_bytes);
 // fit_text to kMaxServerNameBytes; publish.server_name_empty when nothing is left.
 [[nodiscard]] Result<std::string> fit_server_name(std::string_view name);

@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/storage/data_root.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
@@ -37,4 +38,18 @@ TEST_CASE("a data root inside the Velopack package is refused", "[storage][data_
     const Result<DataRootReport> report = prepare_data_root(layout, InstallLayout{}, paths, fs);
     REQUIRE_FALSE(report);
     CHECK(report.error().id == "storage.root_inside_package");
+}
+
+TEST_CASE("a data root that cannot be created makes the stores memory-only", "[storage][data_root]") {
+    testing::FakePlatformPaths paths;
+    testing::InMemoryFileSystem fs;
+    const AppLayout layout(DataRoot{paths.default_data_root(), false}, paths);
+    fs.faults().fail_next(testing::FsOperation::CreateDirsOwnerOnly,
+                          make_diag(ErrorDomain::Storage, MessageId{"storage.write_failed"}).build());
+
+    const Result<DataRootReport> report = prepare_data_root(layout, InstallLayout{}, paths, fs);
+    REQUIRE(report);
+    CHECK(report->mode == StorageMode::InMemory);
+    REQUIRE(report->reason);
+    CHECK(report->reason->id == "storage.root_not_writable");
 }

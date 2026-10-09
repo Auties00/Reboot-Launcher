@@ -21,6 +21,8 @@ public:
     // FILE_SHARE_READ only, so nothing can write, rename or delete the file while it is held.
     Result<ports::HeldFile> open_deny_write(const NativePath& path) override;
     Result<ports::FileRevision> revision(const NativePath& path) override;
+    // Shares read, write and delete, so the game keeps writing and renaming its log meanwhile.
+    Result<ports::SharedRead> read_shared(const NativePath& path, u64 offset, std::size_t max_bytes) override;
     // Existing components keep their DACL.
     Result<void> create_dirs_owner_only(const NativePath& path) override;
     // Never enters a junction or symlink, and clears the read-only attribute installed payloads carry.

@@ -5,7 +5,9 @@
 #include <format>
 #include <limits>
 #include <optional>
+#include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -32,7 +34,10 @@ struct Envelope {
 };
 
 [[nodiscard]] std::optional<Envelope> parse_envelope(std::span<const u8> bytes) {
-    std::optional<json::value> parsed = parse_json(as_text(bytes));
+    std::string_view text = as_text(bytes);
+    // Some editors save a hand edit with a UTF-8 byte order mark.
+    if (text.starts_with("\xEF\xBB\xBF")) text.remove_prefix(3);
+    std::optional<json::value> parsed = parse_json(text);
     if (!parsed || !parsed->is_object()) return std::nullopt;
     const json::object& object = parsed->get_object();
     const json::value* schema = object.if_contains("schema");
@@ -105,7 +110,8 @@ struct DocumentFile::Impl {
 
     json::object values;
     u64 revision = 0;
-    u32 schema_on_disk = 0;
+    // Why the mode is ReadOnly; replace() fails with it.
+    std::optional<Diagnostic> read_only_reason;
     StorageMode mode = StorageMode::ReadWrite;
     // False once the store is memory-only for good; a failed write keeps it true and retries.
     bool disk = true;
@@ -151,9 +157,9 @@ void DocumentFile::Impl::start_disk_job(bool write) {
             if (!write) return DiskOutcome{std::nullopt, expected};
             if (Result<void> replaced = fs.atomic_replace(path, bytes, keep_backup); !replaced)
                 return std::unexpected(replaced.error());
+            // The write landed even if the stat fails; the next job then rereads the file as a hand edit.
             Result<ports::FileRevision> after = fs.revision(path);
-            if (!after) return std::unexpected(after.error());
-            return DiskOutcome{std::nullopt, *after};
+            return DiskOutcome{std::nullopt, after ? std::optional(*after) : std::nullopt};
         },
         CancelToken{}, strand, [this, alive_token = alive.token(), write](Result<DiskOutcome> outcome) {
             if (alive_token.cancelled()) return;
@@ -161,28 +167,33 @@ void DocumentFile::Impl::start_disk_job(bool write) {
         });
 }
 
+// `busy` stays set until the end, so a change made from a callback here waits for the next write.
 void DocumentFile::Impl::on_disk_job(bool write, Result<DiskOutcome> outcome) {
-    busy = false;
     const std::vector<std::string> carried = std::exchange(in_flight, {});
     if (!outcome || outcome->hand_edit)
         for (const std::string& member : carried) add_member(dirty, member);
-    if (!outcome) {
+    if (!outcome && write) {
         Diagnostic error = make_diag(ErrorDomain::Storage, msg::kWriteFailed)
                                .arg("document", format.name)
                                .arg("path", path)
                                .cause(std::move(outcome.error()))
                                .build();
         set_write_failed(error);
+        busy = false;
         waiters.finish(std::unexpected(std::move(error)));
         return;
     }
-    on_disk = outcome->revision;
-    if (outcome->hand_edit) {
-        merge_hand_edit(*outcome->hand_edit);
-    } else if (write) {
-        primary_unreadable = false;
-        set_write_failed(std::nullopt);
+    // A refresh that cannot look at the file leaves the mode alone; nothing was lost.
+    if (outcome) {
+        on_disk = outcome->revision;
+        if (outcome->hand_edit) {
+            merge_hand_edit(*outcome->hand_edit);
+        } else if (write) {
+            primary_unreadable = false;
+            set_write_failed(std::nullopt);
+        }
     }
+    busy = false;
     // Members changed during the write, or kept over a hand edit, go out in the next one.
     if (!dirty.empty()) {
         start_disk_job(true);
@@ -223,21 +234,23 @@ LoadReport DocumentFile::load() {
     Impl& impl = *impl_;
     LoadReport report{.document = std::string(impl.format.name)};
     Result<std::vector<u8>> primary = impl.fs.read_all(impl.path);
-    if (!primary) {
-        if (primary.error().kind == ErrorKind::NotFound) return report;
+    if (!primary && primary.error().kind != ErrorKind::NotFound)
         return load_memory_only(make_diag(ErrorDomain::Storage, msg::kMemoryOnly)
                                     .arg("document", impl.format.name)
                                     .arg("path", impl.path)
                                     .cause(std::move(primary.error()))
                                     .build());
-    }
 
-    std::vector<u8> used = *primary;
-    std::optional<Envelope> envelope = parse_envelope(used);
-    report.source = LoadSource::Primary;
+    std::vector<u8> used;
+    std::optional<Envelope> envelope;
+    if (primary) {
+        envelope = parse_envelope(*primary);
+        if (envelope) used = *primary;
+        report.source = LoadSource::Primary;
+    }
     if (!envelope) {
-        const NativePath backup_path = with_suffix(impl.path, ".bak");
-        if (Result<std::vector<u8>> backup = impl.fs.read_all(backup_path)) {
+        // Also covers a missing primary: a replace that failed after moving it aside leaves only the .bak.
+        if (Result<std::vector<u8>> backup = impl.fs.read_all(with_suffix(impl.path, ".bak"))) {
             envelope = parse_envelope(*backup);
             if (envelope) used = std::move(*backup);
         }
@@ -247,6 +260,8 @@ LoadReport DocumentFile::load() {
                                 .severity(Severity::Warning)
                                 .arg("document", impl.format.name)
                                 .build();
+        } else if (!primary) {
+            return report;
         } else {
             const NativePath quarantine = with_suffix(impl.path, ".corrupt-" + utc_stamp(impl.clock.system_now()));
             if (Result<void> copied = impl.fs.atomic_replace(quarantine, *primary, false); !copied) {
@@ -273,7 +288,6 @@ LoadReport DocumentFile::load() {
     if (!envelope) return report;
 
     report.schema_on_disk = envelope->schema;
-    impl.schema_on_disk = envelope->schema;
     impl.revision = envelope->revision;
     impl.values = std::move(envelope->values);
     if (envelope->schema > impl.format.schema) {
@@ -308,6 +322,7 @@ LoadReport DocumentFile::load() {
                 add_member(impl.dirty, std::string_view(member.key().data(), member.key().size()));
         }
     }
+    if (impl.mode == StorageMode::ReadOnly) impl.read_only_reason = report.reason;
     report.mode = impl.mode;
     return report;
 }
@@ -336,12 +351,12 @@ StorageMode DocumentFile::mode() const noexcept { return impl_->mode; }
 
 Result<u64> DocumentFile::replace(json::object values) {
     Impl& impl = *impl_;
-    if (impl.mode == StorageMode::ReadOnly)
-        return make_diag(ErrorDomain::Storage, msg::kReadOnly)
-            .kind(ErrorKind::Conflict)
-            .arg("document", impl.format.name)
-            .arg("schema", impl.schema_on_disk)
-            .fail();
+    if (impl.mode == StorageMode::ReadOnly) {
+        Diagnostic error = *impl.read_only_reason;
+        error.severity = Severity::Error;
+        error.kind = ErrorKind::Conflict;
+        return std::unexpected(std::move(error));
+    }
     for (const json::key_value_pair& member : values) {
         const json::value* old = impl.values.if_contains(member.key());
         if (old == nullptr || *old != member.value())

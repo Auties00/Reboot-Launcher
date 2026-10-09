@@ -43,12 +43,18 @@ ConformanceReport run_platform_paths_conformance(const ports::IPlatformPaths& pa
     report.expect("data root is absolute and normal", is_normal_absolute(data));
     report.expect("cache root is absolute and normal", is_normal_absolute(paths.default_cache_root()));
     report.expect("logs root is absolute and normal", is_normal_absolute(paths.default_logs_root()));
-    report.expect("ipc runtime base is absolute and normal", is_normal_absolute(paths.ipc_runtime_base()));
+    // Empty where the engine endpoint is no socket, as with Windows' named pipe.
+    const NativePath ipc_base = paths.ipc_runtime_base();
+    report.expect("ipc runtime base is empty or absolute and normal", ipc_base.empty() || is_normal_absolute(ipc_base));
     report.expect("exe dir is absolute and normal", is_normal_absolute(paths.exe_dir()));
     report.expect("data root differs from the exe dir", data != paths.exe_dir());
     const std::optional<NativePath> velopack = paths.velopack_package_dir();
-    report.expect("velopack package dir is set exactly for Velopack installs",
-                  velopack.has_value() == (paths.install_kind() == ports::InstallKind::Velopack));
+    const ports::InstallKind kind = paths.install_kind();
+    report.expect("velopack package dir is set for Velopack installs",
+                  velopack || kind != ports::InstallKind::Velopack);
+    // A macOS app bundle is the package Velopack swaps.
+    report.expect("velopack package dir is set only for Velopack installs and app bundles",
+                  !velopack || kind == ports::InstallKind::Velopack || kind == ports::InstallKind::AppBundle);
     if (velopack) report.expect("data root is outside the Velopack package dir", !is_within(data, *velopack));
     return report;
 }

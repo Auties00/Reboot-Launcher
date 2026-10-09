@@ -14,7 +14,7 @@ struct ShellName {
 
     auto operator<=>(const ShellName&) const = default;
 
-    // [a-z0-9-], 1 to 32 bytes; fails with storage.invalid_shell_name.
+    // [a-z0-9-], 1 to 32 bytes, not a Windows device name; fails with storage.invalid_shell_name.
     [[nodiscard]] static Result<ShellName> parse(std::string_view text);
 };
 

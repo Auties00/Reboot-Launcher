@@ -12,6 +12,11 @@
 #include "reboot/gameserver/game_server_config.hpp"
 #include "reboot/host/host_backend_link.hpp"
 
+namespace reboot {
+class Executor;
+class IRandom;
+}  // namespace reboot
+
 namespace reboot::backend {
 class BackendService;
 }
@@ -20,10 +25,12 @@ namespace reboot::engine {
 
 // Capabilities: none; lets a needs_backend game server lease the backend, which host cannot reach.
 // Strand-only. One session lease per host session: acquire() leases, waits for readiness,
-// registers the account and hands back the origin and service token; release() drops the lease.
+// configures the session and mints its LaunchSecret as the service token; release() drops the
+// lease, which ends the session's credentials. Only the embedded backend mints one.
 class EngineHostBackendLink final : public host::IHostBackendLink {
 public:
-    explicit EngineHostBackendLink(backend::BackendService& backend) noexcept : backend_(backend) {}
+    EngineHostBackendLink(backend::BackendService& backend, Executor& strand, IRandom& random) noexcept
+        : backend_(backend), strand_(strand), random_(random) {}
     EngineHostBackendLink(const EngineHostBackendLink&) = delete;
     EngineHostBackendLink& operator=(const EngineHostBackendLink&) = delete;
 
@@ -32,7 +39,11 @@ public:
     void release(SessionId session) override;
 
 private:
+    [[nodiscard]] backend::BackendLease* lease_of(const SessionId& session);
+
     backend::BackendService& backend_;
+    Executor& strand_;
+    IRandom& random_;
     std::vector<std::pair<SessionId, backend::BackendLease>> leases_;
 };
 

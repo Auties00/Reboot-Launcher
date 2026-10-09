@@ -6,6 +6,7 @@ reboot_add_package(os_macos/runner
     src/mac_runtime_layout.cpp
     src/make_runner_platform.cpp
     src/messages.cpp
+    src/runner_platform_port.cpp
   DEPS
     reboot::posix)
 

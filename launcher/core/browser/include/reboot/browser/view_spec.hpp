@@ -12,17 +12,17 @@ namespace reboot::browser {
 // Values match rbsb/1; Unknown on an entry is All in a filter.
 enum class Region : u8 { All, Africa, Antarctica, Asia, Europe, NorthAmerica, Oceania, SouthAmerica };
 
-// Without is what 10.0.9's "Accessible" filter meant (password == null).
+// Without keeps the servers that need no password.
 enum class PasswordFilter : u8 { Any, Without, Only };
 
-// rbsb/1 has no oldest-first or Z-A view, so 10.x's time-ascending and name-descending sorts are gone.
+// The three orders rbsb/1 views have; there is no oldest-first or Z-A view.
 enum class ServerSort : u8 { Players, Newest, Name };
 
 inline constexpr u32 kSmallWindow = 50;
 inline constexpr u32 kLargeWindow = 200;
 
 // Empty `buckets` is every version; several are merged locally. `exact_version` then keeps only
-// servers of that build, aliases included.
+// servers of that build.
 struct VersionFilter {
     std::vector<u32> buckets;
     std::optional<GameVersion> exact_version;
@@ -31,7 +31,7 @@ struct VersionFilter {
 };
 
 // Capabilities: server-browser.browse, server-browser.+28, server-browser.+29, server-browser.+65, game-builds.+2.
-// The edge lists only online, reachable, listed servers, as 10.0.9 hid non-discoverable rows.
+// The edge lists only online, reachable, listed servers.
 struct ViewSpec {
     VersionFilter versions;
     PasswordFilter password = PasswordFilter::Any;
@@ -43,7 +43,7 @@ struct ViewSpec {
     bool operator==(const ViewSpec&) const = default;
 
     // Fails with browser.invalid_view_spec: a zero window, or non-empty `buckets` missing one of
-    // buckets_for(exact_version), which would hide the alias spelling's servers.
+    // buckets_for(exact_version), which would hide that build's servers.
     [[nodiscard]] Result<void> validate() const;
 };
 

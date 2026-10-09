@@ -7,11 +7,11 @@
 #include <spawn.h>
 #include <string>
 #include <sys/wait.h>
-#include <unistd.h>
 #include <vector>
 
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/process_start_time.hpp"
+#include "unistd.hpp"
 
 namespace reboot::posix {
 
@@ -22,10 +22,15 @@ struct Pipe {
     UniqueFd write;
 };
 
+// Close-on-exec, so a process another thread spawns meanwhile cannot hold a child's stdin open;
+// the dup2 file actions clear the flag on the child's copies.
 [[nodiscard]] Result<Pipe> make_pipe() {
     std::array<int, 2> ends{-1, -1};
     if (::pipe(ends.data()) != 0) return std::unexpected(call_failed("pipe", errno));
-    return Pipe{UniqueFd{ends[0]}, UniqueFd{ends[1]}};
+    Pipe pipe{UniqueFd{ends[0]}, UniqueFd{ends[1]}};
+    for (const int end : ends)
+        if (::fcntl(end, F_SETFD, FD_CLOEXEC) != 0) return std::unexpected(call_failed("fcntl", errno));
+    return pipe;
 }
 
 class SpawnFileActions {

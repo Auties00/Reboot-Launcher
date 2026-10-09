@@ -1,8 +1,11 @@
 #pragma once
 
+#include <optional>
+
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/integration/purge_hooks.hpp"
+#include "reboot/integration/purge_report.hpp"
 #include "reboot/integration/purge_scope.hpp"
 #include "reboot/integration/purge_targets.hpp"
 
@@ -29,9 +32,13 @@ public:
     PurgeService& operator=(const PurgeService&) = delete;
 
     // OpKind::Generic, completing with a PurgeReport; any blocker is integration.purge_blocked, with no op.
+    // A purge in progress blocks another; blockers found once `prepare` is ready fail the op.
     Result<OpHandle> start_purge(PurgeScope scope, DisconnectPolicy policy);
 
 private:
+    void prepared(PurgeScope scope, Operation<PurgeReport>& op);
+    void finish(PurgeScope scope, Operation<PurgeReport>& op, Outcome<PurgeReport> outcome);
+
     ports::IFileSystem& fs_;
     const AppLayout& layout_;
     const InstallLayout& install_;
@@ -40,6 +47,7 @@ private:
     WorkerPool& workers_;
     Executor& strand_;
     OpRegistry& ops_;
+    std::optional<OpId> running_;
 };
 
 }  // namespace reboot::integration

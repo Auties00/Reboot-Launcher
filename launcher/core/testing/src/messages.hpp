@@ -31,9 +31,19 @@ REBOOT_MESSAGE_DECL(kStreamClosed);
 REBOOT_MESSAGE_DECL(kBadScript);
 REBOOT_MESSAGE_DECL(kMalformedReply);
 REBOOT_MESSAGE_DECL(kBadBootstrap);
+REBOOT_MESSAGE_DECL(kIsADirectory);
+REBOOT_MESSAGE_DECL(kIsALink);
+REBOOT_MESSAGE_DECL(kSimulatedCrash);
+REBOOT_MESSAGE_DECL(kScratchDirFailed);
+REBOOT_MESSAGE_DECL(kUnknownStream);
+REBOOT_MESSAGE_DECL(kRenameConflict);
+REBOOT_MESSAGE_DECL(kSocketFailed);
 
 // Owned and registered by the OS packages; the fakes fail with the same ids the real adapters use.
 inline constexpr MessageId kEndpointUntrusted{"ipc.endpoint_untrusted"};
 inline constexpr MessageId kNotSupported{"platform.not_supported"};
+inline constexpr MessageId kConnectTimeout{"net.connect_timeout"};
+inline constexpr MessageId kRequestTimeout{"net.request_timeout"};
+inline constexpr MessageId kTransferStalled{"net.transfer_stalled"};
 
 }  // namespace reboot::testing::msg

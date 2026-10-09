@@ -1,10 +1,12 @@
 #include "reboot/catalog/catalog_service.hpp"
 
+#include <initializer_list>
 #include <utility>
 
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/trust/check_expiry.hpp"
+#include "reboot/trust/trust_error.hpp"
 
 namespace reboot::catalog {
 
@@ -16,11 +18,37 @@ namespace {
     return warning;
 }
 
+[[nodiscard]] Diagnostic rollback_warning(u64 serial, u64 active) {
+    return as_warning(CatalogError{
+        .code = CatalogErrorCode::Untrusted,
+        .cause = trust::to_diagnostic(trust::TrustError{.code = trust::TrustErrorCode::SerialRollback,
+                                                        .document = trust::SignedDocumentKind::BuildCatalog,
+                                                        .serial = serial,
+                                                        .highest_seen = active})});
+}
+
+// A first run has no cache; any other cache failure is worth a warning.
+[[nodiscard]] bool no_cache_yet(const CatalogError& error) noexcept {
+    return error.code == CatalogErrorCode::CacheMissing && (!error.cause || error.cause->kind == ErrorKind::NotFound);
+}
+
+// Its op already has an outcome; completing it only lets the registry free it.
+void release(Operation<CatalogUpdated>& op) { (void)op.complete(Cancelled{}); }
+
 }  // namespace
 
 CatalogService::CatalogService(ICatalogSource& remote, ICatalogSource& bundled, OpRegistry& ops, EventBus& events,
                                const IClock& clock)
     : remote_(remote), bundled_(bundled), ops_(ops), events_(events), clock_(clock) {}
+
+CatalogService::~CatalogService() {
+    alive_.cancel(CancelReason::Shutdown);
+    for (std::optional<Refresh>* refresh : {&running_, &queued_}) {
+        if (!*refresh) continue;
+        (void)ops_.cancel((*refresh)->handle.id(), CancelReason::Shutdown);
+        release(*(*refresh)->op);
+    }
+}
 
 std::vector<CatalogEntry> CatalogService::list(const CatalogFilter& filter) const {
     std::vector<CatalogEntry> out;
@@ -52,6 +80,10 @@ Result<CatalogEntry> CatalogService::installable_entry(std::string_view name) co
 Result<OpHandle> CatalogService::start_refresh(CatalogRefresh mode, DisconnectPolicy policy) {
     if (queued_ && !queued_->op->done()) return queued_->handle;
     if (running_ && !running_->op->done()) return running_->handle;
+    if (queued_) {
+        release(*queued_->op);
+        queued_.reset();
+    }
 
     auto [handle, op] = ops_.create<CatalogUpdated>(OpKind::HttpSmall, policy, std::nullopt);
     Refresh refresh{.handle = handle, .op = &op, .mode = mode, .warnings = {}, .changed = false};
@@ -72,10 +104,11 @@ void CatalogService::run() {
 
 void CatalogService::load_initial() {
     const CancelToken token = running_->op->token();
-    remote_.load(CatalogFetch::CacheOnly, token, [this, token](CatalogLoadResult cached) {
-        bundled_.load(CatalogFetch::CacheOnly, token, [this, cached = std::move(cached)](CatalogLoadResult bundled) mutable {
-            // A first run has no cache, which needs no warning.
-            if (!cached && cached.error().code != CatalogErrorCode::CacheMissing)
+    remote_.load(CatalogFetch::CacheOnly, token, [this, token, alive = alive_.token()](CatalogLoadResult cached) {
+        if (alive.cancelled()) return;
+        bundled_.load(CatalogFetch::CacheOnly, token, [this, alive, cached = std::move(cached)](CatalogLoadResult bundled) mutable {
+            if (alive.cancelled()) return;
+            if (!cached && !no_cache_yet(cached.error()))
                 running_->warnings.push_back(as_warning(cached.error()));
             if (!bundled) running_->warnings.push_back(as_warning(bundled.error()));
 
@@ -94,10 +127,13 @@ void CatalogService::load_initial() {
 }
 
 void CatalogService::revalidate() {
+    // A cancelled or timed-out op keeps what the local copies gave and skips the network.
+    if (running_->op->token().cancelled()) return finish(std::nullopt);
     const bool expired = clock_.system_now() > current_.expires_at;
     if (origin_ && running_->mode == CatalogRefresh::IfExpired && !expired) return finish(std::nullopt);
 
-    remote_.load(CatalogFetch::Revalidate, running_->op->token(), [this](CatalogLoadResult fetched) {
+    remote_.load(CatalogFetch::Revalidate, running_->op->token(), [this, alive = alive_.token()](CatalogLoadResult fetched) {
+        if (alive.cancelled()) return;
         if (!fetched) {
             if (!origin_) return finish(to_diagnostic(fetched.error()));
             running_->warnings.push_back(as_warning(fetched.error()));
@@ -110,8 +146,12 @@ void CatalogService::revalidate() {
 
 void CatalogService::activate(LoadedCatalog loaded) {
     for (auto& warning : loaded.warnings) running_->warnings.push_back(std::move(warning));
-    if (origin_ && loaded.catalog.serial < current_.serial) return;
-    if (origin_ && loaded.catalog.serial == current_.serial && *origin_ == loaded.origin) return;
+    // One serial names one signed document, so an equal serial changes nothing.
+    if (origin_ && loaded.catalog.serial <= current_.serial) {
+        if (loaded.origin == CatalogOrigin::Remote && loaded.catalog.serial < current_.serial)
+            running_->warnings.push_back(rollback_warning(loaded.catalog.serial, current_.serial));
+        return;
+    }
 
     current_ = std::move(loaded.catalog);
     origin_ = loaded.origin;
@@ -151,6 +191,7 @@ void CatalogService::finish(std::optional<Diagnostic> failure) {
     running_ = std::move(queued_);
     queued_.reset();
     if (running_->op->done()) {
+        release(*running_->op);
         running_.reset();
         return;
     }

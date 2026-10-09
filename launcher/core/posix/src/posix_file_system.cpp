@@ -10,12 +10,12 @@
 #include <string_view>
 #include <sys/file.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include "messages.hpp"
 #include "owner_only_directory.hpp"
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
+#include "unistd.hpp"
 
 namespace reboot::posix {
 
@@ -43,6 +43,14 @@ constexpr std::size_t kReadGrowth = 64 * 1024;
         bytes = bytes.subspan(static_cast<std::size_t>(written));
     }
     return {};
+}
+
+// A trailing "/" or "/." makes lstat and O_NOFOLLOW resolve a final link, so it is dropped.
+[[nodiscard]] NativePath without_trailing_separator(NativePath path) {
+    while (path.has_relative_path() && (!path.has_filename() || path.filename() == ".") &&
+           !path.parent_path().empty())
+        path = path.parent_path();
+    return path;
 }
 
 [[nodiscard]] Diagnostic held_file_changed(const NativePath& path) {
@@ -147,10 +155,16 @@ Result<void> PosixFileSystem::atomic_replace(const NativePath& target, std::span
         if (::close(file.release()) != 0) return std::unexpected(call_failed("close", errno, temp));
         if (keep_backup) {
             const NativePath backup = NativePath{target.native() + ".bak"};
-            if (::unlink(backup.c_str()) != 0 && errno != ENOENT)
-                return std::unexpected(call_failed("unlink", errno, backup));
-            if (::linkat(AT_FDCWD, target.c_str(), AT_FDCWD, backup.c_str(), 0) != 0 && errno != ENOENT)
-                return std::unexpected(call_failed("linkat", errno, backup));
+            struct stat previous {};
+            // Without a previous file an older backup may be the only copy left, so it stays.
+            if (::lstat(target.c_str(), &previous) == 0) {
+                if (::unlink(backup.c_str()) != 0 && errno != ENOENT)
+                    return std::unexpected(call_failed("unlink", errno, backup));
+                if (::linkat(AT_FDCWD, target.c_str(), AT_FDCWD, backup.c_str(), 0) != 0 && errno != ENOENT)
+                    return std::unexpected(call_failed("linkat", errno, backup));
+            } else if (errno != ENOENT) {
+                return std::unexpected(call_failed("lstat", errno, target));
+            }
         }
         if (::rename(temp.c_str(), target.c_str()) != 0) return std::unexpected(call_failed("rename", errno, target));
         return {};
@@ -202,7 +216,8 @@ Result<ports::FileLock> PosixFileSystem::lock_exclusive(const NativePath& path, 
     return ports::FileLock{std::make_unique<FlockHandle>(std::move(fd))};
 }
 
-Result<void> PosixFileSystem::restrict_to_owner(const NativePath& path) {
+Result<void> PosixFileSystem::restrict_to_owner(const NativePath& given) {
+    const NativePath path = without_trailing_separator(given);
     struct stat info {};
     if (::lstat(path.c_str(), &info) != 0) return std::unexpected(call_failed("lstat", errno, path));
     // ELOOP, as O_NOFOLLOW reports a link.
@@ -222,11 +237,33 @@ Result<ports::HeldFile> PosixFileSystem::open_deny_write(const NativePath& path)
 }
 
 Result<ports::FileRevision> PosixFileSystem::revision(const NativePath& path) {
+    return PosixFileRevisionReader{}.revision(path);
+}
+
+Result<ports::SharedRead> PosixFileSystem::read_shared(const NativePath& path, u64 offset, std::size_t max_bytes) {
+    const UniqueFd fd{::open(path.c_str(), O_RDONLY | O_CLOEXEC)};
+    if (!fd.valid()) return std::unexpected(call_failed("open", errno, path));
     struct stat info {};
-    if (::stat(path.c_str(), &info) != 0) return std::unexpected(call_failed("stat", errno, path));
-    return ports::FileRevision{.size = static_cast<u64>(info.st_size),
-                               .mtime = modified_time(info),
-                               .file_id = static_cast<u64>(info.st_ino)};
+    if (::fstat(fd.get(), &info) != 0) return std::unexpected(call_failed("fstat", errno, path));
+    ports::SharedRead read;
+    read.revision = ports::FileRevision{.size = static_cast<u64>(info.st_size),
+                                        .mtime = modified_time(info),
+                                        .file_id = static_cast<u64>(info.st_ino)};
+    if (offset >= read.revision.size) return read;
+    read.bytes.resize(max_bytes);
+    std::size_t filled = 0;
+    while (filled < max_bytes) {
+        const auto got = ::pread(fd.get(), read.bytes.data() + filled, max_bytes - filled,
+                                 static_cast<off_t>(offset + filled));
+        if (got < 0) {
+            if (errno == EINTR) continue;
+            return std::unexpected(call_failed("pread", errno, path));
+        }
+        if (got == 0) break;
+        filled += static_cast<std::size_t>(got);
+    }
+    read.bytes.resize(filled);
+    return read;
 }
 
 Result<void> PosixFileSystem::create_dirs_owner_only(const NativePath& path) {
@@ -240,12 +277,18 @@ Result<void> PosixFileSystem::create_dirs_owner_only(const NativePath& path) {
             continue;
         }
         if (errno != ENOENT) return std::unexpected(call_failed("stat", errno, current));
-        if (auto made = make_owner_only_directory(current); !made) return std::unexpected(std::move(made.error()));
+        auto made = make_owner_only_directory(current);
+        if (!made) return std::unexpected(std::move(made.error()));
+        if (*made) continue;
+        // Another process created the path meanwhile; it must still be a directory.
+        if (::stat(current.c_str(), &info) != 0) return std::unexpected(call_failed("stat", errno, current));
+        if (!S_ISDIR(info.st_mode)) return std::unexpected(call_failed("mkdir", ENOTDIR, current));
     }
     return {};
 }
 
-Result<void> PosixFileSystem::remove_tree(const NativePath& path) {
+Result<void> PosixFileSystem::remove_tree(const NativePath& given) {
+    const NativePath path = without_trailing_separator(given);
     struct stat info {};
     if (::lstat(path.c_str(), &info) != 0) {
         if (errno == ENOENT) return {};
@@ -260,6 +303,14 @@ Result<void> PosixFileSystem::remove_tree(const NativePath& path) {
     if (auto removed = remove_directory_contents(std::move(directory), path); !removed) return removed;
     if (::rmdir(path.c_str()) != 0 && errno != ENOENT) return std::unexpected(call_failed("rmdir", errno, path));
     return {};
+}
+
+Result<ports::FileRevision> PosixFileRevisionReader::revision(const NativePath& path) {
+    struct stat info {};
+    if (::stat(path.c_str(), &info) != 0) return std::unexpected(call_failed("stat", errno, path));
+    return ports::FileRevision{.size = static_cast<u64>(info.st_size),
+                               .mtime = modified_time(info),
+                               .file_id = static_cast<u64>(info.st_ino)};
 }
 
 }  // namespace reboot::posix

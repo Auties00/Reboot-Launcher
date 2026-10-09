@@ -26,9 +26,9 @@ inline constexpr i64 kInjectHashMismatch = 577;
 // - hello() sends WhHello{token, REBOOT_WINHOST_BUILD, kWinhostProtocol, pid}; the build is
 //   winhost's own payload release, not the launcher's ipc_build.
 // - WhWelcome{SpawnGame}: Win32Session parks the park_utf16 files until the session ends, then
-//   creates the game CREATE_SUSPENDED with the given UTF-16 argv, environment block and cwd, and
-//   the companions with winhost's own environment (without REBOOT_CTL*) and the game's cwd, all
-//   in one KILL_ON_JOB_CLOSE Job. It then injects the Early entries: EarlyBirdApc before resume,
+//   creates the game CREATE_SUSPENDED with the given UTF-16 argv and cwd, and the given
+//   environment block laid over winhost's own environment (without REBOOT_CTL*), and the
+//   companions with winhost's own environment and the game's cwd, all in one KILL_ON_JOB_CLOSE Job. It then injects the Early entries: EarlyBirdApc before resume,
 //   AfterResume once Resume arrives. LoggedIn entries wait for an Inject request. Spawned{Game|Companion} follows each creation, Injected each entry.
 //   A failed launch sends WhFatal, terminates the Job and ends run() with LaunchFailed.
 // - Every InjectSpec is opened deny-write, hashed through that handle and compared with its
@@ -44,7 +44,8 @@ inline constexpr i64 kInjectHashMismatch = 577;
 // - Resume resumes the game's main thread (companions are never resumed); Inject{entry} injects
 //   one entry. Stop{grace_ms} is answered ok at once, gives the Job grace_ms to empty, then
 //   terminates it; once it is empty and its Exited events are sent, winhost disconnects and run()
-//   returns Stopped. This is the sequence FakeWinhost plays.
+//   returns Stopped. This is the sequence FakeWinhost plays. A Job that does not empty within
+//   drain_timeout_ms is reported as WhFatal{stop} before the disconnect.
 // - Output{role, stream, bytes} relays each process's stdout and stderr pipe in chunks of at
 //   most kOutputChunkBytes; Exited{role, code} follows each process exit. Exited has no pid, so
 //   two companions' exits cannot be told apart. A game that exits on its own leaves winhost
@@ -63,7 +64,8 @@ public:
     Expected<void> hello(const ControlTokenBytes& token);
 
     // Serves the channel until it ends: Stopped, EngineClosed after a Welcome, Refused on EOF
-    // before one, LaunchFailed, or ProtocolError for a malformed, oversized or out-of-order frame.
+    // before one, LaunchFailed, or ProtocolError for a malformed, oversized or out-of-order frame,
+    // which is reported as WhFatal{protocol}. Every way out ends the Job first.
     [[nodiscard]] WinhostExit run();
 
 private:

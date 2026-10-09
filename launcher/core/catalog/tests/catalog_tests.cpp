@@ -197,3 +197,14 @@ TEST_CASE("to_diagnostic gives each error its id and kind") {
     CHECK(busy.retryable);
     CHECK_FALSE(to_diagnostic(CatalogError{.code = CatalogErrorCode::HttpStatus, .http_status = 404}).retryable);
 }
+
+TEST_CASE("parse_catalog refuses a time system_clock cannot hold") {
+    const std::string far = R"({"schema":1,"serial":1,"generated_unix_ms":0,"expires_unix_ms":9000000000000000,"entries":[],"flag_ranges":[]})";
+    CHECK(parse_error(far).where == "expires_unix_ms");
+    const std::string negative = R"({"schema":1,"serial":1,"generated_unix_ms":-1,"expires_unix_ms":0,"entries":[],"flag_ranges":[]})";
+    CHECK(parse_error(negative).where == "generated_unix_ms");
+    const std::string year_2200 = R"({"schema":1,"serial":1,"generated_unix_ms":0,"expires_unix_ms":7258118400000,"entries":[],"flag_ranges":[]})";
+    const auto parsed = parse_catalog(bytes(year_2200));
+    REQUIRE(parsed);
+    CHECK(parsed->expires_at.time_since_epoch() == std::chrono::milliseconds(7258118400000));
+}

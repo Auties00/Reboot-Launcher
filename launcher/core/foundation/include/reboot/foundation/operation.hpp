@@ -160,6 +160,10 @@ private:
 
 class OpRegistry;
 
+namespace detail {
+struct OpAccess;
+}
+
 // Completes exactly once: the first complete() moves the state Pending -> Completing -> Done.
 class OperationBase {
 public:
@@ -184,12 +188,17 @@ protected:
 
 private:
     friend class OpRegistry;
+    friend struct detail::OpAccess;
     enum class State : u8 { Pending, Completing, Done };
+
+    bool settle(ErasedOutcome outcome);
 
     OpRegistry& registry_;
     OpId id_;
     OpKind kind_;
     std::atomic<State> state_{State::Pending};
+    // Set by the work's own complete(); until then the registry keeps the object alive.
+    std::atomic<bool> work_ended_{false};
     CancelSource cancel_;
 };
 
@@ -223,11 +232,16 @@ private:
 // 10 minutes after it completed.
 class OpRegistry {
 public:
+    // Sees every outcome before it is kept and published, and may add to it (the error router's log_ref).
+    using OutcomeHook = UniqueFunction<void(OpId, OpKind, const std::optional<SessionId>&, ErasedOutcome&)>;
+
     OpRegistry(IClock& clock, TimerService& timers, EventBus& events);
     ~OpRegistry();
     OpRegistry(const OpRegistry&) = delete;
     OpRegistry& operator=(const OpRegistry&) = delete;
 
+    // The work's Operation<T>& stays valid until its own complete() returned, even when the outcome
+    // was decided earlier (cancel, deadline) and has since been released.
     template <class T>
     std::pair<OpHandle, Operation<T>&> create(OpKind kind, DisconnectPolicy policy, std::optional<SessionId> session,
                                               RunnerMultiplier multiplier = RunnerMultiplier::Native,
@@ -250,6 +264,9 @@ public:
     [[nodiscard]] bool has_live_detached() const;
     // By id.
     [[nodiscard]] std::vector<LiveOp> live() const;
+
+    // Replaces the earlier hook.
+    void set_outcome_hook(OutcomeHook hook);
 
 private:
     friend class OperationBase;

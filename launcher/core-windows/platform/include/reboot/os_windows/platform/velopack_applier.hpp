@@ -28,8 +28,8 @@ public:
     Result<void> stage(const NativePath& package) override;
     // Keeps no staged handle: a fresh UpdateManager over `feed_dir` finds the pending asset.
     Result<void> apply_and_restart(std::vector<std::string> args) override;
-    // Windows cannot replace a running image, so the engine exits for Update.exe.
-    [[nodiscard]] bool supports_in_place() const override { return false; }
+    // False for a portable install, so updates runs UpdateMode::NotifyOnly.
+    [[nodiscard]] bool supports_in_place() const override { return velopack_root_.has_value(); }
 
 private:
     std::optional<NativePath> velopack_root_;

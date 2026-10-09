@@ -23,5 +23,12 @@ REBOOT_MESSAGE(kBadScript, "testing.bad_script", "{path} is not a valid fake scr
 REBOOT_MESSAGE(kMalformedReply, "testing.malformed_reply",
                "The reply to request {req_id} has neither a payload nor an error");
 REBOOT_MESSAGE(kBadBootstrap, "testing.bad_bootstrap", "The game-control environment lacks a valid {name}");
+REBOOT_MESSAGE(kIsADirectory, "testing.is_a_directory", "{path} is a directory");
+REBOOT_MESSAGE(kIsALink, "testing.is_a_link", "{path} is a symbolic link");
+REBOOT_MESSAGE(kSimulatedCrash, "testing.simulated_crash", "Replacing {path} stopped before the rename");
+REBOOT_MESSAGE(kScratchDirFailed, "testing.scratch_dir_failed", "Cannot create a scratch directory under {path}");
+REBOOT_MESSAGE(kUnknownStream, "testing.unknown_stream", "Stream {stream} was never opened");
+REBOOT_MESSAGE(kRenameConflict, "testing.rename_conflict", "{account} already exists");
+REBOOT_MESSAGE(kSocketFailed, "testing.socket_failed", "{operation} failed for {endpoint}");
 
 }  // namespace reboot::testing::msg

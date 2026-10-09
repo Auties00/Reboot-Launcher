@@ -123,15 +123,21 @@ bool UpstreamPolicy::allows_connect(const UpstreamOrigin& target, const Endpoint
     return allows(target) && (!local || backend_on_loopback_);
 }
 
+bool UpstreamPolicy::learns_from(std::string_view path) noexcept {
+    path = path.substr(0, path.find('?'));
+    return (path.starts_with(kCloudstorageSystem) && path.size() > kCloudstorageSystem.size()) ||
+           path.starts_with(kMatchmakingTicket);
+}
+
 std::vector<UpstreamOrigin> UpstreamPolicy::learn(std::string_view path, std::span<const u8> decoded_body) {
-    if (decoded_body.size() > kLearnBodyCap) return {};
+    if (decoded_body.size() > kLearnBodyCap || !learns_from(path)) return {};
     path = path.substr(0, path.find('?'));
     const std::string_view text(reinterpret_cast<const char*>(decoded_body.data()), decoded_body.size());
 
     std::vector<UpstreamOrigin> found;
-    if (path.starts_with(kCloudstorageSystem) && path.size() > kCloudstorageSystem.size())
+    if (path.starts_with(kCloudstorageSystem))
         found = xmpp_origins(text);
-    else if (path.starts_with(kMatchmakingTicket))
+    else
         found = service_url_origins(text);
 
     std::vector<UpstreamOrigin> added;

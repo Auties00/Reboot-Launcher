@@ -108,3 +108,45 @@ TEST_CASE("an account record with a bad tag is dropped", "[storage][documents]")
     REQUIRE(issues.size() == 1);
     CHECK(issues[0].reason.id == "storage.invalid_value");
 }
+
+TEST_CASE("members a newer engine added to a record are kept", "[storage][documents]") {
+    LibraryDocument library;
+    library.builds.push_back(LibraryEntry{.id = BuildId{uuid("6f1c2a4e-1b7d-4a53-9a5e-2f0d8c3b7a10")},
+                                          .name = "8.51",
+                                          .root = testing::default_fake_root() / "builds" / "8.51"});
+    json::object library_json = library.write();
+    library_json["builds"].as_array()[0].as_object()["future"] = 7;
+    std::vector<ValueIssue> issues;
+    const LibraryDocument read_library = LibraryDocument::read(library_json, issues);
+    CHECK(issues.empty());
+    REQUIRE(read_library.builds.size() == 1);
+    CHECK(read_library.builds[0].unknown == json::object{{"future", 7}});
+    CHECK(read_library.write() == library_json);
+
+    AccountsDocument accounts;
+    accounts.records.push_back(AccountRecord{.record_id = AccountRecordId{uuid("9a3e7c51-2d44-4c1b-8f0a-61b2d5e9c3f7")},
+                                             .role = contracts::backend::AccountRole::Client,
+                                             .display_name = "Player",
+                                             .tag = "abc123"});
+    json::object accounts_json = accounts.write();
+    accounts_json["records"].as_array()[0].as_object()["future"] = "kept";
+    const AccountsDocument read_accounts = AccountsDocument::read(accounts_json, issues);
+    CHECK(issues.empty());
+    CHECK(read_accounts.write() == accounts_json);
+}
+
+TEST_CASE("a recorded child with a pid no process can have is dropped", "[storage][documents]") {
+    RuntimeDocument runtime;
+    const auto created = std::chrono::system_clock::time_point{std::chrono::seconds{5}};
+    runtime.children.push_back(RecordedProcess{.pid = 4200, .created = created, .role = ChildRole::Backend});
+    runtime.children.push_back(RecordedProcess{.pid = 0, .created = created, .role = ChildRole::Game});
+    runtime.children.push_back(RecordedProcess{.pid = 0xFFFFFFFFu, .created = created, .role = ChildRole::Game});
+    std::vector<ValueIssue> issues;
+    const RuntimeDocument read = RuntimeDocument::read(runtime.write(), issues);
+    REQUIRE(read.children.size() == 1);
+    CHECK(read.children[0].pid == 4200u);
+    REQUIRE(issues.size() == 2);
+    CHECK(issues[0].path == "children[1]");
+    CHECK(issues[0].reason.id == "storage.out_of_range");
+    CHECK(issues[1].path == "children[2]");
+}

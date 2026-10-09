@@ -25,5 +25,13 @@ REBOOT_MESSAGE_DECL(kSessionNotStaged);
 REBOOT_MESSAGE_DECL(kSessionAlreadyStaged);
 REBOOT_MESSAGE_DECL(kRunnerSpawnFailed);
 REBOOT_MESSAGE_DECL(kRunnerExited);
+REBOOT_MESSAGE_DECL(kWinhostFatal);
+REBOOT_MESSAGE_DECL(kPathNotExposable);
+REBOOT_MESSAGE_DECL(kNoVcRedist);
+REBOOT_MESSAGE_DECL(kCancelled);
+REBOOT_MESSAGE_DECL(kAnswerInvalid);
+REBOOT_MESSAGE_DECL(kRecordsNotList);
+REBOOT_MESSAGE_DECL(kRecordInvalid);
+REBOOT_MESSAGE_DECL(kRecordDuplicate);
 
 }  // namespace reboot::compat::msg

@@ -44,13 +44,13 @@ SocketStream::~SocketStream() {
 
 void SocketStream::write(std::span<const u8> bytes) {
     const std::lock_guard lock{mutex_};
-    if (finished_ || bytes.empty()) return;
+    if (finished_ || send_closed_ || bytes.empty()) return;
     if (!outbound_.empty()) {
         outbound_.insert(outbound_.end(), bytes.begin(), bytes.end());
         return;
     }
     const std::size_t sent = send_locked(bytes);
-    if (finished_ || sent == bytes.size()) return;
+    if (finished_ || send_closed_ || sent == bytes.size()) return;
     outbound_.assign(bytes.begin() + static_cast<std::ptrdiff_t>(sent), bytes.end());
     wake_.wake();
 }
@@ -131,6 +131,8 @@ bool SocketStream::run_once() {
         bool reading = false;
         {
             const std::lock_guard lock{mutex_};
+            // close() from another thread may have finished the stream since poll returned.
+            if (finished_) return true;
             reading = static_cast<bool>(on_read_);
             if (!reading) hung_up_ = true;
         }
@@ -173,6 +175,12 @@ std::size_t SocketStream::send_locked(std::span<const u8> bytes) noexcept {
     std::size_t sent = 0;
     while (sent < bytes.size()) {
         const IoResult result = send_some(socket_.get(), bytes.subspan(sent));
+        if (result.error == EPIPE || result.error == ECONNRESET) {
+            send_closed_ = true;
+            outbound_.clear();
+            outbound_sent_ = 0;
+            return sent;
+        }
         if (result.error != 0) {
             finish_locked();
             return sent;
@@ -184,15 +192,23 @@ std::size_t SocketStream::send_locked(std::span<const u8> bytes) noexcept {
 }
 
 void SocketStream::flush_locked() noexcept {
-    const std::size_t sent = send_locked(outbound_);
-    if (finished_) return;
-    outbound_.erase(outbound_.begin(), outbound_.begin() + static_cast<std::ptrdiff_t>(sent));
+    const std::size_t sent = send_locked(std::span<const u8>{outbound_}.subspan(outbound_sent_));
+    if (finished_ || send_closed_) return;
+    outbound_sent_ += sent;
+    if (outbound_sent_ == outbound_.size()) {
+        outbound_.clear();
+        outbound_sent_ = 0;
+    } else if (outbound_sent_ >= outbound_.size() / 2) {
+        outbound_.erase(outbound_.begin(), outbound_.begin() + static_cast<std::ptrdiff_t>(outbound_sent_));
+        outbound_sent_ = 0;
+    }
 }
 
 void SocketStream::finish_locked() noexcept {
     if (finished_) return;
     finished_ = true;
     outbound_.clear();
+    outbound_sent_ = 0;
     ::shutdown(socket_.get(), SHUT_RDWR);
     wake_.wake();
 }

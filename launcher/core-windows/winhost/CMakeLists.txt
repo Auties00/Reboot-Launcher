@@ -6,10 +6,6 @@ if(NOT WIN32)
   return()
 endif()
 
-# main.cpp lands with the implementation; until then only the headers exist.
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
-  return()
-endif()
 if(NOT MSVC OR NOT CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "x64")
   message(FATAL_ERROR "reboot-winhost is an x64 MSVC build")
 endif()
@@ -24,6 +20,7 @@ set(winhost_repro_options /Brepro /experimental:deterministic "/pathmap:${winhos
 
 add_library(reboot_os_windows_winhost STATIC
   src/control_connection.cpp
+  src/env_overlay.cpp
   src/winhost_agent.cpp
   src/winhost_bootstrap.cpp
   src/winhost_failure.cpp)
@@ -52,6 +49,10 @@ if(REBOOT_BUILD_TESTS)
     target_include_directories(reboot_os_windows_winhost_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(reboot_os_windows_winhost_tests PRIVATE
       reboot_os_windows_winhost Catch2::Catch2WithMain reboot_warnings)
+    # The kill-chain tests run the real executable.
+    add_dependencies(reboot_os_windows_winhost_tests reboot-winhost)
+    target_compile_definitions(reboot_os_windows_winhost_tests PRIVATE
+      "REBOOT_WINHOST_EXE=\"$<TARGET_FILE:reboot-winhost>\"")
     if(NOT COMMAND catch_discover_tests)
       include(Catch)
     endif()

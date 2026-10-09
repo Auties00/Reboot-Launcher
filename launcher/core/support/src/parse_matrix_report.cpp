@@ -16,6 +16,10 @@ namespace {
 
 namespace json = boost::json;
 
+// The clock's tick is finer than a second, so larger values would overflow the time_point.
+constexpr u64 kMaxRecordedAt = static_cast<u64>(
+    std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::duration::max()).count());
+
 [[nodiscard]] std::unexpected<Diagnostic> malformed(std::string where) {
     return make_diag(ErrorDomain::Support, msg::kMatrixReportMalformed).arg("where", std::move(where)).fail();
 }
@@ -178,7 +182,7 @@ namespace json = boost::json;
     if (!range->contains(*version, cl)) return malformed(where + ".version");
 
     const std::optional<u64> recorded_at = unsigned_at(row, "recorded_at");
-    if (!recorded_at || *recorded_at > u64{1} << 40) return malformed(where + ".recorded_at");
+    if (!recorded_at || *recorded_at > kMaxRecordedAt) return malformed(where + ".recorded_at");
     const std::optional<std::string_view> log_ref = string_at(row, "log_ref");
     if (!log_ref) return malformed(where + ".log_ref");
 

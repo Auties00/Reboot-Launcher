@@ -10,5 +10,6 @@ REBOOT_MESSAGE_DECL(kStopping);
 REBOOT_MESSAGE_DECL(kRefusingNew);
 REBOOT_MESSAGE_DECL(kParentNotLive);
 REBOOT_MESSAGE_DECL(kInvalidTransition);
+REBOOT_MESSAGE_DECL(kStopOverran);
 
 }  // namespace reboot::sessions::msg

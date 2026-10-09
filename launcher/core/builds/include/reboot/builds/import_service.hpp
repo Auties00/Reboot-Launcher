@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -59,7 +60,9 @@ struct ImportServiceDeps {
 // Strand-only; never writes into the folder. Order: validate, resolve, detect, version cap, add.
 class ImportService {
 public:
-    explicit ImportService(ImportServiceDeps deps) : deps_(deps) {}
+    explicit ImportService(ImportServiceDeps deps);
+    // Settles running imports as cancelled; their pending work never reaches this object.
+    ~ImportService();
     ImportService(const ImportService&) = delete;
     ImportService& operator=(const ImportService&) = delete;
 
@@ -71,9 +74,12 @@ public:
     Result<OpHandle> start_import(ImportRequest request, DisconnectPolicy policy);
 
 private:
+    struct Impl;
+
     ImportServiceDeps deps_;
     LayoutResolver resolver_;
     PeVersionReader reader_;
+    std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace reboot::builds

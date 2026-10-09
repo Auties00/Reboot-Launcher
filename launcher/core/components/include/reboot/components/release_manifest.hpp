@@ -33,8 +33,10 @@ struct ReleaseManifest {
     bool operator==(const ReleaseManifest&) const = default;
 };
 
-// Parses a body whose signature was already verified. Refuses, with components.manifest_malformed
-// naming the field:
+// Parses a body whose signature was already verified; tests/data/release_manifest.json shows the
+// layout. Unknown keys are ignored, and an app or runtime for an os, arch or runtime kind this build
+// cannot name, or a payload file of an unknown role, is skipped. Refuses, with
+// components.manifest_malformed naming the field:
 // - any schema but VersionStreams::manifest_schema (components.manifest_schema_unsupported);
 // - an artifact without sha256, or a RemoteFile with no urls;
 // - two app entries for one platform and channel, or an unknown app kind;

@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <utility>
 
+#include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
@@ -54,6 +55,14 @@ struct SessionRegistry::State {
     std::vector<StopBarrier> barriers;
     u64 next_barrier = 1;
     bool refusing_new = false;
+    // Cancelled by the destructor, so a task posted earlier finds no state to touch.
+    CancelSource alive;
+
+    void post(UniqueFunction<void()> task) {
+        strand.post([alive = alive.token(), task = std::move(task)]() mutable {
+            if (!alive.cancelled()) task();
+        });
+    }
 
     [[nodiscard]] Session* find(SessionId id) const {
         const auto it = std::ranges::find(sessions, id, [](const auto& session) { return session->info.id; });
@@ -92,12 +101,16 @@ struct SessionRegistry::State {
         publish_state(session);
 
         const SessionId id = session.info.id;
-        for (const SessionId child_id : session.info.children) {
+        // A copy: a child's driver runs inside this loop and may reach the registry.
+        const std::vector<SessionId> children = session.info.children;
+        for (const SessionId child_id : children) {
             Session* child = find(child_id);
             if (child == nullptr) continue;
             ++session.children_pending;
             stop(*child, StopRequest{.reason = StopReason::ParentEnded, .grace = grace, .error = {}},
-                 [this, id] { on_child_ended(id); });
+                 [this, alive = alive.token(), id] {
+                     if (!alive.cancelled()) on_child_ended(id);
+                 });
         }
         if (session.children_pending == 0) stop_driver(session);
     }
@@ -110,11 +123,14 @@ struct SessionRegistry::State {
 
     void stop_driver(Session& session) {
         const SessionId id = session.info.id;
-        session.stop_deadline = timers.after(session.stop->grace + kStopKillMargin,
-                                             [this, id] { end(id, internal_bug("session_registry.stop_deadline")); });
-        // Posted, so the driver is never destroyed inside its own stop().
-        session.driver->stop(*session.stop, [this, id](Result<void> stopped) {
-            strand.post([this, id, stopped = std::move(stopped)]() mutable {
+        session.stop_deadline = timers.after(session.stop->grace + kStopKillMargin, [this, id] {
+            end(id, to_diagnostic(SessionsError{
+                        .code = SessionsErrorCode::StopOverran, .session = id, .from = {}, .to = {}}));
+        });
+        // Posted, so the driver is never destroyed inside its own stop(); a `done` after the registry is a no-op.
+        session.driver->stop(*session.stop, [this, alive = alive.token(), id](Result<void> stopped) {
+            if (alive.cancelled()) return;
+            post([this, id, stopped = std::move(stopped)]() mutable {
                 end(id, stopped ? std::optional<Diagnostic>() : std::optional<Diagnostic>(std::move(stopped.error())));
             });
         });
@@ -136,6 +152,8 @@ struct SessionRegistry::State {
         std::optional<Diagnostic> error = std::move(session->stop->error);
         if (failure && error) failure->causes.push_back(std::move(*error));
         if (failure) error = std::move(failure);
+        // Before SessionEnded, so whatever the driver held is free when listeners and `on_ended` run.
+        session->driver.reset();
 
         // Erased first, so a listener woken by SessionEnded already sees has_live() without it.
         events.publish(EventKind::SessionEnded,
@@ -150,7 +168,8 @@ struct SessionRegistry::State {
     }
 
     [[nodiscard]] UniqueFunction<void()> join_barrier(u64 barrier) {
-        return [this, barrier] {
+        return [this, alive = alive.token(), barrier] {
+            if (alive.cancelled()) return;
             const auto it = std::ranges::find(barriers, barrier, &StopBarrier::id);
             if (it == barriers.end() || --it->remaining > 0) return;
             UniqueFunction<void()> done = std::move(it->done);
@@ -184,9 +203,16 @@ SessionRegistry::SessionRegistry(IClock& clock, IRandom& random, Executor& stran
                                            .ended = {},
                                            .barriers = {},
                                            .next_barrier = 1,
-                                           .refusing_new = false})) {}
+                                           .refusing_new = false,
+                                           .alive = {}})) {}
 
-SessionRegistry::~SessionRegistry() = default;
+// Drivers go children first, while the state is still whole, since a driver's destructor may call back in.
+SessionRegistry::~SessionRegistry() {
+    state_->alive.cancel(CancelReason::Shutdown);
+    std::vector<std::unique_ptr<Session>> sessions = std::move(state_->sessions);
+    state_->sessions.clear();
+    while (!sessions.empty()) sessions.pop_back();
+}
 
 Result<SessionId> SessionRegistry::open(SessionSpec spec, std::unique_ptr<ISessionDriver> driver) {
     if (!driver) return std::unexpected(internal_bug("session_registry.open"));
@@ -256,14 +282,14 @@ Result<Incarnation> SessionRegistry::note_spawned(SessionId id, SpawnedProcess p
     return session.incarnation;
 }
 
-Result<void> SessionRegistry::begin_respawn(SessionId id) {
+Result<Incarnation> SessionRegistry::begin_respawn(SessionId id) {
     auto found = state_->lookup(id);
     if (!found) return std::unexpected(std::move(found.error()));
     Session& session = **found;
     if (!is_active(session.info.phase)) return fail(SessionsErrorCode::Stopping, id);
     if (!session.respawn_pending) ++session.incarnation.value;
     session.respawn_pending = true;
-    return {};
+    return session.incarnation;
 }
 
 void SessionRegistry::note_process_exited(SessionId id, SpawnedProcess process) {

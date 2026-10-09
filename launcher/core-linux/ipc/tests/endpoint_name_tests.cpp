@@ -38,6 +38,11 @@ TEST_CASE("an absolute XDG_RUNTIME_DIR is the runtime base", "[endpoint_name]") 
     CHECK(base.from_xdg_runtime_dir);
 }
 
+TEST_CASE("the runtime base is lexically normal, as XdgPaths::ipc_runtime_base gives it", "[endpoint_name]") {
+    CHECK(resolve_ipc_runtime_base("/run/user/./1000", 1000).path.string() == "/run/user/1000");
+    CHECK(resolve_ipc_runtime_base("/run//user/x/../1000", 1000).path.string() == "/run/user/1000");
+}
+
 TEST_CASE("without an absolute XDG_RUNTIME_DIR the base is a per-uid /tmp directory", "[endpoint_name]") {
     for (const std::optional<std::string_view> value :
          {std::optional<std::string_view>{}, std::optional<std::string_view>{""},

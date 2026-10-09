@@ -51,7 +51,8 @@ public:
     [[nodiscard]] std::optional<u32> stop_grace_ms() const;
     [[nodiscard]] bool job_terminated() const;
     [[nodiscard]] std::vector<OwnedFrame> received_frames() const;
-    // The DLL the script's game_client_dll started, once Resume arrived.
+    // The DLL the script's game_client_dll started, once Resume arrived. After connect() it
+    // reaches the engine over TCP by itself; after attach() the test attaches its stream.
     [[nodiscard]] FakeClientDll* game_client_dll() const;
 
 private:

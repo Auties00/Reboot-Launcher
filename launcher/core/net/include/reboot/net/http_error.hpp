@@ -21,9 +21,11 @@ enum class HttpErrorCode : u8 {
     PlainHttpNeedsConsent,
     DowngradeRefused,
     Transport,
+    Cancelled,
 };
 
-// `limit` is the timeout or stall window that ran out; `byte_limit` the body cap.
+// `limit` is the timeout or stall window that ran out; `byte_limit` the body cap. For InvalidUrl,
+// `host` holds the rejected URL.
 struct HttpError {
     HttpErrorCode code = HttpErrorCode::Transport;
     std::string host;

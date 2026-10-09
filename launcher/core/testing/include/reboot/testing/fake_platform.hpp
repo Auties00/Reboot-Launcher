@@ -27,6 +27,7 @@
 #include "reboot/testing/fake_update_applier.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/in_memory_ipc.hpp"
+#include "reboot/testing/in_memory_log_file_system.hpp"
 #include "reboot/testing/scripted_process_launcher.hpp"
 
 namespace reboot::testing {
@@ -61,6 +62,7 @@ public:
 
     [[nodiscard]] FakePlatformPaths& paths() noexcept { return *paths_; }
     [[nodiscard]] InMemoryFileSystem& fs() noexcept { return *fs_; }
+    [[nodiscard]] InMemoryLogFileSystem& logs() noexcept { return *logs_; }
     [[nodiscard]] FakeFileWatcher& watcher() noexcept { return *watcher_; }
     [[nodiscard]] FakeDiskInfo& disk() noexcept { return *disk_; }
     [[nodiscard]] FakeSecretStore& secrets() noexcept { return *secrets_; }
@@ -92,6 +94,7 @@ private:
     // Views into services_.
     FakePlatformPaths* paths_ = nullptr;
     InMemoryFileSystem* fs_ = nullptr;
+    InMemoryLogFileSystem* logs_ = nullptr;
     FakeFileWatcher* watcher_ = nullptr;
     FakeDiskInfo* disk_ = nullptr;
     FakeSecretStore* secrets_ = nullptr;

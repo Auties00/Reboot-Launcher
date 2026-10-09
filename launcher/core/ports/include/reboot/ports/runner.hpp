@@ -32,6 +32,16 @@ struct RuntimeDirs {
     std::optional<NativePath> launcher;
 };
 
+// Boot creates or upgrades the prefix; KillServer ends its wineserver; Run starts a Windows program.
+enum class PrefixVerb : u8 { Boot, KillServer, Run };
+
+struct PrefixCommand {
+    PrefixVerb verb{};
+    // Run only.
+    NativePath exe;
+    std::vector<std::string> args;
+};
+
 // Play only: hosting never runs under Wine.
 class IRunnerPlatform {
 public:
@@ -43,8 +53,11 @@ public:
     virtual Result<void> post_extract(const NativePath& runtime_dir) = 0;
     virtual Result<ProcessLaunch> runner_launch(const RuntimeLayout& layout, const NativePath& prefix,
                                                 const NativePath& winhost_exe, EnvBlock base) = 0;
-    // The Steam Linux Runtime setup on Linux; nothing elsewhere.
-    virtual Result<void> runtime_setup(const RuntimeLayout& layout, CancelToken token) = 0;
+    // `base` holds the runner layer, as for runner_launch; a Run exe's directory is exposed like winhost's.
+    virtual Result<ProcessLaunch> prefix_command(const RuntimeLayout& layout, const NativePath& prefix,
+                                                 const PrefixCommand& command, EnvBlock base) = 0;
+    // The Steam Linux Runtime setup on Linux, returning the build it installed; nothing elsewhere.
+    virtual Result<std::optional<std::string>> runtime_setup(const RuntimeLayout& layout, CancelToken token) = 0;
     // RosettaInstall when Rosetta is missing on Apple Silicon.
     [[nodiscard]] virtual std::optional<UserRequestKind> pending_prerequisite() = 0;
 };

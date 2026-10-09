@@ -138,13 +138,22 @@ void WorkerPool::shutdown() {
     impl_->threads.clear();
 }
 
+namespace detail {
+
+struct TimerState {
+    u64 next_id = 1;
+    std::map<u64, UniqueFunction<void()>> pending;
+};
+
+}  // namespace detail
+
 TimerHandle::TimerHandle(TimerHandle&& other) noexcept
-    : service_(std::exchange(other.service_, nullptr)), id_(std::exchange(other.id_, 0)) {}
+    : state_(std::move(other.state_)), id_(std::exchange(other.id_, 0)) {}
 
 TimerHandle& TimerHandle::operator=(TimerHandle&& other) noexcept {
     if (this != &other) {
         cancel();
-        service_ = std::exchange(other.service_, nullptr);
+        state_ = std::move(other.state_);
         id_ = std::exchange(other.id_, 0);
     }
     return *this;
@@ -153,20 +162,23 @@ TimerHandle& TimerHandle::operator=(TimerHandle&& other) noexcept {
 TimerHandle::~TimerHandle() { cancel(); }
 
 void TimerHandle::cancel() {
-    if (service_ == nullptr) return;
-    std::exchange(service_, nullptr)->cancel(id_);
-    id_ = 0;
+    const std::shared_ptr<detail::TimerState> state = std::exchange(state_, {}).lock();
+    const u64 id = std::exchange(id_, 0);
+    if (!state) return;
+    const auto it = state->pending.find(id);
+    if (it == state->pending.end()) return;
+    // Destroyed after the erase: the callback may own a handle that cancels into the same map.
+    [[maybe_unused]] const UniqueFunction<void()> removed = std::move(it->second);
+    state->pending.erase(it);
 }
 
-bool TimerHandle::active() const { return service_ != nullptr && service_->active(id_); }
-
-struct TimerService::State {
-    u64 next_id = 1;
-    std::map<u64, UniqueFunction<void()>> pending;
-};
+bool TimerHandle::active() const {
+    const std::shared_ptr<detail::TimerState> state = state_.lock();
+    return state && state->pending.contains(id_);
+}
 
 TimerService::TimerService(IClock& clock, Executor& executor)
-    : clock_(clock), executor_(executor), state_(std::make_shared<State>()) {}
+    : clock_(clock), executor_(executor), state_(std::make_shared<detail::TimerState>()) {}
 
 // Callbacks are destroyed outside the map: one may own a TimerHandle that cancels into it.
 TimerService::~TimerService() { [[maybe_unused]] const auto pending = std::exchange(state_->pending, {}); }
@@ -185,17 +197,8 @@ TimerHandle TimerService::at(SteadyTime when, UniqueFunction<void()> callback) {
         state->pending.erase(it);
         fire();
     });
-    return TimerHandle(*this, id);
+    return TimerHandle(state_, id);
 }
-
-void TimerService::cancel(u64 id) {
-    const auto it = state_->pending.find(id);
-    if (it == state_->pending.end()) return;
-    [[maybe_unused]] const UniqueFunction<void()> removed = std::move(it->second);
-    state_->pending.erase(it);
-}
-
-bool TimerService::active(u64 id) const { return state_->pending.contains(id); }
 
 void ManualExecutor::post(UniqueFunction<void()> task) { ready_.push_back(std::move(task)); }
 
@@ -225,8 +228,15 @@ std::size_t ManualExecutor::run_all() {
 }
 
 std::size_t ManualExecutor::advance(std::chrono::steady_clock::duration by) {
-    clock_.advance(by);
-    return run_all();
+    const SteadyTime target = clock_.steady_now() + by;
+    std::size_t ran = run_all();
+    // Stops at each due time on the way, so a timed task sees the clock at its own deadline.
+    while (!timed_.empty() && timed_.begin()->first <= target) {
+        if (const SteadyTime due = timed_.begin()->first; due > clock_.steady_now()) clock_.advance(due - clock_.steady_now());
+        ran += run_all();
+    }
+    if (target > clock_.steady_now()) clock_.advance(target - clock_.steady_now());
+    return ran + run_all();
 }
 
 }  // namespace reboot

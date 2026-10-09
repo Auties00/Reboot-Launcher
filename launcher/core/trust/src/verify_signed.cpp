@@ -5,6 +5,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,8 +23,8 @@ struct MdCtxDeleter {
 };
 
 // Empties this thread's OpenSSL error queue, so a stale entry never reaches a later caller.
-[[nodiscard]] std::string take_openssl_error() {
-    std::string text;
+[[nodiscard]] std::optional<std::string> take_openssl_error() {
+    std::optional<std::string> text;
     if (const unsigned long code = ERR_get_error(); code != 0) {
         std::array<char, 256> buffer{};
         ERR_error_string_n(code, buffer.data(), buffer.size());
@@ -41,6 +42,8 @@ struct MdCtxDeleter {
 }  // namespace
 
 std::expected<void, TrustError> verify_signed(const KeyRing& ring, const SignedDocument& document) {
+    // Whatever is queued now is not ours, so a CryptoFailure never carries an unrelated reason.
+    ERR_clear_error();
     const Ed25519PublicKey* key = ring.find(document.key_id);
     if (key == nullptr)
         return std::unexpected(

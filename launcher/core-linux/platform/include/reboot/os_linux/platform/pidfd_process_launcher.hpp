@@ -41,8 +41,10 @@ public:
     // systemd-run --user --scope execs the command in place with runtime_dir added, which
     // `env -u XDG_RUNTIME_DIR` strips again when launch.env lacks it. The scope is the backstop
     // for processes that leave the group (wineserver); terminate_tree kills the group, then stops it.
+    // An exited child stays a zombie until its handle is destroyed, so terminate_tree can still
+    // kill what is left of its group without hitting a reused pid.
     Result<std::unique_ptr<ports::ChildProcess>> spawn(const ports::ProcessLaunch& launch) override;
-    // `created` must equal read_proc_start_time, which guards against pid reuse.
+    // `created` must equal read_proc_start_time, which guards against pid reuse; a zombie is not alive.
     Result<bool> is_alive(u32 pid, std::chrono::system_clock::time_point created) override;
     // SIGKILL to the process group `pid` leads after the same check; a process already gone is success.
     Result<void> kill(u32 pid, std::chrono::system_clock::time_point created) override;

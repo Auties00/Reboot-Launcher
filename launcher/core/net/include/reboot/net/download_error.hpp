@@ -19,6 +19,7 @@ enum class DownloadErrorCode : u8 {
     HttpStatus,
     Io,
     AttemptsExhausted,
+    Cancelled,
 };
 
 struct DownloadError {

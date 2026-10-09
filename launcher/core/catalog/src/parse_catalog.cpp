@@ -138,8 +138,9 @@ public:
         return u64_at(key).and_then([&](u64 unix_ms) -> Parsed<std::chrono::system_clock::time_point> {
             using std::chrono::milliseconds;
             using std::chrono::system_clock;
-            // Keeps the conversion to system_clock's tick in range on every library.
-            constexpr u64 kMaxUnixMs = u64{1} << 52;
+            // The largest time this library's system_clock tick can hold (year 2262 with nanoseconds).
+            constexpr u64 kMaxUnixMs =
+                static_cast<u64>(std::chrono::duration_cast<milliseconds>(system_clock::duration::max()).count());
             if (unix_ms > kMaxUnixMs) return malformed(at(key));
             return system_clock::time_point(
                 std::chrono::duration_cast<system_clock::duration>(milliseconds(static_cast<i64>(unix_ms))));

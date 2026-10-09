@@ -28,7 +28,9 @@ struct SpawnedChild {
 // macOS only: Linux spawns through clone3 in its own launcher.
 class PosixSpawner {
 public:
-    // The kernel's start time of `pid` (proc_pidinfo); nullopt when no such process exists.
+    // The kernel's start time of `pid`; nullopt when no such process exists. A child that already
+    // exited but is not yet reaped must still answer (sysctl KERN_PROC; proc_pidinfo fails for a
+    // zombie), or spawn would kill and report a child that only ended quickly.
     using StartTimeReader = UniqueFunction<Result<std::optional<std::chrono::system_clock::time_point>>(u32 pid)>;
 
     explicit PosixSpawner(StartTimeReader read_start_time) noexcept : read_start_time_(std::move(read_start_time)) {}

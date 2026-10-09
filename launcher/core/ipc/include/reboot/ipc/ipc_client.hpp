@@ -25,7 +25,7 @@ class IClock;
 
 namespace reboot::ports {
 class IEngineStarter;
-class IFileSystem;
+class IFileRevisionReader;
 class IIpcConnector;
 }  // namespace reboot::ports
 
@@ -51,7 +51,7 @@ struct IpcClientOptions {
 struct IpcClientDeps {
     ports::IIpcConnector& connector;
     ports::IEngineStarter& starter;
-    ports::IFileSystem& files;
+    ports::IFileRevisionReader& files;
     IClock& clock;
     // Runs every connect round and backoff wait; a ManualExecutor in tests.
     Executor& executor;
@@ -65,19 +65,21 @@ struct IpcClientDeps {
 class IpcClient {
 public:
     IpcClient(IpcClientDeps deps, IpcClientOptions options);
-    // Closes, then waits for a sink call in progress.
+    // Closes, then waits for a sink call, `done` call, connect round or stream callback in progress.
     ~IpcClient();
     IpcClient(const IpcClient&) = delete;
     IpcClient& operator=(const IpcClient&) = delete;
 
-    // Calls `done` once on the executor, within connect_deadline. Each round checks the update
-    // marker, connects, and in Autostart runs IEngineStarter::ensure_started when nobody listens.
+    // Calls `done` once on the executor, within connect_deadline of this call; a reconnect waiting
+    // out its backoff starts at once. Each round checks the update marker, connects, and in
+    // Autostart runs IEngineStarter::ensure_started when nobody listens.
     void connect(UniqueFunction<void(Result<Handshake>)> done);
     // Sends Goodbye{Normal} and stops reconnecting; no sink call starts after it returns.
     void close();
 
-    // ipc.connection_lost while no link is up. A frame sent just before a loss may or may not
-    // have reached the engine, so a Start can have created its op without a Started.
+    // ipc.connection_lost while no link is up, ipc.message_too_large for a frame over
+    // kIpcFrameCap. A frame sent just before a loss may or may not have reached the engine, so a
+    // Start can have created its op without a Started.
     template <ContractMessage T>
         requires(!std::same_as<T, contracts::ipc::Hello> && !std::same_as<T, contracts::ipc::SecretPut>)
     Result<void> send(const T& message) {

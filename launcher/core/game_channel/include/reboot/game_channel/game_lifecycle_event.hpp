@@ -18,19 +18,13 @@ using WindowCreated = contracts::game_client::WindowCreated;
 using ExitRequested = contracts::game_client::ExitRequested;
 using ConsoleReady = contracts::game_client::ConsoleReady;
 
-// Map travel began; hangs are not reported until TravelEnded.
-struct TravelStarted {};
-struct TravelEnded {};
-
+// Map travel began; the session ignores Unresponsive until TravelEnded.
+using TravelStarted = contracts::game_client::TravelStarted;
+using TravelEnded = contracts::game_client::TravelEnded;
 // The game entered the match at `address`, as test_join asked.
-struct Joined {
-    std::string address;
-};
-
+using Joined = contracts::game_client::Joined;
 // The match connection dropped; `reason` is the game's own network failure text.
-struct Disconnected {
-    std::string reason;
-};
+using Disconnected = contracts::game_client::Disconnected;
 
 // DllStep comes from our DLL with its `step`; the others are LegacyOutputAdapter verdicts.
 enum class FatalCause : u8 { DllStep, CorruptBuild, AuthFailure, CannotConnect };

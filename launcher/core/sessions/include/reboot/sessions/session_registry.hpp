@@ -47,7 +47,8 @@ public:
     // A primary spawn starts the next incarnation, unless begin_respawn already did.
     Result<Incarnation> note_spawned(SessionId session, SpawnedProcess process);
     // Call before killing the primary to respawn it, so its exit counts as an earlier incarnation's.
-    Result<void> begin_respawn(SessionId session);
+    // Returns the respawned primary's incarnation, also for reporting a failed respawn.
+    Result<Incarnation> begin_respawn(SessionId session);
     void note_process_exited(SessionId session, SpawnedProcess process);
 
     // Raising a condition with the same message id replaces it.

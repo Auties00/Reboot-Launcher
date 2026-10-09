@@ -66,3 +66,11 @@ TEST_CASE("resolve ignores ASCII case and surrounding space only") {
     CHECK_FALSE(table.resolve(""));
     CHECK(table.resolve("6.1.1")->version != table.resolve("6.10.1")->version);
 }
+
+TEST_CASE("catalog names are trimmed and a blank alias matches nothing") {
+    Catalog catalog;
+    catalog.entries = {entry("cert", "3.5", {" Season 3 ", "  "})};
+    const auto table = AliasTable::for_catalog(catalog);
+    CHECK(table.resolve("season 3")->entry == "cert");
+    CHECK_FALSE(table.resolve(" "));
+}

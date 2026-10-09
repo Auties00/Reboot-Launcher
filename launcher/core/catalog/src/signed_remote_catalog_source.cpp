@@ -20,6 +20,7 @@ namespace {
 
 // The ".sig" line is about 160 bytes.
 constexpr std::size_t kSignatureMaxBody = 4096;
+constexpr std::size_t kEtagMaxSize = 1024;
 
 [[nodiscard]] NativePath with_suffix(const NativePath& path, std::string_view suffix) {
     NativePath out = path;
@@ -33,6 +34,14 @@ constexpr std::size_t kSignatureMaxBody = 4096;
 
 [[nodiscard]] std::span<const u8> as_bytes(std::string_view text) noexcept {
     return {reinterpret_cast<const u8*>(text.data()), text.size()};
+}
+
+// Visible ASCII only, so an edited or hostile .etag file can never inject a header line.
+[[nodiscard]] std::string usable_etag(std::string_view etag) {
+    if (etag.size() > kEtagMaxSize) return {};
+    for (const char c : etag)
+        if (c < '!' || c > '~') return {};
+    return std::string(etag);
 }
 
 }  // namespace
@@ -68,7 +77,7 @@ SignedRemoteCatalogSource::SignedRemoteCatalogSource(RemoteCatalogLocation locat
       keys_(keys),
       serials_(serials) {}
 
-SignedRemoteCatalogSource::~SignedRemoteCatalogSource() = default;
+SignedRemoteCatalogSource::~SignedRemoteCatalogSource() { alive_.cancel(CancelReason::Shutdown); }
 
 void SignedRemoteCatalogSource::load(CatalogFetch fetch, CancelToken token,
                                      UniqueFunction<void(CatalogLoadResult)> done) {
@@ -83,24 +92,27 @@ void SignedRemoteCatalogSource::load(CatalogFetch fetch, CancelToken token,
     const CatalogError missing{.code = CatalogErrorCode::CacheMissing, .path = cache_body_};
     submit_catalog_work<CachedCopy>(
         workers_, strand_, std::move(token),
-        [this, missing]() -> std::expected<CachedCopy, CatalogError> {
+        [&files = files_, &keys = keys_, body_path = cache_body_, signature_path = cache_signature_,
+         etag_path = cache_etag_, missing]() -> std::expected<CachedCopy, CatalogError> {
             const auto absent = [&](const NativePath& path, Diagnostic cause) {
                 CatalogError error = missing;
                 error.path = path;
                 error.cause = std::move(cause);
                 return std::unexpected(std::move(error));
             };
-            auto body = files_.read_all(cache_body_);
-            if (!body) return absent(cache_body_, std::move(body.error()));
-            auto signature = files_.read_all(cache_signature_);
-            if (!signature) return absent(cache_signature_, std::move(signature.error()));
-            auto catalog = verify_and_parse(keys_, std::move(*body), as_text(*signature));
+            auto body = files.read_all(body_path);
+            if (!body) return absent(body_path, std::move(body.error()));
+            auto signature = files.read_all(signature_path);
+            if (!signature) return absent(signature_path, std::move(signature.error()));
+            auto catalog = verify_and_parse(keys, std::move(*body), as_text(*signature));
             if (!catalog) return std::unexpected(std::move(catalog.error()));
             // A missing or unreadable ETag only costs a full download.
-            auto etag = files_.read_all(cache_etag_);
-            return CachedCopy{.catalog = std::move(*catalog), .etag = etag ? std::string(as_text(*etag)) : std::string()};
+            auto etag = files.read_all(etag_path);
+            return CachedCopy{.catalog = std::move(*catalog), .etag = etag ? usable_etag(as_text(*etag)) : std::string()};
         },
-        missing, [this](std::expected<CachedCopy, CatalogError> cached) { on_cache_read(std::move(cached)); });
+        missing, [this, alive = alive_.token()](std::expected<CachedCopy, CatalogError> cached) {
+            if (!alive.cancelled()) on_cache_read(std::move(cached));
+        });
 }
 
 void SignedRemoteCatalogSource::on_cache_read(std::expected<CachedCopy, CatalogError> cached) {
@@ -123,7 +135,8 @@ void SignedRemoteCatalogSource::fetch_body() {
     if (load_->cached && !load_->cached->etag.empty())
         request.headers.push_back({.name = "If-None-Match", .value = load_->cached->etag});
 
-    auto sent = http_.send(std::move(request), load_->token, [this](Result<net::HttpResponse> response) {
+    auto sent = http_.send(std::move(request), load_->token, [this, alive = alive_.token()](Result<net::HttpResponse> response) {
+        if (alive.cancelled()) return;
         if (!response)
             return finish(std::unexpected(CatalogError{
                 .code = CatalogErrorCode::FetchFailed, .url = location_.catalog_url, .cause = std::move(response.error())}));
@@ -134,7 +147,7 @@ void SignedRemoteCatalogSource::fetch_body() {
             return finish(std::unexpected(CatalogError{
                 .code = CatalogErrorCode::HttpStatus, .url = location_.catalog_url, .http_status = response->status}));
         const std::string* etag = response->header("ETag");
-        load_->etag = etag != nullptr ? *etag : std::string();
+        load_->etag = etag != nullptr ? usable_etag(*etag) : std::string();
         load_->body = std::move(response->body);
         fetch_signature();
     });
@@ -145,7 +158,8 @@ void SignedRemoteCatalogSource::fetch_body() {
 
 void SignedRemoteCatalogSource::fetch_signature() {
     const net::HttpRequest request{.url = location_.signature_url, .max_body = kSignatureMaxBody};
-    auto sent = http_.send(request, load_->token, [this](Result<net::HttpResponse> response) {
+    auto sent = http_.send(request, load_->token, [this, alive = alive_.token()](Result<net::HttpResponse> response) {
+        if (alive.cancelled()) return;
         if (!response)
             return finish(std::unexpected(CatalogError{.code = CatalogErrorCode::FetchFailed,
                                                        .url = location_.signature_url,
@@ -157,13 +171,15 @@ void SignedRemoteCatalogSource::fetch_signature() {
         load_->signature = std::move(response->body);
         submit_catalog_work<LoadedCatalog>(
             workers_, strand_, load_->token,
-            [this, body = load_->body, signature = load_->signature]() mutable -> CatalogLoadResult {
-                auto catalog = verify_and_parse(keys_, std::move(body), as_text(signature));
+            [&keys = keys_, body = load_->body, signature = load_->signature]() mutable -> CatalogLoadResult {
+                auto catalog = verify_and_parse(keys, std::move(body), as_text(signature));
                 if (!catalog) return std::unexpected(std::move(catalog.error()));
                 return LoadedCatalog{.catalog = std::move(*catalog), .origin = CatalogOrigin::Remote, .warnings = {}};
             },
             CatalogError{.code = CatalogErrorCode::Untrusted},
-            [this](CatalogLoadResult fetched) { on_verified(std::move(fetched)); });
+            [this, alive](CatalogLoadResult fetched) {
+                if (!alive.cancelled()) on_verified(std::move(fetched));
+            });
     });
     if (!sent)
         finish(std::unexpected(CatalogError{
@@ -189,23 +205,24 @@ void SignedRemoteCatalogSource::on_verified(CatalogLoadResult fetched) {
     const CatalogError write_failed{.code = CatalogErrorCode::CacheWriteFailed, .path = cache_body_};
     submit_catalog_work<void>(
         workers_, strand_, load_->token,
-        [this, write_failed, writes = std::move(writes)]() -> std::expected<void, CatalogError> {
+        [&files = files_, dir = cache_body_.parent_path(), write_failed,
+         writes = std::move(writes)]() -> std::expected<void, CatalogError> {
             const auto fail = [&](const NativePath& path, Diagnostic cause) {
                 CatalogError error = write_failed;
                 error.path = path;
                 error.cause = std::move(cause);
                 return std::unexpected(std::move(error));
             };
-            const NativePath dir = cache_body_.parent_path();
-            if (auto created = files_.create_dirs_owner_only(dir); !created) return fail(dir, std::move(created.error()));
+            if (auto created = files.create_dirs_owner_only(dir); !created) return fail(dir, std::move(created.error()));
             // A crash between writes leaves a body and .sig that fail to verify, so the next load refetches.
             for (const auto& write : writes)
-                if (auto written = files_.atomic_replace(write.path, write.bytes, false); !written)
+                if (auto written = files.atomic_replace(write.path, write.bytes, false); !written)
                     return fail(write.path, std::move(written.error()));
             return {};
         },
         write_failed,
-        [this, fetched = std::move(*fetched)](std::expected<void, CatalogError> written) mutable {
+        [this, alive = alive_.token(), fetched = std::move(*fetched)](std::expected<void, CatalogError> written) mutable {
+            if (alive.cancelled()) return;
             if (!written) {
                 Diagnostic warning = to_diagnostic(written.error());
                 warning.severity = Severity::Warning;

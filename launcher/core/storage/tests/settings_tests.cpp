@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -196,6 +197,8 @@ TEST_CASE("reset_to_defaults is one revision and one event", "[storage][settings
     patch.host.listing = HostListing::Listed;
     patch.host.update_policy = HostUpdatePolicy::Manual;
     REQUIRE(f.settings.patch(patch) == 1u);
+    // Delivered now, or the bus would coalesce it with the reset's event.
+    REQUIRE(f.changes().size() == 1);
 
     REQUIRE(f.settings.reset_to_defaults(f.registry.in_group(ResetGroup::Host)) == 2u);
     const auto changes = f.changes();
@@ -235,4 +238,61 @@ TEST_CASE("the Wine settings patch and reset with the Play group", "[storage][se
 
     REQUIRE(f.settings.reset_to_defaults(f.registry.in_group(ResetGroup::Play)) == 2u);
     CHECK(f.settings.snapshot().values.play == PlaySettings{});
+}
+
+TEST_CASE("a hand edit publishes SettingsChanged for the keys it changed", "[storage][settings]") {
+    test::WorkerStrand strand;
+    WorkerPool workers{1};
+    ManualClock clock;
+    testing::InMemoryFileSystem fs;
+    EventBus events{EngineEpoch{1}};
+    testing::EventRecorder recorder{events, EventFilter{.kinds = {EventKind::SettingsChanged}}};
+    const NativePath path = testing::default_fake_root() / "config" / "settings.json";
+    fs.write_text(path, test::golden_text("hand_edit_before.json"));
+    DocumentStore<SettingsDocument> store{fs, workers, strand, clock, path};
+    REQUIRE(store.load().source == LoadSource::Primary);
+    SettingsRegistry registry;
+    Settings settings{store, registry, events};
+
+    fs.write_text(path, test::golden_text("hand_edit_edited.json"));
+    store.refresh();
+    std::optional<Result<void>> flushed;
+    store.flush({}, [&flushed](Result<void> done) { flushed = std::move(done); });
+    strand.run_until([&flushed] { return flushed.has_value(); });
+    REQUIRE(*flushed);
+
+    recorder.pump();
+    const auto changes = recorder.payloads<SettingsChanged>(EventKind::SettingsChanged);
+    REQUIRE(changes.size() == 1);
+    CHECK(changes[0]->keys == std::vector<std::string>{"ui.language"});
+    CHECK(changes[0]->revision == 5u);
+    CHECK(settings.snapshot().values.ui.language == "de");
+}
+
+TEST_CASE("language tags, launch arguments and auth DLL paths are validated", "[storage][settings]") {
+    for (const std::string_view tag : {"system", "de", "pt-BR", "zh-Hant-TW", "es-419"})
+        CHECK(validate_language_tag(std::string(tag)));
+    for (const std::string_view tag : {"", "e", "engl", "en_US", "en--US", "-en", "en-", "en-abcdefghi", "1en"}) {
+        const Result<std::string> refused = validate_language_tag(std::string(tag));
+        REQUIRE_FALSE(refused);
+        CHECK(refused.error().id == "storage.invalid_language_tag");
+    }
+
+    for (const std::string_view args : {R"(-log "C:\Fortnite Builds\8.51" -nosplash)", R"(-msg "say \"hi\"")",
+                                        "-a\t-b", R"(-dir C:\path\)"})
+        CHECK(validate_launch_args(std::string(args)));
+    for (const std::string_view args : {R"(-log "unterminated)", "-a\n-b", "-a\x7f", R"(-msg "say \\"hi")", "\xff"}) {
+        const Result<std::string> refused = validate_launch_args(std::string(args));
+        REQUIRE_FALSE(refused);
+        CHECK(refused.error().id == "storage.invalid_launch_args");
+    }
+
+    CHECK(validate_auth_dll_path(std::nullopt));
+    CHECK(validate_auth_dll_path(testing::default_fake_root() / "auth" / "Cobalt.DLL"));
+    for (const NativePath& path : {NativePath("Cobalt.dll"), testing::default_fake_root() / "auth" / "cobalt.exe",
+                                   testing::default_fake_root() / "auth"}) {
+        const Result<std::optional<NativePath>> refused = validate_auth_dll_path(path);
+        REQUIRE_FALSE(refused);
+        CHECK(refused.error().id == "storage.invalid_auth_dll_path");
+    }
 }

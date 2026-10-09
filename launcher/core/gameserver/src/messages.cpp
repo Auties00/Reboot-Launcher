@@ -30,5 +30,7 @@ REBOOT_MESSAGE(kCommandNotDeclared, "gameserver.command_not_declared",
                "This game server does not support the {command} command");
 REBOOT_MESSAGE(kCommandTimeout, "gameserver.command_timeout",
                "The game server did not answer the {command} command within {timeout}");
+REBOOT_MESSAGE(kCacheEntryInvalid, "gameserver.cache_entry_invalid",
+               "A cached game server description has a missing or invalid {member}");
 
 }  // namespace reboot::gameserver::msg

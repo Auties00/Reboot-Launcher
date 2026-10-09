@@ -78,17 +78,21 @@ public:
     ManifestService(const ManifestService&) = delete;
     ManifestService& operator=(const ManifestService&) = delete;
 
-    // Startup: the cached copy, else the bundled snapshot, each with its signature re-verified.
-    // The bundled snapshot ships inside the signed app, so it skips the serial gate.
+    // Startup: the cached copy, unless the bundled snapshot has a higher serial, each with its
+    // signature re-verified. The bundled snapshot ships inside the signed app, so it skips the
+    // serial gate. A manifest a refresh adopted first is kept.
     void load(UniqueFunction<void(Result<ManifestOrigin>)> done);
 
-    // Fetches under the HttpSmall deadline. A manifest with the current serial is Unchanged.
+    // Fetches under the HttpSmall deadline. A manifest with the current serial is Unchanged. A refresh
+    // while one is in flight joins it; a cancelled caller stops only its own wait.
     void refresh(CancelToken token, UniqueFunction<void(Result<ManifestRefresh>)> done);
 
     [[nodiscard]] const ReleaseManifest* current() const noexcept;
     [[nodiscard]] std::optional<ManifestOrigin> origin() const noexcept;
     // A Warning once the copy in use has expired; it stays in use until a fresh one is admitted.
     [[nodiscard]] std::optional<Diagnostic> expiry_warning() const;
+
+    [[nodiscard]] ManifestPlatform platform() const noexcept;
 
     // The entry for this platform and channel.
     [[nodiscard]] std::optional<AppEntry> app_entry() const;

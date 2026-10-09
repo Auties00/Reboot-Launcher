@@ -94,7 +94,9 @@ json::value path_to_json(const NativePath& path) { return native_to_json(path, p
 
 Result<NativePath> path_from_json(const json::value& value) {
     if (const json::string* text = value.if_string()) {
-        if (text->empty() || !is_valid_utf8(view(*text))) return invalid_input(msg::kInvalidPath).fail();
+        // An embedded NUL would make the OS see a shorter path than the one validated.
+        if (text->empty() || !is_valid_utf8(view(*text)) || view(*text).contains('\0'))
+            return invalid_input(msg::kInvalidPath).fail();
         return NativePath(std::u8string(text->begin(), text->end()));
     }
     const json::object* object = value.if_object();
@@ -103,7 +105,9 @@ Result<NativePath> path_from_json(const json::value& value) {
     if (encoded == nullptr || !encoded->is_string()) return invalid_input(msg::kInvalidPath).fail();
     const std::optional<std::vector<u8>> bytes = base64_decode(view(encoded->get_string()));
     if (!bytes || bytes->empty()) return invalid_input(msg::kInvalidPath).fail();
-    return native_from_bytes<NativePath::string_type>(*bytes);
+    Result<NativePath> path = native_from_bytes<NativePath::string_type>(*bytes);
+    if (path && path->native().contains(NativePath::value_type{})) return invalid_input(msg::kInvalidPath).fail();
+    return path;
 }
 
 json::value time_to_json(std::chrono::system_clock::time_point time) {

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <chrono>
 #include <climits>
 #include <poll.h>
 #include <string>
@@ -26,11 +27,18 @@ namespace {
 
 // errno of a connect that was still in progress, or ETIMEDOUT after `deadline`.
 [[nodiscard]] int finish_connect(int socket_fd, std::chrono::milliseconds deadline) noexcept {
-    const auto timeout = static_cast<int>(std::clamp<std::chrono::milliseconds::rep>(deadline.count(), 0, INT_MAX));
-    pollfd fd{.fd = socket_fd, .events = POLLOUT, .revents = 0};
-    const int ready = ::poll(&fd, 1, timeout);
-    if (ready < 0) return errno;
-    if (ready == 0) return ETIMEDOUT;
+    const auto until = std::chrono::steady_clock::now() + std::clamp(deadline, std::chrono::milliseconds{0},
+                                                                      std::chrono::milliseconds{INT_MAX});
+    for (;;) {
+        const auto left = std::chrono::ceil<std::chrono::milliseconds>(until - std::chrono::steady_clock::now());
+        const auto timeout = static_cast<int>(std::clamp<std::chrono::milliseconds::rep>(left.count(), 0, INT_MAX));
+        pollfd fd{.fd = socket_fd, .events = POLLOUT, .revents = 0};
+        const int ready = ::poll(&fd, 1, timeout);
+        if (ready < 0 && errno == EINTR) continue;
+        if (ready < 0) return errno;
+        if (ready == 0) return ETIMEDOUT;
+        break;
+    }
     int error = 0;
     socklen_t length = sizeof error;
     if (::getsockopt(socket_fd, SOL_SOCKET, SO_ERROR, &error, &length) != 0) return errno;

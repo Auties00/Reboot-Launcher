@@ -93,7 +93,11 @@ jobs:
         run: cmake --build --preset %PRESET% --target dag_check
       - name: Test
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
-        run: ctest --preset %PRESET% --no-tests=error
+        run: ctest --preset %PRESET% --no-tests=error -LE gate
+      # Message catalog completeness, the secret grep and the data root outside the Velopack package.
+      - name: CI gates
+        if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
+        run: ctest --preset %PRESET% --no-tests=error -L gate
 
   macos:
     name: macOS, Apple Clang (build, floor, DAG, tests)
@@ -142,7 +146,11 @@ jobs:
         run: cmake --build --preset "$PRESET" --target dag_check
       - name: Test
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
-        run: ctest --preset "$PRESET" --no-tests=error
+        run: ctest --preset "$PRESET" --no-tests=error -LE gate
+      # Message catalog completeness, the secret grep and the data root outside the app bundle.
+      - name: CI gates
+        if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
+        run: ctest --preset "$PRESET" --no-tests=error -L gate
 
   schema:
     name: reboot.api.v1 (generated code, goldens, buf lint and breaking)

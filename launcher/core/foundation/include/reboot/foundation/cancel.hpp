@@ -14,6 +14,7 @@ namespace detail {
 struct CancelState;
 }
 
+// After reset() or destruction the callback never runs, and is not running on another thread.
 class CancelRegistration {
 public:
     CancelRegistration() = default;
@@ -58,7 +59,8 @@ public:
 
     [[nodiscard]] CancelToken token() const;
 
-    // Only the first call wins; its reason is stored by CAS before any callback runs.
+    // Only the first call wins; its reason is stored by CAS before any callback runs. Callbacks
+    // run one at a time on the calling thread.
     bool cancel(CancelReason reason);
     [[nodiscard]] bool cancelled() const noexcept;
 

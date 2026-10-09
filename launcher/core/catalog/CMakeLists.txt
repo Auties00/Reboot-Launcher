@@ -13,4 +13,6 @@ reboot_add_package(catalog
 
 if(TARGET reboot_catalog_tests)
   target_compile_definitions(reboot_catalog_tests PRIVATE REBOOT_CATALOG_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
+  # The tests sign their own catalogs.
+  target_link_libraries(reboot_catalog_tests PRIVATE OpenSSL::Crypto)
 endif()

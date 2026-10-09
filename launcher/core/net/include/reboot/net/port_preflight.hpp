@@ -34,7 +34,7 @@ public:
     PortPreflight(const PortPreflight&) = delete;
     PortPreflight& operator=(const PortPreflight&) = delete;
 
-    // Fails only when no socket can be opened at all.
+    // Fails when no socket can be opened, or when the bind fails other than as in use or denied.
     [[nodiscard]] Result<PortAvailability> test(PortProtocol protocol, Endpoint bind);
 
     // Tests every port of a block on `address` and names the owners of the first one taken.

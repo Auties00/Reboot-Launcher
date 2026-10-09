@@ -25,6 +25,8 @@ namespace reboot::host {
 class HostProfileStore {
 public:
     HostProfileStore(storage::DocumentStore<HostProfilesDocument>& store, IRandom& random);
+    // Detaches from the store, which outlives this.
+    ~HostProfileStore();
     HostProfileStore(const HostProfileStore&) = delete;
     HostProfileStore& operator=(const HostProfileStore&) = delete;
 
@@ -50,9 +52,17 @@ public:
     void set_on_reload(UniqueFunction<void()> on_reload);
 
 private:
+    // The document's profiles, plus any built-in it lacks: one the store refused or a hand edit dropped.
+    [[nodiscard]] std::vector<HostProfile> merged() const;
+    // Adds the missing built-ins in front of `profiles`; false when none was missing.
+    bool add_builtins(std::vector<HostProfile>& profiles) const;
+    Result<void> commit(std::vector<HostProfile> profiles);
+
     storage::DocumentStore<HostProfilesDocument>& store_;
     IRandom& random_;
     UniqueFunction<void()> on_reload_;
+    // Set by ensure_builtin(); until then a missing built-in is not added.
+    std::optional<HostListing> default_listing_;
 };
 
 }  // namespace reboot::host

@@ -1,10 +1,12 @@
 #include "reboot/storage/runtime_document.hpp"
 
+#include <limits>
 #include <utility>
 
 #include <boost/json/array.hpp>
 
 #include "member_reader.hpp"
+#include "messages.hpp"
 #include "reboot/storage/json_values.hpp"
 
 namespace reboot::storage {
@@ -21,6 +23,14 @@ namespace {
     return out;
 }
 
+// 0 and values past pid_t's range would make a POSIX kill() signal a whole group instead.
+[[nodiscard]] Result<u32> pid_from_json(const json::value& raw) {
+    Result<u32> pid = u32_from_json(raw);
+    if (pid && (*pid == 0 || *pid > static_cast<u32>(std::numeric_limits<i32>::max())))
+        return invalid_input(msg::kOutOfRange).arg("value", *pid).fail();
+    return pid;
+}
+
 [[nodiscard]] Result<EnginePort> engine_port_from_json(const json::value& raw) {
     Result<const json::object*> object = object_from_json(raw);
     if (!object) return std::unexpected(std::move(object.error()));
@@ -35,7 +45,7 @@ namespace {
                                                       std::vector<ValueIssue>& issues) {
     Result<const json::object*> object = object_from_json(raw);
     if (!object) return std::unexpected(std::move(object.error()));
-    Result<u32> pid = required(**object, "pid", u32_from_json);
+    Result<u32> pid = required(**object, "pid", pid_from_json);
     if (!pid) return std::unexpected(std::move(pid.error()));
     Result<std::chrono::system_clock::time_point> created = required(**object, "created", time_from_json);
     if (!created) return std::unexpected(std::move(created.error()));

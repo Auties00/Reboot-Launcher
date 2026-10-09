@@ -33,18 +33,18 @@ void BundledCatalogSource::load(CatalogFetch, CancelToken token, UniqueFunction<
     const CatalogError unusable{.code = CatalogErrorCode::BundledUnusable, .path = body_};
     submit_catalog_work<LoadedCatalog>(
         workers_, strand_, std::move(token),
-        [this, unusable]() -> CatalogLoadResult {
+        [&files = files_, &keys = keys_, body_path = body_, signature_path = signature_, unusable]() -> CatalogLoadResult {
             const auto fail = [&](Diagnostic cause) {
                 CatalogError error = unusable;
                 error.cause = std::move(cause);
                 return std::unexpected(std::move(error));
             };
-            auto body = files_.read_all(body_);
+            auto body = files.read_all(body_path);
             if (!body) return fail(std::move(body.error()));
-            auto signature = files_.read_all(signature_);
+            auto signature = files.read_all(signature_path);
             if (!signature) return fail(std::move(signature.error()));
             const std::string_view signature_text(reinterpret_cast<const char*>(signature->data()), signature->size());
-            auto catalog = verify_and_parse(keys_, std::move(*body), signature_text);
+            auto catalog = verify_and_parse(keys, std::move(*body), signature_text);
             if (!catalog) return fail(to_diagnostic(catalog.error()));
             return LoadedCatalog{.catalog = std::move(*catalog), .origin = CatalogOrigin::Bundled, .warnings = {}};
         },

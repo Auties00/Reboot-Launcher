@@ -21,7 +21,7 @@ using AccountRecord = storage::AccountRecord;
 inline constexpr std::size_t kTagLength = 6;
 inline constexpr std::size_t kMaxAccountIdLength = kMaxDisplayNameLength + 1 + kTagLength;
 
-// Appended when no password is set, as 10.0.9 did.
+// The domain of a login that is not password-backed.
 inline constexpr std::string_view kLoginDomainSuffix = "@projectreboot.dev";
 
 // display_name + "-" + tag, at most 23 chars. The tag makes it unique without a registry, so two

@@ -320,6 +320,26 @@ message HostCancelMatchEndResponse {
   bool cancelled = 1;
 }
 
+// Moves a profile's rbsb identity, and so its server id and share link, to another PC or VPS.
+message HostIdentityExportRequest {
+  HostProfileId profile = 1;
+  // A directory that does not exist yet; it is created readable by the owner only.
+  Path destination = 2;
+}
+
+message HostIdentityExportResponse {}
+
+// Replaces the profile's identity with one an export wrote; refused while the profile is hosting.
+message HostIdentityImportRequest {
+  HostProfileId profile = 1;
+  // The directory an export created.
+  Path source = 2;
+}
+
+message HostIdentityImportResponse {
+  ServerId server = 1;
+}
+
 message HostProfilesChanged {
   HostProfileChange change = 1;
   // Absent for RESET.
@@ -407,5 +427,17 @@ service Host {
   // Stops the pending match-end action and leaves the server running.
   rpc CancelMatchEnd(HostCancelMatchEndRequest) returns (HostCancelMatchEndResponse) {
     option (method_info) = {id: 9};
+  }
+  rpc IdentityExport(HostIdentityExportRequest) returns (HostIdentityExportResponse) {
+    option (method_info) = {
+      id: 10
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  rpc IdentityImport(HostIdentityImportRequest) returns (HostIdentityImportResponse) {
+    option (method_info) = {
+      id: 11
+      kind: METHOD_KIND_OPERATION
+    };
   }
 }

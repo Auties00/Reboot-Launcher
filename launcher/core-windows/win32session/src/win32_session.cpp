@@ -3,14 +3,18 @@
 #include "reboot/os_windows/win32session/win32_session.hpp"
 
 #include <array>
+#include <atomic>
 #include <chrono>
-#include <cstring>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "file_park.hpp"
+#include "handle_list.hpp"
+#include "poll_until.hpp"
 #include "remote_injector.hpp"
 #include "unique_handle.hpp"
 #include "wide.hpp"
@@ -25,11 +29,86 @@ using contracts::winhost::ProcessRole;
 using contracts::winhost::SpawnGame;
 namespace wh = contracts::winhost;
 
+using namespace std::chrono_literals;
+
 // Largest Output payload per read; one pipe read is split into chunks of this size.
 constexpr std::size_t kOutputChunk = std::size_t{64} << 10;
+// How often a wait on the Job or on the watcher threads polls.
+constexpr std::chrono::milliseconds kDrainStep = 10ms;
+// How often the module list is checked while an early-bird load is confirmed.
+constexpr std::chrono::milliseconds kConfirmStep = 25ms;
+// The bound used when SpawnGame gives no timeout: long enough for a kill to take effect, short
+// enough never to hang the engine on a wedged process.
+constexpr std::chrono::milliseconds kDefaultBound = 5s;
 
 std::unexpected<SpawnError> spawn_fail(SpawnStep step, DWORD code) {
     return std::unexpected(SpawnError{step, SystemError{SystemError::Origin::Host, static_cast<i64>(code)}});
+}
+
+std::chrono::milliseconds from_ms(u32 value, std::chrono::milliseconds fallback) {
+    return value == 0 ? fallback : std::chrono::milliseconds{value};
+}
+
+void sleep_for(std::chrono::milliseconds wait) { std::this_thread::sleep_for(wait); }
+
+std::chrono::steady_clock::time_point steady_now() { return std::chrono::steady_clock::now(); }
+
+std::vector<u32> job_pids(HANDLE job) {
+    // Doubles the list until every assigned process fits; capped so a runaway spawner cannot make
+    // this allocate without bound.
+    for (DWORD capacity = 64; capacity <= (1u << 16); capacity *= 2) {
+        const std::size_t bytes = sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST) + (capacity - 1) * sizeof(ULONG_PTR);
+        std::vector<u8> storage(bytes);
+        auto* list = reinterpret_cast<JOBOBJECT_BASIC_PROCESS_ID_LIST*>(storage.data());
+        if (QueryInformationJobObject(job, JobObjectBasicProcessIdList, list, static_cast<DWORD>(bytes), nullptr) ==
+            0) {
+            if (GetLastError() == ERROR_MORE_DATA) continue;
+            return {};
+        }
+        if (list->NumberOfAssignedProcesses > list->NumberOfProcessIdsInList && capacity < (1u << 16)) continue;
+        std::vector<u32> pids;
+        pids.reserve(list->NumberOfProcessIdsInList);
+        for (DWORD i = 0; i < list->NumberOfProcessIdsInList; ++i)
+            pids.push_back(static_cast<u32>(list->ProcessIdList[i]));
+        return pids;
+    }
+    return {};
+}
+
+// What the session shares with its watcher threads. A thread left running after a failed kill
+// keeps this alive and finds the sink cleared, so it never reaches the session or the caller.
+struct Shared {
+    std::mutex mutex;
+    EventSink sink;
+    std::atomic<bool> stopping{false};
+    UniqueHandle stop_event;  // manual-reset; ends the exit waits
+
+    void emit(SessionEvent event) {
+        std::scoped_lock lock(mutex);
+        if (sink) sink(std::move(event));
+    }
+};
+
+template <class Body>
+DWORD WINAPI thread_main(LPVOID param) {
+    std::unique_ptr<Body> body(static_cast<Body*>(param));
+    // A throwing sink or a failed allocation ends this watcher, never the process.
+    try {
+        (*body)();
+    } catch (...) {
+    }
+    return 0;
+}
+
+// A Win32 thread rather than std::thread: stopping one takes its handle for CancelSynchronousIo
+// and a timed wait.
+template <class Body>
+std::expected<UniqueHandle, DWORD> start_thread(Body body) {
+    auto boxed = std::make_unique<Body>(std::move(body));
+    HANDLE thread = CreateThread(nullptr, 0, &thread_main<Body>, boxed.get(), 0, nullptr);
+    if (thread == nullptr) return std::unexpected(GetLastError());
+    static_cast<void>(boxed.release());
+    return UniqueHandle(thread);
 }
 
 struct Proc {
@@ -37,93 +116,98 @@ struct Proc {
     UniqueHandle thread;
     u32 pid = 0;
     ProcessRole role{};
-    UniqueHandle out_read;  // game only
-    UniqueHandle err_read;  // game only
+    UniqueHandle out_read;  // game only; moved to its reader thread
+    UniqueHandle err_read;  // game only; moved to its reader thread
 };
 
 class SessionImpl final : public Win32Session {
 public:
-    explicit SessionImpl(EventSink sink) : sink_(std::move(sink)) {}
+    explicit SessionImpl(EventSink sink) : shared_(std::make_shared<Shared>()) { shared_->sink = std::move(sink); }
 
     ~SessionImpl() override {
-        terminate_and_drain(std::chrono::milliseconds{0});
+        drop();
         parked_.reset();
     }
 
     std::expected<void, SpawnError> launch(const SpawnGame& spawn);
 
-    std::expected<void, InjectError> inject(const InjectSpec& spec) override {
-        RemoteInjector injector(game().process.get());
-        auto loaded = injector.load_now(spec);
-        if (!loaded) {
-            emit(wh::Injected{spec.path_utf16, false, loaded.error().error.code});
-            return std::unexpected(loaded.error());
-        }
-        emit(wh::Injected{spec.path_utf16, true, std::nullopt});
-        held_.push_back(std::move(*loaded));
-        return {};
-    }
+    std::expected<void, InjectError> inject(const InjectSpec& spec) override { return load_held(spec); }
 
     std::expected<void, SpawnError> resume() override {
-        if (ResumeThread(game().thread.get()) == static_cast<DWORD>(-1))
-            return spawn_fail(SpawnStep::Resume, GetLastError());
-        for (auto& deferred : after_resume_) finish_after_resume(deferred);
+        if (ResumeThread(game().thread.get()) == static_cast<DWORD>(-1)) {
+            const DWORD code = GetLastError();
+            abandon();
+            return spawn_fail(SpawnStep::Resume, code);
+        }
+        for (const auto& deferred : after_resume_)
+            if (auto done = load_held(deferred); !done) {
+                abandon();
+                return spawn_fail(SpawnStep::Inject, static_cast<DWORD>(done.error().error.code));
+            }
         after_resume_.clear();
-        for (auto& early : early_apc_) confirm_early(early);
+        for (auto& early : early_apc_)
+            if (auto done = confirm_early(early); !done) {
+                abandon();
+                return spawn_fail(SpawnStep::Inject, static_cast<DWORD>(done.error().error.code));
+            }
         early_apc_.clear();
         return {};
     }
 
-    void stop(std::chrono::milliseconds grace) override {
-        terminate_and_drain(grace);
+    std::expected<void, StuckProcesses> stop(std::chrono::milliseconds grace) override {
+        auto stuck = terminate_and_drain(grace);
         parked_.reset();
+        return stuck;
     }
 
 private:
     Proc& game() { return procs_.front(); }
 
-    void emit(SessionEvent event) {
-        std::scoped_lock lock(sink_mutex_);
-        if (sink_) sink_(std::move(event));
-    }
+    void emit(SessionEvent event) { shared_->emit(std::move(event)); }
 
     std::expected<Proc, SpawnError> create_suspended(const Bytes& exe, const std::vector<Bytes>& argv,
-                                                     ProcessRole role, bool game_process);
+                                                     const Bytes& env, ProcessRole role, bool game_process);
 
-    void finish_after_resume(const InjectSpec& spec) {
-        RemoteInjector injector(game().process.get());
-        auto loaded = injector.load_now(spec);
-        if (!loaded) {
-            emit(wh::Injected{spec.path_utf16, false, loaded.error().error.code});
-            return;
-        }
-        emit(wh::Injected{spec.path_utf16, true, std::nullopt});
-        held_.push_back(std::move(*loaded));
+    // A waited remote load. The deny-write handle is held whenever the file passed its hash, since
+    // a load that timed out may still happen.
+    std::expected<void, InjectError> load_held(const InjectSpec& spec) {
+        InjectedDll dll;
+        auto loaded = RemoteInjector(game().process.get()).load_now(spec, inject_timeout_, dll);
+        if (dll.file) held_.push_back(std::move(dll));
+        emit(wh::Injected{spec.path_utf16, loaded.has_value(),
+                          loaded ? std::nullopt : std::optional<i64>{loaded.error().error.code}});
+        return loaded;
     }
 
-    void confirm_early(InjectedDll& dll) {
-        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds{10};
-        bool ok = false;
-        while (std::chrono::steady_clock::now() < deadline) {
-            if (module_loaded(game().process.get(), dll.base_name)) {
-                ok = true;
-                break;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds{25});
-        }
-        if (dll.remote_path != nullptr) {
+    std::expected<void, InjectError> confirm_early(InjectedDll& dll) {
+        const bool ok = poll_until([&] { return module_loaded(game().process.get(), dll.base_name); }, sleep_for,
+                                   steady_now, inject_timeout_, kConfirmStep);
+        // An unconfirmed APC may still run and read the path, so its buffer stays until the Job dies.
+        if (ok && dll.remote_path != nullptr) {
             VirtualFreeEx(game().process.get(), dll.remote_path, 0, MEM_RELEASE);
             dll.remote_path = nullptr;
+            dll.remote_size = 0;
         }
         emit(wh::Injected{dll.path_utf16, ok, ok ? std::nullopt : std::optional<i64>{ERROR_MOD_NOT_FOUND}});
         held_.push_back(std::move(dll));
+        if (!ok)
+            return std::unexpected(
+                InjectError{InjectStep::Confirm, SystemError{SystemError::Origin::Host, ERROR_MOD_NOT_FOUND}});
+        return {};
     }
 
-    void start_watchers();
-    void terminate_and_drain(std::chrono::milliseconds grace);
+    std::expected<void, SpawnError> start_watchers();
+    void stop_watchers(bool stuck);
+    std::expected<void, StuckProcesses> terminate_and_drain(std::chrono::milliseconds grace);
+    // Teardown and rollback paths kill the Job and move on; a stuck process there is unactionable.
+    void drop() { static_cast<void>(terminate_and_drain(0ms)); }
+    void abandon() {
+        after_resume_.clear();
+        early_apc_.clear();
+        drop();
+    }
 
-    EventSink sink_;
-    std::mutex sink_mutex_;
+    std::shared_ptr<Shared> shared_;
     UniqueHandle job_;
     UniqueHandle stdin_null_;
     std::vector<Proc> procs_;  // index 0 is the game
@@ -131,14 +215,15 @@ private:
     std::vector<InjectSpec> after_resume_;
     std::vector<InjectedDll> early_apc_;
     std::optional<FilePark> parked_;
-    std::vector<std::thread> watchers_;
-    Bytes env_block_;
+    std::vector<UniqueHandle> watchers_;
     std::wstring cwd_;
+    std::chrono::milliseconds inject_timeout_ = kDefaultBound;
+    std::chrono::milliseconds drain_timeout_ = kDefaultBound;
     bool terminated_ = false;
 };
 
 std::expected<Proc, SpawnError> SessionImpl::create_suspended(const Bytes& exe, const std::vector<Bytes>& argv,
-                                                              ProcessRole role, bool game_process) {
+                                                              const Bytes& env, ProcessRole role, bool game_process) {
     SECURITY_ATTRIBUTES inherit{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
 
     UniqueHandle out_read;
@@ -154,6 +239,7 @@ std::expected<Proc, SpawnError> SessionImpl::create_suspended(const Bytes& exe, 
         if (CreatePipe(&r, &w, &inherit, 0) == 0) return spawn_fail(SpawnStep::CreatePipe, GetLastError());
         err_read = UniqueHandle(r);
         err_write = UniqueHandle(w);
+        // Only the child inherits the write ends; our read ends stay out of the child.
         SetHandleInformation(out_read.get(), HANDLE_FLAG_INHERIT, 0);
         SetHandleInformation(err_read.get(), HANDLE_FLAG_INHERIT, 0);
     }
@@ -161,6 +247,7 @@ std::expected<Proc, SpawnError> SessionImpl::create_suspended(const Bytes& exe, 
     HANDLE child_out = game_process ? out_write.get() : stdin_null_.get();
     HANDLE child_err = game_process ? err_write.get() : stdin_null_.get();
     std::array<HANDLE, 3> inherited{stdin_null_.get(), child_out, child_err};
+    const std::size_t inherited_count = unique_handles(inherited);
     HANDLE job = job_.get();
 
     SIZE_T attr_size = 0;
@@ -177,7 +264,7 @@ std::expected<Proc, SpawnError> SessionImpl::create_suspended(const Bytes& exe, 
                                   nullptr) == 0)
         return spawn_fail(SpawnStep::AttributeList, GetLastError());
     if (UpdateProcThreadAttribute(attr_list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, inherited.data(),
-                                  inherited.size() * sizeof(HANDLE), nullptr, nullptr) == 0)
+                                  inherited_count * sizeof(HANDLE), nullptr, nullptr) == 0)
         return spawn_fail(SpawnStep::AttributeList, GetLastError());
 
     STARTUPINFOEXW si{};
@@ -188,15 +275,26 @@ std::expected<Proc, SpawnError> SessionImpl::create_suspended(const Bytes& exe, 
     si.StartupInfo.hStdError = child_err;
     si.lpAttributeList = attr_list;
 
+    // Naming the application means the first command-line token is never searched for on a path.
+    const std::wstring application = to_wide(exe);
     std::wstring command_line = build_command_line(exe, argv);
-    const std::wstring cwd = cwd_;
+    Bytes env_copy;
+    if (!env.empty()) {
+        // Room for the terminator up front, so padding never reallocates and strands a copy.
+        env_copy.reserve(env.size() + 6);
+        env_copy.assign(env.begin(), env.end());
+        terminate_env_block(env_copy);
+    }
+    void* env_ptr = env_copy.empty() ? nullptr : env_copy.data();
     PROCESS_INFORMATION pi{};
-    const BOOL ok = CreateProcessW(
-        nullptr, command_line.data(), nullptr, nullptr, TRUE,
-        CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | EXTENDED_STARTUPINFO_PRESENT, env_block_.data(),
-        cwd.empty() ? nullptr : cwd.c_str(), &si.StartupInfo, &pi);
+    const BOOL ok = CreateProcessW(application.c_str(), command_line.data(), nullptr, nullptr, TRUE,
+                                   CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | EXTENDED_STARTUPINFO_PRESENT,
+                                   env_ptr, cwd_.empty() ? nullptr : cwd_.c_str(), &si.StartupInfo, &pi);
+    const DWORD create_error = ok == 0 ? GetLastError() : 0;
+    wipe(command_line);
+    wipe(env_copy);
     if (ok == 0)
-        return spawn_fail(game_process ? SpawnStep::CreateGame : SpawnStep::CreateCompanion, GetLastError());
+        return spawn_fail(game_process ? SpawnStep::CreateGame : SpawnStep::CreateCompanion, create_error);
 
     Proc proc;
     proc.process = UniqueHandle(pi.hProcess);
@@ -208,74 +306,115 @@ std::expected<Proc, SpawnError> SessionImpl::create_suspended(const Bytes& exe, 
     return proc;
 }
 
-void SessionImpl::start_watchers() {
-    for (std::size_t i = 0; i < procs_.size(); ++i) {
-        Proc& proc = procs_[i];
-        if (proc.out_read) {
-            HANDLE pipe = proc.out_read.get();
-            watchers_.emplace_back([this, pipe] {
-                std::array<u8, kOutputChunk> buffer{};
-                DWORD read = 0;
-                while (ReadFile(pipe, buffer.data(), static_cast<DWORD>(buffer.size()), &read, nullptr) != 0 &&
-                       read != 0)
-                    emit(wh::Output{ProcessRole::Game, OutputStream::Stdout, Bytes(buffer.begin(), buffer.begin() + read)});
+std::expected<void, SpawnError> SessionImpl::start_watchers() {
+    HANDLE event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    if (event == nullptr) return spawn_fail(SpawnStep::Watch, GetLastError());
+    shared_->stop_event = UniqueHandle(event);
+
+    // Each thread owns its handles and a reference to the shared state, so one left running after a
+    // failed kill never touches the session. A half-started set is stopped by the caller's rollback.
+    try {
+        for (Proc& proc : procs_) {
+            const ProcessRole role = proc.role;
+            for (auto [pipe, stream] : {std::pair{&proc.out_read, OutputStream::Stdout},
+                                        std::pair{&proc.err_read, OutputStream::Stderr}}) {
+                if (!*pipe) continue;
+                auto started = start_thread([shared = shared_, read_end = std::move(*pipe), role, stream] {
+                    std::vector<u8> buffer(kOutputChunk);
+                    DWORD read = 0;
+                    while (!shared->stopping.load(std::memory_order_acquire) &&
+                           ReadFile(read_end.get(), buffer.data(), static_cast<DWORD>(buffer.size()), &read,
+                                    nullptr) != 0 &&
+                           read != 0)
+                        shared->emit(wh::Output{role, stream, Bytes(buffer.begin(), buffer.begin() + read)});
+                });
+                if (!started) return spawn_fail(SpawnStep::Watch, started.error());
+                watchers_.push_back(std::move(*started));
+            }
+
+            HANDLE process = nullptr;
+            if (DuplicateHandle(GetCurrentProcess(), proc.process.get(), GetCurrentProcess(), &process,
+                                SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, 0) == 0)
+                return spawn_fail(SpawnStep::Watch, GetLastError());
+            auto started = start_thread([shared = shared_, process = UniqueHandle(process), role] {
+                const std::array<HANDLE, 2> waits{process.get(), shared->stop_event.get()};
+                // The stop event ends the wait on a process the kill could not end; no Exited then.
+                if (WaitForMultipleObjects(static_cast<DWORD>(waits.size()), waits.data(), FALSE, INFINITE) !=
+                    WAIT_OBJECT_0)
+                    return;
+                DWORD code = 0;
+                const bool got = GetExitCodeProcess(process.get(), &code) != 0;
+                shared->emit(wh::Exited{role, got ? std::optional<i64>{static_cast<i64>(code)} : std::nullopt});
             });
+            if (!started) return spawn_fail(SpawnStep::Watch, started.error());
+            watchers_.push_back(std::move(*started));
         }
-        if (proc.err_read) {
-            HANDLE pipe = proc.err_read.get();
-            watchers_.emplace_back([this, pipe] {
-                std::array<u8, kOutputChunk> buffer{};
-                DWORD read = 0;
-                while (ReadFile(pipe, buffer.data(), static_cast<DWORD>(buffer.size()), &read, nullptr) != 0 &&
-                       read != 0)
-                    emit(wh::Output{ProcessRole::Game, OutputStream::Stderr, Bytes(buffer.begin(), buffer.begin() + read)});
-            });
-        }
-        HANDLE process = proc.process.get();
-        ProcessRole role = proc.role;
-        watchers_.emplace_back([this, process, role] {
-            WaitForSingleObject(process, INFINITE);
-            DWORD code = 0;
-            const bool got = GetExitCodeProcess(process, &code) != 0;
-            emit(wh::Exited{role, got ? std::optional<i64>{static_cast<i64>(code)} : std::nullopt});
-        });
+    } catch (...) {
+        return spawn_fail(SpawnStep::Watch, ERROR_NOT_ENOUGH_MEMORY);
     }
+    return {};
 }
 
-void SessionImpl::terminate_and_drain(std::chrono::milliseconds grace) {
-    if (!terminated_ && job_) {
-        if (grace.count() > 0) {
-            const auto deadline = std::chrono::steady_clock::now() + grace;
-            for (;;) {
-                JOBOBJECT_BASIC_ACCOUNTING_INFORMATION info{};
-                if (QueryInformationJobObject(job_.get(), JobObjectBasicAccountingInformation, &info, sizeof(info),
-                                              nullptr) != 0 &&
-                    info.ActiveProcesses == 0)
-                    break;
-                if (std::chrono::steady_clock::now() >= deadline) break;
-                std::this_thread::sleep_for(std::chrono::milliseconds{20});
-            }
-        }
-        TerminateJobObject(job_.get(), 1);
-        for (;;) {
-            JOBOBJECT_BASIC_ACCOUNTING_INFORMATION info{};
-            if (QueryInformationJobObject(job_.get(), JobObjectBasicAccountingInformation, &info, sizeof(info),
-                                          nullptr) == 0 ||
-                info.ActiveProcesses == 0)
-                break;
-            std::this_thread::sleep_for(std::chrono::milliseconds{5});
-        }
-        terminated_ = true;
+void SessionImpl::stop_watchers(bool stuck) {
+    if (watchers_.empty()) return;
+    SetEvent(shared_->stop_event.get());
+    const auto all_done = [&] {
+        for (const auto& watcher : watchers_)
+            if (WaitForSingleObject(watcher.get(), 0) != WAIT_OBJECT_0) return false;
+        return true;
+    };
+    // With the Job empty a reader reaches EOF on its own after the last output; a stuck process,
+    // or one outside the Job that inherited a write end, keeps it blocked until it is cancelled.
+    bool done = poll_until(all_done, sleep_for, steady_now, stuck ? 0ms : drain_timeout_, kDrainStep);
+    if (!done) {
+        shared_->stopping.store(true, std::memory_order_release);
+        // Repeated: a reader that read the flag just before it was set is not in ReadFile yet.
+        done = poll_until(
+            all_done,
+            [&](std::chrono::milliseconds wait) {
+                for (const auto& watcher : watchers_) CancelSynchronousIo(watcher.get());
+                sleep_for(wait);
+            },
+            steady_now, drain_timeout_, kDrainStep);
     }
-    for (auto& watcher : watchers_)
-        if (watcher.joinable()) watcher.join();
+    if (!done) {
+        std::scoped_lock lock(shared_->mutex);
+        shared_->sink = nullptr;
+    }
     watchers_.clear();
 }
 
+std::expected<void, StuckProcesses> SessionImpl::terminate_and_drain(std::chrono::milliseconds grace) {
+    std::optional<StuckProcesses> stuck;
+    if (!terminated_ && job_) {
+        // The game is the only resumed process, so grace waits on it; the suspended companions
+        // would never exit on their own and must not hold up the kill.
+        if (grace.count() > 0 && !procs_.empty()) WaitForSingleObject(game().process.get(), wait_millis(grace));
+        TerminateJobObject(job_.get(), 1);
+        const bool empty = poll_until(
+            [&] {
+                // The Job's count drops before a killed process is signalled; an exit wait woken by
+                // the stop event first would lose that process's Exited.
+                for (const Proc& proc : procs_)
+                    if (WaitForSingleObject(proc.process.get(), 0) != WAIT_OBJECT_0) return false;
+                JOBOBJECT_BASIC_ACCOUNTING_INFORMATION info{};
+                return QueryInformationJobObject(job_.get(), JobObjectBasicAccountingInformation, &info,
+                                                 sizeof(info), nullptr) != 0 &&
+                       info.ActiveProcesses == 0;
+            },
+            sleep_for, steady_now, drain_timeout_, kDrainStep);
+        if (!empty) stuck = StuckProcesses{job_pids(job_.get())};
+        terminated_ = true;
+    }
+    stop_watchers(stuck.has_value());
+    if (stuck) return std::unexpected(std::move(*stuck));
+    return {};
+}
+
 std::expected<void, SpawnError> SessionImpl::launch(const SpawnGame& spawn) {
-    env_block_ = spawn.env_block_utf16;
-    if (env_block_.empty() || env_block_.back() != 0) env_block_.insert(env_block_.end(), {0, 0});
     cwd_ = to_wide(spawn.cwd_utf16);
+    inject_timeout_ = from_ms(spawn.inject_timeout_ms, kDefaultBound);
+    drain_timeout_ = from_ms(spawn.drain_timeout_ms, kDefaultBound);
 
     parked_.emplace(spawn.park_utf16);
 
@@ -287,21 +426,27 @@ std::expected<void, SpawnError> SessionImpl::launch(const SpawnGame& spawn) {
     if (SetInformationJobObject(job_.get(), JobObjectExtendedLimitInformation, &limits, sizeof(limits)) == 0)
         return spawn_fail(SpawnStep::ConfigureJob, GetLastError());
 
+    // Inheritable so it can go in each child's handle list as its stdin and the companions' stdio.
+    SECURITY_ATTRIBUTES null_inherit{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
     stdin_null_ = UniqueHandle(CreateFileW(L"NUL", GENERIC_READ | GENERIC_WRITE,
-                                           FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
+                                           FILE_SHARE_READ | FILE_SHARE_WRITE, &null_inherit, OPEN_EXISTING, 0,
+                                           nullptr));
+    if (!stdin_null_) return spawn_fail(SpawnStep::ConfigureJob, GetLastError());
 
-    auto game = create_suspended(spawn.exe_utf16, spawn.argv_utf16, ProcessRole::Game, true);
+    auto game = create_suspended(spawn.exe_utf16, spawn.argv_utf16, spawn.env_block_utf16, ProcessRole::Game, true);
     if (!game) {
-        terminate_and_drain(std::chrono::milliseconds{0});
+        drop();
         return std::unexpected(game.error());
     }
     procs_.push_back(std::move(*game));
     emit(wh::Spawned{ProcessRole::Game, procs_.front().pid});
 
     for (const auto& companion : spawn.companions) {
-        auto proc = create_suspended(companion.exe_utf16, companion.argv_utf16, ProcessRole::Companion, false);
+        // Companions take the caller's environment, not the game's channel layer.
+        auto proc = create_suspended(companion.exe_utf16, companion.argv_utf16, Bytes{}, ProcessRole::Companion,
+                                     false);
         if (!proc) {
-            terminate_and_drain(std::chrono::milliseconds{0});
+            drop();
             return std::unexpected(proc.error());
         }
         const u32 pid = proc->pid;
@@ -318,7 +463,7 @@ std::expected<void, SpawnError> SessionImpl::launch(const SpawnGame& spawn) {
             auto queued = injector.queue_early(entry, procs_.front().thread.get());
             if (!queued) {
                 emit(wh::Injected{entry.path_utf16, false, queued.error().error.code});
-                terminate_and_drain(std::chrono::milliseconds{0});
+                drop();
                 return spawn_fail(SpawnStep::Inject, static_cast<DWORD>(queued.error().error.code));
             }
             early_apc_.push_back(std::move(*queued));
@@ -327,7 +472,10 @@ std::expected<void, SpawnError> SessionImpl::launch(const SpawnGame& spawn) {
         }
     }
 
-    start_watchers();
+    if (auto watched = start_watchers(); !watched) {
+        drop();
+        return std::unexpected(watched.error());
+    }
     return {};
 }
 

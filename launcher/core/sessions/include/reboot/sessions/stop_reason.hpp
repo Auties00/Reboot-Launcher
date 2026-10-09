@@ -15,6 +15,8 @@ enum class StopReason : u8 {
     EngineShutdown,
     Update,
     Replaced,
+    // A host's match-end policy asked for the stop.
+    MatchEnded,
     // The reasons below are a session ending on its own.
     Exited,
     Crashed,
@@ -23,7 +25,7 @@ enum class StopReason : u8 {
     Fatal,
 };
 
-[[nodiscard]] constexpr bool was_requested(StopReason reason) noexcept { return reason <= StopReason::Replaced; }
+[[nodiscard]] constexpr bool was_requested(StopReason reason) noexcept { return reason <= StopReason::MatchEnded; }
 
 [[nodiscard]] constexpr std::string_view stop_reason_name(StopReason reason) noexcept {
     switch (reason) {
@@ -34,6 +36,7 @@ enum class StopReason : u8 {
         case StopReason::EngineShutdown: return "engine_shutdown";
         case StopReason::Update: return "update";
         case StopReason::Replaced: return "replaced";
+        case StopReason::MatchEnded: return "match_ended";
         case StopReason::Exited: return "exited";
         case StopReason::Crashed: return "crashed";
         case StopReason::Unresponsive: return "unresponsive";

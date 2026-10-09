@@ -35,19 +35,19 @@ public:
     // at reboot-engine run --foreground. For the default root:
     // 1. Only when this process's main bundle carries kEngineAgentPlist (the app; the CLI skips
     //    this step), before spawn.lock is taken since registering is idempotent: the
-    //    SMAppService agent for that plist. NotRegistered is registered on a thread this starter
-    //    owns, which catches everything and reports internal.bug. Past kAgentRegisterDeadline
-    //    the call is platform.agent_register_timed_out (retryable), and the next call awaits
-    //    the same register instead of issuing another. A register error is
-    //    platform.agent_register_failed. RequiresApproval, before or after registering, gives
-    //    AwaitingUser.
+    //    SMAppService agent for that plist. NotRegistered (or NotFound) is registered on a thread
+    //    this starter owns, which catches everything and reports internal.bug. Past
+    //    kAgentRegisterDeadline the call is platform.agent_register_timed_out (retryable), and the
+    //    next call awaits the same register instead of issuing another. A register error is
+    //    platform.agent_register_failed unless the agent ended up enabled. RequiresApproval,
+    //    before or after registering, gives AwaitingUser.
     // 2. Holding <root>/state/spawn.lock (flock, for this call only): posix_spawn of
     //    /bin/launchctl kickstart gui/<uid>/<kEngineAgentLabel> with an empty environment and
     //    stdio on /dev/null, its exit awaited through kqueue EVFILT_PROC, which reports the
     //    status even when the host ignores SIGCHLD. Exit 0 gives Started (kickstart leaves a
     //    running engine alone). A label unknown to the domain, because the app never registered
-    //    it, gives AwaitingUser. Past kLaunchctlDeadline the child is SIGKILLed and reaped:
-    //    platform.agent_kickstart_timed_out (retryable). Anything else is
+    //    it, or disabled in Login Items, gives AwaitingUser. Past kLaunchctlDeadline the child is
+    //    SIGKILLed and reaped: platform.agent_kickstart_timed_out (retryable). Anything else is
     //    platform.agent_kickstart_failed.
     // Both AwaitingUser cases reach IpcClient alike, since ports::StartResult carries no reason.
     Result<ports::StartResult> ensure_started(const NativePath& engine_exe, const DataRoot& root) override;

@@ -84,7 +84,11 @@ private:
 
 class TimerService;
 
-// Cancels its timer on destruction.
+namespace detail {
+struct TimerState;
+}
+
+// Cancels its timer on destruction; harmless once the service is gone.
 class TimerHandle {
 public:
     TimerHandle() = default;
@@ -99,9 +103,9 @@ public:
 
 private:
     friend class TimerService;
-    TimerHandle(TimerService& service, u64 id) : service_(&service), id_(id) {}
+    TimerHandle(std::weak_ptr<detail::TimerState> state, u64 id) : state_(std::move(state)), id_(id) {}
 
-    TimerService* service_ = nullptr;
+    std::weak_ptr<detail::TimerState> state_;
     u64 id_ = 0;
 };
 
@@ -117,15 +121,10 @@ public:
     [[nodiscard]] TimerHandle at(SteadyTime when, UniqueFunction<void()> callback);
 
 private:
-    friend class TimerHandle;
-    void cancel(u64 id);
-    [[nodiscard]] bool active(u64 id) const;
-
-    struct State;
     IClock& clock_;
     Executor& executor_;
-    // Shared with posted tasks so a timer that fires after destruction is a no-op.
-    std::shared_ptr<State> state_;
+    // Shared with posted tasks and handles, so either outliving the service is a no-op.
+    std::shared_ptr<detail::TimerState> state_;
 };
 
 // Test executor: nothing runs until the test says so, and timed tasks follow the ManualClock.
@@ -136,7 +135,8 @@ public:
     void post(UniqueFunction<void()> task) override;
     void post_at(SteadyTime when, UniqueFunction<void()> task) override;
 
-    // Due timed tasks count as ready; run_all and advance return how many tasks ran.
+    // Due timed tasks count as ready; run_all and advance return how many tasks ran. advance()
+    // moves the clock from one due time to the next, so each timed task runs at its own deadline.
     bool run_one();
     std::size_t run_all();
     std::size_t advance(std::chrono::steady_clock::duration by);

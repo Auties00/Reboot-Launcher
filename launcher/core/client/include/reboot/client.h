@@ -114,7 +114,7 @@ enum {
 /* Fields are only appended; a newer caller's extra fields must be zero for an older library. */
 typedef struct rb_ctx_options {
     uint32_t struct_size;
-    /* UTF-8, NUL-terminated; NULL means REBOOT_LAUNCHER_HOME, then the platform default. */
+    /* UTF-8, NUL-terminated and absolute; NULL means REBOOT_LAUNCHER_HOME, then the platform default. */
     const char* data_root;
     uint32_t client_kind;
     uint32_t launch_mode;

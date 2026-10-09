@@ -35,8 +35,8 @@ public:
     // DACL: the user and LocalSystem only. SACL: Medium label, NO_WRITE_UP.
     [[nodiscard]] Result<std::vector<u8>> pipe_security_descriptor() const;
 
-    // Engine side, before any byte is read. TokenUser, TokenSessionId and the impersonation level
-    // come from one ImpersonateNamedPipeClient token; the session fills the peer's os_session.
+    // Engine side, before any byte is read. TokenUser and the impersonation level come from one
+    // ImpersonateNamedPipeClient token, the pid from GetNamedPipeClientProcessId.
     // Below SecurityIdentification: platform.pipe_client_unidentified; another user:
     // platform.pipe_client_other_user; both are causes of ipc.endpoint_untrusted.
     [[nodiscard]] Result<ports::PeerIdentity> verify_client(PipeHandle pipe) const;

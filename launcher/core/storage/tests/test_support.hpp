@@ -3,10 +3,12 @@
 #include <chrono>
 #include <condition_variable>
 #include <deque>
+#include <future>
 #include <mutex>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <catch2/catch_test_macros.hpp>
@@ -51,6 +53,33 @@ private:
     std::mutex mutex_;
     std::condition_variable ready_;
     std::deque<UniqueFunction<void()>> tasks_;
+};
+
+// Holds a one-thread pool's worker, so jobs queued behind it wait until release().
+class WorkerGate {
+public:
+    WorkerGate(WorkerPool& workers, Executor& strand) {
+        workers.submit<std::monostate>(
+            [opened = opened_.get_future()](CancelToken) -> Result<std::monostate> {
+                opened.wait();
+                return std::monostate{};
+            },
+            CancelToken{}, strand, [](Result<std::monostate>) {});
+    }
+    WorkerGate(const WorkerGate&) = delete;
+    WorkerGate& operator=(const WorkerGate&) = delete;
+    // A failed REQUIRE must not leave the pool's destructor waiting on the gate.
+    ~WorkerGate() { release(); }
+
+    void release() {
+        if (released_) return;
+        released_ = true;
+        opened_.set_value();
+    }
+
+private:
+    std::promise<void> opened_;
+    bool released_ = false;
 };
 
 // 2026-10-07T23:58:29Z, so quarantine names are stable.

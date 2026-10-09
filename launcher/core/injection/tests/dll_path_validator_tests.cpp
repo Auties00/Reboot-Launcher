@@ -61,6 +61,55 @@ TEST_CASE("check_image accepts only an x64 PE32+ image with the DLL characterist
     CHECK(DllPathValidator::check_image(kDll, truncated).error().is(msg::kDllNotPe64));
 }
 
+TEST_CASE("check_image refuses a foreign machine, a bad signature and an out-of-range header offset",
+          "[injection][validator]") {
+    // The golden DLL's PE header is at 0x80.
+    std::vector<u8> arm64 = golden("pe64_dll.bin");
+    arm64[0x84] = 0x64;
+    arm64[0x85] = 0xAA;
+    CHECK(DllPathValidator::check_image(kDll, arm64).error().is(msg::kDllNotPe64));
+
+    std::vector<u8> no_signature = golden("pe64_dll.bin");
+    no_signature[0x81] = 'X';
+    CHECK(DllPathValidator::check_image(kDll, no_signature).error().is(msg::kDllNotPe64));
+
+    std::vector<u8> no_mz = golden("pe64_dll.bin");
+    no_mz[0] = 'N';
+    CHECK(DllPathValidator::check_image(kDll, no_mz).error().is(msg::kDllNotPe64));
+
+    for (const u8 top : {u8{0x00}, u8{0xFF}}) {
+        std::vector<u8> far = golden("pe64_dll.bin");
+        far[0x3C] = 0xF0;
+        far[0x3D] = 0xFF;
+        far[0x3E] = top;
+        far[0x3F] = top;
+        CHECK(DllPathValidator::check_image(kDll, far).error().is(msg::kDllNotPe64));
+    }
+}
+
+TEST_CASE("validate runs the name checks before reading and the image checks after", "[injection][validator]") {
+    testing::InMemoryFileSystem fs;
+    const DllPathValidator validator(fs);
+
+    CHECK(validator.validate(NativePath{}).error().is(msg::kDllPathEmpty));
+    CHECK(validator.validate("auth/missing.exe").error().is(msg::kDllNotDll));
+
+    fs.write(kDll, golden("pe32_dll.bin"));
+    CHECK(validator.validate(kDll).error().is(msg::kDllNotPe64));
+    fs.write(kDll, golden("pe64_exe.bin"));
+    CHECK(validator.validate(kDll).error().is(msg::kDllNotDll));
+    CHECK(validator.resolve(kDll).error().is(msg::kDllNotDll));
+}
+
+#ifdef _WIN32
+TEST_CASE("check_name refuses an extension with an unpaired surrogate without throwing", "[injection][validator]") {
+    const NativePath path{std::wstring{L"auth/custom.dl"} + wchar_t{0xD800}};
+    const auto result = DllPathValidator::check_name(path);
+    REQUIRE_FALSE(result);
+    CHECK(result.error().is(msg::kDllNotDll));
+}
+#endif
+
 TEST_CASE("validate pins the DLL with the digest of the bytes it read", "[injection][validator]") {
     testing::InMemoryFileSystem fs;
     const std::vector<u8> image = golden("pe64_dll.bin");
@@ -102,6 +151,7 @@ TEST_CASE("an unreadable file keeps the read's OS code and cause", "[injection][
     const auto unreadable = DllPathValidator(fs).validate(kDll);
     REQUIRE_FALSE(unreadable);
     CHECK(unreadable.error().is(msg::kDllUnreadable));
+    CHECK(unreadable.error().kind == ErrorKind::Generic);
     CHECK(unreadable.error().os_error == denied);
     REQUIRE(unreadable.error().causes.size() == 1);
     CHECK(unreadable.error().causes[0].id == "posix.io_failed");

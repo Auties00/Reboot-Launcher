@@ -10,5 +10,8 @@ REBOOT_MESSAGE(kUnknownSession, "front.unknown_session", "Session {session} has 
 REBOOT_MESSAGE(kUpstreamInvalid, "front.upstream_invalid", "{url} is not a valid http, https, ws or wss address");
 REBOOT_MESSAGE(kLegacyFixedInUse, "front.legacy_fixed_in_use",
                "Session {session} already uses the fixed ports of the custom authentication DLL");
+REBOOT_MESSAGE(kLegacyFixedCancelled, "front.legacy_fixed_cancelled",
+               "Opening the fixed ports for session {session} was cancelled");
+REBOOT_MESSAGE(kUnexpectedAnswer, "front.unexpected_answer", "The answer does not fit the question about {origin}");
 
 }  // namespace reboot::front::msg

@@ -9,12 +9,12 @@ namespace reboot::os_linux::ipc {
 namespace {
 
 constexpr std::string_view kPathName = "PATH";
-constexpr std::array<std::string_view, 6> kCopiedNames{
-    kPathName, "TMPDIR", "XDG_DATA_DIRS", "XDG_CONFIG_DIRS", "DBUS_SESSION_BUS_ADDRESS", "LANG",
+constexpr std::array<std::string_view, 5> kCopiedNames{
+    kPathName, "XDG_DATA_DIRS", "XDG_CONFIG_DIRS", "DBUS_SESSION_BUS_ADDRESS", "LANG",
 };
 constexpr std::string_view kLocalePrefix = "LC_";
-// Relative values are invalid by the XDG spec and would resolve against the engine's cwd.
-constexpr std::array<std::string_view, 2> kAbsoluteOnlyNames{"XDG_CONFIG_HOME", "XDG_RUNTIME_DIR"};
+// Relative values would resolve against the engine's cwd, its install directory.
+constexpr std::array<std::string_view, 3> kAbsoluteOnlyNames{"TMPDIR", "XDG_CONFIG_HOME", "XDG_RUNTIME_DIR"};
 
 [[nodiscard]] std::string entry(std::string_view name, std::string_view value) {
     std::string text;

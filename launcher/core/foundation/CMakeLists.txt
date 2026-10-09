@@ -32,6 +32,7 @@ if(REBOOT_BUILD_TESTS)
     add_executable(reboot_foundation_tests ${foundation_tests})
     target_include_directories(reboot_foundation_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(reboot_foundation_tests PRIVATE reboot_foundation reboot_ports reboot_contracts
+                                                          $<TARGET_NAME_IF_EXISTS:reboot_testing>
                                                           Catch2::Catch2WithMain reboot_warnings)
     include(Catch)
     catch_discover_tests(reboot_foundation_tests)

@@ -39,6 +39,8 @@ struct PlaySessionState {
     // Ids of the optional patches and hooks that failed.
     std::vector<std::string> degraded;
     bool console_ready = false;
+    // Between TravelStarted and TravelEnded, when an unresponsive game is not reported.
+    bool traveling = false;
     // Set once an end was reported or a stop began; later events change nothing.
     bool ending = false;
 };

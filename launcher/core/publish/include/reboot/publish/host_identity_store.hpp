@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <optional>
+#include <span>
 #include <string_view>
 #include <vector>
 
@@ -29,7 +30,7 @@ namespace reboot::publish {
 // The file inside an export directory.
 inline constexpr std::string_view kIdentityExportFile = "identity.json";
 
-// Capabilities: server-browser.+89, hosting.+35, hosting.share.
+// Capabilities: hosting.+35, hosting.share.
 // Strand-only; file work runs on the WorkerPool. Owns state/host-identity/<profile>.json, one
 // owner-only file per host profile holding {server_id, token}.
 // - A server id is minted here with uuid_v4.
@@ -46,10 +47,11 @@ public:
     HostIdentityStore(const HostIdentityStore&) = delete;
     HostIdentityStore& operator=(const HostIdentityStore&) = delete;
 
-    // Blocking: engine startup only, before the strand runs. Fails with publish.identity_dir_unavailable
-    // when the owner-only directory cannot be created; the engine then calls load_memory_only().
+    // Blocking: engine startup only, before the strand runs. Reads the file of each host profile
+    // (the port lists no directories). Fails with publish.identity_dir_unavailable when the
+    // owner-only directory cannot be created; the engine then calls load_memory_only().
     // An unreadable file is moved aside and reported, never a failure.
-    [[nodiscard]] Result<std::vector<IdentityLoadIssue>> load();
+    [[nodiscard]] Result<std::vector<IdentityLoadIssue>> load(std::span<const HostProfileId> profiles);
     // For a data root that could not be created: identities live in memory and tokens are lost at exit.
     void load_memory_only();
 
@@ -81,7 +83,8 @@ public:
     Result<OpHandle> start_export(const HostProfileId& profile, NativePath destination, DisconnectPolicy policy);
     // Replaces the profile's identity with an exported one (OpKind::Import) and completes with its
     // ServerId. Fails at once with publish.identity_in_use while held; the op fails with
-    // publish.identity_file_invalid when `source` is not an export directory with a token.
+    // publish.identity_file_invalid when `source` is not an export directory with a token. The
+    // identity is held until its file is written; a failed or cancelled import restores the old one.
     Result<OpHandle> start_import(const HostProfileId& profile, NativePath source, DisconnectPolicy policy);
 
     // ShutdownCoordinator's store step; `done` runs on the strand.

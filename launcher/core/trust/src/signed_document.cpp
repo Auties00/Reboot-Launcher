@@ -19,9 +19,11 @@ std::expected<SignedDocument, TrustError> make_signed_document(SignedDocumentKin
         return std::unexpected(TrustError{.code = TrustErrorCode::SignatureMalformed, .document = kind});
     };
     std::string_view text = signature_file;
-    if (text.ends_with('\n')) text.remove_suffix(1);
-    // A .sig checked out with CRLF line endings.
-    if (text.ends_with('\r')) text.remove_suffix(1);
+    if (text.ends_with('\n')) {
+        text.remove_suffix(1);
+        // A .sig checked out with CRLF line endings.
+        if (text.ends_with('\r')) text.remove_suffix(1);
+    }
     if (!text.starts_with(kScheme)) return malformed();
     text.remove_prefix(kScheme.size());
 

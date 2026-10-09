@@ -45,8 +45,9 @@ public:
     // `launcher` is a real one: the OS conformance run passes its own.
     ContractConformance(ports::IProcessLauncher& launcher, IConformanceWaiter& waiter, ContractTiming timing = {});
 
-    // Hello, Ready with a serving HTTP listener, one reply per request, Unsupported for unknown
-    // types, unique credentials, bind failure, stdin-EOF exit and writes kept inside the work dir.
+    // Hello, Ready with a serving HTTP listener whose backend-info names a Reboot backend, one reply
+    // per request, Unsupported for unknown types, unique credentials, bind failure, stdin-EOF exit
+    // and writes kept inside the work dir.
     [[nodiscard]] ConformanceReport run_backend(const ContractSubject& subject);
 
     // --describe, Hello, exactly the Welcome ports, ListenFailed on an occupied one, the rbsb probe,

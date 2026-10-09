@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
+#include <string_view>
 
 #include "connect_settings.hpp"
 #include "messages.hpp"
@@ -9,6 +10,12 @@ using namespace reboot;
 using namespace reboot::client;
 
 namespace {
+
+#if defined(_WIN32)
+constexpr const char* kAbsoluteRoot = "C:\\srv\\reboot";
+#else
+constexpr const char* kAbsoluteRoot = "/srv/reboot";
+#endif
 
 [[nodiscard]] rb_ctx_options options() {
     rb_ctx_options out{};
@@ -31,12 +38,12 @@ TEST_CASE("minimal options take the defaults", "[client][settings]") {
 
 TEST_CASE("every field is read and copied", "[client][settings]") {
     rb_ctx_options in = options();
-    in.data_root = "/srv/reboot";
+    in.data_root = kAbsoluteRoot;
     in.launch_mode = RB_LAUNCH_CONNECT_ONLY;
     in.connect_deadline_ms = 2500;
     const auto settings = read_connect_settings(&in);
     REQUIRE(settings);
-    CHECK(settings->data_root == NativePath{u8"/srv/reboot"});
+    CHECK(settings->data_root == NativePath{std::string_view{kAbsoluteRoot}});
     CHECK(settings->launch_mode == ipc::LaunchMode::ConnectOnly);
     CHECK(settings->connect_deadline == std::chrono::milliseconds{2500});
 }
@@ -59,6 +66,10 @@ TEST_CASE("bad options fail with client.invalid_argument", "[client][settings]")
     rb_ctx_options empty_root = options();
     empty_root.data_root = "";
     CHECK(read_connect_settings(&empty_root).error().is(msg::kInvalidArgument));
+
+    rb_ctx_options relative_root = options();
+    relative_root.data_root = "reboot/data";
+    CHECK(read_connect_settings(&relative_root).error().is(msg::kInvalidArgument));
 
     rb_ctx_options bad_utf8 = options();
     bad_utf8.data_root = "\xC3";
