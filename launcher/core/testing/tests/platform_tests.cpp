@@ -17,8 +17,8 @@
 #include "reboot/testing/port_conformance.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 
-using namespace reboot;
-using namespace reboot::testing;
+using namespace rb;
+using namespace rb::testing;
 
 namespace {
 

@@ -22,7 +22,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -217,4 +217,4 @@ Result<ports::WatchHandle> InotifyWatcher::watch(const NativePath& dir, UniqueFu
     return ports::WatchHandle{std::make_unique<InotifyWatchHandle>(impl_->shared, wd, std::move(subscriber))};
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

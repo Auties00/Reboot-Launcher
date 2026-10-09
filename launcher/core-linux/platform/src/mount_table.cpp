@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/paths.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -156,4 +156,4 @@ std::optional<std::size_t> containing_mount(const std::vector<MountEntry>& entri
     return best;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

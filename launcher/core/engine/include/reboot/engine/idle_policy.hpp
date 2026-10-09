@@ -7,7 +7,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/function.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Capabilities: none. Strand-only; decides when the engine may end on its own.
 class IdlePolicy {
@@ -47,4 +47,4 @@ private:
     bool disabled_ = false;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

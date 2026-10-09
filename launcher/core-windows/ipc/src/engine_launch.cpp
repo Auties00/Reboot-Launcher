@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/paths.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 std::string engine_task_name(std::string_view user_sid) {
     std::string name = "Reboot Launcher Engine ";
@@ -46,4 +46,4 @@ std::optional<u32> parse_session_id(std::string_view os_session) {
     return id;
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

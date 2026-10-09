@@ -8,11 +8,11 @@
 #include "reboot/contracts/common.hpp"
 #include "reboot/process/child_channel.hpp"
 
-using namespace reboot;
-using namespace reboot::process;
+using namespace rb;
+using namespace rb::process;
 
-namespace be = reboot::contracts::backend;
-namespace common = reboot::contracts::common;
+namespace be = rb::contracts::backend;
+namespace common = rb::contracts::common;
 
 namespace {
 

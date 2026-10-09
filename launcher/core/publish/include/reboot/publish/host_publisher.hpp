@@ -15,18 +15,18 @@
 #include "reboot/publish/reachability_changed.hpp"
 #include "reboot/publish/share_link.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IRandom;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IQuicTransport;
 }
 
-namespace reboot::publish {
+namespace rb::publish {
 
 class HostIdentityStore;
 class IPublishNoticeSink;
@@ -113,4 +113,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

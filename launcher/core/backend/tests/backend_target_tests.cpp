@@ -5,8 +5,8 @@
 #include "reboot/backend/backend_config.hpp"
 #include "reboot/backend/backend_target.hpp"
 
-using namespace reboot;
-using namespace reboot::backend;
+using namespace rb;
+using namespace rb::backend;
 
 namespace {
 

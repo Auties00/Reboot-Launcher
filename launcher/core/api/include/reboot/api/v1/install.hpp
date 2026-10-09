@@ -12,7 +12,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 struct Volume {
     Path root;
@@ -83,14 +83,14 @@ public:
 
     // An operation: a volume query can hang on a network or empty optical drive.
     // Completes with InstallSuggestDestinationResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_suggest_destination(const CallContext& context, const InstallSuggestDestinationRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_suggest_destination(const CallContext& context, const InstallSuggestDestinationRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with InstallInstallResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_install(const CallContext& context, const InstallInstallRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_install(const CallContext& context, const InstallInstallRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Drops the archive a cancelled or failed install kept for resuming.
     // Completes with InstallDiscardStagingResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_discard_staging(const CallContext& context, const InstallDiscardStagingRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_discard_staging(const CallContext& context, const InstallDiscardStagingRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with InstallDeleteUnregisteredResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_delete_unregistered(const CallContext& context, const InstallDeleteUnregisteredRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_delete_unregistered(const CallContext& context, const InstallDeleteUnregisteredRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

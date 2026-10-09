@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::backend::msg {
+namespace rb::backend::msg {
 
 REBOOT_MESSAGE_DECL(kInvalidUrl);
 REBOOT_MESSAGE_DECL(kInvalidPort);
@@ -25,12 +25,12 @@ REBOOT_MESSAGE_DECL(kStoppedBeforeReady);
 REBOOT_MESSAGE_DECL(kAnswerInvalid);
 REBOOT_MESSAGE_DECL(kPathNotUtf8);
 
-}  // namespace reboot::backend::msg
+}  // namespace rb::backend::msg
 
-namespace reboot::backend {
+namespace rb::backend {
 
 [[nodiscard]] inline DiagBuilder invalid_input(MessageId message) {
     return make_diag(ErrorDomain::Backend, message).kind(ErrorKind::InvalidInput);
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

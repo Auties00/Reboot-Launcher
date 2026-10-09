@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace {
 
@@ -37,4 +37,4 @@ Result<ConsoleKey> ConsoleKey::parse(std::string_view name) {
 
 std::span<const std::string_view> unreal_key_names() noexcept { return kUnrealKeyNames; }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

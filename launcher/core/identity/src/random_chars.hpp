@@ -4,11 +4,11 @@
 #include <string>
 #include <string_view>
 
-namespace reboot {
+namespace rb {
 class IRandom;
 }
 
-namespace reboot::identity {
+namespace rb::identity {
 
 // `count` chars drawn uniformly from `alphabet`, which holds at most 256 chars.
 [[nodiscard]] std::string random_chars(IRandom& random, std::string_view alphabet, std::size_t count);
@@ -20,4 +20,4 @@ namespace reboot::identity {
 // Every byte outside [A-Za-z0-9] removed.
 [[nodiscard]] std::string keep_ascii_alnum(std::string_view text);
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

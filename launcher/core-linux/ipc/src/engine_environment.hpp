@@ -8,7 +8,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/paths.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 inline constexpr std::string_view kDefaultEnginePath = "/usr/local/bin:/usr/bin:/bin";
 
@@ -36,4 +36,4 @@ struct EngineEnvironmentInputs {
 [[nodiscard]] std::vector<std::string> engine_environment(std::span<const std::string_view> inherited,
                                                           const EngineEnvironmentInputs& inputs, const DataRoot& root);
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

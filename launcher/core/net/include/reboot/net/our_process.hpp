@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 // One of the engine's live children; `created` guards against a reused pid.
 struct OurProcess {
@@ -12,4 +12,4 @@ struct OurProcess {
     std::chrono::system_clock::time_point created;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

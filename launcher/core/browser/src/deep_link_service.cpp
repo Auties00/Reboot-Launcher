@@ -12,7 +12,7 @@
 #include "reboot/browser/own_servers.hpp"
 #include "reboot/foundation/user_request.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -136,4 +136,4 @@ Result<OpHandle> DeepLinkService::start_resolve(std::string_view link, Disconnec
     return handle;
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

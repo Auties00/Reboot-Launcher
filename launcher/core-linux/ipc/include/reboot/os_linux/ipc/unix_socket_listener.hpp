@@ -11,7 +11,7 @@
 #include "reboot/posix/unique_fd.hpp"
 #include "reboot/posix/unix_socket_listener_base.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // Covers no capability ids; IIpcListener for the engine over
 // <linux_ipc_runtime_base(geteuid())>/reboot-launcher/<hash16>.sock, bound itself or inherited
@@ -41,4 +41,4 @@ private:
     NativePath runtime_base_;
 };
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

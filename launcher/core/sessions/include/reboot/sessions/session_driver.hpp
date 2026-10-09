@@ -4,7 +4,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/sessions/stop_request.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // Runs once on the strand, possibly inside stop(); an error still ends the session.
 using StopDone = UniqueFunction<void(Result<void>)>;
@@ -20,4 +20,4 @@ public:
     virtual void stop(const StopRequest& request, StopDone done) = 0;
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

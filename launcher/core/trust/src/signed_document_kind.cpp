@@ -1,6 +1,6 @@
 #include "reboot/trust/signed_document_kind.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 std::string_view document_kind_name(SignedDocumentKind kind) noexcept {
     switch (kind) {
@@ -18,4 +18,4 @@ std::string_view signature_context(SignedDocumentKind kind) noexcept {
     return {};
 }
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace reboot {
+namespace rb {
 
 [[nodiscard]] bool is_valid_utf8(std::string_view text);
 
@@ -20,4 +20,4 @@ namespace reboot {
 
 [[nodiscard]] bool iequals_ascii(std::string_view a, std::string_view b);
 
-}  // namespace reboot
+}  // namespace rb

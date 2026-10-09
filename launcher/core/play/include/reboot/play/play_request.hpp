@@ -9,7 +9,7 @@
 #include "reboot/play/play_target.hpp"
 #include "reboot/sessions/lease.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // Covers game-launch.orchestration.
 // What Play.plan and Play.start receive.
@@ -28,4 +28,4 @@ struct PlayRequest {
     sessions::Lease lease = sessions::Lease::engine();
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

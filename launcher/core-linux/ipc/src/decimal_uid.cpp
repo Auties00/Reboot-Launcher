@@ -4,7 +4,7 @@
 #include <limits>
 #include <system_error>
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 std::optional<u32> parse_decimal_uid(std::string_view text) noexcept {
     if (text.empty() || text.front() < '0' || text.front() > '9') return std::nullopt;
@@ -16,4 +16,4 @@ std::optional<u32> parse_decimal_uid(std::string_view text) noexcept {
     return uid;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

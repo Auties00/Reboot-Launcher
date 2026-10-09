@@ -20,8 +20,8 @@
 #include "reboot/testing/event_recorder.hpp"
 #include "reboot/testing/fake_prereqs.hpp"
 
-using namespace reboot;
-using namespace reboot::integration;
+using namespace rb;
+using namespace rb::integration;
 
 namespace {
 

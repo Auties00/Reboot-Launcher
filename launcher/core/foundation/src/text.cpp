@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "unicode_data.hpp"
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -258,4 +258,4 @@ bool iequals_ascii(std::string_view a, std::string_view b) {
     return std::ranges::equal(a, b, {}, lower, lower);
 }
 
-}  // namespace reboot
+}  // namespace rb

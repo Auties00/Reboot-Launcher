@@ -13,7 +13,7 @@
 #include "messages.hpp"
 #include "reboot/net/port_owner_service.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -96,4 +96,4 @@ Result<std::expected<void, PortConflict>> PortPreflight::require_free(PortProtoc
     return std::expected<void, PortConflict>{};
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

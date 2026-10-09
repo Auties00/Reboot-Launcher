@@ -11,7 +11,7 @@
 #include "reboot/builds/byte_source.hpp"
 #include "zip_directory.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -214,4 +214,4 @@ Result<ArchiveProbe> probe_archive(IByteSource& source) {
                         .window = ByteWindow{.offset = *data, .length = entry.compressed_size}};
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

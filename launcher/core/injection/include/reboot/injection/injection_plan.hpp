@@ -11,7 +11,7 @@
 #include "reboot/injection/planned_dll.hpp"
 #include "reboot/ports/session_host.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 struct InjectionPlan {
     NetMode net_mode = NetMode::Isolated;
@@ -30,4 +30,4 @@ struct InjectionPlan {
 // turns auth_redirect off. Both use resolve_boot_strategy(), so no runner gate is bypassed.
 [[nodiscard]] InjectionPlan plan_injection(const InjectionInputs& inputs);
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

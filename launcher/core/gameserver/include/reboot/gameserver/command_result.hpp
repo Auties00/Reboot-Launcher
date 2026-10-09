@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 // Failed covers the server's own CommandResult{ok = false}, no reply in time and a server that
 // exited first.
@@ -17,4 +17,4 @@ struct CommandResult {
     std::optional<Diagnostic> error;
 };
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

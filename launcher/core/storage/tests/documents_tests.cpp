@@ -14,8 +14,8 @@
 #include "reboot/storage/state_document.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 
-using namespace reboot;
-using namespace reboot::storage;
+using namespace rb;
+using namespace rb::storage;
 
 namespace {
 

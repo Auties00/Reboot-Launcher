@@ -16,7 +16,7 @@
 #include "reboot/ports/os_services.hpp"
 #include "reboot/ux/message_catalog.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // What ApiRouter keeps besides the connections and started ops. Strand-only.
 struct ApiRouter::State {
@@ -51,4 +51,4 @@ struct ApiRouter::State {
     CancelSource alive;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

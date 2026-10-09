@@ -13,20 +13,20 @@
 #include "reboot/ports/session_host.hpp"
 #include "reboot/process/env_builder.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IProcessLauncher;
 }
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 class GameChannelListener;
 }
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // One line of the runner's own output; the engine logs it as LogCategory::Wine under the
 // session, which routes it to WineLogSink.
@@ -94,4 +94,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

@@ -25,7 +25,7 @@
 #include "reboot/ports/ipc.hpp"
 #include "reboot/testing/in_memory_ipc.hpp"
 
-namespace reboot::ipc::test {
+namespace rb::ipc::test {
 
 namespace wire = contracts::ipc;
 
@@ -198,4 +198,4 @@ private:
     return wire::Hello{wire::ClientKind::Test, std::move(build), 1u << 16, 99, {"session-1", false, {}}};
 }
 
-}  // namespace reboot::ipc::test
+}  // namespace rb::ipc::test

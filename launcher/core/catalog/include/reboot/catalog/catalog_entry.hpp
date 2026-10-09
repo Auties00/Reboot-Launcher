@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 // What the catalog generator probed; the extractor still picks the format from magic bytes.
 // Unrecognized is a value this build cannot read, and such an entry is never installable.
@@ -47,4 +47,4 @@ struct CatalogEntry {
     bool operator==(const CatalogEntry&) const = default;
 };
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

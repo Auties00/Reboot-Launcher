@@ -13,7 +13,7 @@
 // reboot-winhost.exe inside the Wine prefix, over loopback TCP to the engine's game channel,
 // after the game-control preamble. Windows strings are UTF-16LE bytes. Requests carry req_id
 // and get a common::CommandResult. On EOF winhost terminates its Job and exits.
-namespace reboot::contracts::winhost {
+namespace rb::contracts::winhost {
 
 using Bytes = std::vector<u8>;
 
@@ -120,4 +120,4 @@ struct Stop {
 };
 REBOOT_CONTRACT_FRAME(Stop, 0x522)
 
-}  // namespace reboot::contracts::winhost
+}  // namespace rb::contracts::winhost

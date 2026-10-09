@@ -4,7 +4,7 @@
 #include "reboot/backend/login_observed_event.hpp"
 #include "reboot/process/child_exit_info.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // BackendService's view of BackendProcess; every call runs on the strand.
 class IBackendProcessObserver {
@@ -17,4 +17,4 @@ public:
     virtual void on_login_observed(const LoginObservedEvent& event) = 0;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

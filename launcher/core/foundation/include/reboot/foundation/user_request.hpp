@@ -10,7 +10,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 class EventBus;
 
@@ -69,4 +69,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot
+}  // namespace rb

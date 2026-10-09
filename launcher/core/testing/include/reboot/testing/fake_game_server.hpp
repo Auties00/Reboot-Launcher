@@ -18,7 +18,7 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decisions testing-strategy, game-server-dll-design, concurrent-hosts).
 // The program side of contracts/game_server.hpp; unscripted it is a conforming game server that
@@ -60,4 +60,4 @@ private:
 // fake_backend_main finds its own.
 int fake_game_server_main(int argc, char** argv);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

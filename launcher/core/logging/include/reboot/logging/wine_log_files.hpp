@@ -10,11 +10,11 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/logging/log_file_names.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class ILogFileSystem;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::logging {
+namespace rb::logging {
 
 class LogFilesInUse;
 
@@ -61,4 +61,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

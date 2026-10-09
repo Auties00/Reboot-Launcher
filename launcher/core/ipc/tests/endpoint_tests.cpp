@@ -7,7 +7,7 @@
 #include "reboot/ipc/ipc_errors.hpp"
 #include "reboot/ports/ipc.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 namespace {
 
@@ -18,7 +18,7 @@ constexpr std::string_view kUnnamedUser = "4242";
 }  // namespace
 
 // The OS ipc package defines this in the real build; the test binary links none.
-std::string reboot::ports::endpoint_name(const PeerIdentity& self, std::string_view root_hash16) {
+std::string rb::ports::endpoint_name(const PeerIdentity& self, std::string_view root_hash16) {
     if (self.user_id == kUnnamedUser) return {};
     return "engine-" + self.user_id + "-" + std::string(root_hash16);
 }

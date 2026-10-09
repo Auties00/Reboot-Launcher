@@ -7,7 +7,7 @@
 #include "caller_facts.hpp"
 #include "messages.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 Result<MacCallerContext> MacCallerContext::detect() {
     SecuritySessionId session_id = 0;
@@ -27,4 +27,4 @@ Result<MacCallerContext> MacCallerContext::detect() {
 
 void MacCallerContext::allow_foreground(u32 /*pid*/) {}
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

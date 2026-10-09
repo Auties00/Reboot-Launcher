@@ -21,7 +21,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace json = boost::json;
 
@@ -396,4 +396,4 @@ void DocumentFile::set_on_mode_changed(UniqueFunction<void(const StorageModeChan
     impl_->on_mode_changed = std::move(on_mode_changed);
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

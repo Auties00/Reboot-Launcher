@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 EventRecorder::EventRecorder(EventBus& bus, EventFilter filter, std::size_t byte_budget)
     : epoch_(bus.epoch()), subscription_(bus.subscribe(std::move(filter), byte_budget)) {}
@@ -31,4 +31,4 @@ bool EventRecorder::sequence_ok() const {
     return true;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

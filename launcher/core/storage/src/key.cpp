@@ -6,7 +6,7 @@
 #include "reboot/storage/json_values.hpp"
 #include "reboot/storage/key.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace json = boost::json;
 
@@ -130,4 +130,4 @@ Result<BackendTarget> SettingCodec<BackendTarget>::decode(const json::value& raw
     return target;
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

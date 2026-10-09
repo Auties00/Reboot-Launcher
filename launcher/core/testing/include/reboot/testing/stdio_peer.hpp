@@ -6,7 +6,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Where a stdio peer's output goes: real stdout/stderr and process exit in a fake executable, a
 // ScriptedChild in-process.
@@ -31,4 +31,4 @@ public:
     virtual void on_stdin_eof() = 0;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

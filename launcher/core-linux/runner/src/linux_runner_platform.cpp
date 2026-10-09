@@ -12,7 +12,7 @@
 #include "reboot/os_linux/runner/kron_wine_runner.hpp"
 #include "reboot/os_linux/runner/umu_invocation.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 namespace {
 
@@ -126,4 +126,4 @@ Result<std::optional<std::string>> LinuxRunnerPlatform::runtime_setup(const port
 
 std::optional<UserRequestKind> LinuxRunnerPlatform::pending_prerequisite() { return std::nullopt; }
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

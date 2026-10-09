@@ -5,7 +5,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 enum class InstallKind : u8 { Velopack, Portable, AppBundle, AppImage, Tarball, Dev };
 
@@ -23,4 +23,4 @@ public:
     [[nodiscard]] virtual std::optional<NativePath> velopack_package_dir() const = 0;
 };
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

@@ -8,8 +8,8 @@
 #include "reboot/compat/compat_document.hpp"
 #include "reboot/storage/load_report.hpp"
 
-using namespace reboot;
-using namespace reboot::compat;
+using namespace rb;
+using namespace rb::compat;
 
 namespace {
 

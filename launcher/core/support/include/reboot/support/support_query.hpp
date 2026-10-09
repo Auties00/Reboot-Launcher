@@ -7,7 +7,7 @@
 #include "reboot/support/host_inputs.hpp"
 #include "reboot/support/support_role.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // The engine resolves a library build or a version and changelist into these fields.
 struct SupportQuery {
@@ -30,4 +30,4 @@ struct SupportQuery {
     bool operator==(const SupportQuery&) const = default;
 };
 
-}  // namespace reboot::support
+}  // namespace rb::support

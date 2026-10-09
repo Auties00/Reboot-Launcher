@@ -14,7 +14,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 [[nodiscard]] Diagnostic wrong_type(std::string_view expected);
 [[nodiscard]] Diagnostic missing_member(std::string_view member);
@@ -102,4 +102,4 @@ template <class Decode>
 // Adds the members of `unknown` that `out` does not already have.
 void append_unknown(boost::json::object& out, const boost::json::object& unknown);
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

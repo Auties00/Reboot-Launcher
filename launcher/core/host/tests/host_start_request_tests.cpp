@@ -3,8 +3,8 @@
 #include "messages.hpp"
 #include "reboot/host/host_start_request.hpp"
 
-using namespace reboot;
-using namespace reboot::host;
+using namespace rb;
+using namespace rb::host;
 
 namespace {
 

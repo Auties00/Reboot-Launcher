@@ -4,7 +4,7 @@
 
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // `runtime_id` is the pinned runtime component id; empty for Native.
 struct RunnerPin {
@@ -14,4 +14,4 @@ struct RunnerPin {
     bool operator==(const RunnerPin&) const = default;
 };
 
-}  // namespace reboot::support
+}  // namespace rb::support

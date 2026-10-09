@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 struct DetachedLaunch {
     NativePath program;
@@ -24,4 +24,4 @@ struct DetachedLaunch {
 // errno travels back over a close-on-exec pipe as platform.ipc_engine_spawn_failed.
 [[nodiscard]] Result<void> spawn_detached(const DetachedLaunch& launch);
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

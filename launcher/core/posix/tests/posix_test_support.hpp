@@ -24,7 +24,7 @@
 
 // Real-OS helpers: this package only builds on macOS and Linux, so its tests double as the
 // conformance run of the shared POSIX adapters.
-namespace reboot::posix::test {
+namespace rb::posix::test {
 
 inline constexpr std::chrono::milliseconds kBudget{10000};
 
@@ -122,4 +122,4 @@ private:
     mode_t previous_;
 };
 
-}  // namespace reboot::posix::test
+}  // namespace rb::posix::test

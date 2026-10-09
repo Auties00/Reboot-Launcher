@@ -8,7 +8,7 @@
 #include "reboot/integration/entry_command.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 namespace {
 
@@ -47,4 +47,4 @@ ReconcileAction reconcile_action(IntegrationKind kind, EntryState state, bool de
     return ReconcileAction::Leave;
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

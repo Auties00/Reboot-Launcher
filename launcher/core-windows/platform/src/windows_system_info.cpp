@@ -5,7 +5,7 @@
 #include "os_version.hpp"
 #include "process_token.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 WindowsSystemInfo::WindowsSystemInfo() : elevated_(process_elevated()) {
     const OsVersion version = read_os_version();
@@ -23,4 +23,4 @@ bool WindowsSystemInfo::elevated() const { return elevated_; }
 
 std::string WindowsSystemInfo::os_session() const { return os_session_; }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

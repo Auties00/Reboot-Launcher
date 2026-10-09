@@ -18,7 +18,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "socket_match.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -119,4 +119,4 @@ Result<std::optional<ports::PortOwner>> LibprocPortInspector::udp_owner(Port por
     return find_owner([port](const LocalSocket& socket) { return owns_udp(socket, port); });
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

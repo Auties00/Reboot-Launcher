@@ -23,18 +23,18 @@
 #include "reboot/process/child_supervisor.hpp"
 #include "reboot/process/process_spec.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IClock;
 class Redactor;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IProcessLauncher;
 }
 
-namespace reboot::backend {
+namespace rb::backend {
 
 class IBackendProcessObserver;
 class IMatchTargetResolver;
@@ -103,4 +103,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

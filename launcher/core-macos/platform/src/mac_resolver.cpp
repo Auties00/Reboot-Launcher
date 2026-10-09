@@ -19,7 +19,7 @@
 // DISPATCH_QUEUE_SERIAL is a C-style cast in Apple's headers.
 #pragma clang diagnostic ignored "-Wold-style-cast"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -210,4 +210,4 @@ void MacResolver::resolve(std::string host, CancelToken token, UniqueFunction<vo
     query->post(&Query::start_on_queue);
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

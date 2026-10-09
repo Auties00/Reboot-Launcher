@@ -10,7 +10,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class SecretKind : u32 {
     Unspecified = 0,
@@ -112,8 +112,8 @@ class ISecretsHandler {
 public:
     virtual ~ISecretsHandler() = default;
 
-    virtual ::reboot::Result<SecretsStateResponse> state(const CallContext& context, const SecretsStateRequest& request) = 0;
-    virtual ::reboot::Result<SecretsClearResponse> clear(const CallContext& context, const SecretsClearRequest& request) = 0;
+    virtual ::rb::Result<SecretsStateResponse> state(const CallContext& context, const SecretsStateRequest& request) = 0;
+    virtual ::rb::Result<SecretsClearResponse> clear(const CallContext& context, const SecretsClearRequest& request) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

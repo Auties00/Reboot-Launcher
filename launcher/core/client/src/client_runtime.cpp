@@ -6,7 +6,7 @@
 #include "abi_boundary.hpp"
 #include "completion_latch.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 namespace {
 
@@ -69,4 +69,4 @@ rb_status open_context(std::unique_ptr<ClientRuntime> runtime, ConnectSettings s
     return RB_OK;
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

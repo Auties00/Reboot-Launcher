@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // Covers no capability ids. The backend's reaction to a crash or hang: the delay doubles from
 // first_delay up to max_delay with each restart still inside `window`, and once max_restarts
@@ -26,4 +26,4 @@ struct RestartPolicy {
     }
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

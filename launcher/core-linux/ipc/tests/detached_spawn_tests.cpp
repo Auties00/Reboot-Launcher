@@ -16,9 +16,9 @@
 #include "messages.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-using namespace reboot;
-using namespace reboot::os_linux::ipc;
-using namespace reboot::os_linux::ipc::test;
+using namespace rb;
+using namespace rb::os_linux::ipc;
+using namespace rb::os_linux::ipc::test;
 
 namespace {
 

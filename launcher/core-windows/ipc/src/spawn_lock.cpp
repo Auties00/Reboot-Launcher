@@ -8,7 +8,7 @@
 #include "win32.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 Result<SpawnLock> SpawnLock::acquire(const NativePath& path, std::chrono::milliseconds wait) {
     std::error_code created;
@@ -40,4 +40,4 @@ Result<SpawnLock> SpawnLock::acquire(const NativePath& path, std::chrono::millis
     return std::unexpected(make_diag(ErrorDomain::Platform, kSpawnLockTimedOut).arg("path", path).arg("deadline", wait).build());
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

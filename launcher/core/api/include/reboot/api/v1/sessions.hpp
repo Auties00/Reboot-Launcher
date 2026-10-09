@@ -12,7 +12,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class SessionKind : u32 {
     Play = 0,
@@ -169,11 +169,11 @@ class ISessionsHandler {
 public:
     virtual ~ISessionsHandler() = default;
 
-    virtual ::reboot::Result<SessionsListResponse> list(const CallContext& context, const SessionsListRequest& request) = 0;
-    virtual ::reboot::Result<SessionsGetResponse> get(const CallContext& context, const SessionsGetRequest& request) = 0;
-    virtual ::reboot::Result<SessionsSetLeaseResponse> set_lease(const CallContext& context, const SessionsSetLeaseRequest& request) = 0;
+    virtual ::rb::Result<SessionsListResponse> list(const CallContext& context, const SessionsListRequest& request) = 0;
+    virtual ::rb::Result<SessionsGetResponse> get(const CallContext& context, const SessionsGetRequest& request) = 0;
+    virtual ::rb::Result<SessionsSetLeaseResponse> set_lease(const CallContext& context, const SessionsSetLeaseRequest& request) = 0;
     // Completes with SessionsStopResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_stop(const CallContext& context, const SessionsStopRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_stop(const CallContext& context, const SessionsStopRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

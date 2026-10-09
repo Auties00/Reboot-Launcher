@@ -7,7 +7,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 enum class ResolveErrorCode : u8 { InvalidAddress, NotFound, NoIpv4Address, Timeout, Failed, Cancelled };
 
@@ -20,4 +20,4 @@ struct ResolveError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const ResolveError& error);
 
-}  // namespace reboot::net
+}  // namespace rb::net

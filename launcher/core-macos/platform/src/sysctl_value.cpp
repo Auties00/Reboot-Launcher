@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <cstring>
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 std::optional<std::string> sysctl_string(const char* name) {
     std::size_t size = 0;
@@ -35,4 +35,4 @@ std::optional<i64> sysctl_integer(const char* name) {
 
 bool apple_silicon() { return sysctl_integer("hw.optional.arm64").value_or(0) == 1; }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

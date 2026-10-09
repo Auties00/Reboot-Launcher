@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/net/udp_beacon_prober.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Applies only once the server reported Listening. KeepRunningUnpublished leaves a slow or
 // unreachable server up as LiveUnpublished, with a diagnostic that says it is not answering
@@ -25,4 +25,4 @@ struct ReadinessPolicy {
     ReadinessTimeoutAction on_timeout = ReadinessTimeoutAction::KeepRunningUnpublished;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

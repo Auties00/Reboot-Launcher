@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 // Covers no capability ids (decisions linux-compat-layer, owner-2).
 // The pinned Kron4ek Wine 11.0 amd64-wow64 build, the runner of the CI smoke tests.
@@ -27,4 +27,4 @@ struct KronWineRunner {
     [[nodiscard]] ports::RuntimeLayout to_runtime_layout() const;
 };
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

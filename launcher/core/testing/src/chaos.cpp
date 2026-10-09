@@ -19,7 +19,7 @@
 #include "reboot/testing/deterministic_runtime.hpp"
 #include "reboot/testing/event_recorder.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 constexpr MessageId kRequestAlreadyResolved{"requests.already_resolved"};
@@ -330,4 +330,4 @@ ConformanceReport race_user_request(std::size_t answers, bool with_withdrawal) {
     });
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

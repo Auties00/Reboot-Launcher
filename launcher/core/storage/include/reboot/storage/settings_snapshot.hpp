@@ -4,7 +4,7 @@
 #include "reboot/storage/load_report.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // A session pins a copy at preflight, so later edits never reach it.
 struct SettingsSnapshot {
@@ -13,4 +13,4 @@ struct SettingsSnapshot {
     SettingsValues values;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

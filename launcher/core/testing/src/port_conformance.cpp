@@ -13,7 +13,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/testing/port_binder.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 [[nodiscard]] bool is_normal_absolute(const NativePath& path) {
@@ -241,4 +241,4 @@ ConformanceReport run_random_conformance(IRandom& random) {
     return report;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

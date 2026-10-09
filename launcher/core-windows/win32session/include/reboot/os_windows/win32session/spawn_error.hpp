@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 // Where launching the session tree failed. A failure at any step rolls the whole launch back by
 // terminating the Job, so no suspended companion is ever orphaned.
@@ -24,4 +24,4 @@ struct SpawnError {
     SystemError error{};
 };
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

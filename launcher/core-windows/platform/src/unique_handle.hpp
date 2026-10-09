@@ -4,7 +4,7 @@
 
 #include "win32.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Owns a HANDLE; both null and INVALID_HANDLE_VALUE mean none.
 class UniqueHandle {
@@ -92,4 +92,4 @@ private:
     BSTR value_ = nullptr;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

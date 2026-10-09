@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace reboot::engine {
+namespace rb::engine {
 
 const boost::json::value* state_extra(const storage::StateDocument& state, std::string_view key) {
     return state.unknown.if_contains(key);
@@ -18,4 +18,4 @@ Result<void> put_state_extra(storage::DocumentStore<storage::StateDocument>& sta
     return {};
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

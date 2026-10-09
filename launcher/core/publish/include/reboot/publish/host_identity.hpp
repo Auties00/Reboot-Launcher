@@ -7,7 +7,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 inline constexpr std::size_t kHostTokenSize = 32;
 
@@ -24,4 +24,4 @@ struct HostIdentity {
     std::optional<HostToken> token;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

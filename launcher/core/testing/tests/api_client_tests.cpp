@@ -16,8 +16,8 @@
 #include "reboot/testing/frame_log.hpp"
 #include "reboot/testing/memory_stream_pair.hpp"
 
-using namespace reboot;
-using namespace reboot::testing;
+using namespace rb;
+using namespace rb::testing;
 namespace ipc = contracts::ipc;
 
 namespace {

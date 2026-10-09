@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::support::msg {
+namespace rb::support::msg {
 
 REBOOT_MESSAGE_DECL(kVersionUnknown);
 REBOOT_MESSAGE_DECL(kAboveVersionCap);
@@ -21,4 +21,4 @@ REBOOT_MESSAGE_DECL(kMalformedServerDescription);
 REBOOT_MESSAGE_DECL(kMatrixReportUnknownSchema);
 REBOOT_MESSAGE_DECL(kMatrixReportMalformed);
 
-}  // namespace reboot::support::msg
+}  // namespace rb::support::msg

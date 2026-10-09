@@ -6,7 +6,7 @@
 #include "reboot/ports/net.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -64,4 +64,4 @@ Result<bool> PortOwnerService::held_by(PortProtocol protocol, Endpoint local, co
     return false;
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

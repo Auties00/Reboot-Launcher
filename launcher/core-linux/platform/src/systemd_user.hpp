@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Whether something accepts connections on the AF_UNIX stream socket at `path`.
 [[nodiscard]] bool unix_socket_accepts(const NativePath& path);
@@ -22,4 +22,4 @@ namespace reboot::os_linux::platform {
 // systemctl_user, failing with platform.helper_failed unless it exits 0.
 [[nodiscard]] Result<void> systemctl_user_ok(std::vector<std::string> args, const NativePath& runtime_dir);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

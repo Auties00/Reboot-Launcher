@@ -10,15 +10,15 @@
 #include "xdg_dirs.hpp"
 
 namespace fs = std::filesystem;
-using reboot::NativePath;
-using reboot::ports::InstallKind;
-using namespace reboot::os_linux::platform;
+using rb::NativePath;
+using rb::ports::InstallKind;
+using namespace rb::os_linux::platform;
 
 namespace {
 
-reboot::testing::ScratchDir scratch() {
-    reboot::OsRandom random;
-    auto dir = reboot::testing::ScratchDir::create(random, "xdg-dirs");
+rb::testing::ScratchDir scratch() {
+    rb::OsRandom random;
+    auto dir = rb::testing::ScratchDir::create(random, "xdg-dirs");
     REQUIRE(dir);
     return std::move(*dir);
 }

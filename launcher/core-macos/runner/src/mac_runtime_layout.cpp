@@ -6,7 +6,7 @@
 #include "messages.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::runner {
+namespace rb::os_macos::runner {
 
 namespace {
 
@@ -67,4 +67,4 @@ ports::RuntimeLayout MacRuntimeLayout::to_runtime_layout() const {
     return out;
 }
 
-}  // namespace reboot::os_macos::runner
+}  // namespace rb::os_macos::runner

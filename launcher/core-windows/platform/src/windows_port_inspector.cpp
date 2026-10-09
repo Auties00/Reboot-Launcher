@@ -10,7 +10,7 @@
 #include "unique_handle.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -115,4 +115,4 @@ Result<std::optional<ports::PortOwner>> WindowsPortInspector::udp_owner(Port por
     return std::optional<ports::PortOwner>{owner_of(*pid)};
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

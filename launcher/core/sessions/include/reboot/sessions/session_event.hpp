@@ -14,7 +14,7 @@
 #include "reboot/sessions/spawned_process.hpp"
 #include "reboot/sessions/stop_reason.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // EventKind::SessionStateChanged: any change to SessionInfo that the other events do not carry.
 struct SessionStateChanged {
@@ -62,4 +62,4 @@ using SessionEvent = std::variant<SessionStateChanged, SessionSpawned, SessionDe
     return std::visit([](const auto& payload) { return event_kind(payload); }, event);
 }
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

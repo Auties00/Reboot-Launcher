@@ -14,7 +14,7 @@
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 namespace {
 
@@ -269,4 +269,4 @@ json::object DescribeCacheDocument::write() const {
 
 Result<json::object> DescribeCacheDocument::upgrade(json::object values, u32) { return values; }
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

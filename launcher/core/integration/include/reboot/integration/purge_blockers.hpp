@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 struct PurgeBlockers {
     std::vector<SessionId> sessions;
@@ -15,4 +15,4 @@ struct PurgeBlockers {
     [[nodiscard]] bool empty() const noexcept { return sessions.empty() && ops.empty() && !backend_running; }
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

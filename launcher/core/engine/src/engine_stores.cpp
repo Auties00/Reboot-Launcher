@@ -6,7 +6,7 @@
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 EngineStores::EngineStores(ports::IFileSystem& fs, WorkerPool& workers, Executor& strand, const IClock& clock,
                            const AppLayout& layout)
@@ -91,4 +91,4 @@ void EngineStores::publish_mode_changes(EventBus& events) {
     describe_cache.set_on_mode_changed(publish);
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

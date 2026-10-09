@@ -15,7 +15,7 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot::net {
+namespace rb::net {
 
 class PortOwnerService;
 
@@ -47,4 +47,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

@@ -15,9 +15,9 @@
 #include "reboot/publish/host_identity_store.hpp"
 #include "reboot/publish/identity_hold.hpp"
 
-using namespace reboot;
-using namespace reboot::publish;
-using namespace reboot::publish::test;
+using namespace rb;
+using namespace rb::publish;
+using namespace rb::publish::test;
 
 namespace {
 

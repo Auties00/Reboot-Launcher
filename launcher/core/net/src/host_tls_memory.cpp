@@ -7,7 +7,7 @@
 #include "reboot/net/http_error.hpp"
 #include "url.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -70,4 +70,4 @@ std::vector<storage::UpstreamTlsMemory> HostTlsMemory::records() const {
     return out;
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

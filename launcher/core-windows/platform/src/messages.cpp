@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Win32 and HRESULT failures; the code travels as the diagnostic's os_error.
 REBOOT_MESSAGE(kCallFailed, "platform.call_failed", "{call} failed.");
@@ -26,4 +26,4 @@ REBOOT_MESSAGE(kVelopackStageFailed, "platform.velopack_stage_failed",
 REBOOT_MESSAGE(kVelopackApplyFailed, "platform.velopack_apply_failed",
                "The updater could not be started to apply the update.");
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

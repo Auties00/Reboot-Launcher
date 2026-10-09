@@ -8,7 +8,7 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/storage/settings.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // Fixed at open: a later settings edit, payload or runtime update never reaches a running session.
 struct PinnedInputs {
@@ -23,4 +23,4 @@ struct PinnedInputs {
     std::optional<std::array<u8, 32>> game_server_sha256;
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

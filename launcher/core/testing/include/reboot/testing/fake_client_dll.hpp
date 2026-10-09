@@ -22,7 +22,7 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decisions testing-strategy, game-control-channel).
 // Plays our in-game client DLL against the engine's game channel: preamble, GcHello, then the script
@@ -76,4 +76,4 @@ private:
     std::shared_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

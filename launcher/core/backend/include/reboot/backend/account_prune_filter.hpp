@@ -5,7 +5,7 @@
 
 #include "reboot/backend/backend_account.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Prunes only LAN-created accounts: Remote, with no identity record, last seen before the cutoff.
 struct AccountPruneFilter {
@@ -19,4 +19,4 @@ struct AccountPruneFilter {
     [[nodiscard]] bool selects(const BackendAccount& account) const noexcept;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

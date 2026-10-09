@@ -8,7 +8,7 @@
 #include "reboot/builds/file_byte_source.hpp"
 #include "reboot/builds/memory_byte_source.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -47,4 +47,4 @@ Result<void> FileByteSource::read_at(u64 offset, std::span<u8> out) {
     return {};
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

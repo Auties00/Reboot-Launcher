@@ -1,6 +1,6 @@
 #include "secret_routing.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 SecretBackend write_backend(KeychainState state, bool aqua_session) noexcept {
     switch (state) {
@@ -31,4 +31,4 @@ SecretBackend read_backend_after_file_miss(KeychainState state) noexcept {
     return SecretBackend::File;
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

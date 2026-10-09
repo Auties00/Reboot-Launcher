@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 namespace {
 
@@ -25,4 +25,4 @@ Result<void> check_display(const DisplayContext& caller, std::string_view engine
     return make_diag(ErrorDomain::Play, msg::kNoDisplay).kind(ErrorKind::Unsupported).fail();
 }
 
-}  // namespace reboot::play
+}  // namespace rb::play

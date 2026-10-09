@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::host::msg {
+namespace rb::host::msg {
 
 REBOOT_MESSAGE(kProfileNotFound, "host.profile_not_found", "There is no host profile {profile}");
 REBOOT_MESSAGE(kProfileNameEmpty, "host.profile_name_empty", "A host profile needs a name");
@@ -58,4 +58,4 @@ REBOOT_MESSAGE(kDuplicateProfile, "host.duplicate_profile", "The host profile {p
 REBOOT_MESSAGE(kSecondAutoServerUnpublished, "host.second_auto_server_unpublished",
                "Another server for your own game is already shared, so this one is not");
 
-}  // namespace reboot::host::msg
+}  // namespace rb::host::msg

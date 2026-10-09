@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 std::optional<std::string> own_environment(const char* name) {
 #ifdef _WIN32
@@ -26,4 +26,4 @@ std::optional<std::string> own_environment(const char* name) {
 #endif
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

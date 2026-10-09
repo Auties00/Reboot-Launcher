@@ -6,7 +6,7 @@
 #include "reboot/engine/engine_info.hpp"
 #include "reboot/foundation/log.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace {
 
@@ -60,4 +60,4 @@ void RuntimeRecorder::record(const process::ChildRecord& child, process::RecordC
         REBOOT_LOG_WARN(Engine, "runtime.json was not updated for pid {}: {}", child.pid, written.error().id);
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

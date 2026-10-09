@@ -5,8 +5,8 @@
 #include "reboot/injection/injection_plan.hpp"
 #include "reboot/injection/runtime_boot_default.hpp"
 
-using namespace reboot;
-using namespace reboot::injection;
+using namespace rb;
+using namespace rb::injection;
 
 namespace {
 

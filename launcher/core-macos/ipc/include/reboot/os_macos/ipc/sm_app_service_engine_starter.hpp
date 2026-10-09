@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // Covers no capability ids; IEngineStarter for reboot_client's Autostart mode. The engine is
 // always launchd's child, never the client's.
@@ -60,4 +60,4 @@ private:
     std::unique_ptr<PendingRegister> pending_register_;
 };
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

@@ -11,7 +11,7 @@
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -285,4 +285,4 @@ void OpRegistry::on_completed(OperationBase& op, ErasedOutcome outcome) {
                           EventScope{record->session, op.id(), {}});
 }
 
-}  // namespace reboot
+}  // namespace rb

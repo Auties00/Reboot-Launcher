@@ -8,7 +8,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // Makes chosen calls of a fake fail. Thread-safe, because some ports are called from workers.
@@ -55,4 +55,4 @@ private:
     std::vector<Armed> armed_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -17,22 +17,22 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot {
+namespace rb {
 class Executor;
 class TimerService;
 class UserRequestRegistry;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class ILoopbackPeerInspector;
 }
 
-namespace reboot::net {
+namespace rb::net {
 class HostTlsMemory;
 }
 
-namespace reboot::front {
+namespace rb::front {
 
 class LegacyFixedListeners;
 
@@ -93,4 +93,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

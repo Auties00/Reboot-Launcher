@@ -7,7 +7,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace json = boost::json;
 
@@ -133,4 +133,4 @@ std::optional<std::vector<u8>> base64_decode(std::string_view text) {
     return out;
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

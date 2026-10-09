@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // Covers no capability ids; the IFileSystem adapter shared by core-macos and core-linux.
 class PosixFileSystem final : public ports::IFileSystem {
@@ -57,4 +57,4 @@ public:
     Result<ports::FileRevision> revision(const NativePath& path) override;
 };
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

@@ -20,7 +20,7 @@
 #include "reboot/foundation/log.hpp"
 #include "wide.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 namespace {
 
 // How long a cancelled call may take to return before its thread is left behind.
@@ -261,4 +261,4 @@ Result<TaskRun> run_engine_task(const std::string& task_name, const NativePath& 
     return result;
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

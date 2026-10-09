@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/integration/prerequisite_id.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 enum class PrerequisiteErrorCode : u8 {
     UnknownId,
@@ -29,4 +29,4 @@ struct PrerequisiteError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const PrerequisiteError& error);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

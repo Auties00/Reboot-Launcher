@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 TrustVerdict classify_trust_settings(std::span<const TrustSettingsEntry> entries) {
     if (entries.empty()) return TrustVerdict::Trusted;
@@ -42,4 +42,4 @@ std::vector<std::vector<u8>> trusted_anchors(std::span<const CertificateVerdict>
     return trusted;
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

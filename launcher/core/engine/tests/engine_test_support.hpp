@@ -33,7 +33,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::engine::test {
+namespace rb::engine::test {
 
 // The strand beside real worker and I/O threads: they post from their threads, timed tasks follow
 // the ManualClock, and only the test thread runs anything.
@@ -309,12 +309,12 @@ inline void write_file(const NativePath& path, std::string_view text) {
     return out;
 }
 
-}  // namespace reboot::engine::test
+}  // namespace rb::engine::test
 
 // A failed REQUIRE on a Result names the diagnostic chain instead of {?}.
 template <class T>
-struct Catch::StringMaker<std::expected<T, reboot::Diagnostic>> {
-    static std::string convert(const std::expected<T, reboot::Diagnostic>& result) {
-        return result ? std::string("ok") : "error " + reboot::engine::test::describe(result.error());
+struct Catch::StringMaker<std::expected<T, rb::Diagnostic>> {
+    static std::string convert(const std::expected<T, rb::Diagnostic>& result) {
+        return result ? std::string("ok") : "error " + rb::engine::test::describe(result.error());
     }
 };

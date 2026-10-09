@@ -12,7 +12,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/storage/library_document.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 [[nodiscard]] std::string_view version_source_name(VersionSource source) noexcept;
 [[nodiscard]] std::optional<VersionSource> version_source_from_name(std::string_view name) noexcept;
@@ -30,4 +30,4 @@ namespace reboot::builds {
 // directory, by path or file id, as one of `others`' roots.
 [[nodiscard]] Result<NativePath> canonical_root(const NativePath& root, const std::vector<InstalledBuild>& others);
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

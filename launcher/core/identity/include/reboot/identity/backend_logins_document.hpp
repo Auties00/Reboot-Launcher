@@ -14,16 +14,16 @@
 #include "reboot/storage/enum_names.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 template <>
 struct EnumNames<identity::CredentialPolicy> {
     static constexpr std::array<std::string_view, 2> kNames{"ticket", "legacy_argv"};
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage
 
-namespace reboot::identity {
+namespace rb::identity {
 
 // Capabilities: profile-identity.credentials.
 // data/backend-logins.json, a storage::Document. An entry equal to the defaults, with no unknown
@@ -47,4 +47,4 @@ struct BackendLoginsDocument {
     return layout.root() / "data" / "backend-logins.json";
 }
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

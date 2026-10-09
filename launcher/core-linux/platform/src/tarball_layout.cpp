@@ -3,7 +3,7 @@
 #include "messages.hpp"
 #include "reboot/os_linux/platform/xdg_paths.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 Result<EngineCommand> stable_engine_command(const XdgPaths& paths) {
     switch (paths.install_kind()) {
@@ -17,4 +17,4 @@ Result<EngineCommand> stable_engine_command(const XdgPaths& paths) {
         .fail();
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

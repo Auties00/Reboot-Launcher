@@ -9,7 +9,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // Covers no capability ids; IEngineStarter for reboot_client's Autostart mode.
 class WindowsEngineStarter final : public ports::IEngineStarter {
@@ -41,4 +41,4 @@ private:
     ports::CallerContext caller_;
 };
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

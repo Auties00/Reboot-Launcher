@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 struct FakeSystemFacts {
     ports::OsInfo os{"test", "1.0", "0", "x86_64"};
@@ -34,4 +34,4 @@ private:
     FakeSystemFacts facts_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

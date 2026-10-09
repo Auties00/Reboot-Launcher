@@ -10,7 +10,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 using LayoutResolution = std::variant<BuildLayout, NeedsShippingChoice>;
 
@@ -34,4 +34,4 @@ private:
     FileFinder finder_;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

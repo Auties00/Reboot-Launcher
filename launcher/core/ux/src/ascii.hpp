@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace reboot::ux {
+namespace rb::ux {
 
 [[nodiscard]] constexpr bool is_alpha(char c) noexcept { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
 [[nodiscard]] constexpr bool is_digit(char c) noexcept { return c >= '0' && c <= '9'; }
@@ -50,4 +50,4 @@ namespace reboot::ux {
     return out;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

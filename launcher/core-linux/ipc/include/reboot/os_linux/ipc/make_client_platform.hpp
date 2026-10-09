@@ -3,7 +3,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ports/platform_services.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 // Linux composition for reboot_client: UnixSocketConnector, SystemdEngineStarter,
 // LinuxCallerContext and LinuxClientPaths. One LinuxClientPaths::detect(), one
@@ -11,4 +11,4 @@ namespace reboot::ports {
 // context is captured once.
 [[nodiscard]] Result<ClientPlatform> make_client_platform();
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

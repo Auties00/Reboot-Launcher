@@ -4,7 +4,7 @@
 
 #include "wide.hpp"
 
-using namespace reboot::os_windows::win32session;
+using namespace rb::os_windows::win32session;
 
 namespace {
 
@@ -13,8 +13,8 @@ Bytes utf16(std::wstring_view text) {
     Bytes out;
     out.reserve(text.size() * 2);
     for (wchar_t c : text) {
-        out.push_back(static_cast<reboot::u8>(c & 0xFF));
-        out.push_back(static_cast<reboot::u8>((c >> 8) & 0xFF));
+        out.push_back(static_cast<rb::u8>(c & 0xFF));
+        out.push_back(static_cast<rb::u8>((c >> 8) & 0xFF));
     }
     return out;
 }

@@ -6,7 +6,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 enum class LegacyMarker : u8 { LoginCompleted, Shutdown, CorruptBuild, AuthFailure, CannotConnect };
 
@@ -29,4 +29,4 @@ struct LifecycleMarkers {
 
 [[nodiscard]] const LifecycleMarkers& builtin_lifecycle_markers() noexcept;
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

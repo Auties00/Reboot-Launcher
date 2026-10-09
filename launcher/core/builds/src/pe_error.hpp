@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 enum class PeErrorCode : u8 {
     NotPe,
@@ -27,4 +27,4 @@ struct PeError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const PeError& error);
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

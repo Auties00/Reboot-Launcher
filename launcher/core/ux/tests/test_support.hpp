@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ux/guidance_state_store.hpp"
 
-namespace reboot::ux::test {
+namespace rb::ux::test {
 
 // Write-through store whose next write can be made to fail.
 class MemoryGuidanceStore final : public IGuidanceStateStore {
@@ -37,4 +37,4 @@ template <class IdType>
     return id;
 }
 
-}  // namespace reboot::ux::test
+}  // namespace rb::ux::test

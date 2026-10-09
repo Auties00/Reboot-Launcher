@@ -25,7 +25,7 @@
 #include "reboot/os_linux/platform/xdg_shell.hpp"
 #include "systemd_user.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 namespace {
 
@@ -76,4 +76,4 @@ Result<PlatformServices> make_platform(const PlatformOptions& options) {
     return services;
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

@@ -24,7 +24,7 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -333,4 +333,4 @@ Result<ExtractSummary> LibArchiveExtractor::extract(const ExtractRequest& reques
     return extraction.run();
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

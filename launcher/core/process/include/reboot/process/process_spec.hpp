@@ -12,7 +12,7 @@
 #include "reboot/process/child_record.hpp"
 #include "reboot/process/wiping_launch.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // Capabilities: game-launch.process-spawn-helper (suspended creation is ISessionHost's, not this spec's).
 // A native child as the engine starts it: the real program with an argument vector, never a
@@ -37,4 +37,4 @@ struct ProcessSpec {
     [[nodiscard]] WipingLaunch to_launch() const;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

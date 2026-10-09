@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 class IByteSource;
 
@@ -25,4 +25,4 @@ struct ZipEntry {
 // Where the entry's data starts, past its local header.
 [[nodiscard]] Result<u64> zip_data_offset(IByteSource& source, const ZipEntry& entry);
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

@@ -51,7 +51,7 @@
 #include "reboot/ux/notice.hpp"
 #include "reboot/ux/onboarding.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace {
 
@@ -752,4 +752,4 @@ Result<SecretBytes> ApiRouter::reveal_secret(const ipc::ConnectionInfo&, std::sp
     return deps_.secrets.reveal(*parsed);
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

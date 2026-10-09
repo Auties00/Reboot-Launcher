@@ -11,16 +11,16 @@
 #include "reboot/ports/runner.hpp"
 #include "reboot/storage/enum_names.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 template <>
 struct EnumNames<ports::RunnerKind> {
     static constexpr std::array<std::string_view, 4> kNames{"native", "umu", "wine", "mac_runtime"};
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage
 
-namespace reboot::compat {
+namespace rb::compat {
 
 using RunnerKind = ports::RunnerKind;
 
@@ -61,4 +61,4 @@ struct RunnerProfile {
     return storage::EnumNames<RunnerKind>::kNames[static_cast<std::size_t>(kind)];
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

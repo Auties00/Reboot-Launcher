@@ -6,7 +6,7 @@
 
 #include "ascii.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -226,4 +226,4 @@ private:
 
 std::expected<TemplateInfo, std::string> parse_template(std::string_view text) { return TemplateParser(text).run(); }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

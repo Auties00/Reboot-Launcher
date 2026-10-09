@@ -13,11 +13,11 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/secret_store.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; ISecretStore over the Secret Service through libsecret, falling
 // back to 0600 files in a 0700 directory. Those files are plaintext, unlike Windows' DPAPI
@@ -55,4 +55,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

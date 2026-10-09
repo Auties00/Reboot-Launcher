@@ -8,13 +8,13 @@
 #include "reboot/contracts/game_server.hpp"
 #include "reboot/foundation/framing.hpp"
 
-namespace backend = reboot::contracts::backend;
-namespace common = reboot::contracts::common;
-namespace gs = reboot::contracts::game_server;
+namespace backend = rb::contracts::backend;
+namespace common = rb::contracts::common;
+namespace gs = rb::contracts::game_server;
 
 // Child stdio carries the common, backend and game-server messages.
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t* data, std::size_t size) {
-    reboot::testing::fuzz_frames<
+    rb::testing::fuzz_frames<
         common::Ping, common::Pong, common::CommandResult, common::Unsupported, common::Log, backend::BackendHello,
         backend::BackendWelcome, backend::Ready, backend::RegisterAccount, backend::RenameAccount,
         backend::MintLaunchCredential, backend::LaunchCredential, backend::ConfigureSession, backend::EndSession,
@@ -25,6 +25,6 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t* data, std::size_t size
         gs::GameServerDescription, gs::ServerHello, gs::ServerWelcome, gs::Listening, gs::ListenFailed,
         gs::StateChanged, gs::PlayerJoined, gs::PlayerLeft, gs::PlayerCount, gs::MatchEnded, gs::Fatal,
         gs::StartMatch, gs::EndMatch, gs::Reset, gs::Kick, gs::SetBans, gs::SetOperators, gs::RunCommand, gs::Drain,
-        gs::Shutdown>(std::span<const reboot::u8>(data, size), reboot::kChildFrameCap);
+        gs::Shutdown>(std::span<const rb::u8>(data, size), rb::kChildFrameCap);
     return 0;
 }

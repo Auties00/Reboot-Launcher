@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <array>
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 namespace {
 
 // Lines the game itself prints; refused logins and an unreachable backend are told apart.
@@ -51,4 +51,4 @@ std::optional<LegacyMarker> LifecycleMarkers::match(std::string_view line) const
 
 const LifecycleMarkers& builtin_lifecycle_markers() noexcept { return kBuiltinMarkers; }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

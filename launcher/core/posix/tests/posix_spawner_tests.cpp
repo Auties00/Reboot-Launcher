@@ -20,9 +20,9 @@
 #include "reboot/posix/process_start_time.hpp"
 #include "unistd.hpp"
 
-using namespace reboot;
-using namespace reboot::posix;
-using namespace reboot::posix::test;
+using namespace rb;
+using namespace rb::posix;
+using namespace rb::posix::test;
 
 namespace {
 

@@ -10,7 +10,7 @@
 #include "reboot/foundation/log.hpp"
 #include "reboot/process/line_reader.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -100,4 +100,4 @@ void LegacyOutputAdapter::finish(OutputSource source) {
     impl_->flush();
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

@@ -11,7 +11,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Every helper program (xdg-mime, systemctl, loginctl, python3, xdg-open) is bounded by this.
 inline constexpr std::chrono::seconds kHelperDeadline{5};
@@ -53,4 +53,4 @@ struct HelperResult {
 // platform.helper_failed for a helper that ran but did not exit 0.
 [[nodiscard]] Diagnostic helper_failed(std::string_view program, const HelperResult& result);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 REBOOT_MESSAGE(kUserTempDirUnavailable, "platform.user_temp_dir_unavailable",
                "The per-user temporary directory could not be read.");
@@ -20,4 +20,4 @@ REBOOT_MESSAGE(kHomeUnavailable, "platform.ipc_home_unavailable", "The home dire
 REBOOT_MESSAGE(kImageUnresolved, "platform.ipc_image_unresolved",
                "The location of the Reboot Launcher client library could not be read.");
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

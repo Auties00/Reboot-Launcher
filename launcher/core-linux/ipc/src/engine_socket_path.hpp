@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 inline constexpr std::string_view kSocketDirName = "reboot-launcher";
 
@@ -18,4 +18,4 @@ inline constexpr std::string_view kSocketDirName = "reboot-launcher";
 [[nodiscard]] Result<NativePath> check_engine_socket_path(const NativePath& runtime_base,
                                                           std::string_view endpoint_name);
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

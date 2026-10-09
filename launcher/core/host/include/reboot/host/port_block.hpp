@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/gameserver/socket_role.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Contiguous ports, one per socket the game server declares, in declaration order.
 // at() and last() require fits(); HostPortAllocator only hands out blocks that fit.
@@ -35,4 +35,4 @@ struct PortBlock {
 // from gameserver::socket_roles, whose description check guarantees a Game socket.
 [[nodiscard]] Port game_port(const PortBlock& block, const std::vector<gameserver::SocketRole>& roles);
 
-}  // namespace reboot::host
+}  // namespace rb::host

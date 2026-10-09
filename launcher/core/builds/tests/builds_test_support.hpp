@@ -35,7 +35,7 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 
-namespace reboot::builds::test {
+namespace rb::builds::test {
 
 // The strand beside real worker threads: they post from their threads, timed tasks follow the
 // ManualClock, and only the test thread runs anything.
@@ -320,4 +320,4 @@ inline void write_build(const NativePath& root, std::string_view shipping_text,
     return {};
 }
 
-}  // namespace reboot::builds::test
+}  // namespace rb::builds::test

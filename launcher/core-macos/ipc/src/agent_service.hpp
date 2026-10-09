@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 
 // C++ entry points into SMAppService (agent_service.mm), so the starter stays .cpp.
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // This process's main bundle ships Contents/Library/LaunchAgents/<plist_name>; a CLI outside a
 // bundle never does.
@@ -19,4 +19,4 @@ namespace reboot::os_macos::ipc {
 // platform.agent_register_failed for `label`, with the NSError code.
 [[nodiscard]] Result<void> agent_register(std::string_view plist_name, std::string_view label);
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

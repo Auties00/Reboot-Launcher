@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 Diagnostic to_diagnostic(const PrefixBusy& error) {
     return make_diag(ErrorDomain::Compat, msg::kPrefixBusy)
@@ -15,4 +15,4 @@ Diagnostic to_diagnostic(const PrefixBusy& error) {
         .build();
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

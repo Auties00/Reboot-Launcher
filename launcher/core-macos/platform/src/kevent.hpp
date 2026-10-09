@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // EV_SET without the macro, so field conversions stay explicit.
 [[nodiscard]] inline struct kevent make_kevent(std::uintptr_t ident, std::int16_t filter, std::uint16_t flags,
@@ -21,4 +21,4 @@ namespace reboot::os_macos::platform {
     return event;
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

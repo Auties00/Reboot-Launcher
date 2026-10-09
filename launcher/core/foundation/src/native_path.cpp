@@ -10,7 +10,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -75,4 +75,4 @@ Result<NativePath> from_wire(const WirePath& path) {
 
 std::string display_utf8(const NativePath& path) { return utf8_of(path.native()); }
 
-}  // namespace reboot
+}  // namespace rb

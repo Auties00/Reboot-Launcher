@@ -3,7 +3,7 @@
 #include "reboot/compat/runner_profile.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 class PrefixManager;
 
@@ -35,4 +35,4 @@ private:
     SessionId session_;
 };
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

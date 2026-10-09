@@ -3,7 +3,7 @@
 #include "reboot/compat/preferred_rhi_seed.hpp"
 #include "test_data.hpp"
 
-using namespace reboot::compat;
+using namespace rb::compat;
 
 TEST_CASE("dx12 is rewritten to dx11", "[compat][rhi]") {
     const auto seeded = seed_preferred_rhi(test::read_text("rhi_dx12.ini"));

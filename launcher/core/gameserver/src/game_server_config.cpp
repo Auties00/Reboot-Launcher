@@ -7,7 +7,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/gameserver/game_server_error.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 namespace {
 
@@ -61,7 +61,7 @@ gs::ServerConfig to_wire(const GameServerConfig& config, const SessionId& sessio
     wire.session_id = session.value;
     wire.game.version = config.game.version.canonical();
     wire.game.cl = config.game.cl.value;
-    if (config.game.build_root) wire.game.build_root = reboot::to_wire(*config.game.build_root);
+    if (config.game.build_root) wire.game.build_root = rb::to_wire(*config.game.build_root);
     wire.listen.bind_address = config.listen.bind_address.to_string();
     wire.listen.ports.reserve(config.listen.ports.size());
     for (const Port port : config.listen.ports) wire.listen.ports.push_back(port.value);
@@ -79,8 +79,8 @@ gs::ServerConfig to_wire(const GameServerConfig& config, const SessionId& sessio
     wire.match.tick_rate = config.match.tick_rate;
     wire.operators.ip_cidrs = config.operator_cidrs;
     wire.bans = config.bans;
-    wire.log_dir = reboot::to_wire(log_dir);
+    wire.log_dir = rb::to_wire(log_dir);
     return wire;
 }
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

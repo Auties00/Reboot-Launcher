@@ -2,7 +2,7 @@
 
 #include "reboot/host/host_error.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 Result<void> check_start(const HostStartRequest& request, const HostProfile& profile) {
     const auto fail = [](HostErrorCode code) -> Result<void> {
@@ -16,4 +16,4 @@ Result<void> check_start(const HostStartRequest& request, const HostProfile& pro
     return {};
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

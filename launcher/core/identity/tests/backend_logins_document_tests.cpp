@@ -8,8 +8,8 @@
 #include "reboot/identity/backend_logins_document.hpp"
 #include "reboot/storage/document_store.hpp"
 
-using namespace reboot;
-using namespace reboot::identity;
+using namespace rb;
+using namespace rb::identity;
 namespace json = boost::json;
 
 static_assert(storage::Document<BackendLoginsDocument>);

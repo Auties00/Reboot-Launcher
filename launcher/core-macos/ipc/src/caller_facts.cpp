@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 ports::CallerContext caller_context_from(const CallerFacts& facts) {
     ports::CallerContext context;
@@ -12,4 +12,4 @@ ports::CallerContext caller_context_from(const CallerFacts& facts) {
     return context;
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

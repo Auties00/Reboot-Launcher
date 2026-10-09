@@ -3,7 +3,7 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 // The reboot.api.v1 EventKind values the library reads or raises; it links no API code.
 enum class ApiEventKind : u32 {
@@ -21,4 +21,4 @@ enum class ApiEventKind : u32 {
     return event;
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

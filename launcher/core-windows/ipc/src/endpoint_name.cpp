@@ -3,7 +3,7 @@
 
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 namespace {
 
 constexpr std::string_view kPipeNamePrefix = R"(\\.\pipe\reboot-engine-)";
@@ -19,4 +19,4 @@ std::string endpoint_name(const PeerIdentity& self, std::string_view root_hash16
     return name;
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

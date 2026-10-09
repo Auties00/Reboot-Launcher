@@ -12,7 +12,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 [[nodiscard]] bool replay_file(const std::filesystem::path& file) {
@@ -69,4 +69,4 @@ void fuzz_require(bool condition, const char* what) noexcept {
     std::abort();
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Ids shared with the other OS packages carry the same English everywhere.
 REBOOT_MESSAGE_DECL(kCallFailed);
@@ -23,4 +23,4 @@ REBOOT_MESSAGE_DECL(kUpdateNotSupported);
 REBOOT_MESSAGE_DECL(kVelopackStageFailed);
 REBOOT_MESSAGE_DECL(kVelopackApplyFailed);
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

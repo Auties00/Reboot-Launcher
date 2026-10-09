@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 std::optional<ports::StartResult> refusal_before_start(const ports::CallerContext& caller, const DataRoot& root) {
     if (caller.elevated) return ports::StartResult::ElevatedRefused;
@@ -62,4 +62,4 @@ Diagnostic agent_register_timed_out(std::string_view label, std::chrono::millise
         .retryable();
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

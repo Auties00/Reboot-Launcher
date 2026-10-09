@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; IFileWatcher over FSEvents, reporting direct entries of `dir` only.
 class FsEventsWatcher final : public ports::IFileWatcher {
@@ -25,4 +25,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

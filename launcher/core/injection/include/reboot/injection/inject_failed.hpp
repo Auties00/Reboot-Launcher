@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/injection/dll_slot.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 // Capabilities: dll-injection.timing.
 // A planned DLL that did not load, from a failed ports::Injected and InjectionPlan::slot_of; it
@@ -23,4 +23,4 @@ struct InjectFailed {
 // injection.inject_failed with the path, the slot and the OS code.
 [[nodiscard]] Diagnostic to_diagnostic(const InjectFailed& error);
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

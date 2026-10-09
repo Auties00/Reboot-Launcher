@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/net_types.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 namespace {
 

@@ -8,7 +8,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // Covers no capability ids (decision linux-compat-layer).
 // The DLL names a PE32+ image imports, regular and delay-loaded, as the image spells them.
@@ -20,4 +20,4 @@ namespace reboot::compat {
 // case-insensitively: the prefix then needs the VC++ redistributable.
 [[nodiscard]] bool needs_vc_runtime(std::span<const std::string> imports) noexcept;
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

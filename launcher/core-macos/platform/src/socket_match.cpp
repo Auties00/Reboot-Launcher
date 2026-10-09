@@ -1,6 +1,6 @@
 #include "socket_match.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -46,4 +46,4 @@ std::optional<ports::PortOwner> choose_owner(std::span<const Candidate> holders)
     return ports::PortOwner{.pid = owner->pid, .exe = owner->exe, .wine_server = wine_server != nullptr};
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace reboot::process {
+namespace rb::process {
 
 namespace {
 
@@ -94,4 +94,4 @@ void LineReader::finish() {
     after_cr_ = false;
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

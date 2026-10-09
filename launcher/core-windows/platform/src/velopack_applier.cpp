@@ -13,7 +13,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -148,4 +148,4 @@ Result<void> VelopackApplier::apply_and_restart(std::vector<std::string> args) {
     ExitProcess(0);
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

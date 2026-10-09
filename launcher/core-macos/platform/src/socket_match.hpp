@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // One socket of PROC_PIDFDSOCKETINFO, reduced to its local side.
 struct LocalSocket {
@@ -33,4 +33,4 @@ struct Candidate {
 // Wine sockets are also held by wineserver: another holder is the owner, and wine_server marks either.
 [[nodiscard]] std::optional<ports::PortOwner> choose_owner(std::span<const Candidate> holders);
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

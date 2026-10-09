@@ -7,7 +7,7 @@
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 SecretFiles::SecretFiles(NativePath dir, ports::IFileSystem& fs) noexcept : dir_(std::move(dir)), fs_(fs) {}
 
@@ -34,4 +34,4 @@ Result<std::optional<SecretBytes>> SecretFiles::get(std::string_view key) {
 
 Result<void> SecretFiles::erase(std::string_view key) { return fs_.remove_tree(path_of(key)); }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

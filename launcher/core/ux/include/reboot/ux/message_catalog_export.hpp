@@ -9,7 +9,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 enum class CatalogIssueKind : u8 {
     MissingId,
@@ -49,4 +49,4 @@ private:
     std::span<const MessageSpec* const> registry_;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

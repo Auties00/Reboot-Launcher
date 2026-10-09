@@ -6,8 +6,8 @@
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/executor.hpp"
 
-using namespace reboot;
-using namespace reboot::engine;
+using namespace rb;
+using namespace rb::engine;
 using namespace std::chrono_literals;
 
 namespace {

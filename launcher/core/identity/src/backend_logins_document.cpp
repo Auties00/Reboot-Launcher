@@ -13,7 +13,7 @@
 #include "messages.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 namespace json = boost::json;
 
@@ -140,4 +140,4 @@ json::object BackendLoginsDocument::write() const {
 
 Result<json::object> BackendLoginsDocument::upgrade(json::object values, u32) { return values; }
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

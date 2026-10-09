@@ -8,7 +8,7 @@
 
 #include "reboot/contracts/game_client.hpp"
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 namespace {
 
 constexpr std::string_view kCtlPrefix = "tcp://127.0.0.1:";
@@ -108,4 +108,4 @@ Expected<WinhostBootstrap> read_bootstrap() {
     return WinhostBootstrap{*port, std::move(*token)};
 }
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

@@ -7,11 +7,11 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::components {
+namespace rb::components {
 
 // What the app package carries for the core. aria2c, 7-Zip and WinRAR are not shipped: downloads
 // and extraction run in process, and the payload and runtimes come through the ComponentStore.
@@ -40,4 +40,4 @@ struct MissingAsset {
 [[nodiscard]] Result<std::vector<MissingAsset>> find_missing_assets(ports::IFileSystem& fs,
                                                                     const InstallLayout& install);
 
-}  // namespace reboot::components
+}  // namespace rb::components

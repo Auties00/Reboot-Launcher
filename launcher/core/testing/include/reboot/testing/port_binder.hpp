@@ -7,7 +7,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 class FakeLoopbackPeerInspector;
 class FakePortInspector;
@@ -33,4 +33,4 @@ public:
 [[nodiscard]] std::unique_ptr<IPortBinder> make_fake_port_binder(FakePortInspector& ports,
                                                                  FakeLoopbackPeerInspector& peers, u32 pid, u32 uid);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

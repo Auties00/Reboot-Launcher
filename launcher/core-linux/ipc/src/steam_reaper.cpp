@@ -8,7 +8,7 @@
 #include <string>
 #include <system_error>
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 constexpr std::string_view kSteamLaunchArgument = "SteamLaunch";
@@ -74,4 +74,4 @@ bool has_steam_reaper_ancestor() {
     return false;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

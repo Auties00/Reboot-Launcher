@@ -10,7 +10,7 @@
 #include "reboot/net/udp_beacon_prober.hpp"
 #include "text_util.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -175,4 +175,4 @@ Result<void> GameServerTarget::check(const HostPort& address, CancelToken token,
         });
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

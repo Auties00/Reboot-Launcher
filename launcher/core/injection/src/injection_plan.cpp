@@ -2,7 +2,7 @@
 
 #include "reboot/injection/runtime_boot_default.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 std::vector<ports::InjectEntry> InjectionPlan::inject_entries() const {
     std::vector<ports::InjectEntry> entries;
@@ -31,4 +31,4 @@ InjectionPlan plan_injection(const InjectionInputs& inputs) {
     return plan;
 }
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 Result<void> FakeUpdateApplier::stage(const NativePath& package) {
     if (auto error = faults_.take(UpdateApplierOperation::Stage)) return std::unexpected(std::move(*error));
@@ -39,4 +39,4 @@ std::optional<std::vector<std::string>> FakeUpdateApplier::restarted_with() cons
     return restarted_with_;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

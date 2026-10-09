@@ -15,11 +15,11 @@
 #include "reboot/storage/settings_snapshot.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 }
 
-namespace reboot::storage {
+namespace rb::storage {
 
 class SettingsRegistry;
 
@@ -52,4 +52,4 @@ private:
     SettingsValues published_;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

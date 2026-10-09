@@ -8,7 +8,7 @@
 #include <system_error>
 #include <utility>
 
-namespace reboot::components {
+namespace rb::components {
 
 namespace {
 
@@ -137,4 +137,4 @@ std::expected<u64, ExtractError> extract_archive(const NativePath& archive_path,
     return unpacked;
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

@@ -29,7 +29,7 @@
 #include "reboot/os_windows/platform/wmi_security_product_probe.hpp"
 #include "wide.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 namespace {
 
@@ -88,4 +88,4 @@ Result<PlatformServices> make_platform(const PlatformOptions& options) {
     return services;
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

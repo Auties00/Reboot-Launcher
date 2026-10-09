@@ -36,7 +36,7 @@
 #include "reboot/trust/signed_document.hpp"
 #include "reboot/trust/signed_document_kind.hpp"
 
-namespace reboot::components::test {
+namespace rb::components::test {
 
 [[nodiscard]] inline std::vector<u8> bytes_of(std::string_view text) { return {text.begin(), text.end()}; }
 
@@ -346,4 +346,4 @@ inline void write_text(const NativePath& path, std::string_view text) {
     out.write(text.data(), static_cast<std::streamsize>(text.size()));
 }
 
-}  // namespace reboot::components::test
+}  // namespace rb::components::test

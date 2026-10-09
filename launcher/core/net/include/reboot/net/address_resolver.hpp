@@ -10,16 +10,16 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IResolver;
 }
 
-namespace reboot::net {
+namespace rb::net {
 
 inline constexpr Port kDefaultGamePort{7777};
 
@@ -55,4 +55,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

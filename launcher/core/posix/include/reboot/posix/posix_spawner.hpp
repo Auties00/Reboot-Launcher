@@ -10,7 +10,7 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // The parent's ends of the child's pipes; the OS launcher watches them and the exit.
 struct SpawnedChild {
@@ -60,4 +60,4 @@ private:
     StartTimeReader read_start_time_;
 };
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/user_request.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decisions testing-strategy, async-event-model).
 // The engine's strand machinery on manual time. The ManualExecutor stands in for both the strand
@@ -46,4 +46,4 @@ private:
     UserRequestRegistry requests_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

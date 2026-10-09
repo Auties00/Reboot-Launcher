@@ -10,7 +10,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 // Per thread; cleared on entry by every export but rb_abi_version, rb_status_name and the two below.
 void clear_last_error() noexcept;
@@ -43,4 +43,4 @@ auto guarded(std::string_view where, Body&& body) noexcept -> decltype(body()) {
 void fill_output(rb_buffer& out, std::vector<u8> bytes);
 void wipe_and_free(rb_buffer& buffer) noexcept;
 
-}  // namespace reboot::client
+}  // namespace rb::client

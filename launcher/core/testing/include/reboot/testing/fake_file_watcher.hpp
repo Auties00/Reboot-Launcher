@@ -9,7 +9,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 class InMemoryFileSystem;
 
@@ -41,4 +41,4 @@ private:
     std::shared_ptr<State> state_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

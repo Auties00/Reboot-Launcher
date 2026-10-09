@@ -3,8 +3,8 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/ipc/compatibility.hpp"
 
-using namespace reboot;
-using reboot::ipc::Compatibility;
+using namespace rb;
+using rb::ipc::Compatibility;
 
 TEST_CASE("only the same build is fully compatible", "[ipc]") {
     STATIC_CHECK(ipc::compatibility_for("1.2.3+abc", "1.2.3+abc") == Compatibility::Full);

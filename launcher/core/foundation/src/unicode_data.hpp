@@ -6,7 +6,7 @@
 
 // Generated from the Unicode 16.0.0 character database (canonical mappings only);
 // Hangul syllables are composed and decomposed algorithmically and are not listed.
-namespace reboot::unicode {
+namespace rb::unicode {
 
 struct CombiningRange {
     u32 first;
@@ -898,4 +898,4 @@ inline constexpr std::array<Composition, 961> kCompositions{{
     {0x16D69, 0x16D67, 0x16D6A},
 }};
 
-}  // namespace reboot::unicode
+}  // namespace rb::unicode

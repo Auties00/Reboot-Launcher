@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::updates::msg {
+namespace rb::updates::msg {
 
 REBOOT_MESSAGE_DECL(kNotifyOnly);
 REBOOT_MESSAGE_DECL(kNoUpdate);
@@ -20,4 +20,4 @@ REBOOT_MESSAGE_DECL(kStopDeclined);
 REBOOT_MESSAGE_DECL(kAnswerInvalid);
 REBOOT_MESSAGE_DECL(kMarkerMalformed);
 
-}  // namespace reboot::updates::msg
+}  // namespace rb::updates::msg

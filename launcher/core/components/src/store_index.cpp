@@ -12,7 +12,7 @@
 
 #include "json_fields.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 namespace {
 
@@ -158,4 +158,4 @@ std::vector<u8> serialize_store_index(const std::vector<StoreEntry>& entries) {
     return {text.begin(), text.end()};
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

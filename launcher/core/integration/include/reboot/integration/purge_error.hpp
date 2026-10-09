@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/integration/purge_scope.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 enum class PurgeErrorCode : u8 {
     // See PurgeBlockers.
@@ -31,4 +31,4 @@ struct PurgeError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const PurgeError& error);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

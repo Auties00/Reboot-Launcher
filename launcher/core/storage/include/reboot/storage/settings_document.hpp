@@ -10,7 +10,7 @@
 #include "reboot/storage/load_report.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // config/settings.json: a flat object of key id -> value, each key validated on its own.
 struct SettingsDocument {
@@ -26,4 +26,4 @@ struct SettingsDocument {
     [[nodiscard]] static Result<boost::json::object> upgrade(boost::json::object values, u32 from_schema);
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

@@ -8,8 +8,8 @@
 #include "messages.hpp"
 #include "reboot/ipc/ipc_errors.hpp"
 
-using namespace reboot;
-using namespace reboot::client;
+using namespace rb;
+using namespace rb::client;
 
 // Golden bytes: what protoc encodes for the same reboot.api.v1 messages.
 TEST_CASE("a failed Outcome encodes as reboot.api.v1 Outcome", "[client][mirror]") {

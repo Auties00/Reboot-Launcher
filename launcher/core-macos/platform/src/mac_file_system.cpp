@@ -7,7 +7,7 @@
 #include "full_fsync.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -50,4 +50,4 @@ Result<void> MacFileSystem::create_dirs_owner_only(const NativePath& path) {
 
 Result<void> MacFileSystem::remove_tree(const NativePath& path) { return posix_.remove_tree(path); }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

@@ -10,7 +10,7 @@
 
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 Result<posix::PeerCredentials> read_darwin_peer(int socket_fd) {
     uid_t uid = 0;
@@ -23,4 +23,4 @@ Result<posix::PeerCredentials> read_darwin_peer(int socket_fd) {
     return posix::PeerCredentials{.uid = static_cast<u32>(uid), .pid = pid > 0 ? static_cast<u32>(pid) : 0U};
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

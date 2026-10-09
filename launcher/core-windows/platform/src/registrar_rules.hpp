@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // The program a registered command runs: the quoted first token, or everything up to the first space.
 [[nodiscard]] std::optional<NativePath> command_program(std::string_view command);
@@ -24,4 +24,4 @@ namespace reboot::os_windows::platform {
 [[nodiscard]] ports::IntegrationState ownership(const NativePath& program, bool program_exists,
                                                 const NativePath& install_root);
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

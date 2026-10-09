@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -273,4 +273,4 @@ std::string mimeapps_with_default(std::string_view text, std::string_view mime,
     return out;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

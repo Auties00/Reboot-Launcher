@@ -7,7 +7,7 @@
 
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 [[nodiscard]] struct flock whole_file_write_lock() noexcept {
@@ -56,4 +56,4 @@ Result<bool> is_ofd_locked(const NativePath& path) {
     return lock.l_type != F_UNLCK;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

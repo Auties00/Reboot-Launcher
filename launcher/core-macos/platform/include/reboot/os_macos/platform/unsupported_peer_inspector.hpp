@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; credential-security requires the loopback peer check on Linux only.
 class UnsupportedPeerInspector final : public ports::ILoopbackPeerInspector {
@@ -15,4 +15,4 @@ public:
     Result<std::optional<u32>> peer_uid(Endpoint local, Endpoint remote) override;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

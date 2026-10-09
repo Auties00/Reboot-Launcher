@@ -2,7 +2,7 @@
 
 #include "caller_facts.hpp"
 
-using reboot::os_macos::ipc::caller_context_from;
+using rb::os_macos::ipc::caller_context_from;
 
 TEST_CASE("the audit session id is the os session, in decimal", "[caller_facts]") {
     const auto context = caller_context_from({.audit_session_id = 100008, .graphic_access = true, .euid = 501});

@@ -20,7 +20,7 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IClock;
@@ -29,43 +29,43 @@ class Subscription;
 class TimerService;
 class UserRequestRegistry;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 struct PlatformServices;
 class IHttpTransport;
 class IQuicTransport;
 class IRunnerPlatform;
 class ISessionHost;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::logging {
+namespace rb::logging {
 class ErrorRouter;
 class FileLogSink;
 class LogExporter;
 class LogLineForwarder;
 class LogRing;
-}  // namespace reboot::logging
+}  // namespace rb::logging
 
-namespace reboot::trust {
+namespace rb::trust {
 class SerialGuard;
-}  // namespace reboot::trust
+}  // namespace rb::trust
 
-namespace reboot::storage {
+namespace rb::storage {
 class FrontendStateStore;
 class ResetService;
 class Settings;
 class SettingsRegistry;
-}  // namespace reboot::storage
+}  // namespace rb::storage
 
-namespace reboot::ux {
+namespace rb::ux {
 class AppLinks;
 class NoticeService;
 class Onboarding;
 class SettingsSearch;
-}  // namespace reboot::ux
+}  // namespace rb::ux
 
-namespace reboot::net {
+namespace rb::net {
 class AddressResolver;
 class HostTlsMemory;
 class HttpClient;
@@ -74,110 +74,110 @@ class PortOwnerService;
 class PortPreflight;
 class ResumableDownloader;
 class UdpBeaconProber;
-}  // namespace reboot::net
+}  // namespace rb::net
 
-namespace reboot::components {
+namespace rb::components {
 class ComponentStore;
 class ManifestService;
-}  // namespace reboot::components
+}  // namespace rb::components
 
-namespace reboot::catalog {
+namespace rb::catalog {
 class BundledCatalogSource;
 class CatalogService;
 class SignedRemoteCatalogSource;
-}  // namespace reboot::catalog
+}  // namespace rb::catalog
 
-namespace reboot::support {
+namespace rb::support {
 class SupportPolicy;
 }
 
-namespace reboot::builds {
+namespace rb::builds {
 class BuildInstaller;
 class ClTable;
 class IArchiveExtractor;
 class ImportService;
 class Library;
-}  // namespace reboot::builds
+}  // namespace rb::builds
 
-namespace reboot::secrets {
+namespace rb::secrets {
 class SecretService;
 }
 
-namespace reboot::identity {
+namespace rb::identity {
 class IdentityService;
 }
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 class GameChannelListener;
 class TokenRegistry;
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel
 
-namespace reboot::compat {
+namespace rb::compat {
 class PrefixManager;
 class RuntimeService;
 class WineSessionHost;
-}  // namespace reboot::compat
+}  // namespace rb::compat
 
-namespace reboot::backend {
+namespace rb::backend {
 class BackendAccounts;
 class BackendProcess;
 class BackendService;
 class IBackendSessions;
 class RemoteBackendProbe;
 class RemoteLogin;
-}  // namespace reboot::backend
+}  // namespace rb::backend
 
-namespace reboot::front {
+namespace rb::front {
 class LegacyFixedListeners;
 class SessionFront;
-}  // namespace reboot::front
+}  // namespace rb::front
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 class GameServerBinary;
 }
 
-namespace reboot::sessions {
+namespace rb::sessions {
 class SessionRegistry;
 class ShutdownCoordinator;
-}  // namespace reboot::sessions
+}  // namespace rb::sessions
 
-namespace reboot::browser {
+namespace rb::browser {
 class BrowserSession;
 class DeepLinkService;
 class GameServerTarget;
 class JoinService;
 class ServerList;
-}  // namespace reboot::browser
+}  // namespace rb::browser
 
-namespace reboot::publish {
+namespace rb::publish {
 class HostIdentityStore;
 class HostPublisher;
 class IPublishNoticeSink;
-}  // namespace reboot::publish
+}  // namespace rb::publish
 
-namespace reboot::host {
+namespace rb::host {
 class HostPortAllocator;
 class HostProfileStore;
 class HostService;
-}  // namespace reboot::host
+}  // namespace rb::host
 
-namespace reboot::play {
+namespace rb::play {
 class MatchTargets;
 class PlayService;
-}  // namespace reboot::play
+}  // namespace rb::play
 
-namespace reboot::integration {
+namespace rb::integration {
 class IntegrationService;
 class PrerequisiteService;
 class PurgeService;
 class ShellService;
-}  // namespace reboot::integration
+}  // namespace rb::integration
 
-namespace reboot::ipc {
+namespace rb::ipc {
 class IpcServer;
 }
 
-namespace reboot::engine {
+namespace rb::engine {
 
 class ApiRouter;
 class EngineActivityProbe;
@@ -388,4 +388,4 @@ private:
     std::shared_ptr<Subscription> reactions_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

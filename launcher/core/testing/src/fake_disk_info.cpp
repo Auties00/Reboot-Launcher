@@ -8,7 +8,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 Result<std::vector<ports::VolumeInfo>> FakeDiskInfo::volumes() {
     if (auto error = faults_.take(DiskOperation::Volumes)) return std::unexpected(std::move(*error));
@@ -52,4 +52,4 @@ void FakeDiskInfo::clear() {
     volumes_.clear();
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

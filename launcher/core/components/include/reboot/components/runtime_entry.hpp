@@ -7,7 +7,7 @@
 #include "reboot/components/manifest_platform.hpp"
 #include "reboot/components/remote_file.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // A play runtime archive, unpacked into its own directory. `id` is the component id and is
 // unique across the manifest; a newer build of a runtime gets a new id.
@@ -29,4 +29,4 @@ struct RuntimeEntry {
     return target.os != ManifestOs::Windows;
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

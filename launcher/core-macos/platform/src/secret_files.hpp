@@ -9,11 +9,11 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // The 0600 file fallback of KeychainSecretStore: one file per key in a 0700 directory.
 class SecretFiles {
@@ -34,4 +34,4 @@ private:
     ports::IFileSystem& fs_;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

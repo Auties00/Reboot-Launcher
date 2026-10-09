@@ -14,7 +14,7 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // The files a build's layout walk found, relative to its root.
 struct LibraryLayout {
@@ -66,4 +66,4 @@ struct LibraryDocument {
     [[nodiscard]] static Result<boost::json::object> upgrade(boost::json::object values, u32 from_schema);
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

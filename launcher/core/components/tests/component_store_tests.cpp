@@ -29,21 +29,21 @@
 #include "reboot/testing/scratch_dir.hpp"
 #include "reboot/trust/serial_guard.hpp"
 
-using namespace reboot;
-using namespace reboot::components;
+using namespace rb;
+using namespace rb::components;
 using namespace std::chrono_literals;
-using reboot::components::test::arg_text;
-using reboot::components::test::bytes_of;
-using reboot::components::test::DiskFileSystem;
-using reboot::components::test::make_tar_gz;
-using reboot::components::test::ManifestJson;
-using reboot::components::test::read_text;
-using reboot::components::test::sha_hex;
-using reboot::components::test::TestSigner;
-using reboot::components::test::TestStrand;
-using reboot::components::test::write_text;
-using reboot::testing::FakeHttpResponse;
-using reboot::testing::FsOperation;
+using rb::components::test::arg_text;
+using rb::components::test::bytes_of;
+using rb::components::test::DiskFileSystem;
+using rb::components::test::make_tar_gz;
+using rb::components::test::ManifestJson;
+using rb::components::test::read_text;
+using rb::components::test::sha_hex;
+using rb::components::test::TestSigner;
+using rb::components::test::TestStrand;
+using rb::components::test::write_text;
+using rb::testing::FakeHttpResponse;
+using rb::testing::FsOperation;
 
 namespace {
 

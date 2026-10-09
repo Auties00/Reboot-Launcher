@@ -6,7 +6,7 @@
 
 #include "reboot/front/upstream_origin.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // What the game's URLs look like for one upstream: the front origin, plus the path prefix that reaches it.
 struct FrontBase {
@@ -29,4 +29,4 @@ struct FrontBase {
 [[nodiscard]] std::optional<std::string> rewrite_location(std::string_view location, const UpstreamOrigin& upstream,
                                                           const FrontBase& base);
 
-}  // namespace reboot::front
+}  // namespace rb::front

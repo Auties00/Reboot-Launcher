@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::engine::msg {
+namespace rb::engine::msg {
 
 REBOOT_MESSAGE(kBadCommandLine, "engine.bad_command_line", "The engine does not accept the argument {argument}");
 REBOOT_MESSAGE(kLockFailed, "engine.lock_failed", "Could not take the engine lock {path}");
@@ -28,4 +28,4 @@ REBOOT_MESSAGE(kCancelled, "engine.cancelled", "The {what} was cancelled");
 REBOOT_MESSAGE(kNoWineRunner, "engine.no_wine_runner", "This system runs the game natively and has no Wine runner");
 REBOOT_MESSAGE(kSelfTestFailed, "engine.self_test_failed", "The engine could not reach itself at {endpoint}");
 
-}  // namespace reboot::engine::msg
+}  // namespace rb::engine::msg

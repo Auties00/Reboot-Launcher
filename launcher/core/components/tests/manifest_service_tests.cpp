@@ -16,14 +16,14 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/trust/serial_guard.hpp"
 
-using namespace reboot;
-using namespace reboot::components;
-using reboot::components::test::arg_text;
-using reboot::components::test::bytes_of;
-using reboot::components::test::ManifestJson;
-using reboot::components::test::TestSigner;
-using reboot::components::test::TestStrand;
-using reboot::testing::FakeHttpResponse;
+using namespace rb;
+using namespace rb::components;
+using rb::components::test::arg_text;
+using rb::components::test::bytes_of;
+using rb::components::test::ManifestJson;
+using rb::components::test::TestSigner;
+using rb::components::test::TestStrand;
+using rb::testing::FakeHttpResponse;
 
 namespace {
 

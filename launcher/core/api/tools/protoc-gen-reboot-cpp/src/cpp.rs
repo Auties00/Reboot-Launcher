@@ -13,7 +13,7 @@ pub const API_DIR: &str = "api";
 pub const HEADER_DIR: &str = "include/reboot/api/v1";
 // The method ids of the public C ABI, in the client package, which never includes api headers.
 const C_METHODS_HEADER: &str = "client/include/reboot/client_methods.h";
-const NAMESPACE: &str = "reboot::api";
+const NAMESPACE: &str = "rb::api";
 const MAX_LINE: usize = 120;
 
 const CPP_KEYWORDS: &[&str] = &[
@@ -576,12 +576,12 @@ impl<'a> Generator<'a> {
             let response = short_name(&m.output_type);
             out.extend(Self::comment(f, &m.path, "    "));
             if is_call(m) {
-                out.push(format!("    virtual ::reboot::Result<{response}> {}(const CallContext& context, const {request}& request) = 0;",
+                out.push(format!("    virtual ::rb::Result<{response}> {}(const CallContext& context, const {request}& request) = 0;",
                                  handler_method_name(m)));
             } else {
                 out.push(format!("    // Completes with {response}."));
-                out.push(format!("    virtual ::reboot::Result<::reboot::OpHandle> {}(const CallContext& context, const {request}& request, \
-                                  ::reboot::DisconnectPolicy disconnect) = 0;", handler_method_name(m)));
+                out.push(format!("    virtual ::rb::Result<::rb::OpHandle> {}(const CallContext& context, const {request}& request, \
+                                  ::rb::DisconnectPolicy disconnect) = 0;", handler_method_name(m)));
             }
         }
         out.extend(["};".to_owned(), String::new()]);
@@ -659,7 +659,7 @@ impl<'a> Generator<'a> {
                 format!("        .service = \"{PACKAGE}.{}\",", s.name),
                 format!("        .name = \"{}.{}\",", snake(&s.name), snake(&m.name)),
                 format!("        .kind = MethodKind::{},", self.options.kind[&info.0]),
-                format!("        .default_disconnect = ::reboot::DisconnectPolicy::{},", self.options.disconnect[&info.2]),
+                format!("        .default_disconnect = ::rb::DisconnectPolicy::{},", self.options.disconnect[&info.2]),
                 format!("        .progress = ProgressUnit::{},", self.options.progress[&info.1]),
                 format!("        .request_type = \"{}\",", &m.input_type[1..]),
                 format!("        .response_type = \"{}\",", &m.output_type[1..]),
@@ -708,17 +708,17 @@ impl<'a> Generator<'a> {
         out.extend([
             "};", "",
             "// Decodes the request, runs the CALL method and encodes its response.",
-            "[[nodiscard]] ::reboot::Result<Bytes> dispatch_call(const Handlers& handlers, const CallContext& context, \
+            "[[nodiscard]] ::rb::Result<Bytes> dispatch_call(const Handlers& handlers, const CallContext& context, \
              u32 method_id, std::span<const u8> request);",
             "",
             "// Decodes the request and starts the OPERATION; no `disconnect` means the method's default.",
-            "[[nodiscard]] ::reboot::Result<::reboot::OpHandle> dispatch_start(const Handlers& handlers, \
+            "[[nodiscard]] ::rb::Result<::rb::OpHandle> dispatch_start(const Handlers& handlers, \
              const CallContext& context, u32 method_id, std::span<const u8> request, \
-             std::optional<::reboot::DisconnectPolicy> disconnect);",
+             std::optional<::rb::DisconnectPolicy> disconnect);",
             "",
             "// Encodes the value an operation completed with: the method's response message, or an empty",
             "// any (Operation<void>) when that message has no fields. Anything else is the engine's bug.",
-            "[[nodiscard]] ::reboot::Result<Bytes> encode_op_result(u32 method_id, const std::any& value);",
+            "[[nodiscard]] ::rb::Result<Bytes> encode_op_result(u32 method_id, const std::any& value);",
             "",
         ].map(str::to_owned));
         out.extend([format!("}}  // namespace {NAMESPACE}"), String::new()]);
@@ -741,41 +741,41 @@ impl<'a> Generator<'a> {
         out.extend(include_block(&["any", "optional", "span", "type_traits", "utility"], &local));
         out.extend([String::new(), format!("namespace {NAMESPACE} {{"), "namespace {".to_owned(), String::new()]);
         out.extend([
-            "::reboot::Diagnostic method_error(::reboot::MessageId message, u32 method_id) {",
-            "    return ::reboot::make_diag(::reboot::ErrorDomain::Api, message)",
+            "::rb::Diagnostic method_error(::rb::MessageId message, u32 method_id) {",
+            "    return ::rb::make_diag(::rb::ErrorDomain::Api, message)",
             "        .arg(\"method\", method_id)",
-            "        .kind(::reboot::ErrorKind::InvalidInput);",
+            "        .kind(::rb::ErrorKind::InvalidInput);",
             "}", "",
             "template <class Handler, class Request, class Response>",
-            "::reboot::Result<Bytes> call(Handler& handler,",
-            "                             ::reboot::Result<Response> (Handler::*method)(const CallContext&, const Request&),",
+            "::rb::Result<Bytes> call(Handler& handler,",
+            "                             ::rb::Result<Response> (Handler::*method)(const CallContext&, const Request&),",
             "                             const CallContext& context, u32 method_id, std::span<const u8> bytes) {",
             "    auto request = decode<Request>(bytes);",
             "    if (!request) return std::unexpected(to_diagnostic(request.error(), method_id));",
-            "    ::reboot::Result<Response> response = (handler.*method)(context, *request);",
+            "    ::rb::Result<Response> response = (handler.*method)(context, *request);",
             "    if (!response) return std::unexpected(std::move(response.error()));",
             "    return encode(*response);",
             "}", "",
             "template <class Handler, class Request>",
-            "::reboot::Result<::reboot::OpHandle> start(",
+            "::rb::Result<::rb::OpHandle> start(",
             "    Handler& handler,",
-            "    ::reboot::Result<::reboot::OpHandle> (Handler::*method)(const CallContext&, const Request&,",
-            "                                                          ::reboot::DisconnectPolicy),",
-            "    const CallContext& context, u32 method_id, std::span<const u8> bytes, ::reboot::DisconnectPolicy disconnect) {",
+            "    ::rb::Result<::rb::OpHandle> (Handler::*method)(const CallContext&, const Request&,",
+            "                                                          ::rb::DisconnectPolicy),",
+            "    const CallContext& context, u32 method_id, std::span<const u8> bytes, ::rb::DisconnectPolicy disconnect) {",
             "    auto request = decode<Request>(bytes);",
             "    if (!request) return std::unexpected(to_diagnostic(request.error(), method_id));",
             "    return (handler.*method)(context, *request, disconnect);",
             "}", "",
             "template <class Response>",
-            "::reboot::Result<Bytes> encode_result(const std::any& value) {",
+            "::rb::Result<Bytes> encode_result(const std::any& value) {",
             "    if (const auto* response = std::any_cast<Response>(&value)) return encode(*response);",
             "    if constexpr (std::is_empty_v<Response>) {",
             "        if (!value.has_value()) return encode(Response{});",
             "    }",
-            "    return std::unexpected(::reboot::internal_bug(\"api.encode_op_result\"));",
+            "    return std::unexpected(::rb::internal_bug(\"api.encode_op_result\"));",
             "}", "",
             "}  // namespace", "",
-            "::reboot::Result<Bytes> dispatch_call(const Handlers& handlers, const CallContext& context, u32 method_id,",
+            "::rb::Result<Bytes> dispatch_call(const Handlers& handlers, const CallContext& context, u32 method_id,",
             "                                      std::span<const u8> request) {",
             "    switch (method_id) {",
         ].map(str::to_owned));
@@ -788,16 +788,16 @@ impl<'a> Generator<'a> {
             "        default:",
             "            break;",
             "    }",
-            "    const ::reboot::MessageId error = MethodTable::find(method_id) ? msg::kWrongMethodKind : msg::kUnknownMethod;",
+            "    const ::rb::MessageId error = MethodTable::find(method_id) ? msg::kWrongMethodKind : msg::kUnknownMethod;",
             "    return std::unexpected(method_error(error, method_id));",
             "}", "",
-            "::reboot::Result<::reboot::OpHandle> dispatch_start(const Handlers& handlers, const CallContext& context,",
+            "::rb::Result<::rb::OpHandle> dispatch_start(const Handlers& handlers, const CallContext& context,",
             "                                                    u32 method_id, std::span<const u8> request,",
-            "                                                    std::optional<::reboot::DisconnectPolicy> disconnect) {",
+            "                                                    std::optional<::rb::DisconnectPolicy> disconnect) {",
             "    const MethodSpec* spec = MethodTable::find(method_id);",
             "    if (!spec) return std::unexpected(method_error(msg::kUnknownMethod, method_id));",
             "    if (spec->kind != MethodKind::Operation) return std::unexpected(method_error(msg::kWrongMethodKind, method_id));",
-            "    const ::reboot::DisconnectPolicy policy = disconnect.value_or(spec->default_disconnect);",
+            "    const ::rb::DisconnectPolicy policy = disconnect.value_or(spec->default_disconnect);",
             "    switch (method_id) {",
         ].map(str::to_owned));
         for (_, s, m) in rows.iter().filter(|(_, _, m)| !is_call(m)) {
@@ -807,10 +807,10 @@ impl<'a> Generator<'a> {
         }
         out.extend([
             "        default:",
-            "            return std::unexpected(::reboot::internal_bug(\"api.dispatch_start\"));",
+            "            return std::unexpected(::rb::internal_bug(\"api.dispatch_start\"));",
             "    }",
             "}", "",
-            "::reboot::Result<Bytes> encode_op_result(u32 method_id, const std::any& value) {",
+            "::rb::Result<Bytes> encode_op_result(u32 method_id, const std::any& value) {",
             "    switch (method_id) {",
         ].map(str::to_owned));
         for (_, s, m) in rows.iter().filter(|(_, _, m)| !is_call(m)) {
@@ -819,7 +819,7 @@ impl<'a> Generator<'a> {
         }
         out.extend([
             "        default:",
-            "            return std::unexpected(::reboot::internal_bug(\"api.encode_op_result\"));",
+            "            return std::unexpected(::rb::internal_bug(\"api.encode_op_result\"));",
             "    }",
             "}", "",
         ].map(str::to_owned));

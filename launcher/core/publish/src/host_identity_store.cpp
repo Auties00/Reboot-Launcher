@@ -16,7 +16,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 namespace {
 
@@ -494,4 +494,4 @@ const HostIdentity& IdentityHold::identity() const {
     return store_ != nullptr ? store_->held_identity(profile_) : kNone;
 }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

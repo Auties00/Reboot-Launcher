@@ -12,7 +12,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -158,4 +158,4 @@ void WindowsResolver::resolve(std::string host, CancelToken token, UniqueFunctio
     Lookup::start(std::make_shared<Lookup>(widen(host), std::move(token), std::move(done)));
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

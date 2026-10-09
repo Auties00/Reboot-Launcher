@@ -3,7 +3,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/os_macos/platform/mac_integration_registrar.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 ports::IntegrationState scheme_state(const NativePath& our_bundle, const std::optional<std::string>& our_identifier,
                                      const std::optional<SchemeHandler>& handler) {
@@ -37,4 +37,4 @@ std::optional<std::string> own_agent_label(std::optional<std::string_view> xpc_s
     return std::string(*xpc_service_name);
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

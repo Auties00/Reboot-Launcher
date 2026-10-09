@@ -4,7 +4,7 @@
 
 #include "field_checks.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 Result<PublishRequest> fit_request(PublishRequest request) {
     auto metadata = fit_metadata(std::move(request.metadata));
@@ -19,4 +19,4 @@ Result<PublishRequest> fit_request(PublishRequest request) {
     return request;
 }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

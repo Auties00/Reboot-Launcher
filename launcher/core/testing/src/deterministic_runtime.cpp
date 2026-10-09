@@ -4,7 +4,7 @@
 #include <chrono>
 #include <cstddef>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 std::size_t DeterministicRuntime::advance(std::chrono::steady_clock::duration by,
                                           std::chrono::steady_clock::duration step) {
@@ -18,4 +18,4 @@ std::size_t DeterministicRuntime::advance(std::chrono::steady_clock::duration by
     return ran;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

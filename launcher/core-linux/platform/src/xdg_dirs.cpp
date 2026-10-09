@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/paths.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -52,4 +52,4 @@ NativePath without_deleted_suffix(NativePath exe) {
     return NativePath{std::move(text)};
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

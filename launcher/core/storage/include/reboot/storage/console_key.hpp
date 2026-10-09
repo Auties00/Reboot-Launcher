@@ -6,7 +6,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // An Unreal Engine key name ("F8", "Tilde"), the form the client DLL takes; UIs map key codes to it.
 struct ConsoleKey {
@@ -21,4 +21,4 @@ struct ConsoleKey {
 // For pickers and the CLI.
 [[nodiscard]] std::span<const std::string_view> unreal_key_names() noexcept;
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

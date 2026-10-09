@@ -13,7 +13,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // Covers no capability ids (decisions persistence-format-migration, update-mechanism).
 // data/prefixes/compat.json: engine state shared by RuntimeService and PrefixManager. A record
@@ -37,4 +37,4 @@ struct CompatDocument {
     return layout.prefixes_dir() / "compat.json";
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

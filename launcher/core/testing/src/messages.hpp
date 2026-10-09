@@ -2,14 +2,14 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // The foundation has no Testing error domain yet; ids keep the stable "testing." prefix.
 inline constexpr ErrorDomain kTestingDomain = ErrorDomain::Unknown;
 
-}  // namespace reboot::testing
+}  // namespace rb::testing
 
-namespace reboot::testing::msg {
+namespace rb::testing::msg {
 
 REBOOT_MESSAGE_DECL(kUnscriptedSpawn);
 REBOOT_MESSAGE_DECL(kNoHttpRoute);
@@ -46,4 +46,4 @@ inline constexpr MessageId kConnectTimeout{"net.connect_timeout"};
 inline constexpr MessageId kRequestTimeout{"net.request_timeout"};
 inline constexpr MessageId kTransferStalled{"net.transfer_stalled"};
 
-}  // namespace reboot::testing::msg
+}  // namespace rb::testing::msg

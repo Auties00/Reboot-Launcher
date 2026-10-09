@@ -9,26 +9,26 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot {
+namespace rb {
 class AppLayout;
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::net {
+namespace rb::net {
 class HttpClient;
 }
 
-namespace reboot::trust {
+namespace rb::trust {
 class KeyRing;
 class SerialGuard;
-}  // namespace reboot::trust
+}  // namespace rb::trust
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 struct RemoteCatalogLocation {
     std::string catalog_url;
@@ -80,4 +80,4 @@ private:
     CancelSource alive_;
 };
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

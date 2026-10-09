@@ -18,17 +18,17 @@
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/state_document.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IIntegrationRegistrar;
 }
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // Covers os-integration.url-protocol and os-integration.+36.
 // Strand-only; entries are read each time, Foreign ones never touched, and `done` runs on the strand.
@@ -86,4 +86,4 @@ private:
     bool busy_ = false;
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

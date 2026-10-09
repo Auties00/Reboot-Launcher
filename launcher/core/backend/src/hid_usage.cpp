@@ -4,7 +4,7 @@
 #include <array>
 #include <span>
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -87,4 +87,4 @@ std::optional<HidUsage> hid_from_evdev(u16 code) noexcept {
     return find(kEvdevExtended, code);
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

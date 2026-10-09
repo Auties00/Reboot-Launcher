@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::sessions::msg {
+namespace rb::sessions::msg {
 
 REBOOT_MESSAGE(kNotFound, "sessions.not_found", "There is no session with id {session}");
 REBOOT_MESSAGE(kEnded, "sessions.ended", "Session {session} has ended");
@@ -12,4 +12,4 @@ REBOOT_MESSAGE(kStopOverran, "sessions.stop_overran",
                "Session {session} did not finish stopping in time, so the engine released it");
 REBOOT_MESSAGE(kInvalidTransition, "sessions.invalid_transition", "Session {session} cannot move from {from} to {to}");
 
-}  // namespace reboot::sessions::msg
+}  // namespace rb::sessions::msg

@@ -9,10 +9,10 @@
 #include "reboot/components/payload_entry.hpp"
 #include "reboot/components/release_manifest.hpp"
 
-using namespace reboot;
-using namespace reboot::components;
-using reboot::components::test::arg_text;
-using reboot::components::test::bytes_of;
+using namespace rb;
+using namespace rb::components;
+using rb::components::test::arg_text;
+using rb::components::test::bytes_of;
 
 namespace {
 

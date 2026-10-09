@@ -9,7 +9,7 @@
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/user_request.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 namespace {
 

@@ -11,7 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // account_id = display_name + "-" + tag. A rename changes display_name only.
 struct AccountRecord {
@@ -42,4 +42,4 @@ struct AccountsDocument {
     [[nodiscard]] static Result<boost::json::object> upgrade(boost::json::object values, u32 from_schema);
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; IDiskInfo over the drive-letter APIs.
 class WindowsDiskInfo final : public ports::IDiskInfo {
@@ -17,4 +17,4 @@ public:
     Result<ports::VolumeInfo> volume_of(const NativePath& path) override;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

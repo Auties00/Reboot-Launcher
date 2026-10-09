@@ -4,11 +4,11 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class IRandom;
 }
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // Delay n is uniform in [0, min(cap, base * 2^n)], so clients cut off together by an edge restart
 // do not come back in step.
@@ -32,4 +32,4 @@ private:
 // GoAway: a uniform delay in [0, reconnect_after], so a draining edge's clients spread out.
 [[nodiscard]] std::chrono::milliseconds go_away_delay(IRandom& random, std::chrono::milliseconds reconnect_after);
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

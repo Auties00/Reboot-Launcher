@@ -9,7 +9,7 @@
 #include "unique_handle.hpp"
 #include "win32.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 // The deny-write handle plus the game-side allocation holding the UTF-16 path. The handle pins the
 // file against a user-mode swap for the session's lifetime; `remote_path` is the only remote
@@ -58,4 +58,4 @@ private:
 // True when `base_name` (a DLL file name) is in `process`'s loaded module list.
 [[nodiscard]] bool module_loaded(HANDLE process, const std::wstring& base_name);
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

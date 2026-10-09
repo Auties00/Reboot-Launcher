@@ -10,7 +10,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 enum class CatalogOrigin : u8 { Remote, Cache, Bundled };
 
@@ -37,4 +37,4 @@ public:
     virtual void load(CatalogFetch fetch, CancelToken token, UniqueFunction<void(CatalogLoadResult)> done) = 0;
 };
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

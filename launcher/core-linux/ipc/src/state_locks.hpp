@@ -4,7 +4,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // Creates every missing component of the absolute `directory` 0700; existing ones stay as they are.
 [[nodiscard]] Result<void> create_private_dirs(const NativePath& directory);
@@ -17,4 +17,4 @@ namespace reboot::os_linux::ipc {
 // flock locks escape); false when the file is missing.
 [[nodiscard]] Result<bool> is_ofd_locked(const NativePath& path);
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

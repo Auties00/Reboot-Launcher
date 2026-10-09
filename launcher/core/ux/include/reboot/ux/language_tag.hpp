@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Capabilities: localization.strings-and-language.
 // A well-formed BCP 47 tag in canonical case ("en", "pt-BR", "zh-Hant-TW").
@@ -34,4 +34,4 @@ private:
     std::string text_;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

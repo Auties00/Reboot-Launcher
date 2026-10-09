@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 enum class AppPackageKind : u8 { Velopack, Tarball };
 
@@ -32,4 +32,4 @@ struct AppEntry {
     return entry.version > installed || (entry.downgrade_ok && entry.version != installed);
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

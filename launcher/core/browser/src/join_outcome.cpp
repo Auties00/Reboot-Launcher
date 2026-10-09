@@ -3,7 +3,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 Diagnostic to_diagnostic(const JoinFailure& failure) {
     const auto diag = [](MessageId id) { return make_diag(ErrorDomain::Browser, id); };
@@ -32,4 +32,4 @@ Diagnostic to_diagnostic(const JoinFailure& failure) {
     return std::move(builder).build();
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

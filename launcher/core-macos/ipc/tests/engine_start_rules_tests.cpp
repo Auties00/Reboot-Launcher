@@ -9,24 +9,24 @@
 #include "engine_start_rules.hpp"
 #include "messages.hpp"
 
-using reboot::ArgSpec;
-using reboot::DataRoot;
-using reboot::Diagnostic;
-using reboot::MessageSpec;
-using reboot::NativePath;
-using reboot::Result;
-using reboot::os_macos::ipc::agent_register_failed;
-using reboot::os_macos::ipc::agent_register_timed_out;
-using reboot::os_macos::ipc::agent_step;
-using reboot::os_macos::ipc::AgentStatus;
-using reboot::os_macos::ipc::AgentStep;
-using reboot::os_macos::ipc::kickstart_outcome;
-using reboot::os_macos::ipc::kLaunchctlServiceDisabled;
-using reboot::os_macos::ipc::kLaunchctlServiceNotFound;
-using reboot::os_macos::ipc::LaunchctlRun;
-using reboot::os_macos::ipc::refusal_before_start;
-using reboot::ports::CallerContext;
-using reboot::ports::StartResult;
+using rb::ArgSpec;
+using rb::DataRoot;
+using rb::Diagnostic;
+using rb::MessageSpec;
+using rb::NativePath;
+using rb::Result;
+using rb::os_macos::ipc::agent_register_failed;
+using rb::os_macos::ipc::agent_register_timed_out;
+using rb::os_macos::ipc::agent_step;
+using rb::os_macos::ipc::AgentStatus;
+using rb::os_macos::ipc::AgentStep;
+using rb::os_macos::ipc::kickstart_outcome;
+using rb::os_macos::ipc::kLaunchctlServiceDisabled;
+using rb::os_macos::ipc::kLaunchctlServiceNotFound;
+using rb::os_macos::ipc::LaunchctlRun;
+using rb::os_macos::ipc::refusal_before_start;
+using rb::ports::CallerContext;
+using rb::ports::StartResult;
 
 namespace {
 
@@ -48,7 +48,7 @@ CallerContext caller(bool elevated, bool interactive) {
 }
 
 const MessageSpec* find_spec(std::string_view id) {
-    for (const MessageSpec* spec : reboot::message_registry())
+    for (const MessageSpec* spec : rb::message_registry())
         if (spec->id == id) return spec;
     return nullptr;
 }
@@ -119,7 +119,7 @@ TEST_CASE("any other exit is agent_kickstart_failed and not retryable", "[engine
         INFO(code);
         const Result<StartResult> result = outcome(LaunchctlRun::End::Exited, code);
         REQUIRE_FALSE(result);
-        CHECK(result.error().is(reboot::os_macos::ipc::kAgentKickstartFailed));
+        CHECK(result.error().is(rb::os_macos::ipc::kAgentKickstartFailed));
         CHECK_FALSE(result.error().retryable);
         CHECK(result.error().detail.has_value());
         check_placeholders(result.error());
@@ -129,16 +129,16 @@ TEST_CASE("any other exit is agent_kickstart_failed and not retryable", "[engine
 TEST_CASE("a launchctl ended by a signal is agent_kickstart_failed", "[engine_start_rules]") {
     const Result<StartResult> result = outcome(LaunchctlRun::End::Signalled, 9);
     REQUIRE_FALSE(result);
-    CHECK(result.error().is(reboot::os_macos::ipc::kAgentKickstartFailed));
+    CHECK(result.error().is(rb::os_macos::ipc::kAgentKickstartFailed));
     check_placeholders(result.error());
 }
 
 TEST_CASE("a kickstart past its deadline is retryable and names the deadline", "[engine_start_rules]") {
     const Result<StartResult> result = outcome(LaunchctlRun::End::TimedOut, 0);
     REQUIRE_FALSE(result);
-    CHECK(result.error().is(reboot::os_macos::ipc::kAgentKickstartTimedOut));
+    CHECK(result.error().is(rb::os_macos::ipc::kAgentKickstartTimedOut));
     CHECK(result.error().retryable);
-    const reboot::Arg* deadline = result.error().find_arg("deadline");
+    const rb::Arg* deadline = result.error().find_arg("deadline");
     REQUIRE(deadline != nullptr);
     REQUIRE(std::holds_alternative<std::chrono::milliseconds>(*deadline));
     CHECK(std::get<std::chrono::milliseconds>(*deadline) == kDeadline);
@@ -147,7 +147,7 @@ TEST_CASE("a kickstart past its deadline is retryable and names the deadline", "
 
 TEST_CASE("a register failure carries the NSError code when there is one", "[engine_start_rules]") {
     const Diagnostic with_code = agent_register_failed(kLabel, 1);
-    CHECK(with_code.is(reboot::os_macos::ipc::kAgentRegisterFailed));
+    CHECK(with_code.is(rb::os_macos::ipc::kAgentRegisterFailed));
     REQUIRE(with_code.os_error);
     CHECK(with_code.os_error->code == 1);
     CHECK_FALSE(with_code.retryable);
@@ -160,7 +160,7 @@ TEST_CASE("a register failure carries the NSError code when there is one", "[eng
 
 TEST_CASE("a register past its deadline is retryable", "[engine_start_rules]") {
     const Diagnostic diag = agent_register_timed_out(kLabel, kDeadline);
-    CHECK(diag.is(reboot::os_macos::ipc::kAgentRegisterTimedOut));
+    CHECK(diag.is(rb::os_macos::ipc::kAgentRegisterTimedOut));
     CHECK(diag.retryable);
     check_placeholders(diag);
 }

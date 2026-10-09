@@ -13,7 +13,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "volume_rules.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -88,4 +88,4 @@ Result<ports::VolumeInfo> MacDiskInfo::volume_of(const NativePath& path) {
     return describe(*mount);
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

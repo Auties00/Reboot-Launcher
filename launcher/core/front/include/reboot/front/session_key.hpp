@@ -10,11 +10,11 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class IRandom;
 }
 
-namespace reboot::front {
+namespace rb::front {
 
 // 128 CSPRNG bits, 32 lowercase hex digits in /s/<key>/; copyable on purpose to route, while redacted in logs.
 struct SessionKey {
@@ -33,13 +33,13 @@ struct SessionKey {
     }
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front
 
 template <>
-struct std::hash<reboot::front::SessionKey> {
-    std::size_t operator()(const reboot::front::SessionKey& key) const noexcept {
-        reboot::u64 lo = 0;
-        reboot::u64 hi = 0;
+struct std::hash<rb::front::SessionKey> {
+    std::size_t operator()(const rb::front::SessionKey& key) const noexcept {
+        rb::u64 lo = 0;
+        rb::u64 hi = 0;
         std::memcpy(&lo, key.bytes.data(), sizeof lo);
         std::memcpy(&hi, key.bytes.data() + sizeof lo, sizeof hi);
         return static_cast<std::size_t>(lo ^ (hi * 0x9E3779B97F4A7C15ull));

@@ -12,7 +12,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -147,4 +147,4 @@ void UeLogTail::start(UniqueFunction<void()> ready) {
     tail.read();
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

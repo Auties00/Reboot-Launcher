@@ -10,7 +10,7 @@
 #include "reboot/ux/message_text.hpp"
 #include "reboot/ux/suggested_action.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Persisted by name; renaming is a migration.
 enum class NoticeKind : u8 {
@@ -51,4 +51,4 @@ struct NoticeRemovedEvent {
     NoticeKey key;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

@@ -3,7 +3,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot {
+namespace rb {
 
 Result<Uuid> parse_uuid(std::string_view text) {
     const auto invalid = [&] {
@@ -21,4 +21,4 @@ Result<Uuid> parse_uuid(std::string_view text) {
     return *uuid;
 }
 
-}  // namespace reboot
+}  // namespace rb

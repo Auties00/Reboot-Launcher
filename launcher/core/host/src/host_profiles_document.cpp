@@ -16,7 +16,7 @@
 #include "reboot/host/host_error.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 namespace {
 
@@ -485,4 +485,4 @@ json::object HostProfilesDocument::write() const {
 
 Result<json::object> HostProfilesDocument::upgrade(json::object values, u32) { return values; }
 
-}  // namespace reboot::host
+}  // namespace rb::host

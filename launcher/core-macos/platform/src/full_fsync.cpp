@@ -7,7 +7,7 @@
 
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 Result<void> full_fsync(int fd) {
     for (;;) {
@@ -22,4 +22,4 @@ Result<void> full_fsync(int fd) {
     return {};
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

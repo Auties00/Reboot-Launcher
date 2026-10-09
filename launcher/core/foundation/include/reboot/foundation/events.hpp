@@ -12,7 +12,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 enum class EventKind : u16 {
     EngineState,
@@ -184,4 +184,4 @@ private:
     bool dispatching_ = false;
 };
 
-}  // namespace reboot
+}  // namespace rb

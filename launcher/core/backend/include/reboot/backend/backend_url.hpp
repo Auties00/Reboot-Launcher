@@ -9,7 +9,7 @@
 #include "reboot/net/url_scheme.hpp"
 #include "reboot/storage/backend_target.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 inline constexpr Port kDefaultBackendPort = storage::kDefaultBackendPort;
 
@@ -31,4 +31,4 @@ struct BackendUrl {
     [[nodiscard]] HostPort endpoint() const { return HostPort{host, port}; }
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

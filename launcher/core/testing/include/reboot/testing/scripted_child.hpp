@@ -14,7 +14,7 @@
 #include "reboot/testing/frame_log.hpp"
 #include "reboot/testing/stdio_peer.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // The test's side of one child spawned by ScriptedProcessLauncher, which keeps it for inspection
@@ -72,4 +72,4 @@ private:
     bool released_ = false;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

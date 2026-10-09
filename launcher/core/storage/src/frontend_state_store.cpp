@@ -15,7 +15,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace {
 
@@ -176,4 +176,4 @@ void FrontendStateStore::flush(CancelToken cancel, UniqueFunction<void(Result<vo
     impl.flushes.add(cancel, std::move(done));
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

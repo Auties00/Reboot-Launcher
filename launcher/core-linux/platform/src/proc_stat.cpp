@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <system_error>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -78,4 +78,4 @@ bool is_steam_reaper(std::string_view comm, std::string_view cmdline) noexcept {
     return false;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

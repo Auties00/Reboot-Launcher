@@ -6,7 +6,7 @@
 #include <string_view>
 #include <type_traits>
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 struct CfReleaser {
     void operator()(CFTypeRef ref) const noexcept {
@@ -24,4 +24,4 @@ using CfPtr = std::unique_ptr<std::remove_pointer_t<Ref>, CfReleaser>;
                                                         static_cast<CFIndex>(text.size()), kCFStringEncodingUTF8, false)};
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

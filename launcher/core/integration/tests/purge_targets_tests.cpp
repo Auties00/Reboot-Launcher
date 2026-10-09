@@ -7,8 +7,8 @@
 #include "reboot/integration/purge_targets.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 
-using namespace reboot;
-using namespace reboot::integration;
+using namespace rb;
+using namespace rb::integration;
 
 namespace {
 

@@ -10,7 +10,7 @@
 #include "reboot/logging/log_files_in_use.hpp"
 #include "reboot/ports/log_file_system.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 namespace {
 
@@ -135,4 +135,4 @@ WineLogStatus WineLogFiles::status() const {
     return impl_->status;
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

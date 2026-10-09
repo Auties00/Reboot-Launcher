@@ -6,7 +6,7 @@
 
 #include "reboot/os_linux/runner/slr_build.hpp"
 
-using reboot::os_linux::runner::SlrBuild;
+using rb::os_linux::runner::SlrBuild;
 
 TEST_CASE("GE-Proton's tool manifest names its runtime", "[slr_build]") {
     constexpr std::string_view kManifest =

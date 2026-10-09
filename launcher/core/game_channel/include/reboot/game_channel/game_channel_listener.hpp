@@ -15,16 +15,16 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot {
+namespace rb {
 class Executor;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IByteStream;
 }
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 class TokenRegistry;
 
@@ -68,4 +68,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

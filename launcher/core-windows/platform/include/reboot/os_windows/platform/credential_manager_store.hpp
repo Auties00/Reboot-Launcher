@@ -11,11 +11,11 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/secret_store.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; ISecretStore over Credential Manager with a DPAPI file fallback.
 class CredentialManagerStore final : public ports::ISecretStore {
@@ -38,4 +38,4 @@ private:
     bool credential_manager_available_ = false;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

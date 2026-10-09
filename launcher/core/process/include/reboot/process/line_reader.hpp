@@ -9,7 +9,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // Capabilities: game-launch.output-line-framing.
 // Turns a child's raw pipe chunks into whole lines, for every child's stdout and stderr. LF, CR
@@ -43,4 +43,4 @@ private:
     bool after_cr_ = false;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

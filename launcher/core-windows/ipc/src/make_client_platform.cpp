@@ -10,7 +10,7 @@
 #include "reboot/os_windows/ipc/windows_engine_starter.hpp"
 #include "reboot/os_windows/ipc/windows_file_revision_reader.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 Result<ClientPlatform> make_client_platform() {
     using namespace os_windows::ipc;
@@ -31,4 +31,4 @@ Result<ClientPlatform> make_client_platform() {
     return platform;
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

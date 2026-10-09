@@ -20,7 +20,7 @@
 #include "reboot/testing/fake_client_dll.hpp"
 #include "reboot/testing/fake_winhost.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 namespace {
 
 using namespace std::chrono_literals;
@@ -717,4 +717,4 @@ TEST_CASE("a client DLL reaches the listener over loopback TCP", "[game_channel]
 }
 
 }  // namespace
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

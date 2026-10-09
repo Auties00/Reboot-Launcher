@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 std::string file_uri(const NativePath& path) {
     constexpr std::string_view kHex = "0123456789ABCDEF";
@@ -29,4 +29,4 @@ bool is_https_url(std::string_view url) noexcept {
     return first != '/' && first != '?' && first != '#';
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

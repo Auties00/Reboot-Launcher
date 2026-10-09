@@ -8,7 +8,7 @@
 #include "messages.hpp"
 #include "runtime_base_check.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 UnixSocketConnector::UnixSocketConnector(NativePath runtime_base)
     : UnixSocketConnectorBase(posix::PeerCredentialCheck{[](int fd) { return read_linux_peer(fd); },
@@ -33,4 +33,4 @@ Result<std::unique_ptr<ports::IByteStream>> UnixSocketConnector::connect(std::st
     return UnixSocketConnectorBase::connect(endpoint_name, deadline);
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

@@ -22,7 +22,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "update_package.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -290,4 +290,4 @@ Result<void> LinuxUpdateApplier::apply_and_restart(std::vector<std::string> args
     return apply_tarball(TarballLayout{*paths_.tarball_root()}, *staged_version_, std::move(args), listen_socket);
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

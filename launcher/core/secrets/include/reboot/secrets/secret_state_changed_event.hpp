@@ -3,7 +3,7 @@
 #include "reboot/secrets/secret_state.hpp"
 #include "reboot/secrets/secret_target.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 // EventKind::SecretStateChanged, coalesced per target; it never carries a value.
 struct SecretStateChangedEvent {
@@ -11,4 +11,4 @@ struct SecretStateChangedEvent {
     SecretState state;
 };
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

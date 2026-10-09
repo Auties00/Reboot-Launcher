@@ -9,7 +9,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 namespace {
 
 [[nodiscard]] Diagnostic unavailable(int error) {
@@ -34,4 +34,4 @@ Result<NativePath> darwin_user_temp_dir() {
     return directory;
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

@@ -3,7 +3,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ux/guidance_state.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Reads and writes GuidanceState; the engine adapts storage's state document to it.
 class IGuidanceStateStore {
@@ -15,4 +15,4 @@ public:
     virtual Result<void> replace(GuidanceState state) = 0;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

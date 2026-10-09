@@ -46,8 +46,8 @@
 #include "unique_handle.hpp"
 #include "wide.hpp"
 
-using namespace reboot;
-using namespace reboot::os_windows::platform;
+using namespace rb;
+using namespace rb::os_windows::platform;
 using namespace std::chrono_literals;
 
 namespace {

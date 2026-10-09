@@ -7,8 +7,8 @@
 #include "reboot/backend/console_key.hpp"
 #include "reboot/backend/hid_usage.hpp"
 
-using namespace reboot;
-using namespace reboot::backend;
+using namespace rb;
+using namespace rb::backend;
 
 TEST_CASE("every allowlisted key name has a label", "[backend]") {
     for (const std::string_view name : storage::unreal_key_names())

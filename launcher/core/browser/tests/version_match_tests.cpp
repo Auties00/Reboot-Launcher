@@ -11,8 +11,8 @@
 #include "reboot/foundation/version.hpp"
 #include "registry/validation.hpp"
 
-using namespace reboot;
-using namespace reboot::browser;
+using namespace rb;
+using namespace rb::browser;
 
 namespace {
 

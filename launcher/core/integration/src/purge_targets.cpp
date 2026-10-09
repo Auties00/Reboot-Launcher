@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/paths.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 namespace {
 
@@ -42,4 +42,4 @@ std::vector<NativePath> directories_for(const PurgeTargets& targets, PurgeScope 
     return all;
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

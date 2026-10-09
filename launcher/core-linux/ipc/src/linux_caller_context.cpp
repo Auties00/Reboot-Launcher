@@ -12,7 +12,7 @@
 
 extern char** environ;
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 [[nodiscard]] std::optional<std::string> read_proc_file(const char* path) {
@@ -42,4 +42,4 @@ LinuxCallerContext LinuxCallerContext::detect() {
 
 void LinuxCallerContext::allow_foreground(u32 /*pid*/) {}
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

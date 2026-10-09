@@ -12,7 +12,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -156,4 +156,4 @@ Result<void> WindowsShell::trash(const NativePath& path) {
     return in_apartment<void>(COINIT_APARTMENTTHREADED, "WindowsShell::trash", [&]() { return recycle(path); });
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

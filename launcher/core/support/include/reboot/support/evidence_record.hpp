@@ -10,7 +10,7 @@
 #include "reboot/support/cell_inputs.hpp"
 #include "reboot/support/support_cell_key.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 enum class EvidenceResult : u8 { Pass, Fail };
 
@@ -30,4 +30,4 @@ struct EvidenceRecord {
     bool operator==(const EvidenceRecord&) const = default;
 };
 
-}  // namespace reboot::support
+}  // namespace rb::support

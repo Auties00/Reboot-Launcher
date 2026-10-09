@@ -6,7 +6,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 namespace {
 
@@ -109,4 +109,4 @@ sessions::SessionExit exit_for_game_exit(const PlaySessionState& state, std::opt
     return sessions::SessionExit{.reason = sessions::ExitReason::Exited, .exit_code = exit_code, .error = std::nullopt};
 }
 
-}  // namespace reboot::play
+}  // namespace rb::play

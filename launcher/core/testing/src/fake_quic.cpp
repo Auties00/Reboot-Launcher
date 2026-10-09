@@ -9,7 +9,7 @@
 #include "reboot/testing/fake_quic_peer.hpp"
 #include "reboot/testing/fake_quic_transport.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 // What the peer and the client's handle share; posted callbacks hold it too.
@@ -237,4 +237,4 @@ std::vector<FakeQuicPeer*> FakeQuicTransport::connections() const {
 
 FakeQuicPeer* FakeQuicTransport::last() const { return connections_.empty() ? nullptr : connections_.back().get(); }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

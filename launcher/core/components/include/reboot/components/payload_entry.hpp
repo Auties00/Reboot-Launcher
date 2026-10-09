@@ -11,7 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 struct PayloadFile {
     PayloadRole role{};
@@ -47,4 +47,4 @@ inline constexpr std::array<PayloadRole, 2> kWinePayloadRoles{PayloadRole::Clien
 // Fails with components.payload_abi_mismatch unless payload_abi equals VersionStreams::payload_abi.
 [[nodiscard]] Result<void> check_payload_abi(const PayloadEntry& entry);
 
-}  // namespace reboot::components
+}  // namespace rb::components

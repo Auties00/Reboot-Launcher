@@ -11,7 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Blocked is a check that cannot run on this runtime yet, e.g. "blocked: runtime" for macOS play.
 enum class CheckStatus : u8 { Passed, Failed, Skipped, Blocked };
@@ -74,4 +74,4 @@ private:
 // "<id>(name=value, ...)": how reports and chaos helpers show a Diagnostic.
 [[nodiscard]] std::string describe_diagnostic(const Diagnostic& diag);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

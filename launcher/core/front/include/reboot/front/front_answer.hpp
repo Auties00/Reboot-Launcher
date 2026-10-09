@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // What the front answers itself instead of relaying; each value is the HTTP status.
 enum class FrontAnswer : u16 {
@@ -17,4 +17,4 @@ enum class FrontAnswer : u16 {
     GatewayTimeout = 504,
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

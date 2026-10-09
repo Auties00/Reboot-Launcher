@@ -13,7 +13,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/operation.hpp"
 
-using namespace reboot;
+using namespace rb;
 using namespace std::chrono_literals;
 
 namespace {

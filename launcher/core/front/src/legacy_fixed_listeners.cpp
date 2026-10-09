@@ -16,7 +16,7 @@
 #include "reboot/net/port_protocol.hpp"
 #include "session_front_impl.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -208,4 +208,4 @@ std::optional<SessionId> LegacyFixedListeners::holder() const {
     return impl_->holder;
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

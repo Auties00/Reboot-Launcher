@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // Play and host move between Preparing and Running in any order; only the stop path goes further.
 enum class SessionPhase : u8 { Preparing, Launching, Loading, Running, Stopping, Ended };
@@ -27,4 +27,4 @@ enum class SessionPhase : u8 { Preparing, Launching, Loading, Running, Stopping,
     return "unknown";
 }
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

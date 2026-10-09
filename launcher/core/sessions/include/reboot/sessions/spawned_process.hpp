@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 enum class ProcessRole : u8 { Game, Companion, GameServer, Winhost };
 
@@ -29,4 +29,4 @@ struct Incarnation {
     constexpr auto operator<=>(const Incarnation&) const = default;
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

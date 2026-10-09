@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // Classified from the port's Diagnostic, so a file someone else has open is never blamed on
 // security software. Only Missing and AccessDenied ask ISecurityProductProbe.
@@ -88,4 +88,4 @@ private:
     bool held_ = true;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

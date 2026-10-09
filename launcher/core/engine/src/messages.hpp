@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::engine::msg {
+namespace rb::engine::msg {
 
 REBOOT_MESSAGE_DECL(kBadCommandLine);
 REBOOT_MESSAGE_DECL(kLockFailed);
@@ -25,4 +25,4 @@ REBOOT_MESSAGE_DECL(kCancelled);
 REBOOT_MESSAGE_DECL(kNoWineRunner);
 REBOOT_MESSAGE_DECL(kSelfTestFailed);
 
-}  // namespace reboot::engine::msg
+}  // namespace rb::engine::msg

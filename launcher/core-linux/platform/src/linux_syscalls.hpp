@@ -6,7 +6,7 @@
 
 // glibc 2.28 (the EL8 floor) wraps none of these, and its kernel headers predate their numbers,
 // which are the same on every architecture we build.
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 #ifdef SYS_pidfd_send_signal
 inline constexpr long kSysPidfdSendSignal = SYS_pidfd_send_signal;
@@ -38,4 +38,4 @@ inline constexpr long kSysCloseRange = 436;
     return static_cast<int>(::syscall(kSysPidfdSendSignal, pidfd, signal, nullptr, 0));
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

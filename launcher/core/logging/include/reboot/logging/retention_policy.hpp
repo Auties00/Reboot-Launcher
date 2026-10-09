@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/logging/log_file_names.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 // Capabilities: logging-diagnostics.log-and-errors.
 // One budget over every log kind in the directory: a file goes when any limit is exceeded.
@@ -34,4 +34,4 @@ struct LogFileInfo {
                                                      std::chrono::system_clock::time_point now,
                                                      std::span<const NativePath> in_use);
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

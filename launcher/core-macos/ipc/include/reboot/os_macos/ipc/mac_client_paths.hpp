@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // Covers no capability ids; IPlatformPaths for reboot_client, which may not link
 // core-macos/platform. Every method follows the same rule as os_macos::platform::MacPaths.
@@ -46,4 +46,4 @@ private:
     bool translocated_ = false;
 };
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

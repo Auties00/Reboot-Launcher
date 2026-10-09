@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // A file that could not be read at load; the profile gets a fresh identity on its next use.
 struct IdentityLoadIssue {
@@ -15,4 +15,4 @@ struct IdentityLoadIssue {
     std::optional<NativePath> quarantined_to;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

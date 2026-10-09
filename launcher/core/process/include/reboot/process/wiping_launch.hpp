@@ -4,7 +4,7 @@
 
 #include "reboot/ports/process.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // Covers no capability ids. A ports::ProcessLaunch that overwrites its environment values when it
 // is destroyed, so a launch copy carrying REBOOT_CTL_TOKEN never outlives the spawn. Move-only.
@@ -23,4 +23,4 @@ private:
     ports::ProcessLaunch launch_;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/sessions/session_phase.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 enum class SessionsErrorCode : u8 {
     NotFound,
@@ -32,4 +32,4 @@ struct SessionsError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const SessionsError& error);
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

@@ -11,7 +11,7 @@
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/sha256.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 std::unique_ptr<boost::asio::ssl::context> make_upstream_tls_context(const std::optional<NativePath>& ca_bundle) {
     auto context = std::make_unique<boost::asio::ssl::context>(boost::asio::ssl::context::tls_client);
@@ -69,4 +69,4 @@ bool certificate_matches(SSL* ssl, const std::array<u8, 32>& pin) {
     return matches;
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

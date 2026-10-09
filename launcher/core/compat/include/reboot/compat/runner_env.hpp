@@ -6,7 +6,7 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // Keeps Wine from writing .desktop launchers and MIME entries into the user's menus.
 inline constexpr std::string_view kWineDllOverrides = "winemenubuilder.exe=d";
@@ -17,4 +17,4 @@ inline constexpr std::string_view kWineDllOverrides = "winemenubuilder.exe=d";
 // override naming one of DXMT's DLLs is dropped, since DXMT serves them as builtin DLLs.
 [[nodiscard]] ports::EnvBlock runner_layer(RunnerKind kind, const ports::RuntimeLayout& layout);
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

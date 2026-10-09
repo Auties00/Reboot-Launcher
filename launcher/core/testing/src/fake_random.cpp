@@ -4,7 +4,7 @@
 #include <mutex>
 #include <span>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 void FakeRandom::fill(std::span<u8> out) {
     const std::scoped_lock lock(mutex_);
@@ -22,4 +22,4 @@ void FakeRandom::fill(std::span<u8> out) {
     }
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

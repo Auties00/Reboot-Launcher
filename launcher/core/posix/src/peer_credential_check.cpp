@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 Result<ports::PeerIdentity> PeerCredentialCheck::verify(int socket_fd) {
     auto peer = read_peer_(socket_fd);
@@ -20,4 +20,4 @@ Result<ports::PeerIdentity> PeerCredentialCheck::verify(int socket_fd) {
     return ports::PeerIdentity{std::to_string(peer->uid), peer->pid};
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

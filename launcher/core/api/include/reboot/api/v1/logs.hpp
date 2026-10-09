@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 // Mirrors reboot::LogLevel.
 enum class LogLevel : u32 {
@@ -106,9 +106,9 @@ class ILogsHandler {
 public:
     virtual ~ILogsHandler() = default;
 
-    virtual ::reboot::Result<LogsReadResponse> read(const CallContext& context, const LogsReadRequest& request) = 0;
+    virtual ::rb::Result<LogsReadResponse> read(const CallContext& context, const LogsReadRequest& request) = 0;
     // Completes with LogsExportResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_export(const CallContext& context, const LogsExportRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_export(const CallContext& context, const LogsExportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

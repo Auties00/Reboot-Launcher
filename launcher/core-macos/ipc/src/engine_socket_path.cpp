@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 namespace {
 
 constexpr std::string_view kSocketSuffix = ".sock";
@@ -40,4 +40,4 @@ Result<NativePath> check_engine_socket_path(const NativePath& user_temp_dir, std
         .fail();
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

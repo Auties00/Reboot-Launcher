@@ -12,7 +12,7 @@
 #include "reboot/posix/posix_file_system.hpp"
 #include "steam_reaper.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 Result<ClientPlatform> make_client_platform() {
     using os_linux::ipc::LinuxCallerContext;
@@ -33,4 +33,4 @@ Result<ClientPlatform> make_client_platform() {
     return platform;
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

@@ -4,7 +4,7 @@
 #include <format>
 #include <system_error>
 
-namespace reboot::logging {
+namespace rb::logging {
 
 namespace {
 
@@ -131,4 +131,4 @@ std::optional<ParsedLogFileName> classify_log_file(std::string_view file_name) n
     return std::nullopt;
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

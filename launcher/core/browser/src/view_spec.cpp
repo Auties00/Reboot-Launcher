@@ -6,7 +6,7 @@
 #include "reboot/browser/version_match.hpp"
 #include "wire/messages.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -26,4 +26,4 @@ Result<void> ViewSpec::validate() const {
     return {};
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

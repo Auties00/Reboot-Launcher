@@ -25,7 +25,7 @@
 #include "wire/frame.hpp"
 #include "wire/messages.hpp"
 
-namespace reboot::browser::test {
+namespace rb::browser::test {
 
 namespace wire = sb::wire;
 
@@ -197,4 +197,4 @@ struct Capture {
     std::optional<T> result;
 };
 
-}  // namespace reboot::browser::test
+}  // namespace rb::browser::test

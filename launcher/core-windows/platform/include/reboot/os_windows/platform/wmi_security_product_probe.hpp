@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; ISecurityProductProbe for remediation that names the AV product.
 class WmiSecurityProductProbe final : public ports::ISecurityProductProbe {
@@ -15,4 +15,4 @@ public:
     Result<std::optional<ports::SecurityProducts>> probe() override;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

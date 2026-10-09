@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -46,4 +46,4 @@ Diagnostic internal_bug(std::string_view where) {
     return make_diag(ErrorDomain::Internal, msg::kInternalBug).arg("where", where).build();
 }
 
-}  // namespace reboot
+}  // namespace rb

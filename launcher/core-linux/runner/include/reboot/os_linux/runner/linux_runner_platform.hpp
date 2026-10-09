@@ -12,7 +12,7 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 // Covers no capability ids (decisions linux-compat-layer, owner-2, process-model).
 // Umu plays and Wine runs the CI smoke tests; hosting runs the native game server and never
@@ -54,4 +54,4 @@ private:
     SlrSetup slr_setup_;
 };
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

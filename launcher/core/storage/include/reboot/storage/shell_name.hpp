@@ -6,7 +6,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // A frontend: "winui", "swiftui", "cli". Names config/frontend/<name>.json and per-shell state.
 struct ShellName {
@@ -18,4 +18,4 @@ struct ShellName {
     [[nodiscard]] static Result<ShellName> parse(std::string_view text);
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

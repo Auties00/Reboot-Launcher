@@ -10,7 +10,7 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/in_memory_ipc.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decisions testing-strategy, async-event-model).
 // The ClientPlatform make_client_platform() would return, built from fakes; its connector reaches
@@ -41,4 +41,4 @@ private:
     InMemoryFileSystem* files_ = nullptr;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -5,7 +5,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 // Mirrors contracts::winhost::BootStrategy; injection maps one to the other.
 enum class BootStrategy : u8 { EarlyBirdApc, AfterResume };
@@ -67,4 +67,4 @@ struct BuildFlagRange {
     bool operator==(const BuildFlagRange&) const = default;
 };
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

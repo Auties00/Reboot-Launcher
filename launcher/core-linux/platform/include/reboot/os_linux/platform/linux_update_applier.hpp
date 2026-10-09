@@ -9,7 +9,7 @@
 #include "reboot/ports/os_services.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 class XdgPaths;
 
@@ -49,4 +49,4 @@ private:
     std::optional<std::string> staged_version_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

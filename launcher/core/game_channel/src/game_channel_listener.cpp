@@ -20,7 +20,7 @@
 #include "reboot/ports/ipc.hpp"
 #include "tcp_byte_stream.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -160,4 +160,4 @@ Result<std::unique_ptr<WinhostPeer>> GameChannelListener::open_winhost(SessionId
 
 void GameChannelListener::adopt(std::unique_ptr<ports::IByteStream> stream) { impl_->core->adopt(std::move(stream)); }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

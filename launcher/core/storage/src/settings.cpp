@@ -11,7 +11,7 @@
 #include "reboot/storage/settings_keys.hpp"
 #include "reboot/storage/settings_registry.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace {
 
@@ -134,4 +134,4 @@ Result<u64> Settings::commit(const SettingsValues& next) {
     return revision;
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

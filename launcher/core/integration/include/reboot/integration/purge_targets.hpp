@@ -5,11 +5,11 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/integration/purge_scope.hpp"
 
-namespace reboot {
+namespace rb {
 class AppLayout;
 }
 
-namespace reboot::integration {
+namespace rb::integration {
 
 struct PurgeTargets {
     std::vector<NativePath> backend_data;
@@ -25,4 +25,4 @@ struct PurgeTargets {
 
 [[nodiscard]] std::vector<NativePath> directories_for(const PurgeTargets& targets, PurgeScope scope);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

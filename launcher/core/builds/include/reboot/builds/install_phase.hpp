@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // Capabilities: game-builds.download-lifecycle.
 // Only the op's outcome means done, never a percentage. Verifying and Extracting report progress
@@ -25,4 +25,4 @@ enum class InstallPhase : u8 { Preparing, Downloading, Verifying, Extracting, De
     return "preparing";
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

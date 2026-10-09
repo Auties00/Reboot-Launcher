@@ -15,8 +15,8 @@
 #include "reboot/process/orphan_reaper.hpp"
 #include "reboot/testing/scripted_process_launcher.hpp"
 
-using namespace reboot;
-using namespace reboot::process;
+using namespace rb;
+using namespace rb::process;
 using namespace std::chrono_literals;
 
 namespace {

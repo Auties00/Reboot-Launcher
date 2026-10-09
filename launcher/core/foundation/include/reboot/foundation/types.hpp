@@ -10,7 +10,7 @@
 #include "core/types.hpp"
 #include "reboot/foundation/result_fwd.hpp"
 
-namespace reboot {
+namespace rb {
 
 using sb::i32;
 using sb::i64;
@@ -61,14 +61,14 @@ using EngineEpoch = Counter<struct EngineEpochTag, u64>;
 
 using CatalogEntryId = std::string;
 
-}  // namespace reboot
+}  // namespace rb
 
 template <class Tag>
-struct std::hash<reboot::Id<Tag>> {
-    std::size_t operator()(const reboot::Id<Tag>& id) const noexcept { return reboot::hash_uuid(id.value); }
+struct std::hash<rb::Id<Tag>> {
+    std::size_t operator()(const rb::Id<Tag>& id) const noexcept { return rb::hash_uuid(id.value); }
 };
 
 template <class Tag, class Rep>
-struct std::hash<reboot::Counter<Tag, Rep>> {
-    std::size_t operator()(const reboot::Counter<Tag, Rep>& c) const noexcept { return std::hash<Rep>{}(c.value); }
+struct std::hash<rb::Counter<Tag, Rep>> {
+    std::size_t operator()(const rb::Counter<Tag, Rep>& c) const noexcept { return std::hash<Rep>{}(c.value); }
 };

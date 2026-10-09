@@ -7,7 +7,7 @@
 
 #include "language_lookup.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -51,4 +51,4 @@ LanguageInfo describe_language(const LanguageTag& tag) {
     return LanguageInfo{.tag = tag, .rtl = is_rtl(tag), .shipped = shipped};
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // The start time of `pid` from field 22 of /proc/<pid>/stat, against the boot time; nullopt
 // when no such process exists.
@@ -56,4 +56,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

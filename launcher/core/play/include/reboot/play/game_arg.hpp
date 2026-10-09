@@ -5,7 +5,7 @@
 #include <string>
 #include <string_view>
 
-namespace reboot::play {
+namespace rb::play {
 
 // Covers game-launch.arguments.
 // One game argument, written "key" or "key=value". Keys compare ASCII case-insensitively, as
@@ -60,4 +60,4 @@ inline constexpr std::string_view kAuthLoginKey = "-AUTH_LOGIN";
 inline constexpr std::string_view kAuthPasswordKey = "-AUTH_PASSWORD";
 inline constexpr std::string_view kAuthTypeKey = "-AUTH_TYPE";
 
-}  // namespace reboot::play
+}  // namespace rb::play

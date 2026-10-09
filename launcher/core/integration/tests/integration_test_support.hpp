@@ -21,7 +21,7 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::integration::test {
+namespace rb::integration::test {
 
 // The strand beside a real WorkerPool: post() is thread-safe and the test thread runs what workers
 // posted. Timed tasks wait for advance(), so op deadlines follow the ManualClock.
@@ -148,4 +148,4 @@ template <class T>
     return diag;
 }
 
-}  // namespace reboot::integration::test
+}  // namespace rb::integration::test

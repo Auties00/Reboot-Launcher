@@ -5,11 +5,11 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IRunnerPlatform;
 }
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 // For PlatformServices::runner. `processes` is PlatformServices::processes, which outlives it;
 // `setup_base` is EnvBuilder's daemon-base layer.
@@ -17,4 +17,4 @@ namespace reboot::os_linux::runner {
                                                                            ports::IProcessLauncher& processes,
                                                                            ports::EnvBlock setup_base);
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

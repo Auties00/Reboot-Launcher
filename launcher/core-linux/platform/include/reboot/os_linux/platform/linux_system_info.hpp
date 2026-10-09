@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; ISystemInfo for the engine process, read once at construction.
 class LinuxSystemInfo final : public ports::ISystemInfo {
@@ -43,4 +43,4 @@ private:
     bool in_container_ = false;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

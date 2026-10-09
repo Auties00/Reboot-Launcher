@@ -8,7 +8,7 @@
 #include "reboot/integration/entry_flavor.hpp"
 #include "reboot/integration/integration_kind.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 inline constexpr std::string_view kActivateUrlFlag = "--activate-url";
 inline constexpr std::string_view kRunVerb = "run";
@@ -23,4 +23,4 @@ inline constexpr std::string_view kServiceManagerOrigin = "--origin=service-mana
 // Program first. Double quotes group and \" is a literal quote; nullopt for an unbalanced quote or no token.
 [[nodiscard]] std::optional<std::vector<std::string>> split_entry_command(std::string_view text);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

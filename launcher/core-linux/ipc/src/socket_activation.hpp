@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // The first fd systemd passes; sd_listen_fds(3) numbers them from here.
 inline constexpr int kListenFdsStart = 3;
@@ -26,4 +26,4 @@ struct SocketActivation {
 
 [[nodiscard]] SocketActivation read_socket_activation(const ListenEnvironment& environment, u32 pid) noexcept;
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

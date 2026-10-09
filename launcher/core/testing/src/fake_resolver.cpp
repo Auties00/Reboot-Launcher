@@ -12,7 +12,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 constexpr u32 kLoopbackV4 = 0x7F000001;
@@ -158,4 +158,4 @@ void FakeResolver::resolve(std::string host, CancelToken token, UniqueFunction<v
     });
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

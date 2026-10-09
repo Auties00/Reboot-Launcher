@@ -11,9 +11,9 @@
 #include "reboot/builds/layout_resolver.hpp"
 #include "reboot/foundation/cancel.hpp"
 
-using namespace reboot;
-using namespace reboot::builds;
-using namespace reboot::builds::test;
+using namespace rb;
+using namespace rb::builds;
+using namespace rb::builds::test;
 
 namespace {
 

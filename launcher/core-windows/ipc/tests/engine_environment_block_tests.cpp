@@ -6,9 +6,9 @@
 #include "engine_environment_block.hpp"
 
 using namespace std::string_literals;
-using reboot::DataRoot;
-using reboot::NativePath;
-using reboot::os_windows::ipc::engine_environment_block;
+using rb::DataRoot;
+using rb::NativePath;
+using rb::os_windows::ipc::engine_environment_block;
 
 TEST_CASE("every REBOOT_ variable is dropped whatever its case", "[engine_environment_block]") {
     const std::vector<std::wstring> inherited{L"PATH=C:\\bin", L"reboot_launcher_home=C:\\old", L"REBOOT_DEBUG=1",

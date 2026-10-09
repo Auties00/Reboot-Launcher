@@ -4,7 +4,7 @@
 
 #include "reboot/components/component_store.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 ComponentPin::ComponentPin(ComponentStore& store, u64 id, ComponentRef ref, SessionId session)
     : store_(&store), id_(id), ref_(std::move(ref)), session_(session) {}
@@ -33,4 +33,4 @@ void ComponentPin::release() noexcept {
     std::exchange(store_, nullptr)->unpin(id_);
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

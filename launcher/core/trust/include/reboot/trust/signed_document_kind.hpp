@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 enum class SignedDocumentKind : u8 { BuildCatalog, ReleaseManifest };
 
@@ -14,4 +14,4 @@ enum class SignedDocumentKind : u8 { BuildCatalog, ReleaseManifest };
 // both kinds can never have a catalog accepted as a manifest.
 [[nodiscard]] std::string_view signature_context(SignedDocumentKind kind) noexcept;
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

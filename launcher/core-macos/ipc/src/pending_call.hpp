@@ -9,7 +9,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/function.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // One blocking call on a thread of its own, for an API with no cancellable form; callers wait
 // for it as long as they choose and may come back for the same result.
@@ -35,4 +35,4 @@ private:
     std::thread thread_;
 };
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

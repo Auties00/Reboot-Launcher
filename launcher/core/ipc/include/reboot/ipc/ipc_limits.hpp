@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 
 // The per-connection caps (subscriptions, calls, outbound budget) live in contracts/ipc.hpp.
-namespace reboot::ipc {
+namespace rb::ipc {
 
 inline constexpr std::chrono::seconds kHelloDeadline{10};
 
@@ -28,4 +28,4 @@ inline constexpr std::chrono::milliseconds kConnectPollInterval{200};
 // clients back from starting an engine.
 inline constexpr std::chrono::seconds kUpdateMarkerTimeout{120};
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

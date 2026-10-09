@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // Requested is never reported as a crash, whatever the exit code.
 enum class ChildExitCause : u8 { Requested, Exited, Unresponsive, HandshakeFailed, ProtocolError, SpawnFailed };
@@ -30,4 +30,4 @@ struct ChildExitInfo {
     std::chrono::milliseconds restart_delay{};
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

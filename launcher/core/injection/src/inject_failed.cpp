@@ -2,7 +2,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 Diagnostic to_diagnostic(const InjectFailed& error) {
     Diagnostic diag = make_diag(ErrorDomain::Injection, msg::kInjectFailed)
@@ -13,4 +13,4 @@ Diagnostic to_diagnostic(const InjectFailed& error) {
     return diag;
 }
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 inline constexpr u32 kCatalogSchema = VersionStreams::catalog_schema;
 
@@ -36,4 +36,4 @@ struct Catalog {
     bool operator==(const Catalog&) const = default;
 };
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

@@ -19,7 +19,7 @@
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -405,4 +405,4 @@ void RuntimeCore::mark_good(const PreparedRuntime& runtime) {
     impl_->update_record(runtime.profile.runtime, [](RuntimeRecord& record) { record.completed_session = true; });
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

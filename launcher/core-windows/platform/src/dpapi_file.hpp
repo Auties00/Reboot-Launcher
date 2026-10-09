@@ -10,7 +10,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // The fallback file for a credential target: the sha256 of its name, so any key is a valid file name.
 [[nodiscard]] NativePath dpapi_file_name(std::string_view target);
@@ -20,4 +20,4 @@ namespace reboot::os_windows::platform {
 [[nodiscard]] Result<std::vector<u8>> dpapi_seal(std::span<const u8> plain, std::string_view target);
 [[nodiscard]] Result<SecretBytes> dpapi_open(std::span<const u8> sealed, std::string_view target);
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

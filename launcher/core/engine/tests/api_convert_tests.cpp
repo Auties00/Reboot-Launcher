@@ -15,8 +15,8 @@
 #include "reboot/secrets/needs_secret.hpp"
 #include "reboot/secrets/secret_error.hpp"
 
-using namespace reboot;
-using namespace reboot::engine;
+using namespace rb;
+using namespace rb::engine;
 using namespace std::chrono_literals;
 
 namespace {

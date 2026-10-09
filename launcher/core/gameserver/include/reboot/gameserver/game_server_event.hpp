@@ -12,7 +12,7 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/process/child_exit_info.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 using MatchState = contracts::game_server::MatchState;
 using ListenStage = contracts::game_server::ListenStage;
@@ -88,4 +88,4 @@ struct ServerExited {
 using GameServerEvent = std::variant<Listening, ListenFailed, MatchStateChanged, PlayerJoined, PlayerLeft,
                                      PlayerCountChanged, MatchEnded, ServerFatal, ServerUnresponsive, ServerExited>;
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

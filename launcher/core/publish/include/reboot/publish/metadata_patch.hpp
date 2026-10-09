@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/publish/listing.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // A live edit; only the fields set are sent.
 struct MetadataPatch {
@@ -24,4 +24,4 @@ struct MetadataPatch {
 // publish.max_players_too_high, or publish.password_too_long above kMaxPasswordBytes.
 [[nodiscard]] Result<MetadataPatch> fit_patch(MetadataPatch patch);
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

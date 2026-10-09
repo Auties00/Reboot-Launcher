@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -66,4 +66,4 @@ void BackendTarget::apply_to(storage::BackendTarget& stored) const {
     }
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

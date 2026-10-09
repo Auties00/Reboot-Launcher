@@ -13,9 +13,9 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/testing/fake_port_inspector.hpp"
 
-using namespace reboot;
-using namespace reboot::net;
-using reboot::testing::PortInspectorOperation;
+using namespace rb;
+using namespace rb::net;
+using rb::testing::PortInspectorOperation;
 
 namespace {
 

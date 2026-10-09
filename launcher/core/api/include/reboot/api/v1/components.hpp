@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class ComponentKind : u32 {
     // Our client DLL set.
@@ -127,13 +127,13 @@ class IComponentsHandler {
 public:
     virtual ~IComponentsHandler() = default;
 
-    virtual ::reboot::Result<ComponentsListResponse> list(const CallContext& context, const ComponentsListRequest& request) = 0;
+    virtual ::rb::Result<ComponentsListResponse> list(const CallContext& context, const ComponentsListRequest& request) = 0;
     // Completes with ComponentsEnsureResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_ensure(const CallContext& context, const ComponentsEnsureRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_ensure(const CallContext& context, const ComponentsEnsureRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with ComponentsRemoveResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_remove(const CallContext& context, const ComponentsRemoveRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_remove(const CallContext& context, const ComponentsRemoveRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with ComponentsRuntimeSetupResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_runtime_setup(const CallContext& context, const ComponentsRuntimeSetupRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_runtime_setup(const CallContext& context, const ComponentsRuntimeSetupRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

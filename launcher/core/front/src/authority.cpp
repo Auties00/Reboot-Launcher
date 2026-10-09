@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -97,4 +97,4 @@ bool is_loopback_host(std::string_view normalized_host) {
     return address && reaches_this_machine(*address);
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

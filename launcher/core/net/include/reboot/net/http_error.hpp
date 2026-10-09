@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 enum class HttpErrorCode : u8 {
     InvalidUrl,
@@ -38,4 +38,4 @@ struct HttpError {
 // Dns, Connect, ConnectTimeout, TotalTimeout, Stalled and Transport come out retryable.
 [[nodiscard]] Diagnostic to_diagnostic(const HttpError& error);
 
-}  // namespace reboot::net
+}  // namespace rb::net

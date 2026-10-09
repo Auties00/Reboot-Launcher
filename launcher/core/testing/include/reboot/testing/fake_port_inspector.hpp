@@ -10,7 +10,7 @@
 #include "reboot/ports/net.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class PortInspectorOperation : u8 { TcpOwner, UdpOwner };
 
@@ -36,4 +36,4 @@ private:
     FaultPlan<PortInspectorOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

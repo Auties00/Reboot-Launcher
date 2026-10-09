@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; IFileSystem over Win32 file APIs, with \\?\ paths so MAX_PATH never applies.
 class WindowsFileSystem final : public ports::IFileSystem {
@@ -29,4 +29,4 @@ public:
     Result<void> remove_tree(const NativePath& path) override;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

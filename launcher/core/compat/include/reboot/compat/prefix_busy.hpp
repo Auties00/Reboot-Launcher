@@ -4,7 +4,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // A change to the runner's prefix was due while another session uses it.
 struct PrefixBusy {
@@ -17,4 +17,4 @@ struct PrefixBusy {
 // compat.prefix_busy.
 [[nodiscard]] Diagnostic to_diagnostic(const PrefixBusy& error);
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

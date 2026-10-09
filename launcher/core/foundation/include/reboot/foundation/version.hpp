@@ -13,7 +13,7 @@
 #define REBOOT_BUILD_ID "dev"
 #endif
 
-namespace reboot {
+namespace rb {
 
 struct SemVer {
     u32 major = 0;
@@ -69,4 +69,4 @@ struct VersionStreams {
     static constexpr u32 catalog_schema = 1;
 };
 
-}  // namespace reboot
+}  // namespace rb

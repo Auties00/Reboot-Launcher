@@ -10,8 +10,8 @@
 #include "reboot/compat/pe_imports.hpp"
 #include "test_data.hpp"
 
-using namespace reboot;
-using namespace reboot::compat;
+using namespace rb;
+using namespace rb::compat;
 
 TEST_CASE("regular and delay-loaded imports are read in order", "[compat][pe]") {
     const auto image = test::read_bytes("pe64_dynamic_crt.dll");

@@ -11,7 +11,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -117,4 +117,4 @@ Result<void> CredentialManagerStore::erase(std::string_view key) {
     return fs_.remove_tree(fallback_dir_ / dpapi_file_name(target));
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

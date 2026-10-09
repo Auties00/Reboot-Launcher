@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 // A tag for field 1 with a length but no length bytes: no message decodes it.
@@ -130,4 +130,4 @@ u64 first_req_id(std::span<const u8> payload) {
     return 0;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -5,7 +5,7 @@
 
 #include "reboot/contracts/winhost.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 using contracts::winhost::Bytes;
 
@@ -25,4 +25,4 @@ void terminate_env_block(Bytes& block);
 void wipe(std::wstring& text) noexcept;
 void wipe(Bytes& bytes) noexcept;
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

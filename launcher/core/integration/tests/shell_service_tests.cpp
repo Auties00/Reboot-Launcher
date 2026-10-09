@@ -14,8 +14,8 @@
 #include "reboot/testing/fake_shell.hpp"
 #include "reboot/testing/fake_system_info.hpp"
 
-using namespace reboot;
-using namespace reboot::integration;
+using namespace rb;
+using namespace rb::integration;
 using contracts::ipc::CallerContext;
 
 namespace {

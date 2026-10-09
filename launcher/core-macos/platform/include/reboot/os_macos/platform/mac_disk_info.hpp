@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; IDiskInfo over statfs plus NSURL volume resource keys.
 class MacDiskInfo final : public ports::IDiskInfo {
@@ -17,4 +17,4 @@ public:
     Result<ports::VolumeInfo> volume_of(const NativePath& path) override;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

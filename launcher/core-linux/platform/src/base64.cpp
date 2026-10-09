@@ -2,7 +2,7 @@
 
 #include <array>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -53,4 +53,4 @@ std::optional<std::vector<u8>> base64_decode(std::string_view text) {
     return out;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

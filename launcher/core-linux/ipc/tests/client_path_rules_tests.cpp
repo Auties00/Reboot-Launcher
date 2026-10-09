@@ -4,12 +4,12 @@
 
 #include "client_path_rules.hpp"
 
-using reboot::NativePath;
-using reboot::os_linux::ipc::classify_install;
-using reboot::os_linux::ipc::InstallFacts;
-using reboot::os_linux::ipc::tarball_root_of;
-using reboot::os_linux::ipc::xdg_home;
-using reboot::ports::InstallKind;
+using rb::NativePath;
+using rb::os_linux::ipc::classify_install;
+using rb::os_linux::ipc::InstallFacts;
+using rb::os_linux::ipc::tarball_root_of;
+using rb::os_linux::ipc::xdg_home;
+using rb::ports::InstallKind;
 
 TEST_CASE("an XDG home counts only when absolute", "[client_paths]") {
     const NativePath fallback{"/home/ada/.local/share"};

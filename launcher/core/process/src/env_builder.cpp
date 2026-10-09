@@ -9,7 +9,7 @@
 #include "reboot/storage/settings_keys.hpp"
 #include "wipe.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 namespace {
 
@@ -242,4 +242,4 @@ Result<BuiltEnv> EnvBuilder::build() && {
     return env;
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

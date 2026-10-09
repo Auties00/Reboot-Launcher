@@ -12,7 +12,7 @@
 
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -172,4 +172,4 @@ DiagLookup diag_find_tcp(Endpoint local, Endpoint remote) {
     return {.answered = true, .socket = found.front()};
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

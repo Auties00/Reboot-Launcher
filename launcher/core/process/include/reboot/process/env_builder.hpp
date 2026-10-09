@@ -14,7 +14,7 @@
 #include "reboot/process/env_layer.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 inline constexpr std::string_view kOpensslIa32capName = "OPENSSL_ia32cap";
 inline constexpr std::string_view kOpensslIa32capValue = "~0x20000000";
@@ -89,4 +89,4 @@ private:
     std::optional<NativePath> proton_log_dir_;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

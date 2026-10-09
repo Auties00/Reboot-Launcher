@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // Unchecked until this engine run resolved the layout once; Missing means it no longer resolves.
 enum class BuildPresence : u8 { Unchecked, Present, Missing };
@@ -36,4 +36,4 @@ struct InstalledBuild {
     bool operator==(const InstalledBuild&) const = default;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

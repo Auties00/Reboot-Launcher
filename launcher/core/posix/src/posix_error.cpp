@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 namespace {
 
@@ -26,4 +26,4 @@ Diagnostic call_failed(std::string_view call, int error, const NativePath& path)
         .kind(kind_of(error));
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

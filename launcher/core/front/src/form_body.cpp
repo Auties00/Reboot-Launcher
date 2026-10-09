@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/secret.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -89,4 +89,4 @@ void append_form_field(std::vector<u8>& out, std::string_view name, std::string_
     encode(out, value);
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

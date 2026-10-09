@@ -4,7 +4,7 @@
 #include "reboot/support/support_query.hpp"
 #include "reboot/support/support_verdict.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // The payload of UserRequestKind::ConfirmUntested raised by HostService::start; the answer is a
 // bool, true to host anyway.
@@ -14,4 +14,4 @@ struct UntestedHostPrompt {
     support::SupportVerdict verdict;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

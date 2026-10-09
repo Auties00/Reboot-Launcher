@@ -5,7 +5,7 @@
 #include "field_checks.hpp"
 #include "reboot/publish/field_limits.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 Result<HostMetadata> fit_metadata(HostMetadata metadata) {
     auto name = fit_server_name(metadata.name);
@@ -19,4 +19,4 @@ Result<HostMetadata> fit_metadata(HostMetadata metadata) {
 
 std::string author_for(const storage::AccountRecord& host) { return host.display_name; }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

@@ -14,7 +14,7 @@
 #include "reboot/front/upstream_origin.hpp"
 #include "reboot/front/upstream_policy.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 class FrontConnection;
 
@@ -97,4 +97,4 @@ private:
     UniqueFunction<void()> drained_;
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

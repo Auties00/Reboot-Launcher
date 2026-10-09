@@ -4,7 +4,7 @@
 
 #include <utility>
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 namespace {
 
@@ -36,4 +36,4 @@ FilePark::~FilePark() {
         MoveFileExW(parked.c_str(), original.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

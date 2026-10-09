@@ -10,7 +10,7 @@
 #include "reboot/net/url_scheme.hpp"
 #include "reboot/storage/state_document.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 // Capabilities: matchmaking-networking.+72, matchmaking-networking.+84.
 // Strand-only. A host once seen on https is never reached over http again, acknowledged or not.
@@ -38,4 +38,4 @@ private:
     UniqueFunction<void(std::vector<storage::UpstreamTlsMemory>)> persist_;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

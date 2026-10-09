@@ -6,7 +6,7 @@
 #include "reboot/contracts/winhost.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 // The {role} argument of this package's messages.
 [[nodiscard]] constexpr std::string_view role_name(contracts::game_client::PeerRole role) noexcept {
@@ -19,4 +19,4 @@ namespace reboot::game_channel {
                                                               : u32{contracts::game_client::kPayloadAbi};
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

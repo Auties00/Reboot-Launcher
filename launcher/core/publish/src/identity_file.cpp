@@ -12,7 +12,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 namespace json = boost::json;
 
@@ -116,4 +116,4 @@ SecretString token_text(const HostToken& token) {
     return SecretString(std::move(text));
 }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

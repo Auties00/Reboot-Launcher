@@ -15,7 +15,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace json = boost::json;
 
@@ -25,7 +25,8 @@ constexpr std::string_view kNativeMember = "native";
 
 [[nodiscard]] std::string_view view(const json::string& text) noexcept { return {text.data(), text.size()}; }
 
-[[nodiscard]] bool well_formed_utf16(std::wstring_view text) noexcept {
+// Only the wchar_t branch below uses it, so POSIX builds never call it.
+[[nodiscard, maybe_unused]] bool well_formed_utf16(std::wstring_view text) noexcept {
     for (std::size_t i = 0; i < text.size(); ++i) {
         const auto unit = static_cast<u32>(text[i]);
         if (unit >= 0xDC00 && unit <= 0xDFFF) return false;
@@ -192,4 +193,4 @@ Result<u64> u64_from_json(const json::value& value) {
     return std::unexpected(wrong_type("number"));
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

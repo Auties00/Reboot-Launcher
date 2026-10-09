@@ -7,7 +7,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // TCP_LISTEN and TCP_TIME_WAIT as the kernel numbers TCP states.
 inline constexpr u8 kTcpListen = 10;
@@ -43,4 +43,4 @@ struct SocketRecord {
 [[nodiscard]] std::optional<SocketRecord> find_connection(const std::vector<SocketRecord>& sockets, Endpoint local,
                                                           Endpoint remote);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

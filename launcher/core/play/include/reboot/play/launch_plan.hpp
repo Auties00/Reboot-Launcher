@@ -11,7 +11,7 @@
 #include "reboot/ports/session_host.hpp"
 #include "reboot/process/built_env.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // The REBOOT_ROLE value of a play session.
 inline constexpr std::string_view kClientRole = "client";
@@ -46,4 +46,4 @@ struct LaunchPlan {
 // The build files a play session moves aside on every runner: each Aftermath DLL, absolute.
 [[nodiscard]] std::vector<NativePath> parked_for(const builds::BuildLayout& layout);
 
-}  // namespace reboot::play
+}  // namespace rb::play

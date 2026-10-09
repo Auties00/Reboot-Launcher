@@ -20,10 +20,10 @@
 #include "reboot/os_linux/platform/pidfd_process_launcher.hpp"
 #include "text_files.hpp"
 
-using namespace reboot;
-using namespace reboot::os_linux::platform;
-using reboot::os_linux::platform::test::require_passed;
-using reboot::os_linux::platform::test::Scratch;
+using namespace rb;
+using namespace rb::os_linux::platform;
+using rb::os_linux::platform::test::require_passed;
+using rb::os_linux::platform::test::Scratch;
 using namespace std::chrono_literals;
 
 namespace {

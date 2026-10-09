@@ -4,7 +4,7 @@
 #include <expected>
 #include <utility>
 
-namespace reboot::support {
+namespace rb::support {
 
 Result<void> check_not_blocked(const SupportQuery& query, const SupportVerdict& verdict) {
     if (verdict.tier != SupportTier::Blocked) return {};
@@ -16,4 +16,4 @@ Result<void> check_not_blocked(const SupportQuery& query, const SupportVerdict& 
     return std::unexpected(std::move(first));
 }
 
-}  // namespace reboot::support
+}  // namespace rb::support

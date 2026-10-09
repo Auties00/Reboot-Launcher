@@ -20,7 +20,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -417,4 +417,4 @@ Result<void> JobProcessLauncher::kill(u32 pid, std::chrono::system_clock::time_p
     return {};
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

@@ -19,23 +19,23 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 class IFileWatcher;
 class ISecurityProductProbe;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::net {
+namespace rb::net {
 class ResumableDownloader;
 }
 
-namespace reboot::components {
+namespace rb::components {
 
 class ManifestService;
 
@@ -118,4 +118,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

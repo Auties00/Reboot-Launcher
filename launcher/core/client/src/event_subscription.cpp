@@ -4,7 +4,7 @@
 
 #include "api_event_kind.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 namespace {
 
@@ -157,4 +157,4 @@ TakenEvent EventSubscription::take_locked() {
     return taken;
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

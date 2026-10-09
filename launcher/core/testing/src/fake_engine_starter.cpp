@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 Result<ports::StartResult> FakeEngineStarter::ensure_started(const NativePath& engine_exe, const DataRoot& root) {
     Result<ports::StartResult> answer = ports::StartResult::Started;
@@ -35,4 +35,4 @@ std::size_t FakeEngineStarter::calls() const {
     return calls_;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

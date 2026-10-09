@@ -6,7 +6,7 @@
 #include "reboot/ux/guidance_state.hpp"
 #include "reboot/ux/guidance_state_store.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Capabilities: none. Strand-only; ux's guidance over state/state.json. StateDocument has no member
 // for notice args, so they stay under "guidance" in its unknown members until storage adds one.
@@ -24,4 +24,4 @@ private:
     ux::GuidanceState current_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

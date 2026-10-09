@@ -9,7 +9,7 @@
 #include "reboot/sessions/shutdown_cause.hpp"
 #include "reboot/sessions/shutdown_step.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // Skipped: no action registered, or the total budget ran out before the step began.
 enum class StepOutcome : u8 { Completed, Failed, TimedOut, Skipped };
@@ -28,4 +28,4 @@ struct ShutdownReport {
     std::chrono::milliseconds elapsed{0};
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

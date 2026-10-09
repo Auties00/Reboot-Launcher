@@ -5,7 +5,7 @@
 #include "reboot/support/support_query.hpp"
 #include "reboot/support/support_tier.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 enum class SupportReason : u8 {
     // Blocked: no confirmed game version yet; the engine asks with ChooseVersion.
@@ -53,4 +53,4 @@ enum class SupportReason : u8 {
 // Errors of kind Unsupported; Untested ones are Warnings.
 [[nodiscard]] Diagnostic to_diagnostic(SupportReason reason, const SupportQuery& query);
 
-}  // namespace reboot::support
+}  // namespace rb::support

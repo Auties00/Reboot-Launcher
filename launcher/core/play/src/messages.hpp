@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::play::msg {
+namespace rb::play::msg {
 
 REBOOT_MESSAGE_DECL(kNoBuildSelected);
 REBOOT_MESSAGE_DECL(kBuildVersionUnknown);
@@ -28,4 +28,4 @@ REBOOT_MESSAGE_DECL(kLaunchTimedOut);
 REBOOT_MESSAGE_DECL(kSessionStopping);
 REBOOT_MESSAGE_DECL(kInvalidAnswer);
 
-}  // namespace reboot::play::msg
+}  // namespace rb::play::msg

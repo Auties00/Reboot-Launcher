@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 enum class LiveKind : u8 { PlaySession, HostSession, BackendPin, Publication, DetachedOp };
 
@@ -44,4 +44,4 @@ public:
     virtual void set_on_change(UniqueFunction<void()> on_change) = 0;
 };
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

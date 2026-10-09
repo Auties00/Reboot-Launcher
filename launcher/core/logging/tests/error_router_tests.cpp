@@ -9,8 +9,8 @@
 #include "reboot/foundation/log.hpp"
 #include "reboot/logging/error_router.hpp"
 
-using namespace reboot;
-using namespace reboot::logging;
+using namespace rb;
+using namespace rb::logging;
 
 namespace {
 

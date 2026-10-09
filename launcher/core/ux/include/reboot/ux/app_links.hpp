@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ux/language_tag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 enum class AppLink : u8 { BugReport, Releases, Discord };
 
@@ -25,4 +25,4 @@ public:
     [[nodiscard]] std::vector<AppLinkEntry> list(const LanguageTag& language) const;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

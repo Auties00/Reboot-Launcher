@@ -5,7 +5,7 @@
 #include "reboot/host/host_error.hpp"
 #include "reboot/publish/field_limits.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 namespace {
 
@@ -55,4 +55,4 @@ Result<HostProfile> validate(HostProfile profile) {
     return profile;
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

@@ -15,10 +15,10 @@
 #include "reboot/testing/scripted_process_launcher.hpp"
 #include "test_strand.hpp"
 
-using namespace reboot;
-using namespace reboot::gameserver;
+using namespace rb;
+using namespace rb::gameserver;
 using namespace std::chrono_literals;
-namespace gs = reboot::contracts::game_server;
+namespace gs = rb::contracts::game_server;
 
 namespace {
 

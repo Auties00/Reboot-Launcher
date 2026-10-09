@@ -16,7 +16,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 class IClock;
 class TimerService;
@@ -282,4 +282,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot
+}  // namespace rb

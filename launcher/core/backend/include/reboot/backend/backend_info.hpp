@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/identity/login_target.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 inline constexpr std::string_view kBackendInfoPath = "/reboot/v1/backend-info";
 
@@ -26,4 +26,4 @@ struct BackendInfo {
     bool operator==(const BackendInfo&) const = default;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

@@ -8,7 +8,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace {
 
@@ -110,4 +110,4 @@ Result<std::string> validate_env_lines(std::string text) {
 
 Result<ConsoleKey> validate_console_key(ConsoleKey key) { return ConsoleKey::parse(key.name); }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

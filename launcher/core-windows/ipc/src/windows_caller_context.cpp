@@ -6,7 +6,7 @@
 #include "win32.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 Result<WindowsCallerContext> WindowsCallerContext::detect() {
     ports::CallerContext context;
@@ -36,4 +36,4 @@ Result<WindowsCallerContext> WindowsCallerContext::detect() {
 
 void WindowsCallerContext::allow_foreground(u32 pid) { AllowSetForegroundWindow(pid); }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

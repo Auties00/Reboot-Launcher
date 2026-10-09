@@ -10,7 +10,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/testing/fake_client_dll_script.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // What reboot-fake-game does where FortniteClient-Win64-Shipping.exe stands: spawned suspended and
 // injected into by winhost or win32session.
@@ -37,4 +37,4 @@ struct FakeGameScript {
 [[nodiscard]] Result<FakeGameScript> load_fake_game_script(const NativePath& file);
 [[nodiscard]] std::string to_json(const FakeGameScript& script);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

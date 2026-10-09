@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::game_channel::msg {
+namespace rb::game_channel::msg {
 
 REBOOT_MESSAGE_DECL(kListenFailed);
 REBOOT_MESSAGE_DECL(kNotListening);
@@ -20,4 +20,4 @@ REBOOT_MESSAGE_DECL(kRequestFailed);
 REBOOT_MESSAGE_DECL(kTestModeOff);
 REBOOT_MESSAGE_DECL(kLogUnreadable);
 
-}  // namespace reboot::game_channel::msg
+}  // namespace rb::game_channel::msg

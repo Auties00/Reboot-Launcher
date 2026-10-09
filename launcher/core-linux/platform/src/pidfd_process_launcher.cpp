@@ -38,7 +38,7 @@
 #include "reboot/posix/unique_fd.hpp"
 #include "text_files.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -984,4 +984,4 @@ Result<void> PidfdProcessLauncher::kill(u32 pid, std::chrono::system_clock::time
     return {};
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

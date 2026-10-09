@@ -10,9 +10,9 @@
 #include "messages.hpp"
 #include "pending_call.hpp"
 
-using reboot::ErrorDomain;
-using reboot::Result;
-using reboot::os_macos::ipc::PendingCall;
+using rb::ErrorDomain;
+using rb::Result;
+using rb::os_macos::ipc::PendingCall;
 
 namespace {
 
@@ -20,7 +20,7 @@ namespace {
 constexpr std::chrono::milliseconds kGenerous{60000};
 
 [[nodiscard]] Result<void> register_failed() {
-    return reboot::make_diag(ErrorDomain::Platform, reboot::os_macos::ipc::kAgentRegisterFailed)
+    return rb::make_diag(ErrorDomain::Platform, rb::os_macos::ipc::kAgentRegisterFailed)
         .arg("label", "dev.projectreboot.launcher.engine")
         .fail();
 }
@@ -33,7 +33,7 @@ TEST_CASE("a finished call hands out its result", "[pending_call]") {
     const std::optional<Result<void>> result = call.wait_for(kGenerous);
     REQUIRE(result);
     REQUIRE_FALSE(*result);
-    CHECK(result->error().is(reboot::os_macos::ipc::kAgentRegisterFailed));
+    CHECK(result->error().is(rb::os_macos::ipc::kAgentRegisterFailed));
 }
 
 TEST_CASE("a call still running gives nothing, then its result to a later wait", "[pending_call]") {

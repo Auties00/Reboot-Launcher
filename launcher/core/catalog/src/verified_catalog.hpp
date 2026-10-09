@@ -13,11 +13,11 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 class KeyRing;
 }
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 // Untrusted for a bad signature file or signature, otherwise parse_catalog's error.
 [[nodiscard]] std::expected<Catalog, CatalogError> verify_and_parse(const trust::KeyRing& keys, std::vector<u8> body,
@@ -39,4 +39,4 @@ void submit_catalog_work(WorkerPool& workers, Executor& strand, CancelToken toke
         });
 }
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

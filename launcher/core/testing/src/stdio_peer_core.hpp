@@ -15,7 +15,7 @@
 #include "reboot/testing/frame_log.hpp"
 #include "reboot/testing/stdio_peer.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // What FakeBackend and FakeGameServer share: framed stdin, liveness, ChildMisbehaviour, and
 // timers on the peer's executor that die with it. Executor-only.
@@ -71,4 +71,4 @@ private:
 // Field 1 of a request payload, which every request's req_id is; 0 when it is not there.
 [[nodiscard]] u64 first_req_id(std::span<const u8> payload);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

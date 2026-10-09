@@ -5,7 +5,7 @@
 #include "reboot/backend/backend_account.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // RegisterAccount: makes `account_id` a Local account; replayed on every backend generation.
 struct AccountRegistration {
@@ -16,4 +16,4 @@ struct AccountRegistration {
     bool operator==(const AccountRegistration&) const = default;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

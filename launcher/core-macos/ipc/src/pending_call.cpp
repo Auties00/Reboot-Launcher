@@ -5,7 +5,7 @@
 
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 PendingCall::~PendingCall() {
     if (thread_.joinable()) thread_.join();
@@ -44,4 +44,4 @@ std::optional<Result<void>> PendingCall::wait_for(std::chrono::milliseconds wait
     return result;
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

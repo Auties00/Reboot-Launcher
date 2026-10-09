@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 // Where injection of one DLL failed. OpenFile doubles as the accessibility probe that detects an
 // antivirus quarantine; RemoteLoad is a remote LoadLibraryW that returned 0.
@@ -26,4 +26,4 @@ struct InjectError {
     SystemError error{};
 };
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

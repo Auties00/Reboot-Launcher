@@ -1,6 +1,6 @@
 #pragma once
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 
 // reboot-winhost.exe's process exit code, which the runner reports to the engine.
 enum class WinhostExit : int {
@@ -17,4 +17,4 @@ enum class WinhostExit : int {
     InternalError = 7,
 };
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

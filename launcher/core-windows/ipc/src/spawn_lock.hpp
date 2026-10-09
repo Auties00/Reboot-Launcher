@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "unique_handle.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // An exclusive LockFileEx on state/spawn.lock, released when destroyed.
 class SpawnLock {
@@ -22,4 +22,4 @@ private:
     UniqueHandle file_;
 };
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

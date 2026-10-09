@@ -8,7 +8,7 @@
 #include "reboot/ux/guidance_state_store.hpp"
 #include "messages.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -240,4 +240,4 @@ Result<OnboardingView> Onboarding::commit(OnboardingRecord record, const Onboard
     return view;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

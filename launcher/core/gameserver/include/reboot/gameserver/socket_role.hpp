@@ -5,7 +5,7 @@
 #include "reboot/contracts/game_server.hpp"
 #include "reboot/gameserver/game_server_description.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 // The Game socket answers the rbsb/1 probe and is the port that gets published.
 using SocketRole = contracts::game_server::SocketRole;
@@ -14,4 +14,4 @@ using SocketRole = contracts::game_server::SocketRole;
 // GameServerConfig::listen.ports[i] is bound for roles[i].
 [[nodiscard]] std::vector<SocketRole> socket_roles(const GameServerDescription& description);
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

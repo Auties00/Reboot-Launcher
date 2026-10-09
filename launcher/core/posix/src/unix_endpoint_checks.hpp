@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // sizeof(sockaddr_un::sun_path): 104 on macOS, 108 on Linux.
 [[nodiscard]] std::size_t sun_path_capacity() noexcept;
@@ -28,4 +28,4 @@ namespace reboot::posix {
 // check_private_directory.
 [[nodiscard]] Result<void> ensure_private_directory(const NativePath& directory, u32 uid);
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

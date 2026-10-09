@@ -1,8 +1,8 @@
 #pragma once
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // This process's id.
 [[nodiscard]] unsigned int current_process_id() noexcept;
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

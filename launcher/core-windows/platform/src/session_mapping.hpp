@@ -8,7 +8,7 @@
 #include "reboot/os_windows/win32session/win32_session.hpp"
 #include "reboot/ports/session_host.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // UTF-16LE bytes, as the winhost contract carries Windows strings; no terminator.
 [[nodiscard]] contracts::winhost::Bytes utf16_bytes(std::wstring_view text);
@@ -21,4 +21,4 @@ namespace reboot::os_windows::platform {
 [[nodiscard]] Diagnostic spawn_diagnostic(const win32session::SpawnError& error, const NativePath& exe);
 [[nodiscard]] Diagnostic inject_diagnostic(const win32session::InjectError& error, const NativePath& dll);
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

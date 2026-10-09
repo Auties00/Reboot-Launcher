@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // A Win32 HANDLE; public headers include no Windows SDK header.
 using PipeHandle = void*;
@@ -53,4 +53,4 @@ private:
     std::string user_sid_;
 };
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

@@ -9,7 +9,7 @@
 #include "reboot/publish/publish_state.hpp"
 #include "reboot/publish/reachability_changed.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Host.status: what the session's events said last, so a UI that attaches mid-session needs no replay.
 struct HostSnapshot {
@@ -24,4 +24,4 @@ struct HostSnapshot {
     std::vector<gameserver::Player> players;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

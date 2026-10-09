@@ -9,18 +9,18 @@
 #include "reboot/integration/purge_scope.hpp"
 #include "reboot/integration/purge_targets.hpp"
 
-namespace reboot {
+namespace rb {
 class AppLayout;
 class Executor;
 class WorkerPool;
 struct InstallLayout;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // Covers no capability ids (decision os-integration-ledger, its PurgeScope).
 // Strand-only; deletion runs on the WorkerPool. Nothing else removes an AppImage or tarball user's data.
@@ -50,4 +50,4 @@ private:
     std::optional<OpId> running_;
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

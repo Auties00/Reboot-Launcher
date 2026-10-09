@@ -8,7 +8,7 @@
 
 #include "reboot/foundation/log.hpp"
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -239,4 +239,4 @@ std::size_t ManualExecutor::advance(std::chrono::steady_clock::duration by) {
     return ran + run_all();
 }
 
-}  // namespace reboot
+}  // namespace rb

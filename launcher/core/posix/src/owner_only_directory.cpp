@@ -7,7 +7,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 Result<bool> make_owner_only_directory(const NativePath& directory) {
     if (::mkdir(directory.c_str(), 0700) != 0) {
@@ -20,4 +20,4 @@ Result<bool> make_owner_only_directory(const NativePath& directory) {
     return true;
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

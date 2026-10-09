@@ -3,7 +3,7 @@
 #include "random_chars.hpp"
 #include "reboot/identity/account_record.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 std::string third_party_login(std::string_view name) {
     std::string login = keep_ascii_alnum(name);
@@ -11,4 +11,4 @@ std::string third_party_login(std::string_view name) {
     return login + std::string(kLoginDomainSuffix);
 }
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

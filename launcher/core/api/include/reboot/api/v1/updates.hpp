@@ -10,7 +10,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class UpdatePhase : u32 {
     Idle = 0,
@@ -104,11 +104,11 @@ class IUpdatesHandler {
 public:
     virtual ~IUpdatesHandler() = default;
 
-    virtual ::reboot::Result<UpdatesStatusResponse> status(const CallContext& context, const UpdatesStatusRequest& request) = 0;
+    virtual ::rb::Result<UpdatesStatusResponse> status(const CallContext& context, const UpdatesStatusRequest& request) = 0;
     // Completes with UpdatesCheckResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_check(const CallContext& context, const UpdatesCheckRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_check(const CallContext& context, const UpdatesCheckRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with UpdatesApplyResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_apply(const CallContext& context, const UpdatesApplyRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_apply(const CallContext& context, const UpdatesApplyRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

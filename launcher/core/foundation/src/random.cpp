@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/sha256.hpp"
 
-namespace reboot {
+namespace rb {
 
 Uuid uuid_v4(IRandom& random) {
     Uuid uuid;
@@ -20,4 +20,4 @@ std::string random_token_hex(IRandom& random, std::size_t bytes) {
     return to_hex(buffer);
 }
 
-}  // namespace reboot
+}  // namespace rb

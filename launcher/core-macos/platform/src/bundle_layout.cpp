@@ -1,6 +1,6 @@
 #include "bundle_layout.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 std::optional<NativePath> app_bundle_of(const NativePath& exe_dir) {
     NativePath dir = exe_dir.lexically_normal();
@@ -13,4 +13,4 @@ std::optional<NativePath> app_bundle_of(const NativePath& exe_dir) {
     return bundle;
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

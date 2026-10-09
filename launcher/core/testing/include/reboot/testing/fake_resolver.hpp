@@ -12,7 +12,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // IResolver over answers the test sets, posted to `deliver_on`; IP literals and "localhost" resolve
@@ -41,4 +41,4 @@ private:
     std::shared_ptr<State> state_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

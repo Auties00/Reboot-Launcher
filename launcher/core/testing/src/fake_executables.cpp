@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 std::optional<NativePath> fake_backend_exe() {
 #ifdef REBOOT_FAKE_BACKEND_EXE
@@ -30,4 +30,4 @@ std::optional<NativePath> fake_game_exe() {
 #endif
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

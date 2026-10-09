@@ -29,7 +29,7 @@
 #include "reboot/secrets/secret_target.hpp"
 #include "reboot/testing/fake_secret_store.hpp"
 
-namespace reboot::secrets::test {
+namespace rb::secrets::test {
 
 inline constexpr std::string_view kRootHash = "00112233aabbccdd";
 
@@ -245,4 +245,4 @@ struct Fixture {
     std::optional<SecretService> service;
 };
 
-}  // namespace reboot::secrets::test
+}  // namespace rb::secrets::test

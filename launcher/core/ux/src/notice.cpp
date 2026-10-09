@@ -1,6 +1,6 @@
 #include "reboot/ux/notice.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 std::string_view persisted_name(NoticeKind kind) {
     switch (kind) {
@@ -14,4 +14,4 @@ std::optional<NoticeKind> parse_notice_kind(std::string_view name) {
     return std::nullopt;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

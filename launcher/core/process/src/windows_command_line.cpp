@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <string_view>
 
-namespace reboot::process {
+namespace rb::process {
 
 namespace {
 
@@ -67,4 +67,4 @@ std::string quote_windows_args(std::span<const std::string> argv) {
     return out;
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

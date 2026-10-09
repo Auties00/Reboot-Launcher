@@ -8,7 +8,7 @@
 #include "reboot/contracts/winhost.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 
 // Where winhost failed; its name is the WhFatal step.
 enum class FailureStep : u8 {
@@ -42,4 +42,4 @@ using Expected = std::expected<T, WinhostFailure>;
 [[nodiscard]] contracts::common::CommandResult failed_reply(u64 req_id, std::string_view request,
                                                             const WinhostFailure& failure);
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

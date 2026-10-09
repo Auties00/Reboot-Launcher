@@ -5,7 +5,7 @@
 #include "engine_socket_path.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 // `self` is not part of the path: the temp directory is already per-user. ipc::endpoint_for
 // checks both inputs before calling this.
@@ -15,4 +15,4 @@ std::string endpoint_name(const PeerIdentity& /*self*/, std::string_view root_ha
     return os_macos::ipc::engine_socket_path(*user_temp_dir, root_hash16).string();
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

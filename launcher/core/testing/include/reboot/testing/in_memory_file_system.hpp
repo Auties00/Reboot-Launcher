@@ -16,7 +16,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class FsOperation : u8 {
     AtomicReplace,
@@ -91,4 +91,4 @@ private:
     FaultPlan<FsOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

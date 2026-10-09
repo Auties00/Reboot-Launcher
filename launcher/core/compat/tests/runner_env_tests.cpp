@@ -6,9 +6,9 @@
 
 #include "reboot/compat/runner_env.hpp"
 
-using reboot::compat::runner_layer;
-using reboot::ports::RunnerKind;
-using reboot::ports::RuntimeLayout;
+using rb::compat::runner_layer;
+using rb::ports::RunnerKind;
+using rb::ports::RuntimeLayout;
 
 using EnvVars = std::vector<std::pair<std::string, std::string>>;
 

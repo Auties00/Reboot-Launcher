@@ -13,7 +13,7 @@
 #include "reboot/posix/unique_fd.hpp"
 #include "text_files.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -93,4 +93,4 @@ LinuxSystemInfo::LinuxSystemInfo() {
     in_container_ = detect_container();
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

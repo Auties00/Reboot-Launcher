@@ -11,7 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ipc/ipc_client.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 // rb_ctx_options, validated and copied, so nothing borrowed outlives rb_ctx_create.
 struct ConnectSettings {
@@ -36,4 +36,4 @@ static_assert(RB_CLIENT_TEST == static_cast<int>(contracts::ipc::ClientKind::Tes
 static_assert(RB_LAUNCH_AUTOSTART == static_cast<int>(ipc::LaunchMode::Autostart));
 static_assert(RB_LAUNCH_CONNECT_ONLY == static_cast<int>(ipc::LaunchMode::ConnectOnly));
 
-}  // namespace reboot::client
+}  // namespace rb::client

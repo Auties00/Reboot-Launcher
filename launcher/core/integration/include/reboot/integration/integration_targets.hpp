@@ -6,7 +6,7 @@
 #include "reboot/integration/entry_flavor.hpp"
 #include "reboot/integration/integration_kind.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // The programs in IPlatformPaths::exe_dir; registrars map them to stable entries, so core never compares paths.
 struct IntegrationTargets {
@@ -19,4 +19,4 @@ struct IntegrationTargets {
 // What IIntegrationRegistrar::apply gets for `kind`; nullopt means Unsupported, without asking the registrar.
 [[nodiscard]] std::optional<NativePath> entry_program(IntegrationKind kind, const IntegrationTargets& targets);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

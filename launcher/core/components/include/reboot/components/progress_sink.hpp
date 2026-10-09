@@ -3,8 +3,8 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 using ProgressSink = UniqueFunction<void(const Progress&)>;
 
-}  // namespace reboot::components
+}  // namespace rb::components

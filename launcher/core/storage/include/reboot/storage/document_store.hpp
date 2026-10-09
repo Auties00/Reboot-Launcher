@@ -17,7 +17,7 @@
 #include "reboot/storage/load_report.hpp"
 #include "reboot/storage/storage_mode_changed.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // read() never fails: a bad member becomes its default with a ValueIssue; unknown ones are kept.
 template <class D>
@@ -87,4 +87,4 @@ private:
     UniqueFunction<void(const D&, std::span<const ValueIssue>)> on_reload_;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

@@ -6,7 +6,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // ConfigureSession: what the embedded backend needs to serve one play or host session.
 struct BackendSessionConfig {
@@ -21,4 +21,4 @@ struct BackendSessionConfig {
     Changelist changelist;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

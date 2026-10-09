@@ -15,7 +15,7 @@
 #include "win32.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 namespace {
 
 constexpr DWORD kPipeBuffer = 64 * 1024;
@@ -189,4 +189,4 @@ Result<void> NamedPipeListener::listen(std::string_view endpoint_name,
 
 void NamedPipeListener::close() { impl_->close(); }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

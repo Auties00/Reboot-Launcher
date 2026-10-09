@@ -17,7 +17,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 namespace asio = boost::asio;
@@ -198,4 +198,4 @@ Result<std::unique_ptr<ports::IByteStream>> connect_tcp(boost::asio::io_context&
     return std::unique_ptr<ports::IByteStream>(std::make_unique<TcpStream>(state));
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

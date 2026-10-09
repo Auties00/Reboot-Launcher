@@ -10,11 +10,11 @@
 #include "reboot/ux/onboarding_step.hpp"
 #include "reboot/ux/suggested_action.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 }
 
-namespace reboot::ux {
+namespace rb::ux {
 
 class IGuidanceStateStore;
 
@@ -82,4 +82,4 @@ private:
     EventBus& events_;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

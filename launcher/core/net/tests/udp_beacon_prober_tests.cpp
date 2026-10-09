@@ -11,8 +11,8 @@
 #include "reboot/net/udp_beacon_prober.hpp"
 #include "reboot/testing/deterministic_runtime.hpp"
 
-using namespace reboot;
-using namespace reboot::net;
+using namespace rb;
+using namespace rb::net;
 using namespace std::chrono_literals;
 
 namespace {

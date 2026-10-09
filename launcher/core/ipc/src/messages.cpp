@@ -1,6 +1,6 @@
 #include "reboot/ipc/ipc_errors.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 REBOOT_MESSAGE(kInvalidEndpointInput, "ipc.invalid_endpoint_input",
                "The engine endpoint cannot be named from this {field}.");
@@ -35,4 +35,4 @@ REBOOT_MESSAGE(kRootMismatch, "ipc.root_mismatch", "The engine serves {engine_ro
 REBOOT_MESSAGE(kEngineImageDiffers, "ipc.engine_image_differs",
                "The engine runs from {image_path}, not {expected_path}.");
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

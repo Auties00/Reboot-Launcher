@@ -3,7 +3,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/secret_store.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 enum class KeychainState : u8 { Missing, Locked, Unlocked };
 
@@ -17,4 +17,4 @@ enum class SecretBackend : u8 { File, Keychain, Locked };
 // a locked keychain may still hold the key.
 [[nodiscard]] SecretBackend read_backend_after_file_miss(KeychainState state) noexcept;
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

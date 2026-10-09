@@ -19,9 +19,9 @@
 #include "reboot/testing/fake_client_platform.hpp"
 #include "wire/codec.hpp"
 
-using namespace reboot;
-using namespace reboot::client;
-using namespace reboot::client::test;
+using namespace rb;
+using namespace rb::client;
+using namespace rb::client::test;
 using std::chrono_literals::operator""ms;
 using std::chrono_literals::operator""s;
 

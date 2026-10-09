@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 namespace {
 
@@ -40,4 +40,4 @@ Diagnostic to_diagnostic(const SessionsError& error) {
     return internal_bug("sessions_error.to_diagnostic");
 }
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

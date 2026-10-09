@@ -27,7 +27,7 @@
 #include "reboot/testing/deterministic_runtime.hpp"
 #include "reboot/testing/fake_loopback_peer_inspector.hpp"
 
-namespace reboot::front::test {
+namespace rb::front::test {
 
 namespace http = boost::beast::http;
 using Request = http::request<http::string_body>;
@@ -204,4 +204,4 @@ private:
 [[nodiscard]] std::vector<u8> deflate_raw(std::string_view data);
 [[nodiscard]] std::vector<u8> gzip(std::string_view data);
 
-}  // namespace reboot::front::test
+}  // namespace rb::front::test

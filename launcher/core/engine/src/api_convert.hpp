@@ -76,7 +76,7 @@
 #include "reboot/ux/suggested_action.hpp"
 
 // Domain values to reboot.api.v1 messages and back. Only ApiRouter uses these.
-namespace reboot::engine::convert {
+namespace rb::engine::convert {
 
 // Values, ids and enums.
 [[nodiscard]] api::Diagnostic diagnostic(const Diagnostic& diag);
@@ -190,4 +190,4 @@ namespace reboot::engine::convert {
 [[nodiscard]] api::SupportQueryResponse support_answer(const support::SupportQuery& query,
                                                        const support::SupportVerdict& verdict);
 
-}  // namespace reboot::engine::convert
+}  // namespace rb::engine::convert

@@ -5,8 +5,8 @@
 #include "reboot/foundation/clock.hpp"
 #include "reboot/ipc/outbound_budget.hpp"
 
-using namespace reboot;
-using Verdict = reboot::ipc::OutboundBudget::Verdict;
+using namespace rb;
+using Verdict = rb::ipc::OutboundBudget::Verdict;
 using std::chrono_literals::operator""s;
 
 TEST_CASE("the budget counts charged bytes until they are refunded", "[ipc][budget]") {

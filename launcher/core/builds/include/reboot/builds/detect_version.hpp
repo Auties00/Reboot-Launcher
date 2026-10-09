@@ -11,7 +11,7 @@
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 class ClTable;
 class PeVersionReader;
@@ -35,4 +35,4 @@ struct DetectionTables {
 [[nodiscard]] Result<VersionDetection> detect_version(const BuildLayout& layout, const PeVersionReader& reader,
                                                       const DetectionTables& tables, const CancelToken& token);
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

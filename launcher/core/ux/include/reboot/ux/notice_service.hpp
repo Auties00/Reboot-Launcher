@@ -7,12 +7,12 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ux/notice.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class IClock;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ux {
+namespace rb::ux {
 
 class IGuidanceStateStore;
 
@@ -53,4 +53,4 @@ private:
     std::vector<SessionBanner> unlisted_live_;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

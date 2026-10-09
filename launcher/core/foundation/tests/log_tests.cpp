@@ -15,7 +15,7 @@
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/secret.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 namespace {
 

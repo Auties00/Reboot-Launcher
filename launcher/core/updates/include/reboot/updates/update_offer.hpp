@@ -8,11 +8,11 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 struct ReleaseManifest;
 }
 
-namespace reboot::updates {
+namespace rb::updates {
 
 struct UpdateOffer {
     components::AppEntry entry;
@@ -29,4 +29,4 @@ struct UpdateOffer {
                                                       components::ManifestPlatform platform,
                                                       storage::UpdateChannel channel, const SemVer& installed);
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

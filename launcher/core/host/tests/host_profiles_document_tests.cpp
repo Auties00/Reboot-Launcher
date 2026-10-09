@@ -10,8 +10,8 @@
 #include "host_test_support.hpp"
 #include "reboot/host/host_profiles_document.hpp"
 
-using namespace reboot;
-using namespace reboot::host;
+using namespace rb;
+using namespace rb::host;
 using namespace std::chrono_literals;
 namespace json = boost::json;
 

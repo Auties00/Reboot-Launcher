@@ -21,7 +21,7 @@
 #include "reboot/testing/wall_clock_waiter.hpp"
 
 // Real-OS helpers: this package builds only on Linux, so these tests double as its conformance run.
-namespace reboot::os_linux::ipc::test {
+namespace rb::os_linux::ipc::test {
 
 inline constexpr std::chrono::milliseconds kBudget{10000};
 
@@ -91,4 +91,4 @@ private:
     std::optional<std::string> previous_;
 };
 
-}  // namespace reboot::os_linux::ipc::test
+}  // namespace rb::os_linux::ipc::test

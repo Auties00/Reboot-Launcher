@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::gameserver::msg {
+namespace rb::gameserver::msg {
 
 REBOOT_MESSAGE(kPathNotAbsolute, "gameserver.path_not_absolute", "{path} is not an absolute path");
 REBOOT_MESSAGE(kExeUnreadable, "gameserver.exe_unreadable", "Cannot read the game server program {path}");
@@ -33,4 +33,4 @@ REBOOT_MESSAGE(kCommandTimeout, "gameserver.command_timeout",
 REBOOT_MESSAGE(kCacheEntryInvalid, "gameserver.cache_entry_invalid",
                "A cached game server description has a missing or invalid {member}");
 
-}  // namespace reboot::gameserver::msg
+}  // namespace rb::gameserver::msg

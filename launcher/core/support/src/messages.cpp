@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::support::msg {
+namespace rb::support::msg {
 
 REBOOT_MESSAGE(kVersionUnknown, "support.version_unknown",
                "The game version of this build is not known yet. Choose it before you play or host");
@@ -33,4 +33,4 @@ REBOOT_MESSAGE(kMatrixReportUnknownSchema, "support.matrix_report_unknown_schema
                "The test report uses schema {schema}, which this version cannot read");
 REBOOT_MESSAGE(kMatrixReportMalformed, "support.matrix_report_malformed", "The test report is malformed at {where}");
 
-}  // namespace reboot::support::msg
+}  // namespace rb::support::msg

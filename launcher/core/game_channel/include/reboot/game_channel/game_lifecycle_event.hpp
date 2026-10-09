@@ -6,7 +6,7 @@
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 using Loaded = contracts::game_client::Loaded;
 using PatchResult = contracts::game_client::PatchResult;
@@ -41,4 +41,4 @@ using GameLifecycleEvent = std::variant<Loaded, PatchResult, RedirectReady, Hook
                                         ExitRequested, ConsoleReady, TravelStarted, TravelEnded, Joined,
                                         Disconnected, SessionFatal>;
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

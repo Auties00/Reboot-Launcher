@@ -6,7 +6,7 @@
 #include "links.hpp"
 #include "messages.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -48,4 +48,4 @@ std::vector<AppLinkEntry> AppLinks::list(const LanguageTag& language) const {
     return out;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

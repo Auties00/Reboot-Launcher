@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/log_file_system.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // ILogFileSystem over plain POSIX calls: files are created 0600 and flushed with fsync, since
 // F_FULLFSYNC on every flush would stall the logger's writer.
@@ -18,4 +18,4 @@ public:
     Result<void> remove(const NativePath& path) override;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

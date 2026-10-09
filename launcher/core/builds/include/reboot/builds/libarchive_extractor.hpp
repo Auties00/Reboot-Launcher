@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/function.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // Capabilities: game-builds.extract, game-builds.+4.
 // In-process libarchive 3.8; a ZipStored 7z is read through the probe's window, never copied out.
@@ -17,4 +17,4 @@ public:
                                    UniqueFunction<void(const ExtractProgress&)> on_progress) override;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

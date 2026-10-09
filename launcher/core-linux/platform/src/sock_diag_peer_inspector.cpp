@@ -4,7 +4,7 @@
 #include "socket_owner.hpp"
 #include "socket_table.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 Result<std::optional<u32>> SockDiagPeerInspector::peer_uid(Endpoint local, Endpoint remote) {
     // The peer's own local end is the front's remote end.
@@ -17,4 +17,4 @@ Result<std::optional<u32>> SockDiagPeerInspector::peer_uid(Endpoint local, Endpo
     return socket->uid;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

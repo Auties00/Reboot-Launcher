@@ -11,7 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ipc/connection_info.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 // Covers no capability ids. The engine's ApiRouter; only it decodes reboot.api.v1. Strand-only.
 class IApiDispatcher {
@@ -42,4 +42,4 @@ public:
     virtual Result<SecretBytes> reveal_secret(const ConnectionInfo& from, std::span<const u8> target) = 0;
 };
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

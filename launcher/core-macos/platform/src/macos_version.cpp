@@ -3,7 +3,7 @@
 #include <charconv>
 #include <system_error>
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 std::optional<u32> macos_major_version(std::string_view product_version) {
     const std::string_view major = product_version.substr(0, product_version.find('.'));
@@ -14,4 +14,4 @@ std::optional<u32> macos_major_version(std::string_view product_version) {
     return value;
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

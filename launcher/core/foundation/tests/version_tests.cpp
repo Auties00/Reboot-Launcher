@@ -9,7 +9,7 @@
 #include "reboot/foundation/version.hpp"
 #include "registry/validation.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 namespace {
 

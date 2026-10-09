@@ -5,7 +5,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/ports/session_host.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // Growing to capacity first also clears what a short-string move left behind.
 inline void wipe(std::string& text) noexcept {
@@ -20,4 +20,4 @@ inline void wipe(ports::SessionLaunch& launch) noexcept {
     for (auto& [name, value] : launch.env.vars) wipe(value);
 }
 
-}  // namespace reboot::play
+}  // namespace rb::play

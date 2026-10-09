@@ -2,7 +2,7 @@
 
 #include "reboot/host/host_error.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 Result<void> validate(const MatchEndPolicy& policy) {
     if (policy.delay < std::chrono::seconds::zero() || policy.delay > kMaxMatchEndDelay)
@@ -10,4 +10,4 @@ Result<void> validate(const MatchEndPolicy& policy) {
     return {};
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

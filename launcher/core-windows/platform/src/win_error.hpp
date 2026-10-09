@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // A missing file, directory, drive or share is NotFound; a sharing or lock violation is Conflict.
 [[nodiscard]] ErrorKind kind_of_win32(u32 error) noexcept;
@@ -20,4 +20,4 @@ namespace reboot::os_windows::platform {
 [[nodiscard]] Diagnostic hresult_failed(std::string_view call, i32 hr);
 [[nodiscard]] Diagnostic hresult_failed(std::string_view call, i32 hr, const NativePath& path);
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

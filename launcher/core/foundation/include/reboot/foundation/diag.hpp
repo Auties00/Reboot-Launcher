@@ -19,7 +19,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot {
+namespace rb {
 
 enum class Severity : u8 { Info, Warning, Error };
 
@@ -276,16 +276,16 @@ public:
 
 }  // namespace detail
 
-}  // namespace reboot
+}  // namespace rb
 
 // Used once per id, at namespace scope in the package's src/messages.cpp.
 #define REBOOT_MESSAGE(ident, dotted_id, english)                                                        \
     static constexpr auto ident##_arg_specs_ =                                                           \
-        ::reboot::detail::placeholders<::reboot::detail::count_placeholders(english)>(english);         \
-    static constexpr ::reboot::MessageSpec ident##_spec_{dotted_id, english, ident##_arg_specs_};      \
-    static const ::reboot::detail::MessageRegistration ident##_registration_{ident##_spec_};           \
-    extern const ::reboot::MessageId ident;                                                             \
-    const ::reboot::MessageId ident { dotted_id }
+        ::rb::detail::placeholders<::rb::detail::count_placeholders(english)>(english);         \
+    static constexpr ::rb::MessageSpec ident##_spec_{dotted_id, english, ident##_arg_specs_};      \
+    static const ::rb::detail::MessageRegistration ident##_registration_{ident##_spec_};           \
+    extern const ::rb::MessageId ident;                                                             \
+    const ::rb::MessageId ident { dotted_id }
 
 // Declares an id for the package's other translation units (src/messages.hpp).
-#define REBOOT_MESSAGE_DECL(ident) extern const ::reboot::MessageId ident
+#define REBOOT_MESSAGE_DECL(ident) extern const ::rb::MessageId ident

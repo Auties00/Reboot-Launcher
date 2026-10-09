@@ -19,7 +19,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -235,4 +235,4 @@ Diagnostic helper_failed(std::string_view program, const HelperResult& result) {
         .arg("exit_code", static_cast<i64>(result.exit_code.value_or(-1)));
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

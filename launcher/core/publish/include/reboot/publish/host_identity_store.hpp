@@ -15,17 +15,17 @@
 #include "reboot/publish/identity_hold.hpp"
 #include "reboot/publish/identity_load_issue.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IRandom;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // The file inside an export directory.
 inline constexpr std::string_view kIdentityExportFile = "identity.json";
@@ -99,4 +99,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

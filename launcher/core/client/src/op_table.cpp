@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace reboot::client {
+namespace rb::client {
 
 bool OpTable::track(u64 op_id, u32 method_id) {
     std::lock_guard lock(mutex_);
@@ -38,4 +38,4 @@ std::vector<PendingOp> OpTable::pending() const {
     return out;
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

@@ -5,7 +5,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // The connection both ends of a memory stream pair share.
 struct MemoryLink;
@@ -22,4 +22,4 @@ struct LinkedPair {
 void close_link(const std::shared_ptr<MemoryLink>& link);
 [[nodiscard]] bool link_open(const MemoryLink& link);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -16,7 +16,7 @@
 #include "reboot/testing/scripted_child.hpp"
 #include "reboot/testing/stdio_peer.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Decides what a matching spawn becomes. An error from `on_spawn` is what spawn() returns.
 struct SpawnRule {
@@ -65,4 +65,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -4,7 +4,7 @@
 
 #include "reboot/backend/backend_service.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 BackendLease::BackendLease(BackendService& service, u64 id, std::optional<SessionId> session, BackendConfig config)
     : service_(&service), id_(id), session_(session), config_(std::move(config)) {}
@@ -33,4 +33,4 @@ void BackendLease::release() {
     if (service != nullptr) service->release(id_);
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

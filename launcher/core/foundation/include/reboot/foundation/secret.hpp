@@ -10,7 +10,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 // Volatile stores are never elided, so the wipe survives optimisation.
 inline void secure_wipe(void* data, std::size_t size) noexcept {
@@ -62,11 +62,11 @@ using SecretBytes = Secret<std::vector<u8>>;
 
 enum class Sensitivity : u8 { Public, Personal, Secret };
 
-}  // namespace reboot
+}  // namespace rb
 
 template <class T>
-struct std::formatter<reboot::Secret<T>, char> : std::formatter<std::string_view, char> {
-    auto format(const reboot::Secret<T>&, std::format_context& ctx) const {
+struct std::formatter<rb::Secret<T>, char> : std::formatter<std::string_view, char> {
+    auto format(const rb::Secret<T>&, std::format_context& ctx) const {
         return std::formatter<std::string_view, char>::format("***", ctx);
     }
 };

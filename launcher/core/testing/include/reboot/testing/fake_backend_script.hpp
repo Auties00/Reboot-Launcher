@@ -10,7 +10,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/testing/child_misbehaviour.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // What FakeBackend does. The defaults describe a conforming reboot-backend.
 struct FakeBackendScript {
@@ -37,4 +37,4 @@ struct FakeBackendScript {
 [[nodiscard]] Result<FakeBackendScript> load_fake_backend_script(const NativePath& file);
 [[nodiscard]] std::string to_json(const FakeBackendScript& script);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

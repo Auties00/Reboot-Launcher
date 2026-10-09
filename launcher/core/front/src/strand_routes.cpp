@@ -10,7 +10,7 @@
 #include "reboot/front/unencrypted_upstream_prompt.hpp"
 #include "reboot/net/host_tls_memory.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -145,4 +145,4 @@ Result<void> StrandRoutes::answered(SessionId session, const UpstreamOrigin& ori
     return {};
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

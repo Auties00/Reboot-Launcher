@@ -15,9 +15,9 @@
 #include "reboot/testing/fake_http_transport.hpp"
 #include "reboot/testing/fake_random.hpp"
 
-using namespace reboot;
-using namespace reboot::backend;
-using namespace reboot::backend::test;
+using namespace rb;
+using namespace rb::backend;
+using namespace rb::backend::test;
 
 namespace {
 

@@ -15,14 +15,14 @@
 #include "reboot/net/mapping_record.hpp"
 #include "reboot/net/port_mapping.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class TimerService;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::net {
+namespace rb::net {
 
 class IPortMappingGateway;
 
@@ -78,4 +78,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

@@ -16,7 +16,7 @@
 #include "reboot/api/v1/secrets.hpp"
 #include "reboot/api/v1/settings.hpp"
 
-namespace api = reboot::api;
+namespace api = rb::api;
 
 namespace {
 
@@ -26,15 +26,15 @@ api::Bytes golden(const std::string& name) {
     return {std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
 }
 
-reboot::Uuid ascending() {
-    reboot::Uuid uuid;
-    for (std::size_t i = 0; i < uuid.bytes.size(); ++i) uuid.bytes[i] = static_cast<reboot::u8>(i + 1);
+rb::Uuid ascending() {
+    rb::Uuid uuid;
+    for (std::size_t i = 0; i < uuid.bytes.size(); ++i) uuid.bytes[i] = static_cast<rb::u8>(i + 1);
     return uuid;
 }
 
-reboot::Uuid descending() {
-    reboot::Uuid uuid;
-    for (std::size_t i = 0; i < uuid.bytes.size(); ++i) uuid.bytes[i] = static_cast<reboot::u8>(0xFF - i);
+rb::Uuid descending() {
+    rb::Uuid uuid;
+    for (std::size_t i = 0; i < uuid.bytes.size(); ++i) uuid.bytes[i] = static_cast<rb::u8>(0xFF - i);
     return uuid;
 }
 

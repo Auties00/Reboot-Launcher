@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Ask raises AccountRenameConflict when the new id already has data.
 enum class RenameConflictChoice : u8 { Ask, KeepExisting, Replace };
@@ -15,4 +15,4 @@ struct AccountRenameRequest {
     RenameConflictChoice on_conflict = RenameConflictChoice::Ask;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

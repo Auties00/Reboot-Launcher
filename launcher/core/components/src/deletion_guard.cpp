@@ -7,7 +7,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 struct DeletionGuard::Impl {
     struct DirWatch {
@@ -66,4 +66,4 @@ void DeletionGuard::untrack(const NativePath& file) {
     if (dir->second.files.empty()) impl_->dirs.erase(dir);
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

@@ -7,7 +7,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // `prefix` counts in the address's own family: at most 32 for IPv4, 128 for IPv6.
 struct IpCidr {
@@ -29,4 +29,4 @@ struct IpCidr {
     constexpr auto operator<=>(const IpCidr&) const = default;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

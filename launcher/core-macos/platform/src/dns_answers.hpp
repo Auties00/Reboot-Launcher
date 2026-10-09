@@ -6,7 +6,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 enum class DnsFamily : u8 { V4, V6 };
 
@@ -32,4 +32,4 @@ private:
     bool v6_answered_ = false;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

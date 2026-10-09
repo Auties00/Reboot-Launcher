@@ -11,7 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ux/message_catalog.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // One settings registry key as search sees it; the engine builds these from storage's registry.
 struct SearchableSetting {
@@ -44,4 +44,4 @@ private:
     std::vector<SearchableSetting> settings_;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

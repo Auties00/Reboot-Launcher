@@ -7,7 +7,7 @@
 #include "reboot/catalog/catalog_error.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 // Parses a body that already passed verify_signed; tests/data/catalog.json shows the layout.
 // - A schema other than kCatalogSchema is UnknownSchema. A duplicate id (ASCII case-insensitive),
@@ -18,4 +18,4 @@ namespace reboot::catalog {
 // - Entries come out sorted by version, then id.
 [[nodiscard]] std::expected<Catalog, CatalogError> parse_catalog(std::span<const u8> json);
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

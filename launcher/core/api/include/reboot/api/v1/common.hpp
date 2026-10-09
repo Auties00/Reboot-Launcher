@@ -8,7 +8,7 @@
 #include "reboot/api/codec.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class GameRole : u32 {
     Client = 0,
@@ -270,4 +270,4 @@ struct Event {
     bool operator==(const Event&) const = default;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

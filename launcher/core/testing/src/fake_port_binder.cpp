@@ -9,7 +9,7 @@
 #include "reboot/testing/fake_loopback_peer_inspector.hpp"
 #include "reboot/testing/fake_port_inspector.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 constexpr u32 kLoopback = 0x7F000001;
@@ -78,4 +78,4 @@ std::unique_ptr<IPortBinder> make_fake_port_binder(FakePortInspector& ports, Fak
     return std::make_unique<FakePortBinder>(ports, peers, pid, uid);
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 REBOOT_MESSAGE(kManifestMalformed, "components.manifest_malformed", "The release manifest is malformed at {field}");
 REBOOT_MESSAGE(kManifestSchemaUnsupported, "components.manifest_schema_unsupported",
@@ -49,4 +49,4 @@ REBOOT_MESSAGE(kHeldFileChanged, "components.held_file_changed",
 
 REBOOT_MESSAGE(kBundledAssetMissing, "components.bundled_asset_missing", "The installation is missing {path}");
 
-}  // namespace reboot::components
+}  // namespace rb::components

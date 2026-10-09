@@ -11,7 +11,7 @@
 #include "reboot/ports/net.hpp"
 #include "reboot/testing/fake_quic_peer.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // IQuicTransport for browser and publish tests; each connection waits for the test to accept or
@@ -37,4 +37,4 @@ private:
     std::optional<Diagnostic> next_open_error_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

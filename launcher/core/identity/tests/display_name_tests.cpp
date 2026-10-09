@@ -5,8 +5,8 @@
 #include "reboot/identity/display_name.hpp"
 #include "reboot/testing/fake_random.hpp"
 
-using namespace reboot;
-using namespace reboot::identity;
+using namespace rb;
+using namespace rb::identity;
 using contracts::backend::AccountRole;
 
 TEST_CASE("validate_display_name accepts 3 to 16 ASCII letters and digits", "[identity]") {

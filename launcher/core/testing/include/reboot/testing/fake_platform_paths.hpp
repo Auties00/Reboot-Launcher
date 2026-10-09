@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // An absolute root that names no real directory: C:/reboot-test on Windows, /reboot-test elsewhere.
 [[nodiscard]] NativePath default_fake_root();
@@ -36,4 +36,4 @@ private:
     std::optional<NativePath> velopack_dir_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

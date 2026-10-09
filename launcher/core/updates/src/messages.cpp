@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::updates::msg {
+namespace rb::updates::msg {
 
 REBOOT_MESSAGE(kNotifyOnly, "updates.notify_only",
                "This installation is updated by its package manager; install version {version} there");
@@ -23,4 +23,4 @@ REBOOT_MESSAGE(kStopDeclined, "updates.stop_declined", "The update will install 
 REBOOT_MESSAGE(kAnswerInvalid, "updates.answer_invalid", "That answer does not settle the question");
 REBOOT_MESSAGE(kMarkerMalformed, "updates.marker_malformed", "The update marker has a malformed {field}");
 
-}  // namespace reboot::updates::msg
+}  // namespace rb::updates::msg

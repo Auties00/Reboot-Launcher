@@ -10,10 +10,10 @@
 #include "reboot/logging/wine_log_files.hpp"
 #include "reboot/testing/in_memory_log_file_system.hpp"
 
-using namespace reboot;
-using namespace reboot::logging;
-using reboot::testing::InMemoryLogFileSystem;
-using reboot::testing::LogFsOperation;
+using namespace rb;
+using namespace rb::logging;
+using rb::testing::InMemoryLogFileSystem;
+using rb::testing::LogFsOperation;
 
 namespace {
 

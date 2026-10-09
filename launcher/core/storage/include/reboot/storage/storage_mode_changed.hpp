@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // A failed write makes a document InMemory, the next good one ReadWrite. The engine publishes it
 // as EventKind::StorageModeChanged, coalesced per document.
@@ -17,4 +17,4 @@ struct StorageModeChanged {
     std::optional<Diagnostic> reason;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

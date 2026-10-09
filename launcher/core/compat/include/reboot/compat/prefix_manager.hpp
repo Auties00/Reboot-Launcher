@@ -16,19 +16,19 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/storage/document_store.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class TimerService;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 class IProcessLauncher;
 class IRunnerPlatform;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::compat {
+namespace rb::compat {
 
 struct PrefixManagerDeps {
     ports::IProcessLauncher& processes;
@@ -81,4 +81,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

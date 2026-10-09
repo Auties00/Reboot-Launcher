@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 const PrerequisiteSpec& prerequisite_spec(PrerequisiteId id) noexcept {
     using enum PrerequisiteImpact;
@@ -24,4 +24,4 @@ const PrerequisiteSpec& prerequisite_spec(PrerequisiteId id) noexcept {
     return kSpecs[static_cast<std::size_t>(id)];
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

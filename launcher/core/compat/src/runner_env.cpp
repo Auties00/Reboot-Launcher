@@ -9,7 +9,7 @@
 #include "dxmt_builtin_dlls.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -77,4 +77,4 @@ ports::EnvBlock runner_layer(RunnerKind kind, const ports::RuntimeLayout& layout
     return layer;
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

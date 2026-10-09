@@ -13,7 +13,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 // Releases the lock on destruction.
 class FileLock {
@@ -139,4 +139,4 @@ public:
     virtual Result<VolumeInfo> volume_of(const NativePath& path) = 0;
 };
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

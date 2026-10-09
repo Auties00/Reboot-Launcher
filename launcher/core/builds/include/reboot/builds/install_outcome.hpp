@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // Extracted to `folder`, but detection or registration failed. Clients offer "Import anyway"
 // (ImportService with the catalog entry) and "Delete files" (BuildInstaller::start_delete_unregistered).
@@ -17,4 +17,4 @@ struct UnregisteredInstall {
 
 using InstallOutcome = std::variant<InstalledBuild, UnregisteredInstall>;
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

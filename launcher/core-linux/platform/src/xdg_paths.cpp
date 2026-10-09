@@ -10,7 +10,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "xdg_dirs.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -65,4 +65,4 @@ ports::InstallKind XdgPaths::install_kind() const {
     return ports::InstallKind::Dev;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

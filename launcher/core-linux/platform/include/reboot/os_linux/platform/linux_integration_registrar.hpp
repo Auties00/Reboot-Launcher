@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 class XdgPaths;
 
@@ -50,4 +50,4 @@ private:
     std::optional<NativePath> data_root_override_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

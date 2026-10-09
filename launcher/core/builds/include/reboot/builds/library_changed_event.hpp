@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 enum class LibraryChange : u8 { Added, Updated, Removed, SelectionChanged };
 
@@ -19,4 +19,4 @@ struct LibraryChangedEvent {
 
 inline constexpr std::string_view kLibraryCoalesceKey = "library";
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

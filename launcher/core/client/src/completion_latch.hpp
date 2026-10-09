@@ -5,7 +5,7 @@
 #include <optional>
 #include <utility>
 
-namespace reboot::client {
+namespace rb::client {
 
 // Covers no capability ids. One value from a callback to a blocked export; deadlines are the executor's.
 template <class T>
@@ -30,4 +30,4 @@ private:
     std::optional<T> value_;
 };
 
-}  // namespace reboot::client
+}  // namespace rb::client

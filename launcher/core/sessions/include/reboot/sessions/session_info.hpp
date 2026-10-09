@@ -16,7 +16,7 @@
 #include "reboot/sessions/spawned_process.hpp"
 #include "reboot/sessions/stop_reason.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 struct SessionInfo {
     SessionId id;
@@ -39,4 +39,4 @@ struct SessionInfo {
     std::optional<StopReason> stop_reason;
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

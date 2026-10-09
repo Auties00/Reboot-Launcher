@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // Covers no capability ids; ICallerContextProbe for the process that loaded reboot_client.
 // make_client_platform detects it once and hands the same context to SmAppServiceEngineStarter.
@@ -29,4 +29,4 @@ private:
     ports::CallerContext context_;
 };
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

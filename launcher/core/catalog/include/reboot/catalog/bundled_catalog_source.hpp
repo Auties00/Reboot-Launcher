@@ -5,21 +5,21 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class WorkerPool;
 struct InstallLayout;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::trust {
+namespace rb::trust {
 class KeyRing;
 }
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 // game-builds.catalog: the signed snapshot shipped at InstallLayout::bundled_catalog, with its
 // .sig beside it. It is verified like a download and is the fallback when no cache verifies.
@@ -40,4 +40,4 @@ private:
     const trust::KeyRing& keys_;
 };
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

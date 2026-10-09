@@ -21,7 +21,7 @@
 #include "messages.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -135,4 +135,4 @@ std::optional<NativePath> MacPaths::velopack_package_dir() const {
     return app_bundle_;
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

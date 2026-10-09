@@ -11,7 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // A granted join. Play records `endpoint` for the session and returns it from the backend's
 // ResolveMatchTarget; the port is the grant's, never an assumed 7777.
@@ -53,4 +53,4 @@ struct JoinFailure {
 
 [[nodiscard]] Diagnostic to_diagnostic(const JoinFailure& failure);
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

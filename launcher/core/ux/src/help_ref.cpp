@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 HelpRef port_forwarding_help(u16 first_port, u16 last_port) {
     const u16 low = std::min(first_port, last_port);
@@ -18,4 +18,4 @@ HelpRef port_forwarding_help(u16 first_port, u16 last_port) {
     return help;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

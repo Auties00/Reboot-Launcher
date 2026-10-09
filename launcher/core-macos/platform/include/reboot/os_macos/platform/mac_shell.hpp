@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; IShellLauncher over NSWorkspace and NSFileManager.
 class MacShell final : public ports::IShellLauncher {
@@ -24,4 +24,4 @@ private:
     bool aqua_session_ = false;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

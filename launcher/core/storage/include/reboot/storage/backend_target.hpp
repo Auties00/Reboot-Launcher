@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/storage/enum_names.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 inline constexpr Port kDefaultBackendPort{3551};
 // The port the game dials for XMPP, used when an XMPP endpoint names none.
@@ -58,4 +58,4 @@ struct BackendTarget {
     [[nodiscard]] static Result<BackendTarget> normalize(BackendTarget target);
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

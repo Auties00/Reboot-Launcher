@@ -21,7 +21,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/logging/log_file_names.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 namespace {
 
@@ -335,4 +335,4 @@ Result<OpHandle> LogExporter::start_export(LogExportRequest request, DisconnectP
     return handle;
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

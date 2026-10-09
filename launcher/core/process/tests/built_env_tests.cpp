@@ -9,8 +9,8 @@
 #include "reboot/process/log_string.hpp"
 #include "reboot/process/wiping_launch.hpp"
 
-using namespace reboot;
-using namespace reboot::process;
+using namespace rb;
+using namespace rb::process;
 
 namespace {
 

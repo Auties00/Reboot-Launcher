@@ -2,8 +2,8 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 enum class SessionKind : u8 { Play, Host };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

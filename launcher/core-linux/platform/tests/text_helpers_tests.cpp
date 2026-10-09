@@ -12,8 +12,8 @@
 #include "update_entries.hpp"
 
 using namespace std::string_view_literals;
-using reboot::u8;
-using namespace reboot::os_linux::platform;
+using rb::u8;
+using namespace rb::os_linux::platform;
 
 TEST_CASE("base64 round trips and refuses non-canonical text", "[base64]") {
     const std::vector<u8> bytes{0x00, 0xFF, 0x10, 0x80, 0x7F};

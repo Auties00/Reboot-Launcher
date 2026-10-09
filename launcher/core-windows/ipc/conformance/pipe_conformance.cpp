@@ -37,8 +37,8 @@
 
 namespace {
 
-using namespace reboot;
-using namespace reboot::os_windows::ipc;
+using namespace rb;
+using namespace rb::os_windows::ipc;
 using namespace std::chrono_literals;
 
 constexpr std::chrono::milliseconds kBudget{5000};

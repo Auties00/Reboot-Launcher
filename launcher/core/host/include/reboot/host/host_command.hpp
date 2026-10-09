@@ -7,7 +7,7 @@
 #include "reboot/host/host_ban.hpp"
 #include "reboot/host/ip_cidr.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Stored in the session's profile first, so the next start keeps them, then sent to the server.
 struct ReplaceBans {
@@ -22,4 +22,4 @@ struct ReplaceOperators {
 using HostCommand = std::variant<gameserver::StartMatch, gameserver::EndMatch, gameserver::ResetMatch, gameserver::Kick,
                                  ReplaceBans, ReplaceOperators, gameserver::RunCommand>;
 
-}  // namespace reboot::host
+}  // namespace rb::host

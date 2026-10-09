@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "wire/messages.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // Our enums mirror rbsb/1's values one to one.
 [[nodiscard]] constexpr sb::wire::Region to_wire(Region region) noexcept {
@@ -49,4 +49,4 @@ namespace reboot::browser {
         std::chrono::duration_cast<std::chrono::system_clock::duration>(edge - clock_offset));
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

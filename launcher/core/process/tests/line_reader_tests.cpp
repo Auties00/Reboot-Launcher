@@ -7,8 +7,8 @@
 
 #include "reboot/process/line_reader.hpp"
 
-using namespace reboot;
-using namespace reboot::process;
+using namespace rb;
+using namespace rb::process;
 
 namespace {
 

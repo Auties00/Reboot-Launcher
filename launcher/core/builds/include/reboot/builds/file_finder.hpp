@@ -10,7 +10,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 struct FindOptions {
     // Directories deeper than this below the root are not entered.
@@ -55,4 +55,4 @@ private:
     FindOptions options_;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

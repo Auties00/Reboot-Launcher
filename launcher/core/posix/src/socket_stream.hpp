@@ -14,7 +14,7 @@
 #include "reboot/posix/unique_fd.hpp"
 #include "socket_fds.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // IByteStream over one connected AF_UNIX socket whose peer PeerCredentialCheck already verified.
 // Reading and on_close run on a thread the stream owns; write() and close() are thread-safe.
@@ -75,4 +75,4 @@ private:
     std::thread thread_;
 };
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

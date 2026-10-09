@@ -12,7 +12,7 @@
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -311,4 +311,4 @@ Result<void> LibsecretSecretStore::erase(std::string_view key) {
     return impl_->clear_file(key);
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

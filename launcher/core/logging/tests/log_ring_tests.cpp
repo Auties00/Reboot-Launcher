@@ -6,8 +6,8 @@
 #include "reboot/logging/log_ring.hpp"
 #include "reboot/logging/wine_log_files.hpp"
 
-using namespace reboot;
-using namespace reboot::logging;
+using namespace rb;
+using namespace rb::logging;
 
 namespace {
 

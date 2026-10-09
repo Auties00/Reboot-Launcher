@@ -4,7 +4,7 @@
 #include <bit>
 #include <cstddef>
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -118,4 +118,4 @@ bool constant_time_equal(std::span<const u8> a, std::span<const u8> b) noexcept 
     return diff == 0;
 }
 
-}  // namespace reboot
+}  // namespace rb

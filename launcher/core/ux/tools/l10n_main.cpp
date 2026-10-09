@@ -17,8 +17,8 @@
 namespace {
 
 namespace fs = std::filesystem;
-using reboot::ux::CatalogIssue;
-using reboot::ux::CatalogIssueKind;
+using rb::ux::CatalogIssue;
+using rb::ux::CatalogIssueKind;
 
 [[nodiscard]] std::string_view kind_name(CatalogIssueKind kind) {
     switch (kind) {
@@ -40,7 +40,7 @@ using reboot::ux::CatalogIssueKind;
     return std::move(text).str();
 }
 
-void print(const reboot::Diagnostic& diag) {
+void print(const rb::Diagnostic& diag) {
     std::cerr << diag.id;
     if (diag.detail) std::cerr << ": " << *diag.detail;
     std::cerr << '\n';
@@ -72,7 +72,7 @@ void print(const reboot::Diagnostic& diag) {
             const std::size_t end = text.find('"', i + 1);
             if (end == std::string_view::npos) continue;
             const std::string_view id = text.substr(i + 1, end - i - 1);
-            if (reboot::domain_from_id(id) != reboot::ErrorDomain::Unknown && id.find('.') != std::string_view::npos)
+            if (rb::domain_from_id(id) != rb::ErrorDomain::Unknown && id.find('.') != std::string_view::npos)
                 ids.emplace_back(id);
         }
     };
@@ -98,8 +98,8 @@ void print(const reboot::Diagnostic& diag) {
             const std::optional<std::string> text = read_file(entry.path());
             if (!text) continue;
             for (const std::string& id : literal_ids(*text)) {
-                const auto registry = reboot::message_registry();
-                if (std::ranges::any_of(registry, [&id](const reboot::MessageSpec* spec) { return spec->id == id; }))
+                const auto registry = rb::message_registry();
+                if (std::ranges::any_of(registry, [&id](const rb::MessageSpec* spec) { return spec->id == id; }))
                     continue;
                 std::cout << "unregistered " << id << ": used in " << fs::relative(entry.path(), root).generic_string()
                           << '\n';
@@ -116,12 +116,12 @@ void print(const reboot::Diagnostic& diag) {
         std::cerr << "usage: reboot-l10n render <catalog.json>\n       reboot-l10n check <catalog.json> [<root>]\n";
         return 2;
     }
-    const reboot::ux::MessageCatalogExport exporter(reboot::message_registry());
+    const rb::ux::MessageCatalogExport exporter(rb::message_registry());
     const fs::path catalog_path{std::string(args[1])};
     const std::optional<std::string> existing = read_file(catalog_path);
 
     if (args[0] == "render") {
-        const reboot::Result<std::string> rendered =
+        const rb::Result<std::string> rendered =
             exporter.render(existing ? std::optional<std::string_view>(*existing) : std::nullopt);
         if (!rendered) {
             print(rendered.error());
@@ -140,7 +140,7 @@ void print(const reboot::Diagnostic& diag) {
         std::cerr << "cannot read " << catalog_path.generic_string() << '\n';
         return 2;
     }
-    const reboot::Result<std::vector<CatalogIssue>> issues = exporter.check(*existing);
+    const rb::Result<std::vector<CatalogIssue>> issues = exporter.check(*existing);
     if (!issues) {
         print(issues.error());
         return 2;

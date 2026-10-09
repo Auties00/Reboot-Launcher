@@ -21,7 +21,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "url.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -800,4 +800,4 @@ Result<void> ResumableDownloader::start(DownloadRequest request, CancelToken tok
     return {};
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

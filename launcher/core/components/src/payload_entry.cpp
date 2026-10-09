@@ -2,7 +2,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 Result<void> check_payload_abi(const PayloadEntry& entry) {
     if (entry.payload_abi == VersionStreams::payload_abi) return {};
@@ -14,4 +14,4 @@ Result<void> check_payload_abi(const PayloadEntry& entry) {
         .fail();
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

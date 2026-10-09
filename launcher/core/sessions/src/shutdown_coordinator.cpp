@@ -11,7 +11,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/sessions/shutdown_budget.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 namespace {
 
@@ -131,4 +131,4 @@ void ShutdownCoordinator::run(ShutdownCause cause, UniqueFunction<void(const Shu
 
 bool ShutdownCoordinator::started() const noexcept { return state_->cause.has_value(); }
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

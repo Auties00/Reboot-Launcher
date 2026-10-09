@@ -2,7 +2,7 @@
 
 #include "os_version.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -37,4 +37,4 @@ std::string native_arch() {
     }
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

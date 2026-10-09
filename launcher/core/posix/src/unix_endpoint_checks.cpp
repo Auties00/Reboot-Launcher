@@ -8,7 +8,7 @@
 #include "owner_only_directory.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 std::size_t sun_path_capacity() noexcept { return sizeof(sockaddr_un::sun_path); }
 
@@ -55,4 +55,4 @@ Result<void> ensure_private_directory(const NativePath& directory, u32 uid) {
     return check_private_directory(directory, uid);
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

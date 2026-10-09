@@ -24,7 +24,7 @@
 #include "systemd_user.hpp"
 #include "text_files.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -482,4 +482,4 @@ Result<void> LinuxIntegrationRegistrar::remove(ports::IntegrationKind kind) {
     return Registrar(paths_, root_hash16_, data_root_override_).remove(kind);
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

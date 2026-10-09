@@ -19,7 +19,7 @@
 
 extern char** environ;
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 // The output of a systemctl or systemd-run call that ran and exited 0.
@@ -112,4 +112,4 @@ Result<ports::StartResult> SystemdEngineStarter::ensure_started(const NativePath
     return ports::StartResult::Started;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

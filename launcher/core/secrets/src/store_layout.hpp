@@ -10,7 +10,7 @@
 #include "reboot/secrets/secret_kind.hpp"
 #include "reboot/secrets/secret_target.hpp"
 
-namespace reboot::secrets::detail {
+namespace rb::secrets::detail {
 
 // Kinds a Remember put may write to the store.
 [[nodiscard]] constexpr bool storable(SecretKind kind) noexcept { return retention_allowed(kind, Retention::Remember); }
@@ -33,4 +33,4 @@ private:
 // Lines that do not name a storable target are skipped.
 [[nodiscard]] std::set<SecretTarget> decode_index(std::span<const u8> bytes);
 
-}  // namespace reboot::secrets::detail
+}  // namespace rb::secrets::detail

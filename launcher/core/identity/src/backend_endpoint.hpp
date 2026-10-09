@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/net_types.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 // The endpoint as BackendTarget::normalize leaves it, the key of a BackendLogin. storage.invalid_host.
 [[nodiscard]] Result<HostPort> normalize_backend_endpoint(const HostPort& endpoint);
@@ -16,4 +16,4 @@ namespace reboot::identity {
 // identity.empty_remote_login for the backend at `endpoint`.
 [[nodiscard]] Diagnostic empty_login(const HostPort& endpoint);
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

@@ -24,9 +24,9 @@
 #include "reboot/trust/signed_document.hpp"
 #include "reboot/trust/signed_document_kind.hpp"
 
-using namespace reboot;
-using namespace reboot::engine;
-using namespace reboot::engine::test;
+using namespace rb;
+using namespace rb::engine;
+using namespace rb::engine::test;
 using namespace std::chrono_literals;
 
 namespace {

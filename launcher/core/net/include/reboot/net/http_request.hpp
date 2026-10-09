@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 enum class HttpMethod : u8 { Get, Head, Post, Put, Delete };
 
@@ -68,4 +68,4 @@ struct HttpRequest {
     std::size_t max_body = kHttpDefaultMaxBody;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

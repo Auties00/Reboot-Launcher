@@ -13,7 +13,7 @@
 #include "path_text.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -192,4 +192,4 @@ bool LayoutResolver::still_valid(const BuildLayout& layout) const {
     return true;
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

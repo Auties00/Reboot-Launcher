@@ -9,7 +9,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class DiskOperation : u8 { Volumes, VolumeOf };
 
@@ -34,4 +34,4 @@ private:
     FaultPlan<DiskOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

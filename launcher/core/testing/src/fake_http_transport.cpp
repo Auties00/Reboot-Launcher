@@ -15,7 +15,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 using Handler = UniqueFunction<FakeHttpResponse(const ports::HttpRequest&)>;
@@ -266,4 +266,4 @@ std::size_t FakeHttpTransport::in_flight() const {
     return state_->in_flight;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

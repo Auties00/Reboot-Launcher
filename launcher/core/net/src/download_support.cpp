@@ -4,7 +4,7 @@
 
 #include "reboot/net/http_response.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -87,4 +87,4 @@ std::optional<ResumeSidecar> decode_sidecar(std::span<const u8> bytes) {
     return out;
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

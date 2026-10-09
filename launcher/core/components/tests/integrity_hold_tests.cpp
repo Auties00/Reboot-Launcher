@@ -7,12 +7,12 @@
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 
-using namespace reboot;
-using namespace reboot::components;
-using reboot::components::test::arg_text;
-using reboot::components::test::bytes_of;
-using reboot::testing::FsOperation;
-using reboot::testing::InMemoryFileSystem;
+using namespace rb;
+using namespace rb::components;
+using rb::components::test::arg_text;
+using rb::components::test::bytes_of;
+using rb::testing::FsOperation;
+using rb::testing::InMemoryFileSystem;
 
 namespace {
 

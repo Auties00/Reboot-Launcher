@@ -5,7 +5,7 @@
 #include "play_env.hpp"
 #include "reboot/play/match_targets.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 PlaySessionDriver::PlaySessionDriver(PlaySessionReleases releases, PlaySessionHooks hooks)
     : releases_(releases), hooks_(std::move(hooks)) {}
@@ -66,4 +66,4 @@ void PlaySessionDriver::release() {
     preflight_.reset();
 }
 
-}  // namespace reboot::play
+}  // namespace rb::play

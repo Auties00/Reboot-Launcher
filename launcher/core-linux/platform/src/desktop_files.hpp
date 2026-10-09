@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // The keys of a .desktop file's [Desktop Entry] group this package reads, values unescaped.
 struct DesktopEntryKeys {
@@ -46,4 +46,4 @@ struct DesktopEntryKeys {
 [[nodiscard]] std::string mimeapps_with_default(std::string_view text, std::string_view mime,
                                                 const std::optional<std::string>& desktop_id);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

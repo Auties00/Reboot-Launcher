@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // ICallerContextProbe with a context the test sets, e.g. another OS session or an elevated caller,
@@ -28,4 +28,4 @@ private:
     std::vector<u32> foreground_allowed_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

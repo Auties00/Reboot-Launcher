@@ -1,6 +1,6 @@
 #include "reboot/gameserver/socket_role.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 std::vector<SocketRole> socket_roles(const GameServerDescription& description) {
     std::vector<SocketRole> roles;
@@ -9,4 +9,4 @@ std::vector<SocketRole> socket_roles(const GameServerDescription& description) {
     return roles;
 }
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

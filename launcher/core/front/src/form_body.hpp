@@ -8,7 +8,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 struct FormField {
     std::string name;
@@ -31,4 +31,4 @@ public:
 
 void append_form_field(std::vector<u8>& out, std::string_view name, std::string_view value);
 
-}  // namespace reboot::front
+}  // namespace rb::front

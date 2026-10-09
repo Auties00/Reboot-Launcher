@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // Values match rbsb/1; Unknown on an entry is All in a filter.
 enum class Region : u8 { All, Africa, Antarctica, Asia, Europe, NorthAmerica, Oceania, SouthAmerica };
@@ -47,4 +47,4 @@ struct ViewSpec {
     [[nodiscard]] Result<void> validate() const;
 };
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

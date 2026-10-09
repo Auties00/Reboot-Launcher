@@ -21,7 +21,7 @@
 #include "reboot/process/child_supervisor.hpp"
 #include "reboot/process/process_spec.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 namespace {
 
@@ -468,4 +468,4 @@ std::span<const BoundSocket> GameServerProcess::bound() const noexcept { return 
 
 std::span<const Player> GameServerProcess::players() const noexcept { return impl_->players; }
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

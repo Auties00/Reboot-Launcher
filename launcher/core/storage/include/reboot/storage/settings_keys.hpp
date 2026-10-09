@@ -17,7 +17,7 @@
 // Capabilities: settings-storage.game-store, settings-storage.backend-store, settings-storage.dll-store,
 // settings-storage.app-store.
 // Every key, in display order.
-namespace reboot::storage {
+namespace rb::storage {
 
 // "system" or a well-formed BCP 47 tag, kept as written; storage.invalid_language_tag.
 [[nodiscard]] Result<std::string> validate_language_tag(std::string tag);
@@ -126,4 +126,4 @@ inline constexpr std::array<const AnyKey*, 14> kAll{
 
 }  // namespace keys
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

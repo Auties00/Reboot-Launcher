@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Not an API event: the embedded backend saw the session log in, a fallback LoggedIn for
 // sessions without our client DLL. BackendProcess maps the reported session key back to the
@@ -14,4 +14,4 @@ struct LoginObservedEvent {
     std::string account_id;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

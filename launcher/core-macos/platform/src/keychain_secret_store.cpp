@@ -16,7 +16,7 @@
 // File-based keychains have only the SecKeychain and SecAccess APIs, which Apple marks deprecated.
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -206,4 +206,4 @@ Result<void> KeychainSecretStore::erase(std::string_view key) {
     return keychain_erase(service_, key, keychain.ref.get());
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

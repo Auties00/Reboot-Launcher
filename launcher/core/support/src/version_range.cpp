@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::support {
+namespace rb::support {
 
 bool VersionRange::contains(const GameVersion& version, std::optional<Changelist> cl) const noexcept {
     if (version < min) return false;
@@ -16,4 +16,4 @@ bool VersionRange::contains(const GameVersion& version, std::optional<Changelist
                                [&](const ChangelistRange& range) { return range.first <= *cl && *cl <= range.last; });
 }
 
-}  // namespace reboot::support
+}  // namespace rb::support

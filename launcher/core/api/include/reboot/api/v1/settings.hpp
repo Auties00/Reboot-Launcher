@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class SettingGroup : u32 {
     Play = 0,
@@ -277,16 +277,16 @@ class ISettingsHandler {
 public:
     virtual ~ISettingsHandler() = default;
 
-    virtual ::reboot::Result<SettingsSnapshotResponse> snapshot(const CallContext& context, const SettingsSnapshotRequest& request) = 0;
-    virtual ::reboot::Result<SettingsPatchResponse> patch(const CallContext& context, const SettingsPatchRequest& request) = 0;
-    virtual ::reboot::Result<SettingsResetResponse> reset(const CallContext& context, const SettingsResetRequest& request) = 0;
-    virtual ::reboot::Result<SettingsSearchResponse> search(const CallContext& context, const SettingsSearchRequest& request) = 0;
-    virtual ::reboot::Result<SettingsFrontendStateGetResponse> frontend_state_get(const CallContext& context, const SettingsFrontendStateGetRequest& request) = 0;
-    virtual ::reboot::Result<SettingsFrontendStatePutResponse> frontend_state_put(const CallContext& context, const SettingsFrontendStatePutRequest& request) = 0;
-    virtual ::reboot::Result<SettingsLanguagesResponse> languages(const CallContext& context, const SettingsLanguagesRequest& request) = 0;
-    virtual ::reboot::Result<SettingsDescriptorsResponse> descriptors(const CallContext& context, const SettingsDescriptorsRequest& request) = 0;
-    virtual ::reboot::Result<SettingsConsoleKeysResponse> console_keys(const CallContext& context, const SettingsConsoleKeysRequest& request) = 0;
-    virtual ::reboot::Result<SettingsConsoleKeyFromNativeResponse> console_key_from_native(const CallContext& context, const SettingsConsoleKeyFromNativeRequest& request) = 0;
+    virtual ::rb::Result<SettingsSnapshotResponse> snapshot(const CallContext& context, const SettingsSnapshotRequest& request) = 0;
+    virtual ::rb::Result<SettingsPatchResponse> patch(const CallContext& context, const SettingsPatchRequest& request) = 0;
+    virtual ::rb::Result<SettingsResetResponse> reset(const CallContext& context, const SettingsResetRequest& request) = 0;
+    virtual ::rb::Result<SettingsSearchResponse> search(const CallContext& context, const SettingsSearchRequest& request) = 0;
+    virtual ::rb::Result<SettingsFrontendStateGetResponse> frontend_state_get(const CallContext& context, const SettingsFrontendStateGetRequest& request) = 0;
+    virtual ::rb::Result<SettingsFrontendStatePutResponse> frontend_state_put(const CallContext& context, const SettingsFrontendStatePutRequest& request) = 0;
+    virtual ::rb::Result<SettingsLanguagesResponse> languages(const CallContext& context, const SettingsLanguagesRequest& request) = 0;
+    virtual ::rb::Result<SettingsDescriptorsResponse> descriptors(const CallContext& context, const SettingsDescriptorsRequest& request) = 0;
+    virtual ::rb::Result<SettingsConsoleKeysResponse> console_keys(const CallContext& context, const SettingsConsoleKeysRequest& request) = 0;
+    virtual ::rb::Result<SettingsConsoleKeyFromNativeResponse> console_key_from_native(const CallContext& context, const SettingsConsoleKeyFromNativeRequest& request) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

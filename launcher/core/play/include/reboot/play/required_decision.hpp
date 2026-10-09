@@ -5,7 +5,7 @@
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/secrets/secret_target.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // Covers game-launch.orchestration.
 // A question start() is expected to raise, so a UI or the CLI can prepare its answer, or put the
@@ -20,4 +20,4 @@ struct RequiredDecision {
     bool operator==(const RequiredDecision&) const = default;
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

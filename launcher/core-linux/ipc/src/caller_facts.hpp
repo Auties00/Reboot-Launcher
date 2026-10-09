@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // What LinuxCallerContext::detect reads from the process.
 struct CallerFacts {
@@ -23,4 +23,4 @@ struct CallerFacts {
 // The rules LinuxCallerContext documents, over facts already read.
 [[nodiscard]] ports::CallerContext caller_context_from(const CallerFacts& facts);
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

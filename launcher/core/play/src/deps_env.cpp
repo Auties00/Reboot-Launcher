@@ -19,7 +19,7 @@
 #include "reboot/injection/dll_path_validator.hpp"
 #include "reboot/storage/settings.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 storage::SettingsSnapshot DepsEnv::settings() const { return deps_.settings.snapshot(); }
 
@@ -215,4 +215,4 @@ void DepsEnv::mark_good(const Preflight& preflight) {
     if (auto* wine = std::get_if<WineRunner>(&deps_.runner)) wine->runtime.mark_good(preflight.wine->runtime);
 }
 
-}  // namespace reboot::play
+}  // namespace rb::play

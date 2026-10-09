@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 class IBackendHandler;
 class IBrowserHandler;
@@ -58,13 +58,13 @@ struct Handlers {
 };
 
 // Decodes the request, runs the CALL method and encodes its response.
-[[nodiscard]] ::reboot::Result<Bytes> dispatch_call(const Handlers& handlers, const CallContext& context, u32 method_id, std::span<const u8> request);
+[[nodiscard]] ::rb::Result<Bytes> dispatch_call(const Handlers& handlers, const CallContext& context, u32 method_id, std::span<const u8> request);
 
 // Decodes the request and starts the OPERATION; no `disconnect` means the method's default.
-[[nodiscard]] ::reboot::Result<::reboot::OpHandle> dispatch_start(const Handlers& handlers, const CallContext& context, u32 method_id, std::span<const u8> request, std::optional<::reboot::DisconnectPolicy> disconnect);
+[[nodiscard]] ::rb::Result<::rb::OpHandle> dispatch_start(const Handlers& handlers, const CallContext& context, u32 method_id, std::span<const u8> request, std::optional<::rb::DisconnectPolicy> disconnect);
 
 // Encodes the value an operation completed with: the method's response message, or an empty
 // any (Operation<void>) when that message has no fields. Anything else is the engine's bug.
-[[nodiscard]] ::reboot::Result<Bytes> encode_op_result(u32 method_id, const std::any& value);
+[[nodiscard]] ::rb::Result<Bytes> encode_op_result(u32 method_id, const std::any& value);
 
-}  // namespace reboot::api
+}  // namespace rb::api

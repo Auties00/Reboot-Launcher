@@ -26,7 +26,7 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 
-namespace reboot::compat::test {
+namespace rb::compat::test {
 
 [[nodiscard]] inline std::string arg_text(const Diagnostic& diag, std::string_view name) {
     const Arg* arg = diag.find_arg(name);
@@ -171,4 +171,4 @@ inline void write_file(const NativePath& path, std::string_view text) {
     return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
 }
 
-}  // namespace reboot::compat::test
+}  // namespace rb::compat::test

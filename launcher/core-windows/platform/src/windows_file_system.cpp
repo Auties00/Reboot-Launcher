@@ -16,7 +16,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -294,4 +294,4 @@ Result<void> WindowsFileSystem::create_dirs_owner_only(const NativePath& path) {
 
 Result<void> WindowsFileSystem::remove_tree(const NativePath& path) { return remove_entry(path); }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

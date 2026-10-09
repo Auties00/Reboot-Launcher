@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -64,4 +64,4 @@ bool environ_block_has(std::string_view block, std::string_view name) noexcept {
     return false;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

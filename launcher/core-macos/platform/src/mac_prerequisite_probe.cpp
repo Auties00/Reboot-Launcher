@@ -27,7 +27,7 @@
 #include "run_program.hpp"
 #include "sysctl_value.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -182,4 +182,4 @@ Result<void> MacPrerequisiteProbe::remediate(std::string_view id) {
         .fail();
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

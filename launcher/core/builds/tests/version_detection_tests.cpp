@@ -14,8 +14,8 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/testing/golden.hpp"
 
-using namespace reboot;
-using namespace reboot::builds;
+using namespace rb;
+using namespace rb::builds;
 
 namespace {
 

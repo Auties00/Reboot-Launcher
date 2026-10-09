@@ -12,11 +12,11 @@
 #include "reboot/host/host_profiles_document.hpp"
 #include "reboot/storage/document_store.hpp"
 
-namespace reboot {
+namespace rb {
 class IRandom;
 }
 
-namespace reboot::host {
+namespace rb::host {
 
 // Capabilities: settings-storage.hosting-store.
 // Strand-only, over data/host-profiles.json; the engine is its only writer. Every write is one
@@ -65,4 +65,4 @@ private:
     std::optional<HostListing> default_listing_;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

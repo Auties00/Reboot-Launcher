@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -157,4 +157,4 @@ void RouteTable::end_stop() {
     drained_ = nullptr;
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

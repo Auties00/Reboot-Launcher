@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::process::msg {
+namespace rb::process::msg {
 
 REBOOT_MESSAGE(kEnvInvalidName, "process.env_invalid_name",
                "The environment variable name {name} from the {layer} layer is not valid");
@@ -40,4 +40,4 @@ REBOOT_MESSAGE(kReapFailed, "process.reap_failed", "Cannot stop process {pid} le
 REBOOT_MESSAGE(kReapCancelled, "process.reap_cancelled",
                "Process {pid} left behind by the previous engine was not checked before startup was cancelled");
 
-}  // namespace reboot::process::msg
+}  // namespace rb::process::msg

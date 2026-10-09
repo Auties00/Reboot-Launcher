@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 enum class CatalogErrorCode : u8 {
     // Transport failure; `cause` holds the net diagnostic.
@@ -38,4 +38,4 @@ struct CatalogError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const CatalogError& error);
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

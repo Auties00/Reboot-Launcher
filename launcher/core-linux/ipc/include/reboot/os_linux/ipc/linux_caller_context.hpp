@@ -5,7 +5,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // Covers no capability ids; ICallerContextProbe for the process that loaded reboot_client.
 class LinuxCallerContext final : public ports::ICallerContextProbe {
@@ -30,4 +30,4 @@ private:
     ports::CallerContext context_;
 };
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

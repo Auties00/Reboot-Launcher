@@ -7,13 +7,13 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class Redactor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::logging {
+namespace rb::logging {
 
 struct LogExportRequest {
     // An existing file is replaced only once the archive is complete.
@@ -48,4 +48,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

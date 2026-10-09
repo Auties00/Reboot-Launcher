@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 namespace {
 
@@ -44,4 +44,4 @@ Diagnostic to_diagnostic(const EntryError& error) {
     return internal_bug("integration::to_diagnostic(EntryError)");
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

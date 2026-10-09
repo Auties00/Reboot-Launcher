@@ -15,11 +15,11 @@
 #include "reboot/testing/fake_http_transport.hpp"
 #include "reboot/testing/fake_random.hpp"
 
-using namespace reboot;
-using namespace reboot::net;
+using namespace rb;
+using namespace rb::net;
 using namespace std::chrono_literals;
-using reboot::net::test::bytes_of;
-using reboot::testing::FakeHttpResponse;
+using rb::net::test::bytes_of;
+using rb::testing::FakeHttpResponse;
 
 namespace {
 

@@ -2,8 +2,8 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 enum class UrlScheme : u8 { Http, Https };
 
-}  // namespace reboot::net
+}  // namespace rb::net

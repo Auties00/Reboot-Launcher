@@ -11,7 +11,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 struct ExtractRequest {
     NativePath archive;
@@ -51,4 +51,4 @@ public:
                                            UniqueFunction<void(const ExtractProgress&)> on_progress) = 0;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

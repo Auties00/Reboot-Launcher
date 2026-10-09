@@ -8,7 +8,7 @@
 #include "reboot/game_channel/game_lifecycle_event.hpp"
 #include "reboot/game_channel/lifecycle_markers.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 enum class OutputSource : u8 { Stdout, Stderr, UeLog };
 
@@ -35,4 +35,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

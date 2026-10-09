@@ -10,7 +10,7 @@
 #include "reboot/ports/ipc.hpp"
 
 // The decisions of SmAppServiceEngineStarter, apart from the calls that feed them.
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // SMAppServiceStatus.
 enum class AgentStatus : u8 { NotRegistered, Enabled, RequiresApproval, NotFound };
@@ -48,4 +48,4 @@ struct LaunchctlRun {
 // platform.agent_register_timed_out, retryable.
 [[nodiscard]] Diagnostic agent_register_timed_out(std::string_view label, std::chrono::milliseconds deadline);
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

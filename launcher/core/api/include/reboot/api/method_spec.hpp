@@ -5,7 +5,7 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class MethodKind : u8 { Call, Operation };
 
@@ -26,4 +26,4 @@ struct MethodSpec {
     std::string_view response_type;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

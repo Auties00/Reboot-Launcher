@@ -12,7 +12,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "registry/validation.hpp"
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -140,4 +140,4 @@ std::string GameVersion::canonical() const {
 
 u32 GameVersion::bucket() const { return sb::registry::version_bucket(canonical()); }
 
-}  // namespace reboot
+}  // namespace rb

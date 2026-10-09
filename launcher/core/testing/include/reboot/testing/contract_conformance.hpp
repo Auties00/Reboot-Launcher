@@ -12,7 +12,7 @@
 #include "reboot/testing/conformance_report.hpp"
 #include "reboot/testing/conformance_waiter.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // reboot-fake-backend or reboot-fake-game-server now; reboot-backend and reboot-game-server later.
 struct ContractSubject {
@@ -61,4 +61,4 @@ private:
     ContractTiming timing_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -6,7 +6,7 @@
 #include "form_body.hpp"
 #include "reboot/foundation/sha256.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -73,4 +73,4 @@ void TicketExchange::settle(std::optional<u32> upstream_status) noexcept {
     state_ = success ? TicketState::Spent : TicketState::Available;
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

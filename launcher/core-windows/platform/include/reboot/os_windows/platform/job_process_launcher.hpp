@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; IProcessLauncher for native children (backend, game server).
 class JobProcessLauncher final : public ports::IProcessLauncher {
@@ -19,4 +19,4 @@ public:
     Result<void> kill(u32 pid, std::chrono::system_clock::time_point created) override;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

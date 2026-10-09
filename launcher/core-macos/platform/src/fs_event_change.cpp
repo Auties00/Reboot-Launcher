@@ -1,6 +1,6 @@
 #include "fs_event_change.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 std::optional<ports::FileChange> fs_event_change(const NativePath& watched, const NativePath& watched_real,
                                                  std::string_view event_path, FsEventFlags flags, bool exists) {
@@ -21,4 +21,4 @@ std::optional<ports::FileChange> fs_event_change(const NativePath& watched, cons
     return ports::FileChange{watched / path.filename(), kind};
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

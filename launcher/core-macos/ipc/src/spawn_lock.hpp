@@ -4,7 +4,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // Creates every missing component of the absolute `directory` 0700; existing ones stay as they are.
 [[nodiscard]] Result<void> create_private_dirs(const NativePath& directory);
@@ -13,4 +13,4 @@ namespace reboot::os_macos::ipc {
 // until the fd closes.
 [[nodiscard]] Result<posix::UniqueFd> lock_exclusive(const NativePath& path);
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

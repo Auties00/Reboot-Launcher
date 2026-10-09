@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // - VanishedAfterDownload: a downloaded file in .staging vanished or became unreadable before its
 //   hash, the usual Defender quarantine on write-close.
@@ -53,4 +53,4 @@ struct ComponentProblem {
 // helper_vanished.
 [[nodiscard]] Diagnostic to_diagnostic(const ComponentProblem& problem);
 
-}  // namespace reboot::components
+}  // namespace rb::components

@@ -8,7 +8,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 Result<void> FakeShell::open_url(std::string_view https_url) {
     if (auto error = faults_.take(ShellOperation::OpenUrl)) return std::unexpected(std::move(*error));
@@ -65,4 +65,4 @@ std::vector<NativePath> FakeShell::trashed() const {
     return trashed_;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

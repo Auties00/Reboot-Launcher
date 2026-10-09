@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -52,4 +52,4 @@ bool link_stays_inside(std::string_view entry, std::string_view target) {
     return true;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

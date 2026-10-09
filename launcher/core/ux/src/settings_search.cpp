@@ -5,7 +5,7 @@
 
 #include "ascii.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -84,4 +84,4 @@ std::vector<SettingMatch> SettingsSearch::search(std::string_view query, const M
     return matches;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

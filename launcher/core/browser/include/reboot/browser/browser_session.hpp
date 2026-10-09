@@ -16,24 +16,24 @@
 #include "reboot/foundation/types.hpp"
 #include "wire/messages.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IClock;
 class IRandom;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IQuicTransport;
 }
 
-namespace reboot::net {
+namespace rb::net {
 class AddressResolver;
 class HttpClient;
-}  // namespace reboot::net
+}  // namespace rb::net
 
-namespace reboot::browser {
+namespace rb::browser {
 
 class BrowserSession;
 
@@ -165,4 +165,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

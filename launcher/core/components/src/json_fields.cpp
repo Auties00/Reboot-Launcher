@@ -8,7 +8,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/sha256.hpp"
 
-namespace reboot::components::json_fields {
+namespace rb::components::json_fields {
 
 namespace json = boost::json;
 
@@ -175,4 +175,4 @@ Result<std::optional<ManifestPlatform>> read_platform(const Reader& in) {
     return std::optional<ManifestPlatform>(ManifestPlatform{*known_os, *known_arch});
 }
 
-}  // namespace reboot::components::json_fields
+}  // namespace rb::components::json_fields

@@ -11,7 +11,7 @@
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 constexpr std::string_view kTcpScheme = "tcp://";
@@ -155,4 +155,4 @@ Result<GameControlBootstrap> read_own_game_control_bootstrap() {
     return read_game_control_bootstrap(env);
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

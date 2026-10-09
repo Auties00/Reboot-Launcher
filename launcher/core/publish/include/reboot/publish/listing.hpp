@@ -2,7 +2,7 @@
 
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // Capabilities: hosting.+19, hosting.+64, hosting.+80.
 // storage owns the persisted names; Unlisted entries stay joinable by link or id through Resolve.
@@ -13,4 +13,4 @@ using Listing = storage::HostListing;
     return listing == Listing::Unlisted || restarting;
 }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

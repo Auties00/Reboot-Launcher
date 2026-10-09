@@ -6,8 +6,8 @@
 #include "reboot/storage/resume_document.hpp"
 #include "reboot/updates/resume_record.hpp"
 
-using namespace reboot;
-using namespace reboot::updates;
+using namespace rb;
+using namespace rb::updates;
 using contracts::ipc::ClientKind;
 using contracts::ipc::EngineOrigin;
 

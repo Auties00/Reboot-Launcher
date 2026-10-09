@@ -12,12 +12,12 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IClock;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::logging {
+namespace rb::logging {
 
 class FileLogSink;
 
@@ -77,4 +77,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

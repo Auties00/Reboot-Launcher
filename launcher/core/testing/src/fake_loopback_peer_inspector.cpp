@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 Result<std::optional<u32>> FakeLoopbackPeerInspector::peer_uid(Endpoint local, Endpoint remote) {
     const std::scoped_lock lock(mutex_);
@@ -29,4 +29,4 @@ void FakeLoopbackPeerInspector::set_supported(bool supported) {
     supported_ = supported;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

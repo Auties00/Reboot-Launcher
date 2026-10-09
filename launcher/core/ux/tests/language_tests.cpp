@@ -8,8 +8,8 @@
 #include "reboot/ux/language_tag.hpp"
 #include "reboot/ux/resolve_language.hpp"
 
-using namespace reboot;
-using namespace reboot::ux;
+using namespace rb;
+using namespace rb::ux;
 
 namespace {
 

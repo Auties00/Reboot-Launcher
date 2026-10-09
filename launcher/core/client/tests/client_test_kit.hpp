@@ -36,7 +36,7 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/in_memory_ipc.hpp"
 
-namespace reboot::client::test {
+namespace rb::client::test {
 
 namespace wire = contracts::ipc;
 
@@ -313,4 +313,4 @@ struct LiveEngine {
     std::thread thread;
 };
 
-}  // namespace reboot::client::test
+}  // namespace rb::client::test

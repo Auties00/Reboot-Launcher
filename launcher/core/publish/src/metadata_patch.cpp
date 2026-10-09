@@ -5,7 +5,7 @@
 #include "field_checks.hpp"
 #include "reboot/publish/field_limits.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 Result<MetadataPatch> fit_patch(MetadataPatch patch) {
     if (patch.name) {
@@ -25,4 +25,4 @@ Result<MetadataPatch> fit_patch(MetadataPatch patch) {
     return patch;
 }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

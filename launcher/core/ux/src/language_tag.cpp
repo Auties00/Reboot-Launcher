@@ -7,7 +7,7 @@
 #include "ascii.hpp"
 #include "messages.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -153,4 +153,4 @@ std::optional<LanguageTag> LanguageTag::from_os_locale(std::string_view locale) 
     return LanguageTag(std::move(*canonical));
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

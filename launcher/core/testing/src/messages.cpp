@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::testing::msg {
+namespace rb::testing::msg {
 
 REBOOT_MESSAGE(kUnscriptedSpawn, "testing.unscripted_spawn", "Nothing is scripted for starting {exe}");
 REBOOT_MESSAGE(kNoHttpRoute, "testing.no_http_route", "No fake response is set for {method} {url}");
@@ -31,4 +31,4 @@ REBOOT_MESSAGE(kUnknownStream, "testing.unknown_stream", "Stream {stream} was ne
 REBOOT_MESSAGE(kRenameConflict, "testing.rename_conflict", "{account} already exists");
 REBOOT_MESSAGE(kSocketFailed, "testing.socket_failed", "{operation} failed for {endpoint}");
 
-}  // namespace reboot::testing::msg
+}  // namespace rb::testing::msg

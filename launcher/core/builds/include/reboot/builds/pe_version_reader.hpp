@@ -9,7 +9,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 class IByteSource;
 
@@ -32,4 +32,4 @@ public:
                                                                      const CancelToken& token) const;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

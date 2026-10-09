@@ -5,7 +5,7 @@
 #include "messages.hpp"
 #include "os_version.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 std::vector<ports::PrerequisiteStatus> WindowsPrerequisites::check() {
     const OsVersion version = read_os_version();
@@ -22,4 +22,4 @@ Result<void> WindowsPrerequisites::remediate(std::string_view id) {
     return make_diag(ErrorDomain::Platform, kNoRemediation).arg("id", id).kind(kind).fail();
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

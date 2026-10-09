@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::front::msg {
+namespace rb::front::msg {
 
 REBOOT_MESSAGE(kListenFailed, "front.listen_failed", "Could not open the game's loopback endpoint on {address}");
 REBOOT_MESSAGE(kNotStarted, "front.not_started", "The game's loopback endpoint is not running");
@@ -14,4 +14,4 @@ REBOOT_MESSAGE(kLegacyFixedCancelled, "front.legacy_fixed_cancelled",
                "Opening the fixed ports for session {session} was cancelled");
 REBOOT_MESSAGE(kUnexpectedAnswer, "front.unexpected_answer", "The answer does not fit the question about {origin}");
 
-}  // namespace reboot::front::msg
+}  // namespace rb::front::msg

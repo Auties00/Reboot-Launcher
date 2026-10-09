@@ -14,12 +14,12 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class IClock;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 struct CatalogFilter {
     // The GUI lists installable entries; the CLI validates names against all of them.
@@ -98,4 +98,4 @@ private:
     CancelSource alive_;
 };
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

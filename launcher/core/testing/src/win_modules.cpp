@@ -6,7 +6,7 @@ extern "C" __declspec(dllimport) void* __stdcall GetModuleHandleW(const wchar_t*
 extern "C" __declspec(dllimport) void* __stdcall LoadLibraryW(const wchar_t* file_name);
 #endif
 
-namespace reboot::testing::win_modules {
+namespace rb::testing::win_modules {
 
 bool loaded(const wchar_t* file_name) noexcept {
 #ifdef _WIN32
@@ -26,4 +26,4 @@ bool load(const wchar_t* path) noexcept {
 #endif
 }
 
-}  // namespace reboot::testing::win_modules
+}  // namespace rb::testing::win_modules

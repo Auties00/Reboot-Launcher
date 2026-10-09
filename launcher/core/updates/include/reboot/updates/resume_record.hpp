@@ -9,11 +9,11 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/updates/activity_probe.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 struct ResumeDocument;
 }
 
-namespace reboot::updates {
+namespace rb::updates {
 
 // state/resume.json: what the engine restores after `run --resume`. Taken once at the next start.
 struct ResumeRecord {
@@ -38,4 +38,4 @@ void store_resume_record(const ResumeRecord& record, storage::ResumeDocument& do
 // `run --resume`, keeping the origin.
 [[nodiscard]] std::vector<std::string> resume_args(contracts::ipc::EngineOrigin origin);
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

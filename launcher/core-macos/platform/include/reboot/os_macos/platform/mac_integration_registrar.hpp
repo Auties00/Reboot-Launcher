@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Agents in Contents/Library/LaunchAgents run Contents/MacOS/reboot-engine; label = name minus .plist.
 // KeepAlive{Crashed=true}: SuccessfulExit would imply RunAtLoad and start this agent at every login.
@@ -36,4 +36,4 @@ private:
     bool translocated_ = false;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

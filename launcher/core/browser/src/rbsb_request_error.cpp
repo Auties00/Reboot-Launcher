@@ -3,7 +3,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -46,4 +46,4 @@ Diagnostic to_diagnostic(const RbsbRequestError& error) {
     return make_diag(ErrorDomain::Browser, kConnectionLost).retryable();
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

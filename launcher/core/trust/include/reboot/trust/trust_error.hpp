@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/trust/signed_document_kind.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 enum class TrustErrorCode : u8 {
     SignatureMalformed,
@@ -32,4 +32,4 @@ struct TrustError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const TrustError& error);
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

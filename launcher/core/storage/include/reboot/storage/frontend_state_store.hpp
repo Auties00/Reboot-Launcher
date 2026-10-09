@@ -12,16 +12,16 @@
 #include "reboot/storage/load_report.hpp"
 #include "reboot/storage/shell_name.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::storage {
+namespace rb::storage {
 
 inline constexpr std::size_t kFrontendStateMaxBytes = 256u << 10;
 
@@ -48,4 +48,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

@@ -5,7 +5,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 // A DLL a session injects, with the digest the session host checks it against.
 struct PinnedDll {
@@ -15,4 +15,4 @@ struct PinnedDll {
     bool operator==(const PinnedDll&) const = default;
 };
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

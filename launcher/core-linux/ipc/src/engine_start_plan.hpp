@@ -9,7 +9,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "systemd_unit_state.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // The argv lists SystemdEngineStarter runs; argv[0] is looked up on PATH.
 
@@ -38,4 +38,4 @@ enum class SocketUnitAction { Skip, Start, Restart };
 [[nodiscard]] std::vector<std::string> systemd_run_argv(std::string_view unit, std::span<const std::string> pinned,
                                                         std::span<const std::string> command);
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 struct OsRelease {
     std::string name;
@@ -18,4 +18,4 @@ struct OsRelease {
 // Whether a NUL-separated environment block, as /proc/<pid>/environ holds it, sets `name`.
 [[nodiscard]] bool environ_block_has(std::string_view block, std::string_view name) noexcept;
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

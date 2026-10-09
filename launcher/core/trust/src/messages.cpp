@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 REBOOT_MESSAGE(kSignatureMalformed, "trust.signature_malformed", "The signature file of the {document} is malformed");
 REBOOT_MESSAGE(kUnknownKey, "trust.unknown_key",
@@ -15,4 +15,4 @@ REBOOT_MESSAGE(kCryptoFailure, "trust.crypto_failure", "OpenSSL failed while che
 REBOOT_MESSAGE(kDocumentExpired, "trust.document_expired",
                "The {document} expired {expired_for} ago; the last verified copy stays in use");
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

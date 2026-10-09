@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 ports::OsInfo FakeSystemInfo::os() const {
     const std::scoped_lock lock(mutex_);
@@ -37,4 +37,4 @@ void FakeSystemInfo::set(FakeSystemFacts facts) {
     facts_ = std::move(facts);
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

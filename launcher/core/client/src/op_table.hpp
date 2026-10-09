@@ -8,7 +8,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 struct OpPending {};
 struct OpUnknown {};
@@ -43,4 +43,4 @@ private:
     std::unordered_map<u64, Entry> ops_;
 };
 
-}  // namespace reboot::client
+}  // namespace rb::client

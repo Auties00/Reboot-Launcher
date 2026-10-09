@@ -3,7 +3,7 @@
 #include "reboot/components/component_ref.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 class ComponentStore;
 
@@ -34,4 +34,4 @@ private:
     SessionId session_;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

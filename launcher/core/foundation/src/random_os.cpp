@@ -19,7 +19,7 @@
 #include <unistd.h>
 #endif
 
-namespace reboot {
+namespace rb {
 
 void OsRandom::fill(std::span<u8> out) {
 #if defined(_WIN32)
@@ -41,4 +41,4 @@ void OsRandom::fill(std::span<u8> out) {
 #endif
 }
 
-}  // namespace reboot
+}  // namespace rb

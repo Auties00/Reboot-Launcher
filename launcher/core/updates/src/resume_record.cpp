@@ -4,7 +4,7 @@
 
 #include "reboot/storage/resume_document.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 namespace {
 
@@ -68,4 +68,4 @@ std::vector<std::string> resume_args(contracts::ipc::EngineOrigin origin) {
     return args;
 }
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

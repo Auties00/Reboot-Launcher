@@ -7,7 +7,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 // Which secret of a kind; held as canonical text so it doubles as the wire and store form.
 class SecretScope {
@@ -27,4 +27,4 @@ private:
     std::string text_;
 };
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

@@ -11,7 +11,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 namespace {
 
 // Lives in the module holding this code: reboot_client.dll for clients.
@@ -71,4 +71,4 @@ ports::InstallKind WindowsClientPaths::install_kind() const {
 
 std::optional<NativePath> WindowsClientPaths::velopack_package_dir() const { return velopack_root_; }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

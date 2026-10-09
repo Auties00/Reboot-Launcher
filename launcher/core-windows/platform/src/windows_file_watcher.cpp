@@ -14,7 +14,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -204,4 +204,4 @@ Result<ports::WatchHandle> WindowsFileWatcher::watch(const NativePath& dir, Uniq
     return ports::WatchHandle(std::make_unique<WatchToken>(std::move(watch)));
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

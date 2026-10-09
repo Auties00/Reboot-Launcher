@@ -22,8 +22,8 @@
 #include "reboot/logging/log_exporter.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 
-using namespace reboot;
-using namespace reboot::logging;
+using namespace rb;
+using namespace rb::logging;
 
 namespace {
 

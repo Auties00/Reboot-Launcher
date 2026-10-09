@@ -5,7 +5,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/integration/purge_scope.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 struct PurgeReport {
     PurgeScope scope{};
@@ -14,4 +14,4 @@ struct PurgeReport {
     std::vector<NativePath> absent;
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

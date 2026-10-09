@@ -8,7 +8,7 @@
 #include "reboot/front/upstream_origin.hpp"
 #include "reboot/net/url_scheme.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 struct Authority {
     std::string_view host;
@@ -28,4 +28,4 @@ struct Authority {
 
 [[nodiscard]] bool reaches_this_machine(const IpAddress& address) noexcept;
 
-}  // namespace reboot::front
+}  // namespace rb::front

@@ -8,7 +8,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 // Ticket: the game gets a session ticket that the front swaps. LegacyArgv: an opt-in, with a
 // warning, that puts the real password in argv for a custom auth DLL talking to a hosted backend.
@@ -28,4 +28,4 @@ struct BackendLogin {
     bool operator==(const BackendLogin&) const = default;
 };
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

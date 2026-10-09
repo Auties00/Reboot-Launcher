@@ -10,8 +10,8 @@
 #include "reboot/ux/notice_service.hpp"
 #include "test_support.hpp"
 
-using namespace reboot;
-using namespace reboot::ux;
+using namespace rb;
+using namespace rb::ux;
 using namespace std::chrono_literals;
 
 namespace {

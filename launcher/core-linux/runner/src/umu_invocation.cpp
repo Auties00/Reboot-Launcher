@@ -6,7 +6,7 @@
 #include "messages.hpp"
 #include "runtime_files.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 namespace {
 
@@ -83,4 +83,4 @@ Result<std::string> UmuInvocation::filesystems_rw(std::string_view inherited, st
     return joined;
 }
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

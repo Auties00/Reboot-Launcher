@@ -6,11 +6,11 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/ports/session_host.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids (win32session holds them); ISessionHost for native Windows play,
 // injecting from the engine process.
@@ -28,4 +28,4 @@ private:
     ports::IFileSystem& fs_;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

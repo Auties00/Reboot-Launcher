@@ -19,7 +19,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::net::test {
+namespace rb::net::test {
 
 // The strand beside real worker or I/O threads: they post from their threads, timed tasks follow
 // the ManualClock, and only the test thread runs anything.
@@ -119,4 +119,4 @@ private:
 
 [[nodiscard]] inline std::vector<u8> bytes_of(std::string_view text) { return {text.begin(), text.end()}; }
 
-}  // namespace reboot::net::test
+}  // namespace rb::net::test

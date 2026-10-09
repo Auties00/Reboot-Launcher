@@ -8,7 +8,7 @@
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/state_document.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Engine bookkeeping that StateDocument has no member for lives under these keys of its unknown
 // members, which every storage write keeps.
@@ -25,4 +25,4 @@ inline constexpr std::string_view kSerialsKey = "serials";
 Result<void> put_state_extra(storage::DocumentStore<storage::StateDocument>& state, std::string_view key,
                              boost::json::value value);
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

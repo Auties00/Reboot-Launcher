@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "win32.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // The engine process token's user SID, as a self-relative copy.
 class UserSid {
@@ -49,4 +49,4 @@ private:
     SECURITY_ATTRIBUTES attributes_{};
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

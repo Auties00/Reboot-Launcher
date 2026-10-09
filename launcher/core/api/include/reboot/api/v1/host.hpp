@@ -12,7 +12,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class Listing : u32 {
     Unlisted = 0,
@@ -568,21 +568,21 @@ class IHostHandler {
 public:
     virtual ~IHostHandler() = default;
 
-    virtual ::reboot::Result<HostProfilesListResponse> profiles_list(const CallContext& context, const HostProfilesListRequest& request) = 0;
-    virtual ::reboot::Result<HostProfilesCreateResponse> profiles_create(const CallContext& context, const HostProfilesCreateRequest& request) = 0;
-    virtual ::reboot::Result<HostProfilesUpdateResponse> profiles_update(const CallContext& context, const HostProfilesUpdateRequest& request) = 0;
-    virtual ::reboot::Result<HostProfilesDeleteResponse> profiles_delete(const CallContext& context, const HostProfilesDeleteRequest& request) = 0;
-    virtual ::reboot::Result<HostShareLinkResponse> share_link(const CallContext& context, const HostShareLinkRequest& request) = 0;
-    virtual ::reboot::Result<HostCommandResponse> command(const CallContext& context, const HostCommandRequest& request) = 0;
+    virtual ::rb::Result<HostProfilesListResponse> profiles_list(const CallContext& context, const HostProfilesListRequest& request) = 0;
+    virtual ::rb::Result<HostProfilesCreateResponse> profiles_create(const CallContext& context, const HostProfilesCreateRequest& request) = 0;
+    virtual ::rb::Result<HostProfilesUpdateResponse> profiles_update(const CallContext& context, const HostProfilesUpdateRequest& request) = 0;
+    virtual ::rb::Result<HostProfilesDeleteResponse> profiles_delete(const CallContext& context, const HostProfilesDeleteRequest& request) = 0;
+    virtual ::rb::Result<HostShareLinkResponse> share_link(const CallContext& context, const HostShareLinkRequest& request) = 0;
+    virtual ::rb::Result<HostCommandResponse> command(const CallContext& context, const HostCommandRequest& request) = 0;
     // Completes with HostStartResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start(const CallContext& context, const HostStartRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
-    virtual ::reboot::Result<HostStatusResponse> status(const CallContext& context, const HostStatusRequest& request) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start(const CallContext& context, const HostStartRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<HostStatusResponse> status(const CallContext& context, const HostStatusRequest& request) = 0;
     // Stops the pending match-end action and leaves the server running.
-    virtual ::reboot::Result<HostCancelMatchEndResponse> cancel_match_end(const CallContext& context, const HostCancelMatchEndRequest& request) = 0;
+    virtual ::rb::Result<HostCancelMatchEndResponse> cancel_match_end(const CallContext& context, const HostCancelMatchEndRequest& request) = 0;
     // Completes with HostIdentityExportResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_identity_export(const CallContext& context, const HostIdentityExportRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_identity_export(const CallContext& context, const HostIdentityExportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with HostIdentityImportResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_identity_import(const CallContext& context, const HostIdentityImportRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_identity_import(const CallContext& context, const HostIdentityImportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

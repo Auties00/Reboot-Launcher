@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // GameUserSettings.ini under the prefix user's AppData/Local/FortniteGame/Saved/Config/WindowsClient.
 inline constexpr std::string_view kGameUserSettingsFile = "GameUserSettings.ini";
@@ -16,4 +16,4 @@ inline constexpr std::string_view kGameUserSettingsFile = "GameUserSettings.ini"
 // line are left as they were.
 [[nodiscard]] std::optional<std::string> seed_preferred_rhi(std::string_view ini);
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // rbsb/1 field limits (the edge's FieldLimits), checked before anything is sent so a bad value
 // fails the call instead of reaching the edge as BAD_REQUEST. Text limits are UTF-8 bytes;
@@ -16,4 +16,4 @@ inline constexpr std::size_t kMaxPasswordBytes = 128;
 // Bounds both max_players and the live player count.
 inline constexpr u32 kMaxPlayerLimit = 1000;
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

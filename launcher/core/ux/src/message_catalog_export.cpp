@@ -11,7 +11,7 @@
 #include "message_template.hpp"
 #include "messages.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -166,4 +166,4 @@ Result<std::vector<CatalogIssue>> MessageCatalogExport::check(std::string_view c
     return issues;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 enum class VelopackHook : u8 { AfterInstall, BeforeUpdate, AfterUpdate, BeforeUninstall };
 
@@ -36,4 +36,4 @@ private:
     NativePath feed_dir_;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

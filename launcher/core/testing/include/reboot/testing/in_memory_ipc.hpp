@@ -8,7 +8,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decisions testing-strategy, async-event-model).
 // The engine's IIpcListener and the client's IIpcConnector over one in-process endpoint namespace,
@@ -41,4 +41,4 @@ private:
     std::shared_ptr<Hub> hub_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

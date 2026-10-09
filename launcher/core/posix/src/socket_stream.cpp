@@ -10,7 +10,7 @@
 #include "reboot/foundation/log.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 namespace {
 
@@ -213,4 +213,4 @@ void SocketStream::finish_locked() noexcept {
     wake_.wake();
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

@@ -14,7 +14,7 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/result_fwd.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 struct PlayTarget {
     // Exactly one of the following is set; none set is a case this build does not know.
@@ -102,9 +102,9 @@ class IPlayHandler {
 public:
     virtual ~IPlayHandler() = default;
 
-    virtual ::reboot::Result<PlayPlanResponse> plan(const CallContext& context, const PlayPlanRequest& request) = 0;
+    virtual ::rb::Result<PlayPlanResponse> plan(const CallContext& context, const PlayPlanRequest& request) = 0;
     // Completes with PlayStartResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start(const CallContext& context, const PlayStartRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start(const CallContext& context, const PlayStartRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

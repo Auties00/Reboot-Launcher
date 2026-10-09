@@ -15,7 +15,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 namespace {
 
@@ -607,4 +607,4 @@ Result<void> IpcClient::send_secret_put(std::span<const u8> target, const Secret
 
 Result<void> IpcClient::write(wire::Bytes frame) { return impl_->core->write(frame); }
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

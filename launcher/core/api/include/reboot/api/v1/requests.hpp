@@ -15,7 +15,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 // Mirrors reboot::UserRequestKind, in order.
 enum class UserRequestKind : u32 {
@@ -239,8 +239,8 @@ class IRequestsHandler {
 public:
     virtual ~IRequestsHandler() = default;
 
-    virtual ::reboot::Result<RequestsPendingResponse> pending(const CallContext& context, const RequestsPendingRequest& request) = 0;
-    virtual ::reboot::Result<RequestsRespondResponse> respond(const CallContext& context, const RequestsRespondRequest& request) = 0;
+    virtual ::rb::Result<RequestsPendingResponse> pending(const CallContext& context, const RequestsPendingRequest& request) = 0;
+    virtual ::rb::Result<RequestsRespondResponse> respond(const CallContext& context, const RequestsRespondRequest& request) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

@@ -6,7 +6,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // A SplitMix64 stream from `seed`, so session keys, tokens and ids repeat from run to run. Never
@@ -22,4 +22,4 @@ private:
     u64 state_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

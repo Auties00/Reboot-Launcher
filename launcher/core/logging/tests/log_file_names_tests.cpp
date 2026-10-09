@@ -3,8 +3,8 @@
 
 #include "reboot/logging/log_file_names.hpp"
 
-using namespace reboot;
-using namespace reboot::logging;
+using namespace rb;
+using namespace rb::logging;
 using namespace std::chrono;
 
 namespace {

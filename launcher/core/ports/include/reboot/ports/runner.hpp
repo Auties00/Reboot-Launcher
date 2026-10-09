@@ -12,7 +12,7 @@
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 enum class RunnerKind : u8 { Native, Umu, Wine, MacRuntime };
 
@@ -62,4 +62,4 @@ public:
     [[nodiscard]] virtual std::optional<UserRequestKind> pending_prerequisite() = 0;
 };
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

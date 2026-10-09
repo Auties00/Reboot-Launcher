@@ -24,12 +24,12 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 
-using namespace reboot;
-using namespace reboot::net;
+using namespace rb;
+using namespace rb::net;
 using namespace std::chrono_literals;
-using reboot::net::test::bytes_of;
-using reboot::net::test::TestStrand;
-using reboot::testing::FakeHttpResponse;
+using rb::net::test::bytes_of;
+using rb::net::test::TestStrand;
+using rb::testing::FakeHttpResponse;
 
 namespace {
 

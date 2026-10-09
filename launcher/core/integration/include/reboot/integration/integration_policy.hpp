@@ -7,11 +7,11 @@
 #include "reboot/integration/entry_state.hpp"
 #include "reboot/integration/integration_kind.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 struct IntegrationStatus;
 }
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // What registrars put in IntegrationStatus::detail, instead of the command, for an inactive entry of ours.
 inline constexpr std::string_view kDisabledDetail = "disabled";
@@ -28,4 +28,4 @@ enum class ReconcileAction : u8 { Leave, Write };
 // Rewrites Stale and creates Absent entries, except declined kinds and Autostart, which is opt-in.
 [[nodiscard]] ReconcileAction reconcile_action(IntegrationKind kind, EntryState state, bool declined) noexcept;
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

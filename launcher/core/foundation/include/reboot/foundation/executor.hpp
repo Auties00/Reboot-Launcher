@@ -14,7 +14,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 using SteadyTime = std::chrono::steady_clock::time_point;
 
@@ -149,4 +149,4 @@ private:
     std::multimap<SteadyTime, UniqueFunction<void()>> timed_;
 };
 
-}  // namespace reboot
+}  // namespace rb

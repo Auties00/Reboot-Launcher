@@ -19,26 +19,26 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot {
+namespace rb {
 class IClock;
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::net {
+namespace rb::net {
 class HttpClient;
 }
 
-namespace reboot::trust {
+namespace rb::trust {
 class KeyRing;
 class SerialGuard;
-}  // namespace reboot::trust
+}  // namespace rb::trust
 
-namespace reboot::components {
+namespace rb::components {
 
 enum class ManifestOrigin : u8 { Fetched, Cached, Bundled };
 
@@ -115,4 +115,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

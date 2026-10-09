@@ -16,7 +16,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -123,4 +123,4 @@ Result<std::optional<ports::SecurityProducts>> WmiSecurityProductProbe::probe() 
     return std::optional<ports::SecurityProducts>{ports::SecurityProducts{std::move(**names), smart_app_control()}};
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

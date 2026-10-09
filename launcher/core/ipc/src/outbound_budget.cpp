@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/clock.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 OutboundBudget::Verdict OutboundBudget::overflow() {
     const SteadyTime now = clock_.steady_now();
@@ -11,4 +11,4 @@ OutboundBudget::Verdict OutboundBudget::overflow() {
     return Verdict::Resync;
 }
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

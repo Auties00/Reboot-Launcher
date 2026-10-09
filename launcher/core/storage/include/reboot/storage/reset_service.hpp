@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/storage/key.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 class Settings;
 class SettingsRegistry;
@@ -59,4 +59,4 @@ private:
     ResetHooks hooks_;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

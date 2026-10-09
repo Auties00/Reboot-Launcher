@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 // Starts of `to` allowed before the Linux shim rolls back, or, with no `previous`, the engine gives up.
 inline constexpr u32 kMaxUpdateAttempts = 2;
@@ -41,4 +41,4 @@ enum class MarkerVerdict : u8 {
 
 [[nodiscard]] MarkerVerdict judge_marker(const PendingUpdateMarker& marker, const SemVer& running);
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

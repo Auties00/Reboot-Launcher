@@ -24,7 +24,7 @@
 #include "reboot/sessions/session_registry.hpp"
 #include "reboot/updates/update_prompts.hpp"
 
-namespace reboot::engine::requests {
+namespace rb::engine::requests {
 
 namespace {
 
@@ -223,4 +223,4 @@ Result<std::any> answer_for(const UserRequest& request, const api::RequestAnswer
     return std::unexpected(mismatch(request));
 }
 
-}  // namespace reboot::engine::requests
+}  // namespace rb::engine::requests

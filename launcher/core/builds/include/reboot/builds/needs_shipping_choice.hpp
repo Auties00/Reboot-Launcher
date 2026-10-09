@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // More than one shipping exe; the caller resolves or imports again with one of `candidates`.
 struct NeedsShippingChoice {
@@ -15,4 +15,4 @@ struct NeedsShippingChoice {
     bool operator==(const NeedsShippingChoice&) const = default;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

@@ -2,7 +2,7 @@
 
 #include "reboot/host/host_error.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 namespace {
 
@@ -23,4 +23,4 @@ Result<void> validate(const PortPolicy& policy) {
     return {};
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

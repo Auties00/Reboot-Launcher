@@ -7,8 +7,8 @@
 
 #include "env_overlay.hpp"
 
-using namespace reboot;
-using namespace reboot::os_windows::winhost;
+using namespace rb;
+using namespace rb::os_windows::winhost;
 using contracts::winhost::Bytes;
 
 namespace {

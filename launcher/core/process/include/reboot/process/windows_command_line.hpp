@@ -3,7 +3,7 @@
 #include <span>
 #include <string>
 
-namespace reboot::process {
+namespace rb::process {
 
 // Capabilities: game-launch.process-spawn-helper.
 // The CreateProcessW command line for `argv` (argv[0] is the program), in UTF-8: CommandLineToArgvW
@@ -11,4 +11,4 @@ namespace reboot::process {
 // quotes only its value (-KEY="a b"), the form UE's FParse::Value also reads. No element holds a NUL.
 [[nodiscard]] std::string quote_windows_args(std::span<const std::string> argv);
 
-}  // namespace reboot::process
+}  // namespace rb::process

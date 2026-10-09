@@ -5,7 +5,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 // Compiled into the custom auth DLLs that NetMode::LegacyFixed exists for.
 inline constexpr Port kLegacyBackendPort{3551};
@@ -26,4 +26,4 @@ struct LegacyRequirements {
 // the OS allows an unprivileged :80 bind, as macOS 10.14 and later do.
 [[nodiscard]] LegacyRequirements legacy_requirements(ports::RunnerKind runner);
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

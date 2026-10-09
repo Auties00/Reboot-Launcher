@@ -9,7 +9,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // sanitize_display_text with tabs as spaces, then cut to `max_bytes` on a code point boundary.
 [[nodiscard]] std::string fit_text(std::string_view text, std::size_t max_bytes);
@@ -21,4 +21,4 @@ namespace reboot::publish {
 [[nodiscard]] Result<void> check_password(const SecretString& password);
 [[nodiscard]] Result<void> check_game_port(Port port);
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

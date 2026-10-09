@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -128,4 +128,4 @@ std::optional<std::vector<std::string>> split_unit_command(std::string_view valu
     return args;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

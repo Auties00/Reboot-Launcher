@@ -5,8 +5,8 @@
 #include "front_test_support.hpp"
 #include "route_table.hpp"
 
-using namespace reboot;
-using namespace reboot::front;
+using namespace rb;
+using namespace rb::front;
 
 namespace {
 

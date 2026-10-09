@@ -10,7 +10,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 [[nodiscard]] std::string octal_mode(u32 mode) {
@@ -55,4 +55,4 @@ Result<void> ensure_runtime_base(const NativePath& runtime_base, u32 uid) {
     return check_runtime_base(runtime_base, uid);
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

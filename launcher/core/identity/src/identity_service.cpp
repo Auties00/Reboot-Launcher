@@ -17,7 +17,7 @@
 #include "reboot/identity/identity_changed_event.hpp"
 #include "reboot/storage/enum_names.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 namespace {
 
@@ -168,4 +168,4 @@ LoginTarget IdentityService::login_target(const storage::BackendTarget& backend,
     return target;
 }
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

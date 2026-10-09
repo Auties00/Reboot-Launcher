@@ -10,7 +10,7 @@
 #include "path_text.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -107,4 +107,4 @@ Result<FindResult> FileFinder::find(const NativePath& root, std::span<const std:
     return std::move(walk.result);
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

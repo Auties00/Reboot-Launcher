@@ -29,7 +29,7 @@
 #include "reboot/os_macos/platform/posix_spawn_launcher.hpp"
 #include "reboot/os_macos/platform/unsupported_peer_inspector.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 namespace {
 
@@ -93,4 +93,4 @@ Result<PlatformServices> make_platform(const PlatformOptions& options) {
     return services;
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

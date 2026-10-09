@@ -6,8 +6,8 @@
 #include "reboot/components/release_manifest.hpp"
 #include "reboot/updates/update_offer.hpp"
 
-using namespace reboot;
-using namespace reboot::updates;
+using namespace rb;
+using namespace rb::updates;
 using components::AppEntry;
 using components::ManifestArch;
 using components::ManifestOs;

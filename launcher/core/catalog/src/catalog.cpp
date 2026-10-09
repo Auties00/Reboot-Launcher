@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 const CatalogEntry* Catalog::find(std::string_view id) const noexcept {
     const auto it = std::ranges::find(entries, id, &CatalogEntry::id);
@@ -22,4 +22,4 @@ BuildFlags Catalog::flags_for(const GameVersion& version) const noexcept {
     return {};
 }
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

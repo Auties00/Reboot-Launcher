@@ -2,8 +2,8 @@
 
 #include "reboot/front/upstream_origin.hpp"
 
-using namespace reboot;
-using namespace reboot::front;
+using namespace rb;
+using namespace rb::front;
 
 TEST_CASE("an upstream URL reduces to its origin", "[front][origin]") {
     const auto origin = parse_upstream_origin("HTTPS://Backend.Example.com./unknown?x");

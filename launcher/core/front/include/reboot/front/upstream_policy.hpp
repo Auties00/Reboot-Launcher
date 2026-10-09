@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/front/upstream_origin.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // Hotfix and ticket bodies above this are relayed without being read.
 inline constexpr std::size_t kLearnBodyCap = 1u << 20;
@@ -43,4 +43,4 @@ private:
     std::vector<UpstreamOrigin> learned_;
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

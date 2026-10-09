@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 // Blocking. A missing entry is a not_found status, not an error.
 [[nodiscard]] Result<std::filesystem::file_status> status_of(const NativePath& path);
@@ -21,4 +21,4 @@ namespace reboot::os_linux::runner {
 // Blocking.
 [[nodiscard]] Result<std::string> read_text(const NativePath& path);
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

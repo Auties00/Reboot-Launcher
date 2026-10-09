@@ -9,7 +9,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/paths.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -101,4 +101,4 @@ Result<void> MacIntegrationRegistrar::remove(ports::IntegrationKind kind) {
     return shims::agent_unregister(plist);
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-namespace reboot::logging {
+namespace rb::logging {
 
 // Capabilities: logging-diagnostics.+41, logging-diagnostics.+51.
 // Idempotent. On std::terminate: Logger::drain_for_terminate with one internal.bug line, the line to stderr, abort().
@@ -23,4 +23,4 @@ private:
     std::string_view previous_;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

@@ -6,7 +6,7 @@
 #include "reboot/foundation/text.hpp"
 #include "wipe.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 namespace {
 
@@ -90,4 +90,4 @@ SecretBytes BuiltEnv::windows_block() const {
 
 ports::EnvBlock BuiltEnv::copy() const { return vars_; }
 
-}  // namespace reboot::process
+}  // namespace rb::process

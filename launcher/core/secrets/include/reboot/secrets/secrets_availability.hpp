@@ -5,7 +5,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/secret_store.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 enum class SecretsUnavailableReason : u8 {
     // The store reports kind Unavailable: macOS outside Aqua, where there is no file fallback.
@@ -27,4 +27,4 @@ struct SecretsAvailability {
     bool operator==(const SecretsAvailability&) const = default;
 };
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

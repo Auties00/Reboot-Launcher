@@ -5,7 +5,7 @@
 #include "messages.hpp"
 #include "runtime_files.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 Result<KronWineRunner> KronWineRunner::resolve(const NativePath& runtime_dir) {
     const auto root = archive_root(runtime_dir, kWineLoader);
@@ -37,4 +37,4 @@ ports::RuntimeLayout KronWineRunner::to_runtime_layout() const {
     return out;
 }
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

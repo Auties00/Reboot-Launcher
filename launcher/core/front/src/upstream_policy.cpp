@@ -11,7 +11,7 @@
 #include "authority.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -149,4 +149,4 @@ std::vector<UpstreamOrigin> UpstreamPolicy::learn(std::string_view path, std::sp
     return added;
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

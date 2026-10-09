@@ -10,7 +10,7 @@
 #include "reboot/net/resumable_downloader.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 struct ContentRange {
     u64 first = 0;
@@ -31,4 +31,4 @@ struct ContentRange {
 [[nodiscard]] std::vector<u8> encode_sidecar(const ResumeSidecar& sidecar);
 [[nodiscard]] std::optional<ResumeSidecar> decode_sidecar(std::span<const u8> bytes);
 
-}  // namespace reboot::net
+}  // namespace rb::net

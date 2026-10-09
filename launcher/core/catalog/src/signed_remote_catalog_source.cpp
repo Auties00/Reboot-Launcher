@@ -14,7 +14,7 @@
 #include "reboot/trust/serial_guard.hpp"
 #include "verified_catalog.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 namespace {
 
@@ -237,4 +237,4 @@ void SignedRemoteCatalogSource::finish(CatalogLoadResult result) {
     load->done(std::move(result));
 }
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

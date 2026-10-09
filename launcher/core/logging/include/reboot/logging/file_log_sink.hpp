@@ -13,15 +13,15 @@
 #include "reboot/logging/log_file_names.hpp"
 #include "reboot/logging/retention_policy.hpp"
 
-namespace reboot {
+namespace rb {
 class IClock;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class ILogFileSystem;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::logging {
+namespace rb::logging {
 
 class LogFilesInUse;
 class WineLogFiles;
@@ -78,4 +78,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

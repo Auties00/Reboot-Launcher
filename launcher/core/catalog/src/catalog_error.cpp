@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 namespace {
 
@@ -47,4 +47,4 @@ Diagnostic to_diagnostic(const CatalogError& error) {
     return internal_bug("catalog::to_diagnostic");
 }
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

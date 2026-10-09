@@ -7,7 +7,7 @@
 #include "messages.hpp"
 #include "runtime_files.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 namespace {
 
@@ -76,4 +76,4 @@ Result<SlrBuild> SlrBuild::read(const NativePath& proton_root, const NativePath&
     return SlrBuild{std::string(*runtime), std::move(*version)};
 }
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

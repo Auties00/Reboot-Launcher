@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace reboot {
+namespace rb {
 
 template <class Signature>
 class UniqueFunction;
@@ -108,4 +108,4 @@ private:
     const VTable* table_ = nullptr;
 };
 
-}  // namespace reboot
+}  // namespace rb

@@ -11,7 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/logging/log_filter.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 inline constexpr std::size_t kLogRingBytes = 4u << 20;
 inline constexpr std::size_t kLogReadMaxBytes = 1u << 20;
@@ -62,4 +62,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

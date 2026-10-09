@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-namespace reboot::browser {
+namespace rb::browser {
 
 [[nodiscard]] constexpr bool is_ascii_space(char c) noexcept {
     return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
@@ -14,4 +14,4 @@ namespace reboot::browser {
     return text;
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

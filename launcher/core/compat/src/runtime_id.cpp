@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -43,4 +43,4 @@ std::strong_ordering compare_runtime_versions(std::string_view a, std::string_vi
     return a.compare(b) <=> 0;
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

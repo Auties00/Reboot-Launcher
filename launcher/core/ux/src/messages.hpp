@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::ux::msg {
+namespace rb::ux::msg {
 
 REBOOT_MESSAGE_DECL(kMalformedLanguageTag);
 REBOOT_MESSAGE_DECL(kMalformedCatalog);
@@ -52,4 +52,4 @@ REBOOT_MESSAGE_DECL(kLinkPortForwardingGuide);
 REBOOT_MESSAGE_DECL(kHelpPortForwardingPort);
 REBOOT_MESSAGE_DECL(kHelpPortForwardingPortRange);
 
-}  // namespace reboot::ux::msg
+}  // namespace rb::ux::msg

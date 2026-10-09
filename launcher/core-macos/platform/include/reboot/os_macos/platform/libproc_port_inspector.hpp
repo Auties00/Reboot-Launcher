@@ -6,7 +6,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; IPortInspector over libproc; without root, other users' ports are nullopt.
 class LibprocPortInspector final : public ports::IPortInspector {
@@ -16,4 +16,4 @@ public:
     Result<std::optional<ports::PortOwner>> udp_owner(Port port) override;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

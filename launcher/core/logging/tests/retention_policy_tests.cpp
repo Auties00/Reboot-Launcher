@@ -4,8 +4,8 @@
 
 #include "reboot/logging/retention_policy.hpp"
 
-using namespace reboot;
-using namespace reboot::logging;
+using namespace rb;
+using namespace rb::logging;
 using namespace std::chrono;
 
 namespace {

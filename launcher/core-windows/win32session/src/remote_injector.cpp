@@ -8,7 +8,7 @@
 
 #include "wide.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 namespace {
 
 using contracts::winhost::InjectSpec;
@@ -189,4 +189,4 @@ DWORD wait_millis(std::chrono::milliseconds timeout) noexcept {
     return static_cast<DWORD>(timeout.count());
 }
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

@@ -27,7 +27,7 @@
 #include "reboot/process/line_reader.hpp"
 #include "reboot/process/wiping_launch.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -498,4 +498,4 @@ void PrefixManager::prepare(const PrefixLease& lease, PrefixRequest request, Can
 
 void PrefixManager::release(u64 lease_id) noexcept { impl_->leases.erase(lease_id); }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

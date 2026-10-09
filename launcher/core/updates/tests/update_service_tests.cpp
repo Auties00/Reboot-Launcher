@@ -11,9 +11,9 @@
 #include "update_service_rig.hpp"
 #include "reboot/updates/update_prompts.hpp"
 
-using namespace reboot;
-using namespace reboot::updates;
-using namespace reboot::updates::test;
+using namespace rb;
+using namespace rb::updates;
+using namespace rb::updates::test;
 using namespace std::chrono_literals;
 using contracts::ipc::ClientKind;
 using contracts::ipc::EngineOrigin;

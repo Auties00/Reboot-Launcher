@@ -13,16 +13,16 @@
 #include "reboot/ipc/connection_info.hpp"
 #include "reboot/ipc/ipc_codec.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IClock;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IByteStream;
 }
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 class IApiDispatcher;
 
@@ -87,4 +87,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

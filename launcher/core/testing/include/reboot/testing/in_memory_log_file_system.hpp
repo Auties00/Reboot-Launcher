@@ -15,7 +15,7 @@
 #include "reboot/ports/log_file_system.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class LogFsOperation : u8 { CreateDirectories, OpenAppend, Append, Flush, List, Remove };
 
@@ -55,4 +55,4 @@ private:
     std::shared_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

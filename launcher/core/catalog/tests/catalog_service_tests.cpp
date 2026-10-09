@@ -18,8 +18,8 @@
 #include "reboot/testing/deterministic_runtime.hpp"
 #include "reboot/testing/event_recorder.hpp"
 
-using namespace reboot;
-using namespace reboot::catalog;
+using namespace rb;
+using namespace rb::catalog;
 using namespace std::chrono_literals;
 
 namespace {

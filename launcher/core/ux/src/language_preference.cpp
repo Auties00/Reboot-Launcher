@@ -2,7 +2,7 @@
 
 #include "ascii.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 Result<LanguagePreference> LanguagePreference::parse(std::string_view setting_value) {
     // "System" would otherwise parse as the well-formed language subtag "system".
@@ -16,4 +16,4 @@ std::string LanguagePreference::to_setting_value() const {
     return tag_ ? tag_->str() : std::string(kSystemValue);
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

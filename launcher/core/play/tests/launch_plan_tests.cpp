@@ -11,8 +11,8 @@
 #include "reboot/process/env_builder.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 
-using namespace reboot;
-using namespace reboot::play;
+using namespace rb;
+using namespace rb::play;
 
 namespace {
 

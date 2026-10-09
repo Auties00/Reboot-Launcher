@@ -16,20 +16,20 @@
 #include "reboot/secrets/secret_target.hpp"
 #include "reboot/secrets/secrets_availability.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class Redactor;
 class TimerService;
 class UserRequestRegistry;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class ISecretStore;
 }
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 // A blocked store call (a libsecret or Keychain prompt) is abandoned after this; its late
 // result is discarded.
@@ -109,4 +109,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

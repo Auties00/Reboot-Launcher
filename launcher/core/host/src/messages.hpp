@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::host::msg {
+namespace rb::host::msg {
 
 REBOOT_MESSAGE_DECL(kProfileNotFound);
 REBOOT_MESSAGE_DECL(kProfileNameEmpty);
@@ -45,4 +45,4 @@ REBOOT_MESSAGE_DECL(kProfileMemberInvalid);
 REBOOT_MESSAGE_DECL(kDuplicateProfile);
 REBOOT_MESSAGE_DECL(kSecondAutoServerUnpublished);
 
-}  // namespace reboot::host::msg
+}  // namespace rb::host::msg

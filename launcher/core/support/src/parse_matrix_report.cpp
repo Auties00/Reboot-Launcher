@@ -11,7 +11,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 namespace {
 
 namespace json = boost::json;
@@ -230,4 +230,4 @@ Result<std::vector<EvidenceRecord>> parse_matrix_report(std::span<const u8> json
     return records;
 }
 
-}  // namespace reboot::support
+}  // namespace rb::support

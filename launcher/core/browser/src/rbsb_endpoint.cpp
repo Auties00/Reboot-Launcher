@@ -3,7 +3,7 @@
 #include "messages.hpp"
 #include "text_util.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 Result<RbsbExpertOverride> RbsbExpertOverride::parse(std::string_view endpoint, std::optional<NativePath> ca_bundle) {
     const std::string_view text = trim_ascii(endpoint);
@@ -31,4 +31,4 @@ RbsbEndpoint select_rbsb_endpoint(const std::optional<components::EndpointOverri
     return RbsbEndpoint{std::string(kCompiledRbsbHost), kCompiledRbsbPort, std::nullopt, EndpointSource::Compiled};
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

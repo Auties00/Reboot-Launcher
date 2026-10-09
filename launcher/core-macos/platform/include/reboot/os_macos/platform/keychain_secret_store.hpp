@@ -11,11 +11,11 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/secret_store.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; ISecretStore over the file-based login keychain, 0600 files as fallback.
 class KeychainSecretStore final : public ports::ISecretStore {
@@ -41,4 +41,4 @@ private:
     bool aqua_session_ = false;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

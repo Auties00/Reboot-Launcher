@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/sessions/session_phase.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Spawning covers the hello and welcome; a respawn after match end or ListenFailed goes
 // through Spawning again while the session itself stays Running. LiveUnpublished is a server
@@ -67,4 +67,4 @@ enum class HostPhase : u8 {
     return "unknown";
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

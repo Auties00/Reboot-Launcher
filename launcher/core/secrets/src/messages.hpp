@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::secrets::msg {
+namespace rb::secrets::msg {
 
 REBOOT_MESSAGE_DECL(kInvalidScope);
 REBOOT_MESSAGE_DECL(kEmptyValue);
@@ -20,4 +20,4 @@ REBOOT_MESSAGE_DECL(kStoreTimedOut);
 REBOOT_MESSAGE_DECL(kRequestWithdrawn);
 REBOOT_MESSAGE_DECL(kAnswerWithoutSecret);
 
-}  // namespace reboot::secrets::msg
+}  // namespace rb::secrets::msg

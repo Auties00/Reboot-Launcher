@@ -5,7 +5,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 struct MemoryStreamPair {
     std::unique_ptr<ports::IByteStream> a;
@@ -18,4 +18,4 @@ struct MemoryStreamPair {
 [[nodiscard]] MemoryStreamPair make_memory_stream_pair(Executor& deliver_on, ports::PeerIdentity a_peer,
                                                        ports::PeerIdentity b_peer);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

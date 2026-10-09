@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Payload of the ConfirmUnencryptedUpstream request BackendService raises for a plain-http upstream.
 struct UnencryptedUpstreamPrompt {
@@ -15,4 +15,4 @@ struct UnencryptedUpstreamAnswer {
     bool accept = false;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

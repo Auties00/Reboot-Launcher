@@ -5,11 +5,11 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class ISystemInfo;
 }
 
-namespace reboot::net {
+namespace rb::net {
 
 // Capabilities: none; carries the rbsb/1 browse, join and publish connections.
 // MsQuic with OpenSSL on every OS, linked at build time (app-local msquic.dll on Windows, the
@@ -38,4 +38,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

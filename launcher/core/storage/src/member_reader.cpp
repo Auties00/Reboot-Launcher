@@ -7,7 +7,7 @@
 #include "messages.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace json = boost::json;
 
@@ -51,4 +51,4 @@ void append_unknown(json::object& out, const json::object& unknown) {
         if (!out.contains(member.key())) out.emplace(member.key(), member.value());
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

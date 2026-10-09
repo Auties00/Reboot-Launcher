@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 REBOOT_MESSAGE_DECL(kCallFailed);
 REBOOT_MESSAGE_DECL(kCallFailedOnPath);
@@ -33,4 +33,4 @@ REBOOT_MESSAGE_DECL(kDnsFailed);
 // ErrorKind::Cancelled.
 REBOOT_MESSAGE_DECL(kDnsCancelled);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

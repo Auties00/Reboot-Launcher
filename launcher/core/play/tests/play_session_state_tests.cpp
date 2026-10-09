@@ -4,9 +4,9 @@
 
 #include "reboot/play/play_session_state.hpp"
 
-using namespace reboot;
-using namespace reboot::play;
-namespace gc = reboot::contracts::game_client;
+using namespace rb;
+using namespace rb::play;
+namespace gc = rb::contracts::game_client;
 
 namespace {
 

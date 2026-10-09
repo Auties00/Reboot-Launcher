@@ -7,7 +7,7 @@
 
 #include "peer_impls.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -99,4 +99,4 @@ Result<void> WinhostPeer::stop(std::chrono::milliseconds grace, ReplyHandler don
         "stop", [grace_ms](u64 req_id) { return encode_contract_frame(wh::Stop{req_id, grace_ms}); }, std::move(done));
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

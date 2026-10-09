@@ -21,7 +21,7 @@
 // The kFSEventStream constants are C-style casts in Apple's headers.
 #pragma clang diagnostic ignored "-Wold-style-cast"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -154,4 +154,4 @@ Result<ports::WatchHandle> FsEventsWatcher::watch(const NativePath& dir, UniqueF
     return ports::WatchHandle{std::make_unique<FsEventsHandle>(stream, impl_->queue, std::move(state))};
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

@@ -17,7 +17,7 @@
 #include "messages.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 constexpr std::string_view kAppDirName = "reboot-launcher";
@@ -137,4 +137,4 @@ NativePath LinuxClientPaths::exe_dir() const { return exe_dir_; }
 
 ports::InstallKind LinuxClientPaths::install_kind() const { return install_kind_; }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // The firewall, Local Network and linger ids concern hosting; the others concern the app or play.
 enum class PrerequisiteId : u8 {
@@ -37,4 +37,4 @@ inline constexpr std::array<std::string_view, 9> kPrerequisiteIds{
     return std::nullopt;
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

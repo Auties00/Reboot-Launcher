@@ -17,7 +17,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/paths.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 // Symbolic links followed on one path before it counts as a loop.
@@ -545,4 +545,4 @@ void InMemoryFileSystem::set_change_listener(UniqueFunction<void(const ports::Fi
     impl_->state->listener = std::move(shared);
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

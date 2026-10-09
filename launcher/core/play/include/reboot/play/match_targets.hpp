@@ -7,7 +7,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 struct MatchTargetEntry {
     // The play session's account, as -AUTH_LOGIN's local part carries it.
@@ -43,4 +43,4 @@ private:
     std::optional<Published> published_;
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

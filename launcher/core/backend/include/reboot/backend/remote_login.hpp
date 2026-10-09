@@ -12,15 +12,15 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/secrets/secret_service.hpp"
 
-namespace reboot {
+namespace rb {
 class Redactor;
 }
 
-namespace reboot::net {
+namespace rb::net {
 class HttpClient;
 }
 
-namespace reboot::backend {
+namespace rb::backend {
 
 struct RemoteLoginRequest {
     BackendInfo upstream;
@@ -59,4 +59,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

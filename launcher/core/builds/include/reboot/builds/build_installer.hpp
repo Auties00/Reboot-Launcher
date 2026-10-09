@@ -10,25 +10,25 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IDiskInfo;
 class IFileSystem;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::net {
+namespace rb::net {
 class ResumableDownloader;
 }
 
-namespace reboot::catalog {
+namespace rb::catalog {
 class CatalogService;
 }
 
-namespace reboot::builds {
+namespace rb::builds {
 
 class ClTable;
 class IArchiveExtractor;
@@ -93,4 +93,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

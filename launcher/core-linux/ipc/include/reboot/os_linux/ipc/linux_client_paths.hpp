@@ -9,7 +9,7 @@
 #include "reboot/os_linux/ipc/ipc_runtime_base.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // Covers no capability ids; IPlatformPaths for reboot_client, which may not link
 // core-linux/platform. Its roots must equal os_linux::platform::XdgPaths.
@@ -68,4 +68,4 @@ private:
     u32 uid_ = 0;
 };
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

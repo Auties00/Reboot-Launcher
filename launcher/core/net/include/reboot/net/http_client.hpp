@@ -11,13 +11,13 @@
 #include "reboot/net/secret_http_response.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IRandom;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::net {
+namespace rb::net {
 
 class HostTlsMemory;
 
@@ -53,4 +53,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

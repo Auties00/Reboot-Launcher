@@ -19,18 +19,18 @@
 #include "reboot/storage/settings_document.hpp"
 #include "reboot/storage/state_document.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IClock;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Capabilities: none. Every AppLayout document in one place; strand-only once loaded.
 class EngineStores {
@@ -68,4 +68,4 @@ private:
     storage::StorageMode mode_ = storage::StorageMode::ReadWrite;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 namespace {
 
 using contracts::winhost::Bytes;
@@ -76,4 +76,4 @@ Bytes overlay_own_environment(const Bytes& overlay) {
     return block;
 }
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

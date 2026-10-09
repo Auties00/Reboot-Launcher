@@ -19,11 +19,11 @@
 #include "reboot/ports/log_file_system.hpp"
 #include "reboot/testing/in_memory_log_file_system.hpp"
 
-using namespace reboot;
-using namespace reboot::logging;
+using namespace rb;
+using namespace rb::logging;
 using namespace std::chrono_literals;
-using reboot::testing::InMemoryLogFileSystem;
-using reboot::testing::LogFsOperation;
+using rb::testing::InMemoryLogFileSystem;
+using rb::testing::LogFsOperation;
 
 namespace {
 

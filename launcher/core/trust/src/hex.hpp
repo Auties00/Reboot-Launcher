@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 [[nodiscard]] constexpr int hex_digit(char c) noexcept {
     if (c >= '0' && c <= '9') return c - '0';
@@ -37,4 +37,4 @@ template <std::size_t N>
     return out;
 }
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

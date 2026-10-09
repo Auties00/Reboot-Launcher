@@ -2,7 +2,7 @@
 
 #include "https_url.hpp"
 
-using reboot::os_macos::platform::is_https_url;
+using rb::os_macos::platform::is_https_url;
 
 TEST_CASE("https links with a host are accepted in any letter case", "[https_url]") {
     CHECK(is_https_url("https://projectreboot.dev/download"));

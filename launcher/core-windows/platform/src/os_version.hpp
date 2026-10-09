@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 struct OsVersion {
     u32 major = 0;
@@ -19,4 +19,4 @@ struct OsVersion {
 // emulated x64 process on ARM64.
 [[nodiscard]] std::string native_arch();
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

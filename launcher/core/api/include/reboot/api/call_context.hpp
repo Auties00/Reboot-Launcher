@@ -3,7 +3,7 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/operation.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 // Who made a call: Play checks the caller's OS session, and a Client lease binds to the connection.
 struct CallContext {
@@ -13,4 +13,4 @@ struct CallContext {
     const contracts::ipc::CallerContext& caller;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

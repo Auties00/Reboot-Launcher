@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::msg {
+namespace rb::msg {
 
 REBOOT_MESSAGE(kInternalBug, "internal.bug", "Something went wrong inside the launcher ({where}).");
 REBOOT_MESSAGE(kInvalidUuid, "foundation.invalid_uuid", "{text} is not a valid identifier.");
@@ -20,4 +20,4 @@ REBOOT_MESSAGE(kMalformedFrame, "contracts.malformed_frame", "A message of type 
 REBOOT_MESSAGE(kUnexpectedFrame, "contracts.unexpected_frame",
                "A message of type {actual} arrived where type {expected} was expected.");
 
-}  // namespace reboot::msg
+}  // namespace rb::msg

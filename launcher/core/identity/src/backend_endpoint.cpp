@@ -5,7 +5,7 @@
 #include "messages.hpp"
 #include "reboot/storage/backend_target.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 Result<HostPort> normalize_backend_endpoint(const HostPort& endpoint) {
     storage::BackendTarget target;
@@ -29,4 +29,4 @@ Diagnostic empty_login(const HostPort& endpoint) {
         .build();
 }
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

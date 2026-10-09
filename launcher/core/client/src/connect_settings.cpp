@@ -10,7 +10,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 namespace {
 
@@ -55,4 +55,4 @@ Result<ConnectSettings> read_connect_settings(const rb_ctx_options* options) {
     return settings;
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

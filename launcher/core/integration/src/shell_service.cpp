@@ -10,7 +10,7 @@
 #include "reboot/integration/shell_error.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 namespace {
 
@@ -94,4 +94,4 @@ void ShellService::run(const contracts::ipc::CallerContext& caller, ShellError b
         std::move(token), strand_, std::move(done));
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

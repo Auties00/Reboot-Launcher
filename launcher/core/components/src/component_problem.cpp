@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 namespace {
 
@@ -66,4 +66,4 @@ Diagnostic to_diagnostic(const ComponentProblem& problem) {
     return std::move(builder).build();
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

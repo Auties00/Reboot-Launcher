@@ -10,7 +10,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/secret.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -99,4 +99,4 @@ std::optional<std::chrono::milliseconds> TokenRegistry::hello_deadline() const {
     return scaled(kHelloBase, *largest);
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

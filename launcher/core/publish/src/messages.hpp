@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::publish::msg {
+namespace rb::publish::msg {
 
 REBOOT_MESSAGE_DECL(kNotPublished);
 REBOOT_MESSAGE_DECL(kAlreadyPublished);
@@ -35,4 +35,4 @@ REBOOT_MESSAGE_DECL(kExportDestinationExists);
 REBOOT_MESSAGE_DECL(kIdentityFileInvalid);
 REBOOT_MESSAGE_DECL(kIdentityUnreadable);
 
-}  // namespace reboot::publish::msg
+}  // namespace rb::publish::msg

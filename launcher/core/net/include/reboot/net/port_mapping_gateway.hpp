@@ -12,7 +12,7 @@
 #include "reboot/net/gateway_error.hpp"
 #include "reboot/net/port_mapping.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 struct GatewayInfo {
     IpAddress lan_address;
@@ -57,4 +57,4 @@ public:
 [[nodiscard]] std::unique_ptr<IPortMappingGateway> make_miniupnpc_gateway();
 [[nodiscard]] std::unique_ptr<IPortMappingGateway> make_natpmp_gateway();
 
-}  // namespace reboot::net
+}  // namespace rb::net

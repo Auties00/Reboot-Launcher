@@ -7,7 +7,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // UdpBlocked, Offline and ServiceDown say why the last attempt failed; the session keeps retrying
 // on the backoff while a lease is held.
@@ -49,4 +49,4 @@ struct ConnectFailureEvidence {
 // anything the probes cannot explain is Backoff.
 [[nodiscard]] ConnectionState classify_connect_failure(const ConnectFailureEvidence& evidence) noexcept;
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

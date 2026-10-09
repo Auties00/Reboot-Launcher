@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class VersionSource : u32 {
     PeString = 0,
@@ -157,16 +157,16 @@ class ILibraryHandler {
 public:
     virtual ~ILibraryHandler() = default;
 
-    virtual ::reboot::Result<LibraryListResponse> list(const CallContext& context, const LibraryListRequest& request) = 0;
-    virtual ::reboot::Result<LibraryGetResponse> get(const CallContext& context, const LibraryGetRequest& request) = 0;
-    virtual ::reboot::Result<LibrarySelectResponse> select(const CallContext& context, const LibrarySelectRequest& request) = 0;
-    virtual ::reboot::Result<LibraryUpdateResponse> update(const CallContext& context, const LibraryUpdateRequest& request) = 0;
+    virtual ::rb::Result<LibraryListResponse> list(const CallContext& context, const LibraryListRequest& request) = 0;
+    virtual ::rb::Result<LibraryGetResponse> get(const CallContext& context, const LibraryGetRequest& request) = 0;
+    virtual ::rb::Result<LibrarySelectResponse> select(const CallContext& context, const LibrarySelectRequest& request) = 0;
+    virtual ::rb::Result<LibraryUpdateResponse> update(const CallContext& context, const LibraryUpdateRequest& request) = 0;
     // Completes with LibraryRelocateResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_relocate(const CallContext& context, const LibraryRelocateRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_relocate(const CallContext& context, const LibraryRelocateRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with LibraryImportResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_import(const CallContext& context, const LibraryImportRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_import(const CallContext& context, const LibraryImportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with LibraryRemoveResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_remove(const CallContext& context, const LibraryRemoveRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_remove(const CallContext& context, const LibraryRemoveRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

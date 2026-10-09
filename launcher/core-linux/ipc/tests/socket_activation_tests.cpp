@@ -4,8 +4,8 @@
 
 #include "socket_activation.hpp"
 
-using reboot::os_linux::ipc::ListenEnvironment;
-using reboot::os_linux::ipc::read_socket_activation;
+using rb::os_linux::ipc::ListenEnvironment;
+using rb::os_linux::ipc::read_socket_activation;
 
 TEST_CASE("LISTEN_FDS counts only when LISTEN_PID names this process", "[socket_activation]") {
     const auto mine = read_socket_activation(ListenEnvironment{"4242", "1"}, 4242);

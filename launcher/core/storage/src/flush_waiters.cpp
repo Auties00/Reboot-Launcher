@@ -6,7 +6,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/executor.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 Diagnostic cancelled(std::string_view document) {
     return make_diag(ErrorDomain::Storage, msg::kCancelled)
@@ -49,4 +49,4 @@ void FlushWaiters::finish_one(u64 id, Result<void> result) {
     waiter.done(std::move(result));
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

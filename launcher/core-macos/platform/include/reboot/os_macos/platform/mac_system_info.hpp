@@ -6,11 +6,11 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; ISystemInfo for the engine process, read once at engine start.
 class MacSystemInfo final : public ports::ISystemInfo {
@@ -39,4 +39,4 @@ private:
     std::optional<NativePath> ca_bundle_;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

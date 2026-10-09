@@ -5,7 +5,7 @@
 #include "messages.hpp"
 #include "random_chars.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 namespace {
 
@@ -45,4 +45,4 @@ bool is_default_display_name(std::string_view name, AccountRole role) noexcept {
     return std::ranges::all_of(name.substr(prefix.size()), [](char c) { return c >= '0' && c <= '9'; });
 }
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

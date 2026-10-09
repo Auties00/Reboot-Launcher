@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::play::msg {
+namespace rb::play::msg {
 
 REBOOT_MESSAGE(kNoBuildSelected, "play.no_build_selected", "Choose a build to play");
 REBOOT_MESSAGE(kBuildVersionUnknown, "play.build_version_unknown", "Set the game version of {build} before playing");
@@ -31,4 +31,4 @@ REBOOT_MESSAGE(kLaunchTimedOut, "play.launch_timed_out", "The game took too long
 REBOOT_MESSAGE(kSessionStopping, "play.session_stopping", "The game session is already stopping");
 REBOOT_MESSAGE(kInvalidAnswer, "play.invalid_answer", "The answer to this question must be yes or no");
 
-}  // namespace reboot::play::msg
+}  // namespace rb::play::msg

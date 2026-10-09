@@ -15,7 +15,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -109,4 +109,4 @@ Result<void> LinuxLogFileSystem::remove(const NativePath& path) {
     return {};
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

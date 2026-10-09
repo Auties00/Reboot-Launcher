@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <unistd.h>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 std::optional<std::string_view> env_value(const char* name) noexcept {
     const char* const value = std::getenv(name);
@@ -35,4 +35,4 @@ std::vector<std::string> envp_strings(const std::vector<std::pair<std::string, s
     return out;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

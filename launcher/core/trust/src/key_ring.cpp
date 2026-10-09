@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/sha256.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 std::string key_id_of(const Ed25519PublicKey& key) {
     const auto digest = sha256(key);
@@ -22,4 +22,4 @@ const Ed25519PublicKey* KeyRing::find(std::string_view key_id) const noexcept {
     return nullptr;
 }
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

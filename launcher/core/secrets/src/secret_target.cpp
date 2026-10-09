@@ -8,7 +8,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 namespace {
 
@@ -45,4 +45,4 @@ Result<SecretTarget> SecretTarget::parse(SecretKind kind, std::string_view scope
     return invalid_scope(kind, scope);
 }
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

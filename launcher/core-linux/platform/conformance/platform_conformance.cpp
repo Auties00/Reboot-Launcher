@@ -40,11 +40,11 @@
 #include "reboot/os_linux/platform/xdg_shell.hpp"
 #include "reboot/testing/port_binder.hpp"
 
-using namespace reboot;
-using namespace reboot::os_linux::platform;
-using reboot::os_linux::platform::test::require_passed;
-using reboot::os_linux::platform::test::require_passed_except;
-using reboot::os_linux::platform::test::Scratch;
+using namespace rb;
+using namespace rb::os_linux::platform;
+using rb::os_linux::platform::test::require_passed;
+using rb::os_linux::platform::test::require_passed_except;
+using rb::os_linux::platform::test::Scratch;
 namespace fs = std::filesystem;
 
 namespace {

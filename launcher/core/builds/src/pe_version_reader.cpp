@@ -9,7 +9,7 @@
 #include "reboot/builds/byte_source.hpp"
 #include "release_marker_scan.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -230,4 +230,4 @@ Result<std::optional<ReleaseMarker>> PeVersionReader::scan_for_marker(IByteSourc
     return std::optional<ReleaseMarker>();
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

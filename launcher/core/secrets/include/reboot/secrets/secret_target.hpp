@@ -7,7 +7,7 @@
 #include "reboot/secrets/secret_kind.hpp"
 #include "reboot/secrets/secret_scope.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 struct SecretTarget {
     SecretKind kind{};
@@ -20,4 +20,4 @@ struct SecretTarget {
     [[nodiscard]] static Result<SecretTarget> parse(SecretKind kind, std::string_view scope);
 };
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

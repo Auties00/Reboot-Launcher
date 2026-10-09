@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // ILoopbackPeerInspector for the front's ticket swap: unsupported (Windows and macOS shapes) every
@@ -30,4 +30,4 @@ private:
     std::map<std::pair<Endpoint, Endpoint>, u32> uids_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

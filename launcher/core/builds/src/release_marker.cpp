@@ -8,7 +8,7 @@
 
 #include "release_marker_scan.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -105,4 +105,4 @@ std::optional<ReleaseMarker> find_release_marker(std::span<const u8> utf16le) {
     return std::nullopt;
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

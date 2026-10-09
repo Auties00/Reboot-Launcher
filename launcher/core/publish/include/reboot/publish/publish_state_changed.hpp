@@ -3,7 +3,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/publish/publish_state.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // EventKind::PublishStateChanged, coalesced per session.
 struct PublishStateChanged {
@@ -11,4 +11,4 @@ struct PublishStateChanged {
     PublishState state;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

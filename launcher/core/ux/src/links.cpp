@@ -2,7 +2,7 @@
 
 #include "language_lookup.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 std::string localized_url(std::span<const LocalizedUrl> urls, const LanguageTag& language) {
     for (const std::string_view range : lookup_fallbacks(language.str()))
@@ -13,4 +13,4 @@ std::string localized_url(std::span<const LocalizedUrl> urls, const LanguageTag&
     return {};
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

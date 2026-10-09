@@ -12,27 +12,27 @@
 #include "reboot/play/play_service.hpp"
 #include "reboot/play/play_session_state.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IRandom;
 class Redactor;
 class UserRequestRegistry;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class ISystemInfo;
 }
 
-namespace reboot::sessions {
+namespace rb::sessions {
 class SessionRegistry;
 }
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 class GameChannelListener;
 }
 
-namespace reboot::play {
+namespace rb::play {
 
 class MatchTargets;
 class PlayEnv;
@@ -69,4 +69,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

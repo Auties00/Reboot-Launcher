@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 enum class TaskRun : u8 {
     // Absent, disabled, not running `engine_exe` least-privileged, or the Task Scheduler failed.
@@ -25,4 +25,4 @@ enum class TaskRun : u8 {
 [[nodiscard]] Result<TaskRun> run_engine_task(const std::string& task_name, const NativePath& engine_exe, u32 session_id,
                                               std::chrono::milliseconds call_deadline);
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

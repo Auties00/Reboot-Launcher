@@ -8,11 +8,11 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IPlatformPaths;
 }
 
-namespace reboot {
+namespace rb {
 
 struct DataRoot {
     NativePath root;
@@ -88,4 +88,4 @@ struct InstallLayout {
 // Returns <root>, the package dir that must never hold the data root.
 [[nodiscard]] std::optional<NativePath> velopack_root_of(const NativePath& exe_dir);
 
-}  // namespace reboot
+}  // namespace rb

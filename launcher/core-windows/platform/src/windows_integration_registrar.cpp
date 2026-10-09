@@ -13,7 +13,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -334,4 +334,4 @@ Result<void> WindowsIntegrationRegistrar::remove(ports::IntegrationKind kind) {
     return {};
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

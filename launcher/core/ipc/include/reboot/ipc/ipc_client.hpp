@@ -18,18 +18,18 @@
 #include "reboot/ipc/ipc_client_sink.hpp"
 #include "reboot/ipc/ipc_codec.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IClock;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IEngineStarter;
 class IFileRevisionReader;
 class IIpcConnector;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 enum class LaunchMode : u8 { Autostart, ConnectOnly };
 
@@ -95,4 +95,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

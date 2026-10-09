@@ -24,7 +24,7 @@
 #include "reboot/publish/share_link.hpp"
 #include "reboot/sessions/shutdown_cause.hpp"
 
-namespace reboot {
+namespace rb {
 class AppLayout;
 class EventBus;
 class Executor;
@@ -32,45 +32,45 @@ class IClock;
 class TimerService;
 class UserRequestRegistry;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 class IProcessLauncher;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::builds {
+namespace rb::builds {
 class Library;
 }
 
-namespace reboot::identity {
+namespace rb::identity {
 class IdentityService;
 }
 
-namespace reboot::net {
+namespace rb::net {
 class PortMapperService;
 class PortOwnerService;
 class UdpBeaconProber;
-}  // namespace reboot::net
+}  // namespace rb::net
 
-namespace reboot::publish {
+namespace rb::publish {
 class HostIdentityStore;
 class HostPublisher;
-}  // namespace reboot::publish
+}  // namespace rb::publish
 
-namespace reboot::sessions {
+namespace rb::sessions {
 class SessionRegistry;
 }
 
-namespace reboot::storage {
+namespace rb::storage {
 class Settings;
 }
 
-namespace reboot::support {
+namespace rb::support {
 class SupportPolicy;
 }
 
-namespace reboot::host {
+namespace rb::host {
 
 class HostPortAllocator;
 class HostProfileStore;
@@ -222,4 +222,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

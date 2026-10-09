@@ -37,7 +37,7 @@
 #include "reboot/storage/settings.hpp"
 #include "reboot/support/support_policy.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 namespace {
 
@@ -1348,4 +1348,4 @@ void HostService::drain(sessions::ShutdownCause cause, UniqueFunction<void()> do
     impl_->drain(cause, std::move(done));
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

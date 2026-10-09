@@ -8,7 +8,7 @@ extern "C" long read(int fd, void* buffer, unsigned long size);
 extern "C" long write(int fd, const void* data, unsigned long size);
 #endif
 
-namespace reboot::testing::raw_stdio {
+namespace rb::testing::raw_stdio {
 namespace {
 
 // Interrupted calls are retried; without errno here, a persistent error ends after these.
@@ -59,4 +59,4 @@ bool write_all(int fd, const unsigned char* data, unsigned long size) noexcept {
     return true;
 }
 
-}  // namespace reboot::testing::raw_stdio
+}  // namespace rb::testing::raw_stdio

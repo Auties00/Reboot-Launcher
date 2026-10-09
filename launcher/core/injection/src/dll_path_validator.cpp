@@ -11,7 +11,7 @@
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 namespace {
 
@@ -97,4 +97,4 @@ Result<void> DllPathValidator::check_image(const NativePath& path, std::span<con
     return {};
 }
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

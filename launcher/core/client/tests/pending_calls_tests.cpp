@@ -6,8 +6,8 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/ipc/ipc_errors.hpp"
 
-using namespace reboot;
-using namespace reboot::client;
+using namespace rb;
+using namespace rb::client;
 
 namespace {
 

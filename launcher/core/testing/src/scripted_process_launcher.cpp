@@ -13,7 +13,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 [[nodiscard]] std::string file_name_of(const NativePath& exe) {
@@ -166,4 +166,4 @@ std::vector<u32> ScriptedProcessLauncher::killed() const {
     return impl_->killed;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

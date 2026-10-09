@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // What SystemdEngineStarter reads from `systemctl --user show --property=LoadState,ActiveState,Listen
 // <unit>`, whose output is one Name=value line per property and per Listen entry.
@@ -20,4 +20,4 @@ struct SystemdUnitState {
     [[nodiscard]] static SystemdUnitState parse(std::string_view show_output);
 };
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

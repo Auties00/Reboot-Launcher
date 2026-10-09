@@ -4,11 +4,11 @@
 
 #include "socket_match.hpp"
 
-using namespace reboot::os_macos::platform;
-using reboot::Endpoint;
-using reboot::IpAddress;
-using reboot::NativePath;
-using reboot::Port;
+using namespace rb::os_macos::platform;
+using rb::Endpoint;
+using rb::IpAddress;
+using rb::NativePath;
+using rb::Port;
 
 namespace {
 

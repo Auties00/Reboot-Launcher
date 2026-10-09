@@ -12,7 +12,7 @@
 #include "reboot/integration/prerequisites_changed.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 namespace {
 
@@ -153,4 +153,4 @@ void PrerequisiteService::start_waiting(PrerequisiteId id) {
     }
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

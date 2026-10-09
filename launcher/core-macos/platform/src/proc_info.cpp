@@ -15,7 +15,7 @@
 
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -78,4 +78,4 @@ Result<std::vector<u32>> child_pids(u32 parent) {
     }
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

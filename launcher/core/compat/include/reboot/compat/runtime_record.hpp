@@ -5,7 +5,7 @@
 #include "reboot/compat/runtime_id.hpp"
 #include "reboot/compat/slr_install.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // What the engine learned about one stored runtime.
 struct RuntimeRecord {
@@ -18,4 +18,4 @@ struct RuntimeRecord {
     bool operator==(const RuntimeRecord&) const = default;
 };
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

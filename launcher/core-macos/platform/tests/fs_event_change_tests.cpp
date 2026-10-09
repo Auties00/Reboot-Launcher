@@ -4,9 +4,9 @@
 
 #include "fs_event_change.hpp"
 
-using namespace reboot::os_macos::platform;
-using reboot::NativePath;
-using reboot::ports::FileChangeKind;
+using namespace rb::os_macos::platform;
+using rb::NativePath;
+using rb::ports::FileChangeKind;
 
 namespace {
 

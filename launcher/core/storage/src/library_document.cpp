@@ -9,7 +9,7 @@
 #include "messages.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace json = boost::json;
 
@@ -142,4 +142,4 @@ json::object LibraryDocument::write() const {
 
 Result<json::object> LibraryDocument::upgrade(json::object values, u32) { return values; }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

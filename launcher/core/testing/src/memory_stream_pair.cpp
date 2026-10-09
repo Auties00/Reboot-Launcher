@@ -10,7 +10,7 @@
 
 #include "memory_link.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 struct MemoryLink {
     struct End {
@@ -157,4 +157,4 @@ MemoryStreamPair make_memory_stream_pair(Executor& deliver_on, ports::PeerIdenti
     return {std::move(pair.a), std::move(pair.b)};
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

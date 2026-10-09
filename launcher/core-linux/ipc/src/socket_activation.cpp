@@ -3,7 +3,7 @@
 #include <charconv>
 #include <system_error>
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 [[nodiscard]] std::optional<u32> parse_decimal(std::string_view text) noexcept {
@@ -23,4 +23,4 @@ SocketActivation read_socket_activation(const ListenEnvironment& environment, u3
     return {true, environment.listen_fds ? parse_decimal(*environment.listen_fds) : std::nullopt};
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

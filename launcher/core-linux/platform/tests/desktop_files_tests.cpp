@@ -6,8 +6,8 @@
 #include "desktop_files.hpp"
 #include "systemd_units.hpp"
 
-using reboot::NativePath;
-using namespace reboot::os_linux::platform;
+using rb::NativePath;
+using namespace rb::os_linux::platform;
 using Args = std::vector<std::string>;
 
 TEST_CASE("Exec values quote reserved characters and keep field codes", "[desktop_files]") {

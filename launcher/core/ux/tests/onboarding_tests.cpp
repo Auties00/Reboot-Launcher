@@ -10,8 +10,8 @@
 #include "reboot/ux/onboarding.hpp"
 #include "test_support.hpp"
 
-using namespace reboot;
-using namespace reboot::ux;
+using namespace rb;
+using namespace rb::ux;
 
 namespace {
 

@@ -9,7 +9,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // Plain std::ifstream seek and read; blocking.
 class FileByteSource final : public IByteSource {
@@ -28,4 +28,4 @@ private:
     u64 size_ = 0;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

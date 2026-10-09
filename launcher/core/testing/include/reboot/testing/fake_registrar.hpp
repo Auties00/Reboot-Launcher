@@ -11,7 +11,7 @@
 #include "reboot/ports/os_services.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class RegistrarOperation : u8 { Status, Apply, Remove };
 
@@ -43,4 +43,4 @@ private:
     FaultPlan<RegistrarOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

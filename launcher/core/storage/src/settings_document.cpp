@@ -6,7 +6,7 @@
 #include "reboot/storage/key.hpp"
 #include "reboot/storage/settings_keys.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace json = boost::json;
 
@@ -32,4 +32,4 @@ json::object SettingsDocument::write() const {
 
 Result<json::object> SettingsDocument::upgrade(json::object values, u32) { return values; }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

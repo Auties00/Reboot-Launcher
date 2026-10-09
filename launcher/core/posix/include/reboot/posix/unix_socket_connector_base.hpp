@@ -9,7 +9,7 @@
 #include "reboot/ports/ipc.hpp"
 #include "reboot/posix/peer_credential_check.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // Covers no capability ids; the client side of the AF_UNIX engine endpoint behind IIpcConnector.
 // `endpoint_name` is the socket path. The returned stream runs on a thread it owns.
@@ -33,4 +33,4 @@ private:
     PeerCredentialCheck peer_check_;
 };
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

@@ -5,8 +5,8 @@
 
 #include "pem.hpp"
 
-using reboot::u8;
-using reboot::os_macos::platform::pem_bundle;
+using rb::u8;
+using rb::os_macos::platform::pem_bundle;
 
 TEST_CASE("pem_bundle wraps each certificate in its own block", "[pem]") {
     const std::vector<std::vector<u8>> certificates{{'M', 'a', 'n'}, {'M', 'a'}, {'M'}};

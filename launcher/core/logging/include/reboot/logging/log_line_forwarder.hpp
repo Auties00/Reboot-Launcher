@@ -5,12 +5,12 @@
 
 #include "reboot/logging/log_ring.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::logging {
+namespace rb::logging {
 
 // Payload of EventKind::LogLine; the bus drops it with a counter when a subscriber lags.
 struct LogLineEvent {
@@ -34,4 +34,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

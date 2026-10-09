@@ -7,7 +7,7 @@
 #include "reboot/storage/key.hpp"
 #include "reboot/storage/settings_keys.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // Capabilities: none.
 // Key lookup by id and reset group; immutable, so any thread may read it.
@@ -23,4 +23,4 @@ private:
     std::span<const AnyKey* const> keys_;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

@@ -8,7 +8,7 @@
 #include "reboot/host/match_end_policy.hpp"
 #include "reboot/publish/field_limits.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 namespace {
 
@@ -120,4 +120,4 @@ Diagnostic to_diagnostic(const HostError& error) {
     return internal_bug("host_error.to_diagnostic");
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

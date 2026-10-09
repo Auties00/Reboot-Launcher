@@ -20,7 +20,7 @@
 #include "reboot/ipc/outbound_budget.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 namespace wire = contracts::ipc;
 
@@ -306,4 +306,4 @@ void IpcConnection::report_closed() {
     if (CloseHandler handler = std::move(impl_->on_closed)) handler(*this);
 }
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

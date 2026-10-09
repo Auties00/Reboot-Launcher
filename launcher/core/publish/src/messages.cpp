@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::publish::msg {
+namespace rb::publish::msg {
 
 REBOOT_MESSAGE(kNotPublished, "publish.not_published", "Session {session} is not published to the server browser");
 REBOOT_MESSAGE(kAlreadyPublished, "publish.already_published",
@@ -48,4 +48,4 @@ REBOOT_MESSAGE(kIdentityFileInvalid, "publish.identity_file_invalid", "{path} is
 REBOOT_MESSAGE(kIdentityUnreadable, "publish.identity_unreadable",
                "The server identity of host profile {profile} could not be read");
 
-}  // namespace reboot::publish::msg
+}  // namespace rb::publish::msg

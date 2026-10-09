@@ -8,7 +8,7 @@
 #include "reboot/process/process_spec.hpp"
 #include "reboot/process/windows_command_line.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 namespace {
 
@@ -41,4 +41,4 @@ std::string to_log_string(const BuiltEnv& env) {
     return out;
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

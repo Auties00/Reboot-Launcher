@@ -1,6 +1,6 @@
 #include "reboot/host/port_block.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 std::vector<Port> PortBlock::ports() const {
     std::vector<Port> out;
@@ -15,4 +15,4 @@ Port game_port(const PortBlock& block, const std::vector<gameserver::SocketRole>
     return block.first;
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

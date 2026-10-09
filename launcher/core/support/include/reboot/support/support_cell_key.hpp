@@ -4,7 +4,7 @@
 #include "reboot/support/support_role.hpp"
 #include "reboot/support/version_range.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // Host cells always use RunnerKind::Native.
 struct SupportCellKey {
@@ -15,4 +15,4 @@ struct SupportCellKey {
     bool operator==(const SupportCellKey&) const = default;
 };
 
-}  // namespace reboot::support
+}  // namespace rb::support

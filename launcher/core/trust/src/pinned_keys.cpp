@@ -9,7 +9,7 @@
 #error "core/trust/CMakeLists.txt defines the pinned public keys"
 #endif
 
-namespace reboot::trust {
+namespace rb::trust {
 
 namespace {
 
@@ -41,4 +41,4 @@ KeyRing KeyRing::pinned(SignedDocumentKind kind) {
     return KeyRing(kind, {});
 }
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

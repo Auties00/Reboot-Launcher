@@ -14,7 +14,7 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot::testing {
+namespace rb::testing {
 
 struct PeerArguments {
     bool describe = false;
@@ -34,4 +34,4 @@ using PeerFactory =
 // stdout and stderr so it never blocks on them, and its exit code ends the process.
 [[noreturn]] void run_peer_process(PeerFactory make);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

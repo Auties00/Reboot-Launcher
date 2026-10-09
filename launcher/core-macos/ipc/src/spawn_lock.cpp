@@ -8,7 +8,7 @@
 
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 Result<void> create_private_dirs(const NativePath& directory) {
     NativePath current;
@@ -35,4 +35,4 @@ Result<posix::UniqueFd> lock_exclusive(const NativePath& path) {
     return fd;
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

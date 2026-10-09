@@ -14,7 +14,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/function.hpp"
 
-namespace reboot::gameserver::test {
+namespace rb::gameserver::test {
 
 // The strand beside a real WorkerPool: workers post from their threads, timed tasks follow the
 // ManualClock, and only the test thread runs anything.
@@ -95,4 +95,4 @@ private:
     std::multimap<SteadyTime, UniqueFunction<void()>> timed_;
 };
 
-}  // namespace reboot::gameserver::test
+}  // namespace rb::gameserver::test

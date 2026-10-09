@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 // Mirrors ports::IntegrationKind.
 enum class IntegrationItem : u32 {
@@ -201,19 +201,19 @@ class IIntegrationHandler {
 public:
     virtual ~IIntegrationHandler() = default;
 
-    virtual ::reboot::Result<IntegrationStatusResponse> status(const CallContext& context, const IntegrationStatusRequest& request) = 0;
-    virtual ::reboot::Result<IntegrationPrerequisitesResponse> prerequisites(const CallContext& context, const IntegrationPrerequisitesRequest& request) = 0;
-    virtual ::reboot::Result<IntegrationShellOpenUrlResponse> shell_open_url(const CallContext& context, const IntegrationShellOpenUrlRequest& request) = 0;
-    virtual ::reboot::Result<IntegrationShellOpenPathResponse> shell_open_path(const CallContext& context, const IntegrationShellOpenPathRequest& request) = 0;
-    virtual ::reboot::Result<IntegrationShellRevealResponse> shell_reveal(const CallContext& context, const IntegrationShellRevealRequest& request) = 0;
+    virtual ::rb::Result<IntegrationStatusResponse> status(const CallContext& context, const IntegrationStatusRequest& request) = 0;
+    virtual ::rb::Result<IntegrationPrerequisitesResponse> prerequisites(const CallContext& context, const IntegrationPrerequisitesRequest& request) = 0;
+    virtual ::rb::Result<IntegrationShellOpenUrlResponse> shell_open_url(const CallContext& context, const IntegrationShellOpenUrlRequest& request) = 0;
+    virtual ::rb::Result<IntegrationShellOpenPathResponse> shell_open_path(const CallContext& context, const IntegrationShellOpenPathRequest& request) = 0;
+    virtual ::rb::Result<IntegrationShellRevealResponse> shell_reveal(const CallContext& context, const IntegrationShellRevealRequest& request) = 0;
     // Completes with IntegrationApplyResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_apply(const CallContext& context, const IntegrationApplyRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_apply(const CallContext& context, const IntegrationApplyRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with IntegrationRemoveResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_remove(const CallContext& context, const IntegrationRemoveRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_remove(const CallContext& context, const IntegrationRemoveRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with IntegrationRemediateResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_remediate(const CallContext& context, const IntegrationRemediateRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_remediate(const CallContext& context, const IntegrationRemediateRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with IntegrationPurgeResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_purge(const CallContext& context, const IntegrationPurgeRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_purge(const CallContext& context, const IntegrationPurgeRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

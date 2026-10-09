@@ -7,7 +7,7 @@
 #include "reboot/front/session_key.hpp"
 #include "reboot/front/upstream_origin.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // A request target on the session listener, split into its route and the upstream path.
 struct FrontPath {
@@ -23,4 +23,4 @@ struct FrontPath {
 // nullopt for anything not under /s/<32 hex digits>, or a malformed relay segment.
 [[nodiscard]] std::optional<FrontPath> parse_front_path(std::string_view target);
 
-}  // namespace reboot::front
+}  // namespace rb::front

@@ -17,7 +17,7 @@
 
 // Private wire messages. Field number = declaration index + 1, so fields are only appended.
 // A run of std::optional fields documented as a choice has at most one member set.
-namespace reboot::contracts {
+namespace rb::contracts {
 
 struct FrameRange {
     u64 first;
@@ -38,9 +38,9 @@ template <class... T>
     return (static_cast<int>(members.has_value()) + ... + 0) <= 1;
 }
 
-}  // namespace reboot::contracts
+}  // namespace rb::contracts
 
-namespace reboot::contracts::common {
+namespace rb::contracts::common {
 
 struct Ping {
     u64 nonce = 0;
@@ -52,7 +52,7 @@ struct Pong {
 };
 REBOOT_CONTRACT_FRAME(Pong, 0x11)
 
-// Mirrors the alternatives of reboot::Arg, in order.
+// Mirrors the alternatives of rb::Arg, in order.
 enum class ArgKind : u8 { String, Signed, Unsigned, Bool, Millis, Path, SemVer };
 
 struct WireArg {
@@ -180,4 +180,4 @@ template <class N>
     return diag;
 }
 
-}  // namespace reboot::contracts::common
+}  // namespace rb::contracts::common

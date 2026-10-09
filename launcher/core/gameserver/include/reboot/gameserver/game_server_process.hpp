@@ -17,20 +17,20 @@
 #include "reboot/process/built_env.hpp"
 #include "reboot/process/child_record.hpp"
 
-namespace reboot {
+namespace rb {
 class AppLayout;
 class Executor;
 class IClock;
 class TimerService;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 class IProcessLauncher;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 // AwaitingListen: Welcome was sent. Exited is final; a respawn is a new GameServerProcess.
 enum class GameServerPhase : u8 { Idle, Preparing, Handshaking, AwaitingListen, Listening, Stopping, Exited };
@@ -109,4 +109,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

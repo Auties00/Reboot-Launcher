@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/trust/signed_document_kind.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 inline constexpr std::size_t kEd25519PublicKeySize = 32;
 
@@ -49,4 +49,4 @@ private:
     std::vector<Entry> entries_;
 };
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

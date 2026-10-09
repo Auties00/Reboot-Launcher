@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // The exit code of a fake child that could not bind what Welcome named, as the contracts require.
 inline constexpr int kBindFailureExitCode = 3;
@@ -44,4 +44,4 @@ struct ChildMisbehaviour {
     std::optional<u64> garbage_frame;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -19,7 +19,7 @@
 #include "reboot/process/line_reader.hpp"
 #include "reboot/process/process_spec.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 namespace {
 
@@ -311,4 +311,4 @@ void GameServerBinary::forget(const Sha256Digest& sha256) {
     if (!written) REBOOT_LOG_WARN(Host, "cannot drop the cached game server description: {}", written.error().id);
 }
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

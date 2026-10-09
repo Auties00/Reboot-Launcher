@@ -6,7 +6,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Text a UI renders from its catalog; core never formats it.
 struct MessageText {
@@ -14,4 +14,4 @@ struct MessageText {
     std::vector<std::pair<std::string, Arg>> args;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

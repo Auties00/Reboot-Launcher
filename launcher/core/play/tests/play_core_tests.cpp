@@ -14,9 +14,9 @@
 #include "reboot/play/play_prompts.hpp"
 #include "reboot/sessions/session_driver.hpp"
 
-using namespace reboot;
-using namespace reboot::play;
-using namespace reboot::play::test;
+using namespace rb;
+using namespace rb::play;
+using namespace rb::play::test;
 using namespace std::chrono_literals;
 
 namespace {

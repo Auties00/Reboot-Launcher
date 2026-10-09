@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; IDiskInfo over /proc/self/mountinfo and statvfs.
 class LinuxDiskInfo final : public ports::IDiskInfo {
@@ -24,4 +24,4 @@ public:
     Result<ports::VolumeInfo> volume_of(const NativePath& path) override;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

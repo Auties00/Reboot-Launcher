@@ -11,8 +11,8 @@
 #include "reboot/ux/language_tag.hpp"
 #include "reboot/ux/suggested_action.hpp"
 
-using namespace reboot;
-using namespace reboot::ux;
+using namespace rb;
+using namespace rb::ux;
 
 namespace {
 

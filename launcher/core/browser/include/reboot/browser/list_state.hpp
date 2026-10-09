@@ -8,7 +8,7 @@
 #include "reboot/browser/server_row.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 using ViewId = Counter<struct BrowserViewTag, u64>;
 
@@ -33,4 +33,4 @@ struct ViewUpdate {
     [[nodiscard]] std::size_t approx_bytes() const noexcept;
 };
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

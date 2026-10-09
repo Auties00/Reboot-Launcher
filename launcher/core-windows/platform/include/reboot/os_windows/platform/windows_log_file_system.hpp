@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/log_file_system.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; ILogFileSystem over Win32 file APIs with \\?\ paths. Log files are
 // opened FILE_SHARE_READ | WRITE | DELETE, so export and pruning work while the logger writes.
@@ -20,4 +20,4 @@ public:
     Result<void> remove(const NativePath& path) override;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

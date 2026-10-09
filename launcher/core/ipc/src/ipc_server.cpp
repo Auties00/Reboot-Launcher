@@ -22,7 +22,7 @@
 #include "reboot/ipc/ipc_limits.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 namespace {
 
@@ -343,4 +343,4 @@ void IpcServer::send_foreground_hint(u32 pid) {
 
 std::size_t IpcServer::connection_count() const noexcept { return impl_->connections.size(); }
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

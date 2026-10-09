@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 class XdgPaths;
 
@@ -37,4 +37,4 @@ struct EngineCommand {
 // exec of the bundled engine. Dev has no stable entry: platform.integration_needs_user_install.
 [[nodiscard]] Result<EngineCommand> stable_engine_command(const XdgPaths& paths);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

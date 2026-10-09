@@ -9,7 +9,7 @@
 #include "reboot/storage/console_key.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // Mirrors SettingsValues; an empty field leaves that setting alone.
 struct SettingsPatch {
@@ -50,4 +50,4 @@ struct SettingsPatch {
     } ui;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

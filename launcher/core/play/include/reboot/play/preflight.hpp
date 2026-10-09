@@ -20,7 +20,7 @@
 #include "reboot/storage/settings_snapshot.hpp"
 #include "reboot/support/support_verdict.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // What a Wine runner session pins; absent on the Native runner.
 struct WinePins {
@@ -54,4 +54,4 @@ struct Preflight {
     injection::InjectionPlan injection;
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

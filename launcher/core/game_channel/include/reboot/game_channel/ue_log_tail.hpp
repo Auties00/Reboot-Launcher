@@ -8,17 +8,17 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class TimerService;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 // A file the game holds open does not reliably raise change notifications while it grows.
 inline constexpr std::chrono::milliseconds kUeLogPollInterval{500};
@@ -45,4 +45,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

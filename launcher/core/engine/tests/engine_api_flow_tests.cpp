@@ -19,9 +19,9 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/updates/update_event.hpp"
 
-using namespace reboot;
-using namespace reboot::engine;
-using namespace reboot::engine::test;
+using namespace rb;
+using namespace rb::engine;
+using namespace rb::engine::test;
 using namespace std::chrono_literals;
 
 namespace {

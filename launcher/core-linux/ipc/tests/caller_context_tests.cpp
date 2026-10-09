@@ -13,9 +13,9 @@
 #include "reboot/os_linux/ipc/linux_caller_context.hpp"
 #include "reboot/testing/port_conformance.hpp"
 
-using reboot::os_linux::ipc::caller_context_from;
-using reboot::os_linux::ipc::CallerFacts;
-using reboot::os_linux::ipc::LinuxCallerContext;
+using rb::os_linux::ipc::caller_context_from;
+using rb::os_linux::ipc::CallerFacts;
+using rb::os_linux::ipc::LinuxCallerContext;
 
 namespace {
 
@@ -37,7 +37,7 @@ TEST_CASE("display_env keeps allow-listed, non-empty variables in environment or
     };
     CallerFacts facts = desktop_facts();
     facts.environment = kEnvironment;
-    const reboot::ports::CallerContext context = caller_context_from(facts);
+    const rb::ports::CallerContext context = caller_context_from(facts);
     CHECK(context.display_env == Pairs{{"WAYLAND_DISPLAY", "wayland-0"},
                                        {"DISPLAY", ":0"},
                                        {"LC_ALL", "C.UTF-8"},
@@ -53,11 +53,11 @@ TEST_CASE("an empty first value hides a later duplicate, as getenv sees it", "[c
 
 TEST_CASE("the allow-list never admits Steam, loader, Wine or umu variables", "[caller_context]") {
     for (const std::string_view name : {"SteamGameId", "LD_LIBRARY_PATH", "WINEDLLOVERRIDES", "UMU_ID", "HOME"})
-        CHECK_FALSE(reboot::os_linux::ipc::is_display_env_name(name));
+        CHECK_FALSE(rb::os_linux::ipc::is_display_env_name(name));
 }
 
 TEST_CASE("a desktop login is interactive, not elevated, with its audit session", "[caller_context]") {
-    const reboot::ports::CallerContext context = caller_context_from(desktop_facts());
+    const rb::ports::CallerContext context = caller_context_from(desktop_facts());
     CHECK(context.os_session == "3");
     CHECK(context.interactive);
     CHECK_FALSE(context.elevated);
@@ -67,7 +67,7 @@ TEST_CASE("an unset audit session and login uid read as absent", "[caller_contex
     CallerFacts facts = desktop_facts();
     facts.session_id = "4294967295";
     facts.login_uid = "4294967295";
-    const reboot::ports::CallerContext context = caller_context_from(facts);
+    const rb::ports::CallerContext context = caller_context_from(facts);
     CHECK(context.os_session.empty());
     CHECK_FALSE(context.interactive);
 
@@ -102,9 +102,9 @@ TEST_CASE("sudo and setuid are elevated; a root login and a container's root are
 
 TEST_CASE("detect reads this process without failing", "[caller_context]") {
     LinuxCallerContext probe = LinuxCallerContext::detect();
-    const reboot::ports::CallerContext context = probe.capture();
+    const rb::ports::CallerContext context = probe.capture();
     for (const auto& [name, value] : context.display_env) {
-        CHECK(reboot::os_linux::ipc::is_display_env_name(name));
+        CHECK(rb::os_linux::ipc::is_display_env_name(name));
         CHECK_FALSE(value.empty());
     }
     probe.allow_foreground(1);
@@ -113,8 +113,8 @@ TEST_CASE("detect reads this process without failing", "[caller_context]") {
 
 TEST_CASE("LinuxCallerContext passes the caller context conformance suite", "[caller_context]") {
     LinuxCallerContext probe = LinuxCallerContext::detect();
-    const reboot::testing::ConformanceReport report =
-        reboot::testing::run_caller_context_conformance(probe, static_cast<reboot::u32>(::getpid()));
+    const rb::testing::ConformanceReport report =
+        rb::testing::run_caller_context_conformance(probe, static_cast<rb::u32>(::getpid()));
     INFO(report.describe());
     CHECK(report.passed());
 }

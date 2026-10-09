@@ -4,7 +4,7 @@
 #include <array>
 #include <string>
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -140,4 +140,4 @@ std::string_view key_label(const ConsoleKey& key) noexcept {
     return it == kConsoleKeys.end() ? std::string_view{} : it->label;
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

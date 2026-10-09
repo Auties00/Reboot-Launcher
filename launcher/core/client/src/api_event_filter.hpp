@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 // Layout of reboot.api.v1 EventFilter: kinds = 1, session = 2, op_id = 3.
 struct ApiEventFilter {
@@ -23,4 +23,4 @@ struct ApiEventFilter {
 // False when the filter names a session, since the library cannot tell an op's session.
 [[nodiscard]] bool admits_op_completed(const ApiEventFilter& filter, u64 op_id) noexcept;
 
-}  // namespace reboot::client
+}  // namespace rb::client

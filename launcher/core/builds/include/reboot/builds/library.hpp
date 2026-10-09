@@ -21,25 +21,25 @@
 #include "reboot/storage/library_document.hpp"
 #include "reboot/support/support_role.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IClock;
 class IRandom;
 class WorkerPool;
 struct InstallLayout;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 class IShellLauncher;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::catalog {
+namespace rb::catalog {
 class CatalogService;
 }
 
-namespace reboot::builds {
+namespace rb::builds {
 
 class ClTable;
 class IBuildUsage;
@@ -135,4 +135,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

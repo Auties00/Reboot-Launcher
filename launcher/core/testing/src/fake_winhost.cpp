@@ -18,7 +18,7 @@
 #include "stdio_peer_core.hpp"
 #include "tcp_stream.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 namespace wh = contracts::winhost;
@@ -321,4 +321,4 @@ FakeClientDll* FakeWinhost::game_client_dll() const {
     return impl_->dll.get();
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

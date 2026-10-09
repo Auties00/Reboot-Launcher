@@ -19,7 +19,7 @@
 #include "reboot/testing/fake_game_server_script.hpp"
 #include "script_json.hpp"
 
-namespace reboot::testing::script_json {
+namespace rb::testing::script_json {
 
 namespace gc = contracts::game_client;
 namespace gs = contracts::game_server;
@@ -98,9 +98,9 @@ template <class Script>
 }
 
 }  // namespace
-}  // namespace reboot::testing::script_json
+}  // namespace rb::testing::script_json
 
-namespace reboot::testing {
+namespace rb::testing {
 
 namespace gc = contracts::game_client;
 namespace gs = contracts::game_server;
@@ -148,4 +148,4 @@ Result<FakeGameScript> load_fake_game_script(const NativePath& file) { return sc
 
 std::string to_json(const FakeGameScript& script) { return script_json::serialize_script(script); }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

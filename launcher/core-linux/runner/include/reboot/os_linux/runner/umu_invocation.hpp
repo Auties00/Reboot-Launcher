@@ -10,7 +10,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 // Covers no capability ids (decisions linux-compat-layer, owner-2).
 // umu-launcher 1.4.4 running GE-Proton for play, with the launcher-owned UMU_FOLDERS_PATH so
@@ -46,4 +46,4 @@ struct UmuInvocation {
                                                             std::span<const NativePath> paths);
 };
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

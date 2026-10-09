@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // The kFSEventStreamEventFlag bits of one event, reduced to what a watcher reports.
 struct FsEventFlags {
@@ -26,4 +26,4 @@ struct FsEventFlags {
                                                                std::string_view event_path, FsEventFlags flags,
                                                                bool exists);
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

@@ -14,7 +14,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -329,4 +329,4 @@ void Logger::drain_for_terminate(LogCategory category, std::string text) noexcep
     }
 }
 
-}  // namespace reboot
+}  // namespace rb

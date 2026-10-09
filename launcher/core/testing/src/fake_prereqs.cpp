@@ -9,7 +9,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 std::vector<ports::PrerequisiteStatus> FakePrereqs::check() {
     const std::scoped_lock lock(mutex_);
@@ -37,4 +37,4 @@ std::vector<std::string> FakePrereqs::remediated() const {
     return remediated_;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

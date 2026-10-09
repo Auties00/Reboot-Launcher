@@ -4,7 +4,7 @@
 #include <optional>
 #include <utility>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 Result<std::optional<ports::PortOwner>> FakePortInspector::tcp_owner(Endpoint local) {
     if (auto error = faults_.take(PortInspectorOperation::TcpOwner)) return std::unexpected(std::move(*error));
@@ -42,4 +42,4 @@ void FakePortInspector::clear_udp(Port port) {
     udp_.erase(port);
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

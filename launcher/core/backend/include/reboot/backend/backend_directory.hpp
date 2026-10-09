@@ -3,7 +3,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/paths.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Capabilities: auth-backend.open-directory.
 // The embedded backend's folders. "Show files" opens data_dir(), which is per user and writable;
@@ -23,4 +23,4 @@ private:
     NativePath content_dir_;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // In run order; FlushLogs stays last.
 enum class ShutdownStep : u8 {
@@ -42,4 +42,4 @@ inline constexpr std::size_t kShutdownStepCount = static_cast<std::size_t>(Shutd
     return "unknown";
 }
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

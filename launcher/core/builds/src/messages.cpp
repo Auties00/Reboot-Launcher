@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::builds::msg {
+namespace rb::builds::msg {
 
 REBOOT_MESSAGE(kNameEmpty, "builds.name_empty", "A build name cannot be empty");
 REBOOT_MESSAGE(kNameTaken, "builds.name_taken", "A build named {name} already exists");
@@ -61,4 +61,4 @@ REBOOT_MESSAGE(kWalkIncomplete, "builds.walk_incomplete", "{count} folders under
 REBOOT_MESSAGE(kCaseCollision, "builds.case_collision",
                "The archive holds both {kept} and {replaced}, which differ only in case; {kept} was kept");
 
-}  // namespace reboot::builds::msg
+}  // namespace rb::builds::msg

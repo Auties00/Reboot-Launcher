@@ -11,7 +11,7 @@
 #include "messages.hpp"
 #include "reboot/testing/port_binder.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 namespace asio = boost::asio;
@@ -108,4 +108,4 @@ private:
 
 std::unique_ptr<IPortBinder> make_socket_port_binder() { return std::make_unique<SocketPortBinder>(); }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/host/port_policy.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 enum class HostErrorCode : u8 {
     ProfileNotFound,
@@ -89,4 +89,4 @@ struct HostError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const HostError& error);
 
-}  // namespace reboot::host
+}  // namespace rb::host

@@ -9,7 +9,7 @@
 #include "reboot/ports/ipc.hpp"
 #include "reboot/posix/unix_socket_connector_base.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // Covers no capability ids; the reboot_client end of the engine socket behind IIpcConnector.
 class UnixSocketConnector final : public posix::UnixSocketConnectorBase {
@@ -26,4 +26,4 @@ private:
     NativePath user_temp_dir_;
 };
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

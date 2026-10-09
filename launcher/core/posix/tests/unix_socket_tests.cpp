@@ -25,9 +25,9 @@
 #include "unistd.hpp"
 #include "unix_endpoint_checks.hpp"
 
-using namespace reboot;
-using namespace reboot::posix;
-using namespace reboot::posix::test;
+using namespace rb;
+using namespace rb::posix;
+using namespace rb::posix::test;
 using namespace std::chrono_literals;
 
 namespace {

@@ -6,7 +6,7 @@
 
 #include "reboot/logging/wine_log_files.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 namespace {
 
@@ -97,4 +97,4 @@ void LogRing::set_on_append(UniqueFunction<void()> on_append) {
     }
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

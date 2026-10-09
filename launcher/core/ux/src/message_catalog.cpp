@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 MessageCatalog MessageCatalog::english_from_registry() {
     std::vector<std::pair<std::string, std::string>> entries;
@@ -21,4 +21,4 @@ std::optional<std::string_view> MessageCatalog::text(std::string_view id) const 
     return it->second;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

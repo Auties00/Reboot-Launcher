@@ -18,7 +18,7 @@
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/testing/fake_random.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 namespace {
 

@@ -11,7 +11,7 @@
 #include "reboot/sessions/session_exit.hpp"
 #include "reboot/sessions/session_phase.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // Launching runs until every planned DLL is injected, before or after resume as the boot strategy
 // says. Loading waits for our DLL's Loaded; Running starts at LoggedIn.
@@ -64,4 +64,4 @@ struct PlayEventEffect {
 // it, Crashed with play.crashed for an NTSTATUS error code (0xC0000000 and up), else Exited.
 [[nodiscard]] sessions::SessionExit exit_for_game_exit(const PlaySessionState& state, std::optional<i32> exit_code);
 
-}  // namespace reboot::play
+}  // namespace rb::play

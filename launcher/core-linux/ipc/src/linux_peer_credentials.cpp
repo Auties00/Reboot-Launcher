@@ -5,7 +5,7 @@
 
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 Result<posix::PeerCredentials> read_linux_peer(int socket_fd) {
     ucred credentials{};
@@ -17,4 +17,4 @@ Result<posix::PeerCredentials> read_linux_peer(int socket_fd) {
                                   .pid = credentials.pid > 0 ? static_cast<u32>(credentials.pid) : 0U};
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

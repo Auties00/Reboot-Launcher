@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::catalog::msg {
+namespace rb::catalog::msg {
 
 REBOOT_MESSAGE(kFetchFailed, "catalog.fetch_failed", "Cannot download the build catalog from {url}");
 REBOOT_MESSAGE(kHttpStatus, "catalog.http_status", "The build catalog server returned HTTP {status} for {url}");
@@ -15,4 +15,4 @@ REBOOT_MESSAGE(kBundledUnusable, "catalog.bundled_unusable",
 REBOOT_MESSAGE(kEntryNotFound, "catalog.entry_not_found", "No build named {name} is in the catalog");
 REBOOT_MESSAGE(kEntryNotInstallable, "catalog.entry_not_installable", "The build {name} is not available for download");
 
-}  // namespace reboot::catalog::msg
+}  // namespace rb::catalog::msg

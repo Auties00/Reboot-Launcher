@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -36,4 +36,4 @@ bool ControlToken::matches(std::span<const u8, kControlTokenSize> candidate) con
     return difference == 0;
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

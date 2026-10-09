@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace reboot::process {
+namespace rb::process {
 
 class BuiltEnv;
 struct ProcessSpec;
@@ -18,4 +18,4 @@ inline constexpr std::string_view kMasked = "***";
 // One NAME=VALUE per line in block order, sensitive values replaced by kMasked.
 [[nodiscard]] std::string to_log_string(const BuiltEnv& env);
 
-}  // namespace reboot::process
+}  // namespace rb::process

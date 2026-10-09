@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::backend::msg {
+namespace rb::backend::msg {
 
 REBOOT_MESSAGE(kInvalidUrl, "backend.invalid_url", "{url} is not a backend address");
 REBOOT_MESSAGE(kInvalidPort, "backend.invalid_port", "{port} is not a port between 1 and 65535");
@@ -26,4 +26,4 @@ REBOOT_MESSAGE(kStoppedBeforeReady, "backend.stopped_before_ready", "The backend
 REBOOT_MESSAGE(kAnswerInvalid, "backend.answer_invalid", "That answer does not settle the question");
 REBOOT_MESSAGE(kPathNotUtf8, "backend.path_not_utf8", "{path} cannot be passed to the backend");
 
-}  // namespace reboot::backend::msg
+}  // namespace rb::backend::msg

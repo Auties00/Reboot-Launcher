@@ -7,7 +7,7 @@
 #include "socket_owner.hpp"
 #include "socket_table.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -30,4 +30,4 @@ Result<std::optional<ports::PortOwner>> SockDiagPortInspector::udp_owner(Port po
     return socket_owner(socket->inode);
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

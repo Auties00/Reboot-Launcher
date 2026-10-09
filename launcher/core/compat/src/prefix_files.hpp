@@ -9,11 +9,11 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // Blocking helpers of PrefixManager, run on the WorkerPool. Failures are compat.prefix_failed
 // naming `step`, unless noted.
@@ -61,4 +61,4 @@ inline constexpr std::string_view kStepSeedRhi = "seed_rhi";
 // PreferredRHI=dx11 in the prefix user's GameUserSettings.ini; nothing when it already holds.
 [[nodiscard]] Result<void> seed_rhi(ports::IFileSystem& fs, RunnerKind kind, const NativePath& prefix);
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::api::msg {
+namespace rb::api::msg {
 
 REBOOT_MESSAGE(kUnknownMethod, "api.unknown_method", "This engine has no method {method}.");
 REBOOT_MESSAGE(kWrongMethodKind, "api.wrong_method_kind",
@@ -11,4 +11,4 @@ REBOOT_MESSAGE(kConflictingCases, "api.conflicting_cases",
 REBOOT_MESSAGE(kUnknownCase, "api.unknown_case",
                "The request for method {method} uses an alternative this engine does not know.");
 
-}  // namespace reboot::api::msg
+}  // namespace rb::api::msg

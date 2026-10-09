@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 inline constexpr GameVersion kMaxSupportedVersion{30, 10, std::nullopt};
 
@@ -15,4 +15,4 @@ inline constexpr GameVersion kMaxSupportedVersion{30, 10, std::nullopt};
     return version.minor > kMaxSupportedVersion.minor;
 }
 
-}  // namespace reboot::support
+}  // namespace rb::support

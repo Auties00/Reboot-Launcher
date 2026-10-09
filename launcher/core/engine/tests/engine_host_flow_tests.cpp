@@ -13,9 +13,9 @@
 #include "reboot/api/v1/sessions.hpp"
 #include "reboot/api/v1/settings.hpp"
 
-using namespace reboot;
-using namespace reboot::engine;
-using namespace reboot::engine::test;
+using namespace rb;
+using namespace rb::engine;
+using namespace rb::engine::test;
 using namespace std::chrono_literals;
 
 namespace {

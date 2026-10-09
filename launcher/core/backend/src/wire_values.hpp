@@ -9,7 +9,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Times before the epoch clamp to 0, which the contract reads as "never".
 [[nodiscard]] inline u64 to_unix_ms(std::chrono::system_clock::time_point at) noexcept {
@@ -40,4 +40,4 @@ namespace reboot::backend {
     return text;
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

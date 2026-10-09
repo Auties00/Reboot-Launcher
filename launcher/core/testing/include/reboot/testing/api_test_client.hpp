@@ -21,7 +21,7 @@
 #include "reboot/ports/ipc.hpp"
 #include "reboot/testing/frame_log.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decisions testing-strategy, async-event-model).
 // What reboot_client does over an IByteStream, minus the C ABI, typed with reboot.api.v1, keeping
@@ -100,4 +100,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

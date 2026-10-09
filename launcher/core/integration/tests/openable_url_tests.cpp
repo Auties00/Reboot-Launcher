@@ -2,7 +2,7 @@
 
 #include "reboot/integration/openable_url.hpp"
 
-using reboot::integration::is_openable_url;
+using rb::integration::is_openable_url;
 
 TEST_CASE("absolute https links with a host open", "[integration][openable_url]") {
     CHECK(is_openable_url("https://github.com/Auties00/reboot_launcher/issues/new"));

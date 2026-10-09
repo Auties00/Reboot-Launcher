@@ -6,7 +6,7 @@
 #include "reboot/backend/account_rename_request.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Payload of a UserRequestKind::AccountRenameConflict request.
 struct AccountRenameConflictPrompt {
@@ -20,4 +20,4 @@ struct AccountRenameConflictAnswer {
     RenameConflictChoice choice = RenameConflictChoice::KeepExisting;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

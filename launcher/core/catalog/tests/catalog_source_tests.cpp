@@ -22,12 +22,12 @@
 #include "reboot/trust/key_ring.hpp"
 #include "reboot/trust/serial_guard.hpp"
 
-using namespace reboot;
-using namespace reboot::catalog;
+using namespace rb;
+using namespace rb::catalog;
 using namespace std::chrono_literals;
-using reboot::catalog::test::bytes_of;
-using reboot::catalog::test::catalog_json;
-using reboot::testing::FakeHttpResponse;
+using rb::catalog::test::bytes_of;
+using rb::catalog::test::catalog_json;
+using rb::testing::FakeHttpResponse;
 
 namespace {
 

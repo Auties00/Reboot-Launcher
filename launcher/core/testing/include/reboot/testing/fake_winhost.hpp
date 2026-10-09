@@ -19,7 +19,7 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot::testing {
+namespace rb::testing {
 
 class FakeClientDll;
 
@@ -63,4 +63,4 @@ private:
     std::shared_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

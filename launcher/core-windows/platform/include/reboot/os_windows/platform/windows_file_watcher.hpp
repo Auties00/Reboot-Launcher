@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; IFileWatcher over overlapped ReadDirectoryChangesW.
 class WindowsFileWatcher final : public ports::IFileWatcher {
@@ -32,4 +32,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // EventKind::SettingsChanged, coalesced: after a missed event, compare `values`, not `keys`.
 struct SettingsChanged {
@@ -18,4 +18,4 @@ struct SettingsChanged {
     [[nodiscard]] std::size_t approx_bytes() const noexcept;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

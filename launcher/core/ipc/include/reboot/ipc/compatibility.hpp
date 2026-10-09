@@ -6,7 +6,7 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 using Compatibility = contracts::ipc::Compatibility;
 
@@ -26,4 +26,4 @@ using Compatibility = contracts::ipc::Compatibility;
     return compatibility == Compatibility::Full || is_bootstrap_method(method_id);
 }
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

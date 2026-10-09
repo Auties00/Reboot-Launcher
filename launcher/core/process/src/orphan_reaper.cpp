@@ -4,7 +4,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 namespace {
 
@@ -49,4 +49,4 @@ void OrphanReaper::reap(std::vector<ChildRecord> recorded, CancelToken token,
         std::move(token), strand_, std::move(done));
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

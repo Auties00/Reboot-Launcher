@@ -10,21 +10,21 @@
 #include "reboot/integration/desktop_check.hpp"
 #include "reboot/integration/shell_error.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::contracts::ipc {
+namespace rb::contracts::ipc {
 struct CallerContext;
 }
 
-namespace reboot::ports {
+namespace rb::ports {
 class IShellLauncher;
 class ISystemInfo;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // Covers os-integration.desktop-services, its open-in-shell part; the rest stays in each UI.
 // Strand-only: validates and checks the caller's desktop here, calls the shell on the WorkerPool.
@@ -60,4 +60,4 @@ private:
     Executor& strand_;
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

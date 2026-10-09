@@ -5,7 +5,7 @@
 #include <boost/container/flat_map.hpp>
 #include <boost/container/flat_set.hpp>
 
-namespace reboot {
+namespace rb {
 
 template <class K, class V, class Compare = std::less<>>
 using FlatMap = boost::container::flat_map<K, V, Compare>;
@@ -13,4 +13,4 @@ using FlatMap = boost::container::flat_map<K, V, Compare>;
 template <class K, class Compare = std::less<>>
 using FlatSet = boost::container::flat_set<K, Compare>;
 
-}  // namespace reboot
+}  // namespace rb

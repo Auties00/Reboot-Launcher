@@ -9,7 +9,7 @@
 #include "reboot/os_linux/ipc/linux_client_paths.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // Covers no capability ids; IEngineStarter for reboot_client's Autostart mode.
 class SystemdEngineStarter final : public ports::IEngineStarter {
@@ -66,4 +66,4 @@ private:
     bool under_steam_reaper_;
 };
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

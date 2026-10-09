@@ -20,7 +20,7 @@
 // CFSTR, callerSecuritySession and the trust-settings keys are C-style casts in Apple's macros.
 #pragma clang diagnostic ignored "-Wold-style-cast"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -137,4 +137,4 @@ bool MacSystemInfo::elevated() const { return elevated_; }
 
 std::string MacSystemInfo::os_session() const { return os_session_; }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

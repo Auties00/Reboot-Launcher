@@ -8,7 +8,7 @@
 #include "reboot/integration/integration_policy.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 namespace {
 
@@ -114,4 +114,4 @@ EntryStatus remove_entry(ports::IIntegrationRegistrar& registrar, const Integrat
     return after;
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

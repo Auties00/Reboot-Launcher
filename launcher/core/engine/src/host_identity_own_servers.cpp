@@ -5,7 +5,7 @@
 #include "reboot/host/host_profile_store.hpp"
 #include "reboot/publish/host_identity_store.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 bool HostIdentityOwnServers::owns(const ServerId& id) const {
     for (const host::HostProfile& profile : profiles_.list())
@@ -13,4 +13,4 @@ bool HostIdentityOwnServers::owns(const ServerId& id) const {
     return false;
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

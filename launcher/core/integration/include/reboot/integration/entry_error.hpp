@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/integration/integration_kind.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 enum class EntryErrorCode : u8 {
     NoItems,
@@ -31,4 +31,4 @@ struct EntryError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const EntryError& error);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

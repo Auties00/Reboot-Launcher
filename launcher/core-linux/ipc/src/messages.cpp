@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // This package owns platform.ipc_*; core-linux/platform owns every other platform.* id on Linux.
 REBOOT_MESSAGE(kEndpointOutsideRuntimeDir, "platform.ipc_endpoint_outside_runtime_dir",
@@ -14,4 +14,4 @@ REBOOT_MESSAGE(kImageUnresolved, "platform.ipc_image_unresolved",
                "The location of the Reboot Launcher client library could not be read.");
 REBOOT_MESSAGE(kEngineSpawnFailed, "platform.ipc_engine_spawn_failed", "{path} could not be started.");
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

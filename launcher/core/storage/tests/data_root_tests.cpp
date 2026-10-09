@@ -6,8 +6,8 @@
 #include "reboot/testing/fake_platform_paths.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 
-using namespace reboot;
-using namespace reboot::storage;
+using namespace rb;
+using namespace rb::storage;
 
 TEST_CASE("the data root is created owner-only and missing bundled files are listed", "[storage][data_root]") {
     testing::FakePlatformPaths paths;

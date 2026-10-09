@@ -10,7 +10,7 @@
 #include "reboot/ports/platform_services.hpp"
 
 int main() {
-    using namespace reboot;
+    using namespace rb;
     try {
         Result<ports::PlatformServices> platform = ports::make_platform(ports::PlatformOptions{});
         if (!platform) {

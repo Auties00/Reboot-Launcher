@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <string_view>
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -49,4 +49,4 @@ std::string pem_bundle(std::span<const std::vector<u8>> certificates) {
     return out;
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

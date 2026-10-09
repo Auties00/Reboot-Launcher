@@ -10,7 +10,7 @@
 #include "reboot/ports/ipc.hpp"
 #include "unique_handle.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // IByteStream over one connected, overlapped pipe handle whose peer PipeTrust already verified.
 // Reads and on_close run on the bound PipeIoThread; write() and close() are thread-safe. Reading
@@ -46,4 +46,4 @@ private:
     std::unique_ptr<PipeIoThread> owned_io_;
 };
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

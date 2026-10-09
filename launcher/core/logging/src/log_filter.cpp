@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::logging {
+namespace rb::logging {
 
 bool LogFilter::matches(const LogRecord& record) const noexcept {
     if (record.level < min_level) return false;
@@ -10,4 +10,4 @@ bool LogFilter::matches(const LogRecord& record) const noexcept {
     return !session || record.session == session;
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

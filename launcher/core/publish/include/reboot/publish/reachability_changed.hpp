@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/publish/host_status.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // Capabilities: matchmaking-networking.public-ip.
 // EventKind::ReachabilityChanged, coalesced per session; the only source of the probe verdict and
@@ -22,4 +22,4 @@ struct ReachabilityChanged {
     std::optional<Endpoint> public_endpoint;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

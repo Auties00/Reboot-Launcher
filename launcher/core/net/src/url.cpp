@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -84,4 +84,4 @@ std::string normalize_host(std::string_view host) {
     return lowercase(host);
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

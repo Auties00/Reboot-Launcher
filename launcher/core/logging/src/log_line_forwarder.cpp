@@ -6,7 +6,7 @@
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 namespace {
 
@@ -61,4 +61,4 @@ LogLineForwarder::~LogLineForwarder() {
     impl_->link->owner = nullptr;
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

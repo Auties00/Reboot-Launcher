@@ -3,7 +3,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/front/reboot_headers.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -49,4 +49,4 @@ std::optional<std::string> rewrite_location(std::string_view location, const Ups
     return out;
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

@@ -6,7 +6,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/publish/field_limits.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 std::string fit_text(std::string_view text, std::size_t max_bytes) {
     std::string out = sanitize_display_text(text);
@@ -58,4 +58,4 @@ Result<void> check_game_port(Port port) {
     return {};
 }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

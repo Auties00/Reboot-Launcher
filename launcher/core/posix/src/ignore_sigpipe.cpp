@@ -5,7 +5,7 @@
 
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 Result<void> ignore_sigpipe() {
     struct sigaction action {};
@@ -15,4 +15,4 @@ Result<void> ignore_sigpipe() {
     return {};
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

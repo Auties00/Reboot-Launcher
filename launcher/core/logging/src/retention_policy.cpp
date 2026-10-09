@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::logging {
+namespace rb::logging {
 
 std::vector<NativePath> select_expired(std::span<const LogFileInfo> files, const RetentionPolicy& policy,
                                        std::chrono::system_clock::time_point now,
@@ -49,4 +49,4 @@ std::vector<NativePath> select_expired(std::span<const LogFileInfo> files, const
     return selected;
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ux/app_links.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Each alternative names the API calls the UI makes when the user picks it; core never makes them.
 
@@ -54,4 +54,4 @@ using SuggestedAction = std::variant<RemediatePrerequisite, InstallBuild, Import
 
 [[nodiscard]] MessageId action_label(const SuggestedAction& action);
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

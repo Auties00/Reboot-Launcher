@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/front/upstream_origin.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // Every upstream TLS connection's context: TLS 1.2 or later, chains checked against `ca_bundle`, else
 // the system store.
@@ -23,4 +23,4 @@ void prepare_tls(SSL* ssl, const UpstreamOrigin& origin, bool pinned);
 // The SHA-256 of the peer's leaf certificate in DER, compared in constant time.
 [[nodiscard]] bool certificate_matches(SSL* ssl, const std::array<u8, 32>& pin);
 
-}  // namespace reboot::front
+}  // namespace rb::front

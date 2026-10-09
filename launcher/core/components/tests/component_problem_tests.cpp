@@ -6,9 +6,9 @@
 #include "reboot/components/component_problem.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 
-using namespace reboot;
-using namespace reboot::components;
-using reboot::components::test::arg_text;
+using namespace rb;
+using namespace rb::components;
+using rb::components::test::arg_text;
 
 namespace {
 

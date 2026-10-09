@@ -8,7 +8,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 enum class MappingMethod : u8 { Upnp, NatPmp };
 
@@ -39,4 +39,4 @@ struct PortMappingChanged {
     }
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

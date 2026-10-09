@@ -31,7 +31,7 @@
 
 #include "game_channel_error.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 class TokenRegistry;
 
@@ -210,4 +210,4 @@ private:
     bool closed_ = false;
 };
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

@@ -11,7 +11,7 @@
 #include "reboot/trust/signed_document_kind.hpp"
 #include "reboot/trust/trust_error.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 inline constexpr std::size_t kEd25519SignatureSize = 64;
 
@@ -29,4 +29,4 @@ struct SignedDocument {
                                                                             std::vector<u8> body,
                                                                             std::string_view signature_file);
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

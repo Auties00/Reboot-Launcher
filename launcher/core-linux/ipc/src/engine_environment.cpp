@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 constexpr std::string_view kPathName = "PATH";
@@ -70,4 +70,4 @@ std::vector<std::string> engine_environment(std::span<const std::string_view> in
     return environment;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

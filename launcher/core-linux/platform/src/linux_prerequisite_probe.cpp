@@ -8,7 +8,7 @@
 #include "messages.hpp"
 #include "process_environment.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -68,4 +68,4 @@ Result<void> LinuxPrerequisiteProbe::remediate(std::string_view id) {
     return {};
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

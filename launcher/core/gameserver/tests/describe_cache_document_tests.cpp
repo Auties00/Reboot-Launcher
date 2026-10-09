@@ -8,9 +8,9 @@
 #include "reboot/gameserver/describe_cache_document.hpp"
 #include "reboot/storage/document_store.hpp"
 
-using namespace reboot;
-using namespace reboot::gameserver;
-namespace gs = reboot::contracts::game_server;
+using namespace rb;
+using namespace rb::gameserver;
+namespace gs = rb::contracts::game_server;
 namespace json = boost::json;
 
 static_assert(storage::Document<DescribeCacheDocument>);

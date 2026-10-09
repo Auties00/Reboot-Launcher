@@ -2,7 +2,7 @@
 
 #include "authority.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -40,4 +40,4 @@ std::optional<FrontPath> parse_front_path(std::string_view target) {
     return out;
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

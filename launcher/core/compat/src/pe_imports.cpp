@@ -8,7 +8,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -174,4 +174,4 @@ bool needs_vc_runtime(std::span<const std::string> imports) noexcept {
     return false;
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

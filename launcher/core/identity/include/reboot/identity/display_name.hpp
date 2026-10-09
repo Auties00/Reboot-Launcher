@@ -7,11 +7,11 @@
 #include "reboot/contracts/backend.hpp"
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot {
+namespace rb {
 class IRandom;
 }
 
-namespace reboot::identity {
+namespace rb::identity {
 
 // [A-Za-z0-9] only, so the name round-trips exactly through the account id.
 inline constexpr std::size_t kMinDisplayNameLength = 3;
@@ -28,4 +28,4 @@ inline constexpr std::size_t kMaxDisplayNameLength = 16;
 // True for a name of the default_display_name shape for `role`.
 [[nodiscard]] bool is_default_display_name(std::string_view name, contracts::backend::AccountRole role) noexcept;
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

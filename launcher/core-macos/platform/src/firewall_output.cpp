@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <string>
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -39,4 +39,4 @@ bool firewall_blocks_app(std::string_view output) {
     return contains(lower, "is blocked") && !contains(lower, "not blocked");
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

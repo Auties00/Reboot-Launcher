@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // The field a BAD_REQUEST names ("invalid <field>"). The edge's text is untrusted, so it is only
 // matched against this closed set and never shown.
@@ -17,4 +17,4 @@ enum class RejectedField : u8 { Unknown, Id, Name, Description, Version, Author,
 // publish.edge_rejected with the field id as its argument.
 [[nodiscard]] Diagnostic edge_rejected(std::string_view edge_message);
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

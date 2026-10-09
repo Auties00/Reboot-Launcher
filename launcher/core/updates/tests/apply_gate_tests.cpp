@@ -2,8 +2,8 @@
 
 #include "reboot/updates/apply_gate.hpp"
 
-using namespace reboot;
-using namespace reboot::updates;
+using namespace rb;
+using namespace rb::updates;
 
 namespace {
 

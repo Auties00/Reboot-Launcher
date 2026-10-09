@@ -4,8 +4,8 @@
 #include "messages.hpp"
 #include "rejected_field.hpp"
 
-using namespace reboot;
-using namespace reboot::publish;
+using namespace rb;
+using namespace rb::publish;
 
 TEST_CASE("a BAD_REQUEST message maps to the field it names", "[publish]") {
     CHECK(rejected_field("invalid name") == RejectedField::Name);

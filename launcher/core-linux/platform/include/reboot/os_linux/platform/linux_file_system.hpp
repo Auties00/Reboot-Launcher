@@ -9,7 +9,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/posix/posix_file_system.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; IFileSystem as posix::PosixFileSystem with open-file-description
 // locks, fsync of the written file, and fsync of its directory after the rename, without which
@@ -35,4 +35,4 @@ private:
     posix::PosixFileSystem posix_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

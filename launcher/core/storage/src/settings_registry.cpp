@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::storage {
+namespace rb::storage {
 
 const AnyKey* SettingsRegistry::find(std::string_view id) const noexcept {
     const auto found = std::ranges::find(keys_, id, [](const AnyKey* key) { return key->spec().id; });
@@ -16,4 +16,4 @@ std::vector<const AnyKey*> SettingsRegistry::in_group(ResetGroup group) const {
     return out;
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

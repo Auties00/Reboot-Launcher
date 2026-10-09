@@ -10,7 +10,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 // ProcessLaunch carries arguments and variables as UTF-8 text.
@@ -123,4 +123,4 @@ std::size_t FakeRunnerPlatform::runtime_setups() const {
     return runtime_setups_;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

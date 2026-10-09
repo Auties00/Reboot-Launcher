@@ -8,7 +8,7 @@
 #include "reboot/ipc/compatibility.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 // One client after Hello; the engine builds api::CallContext from it.
 struct ConnectionInfo {
@@ -24,4 +24,4 @@ struct ConnectionInfo {
     Compatibility compatibility{};
 };
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

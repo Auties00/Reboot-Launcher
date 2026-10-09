@@ -6,7 +6,7 @@
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 // An empty `categories` matches every category; a set `session` excludes records with none.
 struct LogFilter {
@@ -17,4 +17,4 @@ struct LogFilter {
     [[nodiscard]] bool matches(const LogRecord& record) const noexcept;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

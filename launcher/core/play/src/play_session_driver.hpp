@@ -11,7 +11,7 @@
 #include "reboot/ports/session_host.hpp"
 #include "reboot/sessions/session_driver.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 class MatchTargets;
 class PlayEnv;
@@ -79,4 +79,4 @@ private:
     bool released_ = false;
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

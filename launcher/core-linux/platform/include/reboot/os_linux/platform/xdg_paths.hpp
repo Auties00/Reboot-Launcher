@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; IPlatformPaths from the XDG base directories and the running exe.
 class XdgPaths final : public ports::IPlatformPaths {
@@ -70,4 +70,4 @@ private:
     std::optional<NativePath> tarball_root_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

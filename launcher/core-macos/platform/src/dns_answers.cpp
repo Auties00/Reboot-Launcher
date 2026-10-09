@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -36,4 +36,4 @@ void DnsAnswers::none(DnsFamily family) noexcept {
     }
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

@@ -8,7 +8,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // Strand-only. The ops a service still owes a completion, so its destructor can settle them, and
 // the token its posted continuations check before touching the service.
@@ -65,4 +65,4 @@ template <class T>
     return Failed{.error = std::move(error)};
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

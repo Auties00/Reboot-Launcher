@@ -24,7 +24,7 @@
 #include "reboot/net/host_tls_memory.hpp"
 #include "reboot/process/restart_policy.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -738,4 +738,4 @@ void BackendService::add_ready_listener(UniqueFunction<void(const BackendState&)
 
 void BackendService::release(u64 lease_id) { impl_->release(lease_id); }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

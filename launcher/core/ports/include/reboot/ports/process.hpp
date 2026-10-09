@@ -13,7 +13,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 // UTF-8; the launcher converts to the OS form.
 struct EnvBlock {
@@ -67,4 +67,4 @@ public:
     virtual Result<void> kill(u32 pid, std::chrono::system_clock::time_point created) = 0;
 };
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

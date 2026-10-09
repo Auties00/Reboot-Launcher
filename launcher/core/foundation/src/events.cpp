@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot {
+namespace rb {
 
 Subscription::Subscription(EventFilter filter, std::size_t byte_budget)
     : filter_(std::move(filter)), byte_budget_(byte_budget) {}
@@ -105,4 +105,4 @@ void EventBus::deliver(const EventEnvelope& event) {
             subscription->offer(event);
 }
 
-}  // namespace reboot
+}  // namespace rb

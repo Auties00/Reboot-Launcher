@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // What a game-control peer reads from its environment before it connects: REBOOT_CTL,
 // REBOOT_CTL_TOKEN (43 unpadded base64url characters as the engine issues it, or 64 hex digits),
@@ -29,4 +29,4 @@ struct GameControlBootstrap {
 // From this process's own environment, as reboot-fake-game reads it.
 [[nodiscard]] Result<GameControlBootstrap> read_own_game_control_bootstrap();
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

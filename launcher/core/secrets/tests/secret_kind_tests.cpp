@@ -2,7 +2,7 @@
 
 #include "reboot/secrets/secret_kind.hpp"
 
-using namespace reboot::secrets;
+using namespace rb::secrets;
 
 TEST_CASE("a remote password is stored only on opt-in", "[secrets]") {
     STATIC_REQUIRE(default_retention(SecretKind::RemoteBackendPassword) == Retention::Session);

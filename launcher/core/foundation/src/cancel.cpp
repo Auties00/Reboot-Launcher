@@ -7,7 +7,7 @@
 #include <thread>
 #include <utility>
 
-namespace reboot {
+namespace rb {
 
 namespace detail {
 
@@ -121,4 +121,4 @@ bool CancelSource::cancelled() const noexcept {
     return state_->reason.load(std::memory_order_acquire) != detail::CancelState::kNotCancelled;
 }
 
-}  // namespace reboot
+}  // namespace rb

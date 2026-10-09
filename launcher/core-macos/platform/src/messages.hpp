@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 REBOOT_MESSAGE_DECL(kCallFailed);
 REBOOT_MESSAGE_DECL(kCallFailedOnPath);
@@ -34,4 +34,4 @@ REBOOT_MESSAGE_DECL(kHelperFailed);
 REBOOT_MESSAGE_DECL(kHelperTimeout);
 REBOOT_MESSAGE_DECL(kNoGateway);
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

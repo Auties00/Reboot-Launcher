@@ -13,7 +13,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // The body of the Ed25519-signed release manifest, schema VersionStreams::manifest_schema.
 // Departures from update-mechanism's v2 schema:
@@ -45,4 +45,4 @@ struct ReleaseManifest {
 // - an endpoint override with an empty host or port 0.
 [[nodiscard]] Result<ReleaseManifest> parse_release_manifest(std::span<const u8> body);
 
-}  // namespace reboot::components
+}  // namespace rb::components

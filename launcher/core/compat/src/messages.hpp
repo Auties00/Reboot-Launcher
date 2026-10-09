@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::compat::msg {
+namespace rb::compat::msg {
 
 REBOOT_MESSAGE_DECL(kRunnerUnsupported);
 REBOOT_MESSAGE_DECL(kNoRuntime);
@@ -34,4 +34,4 @@ REBOOT_MESSAGE_DECL(kRecordsNotList);
 REBOOT_MESSAGE_DECL(kRecordInvalid);
 REBOOT_MESSAGE_DECL(kRecordDuplicate);
 
-}  // namespace reboot::compat::msg
+}  // namespace rb::compat::msg

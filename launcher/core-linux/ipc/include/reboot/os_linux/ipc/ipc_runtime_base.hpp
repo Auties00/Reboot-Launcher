@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // The directory under which the engine socket lives, as reboot-launcher/<hash16>.sock.
 struct IpcRuntimeBase {
@@ -23,4 +23,4 @@ struct IpcRuntimeBase {
 // (owner `uid`, mode 0700) before use.
 [[nodiscard]] IpcRuntimeBase linux_ipc_runtime_base(u32 uid);
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

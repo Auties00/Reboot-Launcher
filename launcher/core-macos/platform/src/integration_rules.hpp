@@ -8,7 +8,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 struct SchemeHandler {
     NativePath bundle;
@@ -28,4 +28,4 @@ struct SchemeHandler {
 // XPC_SERVICE_NAME when it names one of our agents; any other value was inherited from another job.
 [[nodiscard]] std::optional<std::string> own_agent_label(std::optional<std::string_view> xpc_service_name);
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

@@ -7,7 +7,7 @@
 #include "messages.hpp"
 #include "reboot/process/env_builder.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -45,4 +45,4 @@ Result<process::ProcessSpec> make_backend_spec(const BackendLaunch& launch) {
     return spec;
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

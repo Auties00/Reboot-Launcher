@@ -24,10 +24,10 @@
 #include "reboot/testing/scripted_process_launcher.hpp"
 #include "runtime_core.hpp"
 
-using namespace reboot;
-using namespace reboot::compat;
-using reboot::compat::test::TestStrand;
-using reboot::components::RuntimeKind;
+using namespace rb;
+using namespace rb::compat;
+using rb::compat::test::TestStrand;
+using rb::components::RuntimeKind;
 
 namespace {
 

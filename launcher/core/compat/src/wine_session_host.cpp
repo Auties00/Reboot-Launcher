@@ -27,7 +27,7 @@
 #include "reboot/process/line_reader.hpp"
 #include "reboot/process/wiping_launch.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -556,4 +556,4 @@ Result<std::unique_ptr<ports::IGameSession>> WineSessionHost::launch(const ports
     return std::unique_ptr<ports::IGameSession>(std::make_unique<WineGameSession>(std::move(state)));
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

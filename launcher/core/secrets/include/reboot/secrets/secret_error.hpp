@@ -3,7 +3,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 enum class SecretError : u8 {
     InvalidScope,
@@ -26,4 +26,4 @@ enum class SecretError : u8 {
 // True when `diag` is the secrets.* diagnostic for `error`.
 [[nodiscard]] bool has_error(const Diagnostic& diag, SecretError error) noexcept;
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

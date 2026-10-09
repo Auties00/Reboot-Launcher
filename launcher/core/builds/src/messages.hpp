@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::builds::msg {
+namespace rb::builds::msg {
 
 REBOOT_MESSAGE_DECL(kNameEmpty);
 REBOOT_MESSAGE_DECL(kNameTaken);
@@ -51,4 +51,4 @@ REBOOT_MESSAGE_DECL(kCatalogVersionMismatch);
 REBOOT_MESSAGE_DECL(kWalkIncomplete);
 REBOOT_MESSAGE_DECL(kCaseCollision);
 
-}  // namespace reboot::builds::msg
+}  // namespace rb::builds::msg

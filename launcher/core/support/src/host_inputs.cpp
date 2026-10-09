@@ -2,7 +2,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 namespace {
 
 [[nodiscard]] bool inverted(const GameVersion& min, const GameVersion& max) noexcept {
@@ -38,4 +38,4 @@ Result<HostInputs> host_inputs_from(const components::Sha256Digest& game_server_
     return inputs;
 }
 
-}  // namespace reboot::support
+}  // namespace rb::support

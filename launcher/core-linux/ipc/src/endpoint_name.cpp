@@ -7,7 +7,7 @@
 #include "reboot/os_linux/ipc/ipc_runtime_base.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 // Empty when self.user_id is not a decimal uid, which UnixSocketListener and UnixSocketConnector
 // reject. ipc::endpoint_for checks both inputs before calling this.
@@ -18,4 +18,4 @@ std::string endpoint_name(const PeerIdentity& self, std::string_view root_hash16
     return os_linux::ipc::engine_socket_path(runtime_base, root_hash16).string();
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

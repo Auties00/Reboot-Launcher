@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 bool is_https_url(std::string_view url) noexcept {
     constexpr std::string_view kScheme = "https://";
@@ -16,4 +16,4 @@ bool is_https_url(std::string_view url) noexcept {
     return !host.empty() && host.front() != ':';
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

@@ -17,7 +17,7 @@
 #include "reboot/ux/app_links.hpp"
 #include "reboot/ux/onboarding_step.hpp"
 
-namespace reboot::engine::convert {
+namespace rb::engine::convert {
 
 namespace {
 
@@ -1004,4 +1004,4 @@ api::SupportQueryResponse support_answer(const support::SupportQuery& query, con
     return out;
 }
 
-}  // namespace reboot::engine::convert
+}  // namespace rb::engine::convert

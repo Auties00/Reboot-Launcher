@@ -18,7 +18,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 namespace {
 
@@ -525,4 +525,4 @@ wire::CallerContext ClientContext::to_wire(const ports::CallerContext& caller) {
     return out;
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

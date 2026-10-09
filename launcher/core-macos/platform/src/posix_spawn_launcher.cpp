@@ -28,7 +28,7 @@
 #include "wait_status.hpp"
 #include "watchdog_script.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -572,4 +572,4 @@ Result<void> PosixSpawnLauncher::kill(u32 pid, std::chrono::system_clock::time_p
     return impl_->spawner.kill_tree(pid, created);
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

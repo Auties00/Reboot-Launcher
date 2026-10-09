@@ -4,7 +4,7 @@
 #include "reboot/integration/purge_blockers.hpp"
 #include "reboot/integration/purge_scope.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // Supplied by the engine, which owns sessions, ops, the backend lease and the logger; all run on the strand.
 struct PurgeHooks {
@@ -16,4 +16,4 @@ struct PurgeHooks {
     UniqueFunction<void(PurgeScope)> on_purged;
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

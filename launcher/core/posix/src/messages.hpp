@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // Registered here for macOS and Linux and by os_windows/ipc on Windows; core/ipc leaves it to them.
 REBOOT_MESSAGE_DECL(kEndpointUntrusted);
@@ -21,4 +21,4 @@ REBOOT_MESSAGE_DECL(kHeldFileChanged);
 // ErrorKind::Conflict.
 REBOOT_MESSAGE_DECL(kEndpointInUse);
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

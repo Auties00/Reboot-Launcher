@@ -26,9 +26,9 @@
 #include "reboot/testing/port_conformance.hpp"
 #include "reboot/testing/wall_clock_waiter.hpp"
 
-using namespace reboot;
-using namespace reboot::os_linux::ipc;
-using namespace reboot::os_linux::ipc::test;
+using namespace rb;
+using namespace rb::os_linux::ipc;
+using namespace rb::os_linux::ipc::test;
 using namespace std::chrono_literals;
 
 namespace {

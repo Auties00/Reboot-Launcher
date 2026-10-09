@@ -14,7 +14,7 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/gameserver/game_server_description.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 // IP-first: `address` is an IP or CIDR block; an account-id ban alone is evadable, since ids are
 // self-asserted.
@@ -73,4 +73,4 @@ struct GameServerConfig {
 [[nodiscard]] contracts::game_server::ServerConfig to_wire(const GameServerConfig& config, const SessionId& session,
                                                            const NativePath& log_dir);
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

@@ -19,7 +19,7 @@
 #include "reboot/storage/json_values.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // The Play, Host and Backend tabs' reset buttons.
 enum class ResetGroup : u8 { Play, Host, Backend };
@@ -159,4 +159,4 @@ private:
     Validator validator_;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

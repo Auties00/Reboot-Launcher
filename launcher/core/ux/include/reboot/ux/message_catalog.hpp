@@ -8,7 +8,7 @@
 
 #include "reboot/ux/language_tag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Capabilities: localization.strings-and-language.
 // MessageId -> ICU MF1 template for one language; v1 has only the English one.
@@ -28,4 +28,4 @@ private:
     std::vector<std::pair<std::string, std::string>> entries_;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

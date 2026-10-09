@@ -9,7 +9,7 @@
 
 #include "reboot/foundation/cancel.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 TEST_CASE("A default token is never cancelled", "[foundation][cancel]") {
     const CancelToken token;

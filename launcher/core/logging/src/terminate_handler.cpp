@@ -11,7 +11,7 @@
 #include "reboot/logging/log_format.hpp"
 #include "terminate_line.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 namespace {
 
@@ -58,4 +58,4 @@ RegisteredThread::RegisteredThread(std::string_view name) noexcept : previous_(t
 
 RegisteredThread::~RegisteredThread() { t_thread_name = previous_; }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

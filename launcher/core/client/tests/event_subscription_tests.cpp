@@ -9,8 +9,8 @@
 #include "event_subscription.hpp"
 #include "reboot/contracts/ipc.hpp"
 
-using namespace reboot;
-using namespace reboot::client;
+using namespace rb;
+using namespace rb::client;
 using contracts::ipc::WireEvent;
 
 namespace {

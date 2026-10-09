@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::game_channel::msg {
+namespace rb::game_channel::msg {
 
 REBOOT_MESSAGE(kListenFailed, "game_channel.listen_failed", "The game control channel cannot listen on 127.0.0.1");
 REBOOT_MESSAGE(kNotListening, "game_channel.not_listening", "The game control channel is not listening");
@@ -24,4 +24,4 @@ REBOOT_MESSAGE(kRequestFailed, "game_channel.request_failed", "The {role} could 
 REBOOT_MESSAGE(kTestModeOff, "game_channel.test_mode_off", "{request} is available only when the game runs in test mode");
 REBOOT_MESSAGE(kLogUnreadable, "game_channel.log_unreadable", "The game log {path} cannot be read");
 
-}  // namespace reboot::game_channel::msg
+}  // namespace rb::game_channel::msg

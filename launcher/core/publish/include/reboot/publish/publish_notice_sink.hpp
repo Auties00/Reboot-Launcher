@@ -2,7 +2,7 @@
 
 #include "reboot/publish/publish_notice.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // The engine's guidance notices, given to HostPublisher at construction so no notice is lost.
 class IPublishNoticeSink {
@@ -12,4 +12,4 @@ public:
     virtual void on_publish_notice(const PublishNotice& notice) = 0;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

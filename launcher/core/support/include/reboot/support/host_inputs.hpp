@@ -8,7 +8,7 @@
 #include "reboot/support/cell_inputs.hpp"
 #include "reboot/support/version_range.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // One described game-server binary; the ranges come from its GameServerDescription.
 struct HostInputs {
@@ -23,4 +23,4 @@ struct HostInputs {
 [[nodiscard]] Result<HostInputs> host_inputs_from(const components::Sha256Digest& game_server_sha256,
                                                   const contracts::game_server::GameServerDescription& description);
 
-}  // namespace reboot::support
+}  // namespace rb::support

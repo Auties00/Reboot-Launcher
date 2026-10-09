@@ -12,9 +12,9 @@
 #include "reboot/os_linux/ipc/make_client_platform.hpp"
 #include "reboot/testing/port_conformance.hpp"
 
-using namespace reboot;
-using namespace reboot::os_linux::ipc;
-using namespace reboot::os_linux::ipc::test;
+using namespace rb;
+using namespace rb::os_linux::ipc;
+using namespace rb::os_linux::ipc::test;
 
 namespace {
 

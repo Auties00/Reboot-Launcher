@@ -8,7 +8,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "verified_catalog.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 namespace {
 
@@ -51,4 +51,4 @@ void BundledCatalogSource::load(CatalogFetch, CancelToken token, UniqueFunction<
         unusable, std::move(done));
 }
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

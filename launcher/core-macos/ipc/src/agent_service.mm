@@ -7,7 +7,7 @@
 
 #include <optional>
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 namespace {
 
 [[nodiscard]] NSString* to_ns_string(std::string_view text) {
@@ -50,4 +50,4 @@ Result<void> agent_register(std::string_view plist_name, std::string_view label)
     }
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

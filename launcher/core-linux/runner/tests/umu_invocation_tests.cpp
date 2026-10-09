@@ -7,8 +7,8 @@
 #include "messages.hpp"
 #include "reboot/os_linux/runner/umu_invocation.hpp"
 
-using reboot::NativePath;
-using reboot::os_linux::runner::UmuInvocation;
+using rb::NativePath;
+using rb::os_linux::runner::UmuInvocation;
 
 using EnvVars = std::vector<std::pair<std::string, std::string>>;
 
@@ -29,7 +29,7 @@ TEST_CASE("a session launch pins the runtime and disables protonfixes", "[umu_in
 }
 
 TEST_CASE("the port layout runs umu-run from the GE-Proton root", "[umu_invocation]") {
-    const reboot::ports::RuntimeLayout layout = invocation().to_runtime_layout();
+    const rb::ports::RuntimeLayout layout = invocation().to_runtime_layout();
     CHECK(layout.root == NativePath{"/rt/ge-proton"});
     CHECK(layout.entry == NativePath{"/rt/umu/umu-run"});
     CHECK(layout.env == invocation().env());
@@ -38,7 +38,7 @@ TEST_CASE("the port layout runs umu-run from the GE-Proton root", "[umu_invocati
 
 TEST_CASE("only a layout that sets PROTONPATH is an umu layout", "[umu_invocation]") {
     CHECK(UmuInvocation::is_umu_layout(invocation().to_runtime_layout()));
-    reboot::ports::RuntimeLayout wine;
+    rb::ports::RuntimeLayout wine;
     wine.env = {{"WINEDLLOVERRIDES", "winemenubuilder.exe=d"}};
     CHECK_FALSE(UmuInvocation::is_umu_layout(wine));
 }
@@ -61,5 +61,5 @@ TEST_CASE("a path with a colon cannot be exposed", "[umu_invocation]") {
     const std::vector<NativePath> paths{NativePath{"/games/Season 1:2"}};
     const auto value = UmuInvocation::filesystems_rw("/logs", paths);
     REQUIRE_FALSE(value);
-    CHECK(value.error().is(reboot::os_linux::runner::kPathNotExposable));
+    CHECK(value.error().is(rb::os_linux::runner::kPathNotExposable));
 }

@@ -19,7 +19,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/logging/log_file_names.hpp"
 
-namespace reboot::logging::test {
+namespace rb::logging::test {
 
 // 2026-10-08T13:05:09Z, pid 4242.
 inline const LogFileGroup kGroup{std::chrono::sys_days{std::chrono::year{2026} / 10 / 8} + std::chrono::hours{13} +
@@ -93,4 +93,4 @@ private:
     std::multimap<SteadyTime, UniqueFunction<void()>> timed_;
 };
 
-}  // namespace reboot::logging::test
+}  // namespace rb::logging::test

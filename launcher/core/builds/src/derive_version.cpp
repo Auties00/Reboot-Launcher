@@ -8,7 +8,7 @@
 
 #include "reboot/builds/cl_table.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -54,4 +54,4 @@ std::optional<DetectedVersion> derive_version(const ReleaseMarker& marker, Versi
     return DetectedVersion{.version = *version, .cl = cl, .source = source, .raw = marker.tail, .file = std::nullopt};
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

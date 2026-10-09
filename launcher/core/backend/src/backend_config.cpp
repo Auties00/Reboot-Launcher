@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace reboot::backend {
+namespace rb::backend {
 
 Result<BackendConfig> BackendConfig::from_settings(const storage::BackendSettings& settings) {
     return BackendTarget::from_settings(settings.target).transform([&](BackendTarget target) {
@@ -10,4 +10,4 @@ Result<BackendConfig> BackendConfig::from_settings(const storage::BackendSetting
     });
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

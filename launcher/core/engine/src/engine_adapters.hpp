@@ -14,16 +14,16 @@
 #include "reboot/ports/runner.hpp"
 #include "reboot/publish/publish_notice_sink.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 class ErrorRouter;
 }
 
-namespace reboot::sessions {
+namespace rb::sessions {
 class SessionRegistry;
 }
 
 // Small adapters the composition root wires between packages that may not reach each other.
-namespace reboot::engine {
+namespace rb::engine {
 
 // Windows plays natively: no runner is supported, so runtime setup and Wine preflight are refused.
 class NativeOnlyRunnerPlatform final : public ports::IRunnerPlatform {
@@ -92,4 +92,4 @@ private:
     std::deque<UniqueFunction<void()>> tasks_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

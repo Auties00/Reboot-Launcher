@@ -2,8 +2,8 @@
 
 #include "systemd_unit_state.hpp"
 
-using reboot::NativePath;
-using reboot::os_linux::ipc::SystemdUnitState;
+using rb::NativePath;
+using rb::os_linux::ipc::SystemdUnitState;
 
 TEST_CASE("an installed, listening socket unit", "[systemd_unit_state]") {
     const SystemdUnitState state = SystemdUnitState::parse(

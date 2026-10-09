@@ -19,7 +19,7 @@
 #include "runtime_base_check.hpp"
 #include "socket_activation.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 [[nodiscard]] std::optional<std::string_view> environment_value(const char* name) {
@@ -96,4 +96,4 @@ Result<std::optional<posix::UniqueFd>> UnixSocketListener::take_inherited_socket
     return std::optional<posix::UniqueFd>{posix::UniqueFd{fd}};
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

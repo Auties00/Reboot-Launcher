@@ -2,7 +2,7 @@
 
 #include <array>
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -48,4 +48,4 @@ ports::VolumeInfo make_volume(const MountFacts& shown, const MountFacts& space,
     return volume;
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

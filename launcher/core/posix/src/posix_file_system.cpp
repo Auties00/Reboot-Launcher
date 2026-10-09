@@ -17,7 +17,7 @@
 #include "reboot/posix/unique_fd.hpp"
 #include "unistd.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 namespace {
 
@@ -313,4 +313,4 @@ Result<ports::FileRevision> PosixFileRevisionReader::revision(const NativePath& 
                                .file_id = static_cast<u64>(info.st_ino)};
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

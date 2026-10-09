@@ -12,7 +12,7 @@
 #include <variant>
 #include <vector>
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 struct StdoutChunk {
@@ -268,4 +268,4 @@ void ScriptedChild::attach_peer(std::unique_ptr<IStdioPeer> peer) {
     peer_->start(std::move(outputs));
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

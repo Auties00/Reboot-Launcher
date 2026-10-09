@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // Covers no capability ids; IPlatformPaths for reboot_client, which may not link
 // core-windows/platform. The install layout comes from foundation's velopack_root_of, which
@@ -38,4 +38,4 @@ private:
     std::optional<NativePath> velopack_root_;
 };
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

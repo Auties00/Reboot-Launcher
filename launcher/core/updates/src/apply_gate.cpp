@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace reboot::updates {
+namespace rb::updates {
 
 void ApplyGate::arm(const ActivitySnapshot& now, UniqueFunction<void()> on_open) {
     on_open_ = std::move(on_open);
@@ -27,4 +27,4 @@ void ApplyGate::update(const ActivitySnapshot& now) {
 
 void ApplyGate::drain_started(const ActivitySnapshot& now) { drained_ = now; }
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

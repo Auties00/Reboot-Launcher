@@ -33,8 +33,8 @@
 
 namespace {
 
-using namespace reboot;
-using namespace reboot::os_macos::ipc;
+using namespace rb;
+using namespace rb::os_macos::ipc;
 
 [[nodiscard]] NativePath user_temp_dir() {
     Result<NativePath> directory = darwin_user_temp_dir();

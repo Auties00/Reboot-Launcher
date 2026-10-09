@@ -14,7 +14,7 @@
 #include "messages.hpp"
 #include "reboot/net/datagram_connector.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -125,4 +125,4 @@ std::unique_ptr<IDatagramConnector> make_asio_datagram_connector(boost::asio::io
     return std::make_unique<AsioDatagramConnector>(io);
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

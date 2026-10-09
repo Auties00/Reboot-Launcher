@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 // Covers no capability ids (decision linux-compat-layer).
 // The Steam Linux Runtime build that GE-Proton runs in, as installed under UMU_FOLDERS_PATH.
@@ -28,4 +28,4 @@ struct SlrBuild {
     bool operator==(const SlrBuild&) const = default;
 };
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

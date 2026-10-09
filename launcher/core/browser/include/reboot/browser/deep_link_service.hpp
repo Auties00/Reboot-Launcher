@@ -8,11 +8,11 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class UserRequestRegistry;
 }
 
-namespace reboot::browser {
+namespace rb::browser {
 
 class BrowserSession;
 class GameServerTarget;
@@ -46,4 +46,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

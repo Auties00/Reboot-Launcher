@@ -7,13 +7,13 @@
 #include "engine_socket_path.hpp"
 #include "messages.hpp"
 
-using reboot::ArgSpec;
-using reboot::Diagnostic;
-using reboot::MessageSpec;
-using reboot::NativePath;
-using reboot::Result;
-using reboot::os_macos::ipc::check_engine_socket_path;
-using reboot::os_macos::ipc::engine_socket_path;
+using rb::ArgSpec;
+using rb::Diagnostic;
+using rb::MessageSpec;
+using rb::NativePath;
+using rb::Result;
+using rb::os_macos::ipc::check_engine_socket_path;
+using rb::os_macos::ipc::engine_socket_path;
 
 namespace {
 
@@ -22,7 +22,7 @@ constexpr std::string_view kHash = "0123456789abcdef";
 constexpr std::string_view kExpected = "/var/folders/ab/cd/T/reboot-launcher/0123456789abcdef.sock";
 
 const MessageSpec* find_spec(std::string_view id) {
-    for (const MessageSpec* spec : reboot::message_registry())
+    for (const MessageSpec* spec : rb::message_registry())
         if (spec->id == id) return spec;
     return nullptr;
 }
@@ -31,9 +31,9 @@ void check_rejected(const NativePath& user_temp_dir, std::string_view endpoint_n
     INFO(endpoint_name);
     const Result<NativePath> result = check_engine_socket_path(user_temp_dir, endpoint_name);
     REQUIRE_FALSE(result);
-    CHECK(result.error().is(reboot::posix::kEndpointUntrusted));
+    CHECK(result.error().is(rb::posix::kEndpointUntrusted));
     REQUIRE(result.error().causes.size() == 1);
-    CHECK(result.error().causes.front().is(reboot::os_macos::ipc::kEndpointOutsideUserTemp));
+    CHECK(result.error().causes.front().is(rb::os_macos::ipc::kEndpointOutsideUserTemp));
 }
 
 }  // namespace

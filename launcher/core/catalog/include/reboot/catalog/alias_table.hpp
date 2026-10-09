@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 // Names any live mirror uses belong in the signed catalog's CatalogEntry::aliases.
 enum class AliasSource : u8 { CatalogId, CatalogAlias };
@@ -43,4 +43,4 @@ private:
     std::vector<std::pair<std::string, AliasMatch>> names_;
 };
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

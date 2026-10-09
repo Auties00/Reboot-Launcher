@@ -45,7 +45,7 @@
 #include "reboot/storage/settings_values.hpp"
 #include "wipe.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 namespace {
 
@@ -1386,4 +1386,4 @@ void PlayCore::on_login_observed(const backend::LoginObservedEvent& event) { imp
 
 std::optional<PlaySessionState> PlayCore::state(SessionId session) const { return impl_->state(session); }
 
-}  // namespace reboot::play
+}  // namespace rb::play

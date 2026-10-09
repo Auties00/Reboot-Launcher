@@ -8,7 +8,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // Task Scheduler names are machine-wide, hence the SID. Must equal
 // os_windows::platform::engine_task_name, which registers the task.
@@ -27,4 +27,4 @@ namespace reboot::os_windows::ipc {
 // A CallerContext os_session: a decimal Windows session id.
 [[nodiscard]] std::optional<u32> parse_session_id(std::string_view os_session);
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

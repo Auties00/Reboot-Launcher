@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // ISecurityProductProbe answering what the test set: nullopt as on macOS and Linux, a product list
@@ -22,4 +22,4 @@ private:
     Result<std::optional<ports::SecurityProducts>> answer_{std::nullopt};
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

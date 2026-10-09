@@ -18,7 +18,7 @@
 #include "reboot/ports/secret_store.hpp"
 #include "reboot/ports/session_host.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 struct PlatformOptions {
     std::optional<NativePath> data_root_override;
@@ -84,4 +84,4 @@ struct ClientPlatform {
 // Defined by core-<os>/ipc for reboot_client.
 [[nodiscard]] Result<ClientPlatform> make_client_platform();
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

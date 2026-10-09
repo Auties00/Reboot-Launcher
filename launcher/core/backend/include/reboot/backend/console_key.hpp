@@ -6,7 +6,7 @@
 #include "reboot/backend/hid_usage.hpp"
 #include "reboot/storage/console_key.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Capabilities: auth-backend.console-key.
 // The UE key name sent per session in ConfigureSession, which the backend binds to the game console;
@@ -20,4 +20,4 @@ using ConsoleKey = storage::ConsoleKey;
 // The key cap a picker shows, such as "F8", "`" or "Num 1"; empty for a name outside the allowlist.
 [[nodiscard]] std::string_view key_label(const ConsoleKey& key) noexcept;
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

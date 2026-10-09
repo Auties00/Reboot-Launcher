@@ -10,7 +10,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 using Callback = UniqueFunction<void(ports::FileChange)>;
@@ -120,4 +120,4 @@ std::size_t FakeFileWatcher::live_watches() const {
     return state_->watches.size();
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

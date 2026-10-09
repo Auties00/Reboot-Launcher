@@ -6,7 +6,7 @@
 #include "messages.hpp"
 #include "reboot/support/version_cap.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 Diagnostic to_diagnostic(SupportReason reason, const SupportQuery& query) {
     const std::string version = query.version ? query.version->canonical() : std::string();
@@ -44,4 +44,4 @@ Diagnostic to_diagnostic(SupportReason reason, const SupportQuery& query) {
     return internal_bug("support::to_diagnostic");
 }
 
-}  // namespace reboot::support
+}  // namespace rb::support

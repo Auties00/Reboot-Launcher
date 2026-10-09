@@ -10,8 +10,8 @@
 #include "reboot/testing/fake_game_script.hpp"
 #include "reboot/testing/fake_game_server_script.hpp"
 
-using namespace reboot;
-using namespace reboot::testing;
+using namespace rb;
+using namespace rb::testing;
 using namespace std::chrono_literals;
 namespace gc = contracts::game_client;
 namespace gs = contracts::game_server;

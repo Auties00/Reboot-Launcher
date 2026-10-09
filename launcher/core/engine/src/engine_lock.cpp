@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 Result<std::optional<EngineLock>> EngineLock::try_acquire(ports::IFileSystem& fs, const AppLayout& layout) {
     const NativePath path = layout.engine_lock();
@@ -14,4 +14,4 @@ Result<std::optional<EngineLock>> EngineLock::try_acquire(ports::IFileSystem& fs
     return make_diag(ErrorDomain::Engine, msg::kLockFailed).arg("path", path).cause(std::move(lock.error())).fail();
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

@@ -9,7 +9,7 @@
 #include "reboot/publish/host_metadata.hpp"
 #include "reboot/publish/listing.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // Sent by host once the session is ready and its block is mapped (or mapping failed). Move-only
 // because of the password.
@@ -29,4 +29,4 @@ struct PublishRequest {
 // publish.game_port_missing for port 0, or publish.player_count_too_high above kMaxPlayerLimit.
 [[nodiscard]] Result<PublishRequest> fit_request(PublishRequest request);
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

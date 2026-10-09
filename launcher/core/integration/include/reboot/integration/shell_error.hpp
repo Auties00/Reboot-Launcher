@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 enum class ShellErrorCode : u8 {
     // A window would open in a session the caller does not see.
@@ -35,4 +35,4 @@ struct ShellError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const ShellError& error);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

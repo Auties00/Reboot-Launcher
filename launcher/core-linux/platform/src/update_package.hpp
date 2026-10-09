@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Extracts the tarball update `package` (tar, optionally zstd) into the empty directory `staging`
 // and returns the name of the one directory it must hold (platform.update_package_invalid
@@ -14,4 +14,4 @@ namespace reboot::os_linux::platform {
 // bits are dropped.
 [[nodiscard]] Result<std::string> extract_update(const NativePath& package, const NativePath& staging);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

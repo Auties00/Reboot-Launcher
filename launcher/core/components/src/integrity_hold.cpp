@@ -6,7 +6,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/sha256.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 namespace {
 
@@ -132,4 +132,4 @@ std::expected<IntegrityHold, HoldFailure> IntegrityHold::acquire(ports::IFileSys
     });
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

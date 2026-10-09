@@ -16,8 +16,8 @@
 #include "reboot/testing/event_recorder.hpp"
 #include "reboot/testing/fake_random.hpp"
 
-using namespace reboot;
-using namespace reboot::sessions;
+using namespace rb;
+using namespace rb::sessions;
 using namespace std::chrono_literals;
 
 namespace {
@@ -79,9 +79,9 @@ private:
 };
 
 struct Fixture {
-    reboot::testing::DeterministicRuntime runtime;
-    reboot::testing::FakeRandom random;
-    reboot::testing::EventRecorder recorder{runtime.events()};
+    rb::testing::DeterministicRuntime runtime;
+    rb::testing::FakeRandom random;
+    rb::testing::EventRecorder recorder{runtime.events()};
     SessionRegistry registry{runtime.clock(), random, runtime.strand(), runtime.timers(), runtime.events()};
     std::deque<DriverLog> logs;
 
@@ -594,8 +594,8 @@ TEST_CASE("stop_all stops only the kind asked for and posts on_ended once all of
 }
 
 TEST_CASE("destroying the registry releases every driver and ignores work posted before") {
-    reboot::testing::DeterministicRuntime runtime;
-    reboot::testing::FakeRandom random;
+    rb::testing::DeterministicRuntime runtime;
+    rb::testing::FakeRandom random;
     auto registry = std::make_unique<SessionRegistry>(runtime.clock(), random, runtime.strand(), runtime.timers(),
                                                       runtime.events());
     SessionRegistry* back = registry.get();
@@ -618,8 +618,8 @@ TEST_CASE("destroying the registry releases every driver and ignores work posted
 }
 
 TEST_CASE("a driver's done that outlives the registry is ignored") {
-    reboot::testing::DeterministicRuntime runtime;
-    reboot::testing::FakeRandom random;
+    rb::testing::DeterministicRuntime runtime;
+    rb::testing::FakeRandom random;
     auto registry = std::make_unique<SessionRegistry>(runtime.clock(), random, runtime.strand(), runtime.timers(),
                                                       runtime.events());
     DriverLog log;

@@ -6,7 +6,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -103,4 +103,4 @@ std::string BackendUrl::origin() const {
     return out;
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

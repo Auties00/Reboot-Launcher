@@ -1,6 +1,6 @@
 #include "reboot/browser/connection_state.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -31,4 +31,4 @@ ConnectionState classify_connect_failure(const ConnectFailureEvidence& evidence)
     return ConnectionState::Backoff;
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

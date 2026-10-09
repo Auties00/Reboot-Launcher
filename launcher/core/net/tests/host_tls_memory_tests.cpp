@@ -4,8 +4,8 @@
 
 #include "reboot/net/host_tls_memory.hpp"
 
-using namespace reboot;
-using namespace reboot::net;
+using namespace rb;
+using namespace rb::net;
 
 namespace {
 

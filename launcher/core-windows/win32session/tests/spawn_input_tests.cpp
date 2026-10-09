@@ -8,7 +8,7 @@
 #include "handle_list.hpp"
 #include "wide.hpp"
 
-using namespace reboot::os_windows::win32session;
+using namespace rb::os_windows::win32session;
 
 namespace {
 
@@ -17,8 +17,8 @@ HANDLE fake(std::uintptr_t value) { return reinterpret_cast<HANDLE>(value); }
 Bytes units(std::initializer_list<char16_t> text) {
     Bytes out;
     for (char16_t c : text) {
-        out.push_back(static_cast<reboot::u8>(c & 0xFF));
-        out.push_back(static_cast<reboot::u8>(c >> 8));
+        out.push_back(static_cast<rb::u8>(c & 0xFF));
+        out.push_back(static_cast<rb::u8>(c >> 8));
     }
     return out;
 }

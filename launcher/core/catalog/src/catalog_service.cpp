@@ -8,7 +8,7 @@
 #include "reboot/trust/check_expiry.hpp"
 #include "reboot/trust/trust_error.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 namespace {
 
@@ -198,4 +198,4 @@ void CatalogService::finish(std::optional<Diagnostic> failure) {
     run();
 }
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

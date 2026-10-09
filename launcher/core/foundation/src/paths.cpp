@@ -11,7 +11,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -135,4 +135,4 @@ std::optional<NativePath> velopack_root_of(const NativePath& exe_dir) {
     return root;
 }
 
-}  // namespace reboot
+}  // namespace rb

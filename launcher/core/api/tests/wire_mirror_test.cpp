@@ -7,19 +7,19 @@
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/ipc.hpp"
 
-namespace api = reboot::api;
-namespace common = reboot::contracts::common;
-namespace ipc = reboot::contracts::ipc;
+namespace api = rb::api;
+namespace common = rb::contracts::common;
+namespace ipc = rb::contracts::ipc;
 
 TEST_CASE("WireDiagnostic and api::Diagnostic share a layout", "[mirror]") {
     common::WireDiagnostic wire;
     wire.id = "host.port_busy";
     wire.args = {{"port", common::ArgKind::Unsigned, "7777"}, {"elapsed", common::ArgKind::Millis, "1500"}};
     wire.detail = "bind";
-    wire.os_origin = reboot::SystemError::Origin::GuestWindows;
+    wire.os_origin = rb::SystemError::Origin::GuestWindows;
     wire.os_code = -10048;
     wire.retryable = true;
-    wire.kind = reboot::ErrorKind::Conflict;
+    wire.kind = rb::ErrorKind::Conflict;
 
     const api::Bytes bytes = sb::wire::encode_to_bytes(wire);
     const auto diag = api::decode<api::Diagnostic>(bytes);
@@ -34,10 +34,10 @@ TEST_CASE("WireDiagnostic and api::Diagnostic share a layout", "[mirror]") {
 
 TEST_CASE("WireEvent and api::Event share a layout", "[mirror]") {
     ipc::WireEvent wire;
-    wire.kind = static_cast<reboot::u32>(api::EventKind::SessionEnded);
+    wire.kind = static_cast<rb::u32>(api::EventKind::SessionEnded);
     wire.epoch = 2;
     wire.seq = 99;
-    wire.session = reboot::Uuid{};
+    wire.session = rb::Uuid{};
     wire.op = 0;
     wire.payload = {0x62, 0x00};
 

@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 enum class Remedy : u8 {
     // Guidance only, such as installing a driver or a distro package.
@@ -15,4 +15,4 @@ enum class Remedy : u8 {
     Install,
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

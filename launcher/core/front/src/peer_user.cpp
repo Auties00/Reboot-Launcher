@@ -1,6 +1,6 @@
 #include "reboot/front/peer_user.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 PeerUser classify_peer(const Result<std::optional<u32>>& peer_uid, std::optional<u32> engine_uid) noexcept {
     if (!peer_uid) {
@@ -12,4 +12,4 @@ PeerUser classify_peer(const Result<std::optional<u32>>& peer_uid, std::optional
     return **peer_uid == *engine_uid ? PeerUser::Engine : PeerUser::Other;
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

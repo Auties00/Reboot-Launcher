@@ -37,7 +37,7 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/memory_stream_pair.hpp"
 
-namespace reboot::play::test {
+namespace rb::play::test {
 
 namespace gc = contracts::game_client;
 
@@ -652,4 +652,4 @@ struct Harness {
     std::unique_ptr<PlayCore> core;
 };
 
-}  // namespace reboot::play::test
+}  // namespace rb::play::test

@@ -22,7 +22,7 @@
 #include "reboot/testing/golden.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 
-namespace reboot::storage::test {
+namespace rb::storage::test {
 
 // The strand beside a real WorkerPool: the test thread runs what workers posted until done.
 class WorkerStrand final : public Executor {
@@ -95,4 +95,4 @@ inline void set_test_time(ManualClock& clock) {
     return {bytes->begin(), bytes->end()};
 }
 
-}  // namespace reboot::storage::test
+}  // namespace rb::storage::test

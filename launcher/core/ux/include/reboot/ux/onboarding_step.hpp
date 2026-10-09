@@ -9,7 +9,7 @@
 #include "reboot/ux/message_text.hpp"
 #include "reboot/ux/suggested_action.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Persisted by name; reordering is free, renaming is a migration.
 enum class StepId : u8 { Welcome, Prerequisites, Profile, Library, Play, Browser, HostListing, Backend, Finish };
@@ -45,4 +45,4 @@ struct OnboardingStep {
     std::vector<SuggestedAction> actions;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

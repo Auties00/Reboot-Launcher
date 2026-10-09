@@ -8,7 +8,7 @@
 
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 namespace {
 
 enum class ReadStatus : u8 { Ok, Eof, Error };
@@ -134,4 +134,4 @@ void ControlConnection::shutdown() noexcept {
     CancelIoEx(reinterpret_cast<HANDLE>(socket), nullptr);
 }
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

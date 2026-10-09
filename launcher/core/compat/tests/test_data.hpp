@@ -9,7 +9,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::compat::test {
+namespace rb::compat::test {
 
 [[nodiscard]] inline NativePath data_path(std::string_view name) { return NativePath(REBOOT_COMPAT_TEST_DATA) / name; }
 
@@ -23,4 +23,4 @@ namespace reboot::compat::test {
     return {text.begin(), text.end()};
 }
 
-}  // namespace reboot::compat::test
+}  // namespace rb::compat::test

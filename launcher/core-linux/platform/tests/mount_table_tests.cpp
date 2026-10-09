@@ -5,8 +5,8 @@
 
 #include "mount_table.hpp"
 
-using reboot::NativePath;
-using namespace reboot::os_linux::platform;
+using rb::NativePath;
+using namespace rb::os_linux::platform;
 
 namespace {
 

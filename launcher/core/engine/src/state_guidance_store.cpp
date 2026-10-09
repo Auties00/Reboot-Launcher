@@ -16,7 +16,7 @@
 #include "reboot/ux/onboarding_step.hpp"
 #include "state_extras.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace json = boost::json;
 
@@ -169,4 +169,4 @@ Result<void> StateGuidanceStore::replace(ux::GuidanceState state) {
     return {};
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

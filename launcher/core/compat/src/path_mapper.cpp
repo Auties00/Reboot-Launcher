@@ -9,7 +9,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -99,4 +99,4 @@ Result<std::u16string> PathMapper::to_windows(const NativePath& host) const {
     return windows;
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

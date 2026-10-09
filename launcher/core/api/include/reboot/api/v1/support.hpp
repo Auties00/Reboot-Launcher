@@ -10,7 +10,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class SupportTier : u32 {
     Unknown = 0,
@@ -64,7 +64,7 @@ class ISupportHandler {
 public:
     virtual ~ISupportHandler() = default;
 
-    virtual ::reboot::Result<SupportQueryResponse> query(const CallContext& context, const SupportQueryRequest& request) = 0;
+    virtual ::rb::Result<SupportQueryResponse> query(const CallContext& context, const SupportQueryRequest& request) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

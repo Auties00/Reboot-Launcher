@@ -14,12 +14,12 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class IClock;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::browser {
+namespace rb::browser {
 
 class BrowserSession;
 class IOwnServers;
@@ -78,4 +78,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

@@ -54,11 +54,11 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/scripted_process_launcher.hpp"
 
-using namespace reboot;
-using namespace reboot::host;
+using namespace rb;
+using namespace rb::host;
 using namespace std::chrono_literals;
 namespace asio = boost::asio;
-namespace gs = reboot::contracts::game_server;
+namespace gs = rb::contracts::game_server;
 
 namespace {
 

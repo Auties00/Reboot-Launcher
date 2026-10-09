@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::storage::msg {
+namespace rb::storage::msg {
 
 REBOOT_MESSAGE(kWrongType, "storage.wrong_type", "Expected {expected}");
 REBOOT_MESSAGE(kUnknownName, "storage.unknown_name", "{value} is not one of the allowed values");
@@ -68,4 +68,4 @@ REBOOT_MESSAGE(kLabelUpdatesAutoCheck, "storage.setting_updates_auto_check", "Ch
 REBOOT_MESSAGE(kLabelUiLanguage, "storage.setting_ui_language", "Language");
 REBOOT_MESSAGE(kLabelUiTheme, "storage.setting_ui_theme", "Theme");
 
-}  // namespace reboot::storage::msg
+}  // namespace rb::storage::msg

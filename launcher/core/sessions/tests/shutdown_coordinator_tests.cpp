@@ -10,8 +10,8 @@
 #include "reboot/sessions/shutdown_coordinator.hpp"
 #include "reboot/testing/deterministic_runtime.hpp"
 
-using namespace reboot;
-using namespace reboot::sessions;
+using namespace rb;
+using namespace rb::sessions;
 using namespace std::chrono_literals;
 
 namespace {
@@ -32,7 +32,7 @@ constexpr bool budgets_fit_totals() {
 using StepDone = UniqueFunction<void(Result<void>)>;
 
 struct Fixture {
-    reboot::testing::DeterministicRuntime runtime;
+    rb::testing::DeterministicRuntime runtime;
     ShutdownCoordinator coordinator{runtime.clock(), runtime.timers(), runtime.strand()};
     std::vector<ShutdownStep> ran;
     std::vector<StepDone> held;
@@ -244,7 +244,7 @@ TEST_CASE("a step's budget is cut to what is left of the total") {
 }
 
 TEST_CASE("destroying the coordinator mid-run ignores its posted step and a late done") {
-    reboot::testing::DeterministicRuntime runtime;
+    rb::testing::DeterministicRuntime runtime;
     auto coordinator = std::make_unique<ShutdownCoordinator>(runtime.clock(), runtime.timers(), runtime.strand());
     StepDone held;
     coordinator->set_action(ShutdownStep::RefuseNew,

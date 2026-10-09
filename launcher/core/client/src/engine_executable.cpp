@@ -1,6 +1,6 @@
 #include "engine_executable.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 NativePath engine_executable(const ports::IPlatformPaths& paths) {
 #if defined(_WIN32)
@@ -10,4 +10,4 @@ NativePath engine_executable(const ports::IPlatformPaths& paths) {
 #endif
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

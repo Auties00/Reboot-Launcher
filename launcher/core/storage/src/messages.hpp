@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::storage::msg {
+namespace rb::storage::msg {
 
 REBOOT_MESSAGE_DECL(kWrongType);
 REBOOT_MESSAGE_DECL(kUnknownName);
@@ -40,12 +40,12 @@ REBOOT_MESSAGE_DECL(kFrontendStateTooLarge);
 REBOOT_MESSAGE_DECL(kFrontendStateNotJson);
 REBOOT_MESSAGE_DECL(kInvalidShellName);
 
-}  // namespace reboot::storage::msg
+}  // namespace rb::storage::msg
 
-namespace reboot::storage {
+namespace rb::storage {
 
 [[nodiscard]] inline DiagBuilder invalid_input(MessageId message) {
     return make_diag(ErrorDomain::Storage, message).kind(ErrorKind::InvalidInput);
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

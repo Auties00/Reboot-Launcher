@@ -5,7 +5,7 @@
 #include "reboot/contracts/common.hpp"
 #include "reboot/process/child_supervisor.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 ChildReply::ChildReply(ChildSupervisor& supervisor, u64 req_id, u32 generation) noexcept
     : supervisor_(&supervisor), req_id_(req_id), generation_(generation) {
@@ -62,4 +62,4 @@ void ChildReply::send(std::vector<u8> frame) {
     supervisor->send_reply(generation_, std::move(frame));
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

@@ -114,7 +114,7 @@
 #include "state_extras.hpp"
 #include "state_guidance_store.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace {
 
@@ -906,4 +906,4 @@ Result<void> EngineServices::write_runtime() { return runtime_recorder_->write_s
 
 void EngineServices::on_os_signal() { lifecycle_->on_os_signal(); }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

@@ -10,7 +10,7 @@
 #include "reboot/host/host_profile.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // data/host-profiles.json, a storage::Document. Enums are stored by name.
 struct HostProfilesDocument {
@@ -28,4 +28,4 @@ struct HostProfilesDocument {
     [[nodiscard]] static Result<boost::json::object> upgrade(boost::json::object values, u32 from_schema);
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

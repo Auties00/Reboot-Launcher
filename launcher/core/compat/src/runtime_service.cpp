@@ -7,7 +7,7 @@
 #include "reboot/components/manifest_service.hpp"
 #include "runtime_core.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -65,4 +65,4 @@ Result<OpHandle> RuntimeService::start_setup(RunnerKind kind, DisconnectPolicy p
 
 void RuntimeService::mark_good(const PreparedRuntime& runtime) { impl_->core.mark_good(runtime); }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

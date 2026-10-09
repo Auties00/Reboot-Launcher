@@ -3,7 +3,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/publish/host_identity.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 class HostIdentityStore;
 
@@ -33,4 +33,4 @@ private:
     HostProfileId profile_;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

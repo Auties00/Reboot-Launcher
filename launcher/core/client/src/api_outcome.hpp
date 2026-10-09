@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 // reboot.api.v1 Outcome up to failed = 4, enough to fail an op the engine can no longer finish.
 struct ApiOutcome {
@@ -19,4 +19,4 @@ struct ApiOutcome {
 
 [[nodiscard]] std::vector<u8> encode_failed_outcome(u64 op_id, u32 method_id, const Diagnostic& reason);
 
-}  // namespace reboot::client
+}  // namespace rb::client

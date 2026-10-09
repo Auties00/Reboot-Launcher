@@ -8,11 +8,11 @@
 #include "reboot/identity/display_name.hpp"
 #include "reboot/storage/accounts_document.hpp"
 
-namespace reboot {
+namespace rb {
 class IRandom;
 }
 
-namespace reboot::identity {
+namespace rb::identity {
 
 using AccountRole = contracts::backend::AccountRole;
 // storage owns the shape of data/accounts.json; this package owns its rules.
@@ -31,4 +31,4 @@ inline constexpr std::string_view kLoginDomainSuffix = "@projectreboot.dev";
 // 6 chars of [a-z0-9] from the CSPRNG; minted once per record and kept across renames.
 [[nodiscard]] std::string generate_tag(IRandom& random);
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

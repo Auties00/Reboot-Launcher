@@ -7,7 +7,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "wire/codec.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 namespace {
 
@@ -56,4 +56,4 @@ void wipe_and_free(rb_buffer& buffer) noexcept {
     buffer = rb_buffer{nullptr, 0, nullptr};
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

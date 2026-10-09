@@ -6,15 +6,15 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 }
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileWatcher;
 }
 
-namespace reboot::components {
+namespace rb::components {
 
 // Capabilities: dll-injection.deletion-guard.
 // Strand-only. Watches the directory of every tracked file through IFileWatcher and reports a
@@ -43,4 +43,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

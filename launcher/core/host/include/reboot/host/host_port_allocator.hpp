@@ -13,16 +13,16 @@
 #include "reboot/host/port_policy.hpp"
 #include "reboot/net/our_process.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::net {
+namespace rb::net {
 class PortPreflight;
 }
 
-namespace reboot::host {
+namespace rb::host {
 
 struct BlockRequest {
     SessionId session;
@@ -69,4 +69,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

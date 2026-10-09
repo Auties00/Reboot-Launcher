@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 struct ClTableEntry {
     u32 changelist = 0;
@@ -34,4 +34,4 @@ private:
     std::span<const ClTableEntry> entries_;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

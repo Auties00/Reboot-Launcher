@@ -8,7 +8,7 @@
 #include "reboot/process/env_layer.hpp"
 #include "reboot/process/process_spec.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 inline constexpr std::string_view kBackendDataEnv = "REBOOT_BACKEND_DATA";
 inline constexpr std::string_view kBackendContentEnv = "REBOOT_BACKEND_CONTENT";
@@ -29,4 +29,4 @@ struct BackendLaunch {
 // REBOOT_BACKEND_CONTENT.
 [[nodiscard]] Result<process::ProcessSpec> make_backend_spec(const BackendLaunch& launch);
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

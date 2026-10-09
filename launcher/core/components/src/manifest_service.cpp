@@ -20,7 +20,7 @@
 #include "reboot/trust/trust_error.hpp"
 #include "reboot/trust/verify_signed.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 namespace {
 
@@ -384,4 +384,4 @@ void ManifestService::add_listener(UniqueFunction<void(const ReleaseManifest&)> 
     impl_->listeners.push_back(std::move(on_changed));
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

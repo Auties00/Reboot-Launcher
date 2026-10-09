@@ -15,7 +15,7 @@
 #include "reboot/process/child_request_handler.hpp"
 #include "reboot/process/line_reader.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 namespace {
 
@@ -521,4 +521,4 @@ void ChildSupervisor::retrack(ChildReply& from, ChildReply& to) noexcept {
     std::ranges::replace(impl_->replies, &from, &to);
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

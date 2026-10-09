@@ -15,10 +15,10 @@
 #include "reboot/testing/event_recorder.hpp"
 #include "service_fixture.hpp"
 
-using namespace reboot;
-using namespace reboot::secrets;
-using namespace reboot::secrets::test;
-using reboot::testing::SecretStoreOperation;
+using namespace rb;
+using namespace rb::secrets;
+using namespace rb::secrets::test;
+using rb::testing::SecretStoreOperation;
 
 namespace {
 
@@ -345,7 +345,7 @@ TEST_CASE("clear erases the stored copy and reports a failed erase", "[secrets][
 
 TEST_CASE("every state change publishes a SecretStateChanged", "[secrets][service]") {
     Fixture f;
-    reboot::testing::EventRecorder recorder(f.events, EventFilter{.kinds = {EventKind::SecretStateChanged}});
+    rb::testing::EventRecorder recorder(f.events, EventFilter{.kinds = {EventKind::SecretStateChanged}});
     f.make();
     f.start();
     std::optional<Result<SecretState>> saved;

@@ -4,11 +4,11 @@
 #include "reboot/integration/integration_kind.hpp"
 #include "reboot/integration/integration_targets.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IIntegrationRegistrar;
 }
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // Blocking registrar calls, for workers and the store-free hooks; `declined` is left false.
 
@@ -27,4 +27,4 @@ namespace reboot::integration {
 [[nodiscard]] EntryStatus remove_entry(ports::IIntegrationRegistrar& registrar, const IntegrationTargets& targets,
                                        const EntryStatus& found);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

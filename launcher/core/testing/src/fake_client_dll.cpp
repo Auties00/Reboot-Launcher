@@ -15,7 +15,7 @@
 #include "stdio_peer_core.hpp"
 #include "tcp_stream.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 namespace gc = contracts::game_client;
@@ -263,4 +263,4 @@ bool FakeClientDll::connected() const {
 
 bool FakeClientDll::closed() const { return impl_->is_closed(); }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

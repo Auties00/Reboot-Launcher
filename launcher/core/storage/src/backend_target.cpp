@@ -6,7 +6,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace {
 
@@ -81,4 +81,4 @@ Result<BackendTarget> BackendTarget::normalize(BackendTarget target) {
     return target;
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

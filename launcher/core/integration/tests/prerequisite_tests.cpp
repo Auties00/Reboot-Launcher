@@ -5,7 +5,7 @@
 #include "reboot/integration/prerequisite_id.hpp"
 #include "reboot/integration/prerequisite_spec.hpp"
 
-using namespace reboot::integration;
+using namespace rb::integration;
 
 TEST_CASE("every id round-trips through its stable string", "[integration][prerequisite]") {
     for (std::size_t i = 0; i < kPrerequisiteIds.size(); ++i) {

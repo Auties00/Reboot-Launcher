@@ -9,7 +9,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 // Malformed and out-of-order frames use contracts.malformed_frame and contracts.unexpected_frame.
 enum class GameChannelErrorCode : u8 {
@@ -51,4 +51,4 @@ struct GameChannelError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const GameChannelError& error);
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

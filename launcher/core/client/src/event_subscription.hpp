@@ -13,7 +13,7 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 struct WakeCallback {
     void (*fn)(std::uintptr_t) = nullptr;
@@ -109,4 +109,4 @@ private:
     std::size_t users_ = 0;
 };
 
-}  // namespace reboot::client
+}  // namespace rb::client

@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // Lowercase: URL schemes are case-insensitive and Linux handlers register it this way.
 inline constexpr std::string_view kShareScheme = "reboot";
@@ -26,4 +26,4 @@ struct ShareLink {
     bool operator==(const ShareLink&) const = default;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

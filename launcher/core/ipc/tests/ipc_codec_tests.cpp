@@ -10,11 +10,11 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/ipc/ipc_codec.hpp"
 
-using namespace reboot;
-using reboot::ipc::ClientMessage;
-using reboot::ipc::EngineMessage;
-using reboot::ipc::IpcCodec;
-namespace wire = reboot::contracts::ipc;
+using namespace rb;
+using rb::ipc::ClientMessage;
+using rb::ipc::EngineMessage;
+using rb::ipc::IpcCodec;
+namespace wire = rb::contracts::ipc;
 
 namespace {
 

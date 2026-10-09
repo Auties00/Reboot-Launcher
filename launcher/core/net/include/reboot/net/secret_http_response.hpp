@@ -9,7 +9,7 @@
 #include "reboot/net/http_response.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 // A response that carries credentials (tokens, exchange codes); the body is wiped on destruction.
 struct SecretHttpResponse {
@@ -20,4 +20,4 @@ struct SecretHttpResponse {
     [[nodiscard]] const std::string* header(std::string_view name) const { return find_header(headers, name); }
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

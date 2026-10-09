@@ -3,7 +3,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "wide.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 std::optional<NativePath> command_program(std::string_view command) {
     const std::size_t start = command.find_first_not_of(' ');
@@ -37,4 +37,4 @@ ports::IntegrationState ownership(const NativePath& program, bool program_exists
     return is_inside(program, install_root) ? ports::IntegrationState::Ours : ports::IntegrationState::Foreign;
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

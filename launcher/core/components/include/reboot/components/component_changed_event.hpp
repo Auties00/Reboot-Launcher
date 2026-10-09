@@ -5,7 +5,7 @@
 #include "reboot/components/component_info.hpp"
 #include "reboot/components/component_problem.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // EventKind::ComponentChanged, coalesced per component id; `problem` stays set through recovery.
 struct ComponentChangedEvent {
@@ -13,4 +13,4 @@ struct ComponentChangedEvent {
     std::optional<ComponentProblem> problem;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

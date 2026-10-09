@@ -92,7 +92,7 @@
 #include "reboot/ux/resolve_language.hpp"
 #include "reboot/ux/settings_search.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace json = boost::json;
 
@@ -1502,4 +1502,4 @@ Result<OpHandle> ApiRouter::start_apply(const api::CallContext&, const api::Upda
     return deps_.updates.start_apply(request.when == api::ApplyWhen::Now ? updates::ApplyWhen::Now : updates::ApplyWhen::WhenIdle);
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

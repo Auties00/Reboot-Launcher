@@ -8,7 +8,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 struct ProgramResult {
     std::optional<int> code;
@@ -23,4 +23,4 @@ struct ProgramResult {
 [[nodiscard]] Result<ProgramResult> run_program(const NativePath& program, std::vector<std::string> args,
                                                 std::chrono::milliseconds deadline);
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

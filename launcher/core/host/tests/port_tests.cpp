@@ -5,8 +5,8 @@
 #include "reboot/host/port_block.hpp"
 #include "reboot/host/port_policy.hpp"
 
-using namespace reboot;
-using namespace reboot::host;
+using namespace rb;
+using namespace rb::host;
 
 using gameserver::SocketRole;
 

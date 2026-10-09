@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // An XDG_*_HOME value counts only when absolute, as the XDG spec requires; `fallback` otherwise.
 // Lexically normal either way, as XdgPaths resolves it.
@@ -27,4 +27,4 @@ struct InstallFacts {
 
 [[nodiscard]] ports::InstallKind classify_install(const InstallFacts& facts);
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

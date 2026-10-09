@@ -8,7 +8,7 @@
 #include "reboot/integration/purge_error.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 namespace {
 
@@ -125,4 +125,4 @@ void PurgeService::finish(PurgeScope scope, Operation<PurgeReport>& op, Outcome<
     op.complete(std::move(outcome));
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

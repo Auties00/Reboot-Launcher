@@ -25,7 +25,7 @@
 #include "reboot/posix/unique_fd.hpp"
 #include "run_program.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -265,4 +265,4 @@ Result<void> MacVelopackApplier::apply_and_restart(std::vector<std::string> args
         .fail();
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

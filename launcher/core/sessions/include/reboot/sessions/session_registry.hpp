@@ -15,15 +15,15 @@
 #include "reboot/sessions/session_spec.hpp"
 #include "reboot/sessions/stop_request.hpp"
 
-namespace reboot {
+namespace rb {
 class IClock;
 class IRandom;
 class Executor;
 class TimerService;
 class EventBus;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 class ISessionDriver;
 
@@ -83,4 +83,4 @@ private:
     std::unique_ptr<State> state_;
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

@@ -10,19 +10,19 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/updates/activity_probe.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 class SessionRegistry;
 }
 
-namespace reboot::backend {
+namespace rb::backend {
 class BackendService;
 }
 
-namespace reboot::publish {
+namespace rb::publish {
 class HostPublisher;
 }
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Capabilities: none. Strand-only; the one view of live work, whose single listener is EngineLifecycle.
 class EngineActivityProbe final : public updates::IActivityProbe {
@@ -54,4 +54,4 @@ private:
     UniqueFunction<void()> on_change_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

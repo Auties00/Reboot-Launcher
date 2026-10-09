@@ -4,10 +4,10 @@
 
 #include "messages.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 Result<std::optional<u32>> UnsupportedPeerInspector::peer_uid(Endpoint, Endpoint) {
     return make_diag(ErrorDomain::Platform, kNotSupported).kind(ErrorKind::Unsupported).fail();
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

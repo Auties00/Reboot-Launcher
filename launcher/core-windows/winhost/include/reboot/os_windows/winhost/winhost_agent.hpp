@@ -9,7 +9,7 @@
 #include "reboot/os_windows/winhost/winhost_exit.hpp"
 #include "reboot/os_windows/winhost/winhost_failure.hpp"
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 
 class ControlConnection;
 
@@ -78,4 +78,4 @@ private:
 // Every exception is caught and becomes InternalError.
 [[nodiscard]] WinhostExit run_winhost() noexcept;
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

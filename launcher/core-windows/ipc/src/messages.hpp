@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 REBOOT_MESSAGE_DECL(kEndpointUntrusted);
 REBOOT_MESSAGE_DECL(kIpcCallFailed);
@@ -21,4 +21,4 @@ REBOOT_MESSAGE_DECL(kSpawnLockTimedOut);
 REBOOT_MESSAGE_DECL(kTaskSchedulerTimedOut);
 REBOOT_MESSAGE_DECL(kEngineSpawnFailed);
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

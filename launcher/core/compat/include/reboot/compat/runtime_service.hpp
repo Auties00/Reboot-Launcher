@@ -15,23 +15,23 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/storage/document_store.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IClock;
 class UserRequestRegistry;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IRunnerPlatform;
 }
 
-namespace reboot::components {
+namespace rb::components {
 class ComponentStore;
 class ManifestService;
-}  // namespace reboot::components
+}  // namespace rb::components
 
-namespace reboot::compat {
+namespace rb::compat {
 
 class PrefixManager;
 
@@ -98,4 +98,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

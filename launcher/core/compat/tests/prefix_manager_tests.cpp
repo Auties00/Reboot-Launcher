@@ -21,13 +21,13 @@
 #include "reboot/testing/scripted_process_launcher.hpp"
 #include "test_data.hpp"
 
-using namespace reboot;
-using namespace reboot::compat;
+using namespace rb;
+using namespace rb::compat;
 using namespace std::chrono_literals;
-using reboot::compat::test::DiskFileSystem;
-using reboot::compat::test::read_file;
-using reboot::compat::test::TestStrand;
-using reboot::compat::test::write_file;
+using rb::compat::test::DiskFileSystem;
+using rb::compat::test::read_file;
+using rb::compat::test::TestStrand;
+using rb::compat::test::write_file;
 
 namespace {
 

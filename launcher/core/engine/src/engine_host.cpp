@@ -44,7 +44,7 @@
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/resume_document.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace {
 
@@ -374,4 +374,4 @@ int EngineHost::run() {
     return exit_code;
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

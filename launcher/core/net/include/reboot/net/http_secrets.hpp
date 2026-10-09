@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/secret.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 struct SecretHeader {
     std::string name;
@@ -21,4 +21,4 @@ struct HttpSecrets {
     SecretBytes body;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

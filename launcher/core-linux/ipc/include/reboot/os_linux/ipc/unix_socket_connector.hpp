@@ -9,7 +9,7 @@
 #include "reboot/ports/ipc.hpp"
 #include "reboot/posix/unix_socket_connector_base.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // Covers no capability ids; the reboot_client end of the engine socket behind IIpcConnector.
 class UnixSocketConnector final : public posix::UnixSocketConnectorBase {
@@ -29,4 +29,4 @@ private:
     NativePath runtime_base_;
 };
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

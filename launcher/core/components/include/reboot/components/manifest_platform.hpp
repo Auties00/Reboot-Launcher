@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 enum class ManifestOs : u8 { Windows, MacOs, Linux };
 enum class ManifestArch : u8 { X64, Arm64 };
@@ -35,4 +35,4 @@ struct ManifestPlatform {
     return {os, arch};
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

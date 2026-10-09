@@ -14,7 +14,7 @@
 #include "reboot/testing/fake_client_dll_script.hpp"
 #include "reboot/testing/script_steps.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 using WinhostStep =
     std::variant<ScriptPause, ScriptDisconnect, ScriptStopPonging, contracts::winhost::Spawned,
@@ -47,4 +47,4 @@ struct FakeWinhostScript {
     i64 exit_code_on_stop = 0;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

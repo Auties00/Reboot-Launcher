@@ -9,7 +9,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/net_types.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 [[nodiscard]] inline boost::asio::ip::address to_asio(const IpAddress& address) {
     if (address.is_v4()) {
@@ -40,4 +40,4 @@ namespace reboot::net {
     return SystemError{SystemError::Origin::Host, error.value()};
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

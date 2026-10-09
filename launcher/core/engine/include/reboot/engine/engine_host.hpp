@@ -6,7 +6,7 @@
 #include "reboot/ports/ipc.hpp"
 #include "reboot/ports/platform_services.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Capabilities: os-integration.single-instance. The engine process; a second one for the same
 // data root exits 0. state/spawn.lock belongs to the clients, and the engine never takes it.
@@ -30,4 +30,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

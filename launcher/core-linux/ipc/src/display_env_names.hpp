@@ -3,7 +3,7 @@
 #include <array>
 #include <string_view>
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // Must equal process::kClientAllowList, linux-compat-layer's client allow-list, which this
 // package may not include. Steam*, LD_*, WINE* and UMU_* are never on it.
@@ -30,4 +30,4 @@ inline constexpr std::array<std::string_view, 2> kDisplayEnvPrefixes{"PIPEWIRE_"
     return false;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

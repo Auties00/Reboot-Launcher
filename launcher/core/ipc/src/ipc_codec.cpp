@@ -7,7 +7,7 @@
 
 #include "wire/buffer.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 namespace {
 
@@ -217,4 +217,4 @@ SecretBytes IpcCodec::encode_secret_reply(u64 req_id, const SecretBytes& secret)
     return SecretBytes{out.take()};
 }
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

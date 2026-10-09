@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "socket_table.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 enum class DiagProtocol : u8 { Tcp, Udp };
 
@@ -24,4 +24,4 @@ struct DiagLookup {
 // The TCP socket whose own local end is `local` and remote end `remote`, by exact-tuple lookup.
 [[nodiscard]] DiagLookup diag_find_tcp(Endpoint local, Endpoint remote);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

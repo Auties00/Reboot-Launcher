@@ -12,7 +12,7 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::os_macos::runner {
+namespace rb::os_macos::runner {
 
 enum class HostCpu : u8 { AppleSilicon, Intel };
 
@@ -49,4 +49,4 @@ private:
     HostCpu cpu_;
 };
 
-}  // namespace reboot::os_macos::runner
+}  // namespace rb::os_macos::runner

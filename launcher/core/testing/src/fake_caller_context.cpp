@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 ports::CallerContext FakeCallerContext::capture() const {
     const std::scoped_lock lock(mutex_);
@@ -26,4 +26,4 @@ std::vector<u32> FakeCallerContext::foreground_allowed() const {
     return foreground_allowed_;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

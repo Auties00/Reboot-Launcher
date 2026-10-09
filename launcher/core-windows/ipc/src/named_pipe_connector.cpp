@@ -12,7 +12,7 @@
 #include "win32.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 Result<std::unique_ptr<ports::IByteStream>> NamedPipeConnector::connect(std::string_view endpoint_name,
                                                                         std::chrono::milliseconds deadline) {
@@ -61,4 +61,4 @@ Result<std::unique_ptr<ports::IByteStream>> NamedPipeConnector::connect(std::str
     return std::unique_ptr<ports::IByteStream>(std::move(*stream));
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

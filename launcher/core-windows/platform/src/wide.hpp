@@ -10,7 +10,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 using EnvVars = std::vector<std::pair<std::string, std::string>>;
 
@@ -41,4 +41,4 @@ void append_argument(std::wstring& line, std::wstring_view arg);
 [[nodiscard]] bool same_creation_time(std::chrono::system_clock::time_point a,
                                       std::chrono::system_clock::time_point b) noexcept;
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

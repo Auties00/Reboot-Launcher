@@ -5,7 +5,7 @@
 #include "reboot/contracts/backend.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // The embedded backend's answer to Health, asked every time readiness matters.
 struct BackendHealth {
@@ -14,4 +14,4 @@ struct BackendHealth {
     u16 http_port = 0;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

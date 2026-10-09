@@ -2,7 +2,7 @@
 
 #include "reboot/browser/server_row.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // Payload of UserRequestKind::ConfirmJoin. The UI shows the hidden, offline and password flags
 // from `server.row` before the user agrees.
@@ -25,4 +25,4 @@ struct NeedsJoinPasswordPrompt {
 
 struct JoinPasswordProvided {};
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

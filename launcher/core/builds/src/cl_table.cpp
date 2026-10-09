@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -136,4 +136,4 @@ std::optional<GameVersion> ClTable::lookup(Changelist changelist) const {
     return std::nullopt;
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

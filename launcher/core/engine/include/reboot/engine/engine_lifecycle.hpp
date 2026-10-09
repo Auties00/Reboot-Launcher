@@ -15,18 +15,18 @@
 #include "reboot/storage/resume_document.hpp"
 #include "reboot/updates/activity_probe.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Subscription;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::sessions {
+namespace rb::sessions {
 class SessionRegistry;
 class ShutdownCoordinator;
-}  // namespace reboot::sessions
+}  // namespace rb::sessions
 
-namespace reboot::engine {
+namespace rb::engine {
 
 class EngineActivityProbe;
 
@@ -123,4 +123,4 @@ private:
     std::shared_ptr<Subscription> update_failures_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

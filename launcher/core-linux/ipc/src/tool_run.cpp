@@ -18,7 +18,7 @@
 
 extern char** environ;
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 // systemctl show prints a few lines; more than this is not the output asked for.
@@ -163,4 +163,4 @@ std::optional<ToolRun> run_tool(std::span<const std::string> argv, std::chrono::
     return run;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

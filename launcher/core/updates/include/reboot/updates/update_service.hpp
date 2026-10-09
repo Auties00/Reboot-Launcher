@@ -18,29 +18,29 @@
 #include "reboot/updates/resume_record.hpp"
 #include "reboot/updates/update_state.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IClock;
 class TimerService;
 class UserRequestRegistry;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 class IUpdateApplier;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::net {
+namespace rb::net {
 class ResumableDownloader;
 }
 
-namespace reboot::components {
+namespace rb::components {
 class ManifestService;
 }
 
-namespace reboot::updates {
+namespace rb::updates {
 
 class IActivityProbe;
 
@@ -131,4 +131,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

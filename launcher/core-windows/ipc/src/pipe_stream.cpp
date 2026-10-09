@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 namespace {
 
 constexpr DWORD kReadChunk = 64 * 1024;
@@ -327,4 +327,4 @@ void PipeStream::close() {
 
 ports::PeerIdentity PipeStream::peer() const { return impl_->peer; }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

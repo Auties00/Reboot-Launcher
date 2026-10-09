@@ -10,7 +10,7 @@
 #include "reboot/identity/credential_delivery.hpp"
 #include "reboot/identity/login_target.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 enum class AuthType : u8 { Epic, ExchangeCode };
 
@@ -52,4 +52,4 @@ struct LoginPlan {
 [[nodiscard]] Result<LoginPlan> plan_login(const AccountRecord& record, const LoginTarget& target,
                                            bool build_takes_exchangecode);
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

@@ -9,7 +9,7 @@
 #include "reboot/ports/platform_services.hpp"
 #include "reboot/posix/ignore_sigpipe.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 Result<EngineEndpoint> make_engine_endpoint() {
     // Child stdio pipes and sockets whose peer left must fail with EPIPE, not end the engine.
@@ -22,4 +22,4 @@ Result<EngineEndpoint> make_engine_endpoint() {
     return endpoint;
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

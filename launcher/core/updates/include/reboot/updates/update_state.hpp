@@ -11,7 +11,7 @@
 #include "reboot/updates/activity_probe.hpp"
 #include "reboot/updates/update_offer.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 // WaitingForIdle: staged behind the ApplyGate. Draining: a consented Drain{Update} is ending live work.
 enum class UpdatePhase : u8 {
@@ -50,4 +50,4 @@ struct UpdateState {
     std::vector<LiveActivity> blocking;
 };
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

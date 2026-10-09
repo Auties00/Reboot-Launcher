@@ -15,7 +15,7 @@
 #include "wire/buffer.hpp"
 #include "wire/codec.hpp"
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 
 // One received frame. The payload may be a WhWelcome with -AUTH_PASSWORD and the game's
 // REBOOT_CTL_TOKEN, so it is wiped on destruction.
@@ -77,4 +77,4 @@ private:
     std::atomic<bool> shut_{false};
 };
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

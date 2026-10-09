@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // An archive entry's path with "./" and empty components dropped; nullopt when absolute or
 // holding "..". An empty result is the archive's root entry itself.
@@ -17,4 +17,4 @@ namespace reboot::os_linux::platform {
 // root when resolved lexically; absolute targets never do.
 [[nodiscard]] bool link_stays_inside(std::string_view entry, std::string_view target);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

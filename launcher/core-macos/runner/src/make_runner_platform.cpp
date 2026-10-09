@@ -7,7 +7,7 @@
 
 #include "reboot/os_macos/runner/dxmt_wine_runner_platform.hpp"
 
-namespace reboot::os_macos::runner {
+namespace rb::os_macos::runner {
 
 std::unique_ptr<ports::IRunnerPlatform> make_runner_platform() {
     int arm64 = 0;
@@ -17,4 +17,4 @@ std::unique_ptr<ports::IRunnerPlatform> make_runner_platform() {
     return std::make_unique<DxmtWineRunnerPlatform>(apple_silicon ? HostCpu::AppleSilicon : HostCpu::Intel);
 }
 
-}  // namespace reboot::os_macos::runner
+}  // namespace rb::os_macos::runner

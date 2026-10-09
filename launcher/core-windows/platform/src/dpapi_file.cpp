@@ -5,7 +5,7 @@
 #include "reboot/foundation/sha256.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -44,4 +44,4 @@ Result<SecretBytes> dpapi_open(std::span<const u8> sealed, std::string_view targ
     return plain;
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

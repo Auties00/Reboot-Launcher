@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "wire/messages.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // Rejected carries the edge's Error code.
 enum class RbsbFailure : u8 { Rejected, NotConnected, ConnectionLost, TimedOut, Cancelled };
@@ -26,4 +26,4 @@ struct RbsbRequestError {
 // One message per edge ErrorCode and failure; NotConnected yields `cause` when set.
 [[nodiscard]] Diagnostic to_diagnostic(const RbsbRequestError& error);
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

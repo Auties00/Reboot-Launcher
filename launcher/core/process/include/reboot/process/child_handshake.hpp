@@ -11,7 +11,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // The role-specific half of a stdio handshake (BackendHello/BackendWelcome, ServerHello/ServerWelcome).
 // ChildChannel compares the protocol itself, so every role gets the same exact-match rule.
@@ -48,4 +48,4 @@ template <ContractMessage Hello, class ProtocolOf, class Welcome>
     return handshake;
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

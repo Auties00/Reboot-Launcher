@@ -5,7 +5,7 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/ipc/ipc_errors.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 std::optional<u64> PendingCalls::open(AnswerDone done) {
     {
@@ -54,4 +54,4 @@ AnswerDone PendingCalls::take(u64 req_id) {
     return done;
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

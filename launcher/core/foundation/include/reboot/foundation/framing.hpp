@@ -15,7 +15,7 @@
 #include "wire/codec.hpp"
 #include "wire/frame.hpp"
 
-namespace reboot {
+namespace rb {
 
 inline constexpr std::size_t kIpcFrameCap = std::size_t{16} << 20;
 inline constexpr std::size_t kChildFrameCap = std::size_t{4} << 20;
@@ -122,10 +122,10 @@ inline constexpr std::size_t kGameControlPreambleSize = kGameControlMagic.size()
     return static_cast<u16>(bytes[6] | (bytes[7] << 8));
 }
 
-}  // namespace reboot
+}  // namespace rb
 
 // Gives a contract message its frame type; used right after the struct, in its namespace.
 #define REBOOT_CONTRACT_FRAME(Type, number)                                                      \
-    [[nodiscard]] constexpr ::reboot::u64 reboot_contract_frame_type(std::type_identity<Type>) noexcept { \
+    [[nodiscard]] constexpr ::rb::u64 reboot_contract_frame_type(std::type_identity<Type>) noexcept { \
         return number;                                                                           \
     }

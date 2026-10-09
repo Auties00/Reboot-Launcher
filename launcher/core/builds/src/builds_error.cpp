@@ -6,7 +6,7 @@
 #include "pe_error.hpp"
 #include "reboot/builds/pe_version_reader.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -140,4 +140,4 @@ Diagnostic to_diagnostic(const PeError& error) {
     return std::move(builder).build();
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

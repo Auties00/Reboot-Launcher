@@ -6,11 +6,11 @@
 
 #include "engine_environment.hpp"
 
-using reboot::DataRoot;
-using reboot::NativePath;
-using reboot::os_linux::ipc::engine_environment;
-using reboot::os_linux::ipc::EngineEnvironmentInputs;
-using reboot::os_linux::ipc::pinned_engine_variables;
+using rb::DataRoot;
+using rb::NativePath;
+using rb::os_linux::ipc::engine_environment;
+using rb::os_linux::ipc::EngineEnvironmentInputs;
+using rb::os_linux::ipc::pinned_engine_variables;
 
 namespace {
 

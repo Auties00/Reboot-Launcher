@@ -13,7 +13,7 @@
 #include "reboot/posix/process_start_time.hpp"
 #include "unistd.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 namespace {
 
@@ -204,4 +204,4 @@ Result<void> PosixSpawner::kill_tree(u32 pid, std::chrono::system_clock::time_po
     return {};
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

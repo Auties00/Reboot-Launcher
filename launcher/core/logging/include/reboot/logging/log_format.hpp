@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/log.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 [[nodiscard]] std::string_view level_name(LogLevel level) noexcept;
 [[nodiscard]] std::string_view category_name(LogCategory category) noexcept;
@@ -19,4 +19,4 @@ namespace reboot::logging {
 // The id, args, detail, OS error and causes; never the English template.
 [[nodiscard]] std::string format_diagnostic(const Diagnostic& diag);
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

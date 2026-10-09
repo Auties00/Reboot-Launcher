@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 enum class PortProtocol : u8 { Udp, Tcp };
 
@@ -12,4 +12,4 @@ enum class PortProtocol : u8 { Udp, Tcp };
     return protocol == PortProtocol::Udp ? "UDP" : "TCP";
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

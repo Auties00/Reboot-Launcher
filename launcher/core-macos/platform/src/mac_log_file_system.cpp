@@ -16,7 +16,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -111,4 +111,4 @@ Result<void> MacLogFileSystem::remove(const NativePath& path) {
     return {};
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

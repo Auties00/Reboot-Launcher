@@ -8,10 +8,10 @@
 #include "reboot/os_linux/ipc/ipc_runtime_base.hpp"
 #include "reboot/ports/ipc.hpp"
 
-using reboot::NativePath;
-using reboot::os_linux::ipc::IpcRuntimeBase;
-using reboot::os_linux::ipc::parse_decimal_uid;
-using reboot::os_linux::ipc::resolve_ipc_runtime_base;
+using rb::NativePath;
+using rb::os_linux::ipc::IpcRuntimeBase;
+using rb::os_linux::ipc::parse_decimal_uid;
+using rb::os_linux::ipc::resolve_ipc_runtime_base;
 
 TEST_CASE("a uid reads back exactly as std::to_string wrote it", "[endpoint_name]") {
     CHECK(parse_decimal_uid("0") == 0u);
@@ -28,8 +28,8 @@ TEST_CASE("anything else is not a uid", "[endpoint_name]") {
 }
 
 TEST_CASE("an identity without a decimal uid has no endpoint", "[endpoint_name]") {
-    CHECK(reboot::ports::endpoint_name({"S-1-5-21-1000", 7}, "0123456789abcdef").empty());
-    CHECK(reboot::ports::endpoint_name({"", 7}, "0123456789abcdef").empty());
+    CHECK(rb::ports::endpoint_name({"S-1-5-21-1000", 7}, "0123456789abcdef").empty());
+    CHECK(rb::ports::endpoint_name({"", 7}, "0123456789abcdef").empty());
 }
 
 TEST_CASE("an absolute XDG_RUNTIME_DIR is the runtime base", "[endpoint_name]") {

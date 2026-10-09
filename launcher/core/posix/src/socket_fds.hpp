@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // Every fd these return is close-on-exec and non-blocking, and writing to a socket never raises
 // SIGPIPE: MSG_NOSIGNAL on Linux, SO_NOSIGPIPE on macOS.
@@ -53,4 +53,4 @@ private:
     UniqueFd write_;
 };
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

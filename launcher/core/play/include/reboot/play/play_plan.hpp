@@ -12,7 +12,7 @@
 #include "reboot/ports/runner.hpp"
 #include "reboot/support/support_verdict.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // Covers game-launch.orchestration.
 // What start would do now, from state the strand holds; layout, payload, runtime and backend are checked by start.
@@ -36,4 +36,4 @@ struct PlayPlan {
     [[nodiscard]] bool startable() const noexcept { return blockers.empty(); }
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

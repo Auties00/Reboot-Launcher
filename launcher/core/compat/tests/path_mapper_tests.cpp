@@ -8,8 +8,8 @@
 // PathMapper serves Wine prefixes, which exist only on macOS and Linux.
 #if !defined(_WIN32)
 
-using namespace reboot;
-using namespace reboot::compat;
+using namespace rb;
+using namespace rb::compat;
 
 namespace {
 

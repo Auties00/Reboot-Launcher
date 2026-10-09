@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // A usage id on the USB HID Keyboard/Keypad page (0x07): a physical key position, whatever the
 // layout. UIs capture keys natively and convert here, so the tables exist once.
@@ -23,4 +23,4 @@ struct HidUsage {
 // A linux/input-event-codes.h KEY_* code: the X11 or xkb keycode minus 8.
 [[nodiscard]] std::optional<HidUsage> hid_from_evdev(u16 code) noexcept;
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

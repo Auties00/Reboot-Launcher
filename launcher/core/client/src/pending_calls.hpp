@@ -11,7 +11,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 // What answers a Call, Start or SecretReveal: a Reply, or Started for an accepted Start.
 using Answer = std::variant<contracts::ipc::Reply, contracts::ipc::Started>;
@@ -39,4 +39,4 @@ private:
     u64 next_req_id_ = 1;
 };
 
-}  // namespace reboot::client
+}  // namespace rb::client

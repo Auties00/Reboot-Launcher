@@ -22,11 +22,11 @@
 #include "reboot/process/process_spec.hpp"
 #include "reboot/process/restart_policy.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IProcessLauncher;
 }
 
-namespace reboot::process {
+namespace rb::process {
 
 class ChildObserver;
 class ChildRequestHandler;
@@ -133,4 +133,4 @@ void ChildSupervisor::command(Request message, UniqueFunction<void(Result<void>)
                  });
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

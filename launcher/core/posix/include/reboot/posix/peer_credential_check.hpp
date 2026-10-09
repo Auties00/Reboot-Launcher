@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 struct PeerCredentials {
     u32 uid = 0;
@@ -36,4 +36,4 @@ private:
     u32 expected_uid_;
 };
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

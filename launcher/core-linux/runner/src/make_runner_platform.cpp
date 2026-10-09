@@ -4,7 +4,7 @@
 
 #include "reboot/os_linux/runner/linux_runner_platform.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 std::unique_ptr<ports::IRunnerPlatform> make_runner_platform(const AppLayout& layout,
                                                              ports::IProcessLauncher& processes,
@@ -13,4 +13,4 @@ std::unique_ptr<ports::IRunnerPlatform> make_runner_platform(const AppLayout& la
     return std::make_unique<LinuxRunnerPlatform>(processes, std::move(setup_base), layout.root() / "data" / "umu");
 }
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

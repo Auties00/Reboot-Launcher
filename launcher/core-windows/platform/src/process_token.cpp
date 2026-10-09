@@ -8,7 +8,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -91,4 +91,4 @@ SECURITY_ATTRIBUTES* OwnerOnlyDacl::attributes() noexcept {
     return &attributes_;
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

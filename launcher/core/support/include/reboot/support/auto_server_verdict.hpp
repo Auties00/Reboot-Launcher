@@ -3,7 +3,7 @@
 #include "reboot/support/support_tier.hpp"
 #include "reboot/support/support_verdict.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // Play with the linked auto server is never rated above the server's host cell.
 struct AutoServerVerdict {
@@ -14,4 +14,4 @@ struct AutoServerVerdict {
     bool operator==(const AutoServerVerdict&) const = default;
 };
 
-}  // namespace reboot::support
+}  // namespace rb::support

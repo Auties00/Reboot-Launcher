@@ -11,7 +11,7 @@
 #include "reboot/game_channel/lifecycle_markers.hpp"
 #include "reboot/process/line_reader.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 namespace {
 
 constexpr std::string_view kLogin = "LogOnlineAccount: [UOnlineAccountCommon::ContinueLoggingIn] Login (Completed)\n";
@@ -149,4 +149,4 @@ TEST_CASE("a handler may drop the adapter while lines are pending", "[game_chann
 }
 
 }  // namespace
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

@@ -23,7 +23,7 @@
 #include "reboot/testing/child_misbehaviour.hpp"
 #include "reboot/testing/conformance_report.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 constexpr std::string_view kControlFlag = "--control=stdio";
@@ -159,4 +159,4 @@ void run_peer_process(PeerFactory make) {
     std::_Exit(exit_code.load());
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

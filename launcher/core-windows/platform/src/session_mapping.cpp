@@ -10,7 +10,7 @@
 #include "messages.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -105,4 +105,4 @@ Diagnostic inject_diagnostic(const win32session::InjectError& error, const Nativ
     return call_failed(inject_call(error.step), win32_code(error.error), dll);
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

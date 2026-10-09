@@ -9,7 +9,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 struct Port {
     u16 value{};
@@ -78,4 +78,4 @@ struct Endpoint {
     [[nodiscard]] constexpr bool is_loopback() const noexcept { return address.is_loopback(); }
 };
 
-}  // namespace reboot
+}  // namespace rb

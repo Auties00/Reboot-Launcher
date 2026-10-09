@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::secrets::msg {
+namespace rb::secrets::msg {
 
 REBOOT_MESSAGE(kInvalidScope, "secrets.invalid_scope", "{scope} does not identify a {kind}");
 REBOOT_MESSAGE(kEmptyValue, "secrets.empty_value", "The {kind} cannot be empty");
@@ -23,4 +23,4 @@ REBOOT_MESSAGE(kRequestWithdrawn, "secrets.request_withdrawn", "The request for 
 REBOOT_MESSAGE(kAnswerWithoutSecret, "secrets.answer_without_secret",
                "The request for the {kind} was answered before a new one was provided");
 
-}  // namespace reboot::secrets::msg
+}  // namespace rb::secrets::msg

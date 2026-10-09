@@ -8,7 +8,7 @@
 
 #include "reboot/host/host_error.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 namespace {
 
@@ -78,4 +78,4 @@ bool IpCidr::contains(const IpAddress& candidate) const noexcept {
     return true;
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

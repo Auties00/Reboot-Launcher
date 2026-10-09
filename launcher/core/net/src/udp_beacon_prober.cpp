@@ -10,7 +10,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/net/datagram_connector.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 struct UdpBeaconProber::Impl {
     struct Probe {
@@ -165,4 +165,4 @@ Result<void> UdpBeaconProber::probe(Endpoint target, ProbePolicy policy, CancelT
     return {};
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

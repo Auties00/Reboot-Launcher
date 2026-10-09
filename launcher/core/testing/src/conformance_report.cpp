@@ -13,7 +13,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 [[nodiscard]] std::string describe_arg(const Arg& arg) {
@@ -101,4 +101,4 @@ std::string describe_diagnostic(const Diagnostic& diag) {
     return out + ")";
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

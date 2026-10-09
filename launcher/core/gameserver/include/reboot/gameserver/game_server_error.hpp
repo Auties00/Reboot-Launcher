@@ -9,7 +9,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 enum class GameServerErrorCode : u8 {
     PathNotAbsolute,
@@ -57,4 +57,4 @@ struct GameServerError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const GameServerError& error);
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

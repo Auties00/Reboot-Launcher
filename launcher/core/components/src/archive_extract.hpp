@@ -8,7 +8,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 struct ExtractError {
     bool cancelled = false;
@@ -22,4 +22,4 @@ struct ExtractError {
                                                                const CancelToken& token,
                                                                UniqueFunction<void(u64 archive_bytes_read)> on_progress);
 
-}  // namespace reboot::components
+}  // namespace rb::components

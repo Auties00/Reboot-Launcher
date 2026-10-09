@@ -2,7 +2,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/logging/file_log_sink.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 void ErrorRouter::watch(FileLogSink& session_log) {
     if (impl_->unwatch) impl_->unwatch();
@@ -15,4 +15,4 @@ void ErrorRouter::watch(FileLogSink& session_log) {
     });
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

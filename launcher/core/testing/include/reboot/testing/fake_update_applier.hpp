@@ -12,7 +12,7 @@
 #include "reboot/ports/os_services.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class UpdateApplierOperation : u8 { Stage, ApplyAndRestart };
 
@@ -41,4 +41,4 @@ private:
     FaultPlan<UpdateApplierOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

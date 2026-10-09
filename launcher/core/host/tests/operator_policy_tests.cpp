@@ -5,8 +5,8 @@
 #include "messages.hpp"
 #include "reboot/host/operator_policy.hpp"
 
-using namespace reboot;
-using namespace reboot::host;
+using namespace rb;
+using namespace rb::host;
 
 namespace {
 

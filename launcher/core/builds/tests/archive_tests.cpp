@@ -15,9 +15,9 @@
 // Last: it brings in libarchive, and with it windows.h.
 #include "archive_writer.hpp"
 
-using namespace reboot;
-using namespace reboot::builds;
-using namespace reboot::builds::test;
+using namespace rb;
+using namespace rb::builds;
+using namespace rb::builds::test;
 
 namespace {
 

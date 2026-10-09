@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/gameserver/game_server_config.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Capabilities: none; implements game-server-dll-design (a server that declares needs_backend).
 // Strand-only. host may not depend on backend, so the engine implements this over
@@ -25,4 +25,4 @@ public:
     virtual void release(SessionId session) = 0;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

@@ -14,7 +14,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -230,4 +230,4 @@ Result<void> seed_rhi(ports::IFileSystem& files, RunnerKind kind, const NativePa
     return {};
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

@@ -17,9 +17,9 @@
 #include "reboot/net/resolve_error.hpp"
 #include "url.hpp"
 
-using namespace reboot;
-using namespace reboot::net;
-using reboot::net::test::arg_text;
+using namespace rb;
+using namespace rb::net;
+using rb::net::test::arg_text;
 
 TEST_CASE("parse_url accepts absolute http and https URLs only", "[net][url]") {
     const auto plain = parse_url("HTTP://Example.COM:8080/path?q=1#x");
@@ -173,8 +173,8 @@ TEST_CASE("Content-Range, validators and the sidecar round-trip", "[net][downloa
     const auto unknown_total = decode_sidecar(encode_sidecar(ResumeSidecar{"https://h/a", "v", std::nullopt}));
     REQUIRE(unknown_total);
     CHECK_FALSE(unknown_total->total);
-    CHECK_FALSE(decode_sidecar(reboot::net::test::bytes_of("garbage")));
-    CHECK_FALSE(decode_sidecar(reboot::net::test::bytes_of("reboot-resume 1\nu\n\n-\n")));
+    CHECK_FALSE(decode_sidecar(rb::net::test::bytes_of("garbage")));
+    CHECK_FALSE(decode_sidecar(rb::net::test::bytes_of("reboot-resume 1\nu\n\n-\n")));
 }
 
 TEST_CASE("gateway codes map UPnP and NAT-PMP results", "[net][mapping]") {

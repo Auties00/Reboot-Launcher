@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace reboot::front {
+namespace rb::front {
 
 // ConfirmUnencryptedUpstream payload the front raises for a learned plain-ws origin; the relay gets 502 until accepted.
 struct UnencryptedUpstreamPrompt {
@@ -16,4 +16,4 @@ struct UnencryptedUpstreamAnswer {
     bool remember = false;
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

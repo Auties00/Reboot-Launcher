@@ -6,7 +6,7 @@
 #include "messages.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 NativePath bundled_asset_path(const InstallLayout& install, BundledAsset asset) {
     switch (asset) {
@@ -47,4 +47,4 @@ Result<std::vector<MissingAsset>> find_missing_assets(ports::IFileSystem& fs, co
     return missing;
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

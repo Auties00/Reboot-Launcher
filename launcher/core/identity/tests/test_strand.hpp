@@ -11,7 +11,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/function.hpp"
 
-namespace reboot::identity::test {
+namespace rb::identity::test {
 
 // The strand beside a real WorkerPool: the test thread runs what workers posted until done.
 class TestStrand final : public Executor {
@@ -44,4 +44,4 @@ private:
     std::deque<UniqueFunction<void()>> tasks_;
 };
 
-}  // namespace reboot::identity::test
+}  // namespace rb::identity::test

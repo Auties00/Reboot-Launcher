@@ -7,7 +7,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/game_channel/token_registry.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -204,4 +204,4 @@ void PeerLink::log_peer(const common::Log& log) const {
                   std::format("{}: {}", key_.module, sanitize_display_text(log.text)));
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

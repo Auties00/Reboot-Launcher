@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 Diagnostic to_diagnostic(const PrerequisiteError& error) {
     const std::string id =
@@ -27,4 +27,4 @@ Diagnostic to_diagnostic(const PrerequisiteError& error) {
     return internal_bug("integration::to_diagnostic(PrerequisiteError)");
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

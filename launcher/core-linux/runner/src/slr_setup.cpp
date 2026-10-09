@@ -15,7 +15,7 @@
 #include "reboot/foundation/log.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 namespace {
 
@@ -183,4 +183,4 @@ Result<SlrBuild> SlrSetup::run(const ports::RuntimeLayout& layout, CancelToken t
     return SlrBuild::read(layout.root, folders_);
 }
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

@@ -6,7 +6,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/events.hpp"
 
-namespace reboot {
+namespace rb {
 
 struct UserRequestRegistry::Impl {
     struct Entry {
@@ -94,4 +94,4 @@ std::vector<UserRequest> UserRequestRegistry::pending() const {
     return out;
 }
 
-}  // namespace reboot
+}  // namespace rb

@@ -12,7 +12,7 @@
 #include "messages.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace json = boost::json;
 
@@ -172,4 +172,4 @@ json::object CompatDocument::write() const {
 
 Result<json::object> CompatDocument::upgrade(json::object values, u32) { return values; }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

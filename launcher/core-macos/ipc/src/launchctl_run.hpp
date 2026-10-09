@@ -7,7 +7,7 @@
 #include "engine_start_rules.hpp"
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // posix_spawn of /bin/launchctl with `arguments`, an empty environment, stdio on /dev/null, no
 // other fd, an empty signal mask and default dispositions. It starts suspended and is resumed
@@ -17,4 +17,4 @@ namespace reboot::os_macos::ipc {
 [[nodiscard]] Result<LaunchctlRun> run_launchctl(std::span<const std::string> arguments,
                                                  std::chrono::milliseconds deadline);
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

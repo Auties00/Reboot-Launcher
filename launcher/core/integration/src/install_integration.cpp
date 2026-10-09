@@ -2,7 +2,7 @@
 
 #include "entry_ops.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 EntryStatus install_integration(ports::IIntegrationRegistrar& registrar, const IntegrationTargets& targets,
                                 InstallHook hook) {
@@ -11,4 +11,4 @@ EntryStatus install_integration(ports::IIntegrationRegistrar& registrar, const I
     return apply_entry(registrar, targets, found);
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

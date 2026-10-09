@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 bool is_https_url(std::string_view url) noexcept {
     constexpr std::string_view kScheme = "https://";
@@ -13,4 +13,4 @@ bool is_https_url(std::string_view url) noexcept {
     return first != '/' && first != '?' && first != '#' && first != '@' && first != ':';
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

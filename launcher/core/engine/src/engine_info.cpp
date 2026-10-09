@@ -1,6 +1,6 @@
 #include "reboot/engine/engine_info.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 ipc::EngineHello to_engine_hello(const EngineInfo& info) {
     return ipc::EngineHello{
@@ -15,4 +15,4 @@ ipc::EngineHello to_engine_hello(const EngineInfo& info) {
     };
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

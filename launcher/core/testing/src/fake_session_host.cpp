@@ -9,7 +9,7 @@
 #include "reboot/testing/fake_session_host.hpp"
 #include "reboot/testing/scripted_process_launcher.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 // What the control and the engine's IGameSession share; posted events hold it too.
@@ -149,4 +149,4 @@ std::vector<FakeSessionControl*> FakeSessionHost::sessions() const {
 
 FakeSessionControl* FakeSessionHost::last() const { return sessions_.empty() ? nullptr : sessions_.back().get(); }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

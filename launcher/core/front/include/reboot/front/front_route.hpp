@@ -9,7 +9,7 @@
 #include "reboot/front/ticket_exchange.hpp"
 #include "reboot/front/upstream_origin.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // Our backend at set_embedded_backend's port, sent X-Reboot-Session; it mints the game's credential itself.
 struct EmbeddedUpstream {};
@@ -36,4 +36,4 @@ struct FrontRoute {
     std::optional<TicketExchange> tickets;
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

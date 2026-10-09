@@ -5,7 +5,7 @@
 
 #include "front_core.hpp"
 
-using namespace reboot::front;
+using namespace rb::front;
 
 TEST_CASE("a pending value reaches its waiter, or the dropper once the waiter gave up", "[front][pending]") {
     boost::asio::io_context io;

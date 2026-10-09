@@ -1,6 +1,6 @@
 #include "reboot/backend/account_prune_filter.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 bool AccountPruneFilter::selects(const BackendAccount& account) const noexcept {
     if (account.kind != BackendAccountKind::Remote || account.record) return false;
@@ -8,4 +8,4 @@ bool AccountPruneFilter::selects(const BackendAccount& account) const noexcept {
     return !role || *role == account.role;
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

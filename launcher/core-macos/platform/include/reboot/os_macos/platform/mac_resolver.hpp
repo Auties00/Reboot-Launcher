@@ -10,7 +10,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; IResolver over DNSServiceGetAddrInfo on one serial dispatch queue.
 class MacResolver final : public ports::IResolver {
@@ -29,4 +29,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

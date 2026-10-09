@@ -10,7 +10,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -87,4 +87,4 @@ Result<ports::VolumeInfo> WindowsDiskInfo::volume_of(const NativePath& path) {
     return std::move(**volume);
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

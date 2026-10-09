@@ -4,7 +4,7 @@
 
 #include "hex.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 namespace {
 
@@ -38,4 +38,4 @@ std::expected<SignedDocument, TrustError> make_signed_document(SignedDocumentKin
     return SignedDocument{.body = std::move(body), .signature = *signature, .key_id = std::string(key_id)};
 }
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

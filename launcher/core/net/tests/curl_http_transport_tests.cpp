@@ -26,8 +26,8 @@
 #include "reboot/net/http_response.hpp"
 #include "reboot/testing/fake_system_info.hpp"
 
-using namespace reboot;
-using namespace reboot::net;
+using namespace rb;
+using namespace rb::net;
 using namespace std::chrono_literals;
 namespace asio = boost::asio;
 using asio::ip::tcp;

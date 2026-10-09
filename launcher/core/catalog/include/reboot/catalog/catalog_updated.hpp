@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 // Published as EventKind::CatalogChanged when the active catalog changes, and also the result
 // of a refresh op, which describes the active catalog afterwards.
@@ -20,4 +20,4 @@ struct CatalogUpdated {
     std::vector<Diagnostic> warnings;
 };
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

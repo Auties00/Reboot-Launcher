@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 REBOOT_MESSAGE_DECL(kManifestMalformed);
 REBOOT_MESSAGE_DECL(kManifestSchemaUnsupported);
@@ -32,4 +32,4 @@ REBOOT_MESSAGE_DECL(kHeldFileUnreadable);
 REBOOT_MESSAGE_DECL(kHeldFileChanged);
 REBOOT_MESSAGE_DECL(kBundledAssetMissing);
 
-}  // namespace reboot::components
+}  // namespace rb::components

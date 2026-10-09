@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; IShellLauncher over the XDG desktop portal, xdg-open and GIO.
 // The engine often runs as a systemd user service without DISPLAY or WAYLAND_DISPLAY, so the
@@ -37,4 +37,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

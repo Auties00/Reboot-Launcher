@@ -9,7 +9,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // One stored version. It keeps its artifacts' urls, so a stored version can be re-fetched after the
 // manifest stopped naming it.
@@ -33,4 +33,4 @@ struct StoreEntry {
 [[nodiscard]] Result<std::vector<StoreEntry>> parse_store_index(std::span<const u8> bytes);
 [[nodiscard]] std::vector<u8> serialize_store_index(const std::vector<StoreEntry>& entries);
 
-}  // namespace reboot::components
+}  // namespace rb::components

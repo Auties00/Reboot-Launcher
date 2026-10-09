@@ -10,7 +10,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // struct _GError, whose layout is GLib's stable ABI.
 struct GErrorView {
@@ -84,4 +84,4 @@ private:
     void* object_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

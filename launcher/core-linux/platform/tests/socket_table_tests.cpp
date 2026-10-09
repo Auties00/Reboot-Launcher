@@ -8,12 +8,12 @@
 
 #include "socket_table.hpp"
 
-using reboot::Endpoint;
-using reboot::IpAddress;
-using reboot::Port;
-using reboot::u32;
-using reboot::u8;
-using namespace reboot::os_linux::platform;
+using rb::Endpoint;
+using rb::IpAddress;
+using rb::Port;
+using rb::u32;
+using rb::u8;
+using namespace rb::os_linux::platform;
 
 namespace {
 

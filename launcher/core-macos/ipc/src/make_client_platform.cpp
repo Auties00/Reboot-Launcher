@@ -12,7 +12,7 @@
 #include "reboot/os_macos/ipc/unix_socket_connector.hpp"
 #include "reboot/posix/posix_file_system.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 Result<ClientPlatform> make_client_platform() {
     using namespace os_macos::ipc;
@@ -31,4 +31,4 @@ Result<ClientPlatform> make_client_platform() {
     return platform;
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

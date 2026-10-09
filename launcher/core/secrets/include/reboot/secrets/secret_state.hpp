@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 // FileStore is the owner-only file a store of kind File writes in place of the OS store.
 enum class SecretLocation : u8 { Absent, Session, OsStore, FileStore };
@@ -20,4 +20,4 @@ struct SecretState {
     bool operator==(const SecretState&) const = default;
 };
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

@@ -30,7 +30,7 @@
 #include "reboot/testing/in_memory_log_file_system.hpp"
 #include "reboot/testing/scripted_process_launcher.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 class DeterministicRuntime;
 
@@ -113,4 +113,4 @@ private:
     FakeRandom* random_ = nullptr;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

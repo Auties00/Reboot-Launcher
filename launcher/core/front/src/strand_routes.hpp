@@ -17,15 +17,15 @@
 #include "reboot/front/upstream_policy.hpp"
 #include "route_table.hpp"
 
-namespace reboot {
+namespace rb {
 class UserRequestRegistry;
 }
 
-namespace reboot::net {
+namespace rb::net {
 class HostTlsMemory;
 }
 
-namespace reboot::front {
+namespace rb::front {
 
 class FrontConnection;
 
@@ -66,4 +66,4 @@ private:
     std::unordered_map<SessionId, RouteState> routes_;
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

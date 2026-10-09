@@ -1,6 +1,6 @@
 #include "wait_status.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 ports::ChildExit decode_wait_status(int status) noexcept {
     const int low = status & 0x7F;
@@ -13,4 +13,4 @@ ports::ChildExit decode_wait_status(int status) noexcept {
     return exit;
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

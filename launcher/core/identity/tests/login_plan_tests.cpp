@@ -6,8 +6,8 @@
 #include "messages.hpp"
 #include "reboot/identity/login_plan.hpp"
 
-using namespace reboot;
-using namespace reboot::identity;
+using namespace rb;
+using namespace rb::identity;
 using contracts::backend::CredentialKind;
 using storage::BackendKind;
 

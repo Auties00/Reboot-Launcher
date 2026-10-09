@@ -6,7 +6,7 @@
 #include "reboot/storage/settings.hpp"
 #include "reboot/storage/settings_registry.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace {
 
@@ -75,4 +75,4 @@ Result<ResetReport> ResetService::reset_unblocked(ResetGroup group) {
     return report;
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

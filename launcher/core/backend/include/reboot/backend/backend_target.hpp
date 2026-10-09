@@ -8,7 +8,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/storage/backend_target.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Our reboot-backend, spawned and supervised by the engine.
 struct EmbeddedBackend {
@@ -55,4 +55,4 @@ struct BackendTarget {
     void apply_to(storage::BackendTarget& stored) const;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

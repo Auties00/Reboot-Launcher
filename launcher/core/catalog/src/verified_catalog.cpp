@@ -5,7 +5,7 @@
 #include "reboot/trust/signed_document.hpp"
 #include "reboot/trust/verify_signed.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 std::expected<Catalog, CatalogError> verify_and_parse(const trust::KeyRing& keys, std::vector<u8> body,
                                                       std::string_view signature_file) {
@@ -18,4 +18,4 @@ std::expected<Catalog, CatalogError> verify_and_parse(const trust::KeyRing& keys
     return parse_catalog(document->body);
 }
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

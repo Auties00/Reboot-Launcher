@@ -2,7 +2,7 @@
 
 #include "reboot/components/release_manifest.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 std::string_view manifest_channel(storage::UpdateChannel channel) noexcept {
     switch (channel) {
@@ -31,4 +31,4 @@ std::optional<UpdateOffer> select_offer(const components::ReleaseManifest& manif
     return UpdateOffer{*best, best->min_supported && installed < *best->min_supported};
 }
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

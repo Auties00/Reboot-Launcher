@@ -12,7 +12,7 @@
 #include "reboot/ports/os_services.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class ShellOperation : u8 { OpenUrl, OpenPath, Reveal, Trash };
 
@@ -45,4 +45,4 @@ private:
     FaultPlan<ShellOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

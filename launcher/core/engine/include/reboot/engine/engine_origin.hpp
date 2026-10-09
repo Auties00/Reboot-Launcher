@@ -5,7 +5,7 @@
 
 #include "reboot/contracts/ipc.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Each start path passes its own --origin, so on-demand and at-login need separate units or agents.
 using EngineOrigin = contracts::ipc::EngineOrigin;
@@ -44,4 +44,4 @@ using EngineOrigin = contracts::ipc::EngineOrigin;
     return "unknown";
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/clock.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -49,4 +49,4 @@ void TokenBucket::hold_off(std::chrono::milliseconds retry_after) {
     refilled_at_ = held_until_;
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

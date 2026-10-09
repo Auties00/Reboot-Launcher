@@ -6,7 +6,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // The values of SecTrustSettingsResult.
 enum class TrustResult : i32 { Invalid = 0, TrustRoot = 1, TrustAsRoot = 2, Deny = 3, Unspecified = 4 };
@@ -35,4 +35,4 @@ struct CertificateVerdict {
 // overrides an earlier one. Returns the trusted certificates, each once, in first-seen order.
 [[nodiscard]] std::vector<std::vector<u8>> trusted_anchors(std::span<const CertificateVerdict> verdicts);
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

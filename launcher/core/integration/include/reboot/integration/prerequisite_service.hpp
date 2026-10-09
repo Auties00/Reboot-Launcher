@@ -9,17 +9,17 @@
 #include "reboot/integration/prerequisite.hpp"
 #include "reboot/integration/prerequisite_id.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IPrerequisiteProbe;
 }
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // Covers no capability ids (decisions macos-compat-layer, linux-compat-layer, windows-headless-hosting).
 // Strand-only; the probe runs on the WorkerPool and `done` on the strand. A remediation's re-check
@@ -59,4 +59,4 @@ private:
     std::vector<Remediation> running_;
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

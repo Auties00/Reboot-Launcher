@@ -5,7 +5,7 @@
 #include "links.hpp"
 #include "messages.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -28,4 +28,4 @@ MessageId doc_page_label(DocPage page) {
     return msg::kLinkPortForwardingGuide;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

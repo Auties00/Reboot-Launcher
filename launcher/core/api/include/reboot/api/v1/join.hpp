@@ -12,7 +12,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 struct ServerTarget {
     ServerId id;
@@ -136,16 +136,16 @@ class IJoinHandler {
 public:
     virtual ~IJoinHandler() = default;
 
-    virtual ::reboot::Result<JoinParseAddressResponse> parse_address(const CallContext& context, const JoinParseAddressRequest& request) = 0;
-    virtual ::reboot::Result<JoinTargetResponse> target(const CallContext& context, const JoinTargetRequest& request) = 0;
-    virtual ::reboot::Result<JoinSetCustomTargetResponse> set_custom_target(const CallContext& context, const JoinSetCustomTargetRequest& request) = 0;
-    virtual ::reboot::Result<JoinClearTargetResponse> clear_target(const CallContext& context, const JoinClearTargetRequest& request) = 0;
+    virtual ::rb::Result<JoinParseAddressResponse> parse_address(const CallContext& context, const JoinParseAddressRequest& request) = 0;
+    virtual ::rb::Result<JoinTargetResponse> target(const CallContext& context, const JoinTargetRequest& request) = 0;
+    virtual ::rb::Result<JoinSetCustomTargetResponse> set_custom_target(const CallContext& context, const JoinSetCustomTargetRequest& request) = 0;
+    virtual ::rb::Result<JoinClearTargetResponse> clear_target(const CallContext& context, const JoinClearTargetRequest& request) = 0;
     // Completes with JoinResolveLinkResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_resolve_link(const CallContext& context, const JoinResolveLinkRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_resolve_link(const CallContext& context, const JoinResolveLinkRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Joins as Play.start does, ConfirmJoin and password included, but only returns the address,
     // for Copy IP while the backend is Local or Remote.
     // Completes with JoinGrantResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_grant(const CallContext& context, const JoinGrantRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_grant(const CallContext& context, const JoinGrantRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

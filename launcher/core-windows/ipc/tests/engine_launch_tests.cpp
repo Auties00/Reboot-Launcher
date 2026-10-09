@@ -7,9 +7,9 @@
 #include "reboot/os_windows/ipc/windows_engine_starter.hpp"
 
 using namespace std::string_literals;
-using reboot::DataRoot;
-using reboot::NativePath;
-using namespace reboot::os_windows::ipc;
+using rb::DataRoot;
+using rb::NativePath;
+using namespace rb::os_windows::ipc;
 
 TEST_CASE("the engine task is named after the user", "[engine_launch]") {
     CHECK(engine_task_name("S-1-5-21-1-2-3-1001") == "Reboot Launcher Engine S-1-5-21-1-2-3-1001");
@@ -58,12 +58,12 @@ TEST_CASE("autostart is refused before anything starts for an elevated or non-in
     const DataRoot root{NativePath{L"\\\\?\\Q:\\no-such-root"}, true};
     const NativePath exe{L"\\\\?\\Q:\\no-such-root\\reboot-engine.exe"};
 
-    WindowsEngineStarter elevated{"S-1-5-21-1", reboot::ports::CallerContext{"1", true, true, {}}};
-    CHECK(elevated.ensure_started(exe, root) == reboot::ports::StartResult::ElevatedRefused);
+    WindowsEngineStarter elevated{"S-1-5-21-1", rb::ports::CallerContext{"1", true, true, {}}};
+    CHECK(elevated.ensure_started(exe, root) == rb::ports::StartResult::ElevatedRefused);
 
-    WindowsEngineStarter service{"S-1-5-21-1", reboot::ports::CallerContext{"0", false, false, {}}};
-    CHECK(service.ensure_started(exe, root) == reboot::ports::StartResult::NoInteractiveSession);
+    WindowsEngineStarter service{"S-1-5-21-1", rb::ports::CallerContext{"0", false, false, {}}};
+    CHECK(service.ensure_started(exe, root) == rb::ports::StartResult::NoInteractiveSession);
 
-    WindowsEngineStarter both{"S-1-5-21-1", reboot::ports::CallerContext{"0", true, false, {}}};
-    CHECK(both.ensure_started(exe, root) == reboot::ports::StartResult::ElevatedRefused);
+    WindowsEngineStarter both{"S-1-5-21-1", rb::ports::CallerContext{"0", true, false, {}}};
+    CHECK(both.ensure_started(exe, root) == rb::ports::StartResult::ElevatedRefused);
 }

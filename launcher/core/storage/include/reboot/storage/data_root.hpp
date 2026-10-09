@@ -8,12 +8,12 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 class IPlatformPaths;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::storage {
+namespace rb::storage {
 
 struct DataRootReport {
     // InMemory when a directory could not be created; every store then loads memory-only.
@@ -28,4 +28,4 @@ struct DataRootReport {
 [[nodiscard]] Result<DataRootReport> prepare_data_root(const AppLayout& layout, const InstallLayout& install,
                                                        const ports::IPlatformPaths& paths, ports::IFileSystem& fs);
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

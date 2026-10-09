@@ -12,7 +12,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 namespace fs = std::filesystem;
 
@@ -75,4 +75,4 @@ Result<std::string> read_text(const NativePath& path) {
     }
 }
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

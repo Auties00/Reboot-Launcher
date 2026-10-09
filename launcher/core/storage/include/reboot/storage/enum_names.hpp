@@ -8,7 +8,7 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // Enumerators are stored by name, never by index: kNames[i] names the enumerator whose value is i.
 template <class E>
@@ -40,4 +40,4 @@ struct EnumNames<ports::IntegrationKind> {
                                                             "desktop_entry"};
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

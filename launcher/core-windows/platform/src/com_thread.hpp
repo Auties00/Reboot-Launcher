@@ -8,7 +8,7 @@
 #include "win32.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Runs `body` on a fresh thread inside its own COM apartment and waits for it. Worker threads carry
 // no apartment, and joining one here keeps the shell and Task Scheduler off the caller's state.
@@ -36,4 +36,4 @@ template <class T, class Body>
     return result;
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

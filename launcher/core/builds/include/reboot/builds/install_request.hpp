@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/support/support_role.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 struct InstallRequest {
     // A catalog id or any of its aliases.
@@ -19,4 +19,4 @@ struct InstallRequest {
     std::vector<support::SupportRole> select_for;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

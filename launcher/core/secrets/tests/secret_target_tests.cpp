@@ -8,8 +8,8 @@
 #include "reboot/secrets/secret_error.hpp"
 #include "reboot/secrets/secret_target.hpp"
 
-using namespace reboot;
-using namespace reboot::secrets;
+using namespace rb;
+using namespace rb::secrets;
 
 namespace {
 

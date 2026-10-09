@@ -10,7 +10,7 @@
 #include "reboot/sessions/session_registry.hpp"
 #include "reboot/sessions/stop_request.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace {
 
@@ -92,4 +92,4 @@ void WaitingExecutor::run_until(UniqueFunction<bool()> done) {
     }
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

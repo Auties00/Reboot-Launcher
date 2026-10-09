@@ -6,7 +6,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // The fields of /proc/<pid>/stat this package reads.
 struct ProcStat {
@@ -27,4 +27,4 @@ struct ProcStat {
 // it, has the argument "SteamLaunch".
 [[nodiscard]] bool is_steam_reaper(std::string_view comm, std::string_view cmdline) noexcept;
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // Random access over bytes, so the PE reader and the archive probe run unchanged over a file,
 // a test buffer or a fuzz input.
@@ -18,4 +18,4 @@ public:
     virtual Result<void> read_at(u64 offset, std::span<u8> out) = 0;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

@@ -12,7 +12,7 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-namespace reboot::builds::test {
+namespace rb::builds::test {
 
 struct Entry {
     std::string name;
@@ -69,4 +69,4 @@ inline std::vector<u8> make_archive(std::string_view format, const std::vector<E
     return bytes;
 }
 
-}  // namespace reboot::builds::test
+}  // namespace rb::builds::test

@@ -1,6 +1,6 @@
 #include "socket_rows.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -33,4 +33,4 @@ std::optional<u32> udp_owner_pid(std::span<const SocketRow> rows, Port port) {
     return std::nullopt;
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

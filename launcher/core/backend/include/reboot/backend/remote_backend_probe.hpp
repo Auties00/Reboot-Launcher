@@ -8,11 +8,11 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/function.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 class HttpClient;
 }
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Capabilities: auth-backend.ping.
 // Strand-only. GET <origin>/reboot/v1/backend-info with HttpSmall limits and no retry. Any HTTP
@@ -34,4 +34,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

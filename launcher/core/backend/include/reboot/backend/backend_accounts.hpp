@@ -12,12 +12,12 @@
 #include "reboot/identity/identity_changed_event.hpp"
 #include "reboot/identity/identity_service.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class UserRequestRegistry;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::backend {
+namespace rb::backend {
 
 class BackendProcess;
 class BackendService;
@@ -58,4 +58,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 // Steam's reaper: `comm` is "reaper" and `cmdline`, NUL-separated as /proc/<pid>/cmdline holds
 // it, has the argument "SteamLaunch".
@@ -12,4 +12,4 @@ namespace reboot::os_linux::ipc {
 // when an ancestor is_steam_reaper. An unreadable entry ends the walk with false.
 [[nodiscard]] bool has_steam_reaper_ancestor();
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

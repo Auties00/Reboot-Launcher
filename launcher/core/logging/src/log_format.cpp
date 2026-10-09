@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <variant>
 
-namespace reboot::logging {
+namespace rb::logging {
 
 namespace {
 
@@ -112,4 +112,4 @@ std::string format_diagnostic(const Diagnostic& diag) {
     return out;
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

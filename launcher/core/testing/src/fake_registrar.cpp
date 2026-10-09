@@ -4,7 +4,7 @@
 #include <optional>
 #include <utility>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 Result<ports::IntegrationStatus> FakeRegistrar::status(ports::IntegrationKind kind) {
     if (auto error = faults_.take(RegistrarOperation::Status)) return std::unexpected(std::move(*error));
@@ -48,4 +48,4 @@ std::optional<NativePath> FakeRegistrar::applied_exe(ports::IntegrationKind kind
     return it->second.exe;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

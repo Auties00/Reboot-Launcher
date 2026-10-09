@@ -10,7 +10,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -72,4 +72,4 @@ ports::InstallKind WindowsPaths::install_kind() const {
 
 std::optional<NativePath> WindowsPaths::velopack_package_dir() const { return velopack_root_; }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

@@ -8,7 +8,7 @@
 #include "reboot/support/evidence_record.hpp"
 #include "reboot/support/runner_pin.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // What play cells are keyed to on this machine. The game server is not here: each host query
 // carries the binary it would run.
@@ -23,4 +23,4 @@ struct SupportInputs {
     std::vector<EvidenceRecord> evidence;
 };
 
-}  // namespace reboot::support
+}  // namespace rb::support

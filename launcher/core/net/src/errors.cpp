@@ -10,7 +10,7 @@
 #include "reboot/net/port_conflict.hpp"
 #include "reboot/net/resolve_error.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -152,4 +152,4 @@ Diagnostic to_diagnostic(const PortConflict& conflict) {
     return std::move(builder).build();
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

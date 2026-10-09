@@ -9,7 +9,7 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 // Covers no capability ids (decisions linux-compat-layer, process-model).
 // The explicit Steam Linux Runtime install or update for umu, never run inside a session.
@@ -35,4 +35,4 @@ private:
     NativePath folders_;
 };
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

@@ -7,8 +7,8 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/testing/fake_file_watcher.hpp"
 
-using namespace reboot;
-using namespace reboot::components;
+using namespace rb;
+using namespace rb::components;
 using ports::FileChange;
 using ports::FileChangeKind;
 

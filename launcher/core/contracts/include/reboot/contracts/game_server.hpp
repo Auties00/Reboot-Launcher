@@ -14,7 +14,7 @@
 // reboot-game-server --control=stdio, and --describe, which writes one GameServerDescription
 // frame to stdout and exits. Requests carry req_id and get a common::CommandResult or
 // common::Unsupported.
-namespace reboot::contracts::game_server {
+namespace rb::contracts::game_server {
 
 inline constexpr u32 kGameServerProtocol = VersionStreams::game_server_protocol;
 
@@ -238,4 +238,4 @@ struct Shutdown {
 };
 REBOOT_CONTRACT_FRAME(Shutdown, 0x328)
 
-}  // namespace reboot::contracts::game_server
+}  // namespace rb::contracts::game_server

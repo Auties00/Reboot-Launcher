@@ -6,7 +6,7 @@
 #include "reboot/sessions/shutdown_cause.hpp"
 #include "reboot/sessions/shutdown_step.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // Windows ends a closed console's process 5 s after the signal, so an OsSignal shutdown must fit 4 s.
 inline constexpr std::chrono::milliseconds kOsSignalShutdownBudget{4000};
@@ -35,4 +35,4 @@ inline constexpr std::chrono::milliseconds kOsSignalShutdownBudget{4000};
     return milliseconds{0};
 }
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

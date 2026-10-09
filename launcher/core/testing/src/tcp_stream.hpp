@@ -10,10 +10,10 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // A loopback TCP connection as an IByteStream, the way a game-control peer reaches the engine.
 // Callbacks run on `io`'s thread; reading starts at once, and bytes wait for on_read.
 [[nodiscard]] Result<std::unique_ptr<ports::IByteStream>> connect_tcp(boost::asio::io_context& io, Endpoint endpoint);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -15,19 +15,19 @@
 #include "reboot/process/child_record.hpp"
 #include "reboot/storage/document_store.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IClock;
 class TimerService;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 class IProcessLauncher;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 // InstallLayout::game_server_exe, or `dev_override` (a phase-3 build tree) when set.
 // Lexical only; fails with gameserver.path_not_absolute.
@@ -73,4 +73,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

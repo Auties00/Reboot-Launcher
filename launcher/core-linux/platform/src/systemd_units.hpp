@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 inline constexpr std::string_view kEngineSocketUnit = "reboot-engine.socket";
 inline constexpr std::string_view kEngineServiceUnit = "reboot-engine.service";
@@ -29,4 +29,4 @@ inline constexpr std::string_view kEngineServiceUnit = "reboot-engine.service";
 // The arguments of an ExecStart value; nullopt when a quote is unbalanced.
 [[nodiscard]] std::optional<std::vector<std::string>> split_unit_command(std::string_view value);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

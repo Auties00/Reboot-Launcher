@@ -58,7 +58,7 @@
 #include "reboot/testing/scratch_dir.hpp"
 #include "reboot/testing/scripted_process_launcher.hpp"
 
-namespace reboot::engine::test {
+namespace rb::engine::test {
 
 // No gateway answers, as on a network without UPnP or NAT-PMP.
 class AbsentGateway final : public net::IPortMappingGateway {
@@ -396,4 +396,4 @@ public:
     std::vector<api::UserRequestKind> accepted;
 };
 
-}  // namespace reboot::engine::test
+}  // namespace rb::engine::test

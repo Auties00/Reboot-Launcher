@@ -12,7 +12,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "text_files.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -99,4 +99,4 @@ Result<ports::VolumeInfo> LinuxDiskInfo::volume_of(const NativePath& path) {
     return describe(entries[*index], read_labels());
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

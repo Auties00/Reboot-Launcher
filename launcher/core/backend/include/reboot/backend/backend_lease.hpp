@@ -5,7 +5,7 @@
 #include "reboot/backend/backend_config.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 class BackendService;
 
@@ -38,4 +38,4 @@ private:
     BackendConfig config_;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

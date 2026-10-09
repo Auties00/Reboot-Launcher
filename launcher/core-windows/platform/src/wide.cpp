@@ -6,7 +6,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -149,4 +149,4 @@ bool same_creation_time(std::chrono::system_clock::time_point a, std::chrono::sy
     return floor<microseconds>(a) == floor<microseconds>(b);
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

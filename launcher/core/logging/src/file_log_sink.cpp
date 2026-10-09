@@ -11,7 +11,7 @@
 #include "reboot/logging/wine_log_files.hpp"
 #include "reboot/ports/log_file_system.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 namespace {
 
@@ -230,4 +230,4 @@ void FileLogSink::set_on_failure(UniqueFunction<void(const Diagnostic&)> on_fail
     }
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

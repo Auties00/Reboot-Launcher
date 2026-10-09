@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::logging {
+namespace rb::logging {
 
 void LogFilesInUse::add(NativePath file) {
     const std::lock_guard lock(mutex_);
@@ -19,4 +19,4 @@ std::vector<NativePath> LogFilesInUse::snapshot() const {
     return files_;
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

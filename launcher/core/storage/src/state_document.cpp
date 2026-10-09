@@ -7,7 +7,7 @@
 #include "member_reader.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace json = boost::json;
 
@@ -108,4 +108,4 @@ json::object StateDocument::write() const {
 
 Result<json::object> StateDocument::upgrade(json::object values, u32) { return values; }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

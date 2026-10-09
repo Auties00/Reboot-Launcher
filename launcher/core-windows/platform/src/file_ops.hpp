@@ -10,7 +10,7 @@
 #include "unique_handle.hpp"
 #include "win32.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Sharing and lock violations: what an AV scanner or the indexer holding a fresh file open produces
 // for a moment. A rename over such a file can also be denied access, so a replace may count that too.
@@ -30,4 +30,4 @@ namespace reboot::os_windows::platform {
 
 [[nodiscard]] std::chrono::system_clock::time_point to_time_point(const FILETIME& time) noexcept;
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/secret.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // Growing to capacity first also clears bytes a short-string move left behind.
 inline void wipe_string(std::string& text) noexcept {
@@ -13,4 +13,4 @@ inline void wipe_string(std::string& text) noexcept {
     text.clear();
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

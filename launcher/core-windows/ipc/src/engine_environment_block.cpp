@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <string_view>
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 namespace {
 
 constexpr std::wstring_view kRebootPrefix = L"REBOOT_";
@@ -54,4 +54,4 @@ std::wstring engine_environment_block(std::span<const std::wstring> inherited, c
     return block;
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

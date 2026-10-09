@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 namespace {
 
@@ -46,4 +46,4 @@ Diagnostic edge_rejected(std::string_view edge_message) {
         .build();
 }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

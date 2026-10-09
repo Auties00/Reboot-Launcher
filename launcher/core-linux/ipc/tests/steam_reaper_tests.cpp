@@ -5,7 +5,7 @@
 #include "steam_reaper.hpp"
 
 using namespace std::string_view_literals;
-using reboot::os_linux::ipc::is_steam_reaper;
+using rb::os_linux::ipc::is_steam_reaper;
 
 TEST_CASE("Steam's reaper launching a game", "[steam_reaper]") {
     CHECK(is_steam_reaper("reaper", "/home/ada/.steam/ubuntu12_32/reaper\0SteamLaunch\0AppId=0\0--\0/usr/bin/x\0"sv));

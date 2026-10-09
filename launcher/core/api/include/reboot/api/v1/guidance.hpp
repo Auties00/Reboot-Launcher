@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 // Mirrors reboot::Severity.
 enum class NoticeLevel : u32 {
@@ -260,12 +260,12 @@ class IGuidanceHandler {
 public:
     virtual ~IGuidanceHandler() = default;
 
-    virtual ::reboot::Result<GuidanceNoticesListResponse> notices_list(const CallContext& context, const GuidanceNoticesListRequest& request) = 0;
-    virtual ::reboot::Result<GuidanceNoticesDismissResponse> notices_dismiss(const CallContext& context, const GuidanceNoticesDismissRequest& request) = 0;
-    virtual ::reboot::Result<GuidanceOnboardingStateResponse> onboarding_state(const CallContext& context, const GuidanceOnboardingStateRequest& request) = 0;
-    virtual ::reboot::Result<GuidanceOnboardingAdvanceResponse> onboarding_advance(const CallContext& context, const GuidanceOnboardingAdvanceRequest& request) = 0;
-    virtual ::reboot::Result<GuidanceOnboardingSkipResponse> onboarding_skip(const CallContext& context, const GuidanceOnboardingSkipRequest& request) = 0;
-    virtual ::reboot::Result<GuidanceLinksResponse> links(const CallContext& context, const GuidanceLinksRequest& request) = 0;
+    virtual ::rb::Result<GuidanceNoticesListResponse> notices_list(const CallContext& context, const GuidanceNoticesListRequest& request) = 0;
+    virtual ::rb::Result<GuidanceNoticesDismissResponse> notices_dismiss(const CallContext& context, const GuidanceNoticesDismissRequest& request) = 0;
+    virtual ::rb::Result<GuidanceOnboardingStateResponse> onboarding_state(const CallContext& context, const GuidanceOnboardingStateRequest& request) = 0;
+    virtual ::rb::Result<GuidanceOnboardingAdvanceResponse> onboarding_advance(const CallContext& context, const GuidanceOnboardingAdvanceRequest& request) = 0;
+    virtual ::rb::Result<GuidanceOnboardingSkipResponse> onboarding_skip(const CallContext& context, const GuidanceOnboardingSkipRequest& request) = 0;
+    virtual ::rb::Result<GuidanceLinksResponse> links(const CallContext& context, const GuidanceLinksRequest& request) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

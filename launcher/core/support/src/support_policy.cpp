@@ -4,7 +4,7 @@
 
 #include "reboot/support/version_cap.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 namespace {
 
 void add_reason(std::vector<SupportReason>& reasons, SupportReason reason) {
@@ -173,4 +173,4 @@ std::vector<SupportCell> SupportPolicy::cells(const std::optional<HostInputs>& s
     return out;
 }
 
-}  // namespace reboot::support
+}  // namespace rb::support

@@ -15,7 +15,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 namespace {
 
@@ -433,4 +433,4 @@ std::expected<Catalog, CatalogError> parse_catalog(std::span<const u8> body) {
     return catalog;
 }
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

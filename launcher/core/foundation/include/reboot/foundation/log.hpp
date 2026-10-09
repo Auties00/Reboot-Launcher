@@ -11,7 +11,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 enum class LogLevel : u8 { Trace, Debug, Info, Warn, Error };
 
@@ -72,16 +72,16 @@ public:
     static void drain_for_terminate(LogCategory category, std::string text) noexcept;
 };
 
-}  // namespace reboot
+}  // namespace rb
 
 #define REBOOT_LOG_AT(level, category, session, ...)                                                       \
     do {                                                                                                      \
-        if (::reboot::Logger::enabled(level))                                                                 \
-            ::reboot::Logger::write(level, ::reboot::LogCategory::category, session, std::format(__VA_ARGS__)); \
+        if (::rb::Logger::enabled(level))                                                                 \
+            ::rb::Logger::write(level, ::rb::LogCategory::category, session, std::format(__VA_ARGS__)); \
     } while (false)
 
-#define REBOOT_LOG_TRACE(category, ...) REBOOT_LOG_AT(::reboot::LogLevel::Trace, category, std::nullopt, __VA_ARGS__)
-#define REBOOT_LOG_DEBUG(category, ...) REBOOT_LOG_AT(::reboot::LogLevel::Debug, category, std::nullopt, __VA_ARGS__)
-#define REBOOT_LOG_INFO(category, ...) REBOOT_LOG_AT(::reboot::LogLevel::Info, category, std::nullopt, __VA_ARGS__)
-#define REBOOT_LOG_WARN(category, ...) REBOOT_LOG_AT(::reboot::LogLevel::Warn, category, std::nullopt, __VA_ARGS__)
-#define REBOOT_LOG_ERROR(category, ...) REBOOT_LOG_AT(::reboot::LogLevel::Error, category, std::nullopt, __VA_ARGS__)
+#define REBOOT_LOG_TRACE(category, ...) REBOOT_LOG_AT(::rb::LogLevel::Trace, category, std::nullopt, __VA_ARGS__)
+#define REBOOT_LOG_DEBUG(category, ...) REBOOT_LOG_AT(::rb::LogLevel::Debug, category, std::nullopt, __VA_ARGS__)
+#define REBOOT_LOG_INFO(category, ...) REBOOT_LOG_AT(::rb::LogLevel::Info, category, std::nullopt, __VA_ARGS__)
+#define REBOOT_LOG_WARN(category, ...) REBOOT_LOG_AT(::rb::LogLevel::Warn, category, std::nullopt, __VA_ARGS__)
+#define REBOOT_LOG_ERROR(category, ...) REBOOT_LOG_AT(::rb::LogLevel::Error, category, std::nullopt, __VA_ARGS__)

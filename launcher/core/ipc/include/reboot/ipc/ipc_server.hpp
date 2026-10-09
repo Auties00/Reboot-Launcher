@@ -10,19 +10,19 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IClock;
 class OpRegistry;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IIpcListener;
 }
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 class IApiDispatcher;
 
@@ -77,4 +77,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

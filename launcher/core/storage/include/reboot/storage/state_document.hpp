@@ -15,7 +15,7 @@
 #include "reboot/storage/load_report.hpp"
 #include "reboot/storage/shell_name.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // Each frontend has its own tour: finishing it in the CLI leaves it offered in WinUI.
 struct ShellOnboarding {
@@ -60,4 +60,4 @@ struct StateDocument {
     [[nodiscard]] static Result<boost::json::object> upgrade(boost::json::object values, u32 from_schema);
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

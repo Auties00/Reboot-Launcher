@@ -11,7 +11,7 @@
 #include "reboot/posix/peer_credential_check.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // Covers no capability ids; the AF_UNIX engine endpoint behind IIpcListener on macOS and Linux.
 // `endpoint_name` is the socket path. Accepting runs on a thread the listener owns, and a peer of
@@ -46,4 +46,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

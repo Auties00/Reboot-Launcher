@@ -8,7 +8,7 @@
 #include "decimal_uid.hpp"
 #include "display_env_names.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 [[nodiscard]] std::string_view trim_line(std::string_view text) noexcept {
@@ -45,4 +45,4 @@ ports::CallerContext caller_context_from(const CallerFacts& facts) {
     return context;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

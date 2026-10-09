@@ -9,7 +9,7 @@
 #include "process_environment.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 bool unix_socket_accepts(const NativePath& path) {
     sockaddr_un address{};
@@ -47,4 +47,4 @@ Result<void> systemctl_user_ok(std::vector<std::string> args, const NativePath& 
     return {};
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

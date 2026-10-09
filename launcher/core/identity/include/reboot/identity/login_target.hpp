@@ -7,7 +7,7 @@
 #include "reboot/identity/backend_login.hpp"
 #include "reboot/storage/backend_target.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 // Reboot answers GET /reboot/v1/backend-info; anything else is ThirdParty.
 enum class UpstreamFlavor : u8 { Reboot, ThirdParty };
@@ -25,4 +25,4 @@ struct LoginTarget {
     bool operator==(const LoginTarget&) const = default;
 };
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

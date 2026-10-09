@@ -14,7 +14,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/testing/child_misbehaviour.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 using ServerScriptEvent =
     std::variant<contracts::game_server::StateChanged, contracts::game_server::PlayerJoined,
@@ -57,4 +57,4 @@ struct FakeGameServerScript {
 [[nodiscard]] Result<FakeGameServerScript> load_fake_game_server_script(const NativePath& file);
 [[nodiscard]] std::string to_json(const FakeGameServerScript& script);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

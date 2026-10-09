@@ -3,7 +3,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 NativePath ProcessSpec::working_directory() const { return cwd ? *cwd : exe.parent_path(); }
 
@@ -42,4 +42,4 @@ WipingLaunch ProcessSpec::to_launch() const {
     return WipingLaunch(std::move(launch));
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

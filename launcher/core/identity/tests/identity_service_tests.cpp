@@ -22,8 +22,8 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "test_strand.hpp"
 
-using namespace reboot;
-using namespace reboot::identity;
+using namespace rb;
+using namespace rb::identity;
 using storage::AccountsDocument;
 using storage::BackendKind;
 namespace json = boost::json;

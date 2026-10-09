@@ -5,7 +5,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/testing/conformance_waiter.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 class DeterministicRuntime;
 
@@ -21,4 +21,4 @@ private:
     DeterministicRuntime& runtime_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

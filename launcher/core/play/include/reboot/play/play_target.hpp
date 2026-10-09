@@ -5,7 +5,7 @@
 #include "reboot/browser/join_target.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // A server from the browser, joined through JoinService with a ConfirmJoin.
 struct BrowserServerTarget {
@@ -24,4 +24,4 @@ struct AutoServerTarget {
 // An address is parsed by browser::parse_game_server_address, then resolved and probed at start.
 using PlayTarget = std::variant<BrowserServerTarget, browser::AddressTarget, AutoServerTarget>;
 
-}  // namespace reboot::play
+}  // namespace rb::play

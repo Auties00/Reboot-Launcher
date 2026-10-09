@@ -3,7 +3,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class DecodeError : u8 {
     // Not protobuf wire data for the message.
@@ -15,6 +15,6 @@ enum class DecodeError : u8 {
 };
 
 // `method_id` travels as the "method" arg.
-[[nodiscard]] ::reboot::Diagnostic to_diagnostic(DecodeError error, u32 method_id);
+[[nodiscard]] ::rb::Diagnostic to_diagnostic(DecodeError error, u32 method_id);
 
-}  // namespace reboot::api
+}  // namespace rb::api

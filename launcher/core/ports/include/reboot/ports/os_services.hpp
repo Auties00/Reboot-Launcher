@@ -9,7 +9,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 class IShellLauncher {
 public:
@@ -96,4 +96,4 @@ public:
     [[nodiscard]] virtual bool supports_in_place() const = 0;
 };
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

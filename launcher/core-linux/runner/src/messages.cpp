@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 REBOOT_MESSAGE(kRunnerKindUnsupported, "platform.linux_runner_kind_unsupported",
                "Linux cannot play with the {runner} runner.");
@@ -23,4 +23,4 @@ REBOOT_MESSAGE(kSlrRuntimeUnknown, "platform.linux_slr_runtime_unknown",
                "The GE-Proton runtime at {path} needs a Steam Linux Runtime that umu does not know.");
 REBOOT_MESSAGE(kSlrBuildMissing, "platform.linux_slr_build_missing", "{path} does not name a Steam Linux Runtime build.");
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

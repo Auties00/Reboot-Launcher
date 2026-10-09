@@ -19,7 +19,7 @@
 #include "unique_handle.hpp"
 #include "wide.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 namespace {
 
 using contracts::winhost::InjectPhase;
@@ -487,4 +487,4 @@ std::expected<std::unique_ptr<Win32Session>, SpawnError> launch_session(const Sp
     return session;
 }
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

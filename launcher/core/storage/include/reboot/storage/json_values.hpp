@@ -16,7 +16,7 @@
 #include "reboot/storage/enum_names.hpp"
 
 // One JSON form per shared type; *_from_json fails with storage.wrong_type or the id noted.
-namespace reboot::storage {
+namespace rb::storage {
 
 [[nodiscard]] boost::json::value name_to_json(std::string_view name);
 // storage.unknown_name.
@@ -75,4 +75,4 @@ template <class Tag>
 // storage.out_of_range for a negative or fractional number.
 [[nodiscard]] Result<u64> u64_from_json(const boost::json::value& value);
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

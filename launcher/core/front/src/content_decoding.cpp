@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -93,4 +93,4 @@ std::optional<std::vector<u8>> decode_content(std::string_view content_encoding,
     return std::nullopt;
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

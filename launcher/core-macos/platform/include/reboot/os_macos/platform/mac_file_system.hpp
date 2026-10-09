@@ -9,7 +9,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/posix/posix_file_system.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; PosixFileSystem plus F_FULLFSYNC, since APFS fsync skips the drive cache.
 class MacFileSystem final : public ports::IFileSystem {
@@ -30,4 +30,4 @@ private:
     posix::PosixFileSystem posix_;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

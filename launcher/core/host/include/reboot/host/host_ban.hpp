@@ -6,7 +6,7 @@
 
 #include "reboot/host/ip_cidr.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // IP-first. Account ids are self-asserted, so a ban that names only one is evadable; it is kept
 // and labelled so until the backend and auth DLL give a verifiable identity. With both set, the
@@ -27,4 +27,4 @@ struct HostBan {
     bool operator==(const HostBan&) const = default;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "win32.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // platform.ipc_call_failed carrying `error` (a Win32 code or an HRESULT).
 [[nodiscard]] Diagnostic call_failed(std::string_view call, DWORD error);
@@ -17,4 +17,4 @@ namespace reboot::os_windows::ipc {
 // ipc.endpoint_untrusted caused by `cause`.
 [[nodiscard]] Diagnostic untrusted(Diagnostic cause);
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

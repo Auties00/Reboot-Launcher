@@ -9,12 +9,12 @@
 #include "reboot/net/port_owner_info.hpp"
 #include "reboot/net/port_protocol.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IPortInspector;
 class IProcessLauncher;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::net {
+namespace rb::net {
 
 // Capabilities: matchmaking-networking.kill-by-port, matchmaking-networking.+44.
 // Names who holds a port; it never terminates anything, so a busy port is reported, not freed.
@@ -39,4 +39,4 @@ private:
     ports::IProcessLauncher& processes_;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

@@ -5,7 +5,7 @@
 
 #include "peer_impls.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -105,4 +105,4 @@ Result<void> ClientDllPeer::test_quit(ReplyHandler done) {
         "test_quit", [](u64 req_id) { return encode_contract_frame(gc::TestQuit{req_id}); }, std::move(done));
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

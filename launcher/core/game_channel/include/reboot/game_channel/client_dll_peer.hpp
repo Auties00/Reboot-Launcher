@@ -13,7 +13,7 @@
 #include "reboot/game_channel/peer_liveness.hpp"
 #include "reboot/game_channel/reply_handler.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 // What a client DLL said in its Hello, without the token.
 struct ClientDllHello {
@@ -62,4 +62,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

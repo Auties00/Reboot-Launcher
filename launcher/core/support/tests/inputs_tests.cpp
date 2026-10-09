@@ -12,8 +12,8 @@
 #include "reboot/support/parse_matrix_report.hpp"
 #include "reboot/support/version_range.hpp"
 
-using namespace reboot;
-using namespace reboot::support;
+using namespace rb;
+using namespace rb::support;
 
 namespace {
 

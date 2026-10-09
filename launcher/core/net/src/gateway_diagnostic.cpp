@@ -5,7 +5,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 Diagnostic gateway_diagnostic(const GatewayError& error, Port port) {
     if (error.code == GatewayErrorCode::NoGateway) {
@@ -28,4 +28,4 @@ Diagnostic mapping_failure(MessageId message, Port port, const GatewayError& err
     return std::move(builder).build();
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

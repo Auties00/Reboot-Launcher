@@ -14,8 +14,8 @@
 #include "reboot/testing/event_recorder.hpp"
 #include "reboot/testing/manual_waiter.hpp"
 
-using namespace reboot;
-using namespace reboot::testing;
+using namespace rb;
+using namespace rb::testing;
 using namespace std::chrono_literals;
 
 namespace {

@@ -2,8 +2,8 @@
 
 #include "reboot/publish/share_link.hpp"
 
-using namespace reboot;
-using namespace reboot::publish;
+using namespace rb;
+using namespace rb::publish;
 
 TEST_CASE("a share link is the lowercase scheme and the server id", "[publish]") {
     ServerId server;

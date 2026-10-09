@@ -10,13 +10,13 @@
 #include "addrinfo_addresses.hpp"
 #include "inotify_events.hpp"
 
-using reboot::IpAddress;
-using reboot::u8;
-using reboot::ports::FileChangeKind;
-using namespace reboot::os_linux::platform;
+using rb::IpAddress;
+using rb::u8;
+using rb::ports::FileChangeKind;
+using namespace rb::os_linux::platform;
 
 TEST_CASE("inotify events map to file changes", "[inotify_events]") {
-    const auto entry = [](reboot::u32 mask) { return map_inotify_event(mask); };
+    const auto entry = [](rb::u32 mask) { return map_inotify_event(mask); };
     CHECK(entry(IN_CREATE)->kind == FileChangeKind::Created);
     CHECK(entry(IN_CREATE | IN_ISDIR)->kind == FileChangeKind::Created);
     CHECK(entry(IN_DELETE)->kind == FileChangeKind::Removed);

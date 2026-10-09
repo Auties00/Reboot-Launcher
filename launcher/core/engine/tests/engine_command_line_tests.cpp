@@ -10,8 +10,8 @@
 #include "reboot/engine/engine_origin.hpp"
 #include "reboot/updates/resume_record.hpp"
 
-using namespace reboot;
-using namespace reboot::engine;
+using namespace rb;
+using namespace rb::engine;
 
 namespace {
 

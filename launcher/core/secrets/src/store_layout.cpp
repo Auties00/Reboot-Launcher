@@ -2,7 +2,7 @@
 
 #include <optional>
 
-namespace reboot::secrets::detail {
+namespace rb::secrets::detail {
 
 namespace {
 
@@ -56,4 +56,4 @@ std::set<SecretTarget> decode_index(std::span<const u8> bytes) {
     return out;
 }
 
-}  // namespace reboot::secrets::detail
+}  // namespace rb::secrets::detail

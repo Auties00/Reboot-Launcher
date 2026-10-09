@@ -6,7 +6,7 @@
 #include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 class ChildSupervisor;
 
@@ -52,4 +52,4 @@ private:
     u32 generation_ = 0;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

@@ -29,7 +29,7 @@
 #include "reboot/updates/update_event.hpp"
 #include "reboot/updates/update_prompts.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 namespace {
 
@@ -794,4 +794,4 @@ Result<void> UpdateService::drain_consented() { return impl_->drain_consented();
 
 Result<void> UpdateService::admit_new_session() const { return impl_->admit_new_session(); }
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

@@ -11,9 +11,9 @@
 #include "reboot/builds/import_service.hpp"
 #include "service_fixture.hpp"
 
-using namespace reboot;
-using namespace reboot::builds;
-using namespace reboot::builds::test;
+using namespace rb;
+using namespace rb::builds;
+using namespace rb::builds::test;
 
 namespace {
 

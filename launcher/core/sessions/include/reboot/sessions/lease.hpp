@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/operation.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // Engine: the session survives every UI. Client: it stops when that connection closes.
 struct Lease {
@@ -18,4 +18,4 @@ struct Lease {
     bool operator==(const Lease&) const = default;
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

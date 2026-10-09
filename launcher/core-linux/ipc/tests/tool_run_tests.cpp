@@ -7,8 +7,8 @@
 
 #include "tool_run.hpp"
 
-using reboot::os_linux::ipc::run_tool;
-using reboot::os_linux::ipc::ToolRun;
+using rb::os_linux::ipc::run_tool;
+using rb::os_linux::ipc::ToolRun;
 using namespace std::chrono_literals;
 
 namespace {

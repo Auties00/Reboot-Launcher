@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 inline constexpr std::string_view kShippingExe = "FortniteClient-Win64-Shipping.exe";
 inline constexpr std::string_view kLauncherExe = "FortniteLauncher.exe";
@@ -36,4 +36,4 @@ struct BuildLayout {
     bool operator==(const BuildLayout&) const = default;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

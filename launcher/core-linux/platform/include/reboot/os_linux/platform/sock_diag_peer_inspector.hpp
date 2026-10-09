@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; ILoopbackPeerInspector for the front's ticket-redemption uid check.
 class SockDiagPeerInspector final : public ports::ILoopbackPeerInspector {
@@ -19,4 +19,4 @@ public:
     Result<std::optional<u32>> peer_uid(Endpoint local, Endpoint remote) override;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

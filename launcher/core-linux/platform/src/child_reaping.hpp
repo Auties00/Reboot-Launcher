@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // How a child ended, as waitid reports it: si_code is CLD_EXITED, CLD_KILLED or CLD_DUMPED.
 struct ReapedStatus {
@@ -53,4 +53,4 @@ struct PeekResult {
 // For PID 1: reaps every zombie child, recording listed ones in ChildTable for their waiters.
 void reap_zombies();
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

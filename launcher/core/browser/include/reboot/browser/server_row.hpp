@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "wire/messages.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // Capabilities: server-browser.+30.
 // One server as a UI shows it. Every text field is untrusted and already passed through
@@ -46,4 +46,4 @@ struct ServerDetails {
 [[nodiscard]] ServerDetails make_server_details(const sb::wire::EntryDetails& details,
                                                 std::chrono::milliseconds clock_offset);
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

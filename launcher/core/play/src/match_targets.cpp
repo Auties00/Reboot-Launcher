@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace reboot::play {
+namespace rb::play {
 
 void MatchTargets::publish(SessionId session, MatchTargetEntry entry) {
     published_ = Published{session, std::move(entry)};
@@ -22,4 +22,4 @@ backend::ResolvedMatchTarget MatchTargets::resolve(const backend::MatchTargetQue
     return backend::ResolvedMatchTarget{published_->entry.endpoint, published_->entry.beacon_port};
 }
 
-}  // namespace reboot::play
+}  // namespace rb::play

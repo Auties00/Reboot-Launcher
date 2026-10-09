@@ -13,17 +13,17 @@
 #include "reboot/storage/load_report.hpp"
 #include "reboot/storage/storage_mode_changed.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IClock;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::storage {
+namespace rb::storage {
 
 struct DocumentFormat {
     // Also names the <name>.v<N>.json schema backups.
@@ -70,4 +70,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/process/child_handshake.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 enum class ChannelPhase : u8 { AwaitingHello, Open, Closed };
 
@@ -51,4 +51,4 @@ private:
     ChannelPhase phase_ = ChannelPhase::AwaitingHello;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

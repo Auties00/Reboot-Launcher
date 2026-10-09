@@ -9,7 +9,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/host/host_error.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 namespace {
 
@@ -162,4 +162,4 @@ Result<void> HostProfileStore::reset() {
 
 void HostProfileStore::set_on_reload(UniqueFunction<void()> on_reload) { on_reload_ = std::move(on_reload); }
 
-}  // namespace reboot::host
+}  // namespace rb::host

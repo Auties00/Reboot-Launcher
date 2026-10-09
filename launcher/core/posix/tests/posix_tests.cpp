@@ -13,8 +13,8 @@
 #include "reboot/posix/unique_fd.hpp"
 #include "unix_endpoint_checks.hpp"
 
-using namespace reboot;
-using namespace reboot::posix;
+using namespace rb;
+using namespace rb::posix;
 
 TEST_CASE("check_socket_path_fits counts the terminator against sun_path") {
     const NativePath fits_macos = "/" + std::string(102, 'a');

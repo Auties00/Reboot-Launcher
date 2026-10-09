@@ -14,7 +14,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 // `user_id` is the SID string on Windows and the decimal uid on POSIX.
 struct PeerIdentity {
@@ -90,4 +90,4 @@ public:
 // Defined by each OS module: the named pipe name on Windows, the socket path on POSIX.
 [[nodiscard]] std::string endpoint_name(const PeerIdentity& self, std::string_view root_hash16);
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

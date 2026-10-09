@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // core/ipc registers the same id; this package may not reach it.
 REBOOT_MESSAGE(kEndpointUntrusted, "ipc.endpoint_untrusted", "The engine endpoint is not trusted.");
@@ -28,4 +28,4 @@ REBOOT_MESSAGE(kTaskSchedulerTimedOut, "platform.task_scheduler_timed_out",
                "The Task Scheduler did not answer {call} within {deadline}.");
 REBOOT_MESSAGE(kEngineSpawnFailed, "platform.engine_spawn_failed", "{path} could not be started.");
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

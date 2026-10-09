@@ -2,7 +2,7 @@
 
 #include "reboot/publish/host_status.hpp"
 
-using namespace reboot::publish;
+using namespace rb::publish;
 
 TEST_CASE("a reachable entry is Live whatever its past failures", "[publish]") {
     CHECK(host_status(true, 0) == HostStatus::Live);

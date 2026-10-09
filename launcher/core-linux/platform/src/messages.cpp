@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // errno failures use posix::call_failed; a GError's domain and code go in Diagnostic::detail.
 REBOOT_MESSAGE(kCallFailed, "platform.call_failed", "{call} failed.");
@@ -39,4 +39,4 @@ REBOOT_MESSAGE(kHelperTimeout, "platform.helper_timeout", "{program} did not fin
 REBOOT_MESSAGE(kDnsFailed, "platform.dns_failed", "{host} could not be resolved.");
 REBOOT_MESSAGE(kDnsCancelled, "platform.dns_cancelled", "Resolving {host} was cancelled.");
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

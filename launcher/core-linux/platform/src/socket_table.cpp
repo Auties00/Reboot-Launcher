@@ -7,7 +7,7 @@
 #include <system_error>
 #include <utility>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -120,4 +120,4 @@ std::optional<SocketRecord> find_connection(const std::vector<SocketRecord>& soc
     return std::nullopt;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

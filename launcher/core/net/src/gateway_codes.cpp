@@ -1,6 +1,6 @@
 #include "gateway_codes.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 GatewayError upnp_error(int code) {
     GatewayError error;
@@ -47,4 +47,4 @@ GatewayError natpmp_error(int code) {
     return error;
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

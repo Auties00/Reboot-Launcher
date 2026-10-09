@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // The first reason recorded for a session wins; a later stop never overwrites it.
 enum class StopReason : u8 {
@@ -46,4 +46,4 @@ enum class StopReason : u8 {
     return "unknown";
 }
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

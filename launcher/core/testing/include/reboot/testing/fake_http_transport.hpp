@@ -15,7 +15,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 struct FakeHttpResponse {
     u32 status = 200;
@@ -66,4 +66,4 @@ private:
     std::shared_ptr<State> state_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

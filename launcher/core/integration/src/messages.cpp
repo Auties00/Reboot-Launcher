@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::integration::msg {
+namespace rb::integration::msg {
 
 REBOOT_MESSAGE(kNoItems, "integration.no_items", "No integration item was named");
 REBOOT_MESSAGE(kForeignEntry, "integration.foreign_entry",
@@ -52,4 +52,4 @@ REBOOT_MESSAGE(kPurgeUnsafeTarget, "integration.purge_unsafe_target",
                "{path} is not a launcher data folder, so nothing was deleted");
 REBOOT_MESSAGE(kPurgeFailed, "integration.purge_failed", "{path} cannot be deleted");
 
-}  // namespace reboot::integration::msg
+}  // namespace rb::integration::msg

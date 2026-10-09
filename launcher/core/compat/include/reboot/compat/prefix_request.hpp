@@ -9,7 +9,7 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // What PrefixManager::prepare brings a prefix to.
 struct PrefixRequest {
@@ -25,4 +25,4 @@ struct PrefixRequest {
     VcRedistSource vc_redist;
 };
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

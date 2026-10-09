@@ -2,8 +2,8 @@
 
 #include "reboot/backend/backend_url.hpp"
 
-using namespace reboot;
-using namespace reboot::backend;
+using namespace rb;
+using namespace rb::backend;
 
 TEST_CASE("a bare host gets the default port and no scheme", "[backend]") {
     const Result<BackendUrl> url = BackendUrl::parse("Example.COM");

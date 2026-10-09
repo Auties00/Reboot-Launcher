@@ -12,7 +12,7 @@
 
 // Our in-game client DLL over loopback TCP to the engine's game channel, after the
 // game-control preamble. Requests carry req_id and get a common::CommandResult.
-namespace reboot::contracts::game_client {
+namespace rb::contracts::game_client {
 
 inline constexpr u16 kPayloadAbi = VersionStreams::payload_abi;
 
@@ -154,4 +154,4 @@ struct TestQuit {
 };
 REBOOT_CONTRACT_FRAME(TestQuit, 0x422)
 
-}  // namespace reboot::contracts::game_client
+}  // namespace rb::contracts::game_client

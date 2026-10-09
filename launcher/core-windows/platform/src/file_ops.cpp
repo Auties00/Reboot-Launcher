@@ -8,7 +8,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -71,4 +71,4 @@ std::chrono::system_clock::time_point to_time_point(const FILETIME& time) noexce
     return from_filetime((static_cast<u64>(time.dwHighDateTime) << 32) | time.dwLowDateTime);
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

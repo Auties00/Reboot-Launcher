@@ -17,9 +17,9 @@
 #include "reboot/testing/event_recorder.hpp"
 #include "reboot/testing/fake_quic_transport.hpp"
 
-using namespace reboot;
-using namespace reboot::publish;
-using namespace reboot::publish::test;
+using namespace rb;
+using namespace rb::publish;
+using namespace rb::publish::test;
 using namespace std::chrono_literals;
 
 namespace {

@@ -4,8 +4,8 @@
 
 #include "trust_rules.hpp"
 
-using namespace reboot::os_macos::platform;
-using reboot::u8;
+using namespace rb::os_macos::platform;
+using rb::u8;
 
 TEST_CASE("a certificate with empty trust settings is trusted as root", "[trust_rules]") {
     CHECK(classify_trust_settings({}) == TrustVerdict::Trusted);

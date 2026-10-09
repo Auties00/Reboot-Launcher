@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::injection {
+namespace rb::injection {
 
 bool LegacyRequirements::xmpp_available() const noexcept {
     return std::ranges::any_of(fixed_listeners, [](const Endpoint& endpoint) { return endpoint.port == kLegacyXmppPort; });
@@ -16,4 +16,4 @@ LegacyRequirements legacy_requirements(ports::RunnerKind runner) {
     return requirements;
 }
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

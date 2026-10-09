@@ -23,7 +23,7 @@
 #include "reboot/api/v1/settings.hpp"
 #include "reboot/api/v1/updates.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 // Event.payload. Each member is named after its EventKind value; session and op ids live in the envelope.
 struct EventPayload {
@@ -226,4 +226,4 @@ struct EventPayload {
     }
 }
 
-}  // namespace reboot::api
+}  // namespace rb::api

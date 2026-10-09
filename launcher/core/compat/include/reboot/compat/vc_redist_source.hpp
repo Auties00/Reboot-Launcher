@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/function.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // At the root of the manifest's RuntimeKind::VcRedist runtime.
 inline constexpr std::string_view kVcRedistInstaller = "vc_redist.x64.exe";
@@ -15,4 +15,4 @@ inline constexpr std::string_view kVcRedistInstaller = "vc_redist.x64.exe";
 // held until the installer exits.
 using VcRedistSource = UniqueFunction<void(UniqueFunction<void(Result<components::PinnedRuntime>)> done)>;
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

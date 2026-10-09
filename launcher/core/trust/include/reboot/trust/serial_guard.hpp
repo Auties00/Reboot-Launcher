@@ -8,7 +8,7 @@
 #include "reboot/trust/signed_document_kind.hpp"
 #include "reboot/trust/trust_error.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 enum class SerialCheck : u8 { Same, Advanced };
 
@@ -34,4 +34,4 @@ private:
     Persist persist_;
 };
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

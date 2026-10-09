@@ -11,7 +11,7 @@
 #include "reboot/ipc/ipc_server.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 struct SelfProcess {
     u32 pid = 0;
@@ -39,4 +39,4 @@ struct EngineInfo {
 
 [[nodiscard]] ipc::EngineHello to_engine_hello(const EngineInfo& info);
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

@@ -8,7 +8,7 @@
 #include "reboot/os_windows/ipc/pipe_trust.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // Covers no capability ids; IIpcListener for the engine. Accepting and every accepted stream run
 // on one I/O thread the listener owns; stream callbacks run there, never on the strand.
@@ -32,4 +32,4 @@ private:
     std::shared_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

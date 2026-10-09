@@ -15,8 +15,8 @@
 #include "reboot/testing/fake_port_inspector.hpp"
 #include "reboot/testing/scripted_process_launcher.hpp"
 
-using namespace reboot;
-using namespace reboot::host;
+using namespace rb;
+using namespace rb::host;
 namespace asio = boost::asio;
 
 namespace {

@@ -6,7 +6,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // Retrying: the edge is unreachable, refused for now, or sent GoAway; the session keeps running
 // "not listed" and reconnects with backoff. Superseded: the same id was registered from another
@@ -26,4 +26,4 @@ struct PublishState {
     std::optional<Diagnostic> error;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

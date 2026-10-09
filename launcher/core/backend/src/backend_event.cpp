@@ -1,6 +1,6 @@
 #include "reboot/backend/backend_event.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -31,4 +31,4 @@ std::size_t BackendEvent::approx_bytes() const noexcept {
     return bytes;
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

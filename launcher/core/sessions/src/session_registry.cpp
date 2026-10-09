@@ -14,7 +14,7 @@
 #include "reboot/sessions/session_event.hpp"
 #include "reboot/sessions/sessions_error.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 namespace {
 
@@ -385,4 +385,4 @@ void SessionRegistry::stop_sessions_using(BuildId build, UniqueFunction<void(Res
                       [done = std::move(done)]() mutable { done(Result<void>{}); });
 }
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

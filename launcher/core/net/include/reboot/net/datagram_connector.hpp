@@ -13,7 +13,7 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot::net {
+namespace rb::net {
 
 // Refused is an ICMP port unreachable reported on the connected socket.
 enum class DatagramFailure : u8 { Refused, Failed };
@@ -43,4 +43,4 @@ public:
 // Asio UDP sockets on `io`.
 [[nodiscard]] std::unique_ptr<IDatagramConnector> make_asio_datagram_connector(boost::asio::io_context& io);
 
-}  // namespace reboot::net
+}  // namespace rb::net

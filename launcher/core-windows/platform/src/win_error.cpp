@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -80,4 +80,4 @@ Diagnostic hresult_failed(std::string_view call, i32 hr, const NativePath& path)
         .retryable(retryable_win32(win32_of(hr)));
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

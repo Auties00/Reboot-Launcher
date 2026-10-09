@@ -13,7 +13,7 @@
 #include "reboot/host/port_policy.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 using HostListing = storage::HostListing;
 using HostUpdatePolicy = storage::HostUpdatePolicy;
@@ -83,4 +83,4 @@ struct HostProfile {
 // with its operator policy normalized.
 [[nodiscard]] Result<HostProfile> validate(HostProfile profile);
 
-}  // namespace reboot::host
+}  // namespace rb::host

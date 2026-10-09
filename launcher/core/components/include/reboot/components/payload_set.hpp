@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 struct StoredFile {
     PayloadRole role{};
@@ -29,4 +29,4 @@ struct PayloadSet {
     }
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

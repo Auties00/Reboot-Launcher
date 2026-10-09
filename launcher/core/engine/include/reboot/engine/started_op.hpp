@@ -7,7 +7,7 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // An op a client started through the API: Engine.operations lists it while it is live, and it is
 // the EventKind::OpStarted payload.
@@ -21,4 +21,4 @@ struct StartedOp {
     std::chrono::system_clock::time_point started_at;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

@@ -6,7 +6,7 @@
 #include "reboot/play/play_service.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // PlayEnv over the engine's services.
 class DepsEnv final : public PlayEnv {
@@ -79,4 +79,4 @@ private:
     ports::EnvBlock daemon_env_;
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

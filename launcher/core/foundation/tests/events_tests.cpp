@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/events.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 namespace {
 

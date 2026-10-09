@@ -3,7 +3,7 @@
 #include "reboot/foundation/text.hpp"
 #include "wide.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 std::optional<NativePath> velopack_root_of(const NativePath& exe_dir, UniqueFunction<bool(const NativePath&)> file_exists) {
     const NativePath dir = exe_dir.has_filename() ? exe_dir : exe_dir.parent_path();
@@ -14,4 +14,4 @@ std::optional<NativePath> velopack_root_of(const NativePath& exe_dir, UniqueFunc
     return root;
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

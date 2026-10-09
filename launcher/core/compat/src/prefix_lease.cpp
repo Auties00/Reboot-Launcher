@@ -4,7 +4,7 @@
 
 #include "reboot/compat/prefix_manager.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 PrefixLease::PrefixLease(PrefixManager& manager, u64 id, RunnerKind kind, SessionId session)
     : manager_(&manager), id_(id), kind_(kind), session_(session) {}
@@ -29,4 +29,4 @@ void PrefixLease::release() noexcept {
     if (PrefixManager* manager = std::exchange(manager_, nullptr)) manager->release(id_);
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

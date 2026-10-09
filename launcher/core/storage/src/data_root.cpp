@@ -6,7 +6,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 Result<DataRootReport> prepare_data_root(const AppLayout& layout, const InstallLayout& install,
                                          const ports::IPlatformPaths& paths, ports::IFileSystem& fs) {
@@ -38,4 +38,4 @@ Result<DataRootReport> prepare_data_root(const AppLayout& layout, const InstallL
     return report;
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

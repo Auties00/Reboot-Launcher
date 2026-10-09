@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 namespace {
 
 [[nodiscard]] SystemError host_error(DWORD error) { return SystemError{SystemError::Origin::Host, static_cast<i64>(error)}; }
@@ -29,4 +29,4 @@ Diagnostic untrusted(Diagnostic cause) {
     return make_diag(ErrorDomain::Ipc, kEndpointUntrusted).cause(std::move(cause));
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

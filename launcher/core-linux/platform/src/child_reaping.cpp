@@ -5,7 +5,7 @@
 #include <sys/wait.h>
 #include <unordered_map>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -89,4 +89,4 @@ void reap_zombies() {
     }
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

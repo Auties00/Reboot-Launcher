@@ -6,7 +6,7 @@
 
 #include "wide.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 inline constexpr wchar_t kParkedSuffix[] = L".reboot-parked";
 
@@ -25,4 +25,4 @@ private:
     std::vector<std::pair<std::wstring, std::wstring>> parked_;
 };
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

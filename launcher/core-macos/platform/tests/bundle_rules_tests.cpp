@@ -7,11 +7,11 @@
 #include "dns_answers.hpp"
 #include "integration_rules.hpp"
 
-using namespace reboot::os_macos::platform;
-using reboot::IpAddress;
-using reboot::NativePath;
-using reboot::ports::IntegrationKind;
-using reboot::ports::IntegrationState;
+using namespace rb::os_macos::platform;
+using rb::IpAddress;
+using rb::NativePath;
+using rb::ports::IntegrationKind;
+using rb::ports::IntegrationState;
 
 TEST_CASE("the app bundle is found from Contents/MacOS only", "[bundle_layout]") {
     CHECK(app_bundle_of("/Applications/Reboot Launcher.app/Contents/MacOS") == NativePath{"/Applications/Reboot Launcher.app"});

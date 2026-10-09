@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 enum class DownloadErrorCode : u8 {
     InsufficientSpace,
@@ -37,4 +37,4 @@ struct DownloadError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const DownloadError& error);
 
-}  // namespace reboot::net
+}  // namespace rb::net

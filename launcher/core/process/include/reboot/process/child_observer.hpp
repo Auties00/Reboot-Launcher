@@ -4,7 +4,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/process/child_exit_info.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // Covers no capability ids; the owner's view of a supervised child (backend or game server).
 // Every call runs on the strand.
@@ -23,4 +23,4 @@ public:
     virtual void on_exit(const ChildExitInfo& exit) = 0;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

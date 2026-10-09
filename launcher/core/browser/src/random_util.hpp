@@ -6,7 +6,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // Uniform in [0, ceiling]; the modulo bias over 64 random bits is far below a millisecond.
 [[nodiscard]] inline std::chrono::milliseconds uniform_delay(IRandom& random, std::chrono::milliseconds ceiling) {
@@ -18,4 +18,4 @@ namespace reboot::browser {
         static_cast<std::chrono::milliseconds::rep>(value % (static_cast<u64>(ceiling.count()) + 1))};
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

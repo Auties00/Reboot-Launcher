@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 // System is pid 0 or 4 on Windows, such as http.sys holding :80. WineHost is wineserver holding
 // the port for a Windows process. Unknown is an owner that could not be classified, such as pid 0
@@ -20,4 +20,4 @@ struct PortOwnerInfo {
     std::optional<Diagnostic> lookup_error;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

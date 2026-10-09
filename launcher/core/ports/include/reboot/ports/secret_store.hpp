@@ -8,7 +8,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 enum class SecretStoreKind : u8 { Os, File, Unavailable };
 
@@ -23,4 +23,4 @@ public:
     virtual Result<void> erase(std::string_view key) = 0;
 };
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

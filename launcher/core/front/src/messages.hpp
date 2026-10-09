@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::front::msg {
+namespace rb::front::msg {
 
 REBOOT_MESSAGE_DECL(kListenFailed);
 REBOOT_MESSAGE_DECL(kNotStarted);
@@ -14,4 +14,4 @@ REBOOT_MESSAGE_DECL(kLegacyFixedInUse);
 REBOOT_MESSAGE_DECL(kLegacyFixedCancelled);
 REBOOT_MESSAGE_DECL(kUnexpectedAnswer);
 
-}  // namespace reboot::front::msg
+}  // namespace rb::front::msg

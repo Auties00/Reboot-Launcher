@@ -5,7 +5,7 @@
 #include "reboot/contracts/backend.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 // The embedded backend mints a single-use, 5-minute value bound to the build (MintLaunchCredential).
 struct BackendMinted {
@@ -44,4 +44,4 @@ using CredentialDelivery = std::variant<BackendMinted, RemotePasswordExchange, F
     return std::holds_alternative<RemotePasswordExchange>(delivery) || std::holds_alternative<LegacyArgv>(delivery);
 }
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

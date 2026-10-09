@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace reboot::logging {
+namespace rb::logging {
 
 // The RegisteredThread name of the calling thread, or "unregistered".
 [[nodiscard]] std::string_view registered_thread_name() noexcept;
@@ -13,4 +13,4 @@ namespace reboot::logging {
 
 [[nodiscard]] std::string terminate_line(std::string_view thread, std::string_view exception_type);
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

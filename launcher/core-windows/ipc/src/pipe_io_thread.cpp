@@ -12,7 +12,7 @@
 #include "reboot/foundation/log.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 struct PipeIoThread::State {
     explicit State(HANDLE completion_port) : port(completion_port) {}
@@ -152,4 +152,4 @@ bool PipeIoThread::post(Request& request) noexcept {
 
 bool PipeIoThread::on_thread() const noexcept { return GetCurrentThreadId() == state_->thread_id.load(); }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

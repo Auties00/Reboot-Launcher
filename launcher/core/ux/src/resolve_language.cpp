@@ -2,7 +2,7 @@
 
 #include "language_lookup.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -39,4 +39,4 @@ ResolvedLanguage resolve_language(const LanguagePreference& preference, std::spa
     return resolved;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

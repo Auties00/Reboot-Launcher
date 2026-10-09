@@ -28,7 +28,7 @@
 #include "win_modules.hpp"
 #endif
 
-namespace reboot::testing {
+namespace rb::testing {
 
 #ifdef _WIN32
 namespace {
@@ -149,4 +149,4 @@ int fake_game_main(int, char**) {
 
 #endif
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

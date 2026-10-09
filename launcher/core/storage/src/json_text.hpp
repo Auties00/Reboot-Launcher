@@ -10,7 +10,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // Two-space indents and a final newline, so hand edits and diffs stay readable.
 [[nodiscard]] std::string to_pretty_json(const boost::json::value& value);
@@ -28,4 +28,4 @@ namespace reboot::storage {
     return {reinterpret_cast<const char*>(bytes.data()), bytes.size()};
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

@@ -24,7 +24,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/testing/port_conformance.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 using namespace std::chrono_literals;
 
@@ -854,4 +854,4 @@ ConformanceReport run_quic_transport_conformance(ports::IQuicTransport& transpor
     return report;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -2,7 +2,7 @@
 
 #include "unistd.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 UniqueFd::~UniqueFd() { reset(); }
 
@@ -12,4 +12,4 @@ void UniqueFd::reset(int fd) noexcept {
     fd_ = fd;
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

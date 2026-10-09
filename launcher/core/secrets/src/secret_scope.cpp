@@ -4,7 +4,7 @@
 #include <string_view>
 #include <utility>
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 namespace {
 
@@ -31,4 +31,4 @@ SecretScope SecretScope::host_profile(HostProfileId profile) { return SecretScop
 
 SecretScope SecretScope::join_request(RequestId request) { return SecretScope(std::to_string(request.value)); }
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

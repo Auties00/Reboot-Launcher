@@ -11,7 +11,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "unistd.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 namespace {
 
@@ -149,4 +149,4 @@ void WakePipe::drain() const noexcept {
     }
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

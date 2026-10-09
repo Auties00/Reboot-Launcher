@@ -4,7 +4,7 @@
 
 #include "win32.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 // Owns a HANDLE; both null and INVALID_HANDLE_VALUE mean none.
 class UniqueHandle {
@@ -37,4 +37,4 @@ private:
     HANDLE handle_ = nullptr;
 };
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

@@ -3,8 +3,8 @@
 
 #include "reboot/front/front_path.hpp"
 
-using namespace reboot;
-using namespace reboot::front;
+using namespace rb;
+using namespace rb::front;
 
 namespace {
 

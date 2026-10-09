@@ -5,7 +5,7 @@
 
 #include "display_env_names.hpp"
 
-using reboot::os_linux::ipc::is_display_env_name;
+using rb::os_linux::ipc::is_display_env_name;
 
 TEST_CASE("display, session bus and locale variables reach the engine", "[display_env_names]") {
     for (const std::string_view name : {"DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "XDG_RUNTIME_DIR", "XDG_SESSION_TYPE",

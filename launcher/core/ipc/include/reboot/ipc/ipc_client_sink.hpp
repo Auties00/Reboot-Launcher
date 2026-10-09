@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ipc/ipc_codec.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 // A completed Hello/HelloAck exchange.
 struct Handshake {
@@ -32,4 +32,4 @@ public:
     virtual void on_reconnected(const Handshake& handshake) = 0;
 };
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

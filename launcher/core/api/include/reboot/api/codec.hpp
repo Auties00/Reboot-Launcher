@@ -12,7 +12,7 @@
 #include "wire/codec.hpp"
 
 // reboot.api.v1 messages are generated sb-codec aggregates; these wrap the codec for them.
-namespace reboot::api {
+namespace rb::api {
 
 using Bytes = std::vector<u8>;
 
@@ -49,4 +49,4 @@ template <sb::wire::Message T>
     return message;
 }
 
-}  // namespace reboot::api
+}  // namespace rb::api

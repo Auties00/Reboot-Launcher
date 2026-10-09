@@ -5,7 +5,7 @@
 #include "deps_env.hpp"
 #include "play_core.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 struct PlayService::Impl {
     Impl(PlayServiceDeps deps_in, PlayServiceOptions options)
@@ -45,4 +45,4 @@ void PlayService::on_login_observed(const backend::LoginObservedEvent& event) { 
 
 std::optional<PlaySessionState> PlayService::state(SessionId session) const { return impl_->core.state(session); }
 
-}  // namespace reboot::play
+}  // namespace rb::play

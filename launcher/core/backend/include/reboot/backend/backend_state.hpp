@@ -9,7 +9,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 struct BackendState {
     BackendPhase phase = BackendPhase::Stopped;
@@ -29,4 +29,4 @@ struct BackendState {
     std::optional<BackendConfig> pending_config;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

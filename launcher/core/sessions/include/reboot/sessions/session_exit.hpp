@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/sessions/stop_reason.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // Why a primary ended without being asked to.
 enum class ExitReason : u8 { Exited, Crashed, Unresponsive, LaunchFailed, Fatal };
@@ -28,4 +28,4 @@ struct SessionExit {
     std::optional<Diagnostic> error;
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

@@ -3,7 +3,7 @@
 #include "firewall_output.hpp"
 #include "macos_version.hpp"
 
-using namespace reboot::os_macos::platform;
+using namespace rb::os_macos::platform;
 
 TEST_CASE("the macOS major version is read from kern.osproductversion", "[macos_version]") {
     CHECK(macos_major_version("14.5") == 14u);

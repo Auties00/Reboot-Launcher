@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 REBOOT_MESSAGE(kInvalidEndpointOverride, "browser.invalid_endpoint_override",
                "{value} is not a valid server browser address");
@@ -48,4 +48,4 @@ REBOOT_MESSAGE(kTargetUnreachable, "browser.target_unreachable",
                "{address} did not answer; the server may be offline or may not answer probes");
 REBOOT_MESSAGE(kAddressCheckCancelled, "browser.address_check_cancelled", "Checking {address} was cancelled");
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

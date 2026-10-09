@@ -10,8 +10,8 @@
 #include "reboot/integration/purge_error.hpp"
 #include "reboot/integration/shell_error.hpp"
 
-using namespace reboot;
-using namespace reboot::integration;
+using namespace rb;
+using namespace rb::integration;
 
 namespace {
 

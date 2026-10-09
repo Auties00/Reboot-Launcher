@@ -5,7 +5,7 @@
 
 #include "poll_until.hpp"
 
-using namespace reboot::os_windows::win32session;
+using namespace rb::os_windows::win32session;
 using namespace std::chrono_literals;
 
 namespace {

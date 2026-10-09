@@ -10,7 +10,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // HelloAck.storage_mode. ReadOnly: written at a newer schema. InMemory: nothing reaches disk.
 using StorageMode = contracts::ipc::StorageMode;
@@ -42,4 +42,4 @@ struct LoadReport {
 // The most restricted mode of all stores, which HelloAck reports.
 [[nodiscard]] StorageMode combined_mode(std::span<const LoadReport> reports) noexcept;
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

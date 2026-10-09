@@ -3,15 +3,15 @@
 #include "reboot/browser/own_servers.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 class HostIdentityStore;
 }
 
-namespace reboot::host {
+namespace rb::host {
 class HostProfileStore;
 }
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Capabilities: none; keeps the browser from listing or joining this user's own servers.
 // Strand-only. A server id is ours when a host profile's identity carries it.
@@ -27,4 +27,4 @@ private:
     const host::HostProfileStore& profiles_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

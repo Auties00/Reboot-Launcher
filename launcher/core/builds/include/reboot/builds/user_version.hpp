@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // A version a person stated: the ChooseVersion answer, an ImportRequest or a CLI --version.
 struct UserVersion {
@@ -14,4 +14,4 @@ struct UserVersion {
     bool operator==(const UserVersion&) const = default;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

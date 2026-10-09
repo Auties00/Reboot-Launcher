@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::storage {
+namespace rb::storage {
 
 StorageMode combined_mode(std::span<const LoadReport> reports) noexcept {
     // Enumerators run from least to most restricted.
@@ -11,4 +11,4 @@ StorageMode combined_mode(std::span<const LoadReport> reports) noexcept {
     return mode;
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

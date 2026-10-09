@@ -8,11 +8,11 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 }
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // Strand-only. Write completion callbacks; a cancelled one gets storage.cancelled at once while writes go on.
 class FlushWaiters {
@@ -46,4 +46,4 @@ private:
 // A storage.cancelled diagnostic for `document`.
 [[nodiscard]] Diagnostic cancelled(std::string_view document);
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

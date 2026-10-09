@@ -7,7 +7,7 @@
 #include "unique_handle.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 namespace {
 
 // FILETIME ticks (100 ns) from 1601-01-01 to 1970-01-01.
@@ -36,4 +36,4 @@ Result<ports::FileRevision> WindowsFileRevisionReader::revision(const NativePath
                                .file_id = (static_cast<u64>(info.nFileIndexHigh) << 32) | info.nFileIndexLow};
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

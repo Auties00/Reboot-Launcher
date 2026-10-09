@@ -9,7 +9,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // One line of /proc/self/mountinfo, with the kernel's octal escapes (\040 and so on) decoded.
 struct MountEntry {
@@ -45,4 +45,4 @@ struct MountEntry {
                                                           const std::vector<std::size_t>& candidates,
                                                           const NativePath& path);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

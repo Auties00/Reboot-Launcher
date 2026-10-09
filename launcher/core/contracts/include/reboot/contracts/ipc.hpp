@@ -15,7 +15,7 @@
 
 // Engine IPC. API payloads (Call, Reply, Start, OpResult, events) are reboot.api.v1 bytes that
 // the client library never decodes. Ping and Pong are the common messages.
-namespace reboot::contracts::ipc {
+namespace rb::contracts::ipc {
 
 using Bytes = std::vector<u8>;
 
@@ -204,4 +204,4 @@ inline constexpr std::size_t kOutboundBudget = std::size_t{32} << 20;
 // Hitting the outbound budget twice within this window disconnects with SlowConsumer.
 inline constexpr std::chrono::seconds kSlowConsumerWindow{10};
 
-}  // namespace reboot::contracts::ipc
+}  // namespace rb::contracts::ipc

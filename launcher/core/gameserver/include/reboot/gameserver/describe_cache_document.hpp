@@ -12,7 +12,7 @@
 #include "reboot/gameserver/game_server_description.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 struct CachedDescription {
     Sha256Digest sha256{};
@@ -41,4 +41,4 @@ struct DescribeCacheDocument {
     [[nodiscard]] static Result<boost::json::object> upgrade(boost::json::object values, u32 from_schema);
 };
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

@@ -9,7 +9,7 @@
 #include "reboot/os_windows/ipc/pipe_trust.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // Covers no capability ids; the reboot_client end of the engine pipe behind IIpcConnector.
 // The returned stream reads on a thread it owns.
@@ -29,4 +29,4 @@ private:
     PipeTrust trust_;
 };
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

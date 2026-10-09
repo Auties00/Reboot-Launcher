@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-namespace reboot::integration {
+namespace rb::integration {
 
 namespace {
 
@@ -28,4 +28,4 @@ bool is_openable_url(std::string_view url) noexcept {
     return !authority.empty() && authority.front() != ':';
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

@@ -15,7 +15,7 @@
 #include "reboot/foundation/user_request.hpp"
 #include "wire_mapping.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -288,4 +288,4 @@ Result<OpHandle> JoinService::start_join(JoinRequest request, DisconnectPolicy p
     return handle;
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

@@ -15,9 +15,9 @@
 #include "reboot/os_linux/ipc/systemd_engine_starter.hpp"
 #include "state_locks.hpp"
 
-using namespace reboot;
-using namespace reboot::os_linux::ipc;
-using namespace reboot::os_linux::ipc::test;
+using namespace rb;
+using namespace rb::os_linux::ipc;
+using namespace rb::os_linux::ipc::test;
 
 namespace {
 

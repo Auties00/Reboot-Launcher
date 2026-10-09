@@ -4,11 +4,11 @@
 #include "reboot/integration/entry_status.hpp"
 #include "reboot/integration/integration_targets.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IIntegrationRegistrar;
 }
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // An engine denied breakaway starts only through the agent, so Velopack's hooks write it.
 enum class InstallHook : u8 { AfterInstall, AfterUpdate };
@@ -17,4 +17,4 @@ enum class InstallHook : u8 { AfterInstall, AfterUpdate };
 [[nodiscard]] EntryStatus install_integration(ports::IIntegrationRegistrar& registrar,
                                               const IntegrationTargets& targets, InstallHook hook);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

@@ -10,7 +10,7 @@
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/executor.hpp"
 
-using namespace reboot;
+using namespace rb;
 using namespace std::chrono_literals;
 
 TEST_CASE("ManualExecutor runs nothing until pumped, in post order", "[foundation][executor]") {

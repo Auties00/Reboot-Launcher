@@ -15,7 +15,7 @@
 #include "memory_link.hpp"
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 using Accept = UniqueFunction<void(std::unique_ptr<ports::IByteStream>)>;
@@ -181,4 +181,4 @@ std::size_t InMemoryIpc::open_connections() const {
 
 const ports::PeerIdentity& InMemoryIpc::self() const noexcept { return hub_->self; }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

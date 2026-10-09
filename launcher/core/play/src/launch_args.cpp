@@ -9,7 +9,7 @@
 #include "reboot/storage/settings_values.hpp"
 #include "wipe.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 namespace {
 
@@ -187,4 +187,4 @@ std::string to_log_string(const LaunchArgs& args) {
     return out;
 }
 
-}  // namespace reboot::play
+}  // namespace rb::play

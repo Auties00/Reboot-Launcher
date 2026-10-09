@@ -6,7 +6,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <memory>
 
-namespace reboot::components::test {
+namespace rb::components::test {
 
 namespace {
 
@@ -37,4 +37,4 @@ std::string make_tar_gz(const std::vector<std::pair<std::string, std::string>>& 
     return {buffer.data(), used};
 }
 
-}  // namespace reboot::components::test
+}  // namespace rb::components::test

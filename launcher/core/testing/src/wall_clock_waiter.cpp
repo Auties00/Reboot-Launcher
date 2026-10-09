@@ -3,7 +3,7 @@
 #include <chrono>
 #include <thread>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 bool WallClockWaiter::wait_until(UniqueFunction<bool()> condition, std::chrono::milliseconds budget) {
     const auto give_up = std::chrono::steady_clock::now() + budget;
@@ -14,4 +14,4 @@ bool WallClockWaiter::wait_until(UniqueFunction<bool()> condition, std::chrono::
     return true;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

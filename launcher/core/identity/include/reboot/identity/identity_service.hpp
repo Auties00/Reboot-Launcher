@@ -13,12 +13,12 @@
 #include "reboot/storage/backend_target.hpp"
 #include "reboot/storage/document_store.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class IRandom;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::identity {
+namespace rb::identity {
 
 struct IdentitySnapshot {
     AccountRecord client;
@@ -83,4 +83,4 @@ private:
     IdentitySnapshot current_;
 };
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

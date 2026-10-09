@@ -3,7 +3,7 @@
 #include <array>
 #include <utility>
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -46,4 +46,4 @@ std::optional<StepId> parse_step_id(std::string_view name) { return parse_name(k
 std::string_view persisted_name(OnboardingChoiceId choice) { return name_of(kChoiceNames, choice); }
 std::optional<OnboardingChoiceId> parse_choice_id(std::string_view name) { return parse_name(kChoiceNames, name); }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

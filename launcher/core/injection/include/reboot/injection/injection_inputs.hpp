@@ -7,7 +7,7 @@
 #include "reboot/injection/runtime_boot_default.hpp"
 #include "reboot/ports/session_host.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 // From the session's pinned inputs, so a later settings edit never changes a running session.
 struct InjectionInputs {
@@ -21,4 +21,4 @@ struct InjectionInputs {
     std::optional<PinnedDll> custom_auth;
 };
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

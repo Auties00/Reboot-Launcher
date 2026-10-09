@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <string>
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 IpcRuntimeBase resolve_ipc_runtime_base(std::optional<std::string_view> xdg_runtime_dir, u32 uid) {
     if (xdg_runtime_dir && xdg_runtime_dir->starts_with('/'))
@@ -17,4 +17,4 @@ IpcRuntimeBase linux_ipc_runtime_base(u32 uid) {
     return resolve_ipc_runtime_base(std::string_view{xdg_runtime_dir}, uid);
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

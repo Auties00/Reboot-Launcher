@@ -7,8 +7,8 @@
 #include "reboot/client.h"
 #include "reboot/ipc/ipc_errors.hpp"
 
-using namespace reboot;
-using namespace reboot::client;
+using namespace rb;
+using namespace rb::client;
 
 TEST_CASE("an output buffer is filled, then wiped and zeroed on release", "[client][abi]") {
     rb_buffer out{};

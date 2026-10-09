@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/identity/login_target.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Where the front sends a session's backend traffic.
 struct BackendUpstream {
@@ -27,4 +27,4 @@ struct BackendUpstream {
     bool operator==(const BackendUpstream&) const = default;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

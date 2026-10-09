@@ -35,15 +35,15 @@ int wmain(int argc, wchar_t** argv) {
     if (variable(L"REBOOT_CONFORMANCE_LEAK")) return 3;
     const std::optional<std::wstring> home = variable(L"REBOOT_LAUNCHER_HOME");
     if (!home) return 4;
-    auto trust = reboot::os_windows::ipc::PipeTrust::for_current_process();
+    auto trust = rb::os_windows::ipc::PipeTrust::for_current_process();
     if (!trust) return 5;
-    const reboot::DataRoot root{reboot::NativePath{*home}, true};
-    const std::string endpoint = reboot::ports::endpoint_name(trust->self(), reboot::root_hash16(reboot::canonical_root(root)));
+    const rb::DataRoot root{rb::NativePath{*home}, true};
+    const std::string endpoint = rb::ports::endpoint_name(trust->self(), rb::root_hash16(rb::canonical_root(root)));
 
     std::mutex mutex;
-    std::vector<std::unique_ptr<reboot::ports::IByteStream>> clients;
-    reboot::os_windows::ipc::NamedPipeListener listener{*trust};
-    if (!listener.listen(endpoint, [&](std::unique_ptr<reboot::ports::IByteStream> stream) {
+    std::vector<std::unique_ptr<rb::ports::IByteStream>> clients;
+    rb::os_windows::ipc::NamedPipeListener listener{*trust};
+    if (!listener.listen(endpoint, [&](std::unique_ptr<rb::ports::IByteStream> stream) {
             const std::lock_guard lock{mutex};
             clients.push_back(std::move(stream));
         }))

@@ -8,7 +8,7 @@
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // In application order: a later layer overrides an earlier one, and kDenyList runs last over all of them.
 enum class EnvLayer : u8 { DaemonBase, ClientAllowList, ProfilePassThrough, Runner, Channel };
@@ -109,4 +109,4 @@ inline constexpr std::array<EnvNamePattern, 4> kWineChannelNames{{
     {contracts::game_client::kEnvRole},
 }};
 
-}  // namespace reboot::process
+}  // namespace rb::process

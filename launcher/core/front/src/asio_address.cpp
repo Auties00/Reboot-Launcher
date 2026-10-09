@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace asio = boost::asio;
 
@@ -27,4 +27,4 @@ Endpoint from_asio(const asio::ip::tcp::endpoint& endpoint) noexcept {
     return {from_asio(endpoint.address()), Port{endpoint.port()}};
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

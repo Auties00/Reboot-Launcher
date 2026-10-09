@@ -5,14 +5,14 @@
 #include "reboot/integration/entry_status.hpp"
 #include "reboot/integration/integration_targets.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IIntegrationRegistrar;
 }
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // Velopack's uninstall hook and AppImage or tarball removal: store-free, never elevated, Foreign kept.
 [[nodiscard]] std::vector<EntryStatus> uninstall_integration(ports::IIntegrationRegistrar& registrar,
                                                              const IntegrationTargets& targets);
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

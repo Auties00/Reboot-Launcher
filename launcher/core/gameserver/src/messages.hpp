@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::gameserver::msg {
+namespace rb::gameserver::msg {
 
 REBOOT_MESSAGE_DECL(kPathNotAbsolute);
 REBOOT_MESSAGE_DECL(kExeUnreadable);
@@ -27,4 +27,4 @@ REBOOT_MESSAGE_DECL(kCommandNotDeclared);
 REBOOT_MESSAGE_DECL(kCommandTimeout);
 REBOOT_MESSAGE_DECL(kCacheEntryInvalid);
 
-}  // namespace reboot::gameserver::msg
+}  // namespace rb::gameserver::msg

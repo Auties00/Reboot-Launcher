@@ -3,7 +3,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/sha256.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -34,6 +34,6 @@ std::optional<SessionKey> SessionKey::parse(std::string_view hex) {
     return key;
 }
 
-std::string SessionKey::to_hex() const { return reboot::to_hex(bytes); }
+std::string SessionKey::to_hex() const { return rb::to_hex(bytes); }
 
-}  // namespace reboot::front
+}  // namespace rb::front

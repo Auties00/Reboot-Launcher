@@ -2,8 +2,8 @@
 
 #include "secret_routing.hpp"
 
-using namespace reboot::os_macos::platform;
-using reboot::ports::SecretStoreKind;
+using namespace rb::os_macos::platform;
+using rb::ports::SecretStoreKind;
 
 TEST_CASE("without a login keychain secrets live in files", "[secret_routing]") {
     CHECK(write_backend(KeychainState::Missing, true) == SecretBackend::File);

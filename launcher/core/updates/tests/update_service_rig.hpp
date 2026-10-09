@@ -54,7 +54,7 @@
 #include "reboot/updates/update_event.hpp"
 #include "reboot/updates/update_service.hpp"
 
-namespace reboot::updates::test {
+namespace rb::updates::test {
 
 // The strand beside real worker threads: they post from their threads, timed tasks follow the
 // ManualClock, and only the test thread runs anything.
@@ -397,4 +397,4 @@ template <class T>
     return failure == nullptr ? nullptr : &failure->error;
 }
 
-}  // namespace reboot::updates::test
+}  // namespace rb::updates::test

@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "win32.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 // One I/O completion port and the thread that drains it. The listener owns one for all its
 // streams; a client stream owns its own.
@@ -59,4 +59,4 @@ private:
     std::shared_ptr<State> state_;
 };
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

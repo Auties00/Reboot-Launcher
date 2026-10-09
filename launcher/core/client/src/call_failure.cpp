@@ -8,7 +8,7 @@
 #include "messages.hpp"
 #include "reboot/ipc/ipc_errors.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 namespace {
 
@@ -69,4 +69,4 @@ rb_status start_status_for(const CallFailure& failure) noexcept {
     return status_for(failure);
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

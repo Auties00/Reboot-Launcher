@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <vector>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -35,4 +35,4 @@ std::optional<PasswdEntry> read_passwd(u32 uid) {
     }
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

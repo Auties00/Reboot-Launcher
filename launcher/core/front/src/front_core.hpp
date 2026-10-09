@@ -18,11 +18,11 @@
 #include "reboot/front/session_front.hpp"
 #include "route_table.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class ILoopbackPeerInspector;
 }
 
-namespace reboot::front {
+namespace rb::front {
 
 class StrandRoutes;
 
@@ -145,4 +145,4 @@ void accept_connections(const std::shared_ptr<FrontCore>& core,
 [[nodiscard]] std::shared_ptr<boost::asio::ip::tcp::acceptor> bind_loopback(boost::asio::io_context& io, Port port,
                                                                           boost::system::error_code& error);
 
-}  // namespace reboot::front
+}  // namespace rb::front

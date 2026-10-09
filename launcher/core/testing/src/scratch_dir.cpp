@@ -8,7 +8,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 constexpr int kAttempts = 8;
@@ -56,4 +56,4 @@ ScratchDir::~ScratchDir() {
     std::filesystem::remove_all(path_, ignored);
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

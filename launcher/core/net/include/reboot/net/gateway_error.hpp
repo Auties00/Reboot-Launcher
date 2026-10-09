@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 // OnlyPermanentLease is UPnP 725, ExternalPortTaken is UPnP 718.
 enum class GatewayErrorCode : u8 {
@@ -24,4 +24,4 @@ struct GatewayError {
     std::optional<std::string> detail;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

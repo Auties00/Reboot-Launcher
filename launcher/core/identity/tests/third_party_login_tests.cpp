@@ -7,8 +7,8 @@
 #include "reboot/identity/third_party_login.hpp"
 #include "reboot/testing/golden.hpp"
 
-using namespace reboot;
-using namespace reboot::identity;
+using namespace rb;
+using namespace rb::identity;
 namespace json = boost::json;
 
 TEST_CASE("third_party_login matches its golden vectors", "[identity]") {

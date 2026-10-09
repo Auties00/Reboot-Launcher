@@ -16,7 +16,7 @@
 #include "win32.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 namespace {
 
 constexpr DWORD kReadyPoll = 25;
@@ -99,4 +99,4 @@ Result<ports::StartResult> WindowsEngineStarter::ensure_started(const NativePath
     return ports::StartResult::CannotDetach;
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

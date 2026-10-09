@@ -7,7 +7,7 @@
 #include "wide.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 
 Result<std::string> sid_string(PSID sid) {
     wchar_t* text = nullptr;
@@ -28,4 +28,4 @@ Result<std::string> token_user_sid(HANDLE token) {
     return sid_string(reinterpret_cast<const TOKEN_USER*>(buffer.data())->User.Sid);
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

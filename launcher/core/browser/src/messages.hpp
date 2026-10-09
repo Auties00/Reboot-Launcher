@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 REBOOT_MESSAGE_DECL(kInvalidEndpointOverride);
 REBOOT_MESSAGE_DECL(kOffline);
@@ -37,4 +37,4 @@ REBOOT_MESSAGE_DECL(kLinkNotFound);
 REBOOT_MESSAGE_DECL(kTargetUnreachable);
 REBOOT_MESSAGE_DECL(kAddressCheckCancelled);
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

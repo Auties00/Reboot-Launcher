@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/storage/settings_values.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 inline constexpr std::string_view kLoopbackBindAddress = "127.0.0.1";
 inline constexpr std::string_view kLanBindAddress = "0.0.0.0";
@@ -27,4 +27,4 @@ struct BackendConfig {
     [[nodiscard]] static Result<BackendConfig> from_settings(const storage::BackendSettings& settings);
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

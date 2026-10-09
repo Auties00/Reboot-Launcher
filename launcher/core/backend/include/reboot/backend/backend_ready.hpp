@@ -5,7 +5,7 @@
 #include "reboot/contracts/backend.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // Ready was received and this generation's replay was acknowledged.
 struct BackendReady {
@@ -16,4 +16,4 @@ struct BackendReady {
     contracts::backend::ContentVersion content;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

@@ -2,7 +2,7 @@
 
 #include "reboot/publish/listing.hpp"
 
-using namespace reboot::publish;
+using namespace rb::publish;
 
 TEST_CASE("an Unlisted server is always hidden", "[publish]") {
     CHECK(hidden_on_edge(Listing::Unlisted, false));

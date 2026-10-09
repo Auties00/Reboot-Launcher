@@ -14,7 +14,7 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/net/port_mapping_gateway.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -437,4 +437,4 @@ std::vector<PortMapping> PortMapperService::mappings(const SessionId& session) c
     return it->second.mappings;
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

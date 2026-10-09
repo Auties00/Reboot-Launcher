@@ -6,7 +6,7 @@
 
 #include "reboot/host/host_error.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 namespace {
 
@@ -54,4 +54,4 @@ std::vector<HostBan> active_bans(const OperatorPolicy& policy, std::chrono::syst
     return out;
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

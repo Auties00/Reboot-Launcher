@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/runner.hpp"
 
-namespace reboot::os_macos::runner {
+namespace rb::os_macos::runner {
 
 // Covers no capability ids (decisions macos-compat-layer, owner-2).
 // The one shipped macOS runtime: CrossOver-source Wine 11.0 with DXMT as builtin DLLs.
@@ -31,4 +31,4 @@ struct MacRuntimeLayout {
     [[nodiscard]] ports::RuntimeLayout to_runtime_layout() const;
 };
 
-}  // namespace reboot::os_macos::runner
+}  // namespace rb::os_macos::runner

@@ -1,6 +1,6 @@
 #include "reboot/play/launch_plan.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 ports::SessionLaunch LaunchPlan::session_launch(SessionId session) const {
     ports::SessionLaunch launch;
@@ -30,4 +30,4 @@ std::vector<NativePath> parked_for(const builds::BuildLayout& layout) {
     return out;
 }
 
-}  // namespace reboot::play
+}  // namespace rb::play

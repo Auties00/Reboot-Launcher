@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::integration::msg {
+namespace rb::integration::msg {
 
 REBOOT_MESSAGE_DECL(kNoItems);
 REBOOT_MESSAGE_DECL(kForeignEntry);
@@ -39,4 +39,4 @@ REBOOT_MESSAGE_DECL(kPurgeBlocked);
 REBOOT_MESSAGE_DECL(kPurgeUnsafeTarget);
 REBOOT_MESSAGE_DECL(kPurgeFailed);
 
-}  // namespace reboot::integration::msg
+}  // namespace rb::integration::msg

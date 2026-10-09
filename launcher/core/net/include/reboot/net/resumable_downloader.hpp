@@ -13,19 +13,19 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IClock;
 class TimerService;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IDiskInfo;
 class IFileSystem;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::net {
+namespace rb::net {
 
 class HttpClient;
 
@@ -103,4 +103,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

@@ -7,7 +7,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 std::string UpstreamOrigin::to_string() const {
     std::string out = scheme == net::UrlScheme::Https ? "https://" : "http://";
@@ -43,4 +43,4 @@ Result<UpstreamOrigin> parse_upstream_origin(std::string_view url) {
     return std::move(*origin);
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

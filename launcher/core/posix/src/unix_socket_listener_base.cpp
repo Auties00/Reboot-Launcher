@@ -19,7 +19,7 @@
 #include "unistd.hpp"
 #include "unix_endpoint_checks.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 namespace {
 
@@ -210,4 +210,4 @@ void UnixSocketListenerBase::Impl::stop() noexcept {
     on_accept = nullptr;
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

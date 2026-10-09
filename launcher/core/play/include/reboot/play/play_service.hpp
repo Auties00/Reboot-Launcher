@@ -15,87 +15,87 @@
 #include "reboot/play/play_session_state.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IRandom;
 class Redactor;
 class UserRequestRegistry;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 class ISessionHost;
 class ISystemInfo;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::storage {
+namespace rb::storage {
 class Settings;
 }
 
-namespace reboot::builds {
+namespace rb::builds {
 class Library;
 }
 
-namespace reboot::catalog {
+namespace rb::catalog {
 class CatalogService;
 }
 
-namespace reboot::support {
+namespace rb::support {
 class SupportPolicy;
 }
 
-namespace reboot::components {
+namespace rb::components {
 class ComponentStore;
 }
 
-namespace reboot::compat {
+namespace rb::compat {
 class PrefixManager;
 class RuntimeService;
 class WineSessionHost;
-}  // namespace reboot::compat
+}  // namespace rb::compat
 
-namespace reboot::identity {
+namespace rb::identity {
 class IdentityService;
 }
 
-namespace reboot::secrets {
+namespace rb::secrets {
 class SecretService;
 }
 
-namespace reboot::backend {
+namespace rb::backend {
 class BackendService;
 class RemoteLogin;
-}  // namespace reboot::backend
+}  // namespace rb::backend
 
-namespace reboot::front {
+namespace rb::front {
 class LegacyFixedListeners;
 class SessionFront;
-}  // namespace reboot::front
+}  // namespace rb::front
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 class GameChannelListener;
 }
 
-namespace reboot::sessions {
+namespace rb::sessions {
 class SessionRegistry;
 }
 
-namespace reboot::browser {
+namespace rb::browser {
 class GameServerTarget;
 class JoinService;
-}  // namespace reboot::browser
+}  // namespace rb::browser
 
-namespace reboot::host {
+namespace rb::host {
 class HostService;
 }
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 class GameServerBinary;
 }
 
-namespace reboot::play {
+namespace rb::play {
 
 class MatchTargets;
 
@@ -188,4 +188,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

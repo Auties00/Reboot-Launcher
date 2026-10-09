@@ -26,7 +26,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -468,4 +468,4 @@ void Library::resolve_layout(BuildId id, CancelToken token, UniqueFunction<void(
         });
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

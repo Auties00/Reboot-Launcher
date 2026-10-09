@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/random.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // A fresh real directory under the system temp directory, removed with its contents on
@@ -30,4 +30,4 @@ private:
     NativePath path_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

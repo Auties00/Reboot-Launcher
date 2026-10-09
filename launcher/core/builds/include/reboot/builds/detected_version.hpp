@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 struct DetectedVersion {
     GameVersion version;
@@ -21,4 +21,4 @@ struct DetectedVersion {
     bool operator==(const DetectedVersion&) const = default;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

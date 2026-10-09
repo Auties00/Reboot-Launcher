@@ -11,7 +11,7 @@
 #include "strand_routes.hpp"
 #include "tls_client.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -150,4 +150,4 @@ void SessionFront::stop(std::chrono::milliseconds grace, UniqueFunction<void()> 
     });
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

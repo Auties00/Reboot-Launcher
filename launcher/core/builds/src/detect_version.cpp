@@ -9,7 +9,7 @@
 #include "reboot/builds/file_byte_source.hpp"
 #include "reboot/builds/pe_version_reader.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -100,4 +100,4 @@ Result<VersionDetection> detect_version(const BuildLayout& layout, const PeVersi
     return VersionDetection(std::move(needs));
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

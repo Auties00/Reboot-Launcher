@@ -7,7 +7,7 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 // reboot.api.v1 EventPayload up to op_completed = 2, each message kept encoded.
 struct ApiEventPayload {
@@ -18,4 +18,4 @@ struct ApiEventPayload {
 // The OpCompleted event the library delivers from an op's encoded Outcome.
 [[nodiscard]] contracts::ipc::WireEvent op_completed_event(u64 epoch, u64 op_id, std::span<const u8> outcome);
 
-}  // namespace reboot::client
+}  // namespace rb::client

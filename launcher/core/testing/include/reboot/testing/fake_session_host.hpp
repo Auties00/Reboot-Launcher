@@ -11,7 +11,7 @@
 #include "reboot/testing/fake_session_control.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class SessionHostOperation : u8 { Launch, Inject, Resume };
 
@@ -43,4 +43,4 @@ private:
     FaultPlan<SessionHostOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

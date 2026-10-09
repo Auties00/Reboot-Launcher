@@ -9,7 +9,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 Result<std::string> read_text_file(const NativePath& path, std::size_t limit) {
     const posix::UniqueFd fd{::open(path.c_str(), O_RDONLY | O_CLOEXEC)};
@@ -35,4 +35,4 @@ std::optional<std::string> try_read_text_file(const NativePath& path) {
     return std::move(*text);
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

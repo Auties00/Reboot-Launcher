@@ -4,8 +4,8 @@
 #include "reboot/front/session_key.hpp"
 #include "reboot/testing/fake_random.hpp"
 
-using namespace reboot;
-using namespace reboot::front;
+using namespace rb;
+using namespace rb::front;
 
 TEST_CASE("a session key round-trips through lowercase hex", "[front][key]") {
     testing::FakeRandom random(7);

@@ -1,6 +1,6 @@
 #include "client_path_rules.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 namespace {
 
 [[nodiscard]] bool is_app_dir(const NativePath& dir) { return dir.extension() == ".app" && !dir.stem().empty(); }
@@ -25,4 +25,4 @@ ImagePlacement place_image(const NativePath& image) {
     return {.app_bundle = std::nullopt, .exe_dir = image.parent_path()};
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

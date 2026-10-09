@@ -5,8 +5,8 @@
 #include "reboot/identity/account_record.hpp"
 #include "reboot/testing/fake_random.hpp"
 
-using namespace reboot;
-using namespace reboot::identity;
+using namespace rb;
+using namespace rb::identity;
 
 TEST_CASE("account_id is the display name, a dash and the tag", "[identity]") {
     const AccountRecord record{AccountRecordId{}, AccountRole::Client, "Bob", "a1b2c3"};

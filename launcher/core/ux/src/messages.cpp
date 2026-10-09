@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::ux::msg {
+namespace rb::ux::msg {
 
 REBOOT_MESSAGE(kMalformedLanguageTag, "ux.malformed_language_tag", "{value} is not a valid language tag");
 REBOOT_MESSAGE(kMalformedCatalog, "ux.malformed_catalog", "The {language} message catalog is malformed");
@@ -69,4 +69,4 @@ REBOOT_MESSAGE(kHelpPortForwardingPortRange, "ux.help_port_forwarding_port_range
                "Other players cannot reach your server. Forward UDP ports {first_port} to {last_port} on your "
                "router to this computer, or use a VPN such as Playit.");
 
-}  // namespace reboot::ux::msg
+}  // namespace rb::ux::msg

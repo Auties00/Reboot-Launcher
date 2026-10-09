@@ -5,7 +5,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace {
 
@@ -44,4 +44,4 @@ Result<EngineCommandLine> parse_command_line(std::span<const std::string_view> a
     return command_line;
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

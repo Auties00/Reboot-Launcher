@@ -8,7 +8,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ux/language_tag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Capabilities: localization.strings-and-language, localization.+49.
 // ui.language: "system" (the default) or a BCP 47 tag.
@@ -32,4 +32,4 @@ private:
     std::optional<LanguageTag> tag_;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

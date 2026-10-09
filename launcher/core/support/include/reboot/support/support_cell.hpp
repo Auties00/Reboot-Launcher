@@ -9,7 +9,7 @@
 #include "reboot/support/support_reason.hpp"
 #include "reboot/support/support_tier.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // One evaluated cell of the matrix that UIs render.
 struct SupportCell {
@@ -24,4 +24,4 @@ struct SupportCell {
     bool operator==(const SupportCell&) const = default;
 };
 
-}  // namespace reboot::support
+}  // namespace rb::support

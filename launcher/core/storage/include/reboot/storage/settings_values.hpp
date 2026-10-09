@@ -12,7 +12,7 @@
 #include "reboot/storage/enum_names.hpp"
 
 // Typed settings. Member initialisers are the defaults every key resets to.
-namespace reboot::storage {
+namespace rb::storage {
 
 enum class Theme : u8 { System, Light, Dark };
 enum class HostListing : u8 { Listed, Unlisted };
@@ -101,4 +101,4 @@ struct SettingsValues {
     bool operator==(const SettingsValues&) const = default;
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

@@ -9,7 +9,7 @@
 #include "reboot/host/host_profile.hpp"
 #include "reboot/sessions/lease.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Apply to this start only; the profile is not changed. --listed/--unlisted and --port in the CLI.
 struct HostOverrides {
@@ -37,4 +37,4 @@ struct HostStartRequest {
 // of the auto profile (host.auto_profile_listed), and an override port that passes validate().
 [[nodiscard]] Result<void> check_start(const HostStartRequest& request, const HostProfile& profile);
 
-}  // namespace reboot::host
+}  // namespace rb::host

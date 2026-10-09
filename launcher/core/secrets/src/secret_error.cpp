@@ -2,7 +2,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 namespace {
 
@@ -33,4 +33,4 @@ bool has_error(const Diagnostic& diag, SecretError error) noexcept {
     return diag.domain == ErrorDomain::Secrets && diag.is(message_for(error));
 }
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

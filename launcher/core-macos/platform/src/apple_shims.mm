@@ -21,7 +21,7 @@
 // Cocoa's macros and bridged casts are C-style casts.
 #pragma clang diagnostic ignored "-Wold-style-cast"
 
-namespace reboot::os_macos::platform::shims {
+namespace rb::os_macos::platform::shims {
 
 namespace {
 
@@ -249,4 +249,4 @@ bool metal3_supported() {
     }
 }
 
-}  // namespace reboot::os_macos::platform::shims
+}  // namespace rb::os_macos::platform::shims

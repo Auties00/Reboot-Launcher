@@ -16,7 +16,7 @@
 #include "session_mapping.hpp"
 #include "wide.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -157,4 +157,4 @@ Result<std::unique_ptr<ports::IGameSession>> Win32SessionHost::launch(const port
     return std::unique_ptr<ports::IGameSession>(std::move(session));
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

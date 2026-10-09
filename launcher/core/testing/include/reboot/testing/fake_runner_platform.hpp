@@ -16,7 +16,7 @@
 #include "reboot/ports/runner.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class RunnerOperation : u8 { Layout, PostExtract, RunnerLaunch, RuntimeSetup, PrefixCommand };
 
@@ -62,4 +62,4 @@ private:
     FaultPlan<RunnerOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

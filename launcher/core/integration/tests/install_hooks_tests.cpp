@@ -8,8 +8,8 @@
 #include "reboot/integration/uninstall_integration.hpp"
 #include "reboot/testing/fake_registrar.hpp"
 
-using namespace reboot;
-using namespace reboot::integration;
+using namespace rb;
+using namespace rb::integration;
 using ports::IntegrationState;
 using testing::RegistrarOperation;
 

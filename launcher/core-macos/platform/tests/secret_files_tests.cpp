@@ -7,9 +7,9 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "secret_files.hpp"
 
-using namespace reboot::os_macos::platform;
-using reboot::NativePath;
-using reboot::u8;
+using namespace rb::os_macos::platform;
+using rb::NativePath;
+using rb::u8;
 
 namespace {
 
@@ -18,7 +18,7 @@ const NativePath kDir{"/data/state/secrets"};
 }  // namespace
 
 TEST_CASE("a secret file round-trips binary values", "[secret_files]") {
-    reboot::testing::InMemoryFileSystem fs;
+    rb::testing::InMemoryFileSystem fs;
     SecretFiles files(kDir, fs);
     const std::vector<u8> value{0x00, 'p', 0xFF, 0x00};
     REQUIRE(files.put("account/1/password", value));
@@ -29,7 +29,7 @@ TEST_CASE("a secret file round-trips binary values", "[secret_files]") {
 }
 
 TEST_CASE("a missing secret file is nullopt and erasing it succeeds", "[secret_files]") {
-    reboot::testing::InMemoryFileSystem fs;
+    rb::testing::InMemoryFileSystem fs;
     SecretFiles files(kDir, fs);
     auto read = files.get("never-written");
     REQUIRE(read);
@@ -38,7 +38,7 @@ TEST_CASE("a missing secret file is nullopt and erasing it succeeds", "[secret_f
 }
 
 TEST_CASE("erase removes the file and put overwrites it", "[secret_files]") {
-    reboot::testing::InMemoryFileSystem fs;
+    rb::testing::InMemoryFileSystem fs;
     SecretFiles files(kDir, fs);
     REQUIRE(files.put("k", std::vector<u8>{1}));
     REQUIRE(files.put("k", std::vector<u8>{2, 3}));
@@ -53,7 +53,7 @@ TEST_CASE("erase removes the file and put overwrites it", "[secret_files]") {
 }
 
 TEST_CASE("file names are bounded hashes inside the directory", "[secret_files]") {
-    reboot::testing::InMemoryFileSystem fs;
+    rb::testing::InMemoryFileSystem fs;
     SecretFiles files(kDir, fs);
     const NativePath path = files.path_of(std::string(1000, '/'));
     CHECK(path.parent_path() == kDir);

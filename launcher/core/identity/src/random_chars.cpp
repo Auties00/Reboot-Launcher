@@ -5,7 +5,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 std::string random_chars(IRandom& random, std::string_view alphabet, std::size_t count) {
     // Bytes at or past the last whole multiple of the alphabet size are redrawn, so no char is favoured.
@@ -31,4 +31,4 @@ std::string keep_ascii_alnum(std::string_view text) {
     return out;
 }
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

@@ -7,7 +7,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 using NativePath = std::filesystem::path;
 
@@ -26,4 +26,4 @@ struct WirePath {
 // Lossy; never feed the result back into a path.
 [[nodiscard]] std::string display_utf8(const NativePath& path);
 
-}  // namespace reboot
+}  // namespace rb

@@ -2,7 +2,7 @@
 
 #include "reboot/contracts/winhost.hpp"
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 
 // Lays `overlay` (a UTF-16LE environment block) over `base` (a double-NUL-terminated block): an
 // overlay variable replaces the base one of the same name, compared case-insensitively. The
@@ -14,4 +14,4 @@ namespace reboot::os_windows::winhost {
 // overlay_environment over this process's own environment.
 [[nodiscard]] contracts::winhost::Bytes overlay_own_environment(const contracts::winhost::Bytes& overlay);
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

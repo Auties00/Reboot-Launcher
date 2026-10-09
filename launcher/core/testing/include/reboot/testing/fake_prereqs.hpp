@@ -9,7 +9,7 @@
 #include "reboot/ports/os_services.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class PrereqOperation : u8 { Remediate };
 
@@ -32,4 +32,4 @@ private:
     FaultPlan<PrereqOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

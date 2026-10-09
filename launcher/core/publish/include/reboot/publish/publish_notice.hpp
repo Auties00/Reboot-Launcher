@@ -3,7 +3,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // IdentityRotated: UNAUTHORIZED replaced the server id, so the share link changed.
 // HostedElsewhere: CONFLICT, the id is now published from another connection.
@@ -19,4 +19,4 @@ struct PublishNotice {
     Diagnostic message;
 };
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

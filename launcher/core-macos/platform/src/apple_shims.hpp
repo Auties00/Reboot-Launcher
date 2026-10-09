@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 
 // C++ entry points into the Objective-C++ shims (src/*.mm), so the adapters stay .cpp.
-namespace reboot::os_macos::platform::shims {
+namespace rb::os_macos::platform::shims {
 
 // NSWorkspace and NSFileManager, for MacShell and the prerequisite settings panes.
 [[nodiscard]] Result<void> workspace_open(std::string_view url);
@@ -46,4 +46,4 @@ struct VolumeKeys {
 // MTLCreateSystemDefaultDevice supportsFamily:MTLGPUFamilyMetal3.
 [[nodiscard]] bool metal3_supported();
 
-}  // namespace reboot::os_macos::platform::shims
+}  // namespace rb::os_macos::platform::shims

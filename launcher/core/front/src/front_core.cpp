@@ -8,7 +8,7 @@
 
 #include "reboot/foundation/log.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -113,4 +113,4 @@ void accept_connections(const std::shared_ptr<FrontCore>& core, const std::share
     });
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

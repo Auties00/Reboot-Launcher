@@ -8,7 +8,7 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/process/env_layer.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 class EnvBuilder;
 
@@ -47,4 +47,4 @@ private:
     std::vector<std::string> denied_;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

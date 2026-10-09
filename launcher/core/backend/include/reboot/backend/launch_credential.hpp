@@ -7,7 +7,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 // The session is the lease's: a credential is minted only for a configured session.
 struct LaunchCredentialRequest {
@@ -24,4 +24,4 @@ struct LaunchCredential {
     std::chrono::system_clock::time_point expires_at;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

@@ -8,8 +8,8 @@
 #include "reboot/publish/metadata_patch.hpp"
 #include "reboot/publish/publish_request.hpp"
 
-using namespace reboot;
-using namespace reboot::publish;
+using namespace rb;
+using namespace rb::publish;
 
 namespace {
 

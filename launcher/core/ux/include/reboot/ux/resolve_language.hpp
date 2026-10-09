@@ -8,7 +8,7 @@
 #include "reboot/ux/language_preference.hpp"
 #include "reboot/ux/language_tag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 enum class LanguageSource : u8 { Explicit, Os, Default };
 
@@ -26,4 +26,4 @@ struct ResolvedLanguage {
                                                 std::span<const LanguageTag> os_preferred,
                                                 std::span<const LanguageInfo> shipped);
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

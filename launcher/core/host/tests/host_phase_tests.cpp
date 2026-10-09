@@ -2,8 +2,8 @@
 
 #include "reboot/host/host_phase.hpp"
 
-using namespace reboot;
-using namespace reboot::host;
+using namespace rb;
+using namespace rb::host;
 
 using sessions::SessionPhase;
 

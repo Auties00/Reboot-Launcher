@@ -6,7 +6,7 @@
 
 #include "remote_injector.hpp"
 
-using namespace reboot::os_windows::win32session;
+using namespace rb::os_windows::win32session;
 using namespace std::chrono_literals;
 
 TEST_CASE("wait_millis never returns INFINITE and clamps non-positive to zero") {

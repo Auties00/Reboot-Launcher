@@ -15,7 +15,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 // `wine_server` marks a port held by wineserver on behalf of a Windows process.
 struct PortOwner {
@@ -128,4 +128,4 @@ public:
                                                                      QuicCallbacks callbacks) = 0;
 };
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

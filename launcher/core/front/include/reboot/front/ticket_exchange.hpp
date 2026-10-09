@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/front/peer_user.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 inline constexpr std::string_view kOauthTokenPath = "/account/api/oauth/token";
 
@@ -67,4 +67,4 @@ private:
     TicketState state_ = TicketState::Available;
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

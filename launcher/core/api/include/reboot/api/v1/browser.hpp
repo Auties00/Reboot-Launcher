@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 // Values match rbsb/1.
 enum class Region : u32 {
@@ -176,12 +176,12 @@ class IBrowserHandler {
 public:
     virtual ~IBrowserHandler() = default;
 
-    virtual ::reboot::Result<BrowserOpenViewResponse> open_view(const CallContext& context, const BrowserOpenViewRequest& request) = 0;
-    virtual ::reboot::Result<BrowserUpdateViewResponse> update_view(const CallContext& context, const BrowserUpdateViewRequest& request) = 0;
-    virtual ::reboot::Result<BrowserCloseViewResponse> close_view(const CallContext& context, const BrowserCloseViewRequest& request) = 0;
-    virtual ::reboot::Result<BrowserStateResponse> state(const CallContext& context, const BrowserStateRequest& request) = 0;
+    virtual ::rb::Result<BrowserOpenViewResponse> open_view(const CallContext& context, const BrowserOpenViewRequest& request) = 0;
+    virtual ::rb::Result<BrowserUpdateViewResponse> update_view(const CallContext& context, const BrowserUpdateViewRequest& request) = 0;
+    virtual ::rb::Result<BrowserCloseViewResponse> close_view(const CallContext& context, const BrowserCloseViewRequest& request) = 0;
+    virtual ::rb::Result<BrowserStateResponse> state(const CallContext& context, const BrowserStateRequest& request) = 0;
     // Completes with BrowserResolveResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_resolve(const CallContext& context, const BrowserResolveRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_resolve(const CallContext& context, const BrowserResolveRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

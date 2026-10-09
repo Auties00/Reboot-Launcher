@@ -7,7 +7,7 @@
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/runtime_document.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 struct EngineInfo;
 
@@ -36,4 +36,4 @@ private:
     storage::DocumentStore<storage::RuntimeDocument>& document_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

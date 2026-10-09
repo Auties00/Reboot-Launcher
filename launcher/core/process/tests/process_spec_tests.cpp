@@ -9,8 +9,8 @@
 #include "reboot/process/restart_policy.hpp"
 #include "reboot/process/windows_command_line.hpp"
 
-using namespace reboot;
-using namespace reboot::process;
+using namespace rb;
+using namespace rb::process;
 
 namespace {
 

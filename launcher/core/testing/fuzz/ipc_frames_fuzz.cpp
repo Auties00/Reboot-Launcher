@@ -7,14 +7,14 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/framing.hpp"
 
-namespace common = reboot::contracts::common;
-namespace ipc = reboot::contracts::ipc;
+namespace common = rb::contracts::common;
+namespace ipc = rb::contracts::ipc;
 
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t* data, std::size_t size) {
-    reboot::testing::fuzz_frames<common::Ping, common::Pong, ipc::Hello, ipc::Call, ipc::Start, ipc::Cancel,
+    rb::testing::fuzz_frames<common::Ping, common::Pong, ipc::Hello, ipc::Call, ipc::Start, ipc::Cancel,
                                  ipc::Attach, ipc::Release, ipc::Subscribe, ipc::Unsubscribe, ipc::Credit,
                                  ipc::SecretPut, ipc::SecretReveal, ipc::LogWrite, ipc::Goodbye, ipc::HelloAck,
                                  ipc::Reply, ipc::Started, ipc::OpResult, ipc::EventBatch, ipc::Resync,
-                                 ipc::ForegroundHint>(std::span<const reboot::u8>(data, size), reboot::kIpcFrameCap);
+                                 ipc::ForegroundHint>(std::span<const rb::u8>(data, size), rb::kIpcFrameCap);
     return 0;
 }

@@ -2,7 +2,7 @@
 #include "reboot/api/v1/method_table.hpp"
 #include "reboot/contracts/ipc.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 static_assert(kEngineStatus == contracts::ipc::kEngineStatus);
 static_assert(kEngineDrain == contracts::ipc::kEngineDrain);
@@ -12,4 +12,4 @@ static_assert(kSessionsList == contracts::ipc::kSessionsList);
 static_assert(kSessionsStop == contracts::ipc::kSessionsStop);
 static_assert(contracts::ipc::kBootstrapMethodIds.size() == 6, "a new bootstrap method needs an assertion here");
 
-}  // namespace reboot::api
+}  // namespace rb::api

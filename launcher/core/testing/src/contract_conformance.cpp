@@ -28,7 +28,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/testing/frame_log.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 namespace asio = boost::asio;
@@ -453,4 +453,4 @@ ConformanceReport ContractConformance::run_game_server(const ContractSubject& su
     return report;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

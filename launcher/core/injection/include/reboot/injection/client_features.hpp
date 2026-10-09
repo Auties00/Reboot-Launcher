@@ -4,7 +4,7 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/injection/net_mode.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 // The ClientDllConfig wire struct, so game_channel sends the plan's value unchanged.
 using ClientFeatures = contracts::game_client::DllFeatures;
@@ -22,4 +22,4 @@ using ClientFeatures = contracts::game_client::DllFeatures;
     };
 }
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

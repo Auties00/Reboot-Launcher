@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // The foundation has no named digest type; this matches contracts::winhost::InjectSpec::sha256.
 using Sha256Digest = std::array<u8, 32>;
@@ -41,4 +41,4 @@ struct ComponentRef {
     auto operator<=>(const ComponentRef&) const = default;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

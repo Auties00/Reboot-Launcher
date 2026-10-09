@@ -5,7 +5,7 @@
 #include "proc_stat.hpp"
 
 using namespace std::string_view_literals;
-using namespace reboot::os_linux::platform;
+using namespace rb::os_linux::platform;
 
 namespace {
 

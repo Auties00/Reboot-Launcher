@@ -11,7 +11,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace json = boost::json;
 
@@ -173,4 +173,4 @@ SerialFloors serials_from_json(const json::value* value) {
     return floors;
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

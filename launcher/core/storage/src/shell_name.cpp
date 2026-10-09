@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 namespace {
 
@@ -30,4 +30,4 @@ Result<ShellName> ShellName::parse(std::string_view text) {
     return ShellName{std::string(text)};
 }
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

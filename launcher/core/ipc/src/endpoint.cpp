@@ -4,7 +4,7 @@
 
 #include "reboot/ipc/ipc_errors.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 namespace {
 
@@ -50,4 +50,4 @@ Result<std::string> endpoint_for(const ports::PeerIdentity& user, std::string_vi
     return name;
 }
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

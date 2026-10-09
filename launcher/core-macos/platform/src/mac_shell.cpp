@@ -6,7 +6,7 @@
 #include "https_url.hpp"
 #include "messages.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -34,4 +34,4 @@ Result<void> MacShell::reveal(const NativePath& path) {
 
 Result<void> MacShell::trash(const NativePath& path) { return shims::file_manager_trash(path); }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

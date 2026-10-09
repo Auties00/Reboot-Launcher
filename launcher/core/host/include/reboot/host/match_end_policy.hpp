@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/gameserver/game_server_description.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 enum class MatchEndAction : u8 { Restart, Shutdown, None };
 
@@ -31,4 +31,4 @@ enum class RestartMethod : u8 { InProcessReset, Respawn };
     return capabilities.in_process_reset ? RestartMethod::InProcessReset : RestartMethod::Respawn;
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

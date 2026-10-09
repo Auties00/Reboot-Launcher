@@ -6,7 +6,7 @@
 #include "reboot/components/component_ref.hpp"
 #include "reboot/contracts/backend.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // `runner_pin` is the pinned runtime component id; empty for the Native runner.
 struct PlayCellInputs {
@@ -28,4 +28,4 @@ struct HostCellInputs {
 // The exact inputs a Tested verdict holds for; any change drops the cell to Untested.
 using CellInputs = std::variant<PlayCellInputs, HostCellInputs>;
 
-}  // namespace reboot::support
+}  // namespace rb::support

@@ -15,18 +15,18 @@
 #include "reboot/client.h"
 #include "wire/codec.hpp"
 
-using reboot::Diagnostic;
-using reboot::ErrorDomain;
-using reboot::ErrorKind;
-using reboot::Result;
-using reboot::u8;
-using reboot::u64;
-using namespace reboot::client;
+using rb::Diagnostic;
+using rb::ErrorDomain;
+using rb::ErrorKind;
+using rb::Result;
+using rb::u8;
+using rb::u64;
+using namespace rb::client;
 
 namespace {
 
 [[nodiscard]] Diagnostic invalid_argument(std::string_view name) {
-    return reboot::make_diag(ErrorDomain::Client, msg::kInvalidArgument).arg("name", name).kind(ErrorKind::InvalidInput);
+    return rb::make_diag(ErrorDomain::Client, msg::kInvalidArgument).arg("name", name).kind(ErrorKind::InvalidInput);
 }
 
 // A null pointer is only valid with a zero size.
@@ -231,10 +231,10 @@ rb_status rb_secret_reveal(rb_ctx* ctx, const uint8_t* target, size_t target_siz
         if (ctx == nullptr) return fail(invalid_argument("ctx"));
         if (!bytes) return fail(invalid_argument("target"));
         if (auto ok = check_output(out, "out"); !ok) return fail(ok.error());
-        CompletionLatch<CallResult<reboot::SecretBytes>> latch;
+        CompletionLatch<CallResult<rb::SecretBytes>> latch;
         ctx->context->reveal_secret(
-            *bytes, [&latch](CallResult<reboot::SecretBytes> result) { latch.set(std::move(result)); });
-        CallResult<reboot::SecretBytes> result = latch.wait();
+            *bytes, [&latch](CallResult<rb::SecretBytes> result) { latch.set(std::move(result)); });
+        CallResult<rb::SecretBytes> result = latch.wait();
         if (!result) return fail(result.error());
         const auto& secret = result->reveal();
         fill_output(*out, std::vector<u8>(secret.begin(), secret.end()));
@@ -246,7 +246,7 @@ void rb_log_write(rb_ctx* ctx, int32_t level, const char* utf8, size_t size) noe
     guarded("rb_log_write", [&] {
         if (ctx == nullptr || (utf8 == nullptr && size != 0) || level < RB_LOG_TRACE || level > RB_LOG_ERROR) return;
         const std::string_view text = utf8 == nullptr ? std::string_view{} : std::string_view{utf8, size};
-        ctx->context->log_write(static_cast<reboot::LogLevel>(level), text);
+        ctx->context->log_write(static_cast<rb::LogLevel>(level), text);
     });
 }
 
@@ -266,5 +266,5 @@ void rb_buffer_release(rb_buffer* buffer) noexcept {
 
 }  // extern "C"
 
-static_assert(RB_LOG_TRACE == static_cast<int>(reboot::LogLevel::Trace));
-static_assert(RB_LOG_ERROR == static_cast<int>(reboot::LogLevel::Error));
+static_assert(RB_LOG_TRACE == static_cast<int>(rb::LogLevel::Trace));
+static_assert(RB_LOG_ERROR == static_cast<int>(rb::LogLevel::Error));

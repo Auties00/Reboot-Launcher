@@ -12,16 +12,16 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 }
 
-namespace reboot::net {
+namespace rb::net {
 class AddressResolver;
 class UdpBeaconProber;
-}  // namespace reboot::net
+}  // namespace rb::net
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // Loopback or 0.0.0.0, compared on the address only, so "127.0.0.1:7778" is local too.
 [[nodiscard]] bool is_local_host(const Endpoint& endpoint) noexcept;
@@ -91,4 +91,4 @@ private:
     std::shared_ptr<GameServerTarget*> self_;
 };
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

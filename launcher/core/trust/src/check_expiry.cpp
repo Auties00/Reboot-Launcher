@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 std::optional<Diagnostic> check_expiry(SignedDocumentKind kind, std::chrono::system_clock::time_point expires_at,
                                        std::chrono::system_clock::time_point now) {
@@ -20,4 +20,4 @@ std::optional<Diagnostic> check_expiry(SignedDocumentKind kind, std::chrono::sys
         .build();
 }
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

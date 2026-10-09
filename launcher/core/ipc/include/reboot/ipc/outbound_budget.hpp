@@ -7,11 +7,11 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class IClock;
 }
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 // Covers no capability ids. EventBatch bytes sent and not yet credited back; IByteStream reports
 // no queue, and the client credits every event as soon as it is taken. Strand-only.
@@ -37,4 +37,4 @@ private:
     std::optional<SteadyTime> last_overflow_;
 };
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

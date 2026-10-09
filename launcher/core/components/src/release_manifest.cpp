@@ -11,7 +11,7 @@
 #include "json_fields.hpp"
 #include "messages.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 namespace {
 
@@ -224,4 +224,4 @@ Result<ReleaseManifest> parse_release_manifest(std::span<const u8> body) {
     return manifest;
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

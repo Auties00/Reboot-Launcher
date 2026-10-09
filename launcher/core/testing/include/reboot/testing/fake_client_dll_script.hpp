@@ -12,7 +12,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/testing/script_steps.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 using ClientDllStep =
     std::variant<ScriptPause, ScriptDisconnect, ScriptStopPonging, contracts::game_client::Loaded,
@@ -43,4 +43,4 @@ struct FakeClientDllScript {
     bool exit_on_shutdown = true;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

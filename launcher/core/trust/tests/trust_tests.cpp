@@ -20,8 +20,8 @@
 #include "reboot/trust/trust_error.hpp"
 #include "reboot/trust/verify_signed.hpp"
 
-using namespace reboot;
-using namespace reboot::trust;
+using namespace rb;
+using namespace rb::trust;
 
 namespace {
 

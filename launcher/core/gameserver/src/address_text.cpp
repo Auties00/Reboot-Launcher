@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/net_types.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 bool is_ip_or_cidr(std::string_view text) {
     const std::size_t slash = text.find('/');
@@ -20,4 +20,4 @@ bool is_ip_or_cidr(std::string_view text) {
     return prefix <= (address->is_v4() ? 32u : 128u);
 }
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

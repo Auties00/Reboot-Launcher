@@ -7,7 +7,7 @@
 #include "reboot/integration/entry_state.hpp"
 #include "reboot/integration/integration_kind.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 // Read from the entry itself each time; only `declined` comes from state.json.
 struct EntryStatus {
@@ -20,4 +20,4 @@ struct EntryStatus {
     std::optional<Diagnostic> detail;
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

@@ -21,7 +21,7 @@
 #include "raw_stdio.hpp"
 #include "stdio_peer_core.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 namespace asio = boost::asio;
@@ -383,4 +383,4 @@ int fake_game_server_main(int argc, char** argv) {
     });
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

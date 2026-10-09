@@ -18,7 +18,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::host::test {
+namespace rb::host::test {
 
 // The strand beside real worker threads: workers post from their threads, timed tasks follow the
 // ManualClock, and only the test thread runs anything.
@@ -128,4 +128,4 @@ private:
     return id;
 }
 
-}  // namespace reboot::host::test
+}  // namespace rb::host::test

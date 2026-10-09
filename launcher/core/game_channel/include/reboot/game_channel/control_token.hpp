@@ -7,7 +7,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 inline constexpr std::size_t kControlTokenSize = 32;
 
@@ -32,4 +32,4 @@ private:
     Secret<std::array<u8, kControlTokenSize>> bytes_;
 };
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

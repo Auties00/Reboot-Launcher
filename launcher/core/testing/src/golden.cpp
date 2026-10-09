@@ -13,7 +13,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 constexpr std::size_t kWindow = 16;
@@ -45,4 +45,4 @@ std::string golden_mismatch(std::span<const u8> expected, std::span<const u8> ac
                        expected.size(), actual.size(), hex_window(expected, offset), hex_window(actual, offset));
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

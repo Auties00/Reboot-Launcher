@@ -5,7 +5,7 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/updates/activity_probe.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 // Payload of UserRequestKind::ConfirmStopSessions raised by Updates.apply(now).
 struct ConfirmStopSessionsPrompt {
@@ -18,4 +18,4 @@ struct ConfirmStopSessionsAnswer {
     bool accept = false;
 };
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

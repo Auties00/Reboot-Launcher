@@ -6,7 +6,7 @@
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 // What a token admits; at most one live token and one connection per key.
 // `module` is the peer's file name (rb_client.dll, reboot-winhost.exe).
@@ -18,4 +18,4 @@ struct PeerKey {
     auto operator<=>(const PeerKey&) const = default;
 };
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

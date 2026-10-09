@@ -10,14 +10,14 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/os_windows/winhost/winhost_exit.hpp"
 
-using namespace reboot;
-using namespace reboot::os_windows::winhost;
-using reboot::os_windows::winhost::test::base64url;
-using reboot::os_windows::winhost::test::LoopbackEngine;
-using reboot::os_windows::winhost::test::system_path;
-using reboot::os_windows::winhost::test::utf16;
-namespace wh = reboot::contracts::winhost;
-namespace common = reboot::contracts::common;
+using namespace rb;
+using namespace rb::os_windows::winhost;
+using rb::os_windows::winhost::test::base64url;
+using rb::os_windows::winhost::test::LoopbackEngine;
+using rb::os_windows::winhost::test::system_path;
+using rb::os_windows::winhost::test::utf16;
+namespace wh = rb::contracts::winhost;
+namespace common = rb::contracts::common;
 
 namespace {
 

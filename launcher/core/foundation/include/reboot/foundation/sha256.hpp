@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 // Self-contained so reboot_client and winhost hash without OpenSSL.
 class Sha256 {
@@ -34,4 +34,4 @@ private:
 // Runs in time that depends only on the lengths.
 [[nodiscard]] bool constant_time_equal(std::span<const u8> a, std::span<const u8> b) noexcept;
 
-}  // namespace reboot
+}  // namespace rb

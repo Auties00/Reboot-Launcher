@@ -11,7 +11,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; IResolver over blocking getaddrinfo on kThreads private threads.
 // A deliberate exception to the WorkerPool rule for blocking DNS: make_platform gets no
@@ -36,4 +36,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::os_linux::runner {
+namespace rb::os_linux::runner {
 
 REBOOT_MESSAGE_DECL(kRunnerKindUnsupported);
 REBOOT_MESSAGE_DECL(kUmuRunMissing);
@@ -18,4 +18,4 @@ REBOOT_MESSAGE_DECL(kSlrSetupCancelled);
 REBOOT_MESSAGE_DECL(kSlrRuntimeUnknown);
 REBOOT_MESSAGE_DECL(kSlrBuildMissing);
 
-}  // namespace reboot::os_linux::runner
+}  // namespace rb::os_linux::runner

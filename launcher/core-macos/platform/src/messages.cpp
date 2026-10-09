@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // errno failures use posix::call_failed; these carry an OSStatus or NSError code.
 REBOOT_MESSAGE(kCallFailed, "platform.call_failed", "{call} failed.");
@@ -43,4 +43,4 @@ REBOOT_MESSAGE(kHelperFailed, "platform.helper_failed", "{program} exited with s
 REBOOT_MESSAGE(kHelperTimeout, "platform.helper_timeout", "{program} did not finish within {deadline}.");
 REBOOT_MESSAGE(kNoGateway, "platform.no_gateway", "No default gateway was found to test Local Network access.");
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

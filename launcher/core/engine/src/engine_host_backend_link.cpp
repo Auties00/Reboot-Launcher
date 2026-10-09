@@ -13,7 +13,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/secret.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace {
 
@@ -89,4 +89,4 @@ void EngineHostBackendLink::release(SessionId session) {
     lease.release();
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

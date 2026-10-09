@@ -9,7 +9,7 @@
 #include "reboot/ports/ipc.hpp"
 #include "reboot/posix/unix_socket_listener_base.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 // Covers no capability ids; IIpcListener for the engine over
 // <user_temp_dir>/reboot-launcher/<hash16>.sock, where `user_temp_dir` is
@@ -30,4 +30,4 @@ private:
     NativePath user_temp_dir_;
 };
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

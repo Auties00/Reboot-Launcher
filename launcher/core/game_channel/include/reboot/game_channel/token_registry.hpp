@@ -11,12 +11,12 @@
 #include "reboot/game_channel/control_token.hpp"
 #include "reboot/game_channel/peer_key.hpp"
 
-namespace reboot {
+namespace rb {
 class IRandom;
 class Redactor;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 // Covers no capability ids (decision game-control-channel).
 // Strand-only. Mints tokens and routes a presented token to its key. Each token's
@@ -47,4 +47,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

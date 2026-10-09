@@ -6,7 +6,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 enum class CancelReason : u8 { User, Deadline, Shutdown, Disconnect, Superseded };
 
@@ -68,4 +68,4 @@ private:
     std::shared_ptr<detail::CancelState> state_;
 };
 
-}  // namespace reboot
+}  // namespace rb

@@ -11,7 +11,7 @@
 #include "reboot/os_windows/win32session/inject_error.hpp"
 #include "reboot/os_windows/win32session/spawn_error.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 // Emitted on the pipe-reader and exit-wait threads, so the callback must be thread-safe. These are
 // the winhost wire structs so the engine (native Windows) and reboot-winhost.exe (under Wine) emit
@@ -70,4 +70,4 @@ public:
 [[nodiscard]] std::expected<std::unique_ptr<Win32Session>, SpawnError> launch_session(
     const contracts::winhost::SpawnGame& spawn, EventSink on_event);
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

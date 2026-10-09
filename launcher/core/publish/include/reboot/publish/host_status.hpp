@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // The edge's verdict on a registered entry. AwaitingProbe: no probe reply yet, so the edge keeps the
 // entry hidden. LiveUnreachable: probes are failing; the edge hides the entry after 3 failures.
@@ -14,4 +14,4 @@ enum class HostStatus : u8 { AwaitingProbe, Live, LiveUnreachable };
     return probe_failures == 0 ? HostStatus::AwaitingProbe : HostStatus::LiveUnreachable;
 }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

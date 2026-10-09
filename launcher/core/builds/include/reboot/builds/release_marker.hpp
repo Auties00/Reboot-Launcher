@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // The longest tail kept; real ones are under 32 characters.
 inline constexpr std::size_t kReleaseTailCap = 64;
@@ -27,4 +27,4 @@ struct ReleaseMarker {
 // odd offsets, and takes the first match whose tail is printable ASCII.
 [[nodiscard]] std::optional<ReleaseMarker> find_release_marker(std::span<const u8> utf16le);
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

@@ -12,7 +12,7 @@
 
 // The JSON forms of what the engine keeps in state.json for services that only hand it a value.
 // Reading never fails: a malformed value reads as absent or default.
-namespace reboot::engine {
+namespace rb::engine {
 
 [[nodiscard]] boost::json::value join_target_to_json(const std::optional<browser::JoinTarget>& target);
 [[nodiscard]] std::optional<browser::JoinTarget> join_target_from_json(const boost::json::value* value);
@@ -31,4 +31,4 @@ struct SerialFloors {
 [[nodiscard]] boost::json::value serials_to_json(const SerialFloors& floors);
 [[nodiscard]] SerialFloors serials_from_json(const boost::json::value* value);
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

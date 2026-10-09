@@ -23,7 +23,7 @@
 #include "reboot/ports/os_services.hpp"
 #include "url.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -453,4 +453,4 @@ void CurlHttpTransport::perform(ports::HttpRequest request, ports::HttpCallbacks
     curl_multi_wakeup(impl->multi);
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

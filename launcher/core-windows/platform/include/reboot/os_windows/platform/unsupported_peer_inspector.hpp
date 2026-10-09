@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; Windows exposes no loopback socket owner uid, so this always fails
 // with platform.not_supported.
@@ -16,4 +16,4 @@ public:
     Result<std::optional<u32>> peer_uid(Endpoint local, Endpoint remote) override;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

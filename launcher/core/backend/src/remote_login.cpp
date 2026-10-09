@@ -17,7 +17,7 @@
 #include "reboot/net/http_client.hpp"
 #include "reboot/secrets/secret_target.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -192,4 +192,4 @@ void RemoteLogin::login(RemoteLoginRequest request, CancelToken token, UniqueFun
     impl_->require(std::move(login), reason);
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

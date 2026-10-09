@@ -10,13 +10,13 @@
 #include "reboot/sessions/shutdown_report.hpp"
 #include "reboot/sessions/shutdown_step.hpp"
 
-namespace reboot {
+namespace rb {
 class IClock;
 class Executor;
 class TimerService;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 struct ShutdownStepContext {
     ShutdownCause cause = ShutdownCause::Requested;
@@ -53,4 +53,4 @@ private:
     std::unique_ptr<State> state_;
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

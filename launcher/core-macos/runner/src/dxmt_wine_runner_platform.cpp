@@ -13,7 +13,7 @@
 #include "reboot/os_macos/runner/mac_runtime_layout.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::runner {
+namespace rb::os_macos::runner {
 
 namespace {
 
@@ -150,4 +150,4 @@ std::optional<UserRequestKind> DxmtWineRunnerPlatform::pending_prerequisite() {
     return std::nullopt;
 }
 
-}  // namespace reboot::os_macos::runner
+}  // namespace rb::os_macos::runner

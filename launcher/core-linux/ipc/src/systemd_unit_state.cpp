@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 constexpr std::string_view kStreamSuffix = " (Stream)";
@@ -31,4 +31,4 @@ SystemdUnitState SystemdUnitState::parse(std::string_view show_output) {
     return state;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

@@ -10,7 +10,7 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; IUpdateApplier for the app bundle; Velopack's restart would open the GUI.
 class MacVelopackApplier final : public ports::IUpdateApplier {
@@ -37,4 +37,4 @@ private:
     std::optional<SemVer> staged_version_;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

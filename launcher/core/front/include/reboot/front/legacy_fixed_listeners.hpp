@@ -15,17 +15,17 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::net {
+namespace rb::net {
 class PortOwnerService;
 }
 
-namespace reboot::front {
+namespace rb::front {
 
 class SessionFront;
 
@@ -75,4 +75,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

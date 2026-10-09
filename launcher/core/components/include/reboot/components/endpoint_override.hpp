@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/net_types.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // The rbsb endpoint named by the signed manifest, read in place of the compiled-in
 // sb.rebootfn.org:443 even when no update is offered.
@@ -15,4 +15,4 @@ struct EndpointOverride {
     bool operator==(const EndpointOverride&) const = default;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

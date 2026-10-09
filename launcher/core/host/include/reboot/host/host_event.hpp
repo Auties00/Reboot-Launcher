@@ -13,7 +13,7 @@
 #include "reboot/host/match_end_policy.hpp"
 #include "reboot/host/port_block.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // EventKind::HostPhaseChanged. `reason` explains Failed, LiveUnpublished and a Restarting that
 // fell back to a respawn.
@@ -69,4 +69,4 @@ using HostEvent = std::variant<HostPhaseChanged, HostListening, MatchEvent, Play
     return std::visit([](const auto& payload) -> const SessionId& { return payload.session; }, event);
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

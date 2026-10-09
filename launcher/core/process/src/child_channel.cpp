@@ -6,7 +6,7 @@
 #include "messages.hpp"
 #include "reboot/contracts/common.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 ChildChannel::ChildChannel(std::string program, ChildHandshake& handshake, Writer write, FrameSink on_frame)
     : program_(std::move(program)), handshake_(handshake), write_(std::move(write)), on_frame_(std::move(on_frame)) {}
@@ -66,4 +66,4 @@ void ChildChannel::send(std::span<const u8> frame) {
     if (phase_ == ChannelPhase::Open) write_(frame);
 }
 
-}  // namespace reboot::process
+}  // namespace rb::process

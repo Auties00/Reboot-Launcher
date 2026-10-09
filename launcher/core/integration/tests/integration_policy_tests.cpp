@@ -7,8 +7,8 @@
 #include "reboot/integration/integration_targets.hpp"
 #include "reboot/ports/os_services.hpp"
 
-using namespace reboot;
-using namespace reboot::integration;
+using namespace rb;
+using namespace rb::integration;
 
 namespace {
 

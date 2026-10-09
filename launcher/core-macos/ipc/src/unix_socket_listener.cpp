@@ -7,7 +7,7 @@
 #include "darwin_peer_credentials.hpp"
 #include "engine_socket_path.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 UnixSocketListener::UnixSocketListener(NativePath user_temp_dir)
     : UnixSocketListenerBase(posix::PeerCredentialCheck{[](int fd) { return read_darwin_peer(fd); },
@@ -21,4 +21,4 @@ Result<void> UnixSocketListener::listen(std::string_view endpoint_name,
     return UnixSocketListenerBase::listen(endpoint_name, std::move(on_accept));
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; IPrerequisiteProbe for play under Wine and for hosting. Blocking.
 class MacPrerequisiteProbe final : public ports::IPrerequisiteProbe {
@@ -37,4 +37,4 @@ private:
     bool local_network_denied_ = false;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

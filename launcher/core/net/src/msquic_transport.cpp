@@ -20,7 +20,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -486,4 +486,4 @@ Result<std::unique_ptr<ports::IQuicConnection>> MsQuicTransport::open_connection
     return std::make_unique<MsQuicConnection>(impl_->registry, std::move(connection));
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

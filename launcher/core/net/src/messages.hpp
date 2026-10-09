@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 REBOOT_MESSAGE_DECL(kInvalidUrl);
 REBOOT_MESSAGE_DECL(kDnsFailed);
@@ -56,4 +56,4 @@ REBOOT_MESSAGE_DECL(kQuicUdpBlocked);
 REBOOT_MESSAGE_DECL(kQuicConnectionLost);
 REBOOT_MESSAGE_DECL(kQuicStreamUnknown);
 
-}  // namespace reboot::net
+}  // namespace rb::net

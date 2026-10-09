@@ -18,7 +18,7 @@
 #include "reboot/foundation/version.hpp"
 
 // The JSON names shared by the release manifest and the store index.
-namespace reboot::components::json_fields {
+namespace rb::components::json_fields {
 
 template <class E>
 struct Named {
@@ -109,4 +109,4 @@ void write_remote_file(boost::json::object& out, const RemoteFile& file);
 // {"os": ..., "arch": ...}; nullopt for a name this build does not know.
 [[nodiscard]] Result<std::optional<ManifestPlatform>> read_platform(const Reader& in);
 
-}  // namespace reboot::components::json_fields
+}  // namespace rb::components::json_fields

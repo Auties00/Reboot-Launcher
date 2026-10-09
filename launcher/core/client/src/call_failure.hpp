@@ -6,7 +6,7 @@
 #include "reboot/contracts/common.hpp"
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 // A failed request. A remote Diagnostic is the engine's Reply.error, passed through unchanged.
 struct CallFailure {
@@ -24,4 +24,4 @@ using CallResult = std::expected<T, CallFailure>;
 // As status_for, except that play refusing a caller in another OS session is RB_E_ENGINE_OTHER_SESSION.
 [[nodiscard]] rb_status start_status_for(const CallFailure& failure) noexcept;
 
-}  // namespace reboot::client
+}  // namespace rb::client

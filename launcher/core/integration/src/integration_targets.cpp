@@ -1,6 +1,6 @@
 #include "reboot/integration/integration_targets.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 std::optional<NativePath> entry_program(IntegrationKind kind, const IntegrationTargets& targets) {
     switch (kind) {
@@ -14,4 +14,4 @@ std::optional<NativePath> entry_program(IntegrationKind kind, const IntegrationT
     return std::nullopt;
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 REBOOT_MESSAGE(kInvalidUrl, "net.invalid_url", "{url} is not a valid http or https address");
 REBOOT_MESSAGE(kDnsFailed, "net.dns_failed", "Could not resolve {host}");
@@ -67,4 +67,4 @@ REBOOT_MESSAGE(kQuicUdpBlocked, "net.quic_udp_blocked", "UDP traffic to {host} a
 REBOOT_MESSAGE(kQuicConnectionLost, "net.quic_connection_lost", "The QUIC connection to {host} was lost");
 REBOOT_MESSAGE(kQuicStreamUnknown, "net.quic_stream_unknown", "QUIC stream {stream} to {host} is not open");
 
-}  // namespace reboot::net
+}  // namespace rb::net

@@ -7,7 +7,7 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/storage/accounts_document.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // What the entry shows. The join password travels separately as a secret.
 struct HostMetadata {
@@ -31,4 +31,4 @@ struct HostMetadata {
 // The author shown for a host record: its display name, which is at most 16 [A-Za-z0-9] chars.
 [[nodiscard]] std::string author_for(const storage::AccountRecord& host);
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

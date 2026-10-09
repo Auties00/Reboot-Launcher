@@ -24,7 +24,7 @@
 #include "messages.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 namespace {
 
 constexpr std::string_view kAppDirName = "Reboot Launcher";
@@ -146,4 +146,4 @@ std::optional<NativePath> MacClientPaths::velopack_package_dir() const {
     return app_bundle_;
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

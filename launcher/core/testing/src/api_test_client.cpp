@@ -13,7 +13,7 @@
 #include "reboot/api/v1/common.hpp"
 #include "wire/codec.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 namespace ipc = contracts::ipc;
 
@@ -198,4 +198,4 @@ u32 ApiTestClient::method_of(u64 req_id) const {
     return it == impl_->methods.end() ? 0 : it->second;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

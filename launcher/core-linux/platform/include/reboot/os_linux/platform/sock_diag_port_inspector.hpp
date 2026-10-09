@@ -6,7 +6,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; IPortInspector over NETLINK_SOCK_DIAG.
 class SockDiagPortInspector final : public ports::IPortInspector {
@@ -22,4 +22,4 @@ public:
     Result<std::optional<ports::PortOwner>> udp_owner(Port port) override;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

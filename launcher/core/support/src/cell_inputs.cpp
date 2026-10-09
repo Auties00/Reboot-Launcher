@@ -2,7 +2,7 @@
 
 #include <boost/pfr/ops_fields.hpp>
 
-namespace reboot::support {
+namespace rb::support {
 
 bool PlayCellInputs::operator==(const PlayCellInputs& other) const noexcept {
     // Field-wise by reflection, so a field added to ContentVersion is compared too.
@@ -10,4 +10,4 @@ bool PlayCellInputs::operator==(const PlayCellInputs& other) const noexcept {
            boost::pfr::eq_fields(backend_content, other.backend_content) && runner_pin == other.runner_pin;
 }
 
-}  // namespace reboot::support
+}  // namespace rb::support

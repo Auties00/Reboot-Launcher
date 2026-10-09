@@ -7,7 +7,7 @@
 #include "reboot/testing/deterministic_runtime.hpp"
 #include "reboot/testing/fake_client_platform.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 // Room for any install a test stages, so free space only matters where a test lowers it.
@@ -93,4 +93,4 @@ FakeClientPlatform::FakeClientPlatform(InMemoryIpc& ipc, NativePath base) {
     platform_.self = ipc.self();
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

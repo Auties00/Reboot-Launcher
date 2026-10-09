@@ -12,16 +12,16 @@
 #include "reboot/gameserver/game_server_config.hpp"
 #include "reboot/host/host_backend_link.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IRandom;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::backend {
+namespace rb::backend {
 class BackendService;
 }
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Capabilities: none; lets a needs_backend game server lease the backend, which host cannot reach.
 // Strand-only. One session lease per host session: acquire() leases, waits for readiness,
@@ -47,4 +47,4 @@ private:
     std::vector<std::pair<SessionId, backend::BackendLease>> leases_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

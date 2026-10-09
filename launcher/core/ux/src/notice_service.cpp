@@ -7,7 +7,7 @@
 #include "reboot/ux/guidance_state_store.hpp"
 #include "messages.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -127,4 +127,4 @@ void NoticeService::update_unlisted_live(SessionId session, HostProfileId profil
                     EventScope{.session = session});
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

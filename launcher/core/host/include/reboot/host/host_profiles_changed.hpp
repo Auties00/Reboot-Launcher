@@ -4,7 +4,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Reset: a Host reset rewrote every profile.
 enum class HostProfileChange : u8 { Added, Updated, Removed, Reset };
@@ -16,4 +16,4 @@ struct HostProfilesChanged {
     std::optional<HostProfileId> profile;
 };
 
-}  // namespace reboot::host
+}  // namespace rb::host

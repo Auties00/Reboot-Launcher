@@ -8,7 +8,7 @@
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decisions testing-strategy, async-event-model).
 // Subscribes to an EventBus the way one IPC connection does and keeps what it delivers, so tests
@@ -48,4 +48,4 @@ private:
     std::size_t resyncs_ = 0;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

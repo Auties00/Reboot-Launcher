@@ -14,7 +14,7 @@
 #include "reboot/updates/pending_update_marker.hpp"
 #include "reboot/updates/update_offer.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 // EventKind::UpdateAvailable.
 struct UpdateAvailable {
@@ -58,4 +58,4 @@ using UpdateEvent = std::variant<UpdateAvailable, UpdateStaged, EngineUpdating, 
 // Publishes the alternative itself as the payload, under its kind.
 void publish(EventBus& events, UpdateEvent event);
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

@@ -1,10 +1,10 @@
 // Included alone first: enums of other packages must be persisted enums with nothing else in scope.
 #include "reboot/storage/json_values.hpp"
 
-static_assert(reboot::storage::PersistedEnum<reboot::contracts::ipc::ClientKind>);
-static_assert(reboot::storage::PersistedEnum<reboot::contracts::ipc::EngineOrigin>);
-static_assert(reboot::storage::PersistedEnum<reboot::contracts::backend::AccountRole>);
-static_assert(reboot::storage::PersistedEnum<reboot::ports::IntegrationKind>);
+static_assert(rb::storage::PersistedEnum<rb::contracts::ipc::ClientKind>);
+static_assert(rb::storage::PersistedEnum<rb::contracts::ipc::EngineOrigin>);
+static_assert(rb::storage::PersistedEnum<rb::contracts::backend::AccountRole>);
+static_assert(rb::storage::PersistedEnum<rb::ports::IntegrationKind>);
 
 #include <chrono>
 #include <concepts>
@@ -21,8 +21,8 @@ static_assert(reboot::storage::PersistedEnum<reboot::ports::IntegrationKind>);
 #include "reboot/storage/load_report.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 
-using namespace reboot;
-using namespace reboot::storage;
+using namespace rb;
+using namespace rb::storage;
 
 namespace json = boost::json;
 

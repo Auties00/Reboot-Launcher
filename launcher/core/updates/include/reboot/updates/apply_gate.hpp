@@ -6,7 +6,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/updates/activity_probe.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 // Capabilities: launcher-updates.check.
 // Strand-only. Opens once nothing is live; a host under host.update_policy=manual stays live until stopped.
@@ -32,4 +32,4 @@ private:
     std::vector<LiveActivity> blocking_;
 };
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

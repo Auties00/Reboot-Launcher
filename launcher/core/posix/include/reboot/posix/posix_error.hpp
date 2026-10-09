@@ -5,7 +5,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 [[nodiscard]] inline SystemError errno_error(int code) noexcept { return SystemError{SystemError::Origin::Host, code}; }
 
@@ -13,4 +13,4 @@ namespace reboot::posix {
 [[nodiscard]] Diagnostic call_failed(std::string_view call, int error);
 [[nodiscard]] Diagnostic call_failed(std::string_view call, int error, const NativePath& path);
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

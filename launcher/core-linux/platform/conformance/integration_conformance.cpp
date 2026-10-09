@@ -16,9 +16,9 @@
 #include "reboot/os_linux/platform/tarball_layout.hpp"
 #include "reboot/os_linux/platform/xdg_paths.hpp"
 
-using namespace reboot;
-using namespace reboot::os_linux::platform;
-using reboot::os_linux::platform::test::Scratch;
+using namespace rb;
+using namespace rb::os_linux::platform;
+using rb::os_linux::platform::test::Scratch;
 using ports::IntegrationKind;
 using ports::IntegrationState;
 namespace fs = std::filesystem;

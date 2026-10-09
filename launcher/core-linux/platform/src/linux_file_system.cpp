@@ -10,7 +10,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -85,4 +85,4 @@ Result<void> LinuxFileSystem::create_dirs_owner_only(const NativePath& path) {
 
 Result<void> LinuxFileSystem::remove_tree(const NativePath& path) { return posix_.remove_tree(path); }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

@@ -28,7 +28,7 @@
 
 // One suite per port, run against the real adapters and the fakes alike so the fakes cannot drift.
 // Suites check ErrorKind, never message ids, except the ids a port itself names.
-namespace reboot::testing {
+namespace rb::testing {
 
 class IPortBinder;
 
@@ -221,4 +221,4 @@ struct QuicConformanceSubject {
 // Consecutive fills differ, are not all zero, and an empty fill is fine.
 [[nodiscard]] ConformanceReport run_random_conformance(IRandom& random);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

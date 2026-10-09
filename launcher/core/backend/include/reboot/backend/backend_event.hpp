@@ -7,7 +7,7 @@
 #include "reboot/backend/backend_stop_cause.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 enum class BackendChange : u8 { Starting, Running, Crashed, Restarting, Stopping, Stopped, Failed, Reconfigured, LeasesChanged };
 
@@ -22,4 +22,4 @@ struct BackendEvent {
     [[nodiscard]] std::size_t approx_bytes() const noexcept;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

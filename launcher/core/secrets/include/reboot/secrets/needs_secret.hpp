@@ -6,7 +6,7 @@
 #include "reboot/secrets/secret_state.hpp"
 #include "reboot/secrets/secret_target.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 enum class NeedsSecretReason : u8 { Missing, Rejected };
 
@@ -25,4 +25,4 @@ struct NeedsSecret {
 // The only accepted answer to NeedsSecret; it is refused until a fresh secret was put.
 struct SecretProvided {};
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 // One <prefix>/dosdevices/<letter>: link, with its target resolved to a canonical host path.
 // `letter` is lowercase, as dosdevices spells it.
@@ -41,4 +41,4 @@ private:
     std::vector<DosDevice> devices_;
 };
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

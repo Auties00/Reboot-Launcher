@@ -8,7 +8,7 @@
 #include "reboot/ux/app_links.hpp"
 #include "reboot/ux/language_tag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 struct LocalizedUrl {
     std::string_view language;
@@ -20,4 +20,4 @@ struct LocalizedUrl {
 
 [[nodiscard]] MessageId app_link_label(AppLink link);
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

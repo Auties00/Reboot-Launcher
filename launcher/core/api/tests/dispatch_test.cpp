@@ -37,13 +37,13 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/diag.hpp"
 
-namespace api = reboot::api;
-namespace msg = reboot::api::msg;
-using reboot::DisconnectPolicy;
-using reboot::OpHandle;
-using reboot::Result;
-using reboot::u32;
-using reboot::u64;
+namespace api = rb::api;
+namespace msg = rb::api::msg;
+using rb::DisconnectPolicy;
+using rb::OpHandle;
+using rb::Result;
+using rb::u32;
+using rb::u64;
 
 // Every method of the schema: X_CALL(id, member, request, response) or X_OP(id, member, request).
 #define REBOOT_API_METHODS(X_CALL, X_OP) \
@@ -151,7 +151,7 @@ namespace {
 
 struct Invocation {
     u32 method_id = 0;
-    reboot::ConnectionId connection;
+    rb::ConnectionId connection;
     std::optional<DisconnectPolicy> disconnect;
     std::any request;
 };
@@ -178,7 +178,7 @@ class RecordingHandlers final : public api::IBackendHandler,
                                 public api::IUpdatesHandler {
 public:
     std::vector<Invocation> invocations;
-    std::optional<reboot::Diagnostic> fail_with;
+    std::optional<rb::Diagnostic> fail_with;
     // Returned by a call whose response type matches; otherwise the response is empty.
     std::any response;
 
@@ -199,7 +199,7 @@ public:
                             DisconnectPolicy disconnect) override {                                  \
         invocations.push_back({api::id, context.connection, disconnect, request});                   \
         if (fail_with) return std::unexpected(*fail_with);                                           \
-        return OpHandle(reboot::OpId{static_cast<u64>(invocations.size())});                       \
+        return OpHandle(rb::OpId{static_cast<u64>(invocations.size())});                       \
     }
     REBOOT_API_METHODS(RECORD_CALL, RECORD_OP)
 #undef RECORD_CALL
@@ -255,17 +255,17 @@ api::Bytes golden(const std::string& name) {
 }
 
 struct Fixture {
-    reboot::contracts::ipc::CallerContext caller{"console", false, {}};
-    api::CallContext context{reboot::ConnectionId{17}, reboot::contracts::ipc::ClientKind::Test, caller};
+    rb::contracts::ipc::CallerContext caller{"console", false, {}};
+    api::CallContext context{rb::ConnectionId{17}, rb::contracts::ipc::ClientKind::Test, caller};
     RecordingHandlers recorder;
     api::Handlers handlers = recorder.handlers();
 };
 
-void check_api_error(const reboot::Diagnostic& diag, reboot::MessageId message, u32 method_id) {
+void check_api_error(const rb::Diagnostic& diag, rb::MessageId message, u32 method_id) {
     CHECK(diag.is(message));
-    CHECK(diag.domain == reboot::ErrorDomain::Api);
-    CHECK(diag.kind == reboot::ErrorKind::InvalidInput);
-    const reboot::Arg* method = diag.find_arg("method");
+    CHECK(diag.domain == rb::ErrorDomain::Api);
+    CHECK(diag.kind == rb::ErrorKind::InvalidInput);
+    const rb::Arg* method = diag.find_arg("method");
     REQUIRE(method);
     const auto* value = std::get_if<u64>(method);
     REQUIRE(value);
@@ -322,7 +322,7 @@ TEST_CASE("an operation starts on its own handler member with its default discon
             api::dispatch_start(fixture.handlers, fixture.context, sample.method_id, sample.request, std::nullopt);
         INFO(spec->name);
         REQUIRE(handle);
-        CHECK(handle->id() == reboot::OpId{1});
+        CHECK(handle->id() == rb::OpId{1});
         REQUIRE(fixture.recorder.invocations.size() == 1);
         const Invocation& invocation = fixture.recorder.invocations.front();
         CHECK(invocation.method_id == sample.method_id);
@@ -441,9 +441,9 @@ TEST_CASE("a call's response is encoded as its message", "[dispatch]") {
 
 TEST_CASE("a handler's diagnostic passes through unchanged", "[dispatch]") {
     Fixture fixture;
-    const reboot::Diagnostic busy = reboot::make_diag(reboot::ErrorDomain::Api, msg::kUnknownCase)
+    const rb::Diagnostic busy = rb::make_diag(rb::ErrorDomain::Api, msg::kUnknownCase)
                                         .arg("method", 1u)
-                                        .kind(reboot::ErrorKind::Conflict)
+                                        .kind(rb::ErrorKind::Conflict)
                                         .retryable(true)
                                         .detail("busy");
     fixture.recorder.fail_with = busy;
@@ -451,7 +451,7 @@ TEST_CASE("a handler's diagnostic passes through unchanged", "[dispatch]") {
     const auto call = api::dispatch_call(fixture.handlers, fixture.context, api::kSessionsList,
                                          api::encode(api::SessionsListRequest{}));
     REQUIRE_FALSE(call);
-    CHECK(call.error().kind == reboot::ErrorKind::Conflict);
+    CHECK(call.error().kind == rb::ErrorKind::Conflict);
     CHECK(call.error().retryable);
     CHECK(call.error().detail == "busy");
 
@@ -459,7 +459,7 @@ TEST_CASE("a handler's diagnostic passes through unchanged", "[dispatch]") {
                                            api::encode(api::HostStartRequest{}),
                                            std::nullopt);
     REQUIRE_FALSE(start);
-    CHECK(start.error().kind == reboot::ErrorKind::Conflict);
+    CHECK(start.error().kind == rb::ErrorKind::Conflict);
     CHECK(start.error().detail == "busy");
     CHECK(fixture.recorder.invocations.size() == 2);
 }
@@ -482,17 +482,17 @@ TEST_CASE("an operation's response encodes as its message", "[dispatch]") {
 TEST_CASE("an operation completing with another method's response is a bug", "[dispatch]") {
     const auto mismatched = api::encode_op_result(api::kPlayStart, std::any{api::HostStartResponse{}});
     REQUIRE_FALSE(mismatched);
-    CHECK(mismatched.error().domain == reboot::ErrorDomain::Internal);
+    CHECK(mismatched.error().domain == rb::ErrorDomain::Internal);
 }
 
 TEST_CASE("an op result for a call or an unknown id is the engine's bug", "[dispatch]") {
     const auto call = api::encode_op_result(api::kPlayPlan, std::any{api::PlayPlanResponse{}});
     REQUIRE_FALSE(call);
-    CHECK(call.error().domain == reboot::ErrorDomain::Internal);
+    CHECK(call.error().domain == rb::ErrorDomain::Internal);
 
     const auto unknown = api::encode_op_result(0, std::any{});
     REQUIRE_FALSE(unknown);
-    CHECK(unknown.error().domain == reboot::ErrorDomain::Internal);
+    CHECK(unknown.error().domain == rb::ErrorDomain::Internal);
 }
 
 TEST_CASE("each decode error maps to its own message", "[dispatch]") {

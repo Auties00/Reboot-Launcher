@@ -17,7 +17,7 @@
 #include "reboot/net/http_error.hpp"
 #include "url.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -375,4 +375,4 @@ Result<void> HttpClient::stream(HttpRequest request, ports::HttpCallbacks callba
     return {};
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

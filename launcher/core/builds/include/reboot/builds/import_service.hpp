@@ -12,21 +12,21 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class UserRequestRegistry;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::catalog {
+namespace rb::catalog {
 class CatalogService;
 }
 
-namespace reboot::builds {
+namespace rb::builds {
 
 class ClTable;
 class Library;
@@ -82,4 +82,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

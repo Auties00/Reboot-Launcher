@@ -13,7 +13,7 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 // The update the engine is restarting into. After two failed attempts the previous version is restored.
 struct PendingUpdate {
@@ -42,4 +42,4 @@ struct ResumeDocument {
     [[nodiscard]] static Result<boost::json::object> upgrade(boost::json::object values, u32 from_schema);
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

@@ -8,7 +8,7 @@
 #include "reboot/api/v1/common.hpp"
 #include "reboot/foundation/result_fwd.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 struct IdentityProfile {
     GameRole role{};
@@ -66,9 +66,9 @@ class IIdentityHandler {
 public:
     virtual ~IIdentityHandler() = default;
 
-    virtual ::reboot::Result<IdentityGetResponse> get(const CallContext& context, const IdentityGetRequest& request) = 0;
-    virtual ::reboot::Result<IdentitySetDisplayNameResponse> set_display_name(const CallContext& context, const IdentitySetDisplayNameRequest& request) = 0;
-    virtual ::reboot::Result<IdentityResetResponse> reset(const CallContext& context, const IdentityResetRequest& request) = 0;
+    virtual ::rb::Result<IdentityGetResponse> get(const CallContext& context, const IdentityGetRequest& request) = 0;
+    virtual ::rb::Result<IdentitySetDisplayNameResponse> set_display_name(const CallContext& context, const IdentitySetDisplayNameRequest& request) = 0;
+    virtual ::rb::Result<IdentityResetResponse> reset(const CallContext& context, const IdentityResetRequest& request) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

@@ -7,7 +7,7 @@
 #include "reboot/integration/entry_status.hpp"
 #include "reboot/integration/integration_kind.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 struct ReconcileReport {
     // nullopt on the first start ever.
@@ -18,4 +18,4 @@ struct ReconcileReport {
     std::vector<EntryStatus> items;
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

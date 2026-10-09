@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 enum class BuildsErrorCode : u8 {
     NameEmpty,
@@ -74,4 +74,4 @@ struct BuildsError {
 
 [[nodiscard]] Diagnostic to_diagnostic(const BuildsError& error);
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

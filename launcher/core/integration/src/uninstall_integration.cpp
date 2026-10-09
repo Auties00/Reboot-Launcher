@@ -4,7 +4,7 @@
 
 #include "entry_ops.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 std::vector<EntryStatus> uninstall_integration(ports::IIntegrationRegistrar& registrar,
                                                const IntegrationTargets& targets) {
@@ -22,4 +22,4 @@ std::vector<EntryStatus> uninstall_integration(ports::IIntegrationRegistrar& reg
     return statuses;
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

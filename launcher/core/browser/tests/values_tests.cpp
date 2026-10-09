@@ -15,9 +15,9 @@
 #include "reboot/browser/token_bucket.hpp"
 #include "reboot/browser/view_spec.hpp"
 
-using namespace reboot;
-using namespace reboot::browser;
-using namespace reboot::browser::test;
+using namespace rb;
+using namespace rb::browser;
+using namespace rb::browser::test;
 using namespace std::chrono_literals;
 
 TEST_CASE("connect failures are classified from the probes", "[browser][values]") {

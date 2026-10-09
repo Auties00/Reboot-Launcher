@@ -6,7 +6,7 @@
 #include "messages.hpp"
 #include "peer_role.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -69,4 +69,4 @@ Diagnostic to_diagnostic(const GameChannelError& error) {
     return diag;
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

@@ -10,7 +10,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // LargestFittingVolume: <mount>/FortniteBuilds/<name> on the eligible volume with the most free
 // space (the Windows default). UnderDataRoot: <data root>/builds/<name>, which stays visible to
@@ -38,4 +38,4 @@ struct DestinationSuggestion {
     std::vector<VolumeCandidate> volumes;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

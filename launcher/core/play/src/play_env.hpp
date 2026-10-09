@@ -48,7 +48,7 @@
 #include "reboot/support/host_inputs.hpp"
 #include "reboot/support/support_policy.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // The runner a play session would use now.
 struct RunnerChoice {
@@ -141,4 +141,4 @@ public:
     virtual void mark_good(const Preflight& preflight) = 0;
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

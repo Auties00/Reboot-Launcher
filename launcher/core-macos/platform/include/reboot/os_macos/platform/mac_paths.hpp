@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Covers no capability ids; IPlatformPaths from the user's Library and the running executable.
 class MacPaths final : public ports::IPlatformPaths {
@@ -40,4 +40,4 @@ private:
     bool translocated_ = false;
 };
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

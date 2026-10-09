@@ -15,7 +15,7 @@
 #include "reboot/ports/secret_store.hpp"
 #include "reboot/testing/fault_plan.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 enum class SecretStoreOperation : u8 { Put, Get, Erase };
 
@@ -45,4 +45,4 @@ private:
     FaultPlan<SecretStoreOperation> faults_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

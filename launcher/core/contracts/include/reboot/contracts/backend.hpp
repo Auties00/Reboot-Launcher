@@ -21,7 +21,7 @@
 //   configured and, on Linux, only from a peer with the backend's own uid;
 // - serve game requests and XMPP only to tokens it issued;
 // - answer GET /reboot/v1/backend-info.
-namespace reboot::contracts::backend {
+namespace rb::contracts::backend {
 
 inline constexpr u32 kBackendProtocol = VersionStreams::backend_protocol;
 
@@ -223,4 +223,4 @@ struct AccountRenameConflict {
 };
 REBOOT_CONTRACT_FRAME(AccountRenameConflict, 0x233)
 
-}  // namespace reboot::contracts::backend
+}  // namespace rb::contracts::backend

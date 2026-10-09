@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 
 class IRandom {
 public:
@@ -33,4 +33,4 @@ template <std::size_t N>
 
 [[nodiscard]] std::string random_token_hex(IRandom& random, std::size_t bytes);
 
-}  // namespace reboot
+}  // namespace rb

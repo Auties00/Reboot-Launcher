@@ -14,7 +14,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -229,4 +229,4 @@ Result<void> XdgShell::trash(const NativePath& path) {
     return std::unexpected(std::move(failure));
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

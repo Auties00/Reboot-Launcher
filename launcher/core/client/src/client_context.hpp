@@ -25,21 +25,21 @@
 #include "reboot/ipc/ipc_client_sink.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class IClock;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileRevisionReader;
 class IPlatformPaths;
-}  // namespace reboot::ports
+}  // namespace rb::ports
 
-namespace reboot::ipc {
+namespace rb::ipc {
 class IpcClient;
 }
 
-namespace reboot::client {
+namespace rb::client {
 
 // Borrowed; everything outlives the ClientContext.
 struct ClientDeps {
@@ -162,4 +162,4 @@ private:
     u64 next_sub_id_ = 1;
 };
 
-}  // namespace reboot::client
+}  // namespace rb::client

@@ -7,7 +7,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Capabilities: os-integration.single-instance.
 // state/engine.lock, held for the engine's whole life: one engine per (OS user, data root). The OS
@@ -34,4 +34,4 @@ private:
     ports::FileLock lock_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

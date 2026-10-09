@@ -6,11 +6,11 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class IClock;
 }
 
-namespace reboot::browser {
+namespace rb::browser {
 
 struct TokenRate {
     u32 tokens = 1;
@@ -42,4 +42,4 @@ private:
     SteadyTime held_until_{};
 };
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

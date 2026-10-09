@@ -4,7 +4,7 @@
 
 #include "reboot/ux/language_tag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Capabilities: localization.strings-and-language, drop-features.
 // A language a UI can offer; the CLI falls back to en for an rtl one, since terminals disagree on BiDi.
@@ -23,4 +23,4 @@ struct LanguageInfo {
 
 [[nodiscard]] LanguageInfo describe_language(const LanguageTag& tag);
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

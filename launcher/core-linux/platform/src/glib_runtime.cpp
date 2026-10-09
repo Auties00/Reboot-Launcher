@@ -2,7 +2,7 @@
 
 #include <dlfcn.h>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 std::optional<GLibRuntime> GLibRuntime::load(const char* soname) {
     GLibRuntime runtime;
@@ -53,4 +53,4 @@ bool CancelAfter::fired() const {
     return fired_;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

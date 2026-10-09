@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace reboot::catalog {
+namespace rb::catalog {
 
 namespace {
 
@@ -57,4 +57,4 @@ std::optional<AliasMatch> AliasTable::resolve(std::string_view name) const {
     return it->second;
 }
 
-}  // namespace reboot::catalog
+}  // namespace rb::catalog

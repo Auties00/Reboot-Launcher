@@ -14,7 +14,7 @@
 #include "messages.hpp"
 #include "reboot/storage/json_values.hpp"
 
-namespace reboot::updates {
+namespace rb::updates {
 
 namespace json = boost::json;
 
@@ -85,4 +85,4 @@ MarkerVerdict judge_marker(const PendingUpdateMarker& marker, const SemVer& runn
     return MarkerVerdict::Foreign;
 }
 
-}  // namespace reboot::updates
+}  // namespace rb::updates

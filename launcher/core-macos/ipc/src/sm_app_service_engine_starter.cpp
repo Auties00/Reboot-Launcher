@@ -14,7 +14,7 @@
 #include "pending_call.hpp"
 #include "spawn_lock.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 struct SmAppServiceEngineStarter::PendingRegister {
     PendingCall call;
@@ -91,4 +91,4 @@ Result<ports::StartResult> SmAppServiceEngineStarter::ensure_started(const Nativ
     return kickstart_outcome(*run, kEngineAgentLabel, kLaunchctlDeadline);
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

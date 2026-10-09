@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::trust {
+namespace rb::trust {
 
 Diagnostic to_diagnostic(const TrustError& error) {
     const std::string_view document = document_kind_name(error.document);
@@ -45,4 +45,4 @@ Diagnostic to_diagnostic(const TrustError& error) {
     return internal_bug("trust::to_diagnostic");
 }
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

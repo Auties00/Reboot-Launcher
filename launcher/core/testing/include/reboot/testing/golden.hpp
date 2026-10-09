@@ -9,7 +9,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Golden vectors live under <package>/tests/data/ and are compared byte for byte.
 [[nodiscard]] Result<std::vector<u8>> read_golden(const NativePath& file);
@@ -25,4 +25,4 @@ template <ContractMessage T>
     return golden_mismatch(*expected, encode_contract_frame(message));
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

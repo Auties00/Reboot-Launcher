@@ -10,7 +10,7 @@
 #include <string_view>
 #include <vector>
 
-namespace reboot::trust {
+namespace rb::trust {
 
 namespace {
 
@@ -72,4 +72,4 @@ std::expected<void, TrustError> verify_signed(const KeyRing& ring, const SignedD
         TrustError{.code = TrustErrorCode::SignatureInvalid, .document = ring.kind(), .key_id = document.key_id});
 }
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

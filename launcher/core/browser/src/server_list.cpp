@@ -16,7 +16,7 @@
 #include "reboot/foundation/events.hpp"
 #include "wire_mapping.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -312,4 +312,4 @@ void ServerList::set_choices(const BrowseChoices& choices) {
     if (impl_->persist) impl_->persist(impl_->choices);
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

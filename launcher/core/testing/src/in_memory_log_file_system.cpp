@@ -9,7 +9,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 struct FileNode {
@@ -196,4 +196,4 @@ u64 InMemoryLogFileSystem::flushes() const {
 
 FaultPlan<LogFsOperation>& InMemoryLogFileSystem::faults() noexcept { return impl_->faults; }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

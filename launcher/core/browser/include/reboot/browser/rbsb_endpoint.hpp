@@ -10,7 +10,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // A DNS name only: an IP address is never compiled in.
 inline constexpr std::string_view kCompiledRbsbHost = "sb.rebootfn.org";
@@ -55,4 +55,4 @@ struct RbsbEndpoint {
 [[nodiscard]] RbsbEndpoint select_rbsb_endpoint(const std::optional<components::EndpointOverride>& manifest,
                                                 const std::optional<RbsbExpertOverride>& expert);
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

@@ -6,8 +6,8 @@
 #include "messages.hpp"
 #include "reboot/client.h"
 
-using namespace reboot;
-using namespace reboot::client;
+using namespace rb;
+using namespace rb::client;
 
 namespace {
 

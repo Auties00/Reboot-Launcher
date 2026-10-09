@@ -4,7 +4,7 @@
 #include "reboot/game_channel/client_dll_peer.hpp"
 #include "reboot/game_channel/winhost_peer.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 struct ClientDllPeer::Impl final : PeerLink {
     Impl(ChannelCore& core, PeerKey key, ControlToken token, ClientDllHandlers handlers);
@@ -31,4 +31,4 @@ struct WinhostPeer::Impl final : PeerLink {
     UniqueFunction<void(WinhostEvent)> on_event;
 };
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

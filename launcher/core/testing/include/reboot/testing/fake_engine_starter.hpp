@@ -10,7 +10,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/ports/ipc.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decisions testing-strategy, async-event-model).
 // IEngineStarter answering from a script (the last answer repeats; Started when empty), so
@@ -32,4 +32,4 @@ private:
     UniqueFunction<void(const NativePath&, const DataRoot&)> on_started_;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <chrono>
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 // Tries `probe` until it holds or `bound` has passed, calling `pause(wait)` between tries with
 // `wait` clamped to the time left; `pause` may return early. A zero bound probes exactly once.
@@ -21,4 +21,4 @@ template <class Probe, class Pause, class Now>
     }
 }
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

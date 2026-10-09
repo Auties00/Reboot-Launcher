@@ -1,7 +1,7 @@
 #pragma once
 
 // Included first by every source of this package, before any system or reboot header.
-// <unistd.h> declares ::reboot(int), which clashes with namespace reboot, so it is renamed while
+// <unistd.h> declares ::reboot(int), which clashes with namespace rb, so it is renamed while
 // the header is read; later includes of <unistd.h> are then no-ops.
 #define reboot darwin_reboot
 #include <unistd.h>

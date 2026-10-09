@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/publish/host_identity.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 // The {server_id, token} record of a profile file and of an export.
 struct StoredIdentity {
@@ -24,4 +24,4 @@ struct StoredIdentity {
 // The token's text form, which is what a log line or the file would show.
 [[nodiscard]] SecretString token_text(const HostToken& token);
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // Borrows the bytes; they must outlive the source.
 class MemoryByteSource final : public IByteSource {
@@ -20,4 +20,4 @@ private:
     std::span<const u8> bytes_;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

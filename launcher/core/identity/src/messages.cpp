@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::identity::msg {
+namespace rb::identity::msg {
 
 REBOOT_MESSAGE(kDisplayNameTooShort, "identity.display_name_too_short",
                "A player name needs at least {min} characters");
@@ -22,4 +22,4 @@ REBOOT_MESSAGE(kLegacyArgvNeedsLogin, "identity.legacy_argv_needs_login",
 REBOOT_MESSAGE(kPasswordInArgv, "identity.password_in_argv",
                "The password is passed on the game's command line, where other programs on this computer can read it");
 
-}  // namespace reboot::identity::msg
+}  // namespace rb::identity::msg

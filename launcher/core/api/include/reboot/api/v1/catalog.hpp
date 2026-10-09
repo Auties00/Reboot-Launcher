@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class CatalogEntryStatus : u32 {
     Available = 0,
@@ -85,9 +85,9 @@ class ICatalogHandler {
 public:
     virtual ~ICatalogHandler() = default;
 
-    virtual ::reboot::Result<CatalogListResponse> list(const CallContext& context, const CatalogListRequest& request) = 0;
+    virtual ::rb::Result<CatalogListResponse> list(const CallContext& context, const CatalogListRequest& request) = 0;
     // Completes with CatalogRefreshResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_refresh(const CallContext& context, const CatalogRefreshRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_refresh(const CallContext& context, const CatalogRefreshRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

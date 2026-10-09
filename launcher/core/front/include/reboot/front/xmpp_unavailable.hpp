@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // ThirdPartyAuthDll: a LegacyFixed session under Wine, where 127.0.0.1:80 is not bound, so the custom
 // DLL's XMPP has no server.
@@ -14,4 +14,4 @@ struct XmppUnavailable {
     XmppUnavailableReason reason{};
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

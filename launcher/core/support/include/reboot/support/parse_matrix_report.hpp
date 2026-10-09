@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/support/evidence_record.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 inline constexpr u32 kMatrixReportSchema = 1;
 
@@ -19,4 +19,4 @@ inline constexpr u32 kMatrixReportSchema = 1;
 // or support.matrix_report_malformed.
 [[nodiscard]] Result<std::vector<EvidenceRecord>> parse_matrix_report(std::span<const u8> json);
 
-}  // namespace reboot::support
+}  // namespace rb::support

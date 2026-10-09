@@ -20,7 +20,7 @@
 
 #include "reboot/foundation/sha256.hpp"
 
-namespace reboot::front::test {
+namespace rb::front::test {
 
 namespace {
 
@@ -448,4 +448,4 @@ std::vector<u8> gzip(std::string_view data) {
     return out;
 }
 
-}  // namespace reboot::front::test
+}  // namespace rb::front::test

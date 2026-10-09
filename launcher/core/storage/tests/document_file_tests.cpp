@@ -17,8 +17,8 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "test_support.hpp"
 
-using namespace reboot;
-using namespace reboot::storage;
+using namespace rb;
+using namespace rb::storage;
 
 namespace {
 

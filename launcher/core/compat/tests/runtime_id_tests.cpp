@@ -4,7 +4,7 @@
 
 #include "reboot/compat/runtime_id.hpp"
 
-using reboot::compat::compare_runtime_versions;
+using rb::compat::compare_runtime_versions;
 
 TEST_CASE("digit runs compare by value", "[compat][runtime_id]") {
     CHECK(std::is_gt(compare_runtime_versions("GE-Proton11-7", "GE-Proton10-25")));

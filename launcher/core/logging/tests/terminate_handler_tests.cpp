@@ -13,8 +13,8 @@
 #include "reboot/logging/terminate_handler.hpp"
 #include "terminate_line.hpp"
 
-using namespace reboot;
-using namespace reboot::logging;
+using namespace rb;
+using namespace rb::logging;
 
 namespace {
 

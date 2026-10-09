@@ -4,7 +4,7 @@
 
 #include "reboot/ports/session_host.hpp"
 
-namespace reboot::injection {
+namespace rb::injection {
 
 // Capabilities: dll-injection.timing.
 // A runtime's boot_inject default, from the runtime manifest entry the session pins, so a
@@ -26,4 +26,4 @@ inline constexpr RuntimeBootDefault kNativeBootDefault{ports::BootStrategy::Earl
     return build.value_or(*runtime.proven);
 }
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

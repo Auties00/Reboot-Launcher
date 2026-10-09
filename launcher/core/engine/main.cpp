@@ -14,15 +14,15 @@
 namespace {
 
 // Nothing is logged yet, so a failure before EngineHost::run prints only its message id.
-int fail(const reboot::Diagnostic& diag) {
+int fail(const rb::Diagnostic& diag) {
     std::fprintf(stderr, "reboot-engine: %s\n", diag.id.c_str());
-    return reboot::exit_code_for(diag);
+    return rb::exit_code_for(diag);
 }
 
 }  // namespace
 
 int main(int argc, char** argv) {
-    using namespace reboot;
+    using namespace rb;
 
     const std::vector<std::string_view> args(argv + 1, argv + argc);
     Result<engine::EngineCommandLine> command_line = engine::parse_command_line(args);

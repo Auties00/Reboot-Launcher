@@ -6,7 +6,7 @@
 #include "reboot/components/component_ref.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // Every artifact the manifest names. `urls` are tried in order; `size` caps the download
 // before the digest can be checked.
@@ -18,4 +18,4 @@ struct RemoteFile {
     bool operator==(const RemoteFile&) const = default;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

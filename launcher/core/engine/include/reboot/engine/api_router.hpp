@@ -37,7 +37,7 @@
 #include "reboot/ipc/api_dispatcher.hpp"
 #include "reboot/ipc/connection_info.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class IClock;
@@ -46,108 +46,108 @@ class UserRequestRegistry;
 class WorkerPool;
 struct InstallLayout;
 class AppLayout;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class ISecurityProductProbe;
 }
 
-namespace reboot::logging {
+namespace rb::logging {
 class ErrorRouter;
 class LogExporter;
 class LogRing;
-}  // namespace reboot::logging
+}  // namespace rb::logging
 
-namespace reboot::storage {
+namespace rb::storage {
 class FrontendStateStore;
 class ResetService;
 class Settings;
 class SettingsRegistry;
-}  // namespace reboot::storage
+}  // namespace rb::storage
 
-namespace reboot::ux {
+namespace rb::ux {
 class AppLinks;
 class NoticeService;
 class Onboarding;
 class SettingsSearch;
-}  // namespace reboot::ux
+}  // namespace rb::ux
 
-namespace reboot::components {
+namespace rb::components {
 class ComponentStore;
 }
 
-namespace reboot::catalog {
+namespace rb::catalog {
 class CatalogService;
 }
 
-namespace reboot::support {
+namespace rb::support {
 class SupportPolicy;
 }
 
-namespace reboot::builds {
+namespace rb::builds {
 class BuildInstaller;
 class ImportService;
 class Library;
-}  // namespace reboot::builds
+}  // namespace rb::builds
 
-namespace reboot::compat {
+namespace rb::compat {
 class RuntimeService;
 }
 
-namespace reboot::secrets {
+namespace rb::secrets {
 class SecretService;
 }
 
-namespace reboot::identity {
+namespace rb::identity {
 class IdentityService;
 }
 
-namespace reboot::backend {
+namespace rb::backend {
 class BackendAccounts;
 class BackendService;
-}  // namespace reboot::backend
+}  // namespace rb::backend
 
-namespace reboot::sessions {
+namespace rb::sessions {
 class SessionRegistry;
 }
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 class GameServerBinary;
 }
 
-namespace reboot::publish {
+namespace rb::publish {
 class HostIdentityStore;
 }
 
-namespace reboot::play {
+namespace rb::play {
 class PlayService;
 }
 
-namespace reboot::host {
+namespace rb::host {
 class HostService;
 }
 
-namespace reboot::browser {
+namespace rb::browser {
 class BrowserSession;
 class DeepLinkService;
 class GameServerTarget;
 class IOwnServers;
 class JoinService;
 class ServerList;
-}  // namespace reboot::browser
+}  // namespace rb::browser
 
-namespace reboot::updates {
+namespace rb::updates {
 class UpdateService;
 }
 
-namespace reboot::integration {
+namespace rb::integration {
 class IntegrationService;
 class PrerequisiteService;
 class PurgeService;
 class ShellService;
-}  // namespace reboot::integration
+}  // namespace rb::integration
 
-namespace reboot::engine {
+namespace rb::engine {
 
 class EngineActivityProbe;
 class EngineLifecycle;
@@ -392,4 +392,4 @@ private:
     std::unique_ptr<State> state_;
 };
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

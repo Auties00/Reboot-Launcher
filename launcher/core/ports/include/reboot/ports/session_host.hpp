@@ -16,7 +16,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/process.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 using BootStrategy = contracts::winhost::BootStrategy;
 using InjectPhase = contracts::winhost::InjectPhase;
@@ -99,4 +99,4 @@ public:
                                                          UniqueFunction<void(SessionHostEvent)> on_event) = 0;
 };
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

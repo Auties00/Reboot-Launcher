@@ -1,6 +1,6 @@
 #include "language_lookup.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 std::vector<std::string_view> lookup_fallbacks(std::string_view range) {
     std::vector<std::string_view> out;
@@ -15,4 +15,4 @@ std::vector<std::string_view> lookup_fallbacks(std::string_view range) {
     return out;
 }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

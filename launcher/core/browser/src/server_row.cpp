@@ -3,7 +3,7 @@
 #include "reboot/foundation/text.hpp"
 #include "wire_mapping.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 ServerRow make_server_row(const sb::wire::ListEntry& entry, std::chrono::milliseconds clock_offset) {
     namespace flag = sb::wire::entry_flag;
@@ -29,4 +29,4 @@ ServerDetails make_server_details(const sb::wire::EntryDetails& details, std::ch
                          local_time(details.updated_ms, clock_offset)};
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

@@ -4,7 +4,7 @@
 
 #include "reboot/browser/version_match.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 ViewSpec make_view_spec(const BrowseChoices& choices, std::span<const GameVersion> installed, u32 window) {
     ViewSpec spec;
@@ -22,4 +22,4 @@ ViewSpec make_view_spec(const BrowseChoices& choices, std::span<const GameVersio
     return spec;
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

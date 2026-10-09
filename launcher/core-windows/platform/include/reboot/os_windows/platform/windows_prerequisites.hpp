@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; IPrerequisiteProbe for the Windows floor.
 class WindowsPrerequisites final : public ports::IPrerequisiteProbe {
@@ -21,4 +21,4 @@ public:
     Result<void> remediate(std::string_view id) override;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

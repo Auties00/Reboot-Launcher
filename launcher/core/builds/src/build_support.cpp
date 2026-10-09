@@ -6,7 +6,7 @@
 
 #include "builds_error.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -75,4 +75,4 @@ Result<NativePath> canonical_root(const NativePath& root, const std::vector<Inst
     return canonical;
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

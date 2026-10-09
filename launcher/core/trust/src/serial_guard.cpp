@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace reboot::trust {
+namespace rb::trust {
 
 SerialGuard::SerialGuard(SignedDocumentKind kind, u64 highest_seen, Persist persist)
     : kind_(kind), highest_seen_(highest_seen), persist_(std::move(persist)) {}
@@ -23,4 +23,4 @@ std::expected<SerialCheck, TrustError> SerialGuard::admit(u64 serial) {
     return SerialCheck::Advanced;
 }
 
-}  // namespace reboot::trust
+}  // namespace rb::trust

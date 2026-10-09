@@ -11,7 +11,7 @@
 #include "reboot/sessions/session_phase.hpp"
 #include "reboot/sessions/session_registry.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace {
 
@@ -74,4 +74,4 @@ void EngineActivityProbe::on_connected(ConnectionId connection, contracts::ipc::
 
 void EngineActivityProbe::on_disconnected(ConnectionId connection) { clients_.erase(connection); }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

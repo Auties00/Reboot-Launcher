@@ -7,7 +7,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Task Scheduler names are machine-wide, hence the SID. Must equal core-windows/ipc's copy.
 [[nodiscard]] std::string engine_task_name(std::string_view user_sid);
@@ -30,4 +30,4 @@ private:
     std::string user_sid_;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

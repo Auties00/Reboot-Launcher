@@ -16,10 +16,10 @@
 #include "reboot/net/port_mapping_gateway.hpp"
 #include "reboot/testing/event_recorder.hpp"
 
-using namespace reboot;
-using namespace reboot::net;
+using namespace rb;
+using namespace rb::net;
 using namespace std::chrono_literals;
-using reboot::net::test::TestStrand;
+using rb::net::test::TestStrand;
 
 namespace {
 

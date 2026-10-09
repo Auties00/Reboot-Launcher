@@ -17,7 +17,7 @@ namespace boost::asio {
 class io_context;
 }
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decisions testing-strategy, backend-architecture).
 // The program side of contracts/backend.hpp; unscripted it is a conforming backend. It runs
@@ -52,4 +52,4 @@ private:
 // `<its own path>.script.json` when present, so a copy can stand in for reboot-backend.
 int fake_backend_main(int argc, char** argv);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

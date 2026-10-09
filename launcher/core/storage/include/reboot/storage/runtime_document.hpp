@@ -17,7 +17,7 @@
 #include "reboot/storage/enum_names.hpp"
 #include "reboot/storage/load_report.hpp"
 
-namespace reboot::storage {
+namespace rb::storage {
 
 enum class ChildRole : u8 { Backend, GameServer, Winhost, Game, Companion };
 enum class EnginePortRole : u8 { Front, GameChannel, LegacyFixed };
@@ -70,4 +70,4 @@ struct RuntimeDocument {
     [[nodiscard]] static Result<boost::json::object> upgrade(boost::json::object values, u32 from_schema);
 };
 
-}  // namespace reboot::storage
+}  // namespace rb::storage

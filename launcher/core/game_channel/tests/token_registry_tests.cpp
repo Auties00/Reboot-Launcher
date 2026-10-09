@@ -9,7 +9,7 @@
 #include "reboot/game_channel/token_registry.hpp"
 #include "reboot/testing/fake_random.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 namespace {
 
 using namespace std::chrono_literals;
@@ -130,4 +130,4 @@ TEST_CASE("the Hello deadline follows the slowest unclaimed token", "[game_chann
 }
 
 }  // namespace
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

@@ -8,7 +8,7 @@
 #include "messages.hpp"
 #include "wire/codec.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 Result<ApiEventFilter> decode_event_filter(std::span<const u8> bytes) {
     ApiEventFilter filter;
@@ -38,4 +38,4 @@ contracts::ipc::WireEvent op_completed_event(u64 epoch, u64 op_id, std::span<con
     return event;
 }
 
-}  // namespace reboot::client
+}  // namespace rb::client

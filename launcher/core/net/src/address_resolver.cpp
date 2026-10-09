@@ -12,7 +12,7 @@
 #include "reboot/ports/net.hpp"
 #include "url.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -169,4 +169,4 @@ Result<void> AddressResolver::resolve(std::string_view text, Port default_port, 
     return {};
 }
 
-}  // namespace reboot::net
+}  // namespace rb::net

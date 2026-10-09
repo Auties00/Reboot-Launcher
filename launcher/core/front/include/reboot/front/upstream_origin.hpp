@@ -7,7 +7,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/net/url_scheme.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // Where the front connects; ws and wss parse as Http and Https.
 struct UpstreamOrigin {
@@ -29,4 +29,4 @@ struct UpstreamOrigin {
 // http, https, ws or wss; the port defaults by scheme and any path is ignored. Fails with front.upstream_invalid.
 [[nodiscard]] Result<UpstreamOrigin> parse_upstream_origin(std::string_view url);
 
-}  // namespace reboot::front
+}  // namespace rb::front

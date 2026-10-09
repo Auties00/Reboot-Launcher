@@ -5,7 +5,7 @@
 #include <span>
 #include <string>
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 struct ToolRun {
     int exit_code = 0;
@@ -18,4 +18,4 @@ struct ToolRun {
 // killed by a signal, or was reaped elsewhere (a host that ignores SIGCHLD).
 [[nodiscard]] std::optional<ToolRun> run_tool(std::span<const std::string> argv, std::chrono::milliseconds deadline);
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

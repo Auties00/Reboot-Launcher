@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Steps shared by the game-control peer scripts, besides the contract events they send.
 
@@ -17,4 +17,4 @@ struct ScriptDisconnect {};
 // Stops answering Ping while staying connected, so the engine sees a hang.
 struct ScriptStopPonging {};
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

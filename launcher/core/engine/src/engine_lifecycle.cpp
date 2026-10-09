@@ -18,7 +18,7 @@
 #include "reboot/sessions/stop_reason.hpp"
 #include "reboot/sessions/stop_request.hpp"
 
-namespace reboot::engine {
+namespace rb::engine {
 
 namespace {
 
@@ -229,4 +229,4 @@ void EngineLifecycle::run_shutdown(sessions::ShutdownCause cause, EngineExit exi
     });
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

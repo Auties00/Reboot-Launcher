@@ -6,7 +6,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Inclusive; the whole block has to fit inside it.
 struct PortRange {
@@ -44,4 +44,4 @@ using PortPolicy = std::variant<PinnedPorts, AutoPorts>;
 // known only at start: a pinned block that covers the reserved port fails there.
 [[nodiscard]] Result<void> validate(const PortPolicy& policy);
 
-}  // namespace reboot::host
+}  // namespace rb::host

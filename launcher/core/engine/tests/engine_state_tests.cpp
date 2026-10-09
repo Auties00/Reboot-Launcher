@@ -23,8 +23,8 @@
 #include "state_extras.hpp"
 #include "state_guidance_store.hpp"
 
-using namespace reboot;
-using namespace reboot::engine;
+using namespace rb;
+using namespace rb::engine;
 using namespace std::chrono_literals;
 
 namespace {

@@ -22,7 +22,7 @@
 #include "reboot/testing/fake_platform_paths.hpp"
 #include "reboot/testing/scripted_process_launcher.hpp"
 
-namespace reboot::backend::test {
+namespace rb::backend::test {
 
 inline constexpr std::string_view kBackendExe = "reboot-backend";
 
@@ -149,4 +149,4 @@ struct Captured {
     }
 };
 
-}  // namespace reboot::backend::test
+}  // namespace rb::backend::test

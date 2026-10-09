@@ -30,7 +30,7 @@
 #include "reboot/testing/game_control_bootstrap.hpp"
 #include "reboot/testing/memory_stream_pair.hpp"
 
-namespace reboot::game_channel::test {
+namespace rb::game_channel::test {
 
 namespace gc = contracts::game_client;
 
@@ -174,4 +174,4 @@ struct Rig {
     GameChannelListener listener{io, strand, timers, tokens};
 };
 
-}  // namespace reboot::game_channel::test
+}  // namespace rb::game_channel::test

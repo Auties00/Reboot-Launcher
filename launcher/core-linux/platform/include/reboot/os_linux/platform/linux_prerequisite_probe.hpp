@@ -7,7 +7,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // Covers no capability ids; IPrerequisiteProbe for Linux play and unattended hosting.
 class LinuxPrerequisiteProbe final : public ports::IPrerequisiteProbe {
@@ -34,4 +34,4 @@ private:
     std::string user_name_;
 };
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

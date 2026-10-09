@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; IShellLauncher over the Explorer shell. Each call runs on a
 // short-lived STA thread, since worker threads carry no COM apartment.
@@ -19,4 +19,4 @@ public:
     Result<void> trash(const NativePath& path) override;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

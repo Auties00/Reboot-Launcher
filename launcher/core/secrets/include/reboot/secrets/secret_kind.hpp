@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 enum class SecretKind : u8 {
     // Password of the user's account on a remote backend; scope is the backend host.
@@ -44,4 +44,4 @@ inline constexpr std::size_t kMaxSecretBytes = 1024;
 // Hosts hand the join password to their players, so it is the one secret a UI may read back.
 [[nodiscard]] constexpr bool revealable(SecretKind kind) noexcept { return kind == SecretKind::HostJoinPassword; }
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

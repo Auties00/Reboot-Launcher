@@ -12,9 +12,9 @@
 #include "reboot/gameserver/socket_role.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 
-using namespace reboot;
-using namespace reboot::gameserver;
-namespace gs = reboot::contracts::game_server;
+using namespace rb;
+using namespace rb::gameserver;
+namespace gs = rb::contracts::game_server;
 
 namespace {
 

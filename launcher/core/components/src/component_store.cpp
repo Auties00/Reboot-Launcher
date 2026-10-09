@@ -28,7 +28,7 @@
 #include "reboot/ports/os_services.hpp"
 #include "store_index.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 namespace {
 
@@ -1128,4 +1128,4 @@ void ComponentStore::unpin(u64 pin_id) noexcept {
     }
 }
 
-}  // namespace reboot::components
+}  // namespace rb::components

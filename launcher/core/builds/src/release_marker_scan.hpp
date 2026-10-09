@@ -8,7 +8,7 @@
 #include "reboot/builds/release_marker.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 inline constexpr std::string_view kReleaseMarkerText = "++Fortnite+Release-";
 
@@ -21,4 +21,4 @@ struct MarkerMatch {
 // find_release_marker over matches that start at `first` or later.
 [[nodiscard]] std::optional<MarkerMatch> find_release_marker_from(std::span<const u8> utf16le, std::size_t first);
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

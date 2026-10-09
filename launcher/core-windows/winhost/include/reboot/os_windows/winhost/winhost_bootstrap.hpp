@@ -9,7 +9,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/os_windows/winhost/winhost_failure.hpp"
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 
 inline constexpr std::size_t kControlTokenSize = 32;
 
@@ -32,4 +32,4 @@ struct WinhostBootstrap {
 // from the environment. FailureStep::Bootstrap when either is missing or malformed.
 [[nodiscard]] Expected<WinhostBootstrap> read_bootstrap();
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

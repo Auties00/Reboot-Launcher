@@ -4,7 +4,7 @@
 #include "reboot/support/support_query.hpp"
 #include "reboot/support/support_verdict.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // Payload of UserRequestKind::AutoServerConsent; the answer is a bool, true to start the server.
 struct AutoServerConsentPrompt {
@@ -19,4 +19,4 @@ struct UntestedPlayPrompt {
     support::SupportVerdict verdict;
 };
 
-}  // namespace reboot::play
+}  // namespace rb::play

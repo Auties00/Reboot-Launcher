@@ -8,16 +8,16 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/process/child_record.hpp"
 
-namespace reboot {
+namespace rb {
 class Executor;
 class WorkerPool;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::ports {
+namespace rb::ports {
 class IProcessLauncher;
 }
 
-namespace reboot::process {
+namespace rb::process {
 
 struct OrphanReapReport {
     std::vector<ChildRecord> killed;
@@ -48,4 +48,4 @@ private:
     Executor& strand_;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

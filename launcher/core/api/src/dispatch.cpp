@@ -33,49 +33,49 @@
 #include "reboot/api/v1/updates.hpp"
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 namespace {
 
-::reboot::Diagnostic method_error(::reboot::MessageId message, u32 method_id) {
-    return ::reboot::make_diag(::reboot::ErrorDomain::Api, message)
+::rb::Diagnostic method_error(::rb::MessageId message, u32 method_id) {
+    return ::rb::make_diag(::rb::ErrorDomain::Api, message)
         .arg("method", method_id)
-        .kind(::reboot::ErrorKind::InvalidInput);
+        .kind(::rb::ErrorKind::InvalidInput);
 }
 
 template <class Handler, class Request, class Response>
-::reboot::Result<Bytes> call(Handler& handler,
-                             ::reboot::Result<Response> (Handler::*method)(const CallContext&, const Request&),
+::rb::Result<Bytes> call(Handler& handler,
+                             ::rb::Result<Response> (Handler::*method)(const CallContext&, const Request&),
                              const CallContext& context, u32 method_id, std::span<const u8> bytes) {
     auto request = decode<Request>(bytes);
     if (!request) return std::unexpected(to_diagnostic(request.error(), method_id));
-    ::reboot::Result<Response> response = (handler.*method)(context, *request);
+    ::rb::Result<Response> response = (handler.*method)(context, *request);
     if (!response) return std::unexpected(std::move(response.error()));
     return encode(*response);
 }
 
 template <class Handler, class Request>
-::reboot::Result<::reboot::OpHandle> start(
+::rb::Result<::rb::OpHandle> start(
     Handler& handler,
-    ::reboot::Result<::reboot::OpHandle> (Handler::*method)(const CallContext&, const Request&,
-                                                          ::reboot::DisconnectPolicy),
-    const CallContext& context, u32 method_id, std::span<const u8> bytes, ::reboot::DisconnectPolicy disconnect) {
+    ::rb::Result<::rb::OpHandle> (Handler::*method)(const CallContext&, const Request&,
+                                                          ::rb::DisconnectPolicy),
+    const CallContext& context, u32 method_id, std::span<const u8> bytes, ::rb::DisconnectPolicy disconnect) {
     auto request = decode<Request>(bytes);
     if (!request) return std::unexpected(to_diagnostic(request.error(), method_id));
     return (handler.*method)(context, *request, disconnect);
 }
 
 template <class Response>
-::reboot::Result<Bytes> encode_result(const std::any& value) {
+::rb::Result<Bytes> encode_result(const std::any& value) {
     if (const auto* response = std::any_cast<Response>(&value)) return encode(*response);
     if constexpr (std::is_empty_v<Response>) {
         if (!value.has_value()) return encode(Response{});
     }
-    return std::unexpected(::reboot::internal_bug("api.encode_op_result"));
+    return std::unexpected(::rb::internal_bug("api.encode_op_result"));
 }
 
 }  // namespace
 
-::reboot::Result<Bytes> dispatch_call(const Handlers& handlers, const CallContext& context, u32 method_id,
+::rb::Result<Bytes> dispatch_call(const Handlers& handlers, const CallContext& context, u32 method_id,
                                       std::span<const u8> request) {
     switch (method_id) {
         case kEngineStatus:
@@ -215,17 +215,17 @@ template <class Response>
         default:
             break;
     }
-    const ::reboot::MessageId error = MethodTable::find(method_id) ? msg::kWrongMethodKind : msg::kUnknownMethod;
+    const ::rb::MessageId error = MethodTable::find(method_id) ? msg::kWrongMethodKind : msg::kUnknownMethod;
     return std::unexpected(method_error(error, method_id));
 }
 
-::reboot::Result<::reboot::OpHandle> dispatch_start(const Handlers& handlers, const CallContext& context,
+::rb::Result<::rb::OpHandle> dispatch_start(const Handlers& handlers, const CallContext& context,
                                                     u32 method_id, std::span<const u8> request,
-                                                    std::optional<::reboot::DisconnectPolicy> disconnect) {
+                                                    std::optional<::rb::DisconnectPolicy> disconnect) {
     const MethodSpec* spec = MethodTable::find(method_id);
     if (!spec) return std::unexpected(method_error(msg::kUnknownMethod, method_id));
     if (spec->kind != MethodKind::Operation) return std::unexpected(method_error(msg::kWrongMethodKind, method_id));
-    const ::reboot::DisconnectPolicy policy = disconnect.value_or(spec->default_disconnect);
+    const ::rb::DisconnectPolicy policy = disconnect.value_or(spec->default_disconnect);
     switch (method_id) {
         case kLibraryRelocate:
             return start(handlers.library, &ILibraryHandler::start_relocate, context, method_id, request, policy);
@@ -292,11 +292,11 @@ template <class Response>
         case kLogsExport:
             return start(handlers.logs, &ILogsHandler::start_export, context, method_id, request, policy);
         default:
-            return std::unexpected(::reboot::internal_bug("api.dispatch_start"));
+            return std::unexpected(::rb::internal_bug("api.dispatch_start"));
     }
 }
 
-::reboot::Result<Bytes> encode_op_result(u32 method_id, const std::any& value) {
+::rb::Result<Bytes> encode_op_result(u32 method_id, const std::any& value) {
     switch (method_id) {
         case kLibraryRelocate:
             return encode_result<LibraryRelocateResponse>(value);
@@ -363,8 +363,8 @@ template <class Response>
         case kLogsExport:
             return encode_result<LogsExportResponse>(value);
         default:
-            return std::unexpected(::reboot::internal_bug("api.encode_op_result"));
+            return std::unexpected(::rb::internal_bug("api.encode_op_result"));
     }
 }
 
-}  // namespace reboot::api
+}  // namespace rb::api

@@ -9,7 +9,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/logging/error_router.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 struct ErrorRouter::Impl {
     // Shared with posted sink failures, which may run after the router is gone.
@@ -35,4 +35,4 @@ struct ErrorRouter::Impl {
     u64 next_ref = 1;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

@@ -12,9 +12,9 @@
 #include "reboot/front/ticket_exchange.hpp"
 #include "reboot/front/unencrypted_upstream_prompt.hpp"
 
-using namespace reboot;
-using namespace reboot::front;
-using namespace reboot::front::test;
+using namespace rb;
+using namespace rb::front;
+using namespace rb::front::test;
 using namespace std::chrono_literals;
 
 namespace {

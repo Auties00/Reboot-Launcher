@@ -2,18 +2,18 @@
 
 #include "messages.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
-::reboot::Diagnostic to_diagnostic(DecodeError error, u32 method_id) {
-    ::reboot::MessageId message = msg::kMalformedRequest;
+::rb::Diagnostic to_diagnostic(DecodeError error, u32 method_id) {
+    ::rb::MessageId message = msg::kMalformedRequest;
     switch (error) {
         case DecodeError::Malformed: message = msg::kMalformedRequest; break;
         case DecodeError::ConflictingCases: message = msg::kConflictingCases; break;
         case DecodeError::UnknownCase: message = msg::kUnknownCase; break;
     }
-    return ::reboot::make_diag(::reboot::ErrorDomain::Api, message)
+    return ::rb::make_diag(::rb::ErrorDomain::Api, message)
         .arg("method", method_id)
-        .kind(::reboot::ErrorKind::InvalidInput);
+        .kind(::rb::ErrorKind::InvalidInput);
 }
 
-}  // namespace reboot::api
+}  // namespace rb::api

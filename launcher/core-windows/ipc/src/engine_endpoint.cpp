@@ -5,7 +5,7 @@
 #include "reboot/os_windows/ipc/pipe_trust.hpp"
 #include "reboot/ports/platform_services.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 Result<EngineEndpoint> make_engine_endpoint() {
     using namespace os_windows::ipc;
@@ -17,4 +17,4 @@ Result<EngineEndpoint> make_engine_endpoint() {
     return endpoint;
 }
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

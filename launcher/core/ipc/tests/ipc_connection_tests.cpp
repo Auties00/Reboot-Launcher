@@ -7,8 +7,8 @@
 #include "reboot/ipc/ipc_connection.hpp"
 #include "reboot/testing/memory_stream_pair.hpp"
 
-using namespace reboot;
-using namespace reboot::ipc::test;
+using namespace rb;
+using namespace rb::ipc::test;
 
 namespace {
 

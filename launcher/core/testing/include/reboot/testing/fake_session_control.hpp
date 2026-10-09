@@ -12,7 +12,7 @@
 #include "reboot/ports/session_host.hpp"
 #include "reboot/testing/game_control_bootstrap.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 class FakeSessionHost;
 
@@ -59,4 +59,4 @@ private:
     bool released_ = false;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

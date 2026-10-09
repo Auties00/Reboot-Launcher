@@ -5,7 +5,7 @@ extern "C" __declspec(dllimport) unsigned long __stdcall GetCurrentProcessId();
 extern "C" int getpid();
 #endif
 
-namespace reboot::engine {
+namespace rb::engine {
 
 // Matches current_process.hpp: u32 is unsigned int on every supported target.
 unsigned int current_process_id() noexcept {
@@ -16,4 +16,4 @@ unsigned int current_process_id() noexcept {
 #endif
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

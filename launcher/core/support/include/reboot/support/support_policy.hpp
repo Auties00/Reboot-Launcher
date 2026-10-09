@@ -11,7 +11,7 @@
 #include "reboot/support/support_query.hpp"
 #include "reboot/support/support_verdict.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // game-builds.+3: rates builds per version range x role x runner. Owned by the engine; UIs only
 // render it. Every rule that applies adds a reason, and the tier is the worst of them:
@@ -49,4 +49,4 @@ private:
     SupportInputs inputs_;
 };
 
-}  // namespace reboot::support
+}  // namespace rb::support

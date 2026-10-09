@@ -2,7 +2,7 @@
 
 #include "wide.hpp"
 
-namespace reboot::os_windows::win32session {
+namespace rb::os_windows::win32session {
 
 std::wstring to_wide(const Bytes& utf16le) {
     std::wstring out(utf16le.size() / 2, L'\0');
@@ -81,4 +81,4 @@ std::wstring build_command_line(const Bytes& exe_utf16, const std::vector<Bytes>
     return line;
 }
 
-}  // namespace reboot::os_windows::win32session
+}  // namespace rb::os_windows::win32session

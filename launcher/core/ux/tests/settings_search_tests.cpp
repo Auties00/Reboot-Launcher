@@ -7,8 +7,8 @@
 #include "reboot/ux/message_catalog.hpp"
 #include "reboot/ux/settings_search.hpp"
 
-using namespace reboot;
-using namespace reboot::ux;
+using namespace rb;
+using namespace rb::ux;
 
 namespace {
 

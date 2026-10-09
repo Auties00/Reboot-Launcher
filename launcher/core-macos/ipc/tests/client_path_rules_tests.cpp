@@ -5,9 +5,9 @@
 
 #include "client_path_rules.hpp"
 
-using reboot::NativePath;
-using reboot::os_macos::ipc::ImagePlacement;
-using reboot::os_macos::ipc::place_image;
+using rb::NativePath;
+using rb::os_macos::ipc::ImagePlacement;
+using rb::os_macos::ipc::place_image;
 
 namespace {
 

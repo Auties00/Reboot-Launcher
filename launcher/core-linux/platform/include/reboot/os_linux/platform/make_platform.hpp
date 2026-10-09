@@ -3,7 +3,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ports/platform_services.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 // Linux composition: XdgPaths, LinuxFileSystem, InotifyWatcher, LinuxDiskInfo,
 // LibsecretSecretStore (fallback files in <data root>/state/secrets), PidfdProcessLauncher
@@ -14,4 +14,4 @@ namespace reboot::ports {
 // core-linux/runner and ipc_listener to core-linux/ipc.
 [[nodiscard]] Result<PlatformServices> make_platform(const PlatformOptions& options);
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

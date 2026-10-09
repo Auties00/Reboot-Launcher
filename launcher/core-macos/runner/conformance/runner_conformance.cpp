@@ -24,11 +24,11 @@
 #include "reboot/testing/scratch_dir.hpp"
 
 namespace fs = std::filesystem;
-using reboot::NativePath;
-using reboot::os_macos::runner::DxmtWineRunnerPlatform;
-using reboot::os_macos::runner::HostCpu;
-using reboot::os_macos::runner::MacRuntimeLayout;
-using reboot::ports::RunnerKind;
+using rb::NativePath;
+using rb::os_macos::runner::DxmtWineRunnerPlatform;
+using rb::os_macos::runner::HostCpu;
+using rb::os_macos::runner::MacRuntimeLayout;
+using rb::ports::RunnerKind;
 
 namespace {
 
@@ -76,9 +76,9 @@ struct RestoreWrite {
     }
 };
 
-reboot::testing::ScratchDir scratch() {
-    reboot::OsRandom random;
-    auto dir = reboot::testing::ScratchDir::create(random, "runner");
+rb::testing::ScratchDir scratch() {
+    rb::OsRandom random;
+    auto dir = rb::testing::ScratchDir::create(random, "runner");
     REQUIRE(dir);
     return std::move(*dir);
 }
@@ -99,7 +99,7 @@ TEST_CASE("a non-executable wine loader is missing", "[runner_conformance]") {
     fs::permissions(dir.path() / MacRuntimeLayout::kWineLoader, fs::perms::owner_read);
     const auto layout = MacRuntimeLayout::resolve(dir.path());
     REQUIRE_FALSE(layout);
-    CHECK(layout.error().is(reboot::os_macos::runner::kWineLoaderMissing));
+    CHECK(layout.error().is(rb::os_macos::runner::kWineLoaderMissing));
 }
 
 TEST_CASE("a missing DXMT file is named", "[runner_conformance]") {
@@ -108,8 +108,8 @@ TEST_CASE("a missing DXMT file is named", "[runner_conformance]") {
     fs::remove(dir.path() / MacRuntimeLayout::kWindowsDllDir / "dxgi.dll");
     const auto layout = MacRuntimeLayout::resolve(dir.path());
     REQUIRE_FALSE(layout);
-    CHECK(layout.error().is(reboot::os_macos::runner::kDxmtMissing));
-    const reboot::Arg* file = layout.error().find_arg("file");
+    CHECK(layout.error().is(rb::os_macos::runner::kDxmtMissing));
+    const rb::Arg* file = layout.error().find_arg("file");
     REQUIRE(file);
     CHECK(std::get<std::string>(*file) == "dxgi.dll");
 }
@@ -146,7 +146,7 @@ TEST_CASE("post_extract clears quarantine from read-only entries and keeps their
     const auto stripped = platform.post_extract(dir.path());
     INFO((stripped ? std::string()
                    : stripped.error().id + " errno " +
-                         std::to_string(stripped.error().os_error.value_or(reboot::SystemError{}).code)));
+                         std::to_string(stripped.error().os_error.value_or(rb::SystemError{}).code)));
     REQUIRE(stripped);
     CHECK_FALSE(quarantined(ro_file));
     CHECK_FALSE(quarantined(ro_dir));
@@ -178,8 +178,8 @@ TEST_CASE("post_extract of a missing runtime fails", "[runner_conformance]") {
     DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
     const auto stripped = platform.post_extract(dir.path() / "missing");
     REQUIRE_FALSE(stripped);
-    CHECK(stripped.error().is(reboot::os_macos::runner::kQuarantineStripFailed));
-    CHECK(stripped.error().kind == reboot::ErrorKind::NotFound);
+    CHECK(stripped.error().is(rb::os_macos::runner::kQuarantineStripFailed));
+    CHECK(stripped.error().kind == rb::ErrorKind::NotFound);
     REQUIRE(stripped.error().os_error);
     CHECK(stripped.error().os_error->code == ENOENT);
 }
@@ -189,8 +189,8 @@ TEST_CASE("an incomplete runtime fails the layout", "[runner_conformance]") {
     DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
     const auto layout = platform.layout(RunnerKind::MacRuntime, {dir.path()});
     REQUIRE_FALSE(layout);
-    CHECK(layout.error().is(reboot::os_macos::runner::kWineLoaderMissing));
-    CHECK(layout.error().kind == reboot::ErrorKind::NotFound);
+    CHECK(layout.error().is(rb::os_macos::runner::kWineLoaderMissing));
+    CHECK(layout.error().kind == rb::ErrorKind::NotFound);
 }
 
 TEST_CASE("the platform passes the runner port suite", "[runner_conformance]") {
@@ -200,7 +200,7 @@ TEST_CASE("the platform passes the runner port suite", "[runner_conformance]") {
     quarantine(runtime / MacRuntimeLayout::kWineLoader);
     DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
 
-    const auto report = reboot::testing::run_runner_platform_conformance(
+    const auto report = rb::testing::run_runner_platform_conformance(
         platform,
         {RunnerKind::MacRuntime, {runtime}, dir.path() / "prefix", dir.path() / "winhost" / "reboot-winhost.exe"});
     INFO(report.describe());
@@ -209,7 +209,7 @@ TEST_CASE("the platform passes the runner port suite", "[runner_conformance]") {
 }
 
 TEST_CASE("the factory detects the host CPU", "[runner_conformance]") {
-    const auto platform = reboot::os_macos::runner::make_runner_platform();
+    const auto platform = rb::os_macos::runner::make_runner_platform();
     REQUIRE(platform);
     CHECK(platform->supported().empty() != runs_on_apple_silicon());
 }

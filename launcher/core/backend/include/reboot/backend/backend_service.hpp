@@ -16,18 +16,18 @@
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot {
+namespace rb {
 class EventBus;
 class Executor;
 class TimerService;
 class UserRequestRegistry;
-}  // namespace reboot
+}  // namespace rb
 
-namespace reboot::net {
+namespace rb::net {
 class HostTlsMemory;
 }
 
-namespace reboot::backend {
+namespace rb::backend {
 
 class BackendProcess;
 class IBackendSessions;
@@ -116,4 +116,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

@@ -21,7 +21,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 namespace {
 
 constexpr const char* kLaunchctl = "/bin/launchctl";
@@ -189,4 +189,4 @@ Result<LaunchctlRun> run_launchctl(std::span<const std::string> arguments, std::
     return LaunchctlRun{.end = LaunchctlRun::End::Signalled, .code = WTERMSIG(status)};
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

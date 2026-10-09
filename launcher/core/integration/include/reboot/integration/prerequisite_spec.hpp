@@ -5,7 +5,7 @@
 #include "reboot/integration/prerequisite_impact.hpp"
 #include "reboot/integration/remedy.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 struct PrerequisiteSpec {
     PrerequisiteId id{};
@@ -16,4 +16,4 @@ struct PrerequisiteSpec {
 
 [[nodiscard]] const PrerequisiteSpec& prerequisite_spec(PrerequisiteId id) noexcept;
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

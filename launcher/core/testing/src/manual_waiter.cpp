@@ -5,7 +5,7 @@
 
 #include "reboot/testing/deterministic_runtime.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 bool ManualWaiter::wait_until(UniqueFunction<bool()> condition, std::chrono::milliseconds budget) {
     constexpr std::chrono::milliseconds kStep{10};
@@ -19,4 +19,4 @@ bool ManualWaiter::wait_until(UniqueFunction<bool()> condition, std::chrono::mil
     return true;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

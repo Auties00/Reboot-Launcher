@@ -2,8 +2,8 @@
 
 #include "reboot/injection/legacy_requirements.hpp"
 
-using namespace reboot;
-using namespace reboot::injection;
+using namespace rb;
+using namespace rb::injection;
 
 TEST_CASE("native binds 127.0.0.1:3551 and :80", "[injection][legacy]") {
     const LegacyRequirements requirements = legacy_requirements(ports::RunnerKind::Native);

@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // Inclusive.
 struct ChangelistRange {
@@ -27,4 +27,4 @@ struct VersionRange {
     bool operator==(const VersionRange&) const = default;
 };
 
-}  // namespace reboot::support
+}  // namespace rb::support

@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 
 namespace {
 
@@ -43,4 +43,4 @@ contracts::common::CommandResult failed_reply(u64 req_id, std::string_view reque
     return contracts::common::CommandResult{req_id, false, contracts::common::to_wire(diag)};
 }
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

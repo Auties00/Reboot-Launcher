@@ -10,7 +10,7 @@
 #include "reboot/support/support_reason.hpp"
 #include "reboot/support/support_tier.hpp"
 
-namespace reboot::support {
+namespace rb::support {
 
 // The cell a query fell in, with the query's own reasons applied on top of it.
 struct SupportVerdict {
@@ -30,4 +30,4 @@ struct SupportVerdict {
 // are its causes. Untested passes; the caller raises ConfirmUntested.
 [[nodiscard]] Result<void> check_not_blocked(const SupportQuery& query, const SupportVerdict& verdict);
 
-}  // namespace reboot::support
+}  // namespace rb::support

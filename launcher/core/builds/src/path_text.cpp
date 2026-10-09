@@ -1,6 +1,6 @@
 #include "path_text.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 std::string utf8_name(const NativePath& path) {
     const std::u8string text = path.generic_u8string();
@@ -14,4 +14,4 @@ std::string folded_key(const NativePath& path) {
     return key;
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

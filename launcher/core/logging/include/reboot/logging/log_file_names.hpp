@@ -7,7 +7,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 enum class LogFileKind : u8 { Session, Wine, ProtonLog };
 
@@ -40,4 +40,4 @@ struct ParsedLogFileName {
 // Session, Wine and Proton's steam-<game id>.log; retention and export never touch other files.
 [[nodiscard]] std::optional<ParsedLogFileName> classify_log_file(std::string_view file_name) noexcept;
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

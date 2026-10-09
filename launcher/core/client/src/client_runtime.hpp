@@ -13,7 +13,7 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/ports/platform_services.hpp"
 
-namespace reboot::client {
+namespace rb::client {
 
 // Covers no capability ids. The OS ports, clock and executor threads one rb_ctx runs on.
 class ClientRuntime {
@@ -45,18 +45,18 @@ private:
     std::thread link_thread_;
 };
 
-}  // namespace reboot::client
+}  // namespace rb::client
 
 // rb_ctx_destroy closes the context and stops the runtime first, so no task outlives the context.
 struct rb_ctx {
-    std::unique_ptr<reboot::client::ClientRuntime> runtime;
-    std::unique_ptr<reboot::client::ClientContext> context;
+    std::unique_ptr<rb::client::ClientRuntime> runtime;
+    std::unique_ptr<rb::client::ClientContext> context;
 };
 
-namespace reboot::client {
+namespace rb::client {
 
 // rb_ctx_create once the options are read: builds the context on `runtime` and waits for connect.
 // The status and rb_last_error are rb_ctx_create's.
 [[nodiscard]] rb_status open_context(std::unique_ptr<ClientRuntime> runtime, ConnectSettings settings, rb_ctx** out);
 
-}  // namespace reboot::client
+}  // namespace rb::client

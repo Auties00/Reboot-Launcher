@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 // Capabilities: logging-diagnostics.log-and-errors.
 // Thread-safe. Pruning skips these, since on POSIX unlinking an open file loses its output.
@@ -26,4 +26,4 @@ private:
     std::vector<NativePath> files_;
 };
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

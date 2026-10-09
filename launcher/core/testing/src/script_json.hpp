@@ -26,7 +26,7 @@
 #include "reboot/foundation/types.hpp"
 #include "wire/codec.hpp"
 
-namespace reboot::testing::script_json {
+namespace rb::testing::script_json {
 
 namespace json = boost::json;
 
@@ -301,4 +301,4 @@ std::optional<ReadError> read(const json::value& in, T& out, const std::string& 
     }
 }
 
-}  // namespace reboot::testing::script_json
+}  // namespace rb::testing::script_json

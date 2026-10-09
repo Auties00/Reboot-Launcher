@@ -11,7 +11,7 @@
 #include "reboot/ux/notice.hpp"
 #include "reboot/ux/onboarding_step.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Offered shows the first-run banner; Exited and Completed both stop it, and start() reopens the tour.
 enum class OnboardingStatus : u8 { Offered, InProgress, Completed, Exited };
@@ -44,4 +44,4 @@ struct GuidanceState {
     std::vector<OneTimeNoticeRecord> notices;
 };
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

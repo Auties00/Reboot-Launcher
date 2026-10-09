@@ -11,7 +11,7 @@
 #include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 struct OwnedFrame {
     u64 type = 0;
@@ -66,4 +66,4 @@ template <ContractMessage... Messages>
     return ((is_frame<Messages>(frame) && decode_contract<Messages>(frame.payload).has_value()) || ...);
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

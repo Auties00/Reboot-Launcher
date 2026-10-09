@@ -11,7 +11,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Covers no capability ids (decision testing-strategy).
 // The server's side of one connection opened through FakeQuicTransport. Callbacks reach the client
@@ -60,4 +60,4 @@ private:
     bool released_ = false;
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

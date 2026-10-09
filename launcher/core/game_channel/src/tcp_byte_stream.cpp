@@ -13,7 +13,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/secret.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 
 namespace {
 
@@ -194,4 +194,4 @@ std::unique_ptr<ports::IByteStream> make_tcp_byte_stream(tcp::socket socket) {
     return std::make_unique<TcpByteStream>(std::make_shared<TcpState>(std::move(socket)));
 }
 
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

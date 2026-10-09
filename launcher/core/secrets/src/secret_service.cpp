@@ -21,7 +21,7 @@
 #include "reboot/secrets/secret_state_changed_event.hpp"
 #include "store_layout.hpp"
 
-namespace reboot::secrets {
+namespace rb::secrets {
 
 namespace {
 
@@ -657,4 +657,4 @@ std::optional<RequestId> SecretService::require(const SecretTarget& target, Secr
     return id;
 }
 
-}  // namespace reboot::secrets
+}  // namespace rb::secrets

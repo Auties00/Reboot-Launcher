@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 enum class EntryState : u8 {
     Absent,
@@ -21,4 +21,4 @@ enum class EntryState : u8 {
     Unknown,
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

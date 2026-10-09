@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-namespace reboot::ux {
+namespace rb::ux {
 
 struct TemplateInfo {
     // Distinct argument names in order of first appearance, nested ones included.
@@ -17,4 +17,4 @@ struct TemplateInfo {
 // Parses an ICU MessageFormat 1 template with ICU's default apostrophe mode; the error says where it broke.
 [[nodiscard]] std::expected<TemplateInfo, std::string> parse_template(std::string_view text);
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

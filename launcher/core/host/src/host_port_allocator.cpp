@@ -10,7 +10,7 @@
 #include "reboot/net/port_conflict.hpp"
 #include "reboot/net/port_preflight.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 namespace {
 
@@ -236,4 +236,4 @@ std::optional<PortBlock> HostPortAllocator::block(SessionId session) const {
     return held->second;
 }
 
-}  // namespace reboot::host
+}  // namespace rb::host

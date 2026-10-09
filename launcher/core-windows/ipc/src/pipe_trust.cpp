@@ -14,7 +14,7 @@
 #include "wide.hpp"
 #include "win32_errors.hpp"
 
-namespace reboot::os_windows::ipc {
+namespace rb::os_windows::ipc {
 namespace {
 
 [[nodiscard]] Diagnostic client_unidentified(ULONG pid) {
@@ -156,4 +156,4 @@ Result<VerifiedServer> PipeTrust::verify_server(PipeHandle pipe) const {
     return verified;
 }
 
-}  // namespace reboot::os_windows::ipc
+}  // namespace rb::os_windows::ipc

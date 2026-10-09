@@ -5,7 +5,7 @@
 
 #include "random_util.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -24,4 +24,4 @@ std::chrono::milliseconds go_away_delay(IRandom& random, std::chrono::millisecon
     return uniform_delay(random, std::max(reconnect_after, std::chrono::milliseconds{0}));
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

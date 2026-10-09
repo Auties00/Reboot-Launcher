@@ -18,7 +18,7 @@
 #include "reboot/game_channel/ue_log_tail.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::game_channel {
+namespace rb::game_channel {
 namespace {
 
 using namespace std::chrono_literals;
@@ -199,4 +199,4 @@ TEST_CASE("a read in flight when the tail goes is discarded", "[game_channel][ue
 }
 
 }  // namespace
-}  // namespace reboot::game_channel
+}  // namespace rb::game_channel

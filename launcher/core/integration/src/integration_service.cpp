@@ -11,7 +11,7 @@
 #include "reboot/integration/integration_changed.hpp"
 #include "reboot/integration/integration_policy.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 namespace {
 
@@ -232,4 +232,4 @@ void IntegrationService::fill_declined(std::vector<EntryStatus>& entries) const 
     for (EntryStatus& entry : entries) entry.declined = contains(declined, entry.kind);
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

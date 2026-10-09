@@ -8,7 +8,7 @@
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 namespace {
 

@@ -3,7 +3,7 @@
 #include "reboot/foundation/diag.hpp"
 
 // The one declaration of every ipc.* id; reboot_client and the OS ipc packages use these.
-namespace reboot::ipc {
+namespace rb::ipc {
 
 // {field}: "user_id" or "root_hash16".
 REBOOT_MESSAGE_DECL(kInvalidEndpointInput);
@@ -44,4 +44,4 @@ REBOOT_MESSAGE_DECL(kRootMismatch);
 // Severity::Warning. {image_path}, {expected_path}
 REBOOT_MESSAGE_DECL(kEngineImageDiffers);
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

@@ -7,7 +7,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/net/url_scheme.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 // An absolute http or https URL. `host` is lowercase and has no IPv6 brackets.
 struct ParsedUrl {
@@ -26,4 +26,4 @@ struct ParsedUrl {
 // Lowercase, without brackets or a trailing ":port".
 [[nodiscard]] std::string normalize_host(std::string_view host);
 
-}  // namespace reboot::net
+}  // namespace rb::net

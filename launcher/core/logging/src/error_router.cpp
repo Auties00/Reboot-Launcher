@@ -10,7 +10,7 @@
 #include "reboot/foundation/clock.hpp"
 #include "reboot/logging/log_format.hpp"
 
-namespace reboot::logging {
+namespace rb::logging {
 
 namespace {
 
@@ -102,4 +102,4 @@ void ErrorRouter::record_outcome(OpId op, OpKind kind, const std::optional<Sessi
     }
 }
 
-}  // namespace reboot::logging
+}  // namespace rb::logging

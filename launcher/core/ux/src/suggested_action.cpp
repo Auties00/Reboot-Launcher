@@ -3,7 +3,7 @@
 #include "links.hpp"
 #include "messages.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 namespace {
 
@@ -24,4 +24,4 @@ struct LabelOf {
 
 MessageId action_label(const SuggestedAction& action) { return std::visit(LabelOf{}, action); }
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

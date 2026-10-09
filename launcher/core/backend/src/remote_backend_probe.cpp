@@ -13,7 +13,7 @@
 #include "messages.hpp"
 #include "reboot/net/http_client.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -119,4 +119,4 @@ void RemoteBackendProbe::probe(const BackendUrl& url, CancelToken token, UniqueF
     impl_->run(std::move(attempt));
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

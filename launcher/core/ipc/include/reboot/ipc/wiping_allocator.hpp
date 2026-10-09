@@ -7,7 +7,7 @@
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 // Wipes every block before freeing it, so a vector that grows leaves no copy behind.
 template <class T>
@@ -33,4 +33,4 @@ public:
 
 using WipedBytes = std::vector<u8, WipingAllocator<u8>>;
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

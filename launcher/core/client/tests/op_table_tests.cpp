@@ -4,8 +4,8 @@
 
 #include "op_table.hpp"
 
-using namespace reboot;
-using namespace reboot::client;
+using namespace rb;
+using namespace rb::client;
 
 TEST_CASE("an op is pending until its first outcome, which then never changes", "[client][ops]") {
     OpTable ops;

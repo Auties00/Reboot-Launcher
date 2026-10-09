@@ -10,7 +10,7 @@
 #include "wide.hpp"
 #include "win_error.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 namespace {
 
@@ -103,4 +103,4 @@ Result<void> WindowsLogFileSystem::remove(const NativePath& path) {
     return {};
 }
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

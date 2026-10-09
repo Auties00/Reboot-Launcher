@@ -23,7 +23,7 @@
 #include "reboot/trust/signed_document.hpp"
 #include "reboot/trust/signed_document_kind.hpp"
 
-namespace reboot::catalog::test {
+namespace rb::catalog::test {
 
 [[nodiscard]] inline std::vector<u8> bytes_of(std::string_view text) { return {text.begin(), text.end()}; }
 
@@ -169,4 +169,4 @@ private:
     std::multimap<SteadyTime, UniqueFunction<void()>> timed_;
 };
 
-}  // namespace reboot::catalog::test
+}  // namespace rb::catalog::test

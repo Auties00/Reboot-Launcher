@@ -7,7 +7,7 @@
 #include "darwin_peer_credentials.hpp"
 #include "engine_socket_path.hpp"
 
-namespace reboot::os_macos::ipc {
+namespace rb::os_macos::ipc {
 
 UnixSocketConnector::UnixSocketConnector(NativePath user_temp_dir)
     : UnixSocketConnectorBase(posix::PeerCredentialCheck{[](int fd) { return read_darwin_peer(fd); },
@@ -21,4 +21,4 @@ Result<std::unique_ptr<ports::IByteStream>> UnixSocketConnector::connect(std::st
     return UnixSocketConnectorBase::connect(endpoint_name, deadline);
 }
 
-}  // namespace reboot::os_macos::ipc
+}  // namespace rb::os_macos::ipc

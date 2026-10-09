@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; ISystemInfo for the engine process, read once at construction.
 class WindowsSystemInfo final : public ports::ISystemInfo {
@@ -27,4 +27,4 @@ private:
     std::string os_session_;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

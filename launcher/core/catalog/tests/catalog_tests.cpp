@@ -11,8 +11,8 @@
 #include "reboot/catalog/parse_catalog.hpp"
 #include "reboot/foundation/diag.hpp"
 
-using namespace reboot;
-using namespace reboot::catalog;
+using namespace rb;
+using namespace rb::catalog;
 
 namespace {
 

@@ -11,7 +11,7 @@
 #include "reboot/gameserver/game_server_config.hpp"
 #include "reboot/gameserver/game_server_description.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 struct StartMatch {
     std::chrono::seconds countdown{};
@@ -49,4 +49,4 @@ inline constexpr std::array<std::string_view, std::variant_size_v<OperatorComman
 // ResetMatch when in_process_reset; any other command only when its name is listed.
 [[nodiscard]] bool is_declared(const OperatorCommand& command, const GameServerCapabilities& capabilities);
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

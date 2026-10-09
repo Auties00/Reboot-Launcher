@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 TEST_CASE("is_valid_utf8 rejects overlongs, surrogates and truncation", "[foundation][text]") {
     CHECK(is_valid_utf8(""));

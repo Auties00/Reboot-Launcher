@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -33,4 +33,4 @@ bool LoopbackAuthority::allows_origin(std::optional<std::string_view> origin_hea
     return is_listener(origin, port, true);
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

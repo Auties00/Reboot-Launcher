@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 bool same_game_version(std::string_view server_version, const GameVersion& wanted) {
     const auto parsed = GameVersion::parse(server_version);
@@ -11,4 +11,4 @@ bool same_game_version(std::string_view server_version, const GameVersion& wante
 
 std::vector<u32> buckets_for(const GameVersion& version) { return {version.bucket()}; }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

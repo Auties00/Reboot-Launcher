@@ -8,11 +8,11 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/injection/pinned_dll.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class IFileSystem;
 }
 
-namespace reboot::injection {
+namespace rb::injection {
 
 // Capabilities: dll-injection.dll-set-resolution, settings-storage.+76.
 // Checks run in this order, each only once the previous passed: empty, name (.dll, compared
@@ -37,4 +37,4 @@ private:
     ports::IFileSystem& fs_;
 };
 
-}  // namespace reboot::injection
+}  // namespace rb::injection

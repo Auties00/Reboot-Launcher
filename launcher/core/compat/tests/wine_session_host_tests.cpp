@@ -28,8 +28,8 @@
 #include "reboot/testing/memory_stream_pair.hpp"
 #include "reboot/testing/scripted_process_launcher.hpp"
 
-using namespace reboot;
-using namespace reboot::compat;
+using namespace rb;
+using namespace rb::compat;
 using namespace std::chrono_literals;
 
 namespace {

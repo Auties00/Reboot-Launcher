@@ -6,7 +6,7 @@
 
 #include "reboot/integration/entry_command.hpp"
 
-using namespace reboot::integration;
+using namespace rb::integration;
 using Tokens = std::vector<std::string>;
 
 TEST_CASE("each flavour has its own link placeholder", "[integration][entry_command]") {

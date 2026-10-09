@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 // What proves a caller shares the engine's desktop. OsSession: the Windows session id or the Aqua
 // session. Display: Linux, where a usable DISPLAY or WAYLAND_DISPLAY is what counts.
@@ -21,4 +21,4 @@ using DisplayContext = contracts::ipc::CallerContext;
 [[nodiscard]] Result<void> check_display(const DisplayContext& caller, std::string_view engine_os_session,
                                          SessionMatch match);
 
-}  // namespace reboot::play
+}  // namespace rb::play

@@ -6,7 +6,7 @@
 #include "reboot/identity/third_party_login.hpp"
 #include "reboot/storage/enum_names.hpp"
 
-namespace reboot::identity {
+namespace rb::identity {
 
 namespace {
 
@@ -68,4 +68,4 @@ Result<LoginPlan> plan_login(const AccountRecord& record, const LoginTarget& tar
     return plan;
 }
 
-}  // namespace reboot::identity
+}  // namespace rb::identity

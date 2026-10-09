@@ -13,7 +13,7 @@
 #include "text_util.hpp"
 #include "wire_mapping.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -210,4 +210,4 @@ Result<void> Search::run(ConnectionId client, SearchRequest request, CancelToken
     return {};
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

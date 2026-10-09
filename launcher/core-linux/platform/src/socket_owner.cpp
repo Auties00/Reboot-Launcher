@@ -16,7 +16,7 @@
 #include "reboot/posix/unique_fd.hpp"
 #include "text_files.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -88,4 +88,4 @@ std::vector<SocketRecord> read_proc_net(std::string_view v4_name, std::string_vi
     return records;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

@@ -7,7 +7,7 @@
 #include "reboot/integration/prerequisite_impact.hpp"
 #include "reboot/integration/remedy.hpp"
 
-namespace reboot::integration {
+namespace rb::integration {
 
 struct Prerequisite {
     PrerequisiteId id{};
@@ -19,4 +19,4 @@ struct Prerequisite {
     std::optional<MessageId> platform_hint;
 };
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

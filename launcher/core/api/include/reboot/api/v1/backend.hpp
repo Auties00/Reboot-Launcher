@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class BackendKind : u32 {
     // The bundled reboot-backend, supervised by the engine.
@@ -208,22 +208,22 @@ class IBackendHandler {
 public:
     virtual ~IBackendHandler() = default;
 
-    virtual ::reboot::Result<BackendStatusResponse> status(const CallContext& context, const BackendStatusRequest& request) = 0;
-    virtual ::reboot::Result<BackendDataDirResponse> data_dir(const CallContext& context, const BackendDataDirRequest& request) = 0;
-    virtual ::reboot::Result<BackendSetTargetResponse> set_target(const CallContext& context, const BackendSetTargetRequest& request) = 0;
-    virtual ::reboot::Result<BackendAccountsListResponse> accounts_list(const CallContext& context, const BackendAccountsListRequest& request) = 0;
+    virtual ::rb::Result<BackendStatusResponse> status(const CallContext& context, const BackendStatusRequest& request) = 0;
+    virtual ::rb::Result<BackendDataDirResponse> data_dir(const CallContext& context, const BackendDataDirRequest& request) = 0;
+    virtual ::rb::Result<BackendSetTargetResponse> set_target(const CallContext& context, const BackendSetTargetRequest& request) = 0;
+    virtual ::rb::Result<BackendAccountsListResponse> accounts_list(const CallContext& context, const BackendAccountsListRequest& request) = 0;
     // Completes with BackendStartResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start(const CallContext& context, const BackendStartRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start(const CallContext& context, const BackendStartRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with BackendStopResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_stop(const CallContext& context, const BackendStopRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_stop(const CallContext& context, const BackendStopRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with BackendAccountsResetResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_accounts_reset(const CallContext& context, const BackendAccountsResetRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_accounts_reset(const CallContext& context, const BackendAccountsResetRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with BackendAccountsDeleteResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_accounts_delete(const CallContext& context, const BackendAccountsDeleteRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_accounts_delete(const CallContext& context, const BackendAccountsDeleteRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with BackendAccountsPruneResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_accounts_prune(const CallContext& context, const BackendAccountsPruneRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_accounts_prune(const CallContext& context, const BackendAccountsPruneRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with BackendAccountsRenameResponse.
-    virtual ::reboot::Result<::reboot::OpHandle> start_accounts_rename(const CallContext& context, const BackendAccountsRenameRequest& request, ::reboot::DisconnectPolicy disconnect) = 0;
+    virtual ::rb::Result<::rb::OpHandle> start_accounts_rename(const CallContext& context, const BackendAccountsRenameRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

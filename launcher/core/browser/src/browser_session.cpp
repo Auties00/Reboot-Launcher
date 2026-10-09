@@ -22,7 +22,7 @@
 #include "reboot/ports/net.hpp"
 #include "wire/frame.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -966,4 +966,4 @@ void BrowserSession::release_lease(u64 id) { impl_->release_lease(id); }
 
 void BrowserSession::unsubscribe(u64 id) { impl_->unsubscribe(id); }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

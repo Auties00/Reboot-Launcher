@@ -8,7 +8,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // sysctl KERN_PROC_PID, which still answers for an exited child nobody reaped yet; nullopt when no
 // such process exists.
@@ -20,4 +20,4 @@ namespace reboot::os_macos::platform {
 // The children of `parent`, zombies included.
 [[nodiscard]] Result<std::vector<u32>> child_pids(u32 parent);
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

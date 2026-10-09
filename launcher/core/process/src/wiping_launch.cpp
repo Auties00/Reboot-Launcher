@@ -2,7 +2,7 @@
 
 #include "wipe.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 namespace {
 
@@ -24,4 +24,4 @@ WipingLaunch& WipingLaunch::operator=(WipingLaunch&& other) noexcept {
 
 WipingLaunch::~WipingLaunch() { wipe_env(launch_.env); }
 
-}  // namespace reboot::process
+}  // namespace rb::process

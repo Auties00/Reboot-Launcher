@@ -7,7 +7,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 // An XDG_*_HOME value counts only when absolute, as the XDG spec requires; otherwise
 // <home>/<fallback>. The result is lexically normal.
@@ -31,4 +31,4 @@ struct InstallFacts {
 // /proc/self/exe reads "<path> (deleted)" once an update replaced the file.
 [[nodiscard]] NativePath without_deleted_suffix(NativePath exe);
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

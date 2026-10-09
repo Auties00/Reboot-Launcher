@@ -17,7 +17,7 @@
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/identity/account_record.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -343,4 +343,4 @@ Result<OpHandle> BackendAccounts::start_purge(DisconnectPolicy policy) {
     });
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

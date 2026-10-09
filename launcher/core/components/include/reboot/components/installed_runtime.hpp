@@ -3,7 +3,7 @@
 #include "reboot/components/component_ref.hpp"
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 // An unpacked runtime archive; compat turns `root` into a RuntimeLayout.
 struct InstalledRuntime {
@@ -12,4 +12,4 @@ struct InstalledRuntime {
     NativePath root;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

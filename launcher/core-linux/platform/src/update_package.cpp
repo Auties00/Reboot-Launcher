@@ -17,7 +17,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "update_entries.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -156,4 +156,4 @@ Result<std::string> extract_update(const NativePath& package, const NativePath& 
     return version;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

@@ -27,7 +27,7 @@
 #include "reboot/testing/fake_random.hpp"
 #include "reboot/testing/fake_shell.hpp"
 
-namespace reboot::builds::test {
+namespace rb::builds::test {
 
 inline constexpr std::string_view kBuildUrl = "https://builds.test/12.41.zip";
 
@@ -147,4 +147,4 @@ struct Services {
                                 .install = install}};
 };
 
-}  // namespace reboot::builds::test
+}  // namespace rb::builds::test

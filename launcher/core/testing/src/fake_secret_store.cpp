@@ -10,7 +10,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 namespace {
 
 [[nodiscard]] Diagnostic unavailable() {
@@ -67,4 +67,4 @@ std::vector<std::string> FakeSecretStore::keys() const {
     return out;
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

@@ -5,8 +5,8 @@
 
 #include "reboot/backend/account_prune_filter.hpp"
 
-using namespace reboot;
-using namespace reboot::backend;
+using namespace rb;
+using namespace rb::backend;
 
 namespace {
 

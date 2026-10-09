@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace reboot::engine {
+namespace rb::engine {
 
 IdlePolicy::IdlePolicy(TimerService& timers, EngineOrigin origin, UniqueFunction<void()> on_idle_exit,
                        std::chrono::steady_clock::duration delay)
@@ -53,4 +53,4 @@ void IdlePolicy::evaluate() {
     });
 }
 
-}  // namespace reboot::engine
+}  // namespace rb::engine

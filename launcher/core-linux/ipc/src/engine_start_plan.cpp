@@ -4,7 +4,7 @@
 
 #include "engine_units.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 constexpr std::string_view kSystemctl = "systemctl";
@@ -57,4 +57,4 @@ std::vector<std::string> systemd_run_argv(std::string_view unit, std::span<const
     return argv;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

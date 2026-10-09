@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 // The foundation has no named digest type; this matches components::Sha256Digest.
 using Sha256Digest = std::array<u8, 32>;
@@ -25,4 +25,4 @@ struct DescribedBinary {
 // Compares the encoded forms, so every field counts, in order.
 [[nodiscard]] bool same_description(const GameServerDescription& a, const GameServerDescription& b);
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

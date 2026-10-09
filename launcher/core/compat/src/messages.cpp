@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::compat::msg {
+namespace rb::compat::msg {
 
 REBOOT_MESSAGE(kRunnerUnsupported, "compat.runner_unsupported", "This system cannot play with the {runner} runner");
 REBOOT_MESSAGE(kNoRuntime, "compat.no_runtime", "The release manifest selects no runtime for the {runner} runner");
@@ -39,4 +39,4 @@ REBOOT_MESSAGE(kRecordsNotList, "compat.records_not_list", "The {member} of the 
 REBOOT_MESSAGE(kRecordInvalid, "compat.record_invalid", "A record of the runner state is incomplete");
 REBOOT_MESSAGE(kRecordDuplicate, "compat.record_duplicate", "The runner state records {name} twice");
 
-}  // namespace reboot::compat::msg
+}  // namespace rb::compat::msg

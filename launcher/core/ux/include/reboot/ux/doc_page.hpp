@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ux/language_tag.hpp"
 
-namespace reboot::ux {
+namespace rb::ux {
 
 // Capabilities: onboarding-ux-flows.+24.
 enum class DocPage : u8 {
@@ -19,4 +19,4 @@ enum class DocPage : u8 {
 
 [[nodiscard]] MessageId doc_page_label(DocPage page);
 
-}  // namespace reboot::ux
+}  // namespace rb::ux

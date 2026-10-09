@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace reboot::integration {
+namespace rb::integration {
 
 std::optional<std::string_view> url_placeholder(EntryFlavor flavor) noexcept {
     switch (flavor) {
@@ -56,4 +56,4 @@ std::optional<std::vector<std::string>> split_entry_command(std::string_view tex
     return tokens;
 }
 
-}  // namespace reboot::integration
+}  // namespace rb::integration

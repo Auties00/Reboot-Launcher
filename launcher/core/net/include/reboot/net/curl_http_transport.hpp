@@ -6,11 +6,11 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ports/net.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 class ISystemInfo;
 }
 
-namespace reboot::net {
+namespace rb::net {
 
 // Capabilities: matchmaking-networking.http-timeouts, matchmaking-networking.+72, matchmaking-networking.+84.
 // libcurl on one transfer thread with a shared connection and DNS cache. TLS per OS:
@@ -38,4 +38,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace reboot::net
+}  // namespace rb::net

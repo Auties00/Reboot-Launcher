@@ -6,7 +6,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // Installed lists only servers an installed build can join: one bucket per installed build.
 enum class VersionScope : u8 { All, Installed };
@@ -26,4 +26,4 @@ struct BrowseChoices {
 [[nodiscard]] ViewSpec make_view_spec(const BrowseChoices& choices, std::span<const GameVersion> installed,
                                       u32 window);
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

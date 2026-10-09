@@ -13,7 +13,7 @@
 #include "reboot/identity/login_plan.hpp"
 #include "reboot/play/game_arg.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 enum class CustomArgsError : u8 { UnbalancedQuote, InvalidText, ReservedKey };
 
@@ -69,4 +69,4 @@ private:
 // One line for the session log, every secret value written "***"; the Redactor still runs over it.
 [[nodiscard]] std::string to_log_string(const LaunchArgs& args);
 
-}  // namespace reboot::play
+}  // namespace rb::play

@@ -12,7 +12,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/testing/conformance_report.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 class DeterministicRuntime;
 
@@ -70,4 +70,4 @@ enum class OpContender : u8 {
 // CAS, the others get requests.already_resolved, and one UserActionResolved is published.
 [[nodiscard]] ConformanceReport race_user_request(std::size_t answers, bool with_withdrawal);
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

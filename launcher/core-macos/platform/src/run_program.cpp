@@ -21,7 +21,7 @@
 #include "reboot/posix/unique_fd.hpp"
 #include "wait_status.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 namespace {
 
@@ -145,4 +145,4 @@ Result<ProgramResult> run_program(const NativePath& program, std::vector<std::st
     return ProgramResult{.code = exit.code, .signal = exit.signal, .output = captured[0] + captured[1]};
 }
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

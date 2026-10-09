@@ -6,7 +6,7 @@
 
 #include "reboot/foundation/text.hpp"
 
-namespace reboot::compat {
+namespace rb::compat {
 
 namespace {
 
@@ -99,4 +99,4 @@ std::optional<std::string> seed_preferred_rhi(std::string_view ini) {
     return out;
 }
 
-}  // namespace reboot::compat
+}  // namespace rb::compat

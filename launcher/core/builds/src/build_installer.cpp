@@ -35,7 +35,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/support/version_cap.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -682,4 +682,4 @@ Result<OpHandle> BuildInstaller::start_delete_unregistered(const NativePath& fol
     return handle;
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

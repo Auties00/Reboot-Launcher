@@ -14,7 +14,7 @@
 #include "socket_stream.hpp"
 #include "unix_endpoint_checks.hpp"
 
-namespace reboot::posix {
+namespace rb::posix {
 
 namespace {
 
@@ -74,4 +74,4 @@ Result<std::unique_ptr<ports::IByteStream>> UnixSocketConnectorBase::connect(std
     return std::unique_ptr<ports::IByteStream>{std::move(*stream)};
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

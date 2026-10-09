@@ -6,7 +6,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 // Capabilities: game-builds.library.
 // Strand-only. The in-use guard for removal and relocation; the sessions package implements it,
@@ -21,4 +21,4 @@ public:
     virtual void stop_sessions_using(BuildId build, UniqueFunction<void(Result<void>)> done) = 0;
 };
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

@@ -4,8 +4,8 @@
 
 #include "reboot/os_windows/winhost/winhost_failure.hpp"
 
-using namespace reboot;
-using namespace reboot::os_windows::winhost;
+using namespace rb;
+using namespace rb::os_windows::winhost;
 
 TEST_CASE("each failure step has its own WhFatal name") {
     CHECK(step_name(FailureStep::Bootstrap) == "bootstrap");

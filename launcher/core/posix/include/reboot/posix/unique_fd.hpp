@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // Owns one file descriptor and closes it on destruction.
 class UniqueFd {
@@ -27,4 +27,4 @@ private:
     int fd_ = -1;
 };
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

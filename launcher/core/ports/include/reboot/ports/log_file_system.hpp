@@ -10,7 +10,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::ports {
+namespace rb::ports {
 
 // An open log file that is only ever appended to; closes on destruction.
 class LogFile {
@@ -65,4 +65,4 @@ public:
     virtual Result<void> remove(const NativePath& path) = 0;
 };
 
-}  // namespace reboot::ports
+}  // namespace rb::ports

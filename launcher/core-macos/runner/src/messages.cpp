@@ -1,6 +1,6 @@
 #include "messages.hpp"
 
-namespace reboot::os_macos::runner {
+namespace rb::os_macos::runner {
 
 REBOOT_MESSAGE(kRunnerKindUnsupported, "platform.mac_runner_kind_unsupported",
                "macOS cannot play with the {runner} runner.");
@@ -12,4 +12,4 @@ REBOOT_MESSAGE(kRuntimeReadFailed, "platform.mac_runtime_read_failed", "{path} c
 REBOOT_MESSAGE(kQuarantineStripFailed, "platform.mac_quarantine_strip_failed",
                "The quarantine flag could not be removed from {path}.");
 
-}  // namespace reboot::os_macos::runner
+}  // namespace rb::os_macos::runner

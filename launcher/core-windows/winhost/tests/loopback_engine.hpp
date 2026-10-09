@@ -13,7 +13,7 @@
 #include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::os_windows::winhost::test {
+namespace rb::os_windows::winhost::test {
 
 // The engine's end of the game channel: a loopback listener and the one connection it accepts.
 // Reads time out, so a test that waits for a frame winhost never sends fails instead of hanging.
@@ -185,4 +185,4 @@ private:
     return out;
 }
 
-}  // namespace reboot::os_windows::winhost::test
+}  // namespace rb::os_windows::winhost::test

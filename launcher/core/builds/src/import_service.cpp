@@ -20,7 +20,7 @@
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/support/version_cap.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 namespace {
 
@@ -228,4 +228,4 @@ Result<OpHandle> ImportService::start_import(ImportRequest request, DisconnectPo
     return handle;
 }
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

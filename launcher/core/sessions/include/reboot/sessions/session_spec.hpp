@@ -10,7 +10,7 @@
 #include "reboot/sessions/pinned_inputs.hpp"
 #include "reboot/sessions/session_kind.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 struct SessionSpec {
     SessionKind kind = SessionKind::Play;
@@ -26,4 +26,4 @@ struct SessionSpec {
     std::optional<HostProfileId> profile;
 };
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

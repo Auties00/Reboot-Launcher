@@ -22,7 +22,7 @@
 #include "reboot/os_windows/win32session/win32_session.hpp"
 #include "reboot/os_windows/winhost/control_connection.hpp"
 
-namespace reboot::os_windows::winhost {
+namespace rb::os_windows::winhost {
 namespace {
 
 namespace wh = contracts::winhost;
@@ -306,4 +306,4 @@ WinhostExit run_winhost() noexcept {
     }
 }
 
-}  // namespace reboot::os_windows::winhost
+}  // namespace rb::os_windows::winhost

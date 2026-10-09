@@ -10,9 +10,9 @@
 #include "reboot/net/datagram_connector.hpp"
 #include "reboot/net/udp_beacon_prober.hpp"
 
-using namespace reboot;
-using namespace reboot::browser;
-using namespace reboot::browser::test;
+using namespace rb;
+using namespace rb::browser;
+using namespace rb::browser::test;
 
 namespace {
 

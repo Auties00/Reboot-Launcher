@@ -39,8 +39,8 @@
 #include "reboot/testing/scratch_dir.hpp"
 #include "reboot/testing/wall_clock_waiter.hpp"
 
-using namespace reboot;
-using namespace reboot::os_macos::platform;
+using namespace rb;
+using namespace rb::os_macos::platform;
 using namespace std::chrono_literals;
 
 namespace {

@@ -26,7 +26,7 @@
 #include "wire/frame.hpp"
 #include "wire/messages.hpp"
 
-namespace reboot::publish::test {
+namespace rb::publish::test {
 
 namespace wire = sb::wire;
 
@@ -260,4 +260,4 @@ private:
     std::deque<std::pair<wire::FrameType, std::vector<u8>>> queue_;
 };
 
-}  // namespace reboot::publish::test
+}  // namespace rb::publish::test

@@ -8,7 +8,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/file_system.hpp"
 
-namespace reboot::os_macos::platform {
+namespace rb::os_macos::platform {
 
 // Where the sealed system volume keeps user files.
 inline constexpr std::string_view kDataVolume = "/System/Volumes/Data";
@@ -38,4 +38,4 @@ struct MountFacts {
 [[nodiscard]] ports::VolumeInfo make_volume(const MountFacts& shown, const MountFacts& space,
                                             const std::optional<shims::VolumeKeys>& keys);
 
-}  // namespace reboot::os_macos::platform
+}  // namespace rb::os_macos::platform

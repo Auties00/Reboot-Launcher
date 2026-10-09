@@ -15,8 +15,8 @@
 #include "velopack_layout.hpp"
 #include "win_error.hpp"
 
-using namespace reboot;
-using namespace reboot::os_windows::platform;
+using namespace rb;
+using namespace rb::os_windows::platform;
 
 namespace {
 

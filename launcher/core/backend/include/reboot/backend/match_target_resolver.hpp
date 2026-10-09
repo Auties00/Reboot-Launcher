@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/net_types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 struct MatchTargetQuery {
     std::string account_id;
@@ -29,4 +29,4 @@ public:
     [[nodiscard]] virtual ResolvedMatchTarget resolve(const MatchTargetQuery& query) = 0;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

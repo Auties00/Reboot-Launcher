@@ -5,7 +5,7 @@
 
 #include "reboot/foundation/net_types.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // The Host and Origin a loopback listener accepts, against DNS rebinding and browser pages.
 struct LoopbackAuthority {
@@ -18,4 +18,4 @@ struct LoopbackAuthority {
     [[nodiscard]] bool allows_origin(std::optional<std::string_view> origin_header) const;
 };
 
-}  // namespace reboot::front
+}  // namespace rb::front

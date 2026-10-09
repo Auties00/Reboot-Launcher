@@ -15,7 +15,7 @@
 #include "gateway_codes.hpp"
 #include "reboot/net/port_mapping_gateway.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 namespace {
 
@@ -146,4 +146,4 @@ private:
 
 std::unique_ptr<IPortMappingGateway> make_natpmp_gateway() { return std::make_unique<NatpmpGateway>(); }
 
-}  // namespace reboot::net
+}  // namespace rb::net

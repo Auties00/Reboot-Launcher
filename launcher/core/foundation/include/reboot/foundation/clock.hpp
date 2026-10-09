@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-namespace reboot {
+namespace rb {
 
 class IClock {
 public:
@@ -38,4 +38,4 @@ private:
     std::chrono::system_clock::time_point system_{};
 };
 
-}  // namespace reboot
+}  // namespace rb

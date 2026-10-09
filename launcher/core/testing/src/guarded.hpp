@@ -4,7 +4,7 @@
 #include <mutex>
 #include <utility>
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Callback results, written on a port's thread and read on the waiting one.
 template <class T>
@@ -33,4 +33,4 @@ template <class T>
     return std::make_shared<Guarded<T>>();
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

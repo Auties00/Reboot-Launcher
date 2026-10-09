@@ -5,7 +5,7 @@
 
 #include "volume_rules.hpp"
 
-using namespace reboot::os_macos::platform;
+using namespace rb::os_macos::platform;
 
 namespace {
 

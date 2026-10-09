@@ -3,7 +3,7 @@
 #include "reboot/components/component_ref.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::components {
+namespace rb::components {
 
 enum class ComponentState : u8 { Missing, Fetching, Ready, Broken };
 
@@ -18,4 +18,4 @@ struct ComponentInfo {
     bool last_good = false;
 };
 
-}  // namespace reboot::components
+}  // namespace rb::components

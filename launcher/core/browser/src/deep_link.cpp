@@ -7,7 +7,7 @@
 #include "reboot/foundation/text.hpp"
 #include "text_util.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 namespace {
 
@@ -41,4 +41,4 @@ Result<DeepLink> parse_deep_link(std::string_view text) {
         .fail();
 }
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

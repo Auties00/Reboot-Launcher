@@ -11,10 +11,10 @@
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "session_mapping.hpp"
 
-using namespace reboot;
-using namespace reboot::os_windows::platform;
-namespace wh = reboot::contracts::winhost;
-namespace w32 = reboot::os_windows::win32session;
+using namespace rb;
+using namespace rb::os_windows::platform;
+namespace wh = rb::contracts::winhost;
+namespace w32 = rb::os_windows::win32session;
 
 namespace {
 

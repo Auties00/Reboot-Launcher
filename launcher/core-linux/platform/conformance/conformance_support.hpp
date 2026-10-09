@@ -15,7 +15,7 @@
 #include "reboot/testing/scratch_dir.hpp"
 #include "reboot/testing/wall_clock_waiter.hpp"
 
-namespace reboot::os_linux::platform::test {
+namespace rb::os_linux::platform::test {
 
 inline void require_passed(const testing::ConformanceReport& report) {
     INFO(report.suite() << ": " << report.describe());
@@ -52,4 +52,4 @@ private:
     }
 };
 
-}  // namespace reboot::os_linux::platform::test
+}  // namespace rb::os_linux::platform::test

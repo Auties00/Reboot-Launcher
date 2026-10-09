@@ -7,7 +7,7 @@
 #include "reboot/os_windows/ipc/windows_file_revision_reader.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 
-using namespace reboot;
+using namespace rb;
 
 TEST_CASE("WindowsFileRevisionReader reads size, mtime and file id without blocking writers", "[os_windows][ipc][files]") {
     OsRandom random;

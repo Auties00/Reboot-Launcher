@@ -3,7 +3,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/sessions/stop_reason.hpp"
 
-namespace reboot::sessions {
+namespace rb::sessions {
 
 // OsSignal: SIGTERM, SIGINT, logoff or a closed console. Drain*: Engine.drain after the user consented.
 enum class ShutdownCause : u8 { Requested, Idle, OsSignal, DrainUpdate, DrainUserStop, DrainReplace };
@@ -20,4 +20,4 @@ enum class ShutdownCause : u8 { Requested, Idle, OsSignal, DrainUpdate, DrainUse
     return StopReason::EngineShutdown;
 }
 
-}  // namespace reboot::sessions
+}  // namespace rb::sessions

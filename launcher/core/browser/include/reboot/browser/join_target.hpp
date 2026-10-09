@@ -8,7 +8,7 @@
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::browser {
+namespace rb::browser {
 
 // A browser server picked from the list or a confirmed link. Name and author are what the user
 // confirmed; a launch always asks the edge again for a fresh JoinGrant.
@@ -44,4 +44,4 @@ struct JoinTargetChanged {
     [[nodiscard]] std::size_t approx_bytes() const noexcept { return sizeof(JoinTargetChanged); }
 };
 
-}  // namespace reboot::browser
+}  // namespace rb::browser

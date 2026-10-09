@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-namespace reboot::posix {
+namespace rb::posix {
 
 // Linux derives start times from /proc/stat btime, which is whole seconds and moves when the
 // wall clock is stepped, so a recorded start time matches within this much.
@@ -14,4 +14,4 @@ inline constexpr std::chrono::seconds kStartTimeTolerance{2};
     return recorded - read <= kStartTimeTolerance && read - recorded <= kStartTimeTolerance;
 }
 
-}  // namespace reboot::posix
+}  // namespace rb::posix

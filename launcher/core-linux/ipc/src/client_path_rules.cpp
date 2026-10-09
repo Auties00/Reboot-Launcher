@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/paths.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 
 NativePath xdg_home(std::optional<std::string_view> value, const NativePath& fallback) {
     if (value && value->starts_with('/')) return NativePath{*value}.lexically_normal();
@@ -25,4 +25,4 @@ ports::InstallKind classify_install(const InstallFacts& facts) {
     return ports::InstallKind::Dev;
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

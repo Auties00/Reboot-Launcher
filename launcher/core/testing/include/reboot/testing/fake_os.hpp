@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Which OS's shape the fakes take where the ports differ by OS.
 enum class FakeOs : u8 {
@@ -14,4 +14,4 @@ enum class FakeOs : u8 {
     Linux,
 };
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

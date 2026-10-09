@@ -2,7 +2,7 @@
 
 #include <sys/inotify.h>
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 u32 inotify_watch_mask() noexcept {
     return IN_CREATE | IN_DELETE | IN_CLOSE_WRITE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO | IN_DELETE_SELF |
@@ -21,4 +21,4 @@ std::optional<InotifyChange> map_inotify_event(u32 mask) noexcept {
     return std::nullopt;
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

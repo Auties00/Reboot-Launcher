@@ -1,6 +1,6 @@
 #include "reboot/play/game_arg.hpp"
 
-namespace reboot::play {
+namespace rb::play {
 
 std::string GameArg::text() const {
     if (!value || value->empty()) return key;
@@ -10,4 +10,4 @@ std::string GameArg::text() const {
     return out;
 }
 
-}  // namespace reboot::play
+}  // namespace rb::play

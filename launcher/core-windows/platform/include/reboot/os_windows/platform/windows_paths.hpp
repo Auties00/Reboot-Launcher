@@ -6,7 +6,7 @@
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
-namespace reboot::os_windows::platform {
+namespace rb::os_windows::platform {
 
 // Covers no capability ids; IPlatformPaths from the known folders and the running exe.
 class WindowsPaths final : public ports::IPlatformPaths {
@@ -31,4 +31,4 @@ private:
     std::optional<NativePath> velopack_root_;
 };
 
-}  // namespace reboot::os_windows::platform
+}  // namespace rb::os_windows::platform

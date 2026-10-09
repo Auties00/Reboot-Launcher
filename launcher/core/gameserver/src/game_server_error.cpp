@@ -4,7 +4,7 @@
 
 #include "messages.hpp"
 
-namespace reboot::gameserver {
+namespace rb::gameserver {
 
 namespace {
 
@@ -76,4 +76,4 @@ Diagnostic to_diagnostic(const GameServerError& error) {
     return internal_bug("gameserver.to_diagnostic");
 }
 
-}  // namespace reboot::gameserver
+}  // namespace rb::gameserver

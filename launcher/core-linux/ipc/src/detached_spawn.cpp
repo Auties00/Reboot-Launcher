@@ -19,7 +19,7 @@
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
-namespace reboot::os_linux::ipc {
+namespace rb::os_linux::ipc {
 namespace {
 
 // Without close_range and under an unlimited RLIMIT_NOFILE, the close loop stops here.
@@ -154,4 +154,4 @@ Result<void> spawn_detached(const DetachedLaunch& launch) {
     return failed(received == sizeof error ? error : EIO);
 }
 
-}  // namespace reboot::os_linux::ipc
+}  // namespace rb::os_linux::ipc

@@ -4,7 +4,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/process/child_reply.hpp"
 
-namespace reboot::process {
+namespace rb::process {
 
 // Covers no capability ids; answers child-to-engine requests (backend ResolveMatchTarget).
 class ChildRequestHandler {
@@ -17,4 +17,4 @@ public:
     virtual void on_request(const RawFrame& frame, ChildReply reply) = 0;
 };
 
-}  // namespace reboot::process
+}  // namespace rb::process

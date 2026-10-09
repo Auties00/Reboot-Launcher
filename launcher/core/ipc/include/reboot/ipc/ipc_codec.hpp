@@ -13,7 +13,7 @@
 #include "reboot/foundation/types.hpp"
 #include "reboot/ipc/wiping_allocator.hpp"
 
-namespace reboot::ipc {
+namespace rb::ipc {
 
 using ClientMessage =
     std::variant<contracts::ipc::Hello, contracts::ipc::Call, contracts::ipc::Start, contracts::ipc::Cancel,
@@ -67,4 +67,4 @@ private:
     WipedBytes pending_;
 };
 
-}  // namespace reboot::ipc
+}  // namespace rb::ipc

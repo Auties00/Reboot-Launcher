@@ -24,7 +24,7 @@
 #include "wire/frame.hpp"
 #include "wire/messages.hpp"
 
-namespace reboot::publish {
+namespace rb::publish {
 
 namespace {
 
@@ -925,4 +925,4 @@ Result<Endpoint> HostPublisher::public_endpoint(const SessionId& session) const 
     return *pub->reach.public_endpoint;
 }
 
-}  // namespace reboot::publish
+}  // namespace rb::publish

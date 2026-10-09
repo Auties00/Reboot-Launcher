@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/diag.hpp"
 
-namespace reboot::process::msg {
+namespace rb::process::msg {
 
 REBOOT_MESSAGE_DECL(kEnvInvalidName);
 REBOOT_MESSAGE_DECL(kEnvInvalidValue);
@@ -29,4 +29,4 @@ REBOOT_MESSAGE_DECL(kChildUnexpectedReply);
 REBOOT_MESSAGE_DECL(kReapFailed);
 REBOOT_MESSAGE_DECL(kReapCancelled);
 
-}  // namespace reboot::process::msg
+}  // namespace rb::process::msg

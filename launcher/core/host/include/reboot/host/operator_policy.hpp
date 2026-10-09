@@ -7,7 +7,7 @@
 #include "reboot/host/host_ban.hpp"
 #include "reboot/host/ip_cidr.hpp"
 
-namespace reboot::host {
+namespace rb::host {
 
 // Account ids are self-asserted, so remote operator rights need an address match. The optional
 // engine-issued operator token of game-server-dll-design is not offered: the allowlist is all.
@@ -28,4 +28,4 @@ struct OperatorPolicy {
 [[nodiscard]] std::vector<HostBan> active_bans(const OperatorPolicy& policy,
                                                std::chrono::system_clock::time_point now);
 
-}  // namespace reboot::host
+}  // namespace rb::host

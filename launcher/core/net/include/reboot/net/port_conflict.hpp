@@ -9,7 +9,7 @@
 #include "reboot/net/port_owner_info.hpp"
 #include "reboot/net/port_protocol.hpp"
 
-namespace reboot::net {
+namespace rb::net {
 
 // InUse is EADDRINUSE, or EACCES on a port someone holds; AccessDenied is EACCES on a port nobody
 // holds (a reserved or excluded port range).
@@ -34,4 +34,4 @@ struct PortConflict {
 
 [[nodiscard]] Diagnostic to_diagnostic(const PortConflict& conflict);
 
-}  // namespace reboot::net
+}  // namespace rb::net

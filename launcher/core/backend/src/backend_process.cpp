@@ -14,7 +14,7 @@
 #include "reboot/process/child_request_handler.hpp"
 #include "wire_values.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 namespace {
 
@@ -419,4 +419,4 @@ void BackendProcess::drain(UniqueFunction<void(Result<void>)> done) {
     impl_->supervisor.command(be::Drain{}, std::move(done));
 }
 
-}  // namespace reboot::backend
+}  // namespace rb::backend

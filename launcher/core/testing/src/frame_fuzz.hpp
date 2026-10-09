@@ -10,7 +10,7 @@
 #include "reboot/testing/frame_log.hpp"
 #include "reboot/testing/fuzz.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 // Frames `input` whole and again in chunks sized by its first byte; both must yield the same
 // frame types and status, and every frame is decoded as whichever of `Messages` owns its type.
@@ -36,4 +36,4 @@ void fuzz_frames(std::span<const u8> input, std::size_t max_frame) {
     fuzz_require(whole_status == chunked_status, "framing status depends on chunking");
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

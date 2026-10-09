@@ -10,7 +10,7 @@
 #include "reboot/front/session_front.hpp"
 #include "strand_routes.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 // Strand-only, but for `core`, which the I/O side shares.
 struct SessionFront::Impl {
@@ -34,4 +34,4 @@ struct SessionFront::Impl {
 // Closes `acceptor` on its own executor, then runs `then` there.
 void close_acceptor(const std::shared_ptr<boost::asio::ip::tcp::acceptor>& acceptor, UniqueFunction<void()> then);
 
-}  // namespace reboot::front
+}  // namespace rb::front

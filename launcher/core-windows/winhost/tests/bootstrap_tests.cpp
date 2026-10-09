@@ -8,9 +8,9 @@
 #include "loopback_engine.hpp"
 #include "reboot/os_windows/winhost/winhost_bootstrap.hpp"
 
-using namespace reboot;
-using namespace reboot::os_windows::winhost;
-using reboot::os_windows::winhost::test::base64url;
+using namespace rb;
+using namespace rb::os_windows::winhost;
+using rb::os_windows::winhost::test::base64url;
 
 namespace {
 

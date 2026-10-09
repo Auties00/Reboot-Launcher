@@ -6,8 +6,8 @@
 #include "reboot/host/host_profile.hpp"
 #include "reboot/publish/field_limits.hpp"
 
-using namespace reboot;
-using namespace reboot::host;
+using namespace rb;
+using namespace rb::host;
 
 namespace {
 

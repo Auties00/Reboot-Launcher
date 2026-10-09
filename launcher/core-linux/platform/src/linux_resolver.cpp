@@ -19,7 +19,7 @@
 #include "reboot/foundation/log.hpp"
 #include "reboot/posix/posix_error.hpp"
 
-namespace reboot::os_linux::platform {
+namespace rb::os_linux::platform {
 
 namespace {
 
@@ -190,4 +190,4 @@ void LinuxResolver::resolve(std::string host, CancelToken token,
     impl_->queue->changed.notify_one();
 }
 
-}  // namespace reboot::os_linux::platform
+}  // namespace rb::os_linux::platform

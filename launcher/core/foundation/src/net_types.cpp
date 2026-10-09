@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 
-namespace reboot {
+namespace rb {
 
 namespace {
 
@@ -203,4 +203,4 @@ std::string Endpoint::to_string() const {
     return address.is_v4() ? host + ':' + port_text : '[' + host + "]:" + port_text;
 }
 
-}  // namespace reboot
+}  // namespace rb

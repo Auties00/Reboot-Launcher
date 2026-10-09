@@ -38,7 +38,7 @@
 #include "strand_routes.hpp"
 #include "tls_client.hpp"
 
-namespace reboot::front {
+namespace rb::front {
 
 namespace {
 
@@ -781,4 +781,4 @@ void serve_connection(const std::shared_ptr<FrontCore>& core, tcp::socket socket
     connection->start();
 }
 
-}  // namespace reboot::front
+}  // namespace rb::front

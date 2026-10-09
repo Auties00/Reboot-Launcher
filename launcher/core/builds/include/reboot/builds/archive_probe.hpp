@@ -6,7 +6,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::builds {
+namespace rb::builds {
 
 class IByteSource;
 
@@ -31,4 +31,4 @@ struct ArchiveProbe {
 // Fails with builds.unsupported_archive or builds.corrupt_archive.
 [[nodiscard]] Result<ArchiveProbe> probe_archive(IByteSource& source);
 
-}  // namespace reboot::builds
+}  // namespace rb::builds

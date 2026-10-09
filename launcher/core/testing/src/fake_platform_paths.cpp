@@ -2,7 +2,7 @@
 
 #include "reboot/foundation/native_path.hpp"
 
-namespace reboot::testing {
+namespace rb::testing {
 
 NativePath default_fake_root() {
 #ifdef _WIN32
@@ -12,4 +12,4 @@ NativePath default_fake_root() {
 #endif
 }
 
-}  // namespace reboot::testing
+}  // namespace rb::testing

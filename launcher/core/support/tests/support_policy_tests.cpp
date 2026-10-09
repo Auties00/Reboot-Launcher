@@ -10,8 +10,8 @@
 #include "reboot/support/support_policy.hpp"
 #include "reboot/support/version_cap.hpp"
 
-using namespace reboot;
-using namespace reboot::support;
+using namespace rb;
+using namespace rb::support;
 
 namespace {
 

@@ -11,7 +11,7 @@
 #include "reboot/foundation/result_fwd.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::api {
+namespace rb::api {
 
 enum class EngineOrigin : u32 {
     OnDemand = 0,
@@ -178,12 +178,12 @@ class IEngineHandler {
 public:
     virtual ~IEngineHandler() = default;
 
-    virtual ::reboot::Result<EngineStatusResponse> status(const CallContext& context, const EngineStatusRequest& request) = 0;
-    virtual ::reboot::Result<EngineInfoResponse> info(const CallContext& context, const EngineInfoRequest& request) = 0;
-    virtual ::reboot::Result<EngineDrainResponse> drain(const CallContext& context, const EngineDrainRequest& request) = 0;
-    virtual ::reboot::Result<EngineShutdownResponse> shutdown(const CallContext& context, const EngineShutdownRequest& request) = 0;
-    virtual ::reboot::Result<EngineRestartWhenIdleResponse> restart_when_idle(const CallContext& context, const EngineRestartWhenIdleRequest& request) = 0;
-    virtual ::reboot::Result<EngineOperationsResponse> operations(const CallContext& context, const EngineOperationsRequest& request) = 0;
+    virtual ::rb::Result<EngineStatusResponse> status(const CallContext& context, const EngineStatusRequest& request) = 0;
+    virtual ::rb::Result<EngineInfoResponse> info(const CallContext& context, const EngineInfoRequest& request) = 0;
+    virtual ::rb::Result<EngineDrainResponse> drain(const CallContext& context, const EngineDrainRequest& request) = 0;
+    virtual ::rb::Result<EngineShutdownResponse> shutdown(const CallContext& context, const EngineShutdownRequest& request) = 0;
+    virtual ::rb::Result<EngineRestartWhenIdleResponse> restart_when_idle(const CallContext& context, const EngineRestartWhenIdleRequest& request) = 0;
+    virtual ::rb::Result<EngineOperationsResponse> operations(const CallContext& context, const EngineOperationsRequest& request) = 0;
 };
 
-}  // namespace reboot::api
+}  // namespace rb::api

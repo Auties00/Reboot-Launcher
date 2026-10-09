@@ -8,8 +8,8 @@
 #include "reboot/contracts/common.hpp"
 #include "reboot/ipc/ipc_limits.hpp"
 
-using namespace reboot;
-using namespace reboot::ipc::test;
+using namespace rb;
+using namespace rb::ipc::test;
 using std::chrono_literals::operator""s;
 
 namespace {

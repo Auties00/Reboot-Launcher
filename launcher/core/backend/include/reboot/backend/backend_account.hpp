@@ -7,7 +7,7 @@
 #include "reboot/contracts/backend.hpp"
 #include "reboot/foundation/types.hpp"
 
-namespace reboot::backend {
+namespace rb::backend {
 
 using AccountRole = contracts::backend::AccountRole;
 
@@ -28,4 +28,4 @@ struct BackendAccount {
     bool operator==(const BackendAccount&) const = default;
 };
 
-}  // namespace reboot::backend
+}  // namespace rb::backend
