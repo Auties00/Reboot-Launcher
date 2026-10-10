@@ -44,7 +44,7 @@ if(REBOOT_BUILD_TESTS)
   file(GLOB conformance_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/conformance/*.cpp")
   if(conformance_sources)
     add_executable(reboot_os_macos_ipc_conformance ${conformance_sources})
-    _reboot_record_target(reboot_os_macos_ipc_conformance test DEPS reboot::os_macos_ipc reboot::testing
+    _reboot_record_target(reboot_os_macos_ipc_conformance test DEPS reboot::os_macos_ipc reboot::posix reboot::testing
       SOURCES ${conformance_sources})
     target_include_directories(reboot_os_macos_ipc_conformance PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(reboot_os_macos_ipc_conformance PRIVATE
