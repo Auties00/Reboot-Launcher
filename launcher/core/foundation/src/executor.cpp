@@ -92,6 +92,7 @@ struct WorkerPool::Impl {
     std::mutex mutex;
     std::condition_variable wake;
     std::deque<UniqueFunction<void()>> jobs;
+    std::size_t running = 0;
     bool stopping = false;
     std::vector<std::thread> threads;
 
@@ -105,8 +106,13 @@ struct WorkerPool::Impl {
                 if (jobs.empty()) return;
                 job = std::move(jobs.front());
                 jobs.pop_front();
+                ++running;
             }
             run_guarded_task(job, "worker pool");
+            // Destroyed before the job counts as done, since its captures may post or release work.
+            job = nullptr;
+            const std::lock_guard lock(mutex);
+            --running;
         }
     }
 };
@@ -125,6 +131,11 @@ void WorkerPool::enqueue(UniqueFunction<void()> job) {
         impl_->jobs.push_back(std::move(job));
     }
     impl_->wake.notify_one();
+}
+
+bool WorkerPool::idle() const {
+    const std::lock_guard lock(impl_->mutex);
+    return impl_->jobs.empty() && impl_->running == 0;
 }
 
 void WorkerPool::shutdown() {

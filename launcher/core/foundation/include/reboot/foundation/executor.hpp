@@ -66,6 +66,9 @@ public:
 
     void shutdown();
 
+    // No job is queued or running.
+    [[nodiscard]] bool idle() const;
+
 private:
     template <class T>
     static Result<T> run_guarded(UniqueFunction<Result<T>(CancelToken)>& work, const CancelToken& token) {

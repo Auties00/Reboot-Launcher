@@ -41,6 +41,9 @@ class TestStrand final : public Executor {
 public:
     explicit TestStrand(ManualClock& clock) : clock_(clock) {}
 
+    // pump_until then moves time only while `workers` is idle, so a slow job never meets a deadline it would beat.
+    void hold_time_for(const WorkerPool& workers) { workers_ = &workers; }
+
     void post(UniqueFunction<void()> task) override {
         const std::scoped_lock lock(mutex_);
         ready_.push_back(std::move(task));
@@ -86,9 +89,9 @@ public:
         return true;
     }
 
-    // Runs until `done`, letting other threads post; when nothing has arrived for a while, time
-    // jumps to the next timer, so a wait that a deadline or a debounce ends still ends. Gives up
-    // after `simulated` of jumps or `budget` of real time.
+    // Runs until `done`, letting other threads post; when nothing has arrived for a while and no
+    // held-for worker is busy, time jumps to the next timer, so a wait that a deadline or a
+    // debounce ends still ends. Gives up after `simulated` of jumps or `budget` of real time.
     template <class Done>
     bool pump_until(Done&& done, std::chrono::steady_clock::duration simulated = std::chrono::minutes{30},
                     std::chrono::milliseconds budget = std::chrono::seconds{60}) {
@@ -102,6 +105,7 @@ public:
                 run_ready();
                 continue;
             }
+            if (workers_ != nullptr && !workers_->idle()) continue;
             std::optional<SteadyTime> due;
             {
                 const std::scoped_lock lock(mutex_);
@@ -157,6 +161,7 @@ private:
     }
 
     ManualClock& clock_;
+    const WorkerPool* workers_ = nullptr;
     std::mutex mutex_;
     std::condition_variable posted_;
     std::deque<UniqueFunction<void()>> ready_;

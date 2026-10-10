@@ -94,6 +94,7 @@ public:
         Result<testing::ScratchDir> dir = testing::ScratchDir::create(random, "reboot-engine-test");
         REQUIRE(dir);
         scratch.emplace(std::move(*dir));
+        strand.hold_time_for(workers);
         work.emplace(boost::asio::make_work_guard(io));
         io_thread = std::thread([this] { io.run(); });
 
@@ -152,11 +153,12 @@ public:
             static_cast<void>(strand.pump_until([this] { return exit.has_value(); }, std::chrono::minutes{2},
                                                 std::chrono::seconds{20}));
         }
-        services.reset();
-        workers.shutdown();
+        // As EngineHost: the threads stop before the services go, since queued jobs still run.
         work.reset();
         io.stop();
         if (io_thread.joinable()) io_thread.join();
+        workers.shutdown();
+        services.reset();
     }
 
     EngineRig(const EngineRig&) = delete;
@@ -205,8 +207,11 @@ public:
         settle();
     }
 
-    // Runs what is ready and what the worker and I/O threads post shortly after.
-    void settle() { static_cast<void>(strand.pump_until([] { return false; }, std::chrono::seconds{0}, std::chrono::milliseconds{200})); }
+    // Runs what is ready and what the worker and I/O threads post shortly after, and what busy workers post when done.
+    void settle() {
+        static_cast<void>(strand.pump_until([] { return false; }, std::chrono::seconds{0}, std::chrono::milliseconds{200}));
+        static_cast<void>(strand.try_run_until([this] { return workers.idle() && strand.run_ready() == 0; }));
+    }
 
     [[nodiscard]] std::unique_ptr<testing::ApiTestClient> connect(contracts::ipc::CallerContext caller = default_caller(),
                                                                  std::string build = std::string(VersionStreams::ipc_build)) {
@@ -221,6 +226,10 @@ public:
     [[nodiscard]] static contracts::ipc::CallerContext default_caller() {
         contracts::ipc::CallerContext caller;
         caller.os_session = "1";
+        // On Linux a client shares the engine's desktop by its display, which play and the shell check.
+#if defined(__linux__)
+        caller.display_env = {{"DISPLAY", ":0"}};
+#endif
         return caller;
     }
 
@@ -250,6 +259,8 @@ public:
     template <class Response>
     [[nodiscard]] static Response completed(const api::Outcome& outcome) {
         if (outcome.failed) FAIL(outcome.failed->id);
+        if (outcome.timed_out) FAIL("timed out in " << *outcome.timed_out);
+        if (outcome.cancelled) FAIL("cancelled");
         REQUIRE(outcome.completed);
         auto decoded = api::decode<Response>(*outcome.completed);
         REQUIRE(decoded);

@@ -129,18 +129,54 @@ struct Link {
     return narrow;
 }
 
+// Always the S-1-... form, where SDDL may print an alias such as LA for the built-in Administrator.
+[[nodiscard]] std::string sid_text(PSID sid) {
+    wchar_t* text = nullptr;
+    REQUIRE(ConvertSidToStringSidW(sid, &text));
+    std::string narrow = to_utf8(text);
+    LocalFree(text);
+    return narrow;
+}
+
+[[nodiscard]] std::string owner_sid(const std::vector<u8>& descriptor) {
+    PSID owner = nullptr;
+    BOOL defaulted = FALSE;
+    REQUIRE(GetSecurityDescriptorOwner(const_cast<u8*>(descriptor.data()), &owner, &defaulted));
+    REQUIRE(owner != nullptr);
+    return sid_text(owner);
+}
+
+// The trustee of each access-allowed ACE, in order.
+[[nodiscard]] std::vector<std::string> allowed_sids(const std::vector<u8>& descriptor) {
+    BOOL present = FALSE;
+    BOOL defaulted = FALSE;
+    PACL dacl = nullptr;
+    REQUIRE(GetSecurityDescriptorDacl(const_cast<u8*>(descriptor.data()), &present, &dacl, &defaulted));
+    REQUIRE(present);
+    REQUIRE(dacl != nullptr);
+    std::vector<std::string> sids;
+    for (DWORD index = 0; index < dacl->AceCount; ++index) {
+        void* ace = nullptr;
+        REQUIRE(GetAce(dacl, index, &ace));
+        auto* const allowed = static_cast<ACCESS_ALLOWED_ACE*>(ace);
+        REQUIRE(allowed->Header.AceType == ACCESS_ALLOWED_ACE_TYPE);
+        sids.push_back(sid_text(&allowed->SidStart));
+    }
+    return sids;
+}
+
 }  // namespace
 
 TEST_CASE("the pipe descriptor is owned by the user, open to the user and SYSTEM only, at medium integrity", "[pipe]") {
     const PipeTrust pipe_trust = trust();
     const auto descriptor = pipe_trust.pipe_security_descriptor();
     REQUIRE(descriptor);
-    CHECK(sddl_of(*descriptor, OWNER_SECURITY_INFORMATION) == "O:" + pipe_trust.user_sid());
-    const std::string dacl = sddl_of(*descriptor, DACL_SECURITY_INFORMATION);
-    CHECK(dacl.starts_with("D:P"));
-    CHECK(dacl.find(";;;" + pipe_trust.user_sid() + ")") != std::string::npos);
-    CHECK(dacl.find(";;;SY)") != std::string::npos);
-    CHECK(std::ranges::count(dacl, '(') == 2);
+    CHECK(owner_sid(*descriptor) == pipe_trust.user_sid());
+    CHECK(sddl_of(*descriptor, DACL_SECURITY_INFORMATION).starts_with("D:P"));
+    const std::vector<std::string> allowed = allowed_sids(*descriptor);
+    CHECK(allowed.size() == 2);
+    CHECK(std::ranges::count(allowed, pipe_trust.user_sid()) == 1);
+    CHECK(std::ranges::count(allowed, std::string("S-1-5-18")) == 1);
     CHECK(sddl_of(*descriptor, LABEL_SECURITY_INFORMATION) == "S:(ML;;NW;;;ME)");
 }
 
