@@ -72,8 +72,8 @@ private:
     if (attributes.error() != 0) return attributes.error();
     sigset_t empty_mask;
     sigset_t every_signal;
-    ::sigemptyset(&empty_mask);
-    ::sigfillset(&every_signal);
+    sigemptyset(&empty_mask);
+    sigfillset(&every_signal);
     constexpr int kFlags = POSIX_SPAWN_SETSIGMASK | POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_CLOEXEC_DEFAULT |
                            POSIX_SPAWN_START_SUSPENDED;
     for (const int result : {

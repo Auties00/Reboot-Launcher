@@ -44,9 +44,9 @@ struct LegacyFixedListeners::Impl {
     void close_sockets() {
         for (const std::shared_ptr<tcp::acceptor>& acceptor : acceptors) {
             ++closing;
-            close_acceptor(acceptor, [&strand = strand, life = std::weak_ptr<int>(life), this] {
-                strand.post([life, this] {
-                    if (life.lock()) closed_one();
+            close_acceptor(acceptor, [&on_strand = strand, weak_life = std::weak_ptr<int>(life), this] {
+                on_strand.post([weak_life, this] {
+                    if (weak_life.lock()) closed_one();
                 });
             });
         }

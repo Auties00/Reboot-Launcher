@@ -76,9 +76,9 @@ struct BackendAccounts::Impl {
     // --- the list
 
     void reload(UniqueFunction<void()> then) {
-        process.list_accounts([this, alive = alive.token(), then = std::move(then)](
+        process.list_accounts([this, alive_token = alive.token(), then = std::move(then)](
                                   Result<std::vector<BackendAccount>> listed) mutable {
-            if (alive.cancelled()) return;
+            if (alive_token.cancelled()) return;
             if (listed) {
                 accounts = std::move(*listed);
                 events.publish(EventKind::BackendAccountsChanged, BackendAccountsChanged{*accounts});
@@ -131,9 +131,9 @@ struct BackendAccounts::Impl {
             cancelled->lease.release();
         });
         service.ensure_ready(task.lease, op.token(),
-                             [this, alive = alive.token(), id, operation,
+                             [this, alive_token = alive.token(), id, operation,
                               body = std::move(body)](Result<BackendUpstream> ready) mutable {
-                                 if (alive.cancelled() || live_task(id) == nullptr) return;
+                                 if (alive_token.cancelled() || live_task(id) == nullptr) return;
                                  if (!ready) return finish<T>(id, *operation, std::unexpected(std::move(ready.error())));
                                  body(id, *operation);
                              });
@@ -181,8 +181,8 @@ struct BackendAccounts::Impl {
     void rename_identity(std::string old_id, std::string new_id) {
         process.rename_account(
             old_id, new_id, be::RenameConflictPolicy::Report,
-            [this, alive = alive.token(), old_id, new_id](Result<void> renamed) {
-                if (alive.cancelled()) return;
+            [this, alive_token = alive.token(), old_id, new_id](Result<void> renamed) {
+                if (alive_token.cancelled()) return;
                 if (renamed) return reload(nullptr);
                 const std::optional<be::AccountRenameConflict> conflict = take_conflict({old_id, new_id});
                 if (!conflict) {
@@ -192,8 +192,8 @@ struct BackendAccounts::Impl {
                 }
                 ask_conflict(*conflict, std::nullopt, this->alive.token(), [this, old_id, new_id](RenameConflictChoice choice) {
                     process.rename_account(old_id, new_id, policy_for(choice),
-                                           [this, alive = this->alive.token(), old_id, new_id](Result<void> resolved) {
-                                               if (alive.cancelled()) return;
+                                           [this, alive_token = this->alive.token(), old_id, new_id](Result<void> resolved) {
+                                               if (alive_token.cancelled()) return;
                                                if (!resolved)
                                                    log(LogLevel::Warn,
                                                        std::format("Renaming backend account {} to {} failed: {}",

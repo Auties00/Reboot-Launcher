@@ -1,5 +1,6 @@
 #include "reboot/front/upstream_origin.hpp"
 
+#include <algorithm>
 #include <array>
 #include <utility>
 

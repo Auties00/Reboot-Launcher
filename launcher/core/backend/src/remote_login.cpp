@@ -104,8 +104,8 @@ struct RemoteLogin::Impl {
         secrets::SecretWait wait{login->request.wait.session, login->request.wait.op, reason};
         const std::optional<RequestId> raised = secrets.require(
             login->target, wait, login->token,
-            [this, alive = alive.token(), login](Result<SecretBytes> password) mutable {
-                if (alive.cancelled()) return;
+            [this, alive_token = alive.token(), login](Result<SecretBytes> password) mutable {
+                if (alive_token.cancelled()) return;
                 if (!password) return login->done(std::unexpected(std::move(password.error())));
                 grant(std::move(login), *password);
             });
@@ -125,8 +125,8 @@ struct RemoteLogin::Impl {
         const CancelToken token = login->token;
         Result<void> sent = http.send_secret(
             std::move(request), std::move(secret), token,
-            [this, alive = alive.token(), login](Result<net::SecretHttpResponse> response) mutable {
-                if (alive.cancelled()) return;
+            [this, alive_token = alive.token(), login](Result<net::SecretHttpResponse> response) mutable {
+                if (alive_token.cancelled()) return;
                 if (!response) return login->done(std::unexpected(std::move(response.error())));
                 on_granted(std::move(login), *response);
             });
@@ -156,8 +156,8 @@ struct RemoteLogin::Impl {
         const CancelToken token = login->token;
         Result<void> sent = http.send_secret(
             std::move(request), std::move(secret), token,
-            [this, alive = alive.token(), login](Result<net::SecretHttpResponse> response) mutable {
-                if (alive.cancelled()) return;
+            [this, alive_token = alive.token(), login](Result<net::SecretHttpResponse> response) mutable {
+                if (alive_token.cancelled()) return;
                 if (!response) return login->done(std::unexpected(std::move(response.error())));
                 std::optional<SecretString> code =
                     success(response->status) ? secret_field(response->body, "code") : std::nullopt;

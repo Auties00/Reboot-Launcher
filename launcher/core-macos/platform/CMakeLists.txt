@@ -51,12 +51,13 @@ reboot_add_package(os_macos/platform
     "-framework Metal" "-framework Security" "-framework ServiceManagement")
 
 # The Objective-C++ shims (src/*.mm) build as CXX, so no consumer directory needs OBJCXX enabled.
+# They build as C++23: AppKit's headers mix enumeration types in arithmetic, which C++26 made ill-formed.
 get_target_property(platform_sources reboot_os_macos_platform SOURCES)
 list(FILTER platform_sources INCLUDE REGEX "\\.mm$")
 if(platform_sources)
   set_source_files_properties(${platform_sources} PROPERTIES
     LANGUAGE CXX
-    COMPILE_OPTIONS "-xobjective-c++;-fobjc-arc")
+    COMPILE_OPTIONS "-xobjective-c++;-fobjc-arc;-std=c++23")
 endif()
 
 # Real-adapter suite (atomic replace, lock exclusivity, FSEvents delivery, process-group kill);

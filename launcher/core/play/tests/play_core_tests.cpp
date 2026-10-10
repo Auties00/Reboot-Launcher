@@ -29,10 +29,6 @@ std::string env_value(const ports::EnvBlock& env, std::string_view name) {
     return {};
 }
 
-bool has_arg(const std::vector<std::string>& argv, std::string_view text) {
-    return std::ranges::find(argv, text) != argv.end();
-}
-
 std::string arg_value(const std::vector<std::string>& argv, std::string_view key) {
     for (const std::string& arg : argv)
         if (arg.size() > key.size() && iequals_ascii(std::string_view(arg).substr(0, key.size()), key) && arg[key.size()] == '=')

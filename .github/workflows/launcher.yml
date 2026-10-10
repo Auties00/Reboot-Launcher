@@ -129,9 +129,10 @@ jobs:
           path: ${{ runner.temp }}/vcpkg-cache
           key: vcpkg-macos-${{ hashFiles('launcher/vcpkg.json', 'launcher/vcpkg-configuration.json', 'launcher/vcpkg-overlays/**') }}
           restore-keys: vcpkg-macos-
+      # No error limit, so one run shows every error of a translation unit.
       - name: Configure
         id: configure
-        run: cmake --preset "$PRESET" -DREBOOT_FLOOR_CHECK=ON
+        run: cmake --preset "$PRESET" -DREBOOT_FLOOR_CHECK=ON -DCMAKE_CXX_FLAGS=-ferror-limit=0
       - name: Save vcpkg binary cache
         if: steps.vcpkg-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4

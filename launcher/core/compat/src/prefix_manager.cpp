@@ -126,9 +126,9 @@ struct PrefixManager::Impl {
     // or the manager has gone since. It may be called more than once and from any thread.
     template <class F>
     [[nodiscard]] auto on_strand(const Job& job, F then) {
-        return [this, alive = alive.token(), kind = job.kind, id = job.id, then](auto value) {
-            deps.strand.post([this, alive, kind, id, then, value = std::move(value)]() mutable {
-                if (alive.cancelled()) return;
+        return [this, alive_token = alive.token(), kind = job.kind, id = job.id, then](auto value) {
+            deps.strand.post([this, alive_token, kind, id, then, value = std::move(value)]() mutable {
+                if (alive_token.cancelled()) return;
                 if (Job* found = current(kind, id)) then(*found, std::move(value));
             });
         };
@@ -137,9 +137,9 @@ struct PrefixManager::Impl {
     template <class T, class Work, class Then>
     void on_worker(Job& job, Work work, Then then) {
         deps.workers.submit<T>(std::move(work), job.token, deps.strand,
-                               [this, alive = alive.token(), kind = job.kind, id = job.id,
+                               [this, alive_token = alive.token(), kind = job.kind, id = job.id,
                                 then = std::move(then)](Result<T> result) mutable {
-                                   if (alive.cancelled()) return;
+                                   if (alive_token.cancelled()) return;
                                    if (Job* found = current(kind, id)) then(*found, std::move(result));
                                });
     }
@@ -433,8 +433,8 @@ struct PrefixManager::Impl {
     void kill(Job& job) {
         if (!job.child) return;
         static_cast<void>(job.child->terminate_tree());
-        job.kill_timer = deps.timers.after(kKillGrace, [this, alive = alive.token(), kind = job.kind, id = job.id] {
-            if (alive.cancelled()) return;
+        job.kill_timer = deps.timers.after(kKillGrace, [this, alive_token = alive.token(), kind = job.kind, id = job.id] {
+            if (alive_token.cancelled()) return;
             if (Job* found = current(kind, id)) fail(*found, cancelled(kind));
         });
     }

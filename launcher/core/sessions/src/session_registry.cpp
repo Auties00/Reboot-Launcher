@@ -108,8 +108,8 @@ struct SessionRegistry::State {
             if (child == nullptr) continue;
             ++session.children_pending;
             stop(*child, StopRequest{.reason = StopReason::ParentEnded, .grace = grace, .error = {}},
-                 [this, alive = alive.token(), id] {
-                     if (!alive.cancelled()) on_child_ended(id);
+                 [this, alive_token = alive.token(), id] {
+                     if (!alive_token.cancelled()) on_child_ended(id);
                  });
         }
         if (session.children_pending == 0) stop_driver(session);
@@ -128,8 +128,8 @@ struct SessionRegistry::State {
                         .code = SessionsErrorCode::StopOverran, .session = id, .from = {}, .to = {}}));
         });
         // Posted, so the driver is never destroyed inside its own stop(); a `done` after the registry is a no-op.
-        session.driver->stop(*session.stop, [this, alive = alive.token(), id](Result<void> stopped) {
-            if (alive.cancelled()) return;
+        session.driver->stop(*session.stop, [this, alive_token = alive.token(), id](Result<void> stopped) {
+            if (alive_token.cancelled()) return;
             post([this, id, stopped = std::move(stopped)]() mutable {
                 end(id, stopped ? std::optional<Diagnostic>() : std::optional<Diagnostic>(std::move(stopped.error())));
             });
@@ -168,8 +168,8 @@ struct SessionRegistry::State {
     }
 
     [[nodiscard]] UniqueFunction<void()> join_barrier(u64 barrier) {
-        return [this, alive = alive.token(), barrier] {
-            if (alive.cancelled()) return;
+        return [this, alive_token = alive.token(), barrier] {
+            if (alive_token.cancelled()) return;
             const auto it = std::ranges::find(barriers, barrier, &StopBarrier::id);
             if (it == barriers.end() || --it->remaining > 0) return;
             UniqueFunction<void()> done = std::move(it->done);

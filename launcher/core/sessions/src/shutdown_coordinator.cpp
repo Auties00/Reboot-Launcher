@@ -65,8 +65,8 @@ struct ShutdownCoordinator::State {
             expiry.cancel(CancelReason::Deadline);
         });
         action(ShutdownStepContext{.cause = *cause, .budget = budget, .expired = expiry.token()},
-               [this, alive = alive.token(), this_attempt](Result<void> result) {
-                   if (alive.cancelled() || this_attempt != attempt) return;
+               [this, alive_token = alive.token(), this_attempt](Result<void> result) {
+                   if (alive_token.cancelled() || this_attempt != attempt) return;
                    if (result) record(StepOutcome::Completed, std::nullopt, since(clock, step_started_at));
                    else record(StepOutcome::Failed, std::move(result.error()), since(clock, step_started_at));
                });

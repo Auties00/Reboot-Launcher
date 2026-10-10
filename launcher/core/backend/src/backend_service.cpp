@@ -248,8 +248,8 @@ struct BackendService::Impl final : IBackendProcessObserver {
         const std::optional<BackendUrl> url = state.config.target.upstream_url();
         if (!url) return fail_start(internal_bug("backend.probe_without_upstream"));
         const CancelToken token = transition.token();
-        probe.probe(*url, token, [this, alive = alive.token(), token](Result<BackendInfo> info) {
-            if (alive.cancelled() || token.cancelled()) return;
+        probe.probe(*url, token, [this, alive_token = alive.token(), token](Result<BackendInfo> info) {
+            if (alive_token.cancelled() || token.cancelled()) return;
             if (!info) {
                 if (info.error().id == kNeedsConsentId) return ask_consent();
                 return fail_start(std::move(info.error()));
@@ -269,12 +269,12 @@ struct BackendService::Impl final : IBackendProcessObserver {
         const CancelToken token = transition.token();
         const RequestId id = requests.ask(
             UserRequestKind::ConfirmUnencryptedUpstream, UnencryptedUpstreamPrompt{plain.origin()}, op, std::nullopt,
-            [this, alive = alive.token(), token, host = plain.host](const std::any& answer) -> Result<void> {
+            [this, alive_token = alive.token(), token, host = plain.host](const std::any& answer) -> Result<void> {
                 const auto* decision = std::any_cast<UnencryptedUpstreamAnswer>(&answer);
                 if (decision == nullptr) return backend_diag(msg::kAnswerInvalid).kind(ErrorKind::InvalidInput).fail();
                 const bool accept = decision->accept;
-                strand.post([this, alive, token, host, accept] {
-                    if (alive.cancelled() || token.cancelled()) return;
+                strand.post([this, alive_token, token, host, accept] {
+                    if (alive_token.cancelled() || token.cancelled()) return;
                     if (!accept)
                         return fail_start(backend_diag(msg::kUnencryptedUpstreamDeclined)
                                               .arg("host", host)
@@ -426,9 +426,9 @@ struct BackendService::Impl final : IBackendProcessObserver {
             waiter->deadline =
                 timers.after(default_deadline(OpKind::BackendReady), [this, id] { fail_waiter(id, not_ready()); });
         Waiter& stored = *waiters.emplace(id, std::move(waiter)).first->second;
-        stored.cancel = token.on_cancel([this, alive = alive.token(), id](CancelReason) {
-            strand.post([this, alive, id] {
-                if (!alive.cancelled())
+        stored.cancel = token.on_cancel([this, alive_token = alive.token(), id](CancelReason) {
+            strand.post([this, alive_token, id] {
+                if (!alive_token.cancelled())
                     fail_waiter(id, backend_diag(msg::kCancelled).kind(ErrorKind::Cancelled).build());
             });
         });

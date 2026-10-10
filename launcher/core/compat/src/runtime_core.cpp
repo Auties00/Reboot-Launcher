@@ -100,8 +100,8 @@ struct RuntimeCore::Impl {
     // Posts `then` with the prepare it belongs to, unless the prepare or the service has ended.
     template <class F>
     void post(u64 id, F then) {
-        deps.strand.post([this, alive = alive.token(), id, then = std::move(then)]() mutable {
-            if (alive.cancelled()) return;
+        deps.strand.post([this, alive_token = alive.token(), id, then = std::move(then)]() mutable {
+            if (alive_token.cancelled()) return;
             if (Prepare* found = find(id)) then(*found);
         });
     }
@@ -130,8 +130,8 @@ struct RuntimeCore::Impl {
                 return runner.pending_prerequisite();
             },
             prepare.op->token(), deps.strand,
-            [this, alive = alive.token(), id = prepare.id](Result<std::optional<UserRequestKind>> pending) {
-                if (alive.cancelled()) return;
+            [this, alive_token = alive.token(), id = prepare.id](Result<std::optional<UserRequestKind>> pending) {
+                if (alive_token.cancelled()) return;
                 Prepare* found = find(id);
                 if (found == nullptr) return;
                 if (!pending) return fail(*found, std::move(pending.error()));
@@ -143,8 +143,8 @@ struct RuntimeCore::Impl {
     void ask_rosetta(Prepare& prepare) {
         const RequestId request = deps.requests.ask(
             UserRequestKind::RosettaInstall, RosettaInstallRequest{}, prepare.op->id(), prepare.session,
-            [this, alive = alive.token(), id = prepare.id](const std::any& answer) -> Result<void> {
-                if (alive.cancelled()) return {};
+            [this, alive_token = alive.token(), id = prepare.id](const std::any& answer) -> Result<void> {
+                if (alive_token.cancelled()) return {};
                 const auto* decision = std::any_cast<RosettaInstallAnswer>(&answer);
                 if (decision == nullptr)
                     return make_diag(ErrorDomain::Compat, msg::kAnswerInvalid).kind(ErrorKind::InvalidInput).fail();
@@ -185,13 +185,13 @@ struct RuntimeCore::Impl {
     void acquire(Prepare& prepare, const RuntimeId& runtime, Then then) {
         deps.catalog.acquire(
             prepare.session, runtime.value, prepare.op->token(),
-            [this, alive = alive.token(), id = prepare.id](const Progress& progress) {
-                if (alive.cancelled()) return;
+            [this, alive_token = alive.token(), id = prepare.id](const Progress& progress) {
+                if (alive_token.cancelled()) return;
                 if (Prepare* found = find(id); found != nullptr && found->progress) found->progress(progress);
             },
-            [this, alive = alive.token(), id = prepare.id, then = std::move(then)](
+            [this, alive_token = alive.token(), id = prepare.id, then = std::move(then)](
                 Result<components::PinnedRuntime> pinned) mutable {
-                if (alive.cancelled()) return;
+                if (alive_token.cancelled()) return;
                 Prepare* found = find(id);
                 if (found == nullptr) return;
                 if (!pinned) return fail(*found, std::move(pinned.error()));
@@ -213,8 +213,8 @@ struct RuntimeCore::Impl {
                 return runner.layout(kind, dirs);
             },
             prepare.op->token(), deps.strand,
-            [this, alive = alive.token(), id = prepare.id](Result<ports::RuntimeLayout> layout) {
-                if (alive.cancelled()) return;
+            [this, alive_token = alive.token(), id = prepare.id](Result<ports::RuntimeLayout> layout) {
+                if (alive_token.cancelled()) return;
                 Prepare* found = find(id);
                 if (found == nullptr) return;
                 if (!layout) return fail(*found, std::move(layout.error()));
@@ -243,11 +243,11 @@ struct RuntimeCore::Impl {
         Setup& setup = *setups.at(kind);
         deps.catalog.acquire(
             SessionId{}, runtime.value, setup.op->token(),
-            [this, alive = alive.token(), kind](const Progress& progress) {
-                if (!alive.cancelled() && setups.contains(kind)) setups.at(kind)->op->progress(progress);
+            [this, alive_token = alive.token(), kind](const Progress& progress) {
+                if (!alive_token.cancelled() && setups.contains(kind)) setups.at(kind)->op->progress(progress);
             },
-            [this, alive = alive.token(), kind, then = std::move(then)](Result<components::PinnedRuntime> pinned) mutable {
-                if (alive.cancelled() || !setups.contains(kind)) return;
+            [this, alive_token = alive.token(), kind, then = std::move(then)](Result<components::PinnedRuntime> pinned) mutable {
+                if (alive_token.cancelled() || !setups.contains(kind)) return;
                 if (!pinned) return setup_failed(kind, std::move(pinned.error()));
                 then(*setups.at(kind), std::move(*pinned));
             });
@@ -282,8 +282,8 @@ struct RuntimeCore::Impl {
                 return runner.runtime_setup(*layout, std::move(token));
             },
             setup.op->token(), deps.strand,
-            [this, alive = alive.token(), kind](Result<std::optional<std::string>> build) {
-                if (alive.cancelled() || !setups.contains(kind)) return;
+            [this, alive_token = alive.token(), kind](Result<std::optional<std::string>> build) {
+                if (alive_token.cancelled() || !setups.contains(kind)) return;
                 if (!build) return setup_failed(kind, std::move(build.error()));
                 const auto it = setups.find(kind);
                 std::unique_ptr<Setup> done = std::move(it->second);

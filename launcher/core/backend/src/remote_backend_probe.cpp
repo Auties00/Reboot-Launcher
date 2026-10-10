@@ -76,8 +76,8 @@ struct RemoteBackendProbe::Impl {
         auto shared = std::make_shared<Attempt>(std::move(attempt));
         Result<void> sent =
             http.send(std::move(request), shared->token,
-                      [this, alive = alive.token(), shared](Result<net::HttpResponse> response) mutable {
-                          if (alive.cancelled()) return;
+                      [this, alive_token = alive.token(), shared](Result<net::HttpResponse> response) mutable {
+                          if (alive_token.cancelled()) return;
                           if (response) return shared->done(read_info(std::move(shared->url), response->body));
                           next(std::move(*shared), std::move(response.error()));
                       });
