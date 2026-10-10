@@ -199,7 +199,8 @@ TEST_CASE("to_diagnostic gives each error its id and kind") {
 }
 
 TEST_CASE("parse_catalog refuses a time system_clock cannot hold") {
-    const std::string far = R"({"schema":1,"serial":1,"generated_unix_ms":0,"expires_unix_ms":9000000000000000,"entries":[],"flag_ranges":[]})";
+    // Past every system_clock: nanosecond ticks end in 2262, libc++'s microseconds in year 294247.
+    const std::string far = R"({"schema":1,"serial":1,"generated_unix_ms":0,"expires_unix_ms":18000000000000000000,"entries":[],"flag_ranges":[]})";
     CHECK(parse_error(far).where == "expires_unix_ms");
     const std::string negative = R"({"schema":1,"serial":1,"generated_unix_ms":-1,"expires_unix_ms":0,"entries":[],"flag_ranges":[]})";
     CHECK(parse_error(negative).where == "generated_unix_ms");

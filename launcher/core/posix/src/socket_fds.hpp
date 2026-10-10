@@ -14,7 +14,7 @@ namespace rb::posix {
 // SIGPIPE: MSG_NOSIGNAL on Linux, SO_NOSIGPIPE on macOS.
 
 [[nodiscard]] Result<UniqueFd> make_unix_stream_socket();
-// An invalid fd when no connection is pending.
+// An invalid fd when no connection is pending or its peer already left.
 [[nodiscard]] Result<UniqueFd> accept_unix_stream(int listen_fd);
 // For a socket we did not create, such as one systemd passed.
 [[nodiscard]] Result<void> make_cloexec_nonblocking(int fd);

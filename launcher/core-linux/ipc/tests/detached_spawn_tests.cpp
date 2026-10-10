@@ -121,7 +121,9 @@ TEST_CASE("the detached program gets only its argv, envp, cwd and /dev/null stdi
 
     CHECK(value_of(report, "args") == "run --origin=on-demand");
     CHECK(value_of(report, "cwd") == cwd.string());
-    CHECK(value_of(report, "sid") == value_of(report, "pid"));
+    // In the session the intermediate child created, which it does not lead, so it never gains a terminal.
+    CHECK(value_of(report, "sid") != std::to_string(::getsid(0)));
+    CHECK(value_of(report, "sid") != value_of(report, "pid"));
     CHECK(value_of(report, "ppid") != std::to_string(::getpid()));
     CHECK(value_of(report, "stdin") == "/dev/null");
     CHECK(value_of(report, "stderr") == "/dev/null");

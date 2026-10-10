@@ -143,9 +143,10 @@ TEST_CASE("links leaving the staging directory are refused, even through a chain
     require_unsafe(extract(scratch, dangling));
 }
 
-TEST_CASE("devices, FIFOs and sockets are refused", "[linux_conformance]") {
+// Tar has no socket type (libarchive refuses to write one and never reads one), so no package carries a socket.
+TEST_CASE("devices and FIFOs are refused", "[linux_conformance]") {
     Scratch scratch;
-    for (const mode_t type : {mode_t{S_IFCHR}, mode_t{S_IFBLK}, mode_t{S_IFIFO}, mode_t{S_IFSOCK}}) {
+    for (const mode_t type : {mode_t{S_IFCHR}, mode_t{S_IFBLK}, mode_t{S_IFIFO}}) {
         std::vector<Item> items = release("11.2.0");
         items.push_back({.path = "11.2.0/node", .type = type, .perm = 0600});
         require_unsafe(extract(scratch, items));

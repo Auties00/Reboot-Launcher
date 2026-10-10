@@ -57,7 +57,8 @@ reboot_add_package(os_linux/platform
 # scope kill, sock_diag owners, update extraction); runs on the Linux CI runner only. It writes
 # its update packages with libarchive.
 if(REBOOT_BUILD_TESTS)
-  file(GLOB conformance_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/conformance/*.cpp")
+  file(GLOB conformance_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/conformance/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/conformance/*.hpp")
   if(conformance_sources)
     add_executable(reboot_os_linux_conformance ${conformance_sources})
     _reboot_record_target(reboot_os_linux_conformance test DEPS reboot::os_linux_platform reboot::testing

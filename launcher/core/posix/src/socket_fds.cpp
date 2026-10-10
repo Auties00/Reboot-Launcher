@@ -21,13 +21,13 @@ constexpr int kSendFlags = MSG_NOSIGNAL;
 constexpr int kSendFlags = 0;
 #endif
 
-[[nodiscard]] Result<void> suppress_sigpipe([[maybe_unused]] int fd) {
+// 0, or the errno of setting SO_NOSIGPIPE where send has no MSG_NOSIGNAL.
+[[nodiscard]] int suppress_sigpipe([[maybe_unused]] int fd) noexcept {
 #if defined(__APPLE__)
     const int on = 1;
-    if (::setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &on, sizeof on) != 0)
-        return std::unexpected(call_failed("setsockopt", errno));
+    if (::setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &on, sizeof on) != 0) return errno;
 #endif
-    return {};
+    return 0;
 }
 
 [[nodiscard]] bool would_block(int error) noexcept { return error == EAGAIN || error == EWOULDBLOCK; }
@@ -60,7 +60,7 @@ Result<UniqueFd> make_unix_stream_socket() {
     if (!fd.valid()) return std::unexpected(call_failed("socket", errno));
     if (auto ready = make_cloexec_nonblocking(fd.get()); !ready) return std::unexpected(std::move(ready.error()));
 #endif
-    if (auto quiet = suppress_sigpipe(fd.get()); !quiet) return std::unexpected(std::move(quiet.error()));
+    if (const int error = suppress_sigpipe(fd.get()); error != 0) return std::unexpected(call_failed("setsockopt", error));
     return fd;
 }
 
@@ -81,7 +81,11 @@ Result<UniqueFd> accept_unix_stream(int listen_fd) {
 #if !defined(__linux__)
         if (auto ready = make_cloexec_nonblocking(fd.get()); !ready) return std::unexpected(std::move(ready.error()));
 #endif
-        if (auto quiet = suppress_sigpipe(fd.get()); !quiet) return std::unexpected(std::move(quiet.error()));
+        if (const int error = suppress_sigpipe(fd.get()); error != 0) {
+            // macOS refuses setsockopt on a socket whose peer already closed: it gave up before the accept.
+            if (error == EINVAL) return UniqueFd{};
+            return std::unexpected(call_failed("setsockopt", error));
+        }
         return fd;
     }
 }

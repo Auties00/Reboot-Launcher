@@ -339,9 +339,19 @@ TEST_CASE("the connector refuses a listener of another uid before writing anythi
     REQUIRE(cause.find_arg("peer_uid") != nullptr);
     CHECK(*cause.find_arg("peer_uid") == Arg{u64{own_uid() + 1}});
 
-    // The engine side saw a connection that ended without a byte.
-    REQUIRE(wait_for([&] { return accepted.count() == 1 && accepted.log(0)->closes() == 1; }));
-    CHECK(accepted.log(0)->received().empty());
+    // The engine side got no byte: a stream that ended at once, or nothing where the peer left before
+    // the accept (macOS). A later client's bytes show the listener has gone past the refused one.
+    TestConnector later;
+    auto client = later.connect(endpoint, 5s);
+    REQUIRE(client.has_value());
+    (*client)->write(as_bytes("later"));
+    REQUIRE(wait_for([&] { return accepted.count() >= 1 && accepted.log(accepted.count() - 1)->received() == "later"; }));
+    REQUIRE(accepted.count() <= 2);
+    if (accepted.count() == 2) {
+        CHECK(accepted.log(0)->received().empty());
+        CHECK(wait_for([&] { return accepted.log(0)->closes() == 1; }));
+    }
+    client->reset();
     listener.close();
     accepted.clear();
 }
