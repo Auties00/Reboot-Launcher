@@ -101,7 +101,7 @@ void _overrideHttpCertificate() {
 Future<Object?> _initNotifications() async {
   try {
     await localNotifier.setup(
-        appName: 'Reboot Launcher',
+        appName: 'Recoil Launcher',
         shortcutPolicy: ShortcutPolicy.ignore
     );
     return null;
@@ -195,7 +195,7 @@ Future<List<Object>> _initStorage() async {
     await GetStorage(DllController.storageName, settingsDirectory.path).initStorage;
   }catch(error) {
     appWithNoStorage = true;
-    errors.add("The Reboot Launcher configuration in ${settingsDirectory.path} cannot be accessed: running with in memory storage");
+    errors.add("The Recoil Launcher configuration in ${settingsDirectory.path} cannot be accessed: running with in memory storage");
   }
 
   try {

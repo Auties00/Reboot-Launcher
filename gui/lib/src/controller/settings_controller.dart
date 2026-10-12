@@ -75,7 +75,7 @@ class SettingsController extends GetxController {
           onPressed: () {
             infoBar.close();
             launchUrl(Uri.parse(
-                "https://github.com/Auties00/reboot_launcher/releases"));
+                "https://github.com/toomi9708-ui/Recoil-Launcher/releases"));
           },
         )
     );

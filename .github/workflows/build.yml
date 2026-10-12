@@ -1,0 +1,20 @@
+﻿name: Build Windows
+on:
+  workflow_dispatch:
+  push:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+        working-directory: gui
+      - run: flutter build windows --release
+        working-directory: gui
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Recoil-Launcher-windows
+          path: gui/build/windows/x64/runner/Release/

@@ -13,7 +13,7 @@ bool useDefaultPath = false;
 
 Directory get installationDirectory {
   if(useDefaultPath) {
-    final dir = Directory('$_home/Reboot Launcher');
+    final dir = Directory('$_home/Recoil Launcher');
     dir.createSync(recursive: true);
     return dir;
   }else {

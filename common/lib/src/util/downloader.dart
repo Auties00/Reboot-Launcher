@@ -20,9 +20,9 @@ const String kRebootAboveS20DownloadUrl =
     "https://nightly.link/Milxnor/Project-Reboot-3.0/workflows/msbuild/master/RebootS20.zip";
 
 const String _kRebootBelowS20FallbackDownloadUrl =
-    "https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/RebootFallback.zip";
+    "https://github.com/toomi9708-ui/Recoil-Launcher/raw/master/gui/dependencies/dlls/RebootFallback.zip";
 const String _kRebootAboveS20FallbackDownloadUrl =
-    "https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/RebootS20Fallback.zip";
+    "https://github.com/toomi9708-ui/Recoil-Launcher/raw/master/gui/dependencies/dlls/RebootS20Fallback.zip";
 
 const String kStopBuildDownloadSignal = "kill";
 
@@ -498,7 +498,7 @@ Future<bool> downloadDependency(InjectableDll dll, String outputPath) async {
         return false;
     }
 
-    final response = await http.get(Uri.parse("https://github.com/Auties00/reboot_launcher/raw/master/gui/dependencies/dlls/$name"));
+    final response = await http.get(Uri.parse("https://github.com/toomi9708-ui/Recoil-Launcher/raw/master/gui/dependencies/dlls/$name"));
     if(response.statusCode != 200) {
         throw Exception("Cannot download $name: status code ${response.statusCode}");
     }

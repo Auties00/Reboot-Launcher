@@ -470,7 +470,7 @@ class _LaunchButtonState extends State<LaunchButton> {
           severity: InfoBarSeverity.warning,
           duration: infoBarLongDuration,
           action: Button(
-            onPressed: () => launchUrlString("https://github.com/Auties00/reboot_launcher/blob/master/documentation/$currentLocale/PortForwarding.md"),
+            onPressed: () => launchUrlString("https://github.com/toomi9708-ui/Recoil-Launcher/blob/master/documentation/$currentLocale/PortForwarding.md"),
             child: Text(translations.checkGameServerFixAction),
           ),
         );

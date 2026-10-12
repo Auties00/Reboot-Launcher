@@ -28,7 +28,7 @@ void main(List<String> args) async {
   useDefaultPath = true;
 
   print("""
-🎮 Reboot Launcher
+🎮 Recoil Launcher
 🔥 Launch, manage, and play Fortnite using Project Reboot!
 🚀 Developed by Auties00 - Version 10.0.7
 """.green());

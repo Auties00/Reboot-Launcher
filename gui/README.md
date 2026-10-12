@@ -1,7 +1,7 @@
 
-# Reboot Launcher
+# Recoil Launcher
 
-Welcome to the **Reboot Launcher**! 
+Welcome to the **Recoil Launcher**! 
 This is a GUI application developed as part of the **Reboot Project**.
 
 ## Getting Started

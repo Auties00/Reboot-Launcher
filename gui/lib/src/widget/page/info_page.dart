@@ -28,7 +28,7 @@ class InfoPage extends RebootPage {
 }
 
 class _InfoPageState extends RebootPageState<InfoPage> {
-  static const String _kReportBugUrl = "https://github.com/Auties00/reboot_launcher/issues/new"; 
+  static const String _kReportBugUrl = "https://github.com/toomi9708-ui/Recoil-Launcher/issues/new"; 
   static const String _kDiscordInviteUrl = "https://discord.gg/rebootmp";
   
   @override
