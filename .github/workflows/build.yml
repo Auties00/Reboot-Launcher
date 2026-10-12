@@ -4,12 +4,12 @@ on:
   push:
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: 3.19.6
       - run: flutter pub get
         working-directory: gui
       - run: flutter build windows --release
@@ -18,3 +18,4 @@ jobs:
         with:
           name: Recoil-Launcher-windows
           path: gui/build/windows/x64/runner/Release/
+
