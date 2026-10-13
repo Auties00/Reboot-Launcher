@@ -521,6 +521,32 @@ TEST_CASE("RATE_LIMITED on HostRegister waits and registers again", "[publish][p
     CHECK(rig.phase(session_id(1)) == PublishPhase::Registering);
 }
 
+TEST_CASE("a HostRegister the edge never answers is retried on a fresh connection", "[publish][publisher]") {
+    PublisherRig rig;
+    REQUIRE(rig.publisher.publish(request()));
+    Edge& edge = rig.connect();
+    const wire::HostRegister first = edge.expect<wire::HostRegister>();
+    rig.strand.advance(kRegisterAnswerWait - 1ms);
+    CHECK(rig.phase(session_id(1)) == PublishPhase::Registering);
+    rig.strand.advance(1ms);
+    const auto state = rig.publisher.state(session_id(1));
+    CHECK(state->phase == PublishPhase::Retrying);
+    REQUIRE(state->error);
+    CHECK(state->error->is(msg::kEdgeUnavailable));
+    CHECK(edge.peer().closed_with());
+
+    rig.strand.advance(browser::FullJitterBackoff::kBase);
+    Edge& second = rig.connect();
+    const wire::HostRegister again = second.expect<wire::HostRegister>();
+    CHECK(again.id == first.id);
+    second.registered(again.req_id);
+    rig.strand.run_ready();
+    CHECK(rig.phase(session_id(1)) == PublishPhase::Registered);
+    // An answered register leaves no deadline behind.
+    rig.strand.advance(kRegisterAnswerWait);
+    CHECK(rig.phase(session_id(1)) == PublishPhase::Registered);
+}
+
 TEST_CASE("an unreachable edge leaves the session not listed and retrying", "[publish][publisher]") {
     PublisherRig rig;
     rig.quic.fail_next_open(network_error());

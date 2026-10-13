@@ -298,18 +298,51 @@ TEST_CASE("views beyond the edge's subscription limit fail at once", "[browser][
     CHECK(second.error().id == "browser.too_many_views");
 }
 
-TEST_CASE("a rejected Subscribe reaches on_rejected and is not replayed", "[browser][session]") {
+TEST_CASE("a rejected Subscribe reaches on_rejected and only a refusal for the limit is replayed", "[browser][session]") {
     SessionRig rig;
     BrowserLease lease = rig.session.acquire();
     Edge& edge = rig.connect();
-    std::optional<wire::ErrorCode> rejected;
-    ViewStreamCallbacks callbacks;
-    callbacks.on_rejected = [&](const RbsbRequestError& error) { rejected = error.code; };
-    auto subscription = rig.session.subscribe(wire::ViewSpec{}, 50, std::move(callbacks));
-    const wire::Subscribe subscribe = edge.expect<wire::Subscribe>();
-    edge.send(wire::Error{subscribe.req_id, wire::ErrorCode::limit_exceeded, {}, 0});
+    std::vector<wire::ErrorCode> rejected;
+    const auto callbacks = [&] {
+        ViewStreamCallbacks out;
+        out.on_rejected = [&](const RbsbRequestError& error) { rejected.push_back(error.code); };
+        return out;
+    };
+    auto limited = rig.session.subscribe(wire::ViewSpec{}, 50, callbacks());
+    auto refused = rig.session.subscribe(wire::ViewSpec{}, 60, callbacks());
+    const wire::Subscribe first = edge.expect<wire::Subscribe>();
+    const wire::Subscribe second = edge.expect<wire::Subscribe>();
+    edge.send(wire::Error{first.req_id, wire::ErrorCode::limit_exceeded, {}, 0});
+    edge.send(wire::Error{second.req_id, wire::ErrorCode::unauthorized, {}, 0});
     rig.rt.run_until_idle();
-    CHECK(rejected == wire::ErrorCode::limit_exceeded);
+    CHECK(rejected == std::vector{wire::ErrorCode::limit_exceeded, wire::ErrorCode::unauthorized});
+
+    edge.peer().close(std::nullopt);
+    rig.rt.run_until_idle();
+    rig.rt.advance(FullJitterBackoff::kBase);
+    Edge& again = rig.connect();
+    CHECK(again.expect<wire::Subscribe>().window == first.window);
+    CHECK(again.idle());
+}
+
+TEST_CASE("a view refused for the edge's limit is sent again once another view closes", "[browser][session]") {
+    SessionRig rig;
+    BrowserLease lease = rig.session.acquire();
+    Edge& edge = rig.connect();
+    std::optional<Result<ViewSubscription>> open = rig.session.subscribe(wire::ViewSpec{}, 50, {});
+    auto limited = rig.session.subscribe(wire::ViewSpec{}, 50, {});
+    const wire::Subscribe granted = edge.expect<wire::Subscribe>();
+    const wire::Subscribe refused = edge.expect<wire::Subscribe>();
+    edge.send(wire::SubOpen{granted.req_id, granted.sub_id, 1, 50});
+    edge.send(wire::Error{refused.req_id, wire::ErrorCode::limit_exceeded, {}, 0});
+    rig.rt.run_until_idle();
+    CHECK(edge.idle());
+
+    open.reset();
+    rig.rt.run_until_idle();
+    CHECK(edge.expect<wire::Unsubscribe>().sub_id == granted.sub_id);
+    CHECK(edge.expect<wire::Subscribe>().req_id != refused.req_id);
+    CHECK(edge.idle());
 }
 
 TEST_CASE("GoAway drains, keeps serving, then moves after the delay", "[browser][session]") {
@@ -375,6 +408,19 @@ TEST_CASE("a failed attempt is explained by the probes", "[browser][session]") {
         CHECK(rig.quic.connections().size() == 2);
         CHECK(rig.session.status().state == ConnectionState::Connecting);
     }
+}
+
+TEST_CASE("an expert endpoint's private CA also checks its /status probe", "[browser][session]") {
+    SessionRig rig;
+    rig.session.set_endpoint(RbsbEndpoint{kEdgeHost, Port{443}, NativePath("private-ca.pem"), EndpointSource::Expert});
+    rig.http_transport.route("GET", "https://edge.test/status", testing::FakeHttpResponse{.status = 200});
+    BrowserLease lease = rig.session.acquire();
+    rig.rt.advance(10s);
+    CHECK(rig.session.status().state == ConnectionState::UdpBlocked);
+    const std::vector<ports::HttpRequest> probes = rig.http_transport.requests();
+    REQUIRE_FALSE(probes.empty());
+    CHECK(probes[0].url == "https://edge.test/status");
+    CHECK(probes[0].tls.ca_bundle == NativePath("private-ca.pem"));
 }
 
 TEST_CASE("a new endpoint moves an open connection at once", "[browser][session]") {

@@ -36,7 +36,8 @@ public:
     // Engine startup, after IdentityService::ensure_records().
     void register_identity(const identity::IdentitySnapshot& identity);
     // EventKind::IdentityChanged: a new account_id for a known record_id renames the backend data
-    // from the id last registered for it, then re-registers the record.
+    // from the id last registered for it, then re-registers the record. Best effort: the rename is
+    // held only in memory, and RegisterAccount moving a record's data is what makes it durable.
     void on_identity_changed(const identity::IdentityChangedEvent& event);
 
     // As of the last Running or account op, each of which publishes BackendAccountsChanged;

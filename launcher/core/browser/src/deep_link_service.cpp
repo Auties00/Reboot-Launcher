@@ -62,6 +62,8 @@ struct DeepLinkService::Impl {
             } else if (error.failure == RbsbFailure::Rejected && error.code == wire::ErrorCode::not_found) {
                 finish(run, Failed{link_not_found()});
             } else {
+                if (error.failure == RbsbFailure::Rejected && error.code == wire::ErrorCode::rate_limited)
+                    session.query_rate().hold_off(error.retry_after);
                 finish(run, Failed{to_diagnostic(error)});
             }
             return;
@@ -117,6 +119,9 @@ Result<OpHandle> DeepLinkService::start_resolve(std::string_view link, Disconnec
     if (!parsed) return std::unexpected(std::move(parsed.error()));
     const ServerId server = parsed->server;
     if (impl_->own.owns(server)) return std::unexpected(to_diagnostic(JoinFailure{.code = JoinFailureCode::OwnServer}));
+    if (const auto wait = impl_->session.query_rate().try_take())
+        return std::unexpected(to_diagnostic(
+            RbsbRequestError{.failure = RbsbFailure::Rejected, .code = wire::ErrorCode::rate_limited, .retry_after = *wait}));
 
     if (const std::optional<OpId> previous = std::exchange(impl_->pending, std::nullopt))
         (void)impl_->ops.cancel(*previous, CancelReason::Superseded);

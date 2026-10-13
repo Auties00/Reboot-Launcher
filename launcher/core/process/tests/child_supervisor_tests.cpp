@@ -1,7 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
+#include <algorithm>
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -136,6 +139,31 @@ struct Fixture {
 };
 
 const ports::ChildExit kSigKill{std::nullopt, 9};
+
+[[nodiscard]] std::vector<u8> oversized_frame() {
+    sb::wire::Writer writer;
+    writer.quic_varint(contract_frame_type_v<be::Ready>);
+    writer.quic_varint(kChildFrameCap + 1);
+    return writer.take();
+}
+
+struct CapturedLog {
+    std::mutex mutex;
+    std::vector<std::string> texts;
+};
+
+class CaptureSink final : public LogSink {
+public:
+    explicit CaptureSink(std::shared_ptr<CapturedLog> captured) : captured_(std::move(captured)) {}
+    void write(std::span<const LogRecord> records) override {
+        const std::lock_guard lock(captured_->mutex);
+        for (const LogRecord& record : records) captured_->texts.push_back(record.text);
+    }
+    void flush() override {}
+
+private:
+    std::shared_ptr<CapturedLog> captured_;
+};
 
 }  // namespace
 
@@ -441,6 +469,170 @@ TEST_CASE("stop closes stdin and a child that exits reports Requested", "[proces
     CHECK_FALSE(f.child().terminated());
     CHECK(f.supervisor->state() == ChildState::Stopped);
     CHECK(f.launcher.children().size() == 1);
+}
+
+TEST_CASE("during the stop grace Log frames and replies still arrive; events and requests do not",
+          "[process][supervisor]") {
+    const auto captured = std::make_shared<CapturedLog>();
+    Logger::add_sink(std::make_unique<CaptureSink>(captured));
+    Logger::install(1 << 20);
+    Logger::set_level(LogLevel::Info);
+
+    Fixture f;
+    f.run();
+    std::optional<Result<be::HealthReply>> health;
+    f.supervisor->request<be::HealthReply>(be::Health{}, [&](Result<be::HealthReply> r) { health = std::move(r); });
+    const u64 health_id = f.last_sent<be::Health>().req_id;
+    std::optional<Result<void>> drain;
+    f.supervisor->command(be::Drain{}, [&](Result<void> r) { drain = std::move(r); });
+    const u64 drain_id = f.last_sent<be::Drain>().req_id;
+    std::optional<Result<void>> late;
+    f.supervisor->command(be::PurgeData{}, [&](Result<void> r) { late = std::move(r); });
+
+    REQUIRE(f.supervisor->stop(5s));
+    f.child().send(common::Log{LogLevel::Info, 0, "flushing the profile store"});
+    f.child().send(be::HealthReply{health_id, "1.2.3", {}, 3551});
+    common::CommandResult ok;
+    ok.ok = true;
+    ok.req_id = drain_id;
+    f.child().send(ok);
+    f.child().send(be::Ready{3551});
+    f.child().send(be::ResolveMatchTarget{7, "acc", "solo"});
+    f.child().send(common::Ping{5});
+    f.rt.run_until_idle();
+
+    REQUIRE(health.has_value());
+    REQUIRE(health->has_value());
+    CHECK((*health)->version == "1.2.3");
+    REQUIRE(drain.has_value());
+    CHECK(drain->has_value());
+    CHECK_FALSE(late.has_value());
+    CHECK(f.observer.events.empty());
+    CHECK(f.handler.replies.empty());
+    CHECK(f.child().stdin_frames().count(contract_frame_type_v<common::Pong>) == 0);
+    CHECK(f.supervisor->state() == ChildState::Stopping);
+
+    // Malformed output only ends the reading; the stop stays a requested one.
+    f.child().write_stdout(oversized_frame());
+    f.child().send(common::Log{LogLevel::Info, 0, "after the garbage"});
+    f.rt.run_until_idle();
+    CHECK_FALSE(f.child().terminated());
+    f.child().exit({0, std::nullopt});
+    f.rt.run_until_idle();
+    REQUIRE(f.observer.exits.size() == 1);
+    CHECK(f.observer.exits[0].cause == ChildExitCause::Requested);
+    REQUIRE(late.has_value());
+    REQUIRE_FALSE(late->has_value());
+    CHECK(late->error().id == "process.child_gone");
+
+    Logger::shutdown();
+    const std::lock_guard lock(captured->mutex);
+    CHECK(std::ranges::count(captured->texts, std::string("flushing the profile store")) == 1);
+    CHECK(std::ranges::count(captured->texts, std::string("after the garbage")) == 0);
+}
+
+TEST_CASE("a hang or protocol error kill ignores later output and shows Stopping until the exit",
+          "[process][supervisor]") {
+    Fixture f(quick_restarts());
+    f.run();
+    f.child().fail_terminations(1);
+    std::optional<Result<void>> drain;
+    f.supervisor->command(be::Drain{}, [&](Result<void> r) { drain = std::move(r); });
+    const u64 drain_id = f.last_sent<be::Drain>().req_id;
+    f.child().write_stdout(oversized_frame());
+    f.rt.run_until_idle();
+    CHECK(f.supervisor->state() == ChildState::Stopping);
+    Result<void> again = f.supervisor->start();
+    REQUIRE_FALSE(again.has_value());
+    CHECK(again.error().id == "process.child_already_started");
+
+    common::CommandResult ok;
+    ok.ok = true;
+    ok.req_id = drain_id;
+    f.child().send(ok);
+    f.rt.run_until_idle();
+    CHECK_FALSE(drain.has_value());
+
+    // The retry a GracefulStop deadline later kills it.
+    f.rt.advance(5s);
+    CHECK(f.child().terminated());
+    REQUIRE(f.observer.exits.size() == 1);
+    CHECK(f.observer.exits[0].cause == ChildExitCause::ProtocolError);
+    CHECK(f.observer.exits[0].after == AfterExit::Restarting);
+    REQUIRE(drain.has_value());
+    CHECK(drain->error().id == "process.child_gone");
+}
+
+TEST_CASE("a kill that keeps failing is given up on as Failed and leaves the record", "[process][supervisor]") {
+    Fixture f(quick_restarts());
+    REQUIRE(f.supervisor->start().has_value());
+    testing::ScriptedChild& child = f.child();
+    child.fail_terminations(3);
+
+    f.rt.advance(2s);
+    CHECK(child.terminate_calls() == 1);
+    CHECK(f.supervisor->state() == ChildState::Stopping);
+    CHECK(f.supervisor->stop(1s));
+    f.rt.advance(5s);
+    CHECK(child.terminate_calls() == 2);
+    CHECK(f.observer.exits.empty());
+    f.rt.advance(5s);
+    CHECK(child.terminate_calls() == 3);
+    CHECK_FALSE(child.terminated());
+
+    REQUIRE(f.observer.exits.size() == 1);
+    const ChildExitInfo& exit = f.observer.exits[0];
+    CHECK(exit.cause == ChildExitCause::Requested);
+    CHECK(exit.after == AfterExit::Failed);
+    CHECK(exit.pid == child.pid());
+    REQUIRE(exit.error.has_value());
+    CHECK(exit.error->id == "process.child_kill_failed");
+    REQUIRE(exit.error->causes.size() == 1);
+    CHECK(exit.error->causes[0].id == "testing.terminate_failed");
+    CHECK(f.supervisor->state() == ChildState::Failed);
+    CHECK_FALSE(f.supervisor->pid().has_value());
+    REQUIRE(f.records.size() == 1);
+    CHECK(f.records[0].second == RecordChange::Spawned);
+
+    // Nothing is retried any more, a late exit is not reported, and the owner can start again.
+    f.rt.advance(30s);
+    CHECK(child.terminate_calls() == 3);
+    child.exit(kSigKill);
+    f.rt.run_until_idle();
+    CHECK(f.observer.exits.size() == 1);
+    CHECK_FALSE(f.supervisor->stop());
+    REQUIRE(f.supervisor->start().has_value());
+    CHECK(f.launcher.children().size() == 2);
+}
+
+TEST_CASE("a kill given up on reports the failure that started it", "[process][supervisor]") {
+    Fixture f;
+    REQUIRE(f.supervisor->start().has_value());
+    f.child().fail_terminations(3);
+    f.rt.advance(2s + 10s);
+    REQUIRE(f.observer.exits.size() == 1);
+    const ChildExitInfo& exit = f.observer.exits[0];
+    CHECK(exit.cause == ChildExitCause::HandshakeFailed);
+    CHECK(exit.after == AfterExit::Failed);
+    REQUIRE(exit.error.has_value());
+    CHECK(exit.error->id == "process.child_kill_failed");
+    REQUIRE(exit.error->causes.size() == 2);
+    CHECK(exit.error->causes[0].id == "process.child_hello_timeout");
+    CHECK(exit.error->causes[1].id == "testing.terminate_failed");
+}
+
+TEST_CASE("a request's scrub sees the message after it was encoded", "[process][supervisor]") {
+    Fixture f;
+    f.run();
+    std::string scrubbed;
+    f.supervisor->command(
+        be::EndSession{0, "session-key-0123"}, [](Result<void>) {},
+        [&](be::EndSession& message) {
+            CHECK(message.req_id != 0);
+            scrubbed = std::exchange(message.session_key, {});
+        });
+    CHECK(scrubbed == "session-key-0123");
+    CHECK(f.last_sent<be::EndSession>().session_key == "session-key-0123");
 }
 
 TEST_CASE("stop kills a child that outlives the grace", "[process][supervisor]") {

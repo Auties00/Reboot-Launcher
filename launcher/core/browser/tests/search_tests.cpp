@@ -12,7 +12,7 @@ using namespace std::chrono_literals;
 namespace {
 
 struct SearchRig : SessionRig {
-    SearchRig() : search(session, own, rt.timers(), rt.clock()) {}
+    SearchRig() : search(session, own, rt.timers()) {}
 
     [[nodiscard]] static SearchRequest text(std::string value) {
         SearchRequest request;

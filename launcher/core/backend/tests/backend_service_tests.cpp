@@ -413,6 +413,78 @@ TEST_CASE("a stop withdraws a pending unencrypted-upstream question", "[backend]
     CHECK(h.state().phase == BackendPhase::Stopped);
 }
 
+TEST_CASE("cancelling the only start op withdraws its question, unpins and stops", "[backend][service]") {
+    ServiceHarness h(remote_config(net::UrlScheme::Http));
+    const Result<OpHandle> start = h.service->start_backend(true, DisconnectPolicy::BoundToConnection);
+    h.rt.run_until_idle();
+    REQUIRE(pending_request(h.rt.requests(), UserRequestKind::ConfirmUnencryptedUpstream));
+    CHECK(h.state().pinned);
+
+    REQUIRE(h.rt.ops().cancel(start->id(), CancelReason::Disconnect));
+    h.rt.run_until_idle();
+    CHECK_FALSE(pending_request(h.rt.requests(), UserRequestKind::ConfirmUnencryptedUpstream));
+    CHECK(h.state().phase == BackendPhase::Stopped);
+    CHECK_FALSE(h.state().pinned);
+    const std::optional<ErasedOutcome> outcome = h.outcome(start);
+    REQUIRE(outcome);
+    CHECK(std::holds_alternative<Cancelled>(*outcome));
+}
+
+TEST_CASE("a cancelled start op leaves the question up for a lease waiter or another start", "[backend][service]") {
+    ServiceHarness h(remote_config(net::UrlScheme::Http));
+    std::optional<BackendLease> lease;
+    Captured<Result<BackendUpstream>> waiter;
+    std::optional<Result<OpHandle>> survivor;
+    SECTION("a lease waiter, while the cancelled op's pin goes") {
+        lease = h.lease(1);
+        h.service->ensure_ready(*lease, {}, waiter.sink());
+        const Result<OpHandle> start = h.service->start_backend(true, DisconnectPolicy::Detached);
+        h.rt.run_until_idle();
+        REQUIRE(h.rt.ops().cancel(start->id(), CancelReason::User));
+        h.rt.run_until_idle();
+        CHECK_FALSE(h.state().pinned);
+        CHECK(std::holds_alternative<Cancelled>(*h.outcome(start)));
+    }
+    SECTION("another start op, which inherits the pin") {
+        const Result<OpHandle> first = h.service->start_backend(true, DisconnectPolicy::Detached);
+        const Result<OpHandle> second = h.service->start_backend(true, DisconnectPolicy::Detached);
+        h.rt.run_until_idle();
+        REQUIRE(h.rt.ops().cancel(first->id(), CancelReason::User));
+        h.rt.run_until_idle();
+        CHECK(h.state().pinned);
+        CHECK(std::holds_alternative<Cancelled>(*h.outcome(first)));
+        survivor = second;
+    }
+    const std::optional<UserRequest> asked = pending_request(h.rt.requests(), UserRequestKind::ConfirmUnencryptedUpstream);
+    REQUIRE(asked);
+    CHECK(h.state().phase == BackendPhase::Starting);
+
+    h.transport.route("GET", "http://play.example:3551/reboot/v1/backend-info", answer(200, std::string(kRebootInfo)));
+    REQUIRE(h.rt.requests().respond(asked->id, UnencryptedUpstreamAnswer{true}));
+    h.rt.run_until_idle();
+    CHECK(h.state().phase == BackendPhase::Running);
+    if (survivor) {
+        CHECK(h.upstream_of(*survivor));
+    } else {
+        REQUIRE(waiter.value);
+        CHECK(waiter.value->has_value());
+    }
+}
+
+TEST_CASE("a start op that times out leaves the start to fail on its own", "[backend][service]") {
+    ServiceHarness h;
+    h.script.ready_delay = 5min;
+    const Result<OpHandle> start = h.service->start_backend(true, DisconnectPolicy::Detached);
+    h.rt.advance(31s);
+    const std::optional<ErasedOutcome> outcome = h.outcome(start);
+    REQUIRE(outcome);
+    CHECK(std::holds_alternative<TimedOut>(*outcome));
+    CHECK(h.state().phase == BackendPhase::Failed);
+    REQUIRE(h.state().last_error);
+    CHECK(h.state().last_error->id == "backend.not_ready");
+    CHECK(h.state().pinned);
+}
+
 TEST_CASE("a local backend is probed, never spawned, and is embedded-only for credentials", "[backend][service]") {
     ServiceHarness h(local_config());
     h.transport.route("GET", "http://127.0.0.1:3551/reboot/v1/backend-info", answer(404));

@@ -250,6 +250,21 @@ TEST_CASE("only an active session changes phase or respawns") {
     CHECK(f.registry.begin_respawn(id).error().id == "sessions.stopping");
 }
 
+TEST_CASE("the payload is pinned after open, and only while the session is active") {
+    Fixture f;
+    const SessionId id = f.open();
+    CHECK_FALSE(f.registry.get(id)->pinned.payload_version);
+    const SemVer version = SemVer::parse("1.2.3").value();
+    REQUIRE(f.registry.pin_payload(id, version));
+    CHECK(f.registry.get(id)->pinned.payload_version == version);
+
+    REQUIRE(f.registry.stop(id, StopRequest{}, nullptr));
+    CHECK(f.registry.pin_payload(id, SemVer::parse("2.0.0").value()).error().id == "sessions.stopping");
+    CHECK(f.registry.get(id)->pinned.payload_version == version);
+    f.finish(0);
+    CHECK(f.registry.pin_payload(id, version).error().id == "sessions.ended");
+}
+
 TEST_CASE("process exits leave the live list") {
     Fixture f;
     const SessionId id = f.open();

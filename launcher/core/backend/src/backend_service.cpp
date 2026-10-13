@@ -100,6 +100,15 @@ struct BackendService::Impl final : IBackendProcessObserver {
         bool embedded = false;
     };
 
+    // A start op still in a command; cancelling it drops its interest in the start.
+    struct StartInterest {
+        Operation<BackendUpstream>* op = nullptr;
+        bool pin = false;
+        // This op's start_backend turned the pin on, so its cancel turns it off again.
+        bool unpin_on_cancel = false;
+        CancelRegistration cancel;
+    };
+
     Impl(BackendConfig config, BackendProcess& process_ref, RemoteBackendProbe& probe_ref, IBackendSessions& sessions_ref,
          OpRegistry& ops_ref, UserRequestRegistry& requests_ref, net::HostTlsMemory& tls_ref, EventBus& events_ref,
          Executor& strand_ref, TimerService& timers_ref)
@@ -203,8 +212,7 @@ struct BackendService::Impl final : IBackendProcessObserver {
     void supersede(Command& start) {
         transition.cancel(CancelReason::Superseded);
         ready_timer.cancel();
-        for (Operation<BackendUpstream>* op : std::exchange(start.start_ops, {}))
-            op->complete(Cancelled{CancelReason::Superseded});
+        for (Operation<BackendUpstream>* op : take_start_ops(start)) op->complete(Cancelled{CancelReason::Superseded});
     }
 
     void execute() {
@@ -265,7 +273,9 @@ struct BackendService::Impl final : IBackendProcessObserver {
         BackendUrl plain = *url;
         plain.scheme = net::UrlScheme::Http;
         std::optional<OpId> op;
-        if (!current->start_ops.empty()) op = current->start_ops.front()->id();
+        // A cancelled op leaves start_ops only once its cancel reaches the strand.
+        const auto live = std::ranges::find_if(current->start_ops, [](const auto* start_op) { return !start_op->done(); });
+        if (live != current->start_ops.end()) op = (*live)->id();
         const CancelToken token = transition.token();
         const RequestId id = requests.ask(
             UserRequestKind::ConfirmUnencryptedUpstream, UnencryptedUpstreamPrompt{plain.origin()}, op, std::nullopt,
@@ -298,7 +308,7 @@ struct BackendService::Impl final : IBackendProcessObserver {
             state.last_error.reset();
             publish(BackendChange::Running);
         }
-        std::vector<Operation<BackendUpstream>*> start_ops = std::exchange(current->start_ops, {});
+        std::vector<Operation<BackendUpstream>*> start_ops = take_start_ops(*current);
         std::vector<std::unique_ptr<Waiter>> ready = take_waiters([](const Waiter&) { return true; });
         next();
         // After next(), so a listener that takes or drops a lease finds a settled queue.
@@ -314,7 +324,7 @@ struct BackendService::Impl final : IBackendProcessObserver {
         state.upstream.reset();
         state.last_error = error;
         publish(BackendChange::Failed);
-        std::vector<Operation<BackendUpstream>*> start_ops = std::exchange(current->start_ops, {});
+        std::vector<Operation<BackendUpstream>*> start_ops = take_start_ops(*current);
         std::vector<std::unique_ptr<Waiter>> failed = take_waiters([](const Waiter&) { return true; });
         next();
         for (Operation<BackendUpstream>* op : start_ops) op->complete(Failed{error});
@@ -446,6 +456,54 @@ struct BackendService::Impl final : IBackendProcessObserver {
         enqueue(std::move(command));
     }
 
+    void start_op(Operation<BackendUpstream>& op, bool pin) {
+        const bool unpin_on_cancel = pin && !state.pinned;
+        if (pin) set_pinned(true);
+        if (current || state.phase != BackendPhase::Running) {
+            // Before enqueue, which may already settle the op and take its interest.
+            const OpId id = op.id();
+            StartInterest& interest = start_interests[id];
+            interest.op = &op;
+            interest.pin = pin;
+            interest.unpin_on_cancel = unpin_on_cancel;
+            interest.cancel = op.token().on_cancel([this, alive_token = alive.token(), id](CancelReason reason) {
+                strand.post([this, alive_token, id, reason] {
+                    if (!alive_token.cancelled()) drop_start(id, reason);
+                });
+            });
+        }
+        want_start(&op);
+    }
+
+    std::vector<Operation<BackendUpstream>*> take_start_ops(Command& command) {
+        std::vector<Operation<BackendUpstream>*> taken = std::exchange(command.start_ops, {});
+        for (const Operation<BackendUpstream>* op : taken) start_interests.erase(op->id());
+        return taken;
+    }
+
+    // A cancelled start op; a start nobody wants any more is stopped, which withdraws its question.
+    void drop_start(OpId id, CancelReason reason) {
+        const auto found = start_interests.find(id);
+        if (found == start_interests.end()) return;
+        Operation<BackendUpstream>* op = found->second.op;
+        const bool unpin = found->second.unpin_on_cancel;
+        start_interests.erase(found);
+        if (current) std::erase(current->start_ops, op);
+        for (Command& command : queue) std::erase(command.start_ops, op);
+        op->complete(Cancelled{reason});
+        // A timed-out op leaves the start to its own deadline, which reports why it failed.
+        if (reason == CancelReason::Deadline) return;
+        if (unpin) {
+            const auto heir = std::ranges::find_if(start_interests, [](const auto& entry) { return entry.second.pin; });
+            if (heir != start_interests.end()) heir->second.unpin_on_cancel = true;
+            else set_pinned(false);
+        }
+        // A restart is the backend's own, not a start someone asked for.
+        if (start_pending() && state.phase != BackendPhase::Restarting && start_interests.empty() && !state.pinned &&
+            leases.empty() && waiters.empty())
+            stop(BackendStopCause::UserStop, nullptr, nullptr);
+    }
+
     void stop(BackendStopCause cause, Operation<void>* op, UniqueFunction<void(Result<void>)> done) {
         Command command;
         command.kind = CommandKind::Stop;
@@ -569,6 +627,7 @@ struct BackendService::Impl final : IBackendProcessObserver {
     bool ready_timed_out = false;
     // Start ops whose health check is in flight.
     std::vector<Operation<BackendUpstream>*> checking;
+    std::map<OpId, StartInterest> start_interests;
 
     UniqueFunction<void(const LoginObservedEvent&)> login_observer;
     std::vector<UniqueFunction<void(const BackendState&)>> ready_listeners;
@@ -638,8 +697,7 @@ Result<OpHandle> BackendService::start_backend(bool pin, DisconnectPolicy policy
                                             : std::optional(2 * default_deadline(OpKind::HttpSmall));
     auto [handle, op] = impl.ops.create<BackendUpstream>(OpKind::BackendReady, policy, std::nullopt,
                                                          RunnerMultiplier::Native, deadline);
-    if (pin) impl.set_pinned(true);
-    impl.want_start(&op);
+    impl.start_op(op, pin);
     return handle;
 }
 

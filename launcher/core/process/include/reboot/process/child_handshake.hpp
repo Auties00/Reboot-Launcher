@@ -9,6 +9,7 @@
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/function.hpp"
+#include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
 
 namespace rb::process {
@@ -21,15 +22,24 @@ struct ChildHandshake {
     // Decodes the Hello far enough to read its protocol integer.
     UniqueFunction<Result<u32>(std::span<const u8> payload)> read_protocol;
     // Runs once the protocol matched, on every spawn: checks the rest of the Hello and returns
-    // the encoded Welcome frame.
-    UniqueFunction<Result<std::vector<u8>>(std::span<const u8> payload)> welcome;
+    // the encoded Welcome frame, wiped once written since it may carry a secret.
+    UniqueFunction<Result<SecretBytes>(std::span<const u8> payload)> welcome;
 };
 
-// `protocol_of(hello)` reads the protocol; `welcome(hello)` returns Result<WelcomeMessage>.
-template <ContractMessage Hello, class ProtocolOf, class Welcome>
+// A scrub for a message that holds no secrets.
+struct NoSecrets {
+    template <class Welcome>
+    void operator()(Welcome&) const noexcept {}
+};
+
+// `protocol_of(hello)` reads the protocol; `welcome(hello)` returns Result<WelcomeMessage>, and
+// `scrub(message)` wipes the secrets that message holds once it is encoded.
+template <ContractMessage Hello, class ProtocolOf, class Welcome, class Scrub = NoSecrets>
     requires std::is_invocable_r_v<u32, ProtocolOf&, const Hello&> &&
-             ContractMessage<typename std::invoke_result_t<Welcome&, const Hello&>::value_type>
-[[nodiscard]] ChildHandshake make_child_handshake(u32 expected_protocol, ProtocolOf protocol_of, Welcome welcome) {
+             ContractMessage<typename std::invoke_result_t<Welcome&, const Hello&>::value_type> &&
+             std::is_invocable_v<Scrub&, typename std::invoke_result_t<Welcome&, const Hello&>::value_type&>
+[[nodiscard]] ChildHandshake make_child_handshake(u32 expected_protocol, ProtocolOf protocol_of, Welcome welcome,
+                                                  Scrub scrub = {}) {
     ChildHandshake handshake;
     handshake.hello_frame = contract_frame_type_v<Hello>;
     handshake.expected_protocol = expected_protocol;
@@ -38,12 +48,15 @@ template <ContractMessage Hello, class ProtocolOf, class Welcome>
         if (!hello) return std::unexpected(std::move(hello.error()));
         return protocol_of(*hello);
     };
-    handshake.welcome = [welcome = std::move(welcome)](std::span<const u8> payload) mutable -> Result<std::vector<u8>> {
+    handshake.welcome = [welcome = std::move(welcome), scrub = std::move(scrub)](
+                            std::span<const u8> payload) mutable -> Result<SecretBytes> {
         Result<Hello> hello = decode_contract<Hello>(payload);
         if (!hello) return std::unexpected(std::move(hello.error()));
         auto reply = welcome(*hello);
         if (!reply) return std::unexpected(std::move(reply.error()));
-        return encode_contract_frame(*reply);
+        SecretBytes frame{encode_contract_frame(*reply)};
+        scrub(*reply);
+        return frame;
     };
     return handshake;
 }

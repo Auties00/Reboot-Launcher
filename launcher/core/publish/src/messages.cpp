@@ -47,5 +47,7 @@ REBOOT_MESSAGE(kExportDestinationExists, "publish.export_destination_exists", "{
 REBOOT_MESSAGE(kIdentityFileInvalid, "publish.identity_file_invalid", "{path} is not a host identity export");
 REBOOT_MESSAGE(kIdentityUnreadable, "publish.identity_unreadable",
                "The server identity of host profile {profile} could not be read");
+REBOOT_MESSAGE(kIdentityAlreadyImported, "publish.identity_already_imported",
+               "This server identity is already used by host profile {profile}");
 
 }  // namespace rb::publish::msg

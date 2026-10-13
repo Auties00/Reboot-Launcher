@@ -288,25 +288,53 @@ TEST_CASE("rotate replaces the id and drops the token", "[publish][identity]") {
     CHECK_FALSE(on_disk->token);
 }
 
-TEST_CASE("remove refuses a held identity and deletes a free one", "[publish][identity]") {
+TEST_CASE("remove deletes a free identity at once and a held one once it is released", "[publish][identity]") {
     StoreRig rig;
     REQUIRE(rig.store.load({}));
     const HostProfileId profile = profile_id(1);
+    std::optional<Result<void>> removed;
     {
         auto hold = rig.store.acquire(profile);
         REQUIRE(hold);
-        const auto refused = rig.store.remove(profile, nullptr);
-        REQUIRE_FALSE(refused);
-        CHECK(refused.error().is(msg::kIdentityInUse));
+        rig.store.save_token(*hold, HostToken(token_bytes(3)), nullptr);
+        REQUIRE(rig.store.remove(profile, [&](Result<void> result) { removed = std::move(result); }));
+        CHECK_FALSE(rig.store.server_id(profile));
+        REQUIRE(rig.settle());
+        CHECK_FALSE(removed);
+        CHECK(rig.fs.exists(identity_file(profile)));
     }
-    REQUIRE(rig.settle());
-    REQUIRE(rig.fs.exists(identity_file(profile)));
+    rig.strand.run_until([&] { return removed.has_value(); });
+    CHECK(*removed);
+    CHECK_FALSE(rig.fs.exists(identity_file(profile)));
+    const ServerId fresh = *rig.store.ensure(profile);
+    CHECK(rig.store.server_id(profile) == fresh);
 
-    std::optional<Result<void>> removed;
+    removed.reset();
     REQUIRE(rig.store.remove(profile, [&](Result<void> result) { removed = std::move(result); }));
     CHECK_FALSE(rig.store.server_id(profile));
     rig.strand.run_until([&] { return removed.has_value(); });
     CHECK(*removed);
+    CHECK_FALSE(rig.fs.exists(identity_file(profile)));
+}
+
+TEST_CASE("a profile deleted while its import writes the file loses the identity", "[publish][identity]") {
+    StoreRig rig;
+    REQUIRE(rig.store.load({}));
+    const HostProfileId profile = profile_id(8);
+    const SecretBytes bytes = encode_identity(server_of(14), HostToken(token_bytes(11)));
+    rig.fs.write("/moved/identity.json", bytes.reveal());
+
+    const auto started = rig.store.start_import(profile, "/moved", DisconnectPolicy::Detached);
+    REQUIRE(started);
+    WorkerGate gate(rig);
+    rig.strand.run_until([&] { return rig.store.server_id(profile) == server_of(14); });
+    std::optional<Result<void>> removed;
+    REQUIRE(rig.store.remove(profile, [&](Result<void> result) { removed = std::move(result); }));
+    gate.release();
+    rig.strand.run_until([&] { return removed.has_value(); });
+    CHECK(*removed);
+    CHECK(completed(rig.wait_op(started->id())) != nullptr);
+    CHECK_FALSE(rig.store.server_id(profile));
     CHECK_FALSE(rig.fs.exists(identity_file(profile)));
 }
 
@@ -363,6 +391,32 @@ TEST_CASE("import replaces a free identity with an exported one", "[publish][ide
     const auto on_disk = stored(rig, profile);
     REQUIRE(on_disk);
     CHECK(on_disk->token->reveal() == token_bytes(6));
+}
+
+TEST_CASE("an export imported into one profile is refused for another", "[publish][identity]") {
+    StoreRig rig;
+    REQUIRE(rig.store.load({}));
+    const SecretBytes bytes = encode_identity(server_of(15), HostToken(token_bytes(12)));
+    rig.fs.write("/moved/identity.json", bytes.reveal());
+    const auto first = rig.store.start_import(profile_id(1), "/moved", DisconnectPolicy::Detached);
+    REQUIRE(first);
+    REQUIRE(completed(rig.wait_op(first->id())) != nullptr);
+
+    const ServerId kept = *rig.store.ensure(profile_id(2));
+    const auto second = rig.store.start_import(profile_id(2), "/moved", DisconnectPolicy::Detached);
+    REQUIRE(second);
+    const auto outcome = rig.wait_op(second->id());
+    const Diagnostic* refused = failure(outcome);
+    REQUIRE(refused != nullptr);
+    CHECK(refused->is(msg::kIdentityAlreadyImported));
+    CHECK(refused->kind == ErrorKind::Conflict);
+    REQUIRE(refused->find_arg("profile") != nullptr);
+    CHECK(rig.store.server_id(profile_id(2)) == kept);
+
+    // Importing it again into the profile that has it is no conflict.
+    const auto again = rig.store.start_import(profile_id(1), "/moved", DisconnectPolicy::Detached);
+    REQUIRE(again);
+    CHECK(completed(rig.wait_op(again->id())) != nullptr);
 }
 
 TEST_CASE("import refuses a held identity and a directory without a token", "[publish][identity]") {
@@ -458,7 +512,6 @@ TEST_CASE("an import cancelled while its file is written restores the old identi
     const auto busy = rig.store.acquire(profile);
     REQUIRE_FALSE(busy);
     CHECK(busy.error().is(msg::kProfileBusy));
-    REQUIRE_FALSE(rig.store.remove(profile, nullptr));
 
     REQUIRE(rig.ops.cancel(started->id(), CancelReason::User));
     // A flush queued behind the import's write also covers the write that restores the old identity.

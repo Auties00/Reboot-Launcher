@@ -109,7 +109,7 @@ TEST_CASE("render and check refuse a malformed catalog") {
 
 TEST_CASE("check reports missing and orphaned ids") {
     const std::vector<CatalogIssue> issues =
-        check(R"({"@@locale": "en", "ux.test_hello": "Hi {name}", "ux.gone": "x", "@ux.gone": {}, "gui.kept": "y"})");
+        check(R"({"@@locale": "en", "ux.test_hello": "Hello {name}", "ux.gone": "x", "@ux.gone": {}, "gui.kept": "y"})");
     REQUIRE(issues.size() == 3);
     CHECK(has(issues, CatalogIssueKind::MissingId, "net.test_ports"));
     CHECK(has(issues, CatalogIssueKind::MissingId, "play.test_plain"));
@@ -118,21 +118,25 @@ TEST_CASE("check reports missing and orphaned ids") {
 }
 
 TEST_CASE("check compares placeholders by name") {
+    const auto mismatches = [](const std::vector<CatalogIssue>& issues) {
+        std::vector<CatalogIssue> out;
+        for (const CatalogIssue& issue : issues)
+            if (issue.kind == CatalogIssueKind::PlaceholderMismatch) out.push_back(issue);
+        return out;
+    };
     SECTION("a missing and an extra placeholder") {
         const std::vector<CatalogIssue> issues =
-            check(R"({"ux.test_hello": "Hello {who}", "net.test_ports": "Ports {last} to {first}",
-                      "play.test_plain": "Nothing"})");
+            mismatches(check(R"({"ux.test_hello": "Hello {who}", "net.test_ports": "Ports {last} to {first}",
+                                 "play.test_plain": "Nothing"})"));
         REQUIRE(issues.size() == 1);
-        CHECK(issues[0].kind == CatalogIssueKind::PlaceholderMismatch);
         CHECK(issues[0].id == "ux.test_hello");
         CHECK(issues[0].detail == "expected {name}, found {who}");
     }
     SECTION("plural and select arguments count as placeholders") {
-        const std::vector<CatalogIssue> issues =
-            check(R"({"ux.test_hello": "{name, select, other {Hi}}", "net.test_ports":
-                      "{first, plural, one {# port} other {# ports}} until {last, number}",
-                      "play.test_plain": "Nothing"})");
-        CHECK(issues.empty());
+        CHECK(mismatches(check(R"({"ux.test_hello": "{name, select, other {Hi}}", "net.test_ports":
+                                   "{first, plural, one {# port} other {# ports}} until {last, number}",
+                                   "play.test_plain": "Nothing"})"))
+                  .empty());
     }
     SECTION("UI-owned keys are not compared") {
         CHECK(check_template("gui.any", "Hello {anything}").empty());
@@ -184,7 +188,7 @@ TEST_CASE("check reports malformed templates") {
         CHECK_FALSE(issues[0].detail.empty());
     }
     const std::vector<CatalogIssue> not_string = check(R"({"ux.test_hello": 5, "net.test_ports": "Ports {first} to {last}",
-                                                          "play.test_plain": "x"})");
+                                                          "play.test_plain": "Nothing to fill in"})");
     REQUIRE(not_string.size() == 1);
     CHECK(not_string[0].kind == CatalogIssueKind::MalformedTemplate);
 }
@@ -235,6 +239,24 @@ TEST_CASE("check reports an id declared twice with different English") {
         MessageCatalogExport(alike).check(R"({"platform.test_twice": "On {name}"})");
     REQUIRE(clean);
     CHECK(clean->empty());
+}
+
+TEST_CASE("check reports a core-owned text that is not the registry's English") {
+    const std::vector<CatalogIssue> issues =
+        check(R"({"ux.test_hello": "Hi {name}", "net.test_ports": "Ports {first} to {last}",
+                  "play.test_plain": "Nothing to fill in", "gui.mine": "Anything"})");
+    REQUIRE(issues.size() == 1);
+    CHECK(issues[0].kind == CatalogIssueKind::StaleTemplate);
+    CHECK(issues[0].id == "ux.test_hello");
+    CHECK(issues[0].detail == R"(expected "Hello {name}")");
+
+    // Any declaration of an id whose declarations conflict is current.
+    static constexpr MessageSpec kOther{"ux.test_hello", "Hi {name}", kNameArgs};
+    const std::array<const MessageSpec*, 2> registry{&kHello, &kOther};
+    const Result<std::vector<CatalogIssue>> twice =
+        MessageCatalogExport(registry).check(R"({"ux.test_hello": "Hi {name}"})");
+    REQUIRE(twice);
+    CHECK_FALSE(has(*twice, CatalogIssueKind::StaleTemplate, "ux.test_hello"));
 }
 
 TEST_CASE("check refuses templates nested too deep") {

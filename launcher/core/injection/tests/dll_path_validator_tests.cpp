@@ -1,14 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <fstream>
 #include <iterator>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include "messages.hpp"
 #include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/sha256.hpp"
 #include "reboot/injection/dll_path_validator.hpp"
 #include "reboot/injection/inject_failed.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
@@ -98,7 +96,8 @@ TEST_CASE("validate runs the name checks before reading and the image checks aft
     CHECK(validator.validate(kDll).error().is(msg::kDllNotPe64));
     fs.write(kDll, golden("pe64_exe.bin"));
     CHECK(validator.validate(kDll).error().is(msg::kDllNotDll));
-    CHECK(validator.resolve(kDll).error().is(msg::kDllNotDll));
+    fs.write(kDll, std::vector<u8>{'M', 'Z'});
+    CHECK(validator.validate(kDll).error().is(msg::kDllNotPe64));
 }
 
 #ifdef _WIN32
@@ -110,27 +109,20 @@ TEST_CASE("check_name refuses an extension with an unpaired surrogate without th
 }
 #endif
 
-TEST_CASE("validate pins the DLL with the digest of the bytes it read", "[injection][validator]") {
+TEST_CASE("validate reads only the PE headers, never the whole file", "[injection][validator]") {
     testing::InMemoryFileSystem fs;
-    const std::vector<u8> image = golden("pe64_dll.bin");
-    fs.write(kDll, image);
     const DllPathValidator validator(fs);
+    std::vector<u8> image = golden("pe64_dll.bin");
+    image.resize(4 * 1024 * 1024);
+    fs.write(kDll, image);
 
-    const auto pinned = validator.validate(kDll);
-    REQUIRE(pinned);
-    CHECK(pinned->path == kDll);
-    CHECK(pinned->sha256 == sha256(image));
+    fs.faults().fail_always(testing::FsOperation::ReadAll, make_diag(ErrorDomain::Posix, MessageId{"posix.io_failed"}).build());
+    CHECK(validator.validate(kDll));
 
-    const auto resolved = validator.resolve(kDll);
-    REQUIRE(resolved);
-    CHECK(*resolved == std::optional<PinnedDll>{*pinned});
-}
-
-TEST_CASE("resolve without a custom auth DLL means our DLL only", "[injection][validator]") {
-    testing::InMemoryFileSystem fs;
-    const auto resolved = DllPathValidator(fs).resolve(std::nullopt);
-    REQUIRE(resolved);
-    CHECK_FALSE(resolved->has_value());
+    // e_lfanew past the end reads nothing there.
+    image[0x3E] = 0x7F;
+    fs.write(kDll, image);
+    CHECK(validator.validate(kDll).error().is(msg::kDllNotPe64));
 }
 
 TEST_CASE("validate reports a file that does not exist as missing", "[injection][validator]") {
@@ -145,7 +137,7 @@ TEST_CASE("an unreadable file keeps the read's OS code and cause", "[injection][
     testing::InMemoryFileSystem fs;
     fs.write(kDll, golden("pe64_dll.bin"));
     const SystemError denied{SystemError::Origin::Host, 13};
-    fs.faults().fail_next(testing::FsOperation::ReadAll,
+    fs.faults().fail_next(testing::FsOperation::ReadShared,
                           make_diag(ErrorDomain::Posix, MessageId{"posix.io_failed"}).os(denied).build());
 
     const auto unreadable = DllPathValidator(fs).validate(kDll);

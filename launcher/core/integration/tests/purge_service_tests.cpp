@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <future>
 #include <optional>
@@ -139,6 +140,23 @@ TEST_CASE("All reports missing targets as absent and keeps settings", "[integrat
     CHECK_FALSE(f.fs.exists(f.layout.components_dir()));
     CHECK_FALSE(f.fs.exists(f.layout.backend_dir()));
     CHECK(f.fs.exists(f.layout.settings_file()));
+}
+
+TEST_CASE("a dangling link in a target's place is removed and reported absent", "[integration][purge]") {
+    Fixture f;
+    const NativePath logs = f.layout.logs_dir();
+    const auto listed = [&] {
+        const std::vector<NativePath> children = f.fs.list(logs.parent_path());
+        return std::ranges::any_of(children, [&](const NativePath& child) { return child.filename() == logs.filename(); });
+    };
+    REQUIRE(f.fs.remove_tree(logs));
+    f.fs.make_symlink(logs, f.paths.default_data_root().parent_path() / "moved-logs");
+    REQUIRE(listed());
+
+    const PurgeReport report = test::completed_value<PurgeReport>(f.run(PurgeScope::Logs));
+    CHECK(report.removed.empty());
+    CHECK(report.absent == std::vector{logs});
+    CHECK_FALSE(listed());
 }
 
 TEST_CASE("any blocker refuses the purge without an op", "[integration][purge]") {

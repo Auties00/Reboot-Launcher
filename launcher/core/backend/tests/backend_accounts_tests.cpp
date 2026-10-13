@@ -190,6 +190,24 @@ TEST_CASE("an identity rename onto an existing account asks which data to keep",
     CHECK(h.ids() == std::vector<std::string>{"Beta-aaaaa2", "Delta-aaaaa1"});
 }
 
+TEST_CASE("registering a record under a new id moves its data, so a lost rename is not lost", "[backend][accounts]") {
+    AccountsHarness h;
+    h.accounts->register_identity(kIdentity);
+    REQUIRE(h.service->start_backend(true, DisconnectPolicy::Detached));
+    h.rt.run_until_idle();
+    // An engine restarted after a rename it only held in memory registers the record's new id.
+    h.process->register_account(AccountRegistration{"Gamma-aaaaa1", record_id(1), AccountRole::Client});
+    h.rt.run_until_idle();
+    CHECK(h.ids() == std::vector<std::string>{"Beta-aaaaa2", "Gamma-aaaaa1"});
+
+    // An id that already has data keeps it, and the record's old data stays where it is.
+    h.process->register_account(AccountRegistration{"Delta-aaaaa9", record_id(9), AccountRole::Client});
+    h.rt.run_until_idle();
+    h.process->register_account(AccountRegistration{"Delta-aaaaa9", record_id(2), AccountRole::Host});
+    h.rt.run_until_idle();
+    CHECK(h.ids() == std::vector<std::string>{"Beta-aaaaa2", "Delta-aaaaa9", "Gamma-aaaaa1"});
+}
+
 TEST_CASE("a rename op asks on conflict and completes with the new id", "[backend][accounts]") {
     AccountsHarness h;
     h.accounts->register_identity(kIdentity);

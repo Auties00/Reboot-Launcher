@@ -35,7 +35,8 @@ public:
 
     // Fails with ViewSpec::validate's error. The view starts Loading.
     [[nodiscard]] Result<ViewId> open(const ViewSpec& spec);
-    // Re-subscribes only the buckets that changed; the view goes back to Loading if any did.
+    // Re-subscribes only the buckets that changed; the view goes back to Loading if any did, or
+    // Failed with the error returned here.
     [[nodiscard]] Result<void> update(ViewId view, const ViewSpec& spec);
     // Unknown ids are ignored.
     void close(ViewId view);

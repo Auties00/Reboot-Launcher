@@ -138,6 +138,12 @@ Result<std::vector<CatalogIssue>> MessageCatalogExport::check(std::string_view c
             issues.push_back({CatalogIssueKind::MalformedTemplate, std::string(key), "the template is empty"});
             continue;
         }
+        const auto declares = [&](const MessageSpec* s) { return s->id == key && s->english == text; };
+        if (registered && std::ranges::none_of(registry_, declares)) {
+            const auto spec = std::ranges::find(registry_, key, &MessageSpec::id);
+            issues.push_back({CatalogIssueKind::StaleTemplate, std::string(key),
+                              "expected \"" + std::string((*spec)->english) + "\""});
+        }
         const auto parsed = parse_template(text);
         if (!parsed) {
             issues.push_back({CatalogIssueKind::MalformedTemplate, std::string(key), parsed.error()});

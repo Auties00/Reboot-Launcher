@@ -117,7 +117,8 @@ struct BrowserSession::Impl {
         u32 sub_id = 0;
         u32 req_id = 0;
         std::optional<u32> view_id;
-        bool rejected = false;
+        // The edge's refusal; one for its limit is retried on a reconnect or once a slot frees.
+        std::optional<wire::ErrorCode> rejected;
     };
 
     using OrphanFrame = std::variant<wire::Snapshot, wire::Delta>;
@@ -130,7 +131,7 @@ struct BrowserSession::Impl {
 
     Impl(BrowserSessionDeps deps_in, RbsbEndpoint endpoint_in, BrowserSessionOptions options_in)
         : deps(deps_in), endpoint(std::move(endpoint_in)), options(std::move(options_in)),
-          alive(std::make_shared<Alive>(Alive{this})), backoff(deps_in.random) {}
+          alive(std::make_shared<Alive>(Alive{this})), backoff(deps_in.random), query_rate(deps_in.clock, kQueryRate) {}
 
     ~Impl() {
         alive->impl = nullptr;
@@ -323,8 +324,10 @@ struct BrowserSession::Impl {
 
         const u64 gen = epoch;
         std::vector<u64> views;
-        for (const auto& [id, sub] : subs)
+        for (auto& [id, sub] : subs) {
+            if (sub.rejected == wire::ErrorCode::limit_exceeded) sub.rejected.reset();
             if (!sub.rejected) views.push_back(id);
+        }
         for (const u64 id : views)
             if (gen == epoch && serving()) send_subscribe(id);
         std::vector<u64> waiting;
@@ -366,6 +369,8 @@ struct BrowserSession::Impl {
         request.limits = net::HttpLimits{kProbeTimeout, kProbeTimeout, std::nullopt};
         request.retry = net::kNoRetry;
         request.max_body = kProbeMaxBody;
+        // /status runs on the edge's host, which an expert override may sign with a private CA.
+        if (stage == ProbeStage::Status) request.ca_bundle = endpoint.ca_bundle;
         const u64 gen = epoch;
         Result<void> started = deps.http.send(std::move(request), attempt ? attempt->token() : CancelToken{},
                                               [weak = alive, gen, stage](Result<net::HttpResponse> response) {
@@ -700,7 +705,7 @@ struct BrowserSession::Impl {
         sub.sub_id = 0;
         sub.req_id = 0;
         sub.view_id.reset();
-        sub.rejected = true;
+        sub.rejected = error.code;
         const std::shared_ptr<ViewStreamCallbacks> callbacks = sub.callbacks;
         if (callbacks->on_rejected) callbacks->on_rejected(rejected);
     }
@@ -746,7 +751,23 @@ struct BrowserSession::Impl {
             sub_by_req.erase(sub.req_id);
             if (serving()) (void)connection->send(*control, wire::frame_bytes(wire::Unsubscribe{sub.sub_id}), false);
         }
+        // Posted: the owner may be dropping the refused view right after this one.
+        if (!sub.rejected)
+            deps.strand.post([weak = alive] {
+                if (Impl* self = weak->impl) self->retry_refused_view();
+            });
         release_lease(sub.lease);
+    }
+
+    // The oldest view refused for the edge's limit, once the limit has room again.
+    void retry_refused_view() {
+        if (!serving()) return;
+        if (edge && edge->limits.max_subscriptions != 0 && active_views() >= edge->limits.max_subscriptions) return;
+        const auto refused = std::ranges::find_if(
+            subs, [](const auto& entry) { return entry.second.rejected == wire::ErrorCode::limit_exceeded; });
+        if (refused == subs.end()) return;
+        refused->second.rejected.reset();
+        send_subscribe(refused->first);
     }
 
     void on_sub_open(const wire::SubOpen& open) {
@@ -863,6 +884,7 @@ struct BrowserSession::Impl {
     std::map<u32, u64> sub_by_wire;
     std::map<u32, std::deque<OrphanFrame>> orphans;
     std::deque<u32> orphan_order;
+    TokenBucket query_rate;
 };
 
 // ---- handles -------------------------------------------------------------------------------
@@ -919,6 +941,8 @@ const std::optional<EdgeSession>& BrowserSession::edge() const noexcept { return
 void BrowserSession::set_endpoint(RbsbEndpoint endpoint) { impl_->set_endpoint(std::move(endpoint)); }
 
 const RbsbEndpoint& BrowserSession::endpoint() const noexcept { return impl_->endpoint; }
+
+TokenBucket& BrowserSession::query_rate() noexcept { return impl_->query_rate; }
 
 Result<ViewSubscription> BrowserSession::subscribe(const sb::wire::ViewSpec& view, u32 window,
                                                    ViewStreamCallbacks callbacks) {

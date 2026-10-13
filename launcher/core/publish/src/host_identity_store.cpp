@@ -52,6 +52,9 @@ struct HostIdentityStore::Impl {
     struct Entry {
         HostIdentity identity;
         bool held = false;
+        // Its profile was deleted while held; it goes, file and all, once released.
+        bool removing = false;
+        std::vector<Done> on_removed;
     };
 
     enum class JobKind : u8 { Write, Remove, Flush };
@@ -193,6 +196,12 @@ struct HostIdentityStore::Impl {
             op.complete(Failed{profile_diag(msg::kIdentityInUse, profile, ErrorKind::Conflict)});
             return;
         }
+        // Two profiles with one server id would supersede each other's registration on the edge.
+        for (const auto& [other, entry] : entries) {
+            if (other == profile || entry.removing || entry.identity.server != loaded->server) continue;
+            op.complete(Failed{profile_diag(msg::kIdentityAlreadyImported, other, ErrorKind::Conflict)});
+            return;
+        }
         std::optional<StoredIdentity> previous;
         if (it != entries.end()) {
             previous.emplace(StoredIdentity{it->second.identity.server, std::nullopt});
@@ -211,14 +220,16 @@ struct HostIdentityStore::Impl {
                 op.complete(Cancelled{CancelReason::Shutdown});
                 return;
             }
-            if (const auto held = self->entries.find(profile); held != self->entries.end()) held->second.held = false;
-            if (saved && !op.done()) {
-                op.complete(Completed<ServerId>{server});
-                return;
+            const auto held = self->entries.find(profile);
+            if (held != self->entries.end()) held->second.held = false;
+            if (held != self->entries.end() && held->second.removing) {
+                self->finish_removal(profile);
+            } else if (!saved || op.done()) {
+                // A failed or cancelled import leaves the identity as it was.
+                self->restore(profile, std::move(previous));
             }
-            // A failed or cancelled import leaves the identity as it was.
-            self->restore(profile, std::move(previous));
-            if (!saved) op.complete(Failed{std::move(saved.error())});
+            if (saved && !op.done()) op.complete(Completed<ServerId>{server});
+            else if (!saved) op.complete(Failed{std::move(saved.error())});
             else op.complete(Cancelled{op.token().reason().value_or(CancelReason::User)});
         });
     }
@@ -229,7 +240,7 @@ struct HostIdentityStore::Impl {
                 unmask(it->second.identity.token);
                 entries.erase(it);
             }
-            remove_file(profile, nullptr);
+            remove_file(profile, {});
             return;
         }
         Entry& entry = entries[profile];
@@ -239,15 +250,24 @@ struct HostIdentityStore::Impl {
         persist(profile, nullptr);
     }
 
-    void remove_file(const HostProfileId& profile, Done removed) {
+    void remove_file(const HostProfileId& profile, std::vector<Done> removed) {
         failed.erase(profile);
         if (memory_only) {
-            post_result(std::move(removed), {});
+            for (Done& waiter : removed) post_result(std::move(waiter), {});
             return;
         }
-        Job job{JobKind::Remove, profile, {}, {}};
-        if (removed) job.waiters.push_back(std::move(removed));
+        Job job{JobKind::Remove, profile, {}, std::move(removed)};
         enqueue(std::move(job));
+    }
+
+    // The deferred half of remove(), once nothing holds the identity.
+    void finish_removal(const HostProfileId& profile) {
+        const auto it = entries.find(profile);
+        if (it == entries.end() || !it->second.removing || it->second.held) return;
+        std::vector<Done> removed = std::move(it->second.on_removed);
+        unmask(it->second.identity.token);
+        entries.erase(it);
+        remove_file(profile, std::move(removed));
     }
 
     ports::IFileSystem& fs;
@@ -327,7 +347,7 @@ void HostIdentityStore::load_memory_only() { impl_->memory_only = true; }
 
 std::optional<ServerId> HostIdentityStore::server_id(const HostProfileId& profile) const {
     const auto it = impl_->entries.find(profile);
-    if (it == impl_->entries.end()) return std::nullopt;
+    if (it == impl_->entries.end() || it->second.removing) return std::nullopt;
     return it->second.identity.server;
 }
 
@@ -366,12 +386,18 @@ ServerId HostIdentityStore::rotate(const IdentityHold& hold, UniqueFunction<void
 
 Result<void> HostIdentityStore::remove(const HostProfileId& profile, UniqueFunction<void(Result<void>)> removed) {
     Impl& impl = *impl_;
+    std::vector<Done> waiters;
+    if (removed) waiters.push_back(std::move(removed));
     if (const auto it = impl.entries.find(profile); it != impl.entries.end()) {
-        if (it->second.held) return std::unexpected(profile_diag(msg::kIdentityInUse, profile, ErrorKind::Conflict));
+        if (it->second.held) {
+            it->second.removing = true;
+            for (Done& waiter : waiters) it->second.on_removed.push_back(std::move(waiter));
+            return {};
+        }
         unmask(it->second.identity.token);
         impl.entries.erase(it);
     }
-    impl.remove_file(profile, std::move(removed));
+    impl.remove_file(profile, std::move(waiters));
     return {};
 }
 
@@ -465,6 +491,7 @@ void HostIdentityStore::flush(UniqueFunction<void(Result<void>)> done) {
 
 void HostIdentityStore::release(const HostProfileId& profile) noexcept {
     if (const auto it = impl_->entries.find(profile); it != impl_->entries.end()) it->second.held = false;
+    impl_->finish_removal(profile);
 }
 
 const HostIdentity& HostIdentityStore::held_identity(const HostProfileId& profile) const {

@@ -117,11 +117,17 @@ struct JoinService::Impl {
     void on_resolved(const RunPtr& run, RbsbResult<wire::ResolveResult> result) {
         if (run->finished) return;
         if (!result) {
-            if (result.error().failure == RbsbFailure::Rejected && result.error().code == wire::ErrorCode::not_found) {
+            const RbsbRequestError& error = result.error();
+            if (error.failure == RbsbFailure::Rejected && error.code == wire::ErrorCode::not_found) {
                 fail(run, JoinFailure{.code = JoinFailureCode::NotFound});
                 return;
             }
-            fail_request(run, result.error());
+            if (error.failure == RbsbFailure::Rejected && error.code == wire::ErrorCode::rate_limited) {
+                session.query_rate().hold_off(error.retry_after);
+                fail(run, JoinFailure{.code = JoinFailureCode::TooManyAttempts, .retry_after = error.retry_after});
+                return;
+            }
+            fail_request(run, error);
             return;
         }
         if (!result->details) {
@@ -199,7 +205,10 @@ struct JoinService::Impl {
         const ServerId server = run->request.server;
         auto bucket = pacing.find(server);
         if (bucket == pacing.end()) bucket = pacing.emplace(server, TokenBucket(clock, kJoinRate)).first;
-        if (const auto wait = bucket->second.try_take()) {
+        // In the edge's order: the connection's query token, then the server's join token.
+        std::optional<std::chrono::milliseconds> wait = session.query_rate().try_take();
+        if (!wait) wait = bucket->second.try_take();
+        if (wait) {
             fail(run, JoinFailure{.code = JoinFailureCode::TooManyAttempts, .retry_after = *wait});
             return;
         }
@@ -248,6 +257,15 @@ struct JoinService::Impl {
                                 local_time(result->expires_ms, run->clock_offset)});
     }
 
+    // Own servers, then the token the Resolve takes; refused before anything is sent.
+    [[nodiscard]] Result<void> admit(ServerId server) {
+        if (own.owns(server)) return std::unexpected(own_server());
+        if (const auto wait = session.query_rate().try_take())
+            return std::unexpected(
+                to_diagnostic(JoinFailure{.code = JoinFailureCode::TooManyAttempts, .server = server, .retry_after = *wait}));
+        return {};
+    }
+
     BrowserSession& session;
     const IOwnServers& own;
     UserRequestRegistry& requests;
@@ -267,13 +285,13 @@ JoinService::~JoinService() = default;
 
 Result<void> JoinService::join(JoinRequest request, OperationBase& op, std::optional<SessionId> session,
                                UniqueFunction<void(Result<JoinOutcome>)> done) {
-    if (impl_->own.owns(request.server)) return std::unexpected(own_server());
+    if (Result<void> admitted = impl_->admit(request.server); !admitted) return admitted;
     impl_->start(std::make_shared<Impl::Run>(std::move(request), op, session, std::move(done)));
     return {};
 }
 
 Result<OpHandle> JoinService::start_join(JoinRequest request, DisconnectPolicy policy) {
-    if (impl_->own.owns(request.server)) return std::unexpected(own_server());
+    if (Result<void> admitted = impl_->admit(request.server); !admitted) return std::unexpected(std::move(admitted.error()));
     auto [handle, op] = impl_->ops.create<JoinOutcome>(kOpKind, policy, std::nullopt);
     Operation<JoinOutcome>* operation = &op;
     impl_->start(std::make_shared<Impl::Run>(std::move(request), op, std::nullopt, [operation](Result<JoinOutcome> result) {

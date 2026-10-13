@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "reboot/browser/server_row.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/types.hpp"
 
 namespace rb::browser {
@@ -13,8 +14,9 @@ namespace rb::browser {
 using ViewId = Counter<struct BrowserViewTag, u64>;
 
 // Loading: no snapshot yet. Ready: live. Stale: the connection dropped; the rows are the last
-// ones seen and the next snapshot replaces them, never merges into them.
-enum class ListState : u8 { Loading, Ready, Stale };
+// ones seen and the next snapshot replaces them, never merges into them. Failed: the edge refused
+// the view, with no rows; a retry the edge accepts makes it Ready again.
+enum class ListState : u8 { Loading, Ready, Stale, Failed };
 
 // Capabilities: server-browser.list-state.
 // Payload of EventKind::ViewSnapshot (state changes) and EventKind::ViewDelta (row changes,
@@ -29,6 +31,8 @@ struct ViewUpdate {
     // In the view's sort order, after the local filters.
     std::vector<ServerRow> rows;
     std::optional<std::chrono::system_clock::time_point> stale_since;
+    // Failed: why.
+    std::optional<Diagnostic> error;
 
     [[nodiscard]] std::size_t approx_bytes() const noexcept;
 };

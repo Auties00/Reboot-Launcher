@@ -52,8 +52,9 @@ public:
     JoinService& operator=(const JoinService&) = delete;
 
     // Runs inside the caller's op (Play.start): its token cancels the join and its prompts suspend
-    // its deadline. Fails synchronously with browser.join_own_server. `done` runs on the strand
-    // exactly once, with a JoinFailure turned into its Diagnostic.
+    // its deadline. Fails synchronously with browser.join_own_server, or TooManyAttempts when the
+    // session's query rate has no token for the Resolve. `done` runs on the strand exactly once,
+    // with a JoinFailure turned into its Diagnostic; a RATE_LIMITED answer is TooManyAttempts.
     [[nodiscard]] Result<void> join(JoinRequest request, OperationBase& op, std::optional<SessionId> session,
                                     UniqueFunction<void(Result<JoinOutcome>)> done);
 

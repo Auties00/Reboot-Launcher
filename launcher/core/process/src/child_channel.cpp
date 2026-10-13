@@ -55,10 +55,10 @@ Result<void> ChildChannel::on_raw_frame(const RawFrame& frame) {
             .arg("actual", *protocol)
             .arg("expected", handshake_.expected_protocol)
             .fail();
-    Result<std::vector<u8>> welcome = handshake_.welcome(frame.payload);
+    Result<SecretBytes> welcome = handshake_.welcome(frame.payload);
     if (!welcome) return std::unexpected(std::move(welcome.error()));
     phase_ = ChannelPhase::Open;
-    write_(*welcome);
+    write_(welcome->reveal());
     return {};
 }
 

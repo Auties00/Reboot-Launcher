@@ -106,6 +106,25 @@ TEST_CASE("a declined or unknown link leaves the target alone", "[browser][link]
     CHECK_FALSE(rig.target.current());
 }
 
+TEST_CASE("a rate-limited link fails, and the next is refused until the hold-off ends", "[browser][link]") {
+    LinkRig rig;
+    BrowserLease lease = rig.session.acquire();
+    Edge& edge = rig.connect();
+    const Result<OpHandle> limited = rig.links.start_resolve(rig.link(7), DisconnectPolicy::Detached);
+    rig.rt.run_until_idle();
+    edge.send(wire::Error{edge.expect<wire::Resolve>().req_id, wire::ErrorCode::rate_limited, {}, 1000});
+    rig.rt.run_until_idle();
+    CHECK(std::get<Failed>(*rig.outcome(limited)).error.id == "browser.rate_limited");
+
+    const Result<OpHandle> refused = rig.links.start_resolve(rig.link(8), DisconnectPolicy::Detached);
+    REQUIRE_FALSE(refused);
+    CHECK(refused.error().id == "browser.rate_limited");
+    CHECK(rig.rt.ops().live().empty());
+
+    rig.rt.advance(std::chrono::seconds{1});
+    CHECK(rig.links.start_resolve(rig.link(8), DisconnectPolicy::Detached));
+}
+
 TEST_CASE("a newer link supersedes a pending one", "[browser][link][race]") {
     LinkRig rig;
     BrowserLease lease = rig.session.acquire();

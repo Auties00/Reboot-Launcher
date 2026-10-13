@@ -6,6 +6,7 @@
 #include "browser_test_support.hpp"
 #include "reboot/browser/join_prompts.hpp"
 #include "reboot/browser/join_service.hpp"
+#include "reboot/browser/search.hpp"
 #include "reboot/foundation/user_request.hpp"
 
 using namespace rb;
@@ -221,6 +222,36 @@ TEST_CASE("joins are paced per server, and RATE_LIMITED holds that server off", 
     const Diagnostic& error = limited.result->error();
     CHECK(error.id == "browser.too_many_join_attempts");
     CHECK(std::get<std::chrono::milliseconds>(*error.find_arg("retry_after")) == 30s);
+}
+
+TEST_CASE("a RATE_LIMITED Resolve is TooManyAttempts and holds every query off", "[browser][join]") {
+    JoinRig rig;
+    Search search(rig.session, rig.own, rig.rt.timers());
+    BrowserLease lease = rig.session.acquire();
+    Edge& edge = rig.connect();
+    auto [handle, op] = rig.rt.ops().create<int>(OpKind::Play, DisconnectPolicy::Detached, std::nullopt);
+    Capture<Result<JoinOutcome>> limited;
+    REQUIRE(rig.join.join(request(1, JoinConfirmation::AlreadyConfirmed), op, std::nullopt, limited.callback()));
+    rig.rt.run_until_idle();
+    edge.send(wire::Error{edge.expect<wire::Resolve>().req_id, wire::ErrorCode::rate_limited, {}, 2000});
+    rig.rt.run_until_idle();
+    REQUIRE(limited.calls == 1);
+    const Diagnostic& error = limited.result->error();
+    CHECK(error.id == "browser.too_many_join_attempts");
+    CHECK(std::get<std::chrono::milliseconds>(*error.find_arg("retry_after")) == 2s);
+
+    const Result<void> refused = rig.join.join(request(2, JoinConfirmation::AlreadyConfirmed), op, std::nullopt,
+                                               [](Result<JoinOutcome>) {});
+    REQUIRE_FALSE(refused);
+    CHECK(refused.error().id == "browser.too_many_join_attempts");
+
+    // A search shares the mirror, so it waits out the same hold-off.
+    Capture<Result<SearchPage>> page;
+    REQUIRE(search.run(ConnectionId{1}, SearchRequest{.text = "x"}, {}, page.callback()));
+    rig.rt.advance(kSearchDebounce);
+    CHECK(edge.idle());
+    rig.rt.advance(2s);
+    CHECK(edge.expect<wire::Query>().text == "x");
 }
 
 TEST_CASE("cancelling the op while ConfirmJoin waits ends the join once", "[browser][join][race]") {

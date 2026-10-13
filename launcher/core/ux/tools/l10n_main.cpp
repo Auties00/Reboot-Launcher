@@ -28,6 +28,7 @@ using rb::ux::CatalogIssueKind;
         case CatalogIssueKind::UnsupportedPlural: return "unsupported_plural";
         case CatalogIssueKind::MalformedTemplate: return "malformed_template";
         case CatalogIssueKind::ConflictingDeclarations: return "conflicting_declarations";
+        case CatalogIssueKind::StaleTemplate: return "stale_template";
     }
     return "unknown";
 }
@@ -152,7 +153,8 @@ void print(const rb::Diagnostic& diag) {
     }
     const int undeclared = args.size() == 3 ? undeclared_literals(fs::path{std::string(args[2])}) : 0;
     if (!issues->empty())
-        std::cout << "run reboot-l10n render " << catalog_path.generic_string() << " after adding or removing messages\n";
+        std::cout << "run reboot-l10n render " << catalog_path.generic_string()
+                  << " after adding, removing or rewording messages\n";
     return issues->empty() && undeclared == 0 ? 0 : 1;
 }
 

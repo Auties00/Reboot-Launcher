@@ -9,6 +9,7 @@
 #include "reboot/browser/connection_state.hpp"
 #include "reboot/browser/rbsb_endpoint.hpp"
 #include "reboot/browser/rbsb_request_error.hpp"
+#include "reboot/browser/token_bucket.hpp"
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/function.hpp"
@@ -139,11 +140,17 @@ public:
     // Set while Connected or Draining.
     [[nodiscard]] const std::optional<EdgeSession>& edge() const noexcept;
 
+    // Mirrors the edge's per-connection query limiter, which Query, Resolve and Join all take from;
+    // callers take a token before each of those requests and hold it off after RATE_LIMITED.
+    [[nodiscard]] TokenBucket& query_rate() noexcept;
+
     // A manifest or expert change; an open connection moves at once.
     void set_endpoint(RbsbEndpoint endpoint);
     [[nodiscard]] const RbsbEndpoint& endpoint() const noexcept;
 
-    // Fails synchronously with browser.too_many_views beyond Welcome.limits.max_subscriptions.
+    // Fails synchronously with browser.too_many_views beyond Welcome.limits.max_subscriptions. A view
+    // the edge refused stays refused, but one refused for its limit is sent again after a reconnect
+    // or once another view closes.
     [[nodiscard]] Result<ViewSubscription> subscribe(const sb::wire::ViewSpec& view, u32 window,
                                                      ViewStreamCallbacks callbacks);
 

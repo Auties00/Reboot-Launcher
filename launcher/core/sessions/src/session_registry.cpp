@@ -268,6 +268,14 @@ Result<void> SessionRegistry::set_lease(SessionId id, Lease lease) {
     return {};
 }
 
+Result<void> SessionRegistry::pin_payload(SessionId id, SemVer version) {
+    auto session = state_->lookup(id);
+    if (!session) return std::unexpected(std::move(session.error()));
+    if (!is_active((*session)->info.phase)) return fail(SessionsErrorCode::Stopping, id);
+    (*session)->info.pinned.payload_version = std::move(version);
+    return {};
+}
+
 Result<Incarnation> SessionRegistry::note_spawned(SessionId id, SpawnedProcess process) {
     auto found = state_->lookup(id);
     if (!found) return std::unexpected(std::move(found.error()));

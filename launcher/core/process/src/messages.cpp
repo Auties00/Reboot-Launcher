@@ -29,6 +29,8 @@ REBOOT_MESSAGE(kChildExited, "process.child_exited", "{program} exited unexpecte
 REBOOT_MESSAGE(kChildSignaled, "process.child_signaled", "{program} was ended by signal {signal}");
 REBOOT_MESSAGE(kChildRestartLimit, "process.child_restart_limit",
                "{program} failed {restarts} times within {window} and is no longer restarted");
+REBOOT_MESSAGE(kChildKillFailed, "process.child_kill_failed",
+               "{program} (pid {pid}) could not be stopped and is left running until the next engine start");
 REBOOT_MESSAGE(kChildNotRunning, "process.child_not_running", "{program} is not running");
 REBOOT_MESSAGE(kChildGone, "process.child_gone", "{program} exited before answering request {frame_type}");
 REBOOT_MESSAGE(kChildRequestFailed, "process.child_request_failed", "{program} could not complete request {frame_type}");

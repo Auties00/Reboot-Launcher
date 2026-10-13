@@ -15,7 +15,6 @@
 #include "reboot/foundation/types.hpp"
 
 namespace rb {
-class IClock;
 class TimerService;
 }  // namespace rb
 
@@ -58,11 +57,11 @@ struct SearchPage {
 };
 
 // Capabilities: server-browser.+27.
-// Strand-only. rbsb/1 Query on name, author or id with ASCII case folding, paced at the edge's
+// Strand-only. rbsb/1 Query on name, author or id with ASCII case folding, paced by the session's
 // query rate; each client's searches are debounced on their own.
 class Search {
 public:
-    Search(BrowserSession& session, const IOwnServers& own, TimerService& timers, const IClock& clock);
+    Search(BrowserSession& session, const IOwnServers& own, TimerService& timers);
     ~Search();
     Search(const Search&) = delete;
     Search& operator=(const Search&) = delete;

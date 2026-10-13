@@ -71,8 +71,9 @@ public:
     // A fresh server id with no token, after UNAUTHORIZED. Returns the new id at once.
     ServerId rotate(const IdentityHold& hold, UniqueFunction<void(Result<void>)> saved);
 
-    // A deleted host profile. Fails at once with publish.identity_in_use while held; otherwise the
-    // identity leaves memory at once and `removed` runs on the strand once the file is gone.
+    // A deleted host profile: the identity leaves memory and `removed` runs on the strand once the
+    // file is gone. While held (a stopping session, an import writing its file) that happens on
+    // release; server_id() is already nullopt meanwhile.
     Result<void> remove(const HostProfileId& profile, UniqueFunction<void(Result<void>)> removed);
 
     // An explicit, user-started move to another PC or VPS (OpKind::Generic). `destination` is a new
@@ -83,8 +84,9 @@ public:
     Result<OpHandle> start_export(const HostProfileId& profile, NativePath destination, DisconnectPolicy policy);
     // Replaces the profile's identity with an exported one (OpKind::Import) and completes with its
     // ServerId. Fails at once with publish.identity_in_use while held; the op fails with
-    // publish.identity_file_invalid when `source` is not an export directory with a token. The
-    // identity is held until its file is written; a failed or cancelled import restores the old one.
+    // publish.identity_file_invalid when `source` is not an export directory with a token, and with
+    // publish.identity_already_imported when another profile has its server id. The identity is
+    // held until its file is written; a failed or cancelled import restores the old one.
     Result<OpHandle> start_import(const HostProfileId& profile, NativePath source, DisconnectPolicy policy);
 
     // ShutdownCoordinator's store step; `done` runs on the strand.

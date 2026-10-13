@@ -4,12 +4,14 @@
 #include <format>
 #include <map>
 #include <span>
+#include <string>
 #include <string_view>
 #include <utility>
 
 #include "reboot/backend/backend_process_observer.hpp"
 #include "reboot/backend/match_target_resolver.hpp"
 #include "reboot/foundation/executor.hpp"
+#include "reboot/foundation/secret.hpp"
 #include "reboot/process/child_observer.hpp"
 #include "reboot/process/child_request_handler.hpp"
 #include "wire_values.hpp"
@@ -29,6 +31,21 @@ void log(LogLevel level, std::string text) {
 [[nodiscard]] std::span<const u8> bytes_of(const std::string& text) noexcept {
     return {reinterpret_cast<const u8*>(text.data()), text.size()};
 }
+
+// Growing to capacity also clears bytes a short-string move left behind.
+void wipe_text(std::string& text) noexcept {
+    text.resize(text.capacity());
+    secure_wipe(text.data(), text.size());
+    text.clear();
+}
+
+// The session key, also inside the origin, opens the front's session routes.
+void wipe_session_secrets(be::ConfigureSession& message) noexcept {
+    wipe_text(message.session_key);
+    wipe_text(message.origin);
+}
+
+void wipe_session_secrets(be::EndSession& message) noexcept { wipe_text(message.session_key); }
 
 [[nodiscard]] be::ConfigureSession configure_message(const BackendSessionConfig& config) {
     return be::ConfigureSession{.req_id = 0,
@@ -132,7 +149,8 @@ struct BackendProcess::Impl final : process::ChildObserver, process::ChildReques
                                else if (!result)
                                    log(LogLevel::Warn, std::format("ConfigureSession replay failed: {}", result.error().id));
                                if (replay) replayed(*replay);
-                           });
+                           },
+                           [](be::ConfigureSession& message) { wipe_session_secrets(message); });
     }
 
     void send_rename(Rename& rename, std::optional<u32> replay) {
@@ -335,14 +353,18 @@ void BackendProcess::end_session(SessionId session, UniqueFunction<void(Result<v
     Impl& impl = *impl_;
     const auto found = impl.sessions.find(session);
     if (found == impl.sessions.end()) return impl.succeed_later(std::move(done));
-    std::string key = found->second.session_key.reveal();
+    be::EndSession message{0, found->second.session_key.reveal()};
     impl.sessions.erase(found);
     if (impl.live()) {
-        impl.supervisor.command(be::EndSession{0, std::move(key)}, [done = std::move(done)](Result<void> ended) mutable {
-            if (done) done(std::move(ended));
-        });
+        impl.supervisor.command(
+            std::move(message),
+            [done = std::move(done)](Result<void> ended) mutable {
+                if (done) done(std::move(ended));
+            },
+            [](be::EndSession& sent) { wipe_session_secrets(sent); });
         impl.send_renames(std::nullopt);
     } else {
+        wipe_session_secrets(message);
         impl.succeed_later(std::move(done));
     }
 }

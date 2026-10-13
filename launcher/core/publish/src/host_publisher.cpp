@@ -445,11 +445,18 @@ struct HostPublisher::Impl {
             return;
         }
         set_phase(pub, PublishPhase::Registering, std::nullopt);
+        // The edge lists the entry only once it answers; an unanswered register would hang forever.
+        pub.register_timer = timers.after(kRegisterAnswerWait, [weak = alive, session = pub.session, gen = pub.gen] {
+            if (Impl* self = weak->impl)
+                if (Publication* target = self->live(session, gen); target != nullptr && target->register_req != 0)
+                    self->retry_later(*target, make_diag(ErrorDomain::Publish, msg::kEdgeUnavailable).retryable().build());
+        });
     }
 
     void on_registered(Publication& pub, wire::HostRegistered& registered) {
         if (registered.req_id == 0 || registered.req_id != pub.register_req) return;
         pub.register_req = 0;
+        pub.register_timer.cancel();
         pub.registered = true;
         pub.backoff.reset();
         if (registered.token) save_token(pub, HostToken(*registered.token));

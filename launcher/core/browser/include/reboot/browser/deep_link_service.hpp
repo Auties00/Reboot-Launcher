@@ -37,8 +37,9 @@ public:
     DeepLinkService(const DeepLinkService&) = delete;
     DeepLinkService& operator=(const DeepLinkService&) = delete;
 
-    // An Operation<LinkResolution>. Fails synchronously with parse_deep_link's error or
-    // browser.join_own_server. An id the edge does not know fails with browser.link_not_found.
+    // An Operation<LinkResolution>. Fails synchronously with parse_deep_link's error,
+    // browser.join_own_server, or browser.rate_limited when the session's query rate has no token.
+    // An id the edge does not know fails with browser.link_not_found.
     [[nodiscard]] Result<OpHandle> start_resolve(std::string_view link, DisconnectPolicy policy);
 
 private:

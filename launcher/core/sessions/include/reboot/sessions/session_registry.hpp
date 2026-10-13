@@ -10,6 +10,7 @@
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
+#include "reboot/foundation/version.hpp"
 #include "reboot/sessions/session_exit.hpp"
 #include "reboot/sessions/session_info.hpp"
 #include "reboot/sessions/session_spec.hpp"
@@ -43,6 +44,8 @@ public:
     // Between Preparing, Launching, Loading and Running only; sessions.invalid_transition otherwise.
     Result<void> set_phase(SessionId session, SessionPhase phase);
     Result<void> set_lease(SessionId session, Lease lease);
+    // Play pins its payload during preflight, after open; sessions.stopping once a stop began.
+    Result<void> pin_payload(SessionId session, SemVer version);
 
     // A primary spawn starts the next incarnation, unless begin_respawn already did.
     Result<Incarnation> note_spawned(SessionId session, SpawnedProcess process);

@@ -45,11 +45,9 @@ namespace {
         if (done > 0) strand.post([&op, done, total] { op.progress(deleting(done, total)); });
         ++done;
         if (cancel.cancelled()) break;
-        if (Result<ports::FileRevision> found = fs.revision(target);
-            !found && found.error().kind == ErrorKind::NotFound) {
-            report.absent.push_back(target);
-            continue;
-        }
+        const Result<ports::FileRevision> found = fs.revision(target);
+        // revision() follows links, so a dangling one reads as absent; remove_tree still takes it away.
+        const bool absent = !found && found.error().kind == ErrorKind::NotFound;
         if (Result<void> removed = fs.remove_tree(target); !removed) {
             if (!failed.path) failed.path = target;
             failed.causes.push_back(to_diagnostic(PurgeError{.code = PurgeErrorCode::RemoveFailed,
@@ -58,7 +56,7 @@ namespace {
                                                              .causes = {std::move(removed.error())}}));
             continue;
         }
-        report.removed.push_back(target);
+        (absent ? report.absent : report.removed).push_back(target);
     }
     if (!failed.causes.empty()) return std::unexpected(to_diagnostic(failed));
     return report;

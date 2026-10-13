@@ -31,6 +31,7 @@ namespace rb::process {
 class ChildObserver;
 class ChildRequestHandler;
 
+// Stopping: the child is being ended, by stop() or after a hang, protocol error or failed handshake.
 enum class ChildState : u8 { Idle, Starting, Running, Restarting, Stopping, Stopped, Failed };
 
 struct ChildSupervisorOptions {
@@ -49,6 +50,9 @@ struct ChildSupervisorOptions {
 // own Job or process group) with a ChildChannel on stdio; stderr goes through a LineReader to the
 // log. It pings per LivenessPolicy, correlates req_id in both directions so every request ends in
 // exactly one reply, CommandResult or Unsupported, and reports each spawn and exit to `record`.
+// A terminate_tree that fails is retried twice, a GracefulStop deadline apart; then on_exit reports
+// Failed with process.child_kill_failed and the record is left for the next engine start to reap.
+// Request frames are wiped once handed to the launcher; the launcher's own queued copy is not.
 class ChildSupervisor {
 public:
     ChildSupervisor(ports::IProcessLauncher& launcher, Executor& strand, TimerService& timers, const IClock& clock,
@@ -68,9 +72,10 @@ public:
     // no on_exit follows; a respawn that fails ends in on_exit with SpawnFailed.
     Result<void> start();
 
-    // Closes stdin, waits `grace`, then terminate_tree; on_exit reports Requested. Returns false
-    // when no child is alive (Idle, Restarting, Stopped, Failed): the state is then Stopped at once
-    // and no on_exit follows.
+    // Closes stdin, waits `grace`, then terminate_tree; on_exit reports Requested. During the
+    // grace Log frames are still logged and replies still complete their requests; events and
+    // child requests are dropped. Returns false when no child is alive (Idle, Restarting, Stopped,
+    // Failed): the state is then Stopped at once and no on_exit follows.
     bool stop(std::chrono::milliseconds grace = default_deadline(OpKind::GracefulStop));
 
     [[nodiscard]] ChildState state() const noexcept;
@@ -79,13 +84,14 @@ public:
 
     // Running only, else process.child_not_running. `done` runs later on the strand, exactly once,
     // with the Reply, the child's CommandResult error, process.child_request_unsupported, or
-    // process.child_gone when the child exits first.
-    template <ContractMessage Reply, CorrelatedMessage Request>
-    void request(Request message, UniqueFunction<void(Result<Reply>)> done);
+    // process.child_gone when the child exits first. `scrub(message)` wipes the secrets the
+    // message holds once it is encoded.
+    template <ContractMessage Reply, CorrelatedMessage Request, class Scrub = NoSecrets>
+    void request(Request message, UniqueFunction<void(Result<Reply>)> done, Scrub scrub = {});
 
     // For requests the child answers with a CommandResult only.
-    template <CorrelatedMessage Request>
-    void command(Request message, UniqueFunction<void(Result<void>)> done);
+    template <CorrelatedMessage Request, class Scrub = NoSecrets>
+    void command(Request message, UniqueFunction<void(Result<void>)> done, Scrub scrub = {});
 
 private:
     friend class ChildReply;
@@ -111,22 +117,26 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-template <ContractMessage Reply, CorrelatedMessage Request>
-void ChildSupervisor::request(Request message, UniqueFunction<void(Result<Reply>)> done) {
+template <ContractMessage Reply, CorrelatedMessage Request, class Scrub>
+void ChildSupervisor::request(Request message, UniqueFunction<void(Result<Reply>)> done, Scrub scrub) {
     message.req_id = next_req_id();
     const u64 req_id = message.req_id;
-    send_request(req_id, contract_frame_type_v<Request>, encode_contract_frame(message), contract_frame_type_v<Reply>,
+    std::vector<u8> frame = encode_contract_frame(message);
+    scrub(message);
+    send_request(req_id, contract_frame_type_v<Request>, std::move(frame), contract_frame_type_v<Reply>,
                  [done = std::move(done)](Result<ReplyFrame> reply) mutable {
                      if (!reply) return done(std::unexpected(std::move(reply.error())));
                      done(decode_contract<Reply>(reply->payload));
                  });
 }
 
-template <CorrelatedMessage Request>
-void ChildSupervisor::command(Request message, UniqueFunction<void(Result<void>)> done) {
+template <CorrelatedMessage Request, class Scrub>
+void ChildSupervisor::command(Request message, UniqueFunction<void(Result<void>)> done, Scrub scrub) {
     message.req_id = next_req_id();
     const u64 req_id = message.req_id;
-    send_request(req_id, contract_frame_type_v<Request>, encode_contract_frame(message), std::nullopt,
+    std::vector<u8> frame = encode_contract_frame(message);
+    scrub(message);
+    send_request(req_id, contract_frame_type_v<Request>, std::move(frame), std::nullopt,
                  [done = std::move(done)](Result<ReplyFrame> reply) mutable {
                      if (!reply) return done(std::unexpected(std::move(reply.error())));
                      done(Result<void>{});

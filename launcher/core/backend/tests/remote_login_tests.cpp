@@ -155,7 +155,9 @@ struct Login {
     testing::FakeSecretStore store{ports::SecretStoreKind::Unavailable};
     Redactor redactor;
     WorkerPool workers{1};
-    secrets::SecretService secrets{store, workers, strand, timers, requests, events, redactor, "00112233aabbccdd"};
+    WorkerPool store_worker{1};
+    secrets::SecretService secrets{store,  store_worker, workers,  strand,
+                                   timers, requests,     events,   redactor, "00112233aabbccdd"};
     testing::FakeHttpTransport transport{strand, clock};
     testing::FakeRandom random{5};
     net::HostTlsMemory tls{{}, nullptr};

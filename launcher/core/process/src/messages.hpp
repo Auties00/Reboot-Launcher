@@ -21,6 +21,7 @@ REBOOT_MESSAGE_DECL(kChildUnresponsive);
 REBOOT_MESSAGE_DECL(kChildExited);
 REBOOT_MESSAGE_DECL(kChildSignaled);
 REBOOT_MESSAGE_DECL(kChildRestartLimit);
+REBOOT_MESSAGE_DECL(kChildKillFailed);
 REBOOT_MESSAGE_DECL(kChildNotRunning);
 REBOOT_MESSAGE_DECL(kChildGone);
 REBOOT_MESSAGE_DECL(kChildRequestFailed);

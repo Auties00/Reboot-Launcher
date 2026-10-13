@@ -24,7 +24,7 @@ struct ChildExitInfo {
     // Absent for SpawnFailed.
     std::optional<u32> pid;
     ports::ChildExit status;
-    // Absent only for Requested.
+    // Absent only for Requested, unless the kill failed.
     std::optional<Diagnostic> error;
     // Set when `after` is Restarting.
     std::chrono::milliseconds restart_delay{};

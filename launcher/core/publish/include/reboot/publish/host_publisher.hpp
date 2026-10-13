@@ -35,6 +35,8 @@ class IPublishNoticeSink;
 inline constexpr std::chrono::milliseconds kUpdateDebounce{400};
 // How long withdraw() waits for the HostUnregister Ack before closing anyway.
 inline constexpr std::chrono::milliseconds kUnregisterAckWait{2000};
+// How long a HostRegister may go unanswered before the connection is dropped and retried.
+inline constexpr std::chrono::milliseconds kRegisterAnswerWait{20'000};
 
 // Capabilities: hosting.publication, hosting.share, matchmaking-networking.public-ip, hosting.+17,
 // hosting.+18, hosting.+20, hosting.+35, hosting.+63, hosting.+86.
@@ -48,9 +50,9 @@ inline constexpr std::chrono::milliseconds kUnregisterAckWait{2000};
 //   in flight and the latest winning, within Welcome.limits; RATE_LIMITED waits retry_after_ms.
 //   hidden and game_port changes skip the debounce; player counts go at once with req_id 0.
 // - hidden = hidden_on_edge(listing, restarting), recomputed for every message.
-// - Reconnect: on a lost connection or GoAway, reconnect with browser::FullJitterBackoff
-//   (go_away_delay as the floor after GoAway) to a freshly resolved edge, and register again with
-//   the token.
+// - Reconnect: on a lost connection, a HostRegister unanswered for kRegisterAnswerWait, or GoAway,
+//   reconnect with browser::FullJitterBackoff (go_away_delay as the floor after GoAway) to a
+//   freshly resolved edge, and register again with the token.
 // - Errors are matched to the session's current connection by req_id. Anything arriving on a
 //   connection being replaced or closed is ignored, so the CONFLICT our own reconnect causes on
 //   the abandoned connection never stops a healthy publication.

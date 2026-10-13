@@ -11,6 +11,7 @@
 #include "messages.hpp"
 #include "reboot/browser/browser_session.hpp"
 #include "reboot/browser/own_servers.hpp"
+#include "reboot/browser/rbsb_request_error.hpp"
 #include "reboot/browser/version_match.hpp"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/events.hpp"
@@ -132,10 +133,12 @@ struct ServerList::Impl {
             const auto it = views.find(id);
             if (it == views.end() || find_feed(id, bucket, feed_id) == nullptr) return;
             View& view = it->second;
-            if (view.filter_locally || error.code != wire::ErrorCode::limit_exceeded) return;
+            if (view.filter_locally || error.code != wire::ErrorCode::limit_exceeded)
+                return fail(id, to_diagnostic(error));
             const BrowserLease hold = session.acquire();
             fall_back(view);
             if (Result<void> subscribed = subscribe_missing(id, view); subscribed) set_loading(id);
+            else fail(id, std::move(subscribed.error()));
         };
         return out;
     }
@@ -156,6 +159,12 @@ struct ServerList::Impl {
     void set_loading(ViewId id) {
         ViewUpdate& update = views.at(id).update;
         update = ViewUpdate{id, ListState::Loading, 0, false, {}, std::nullopt};
+        publish(id, EventKind::ViewSnapshot);
+    }
+
+    void fail(ViewId id, Diagnostic error) {
+        ViewUpdate& update = views.at(id).update;
+        update = ViewUpdate{id, ListState::Failed, 0, false, {}, std::nullopt, std::move(error)};
         publish(id, EventKind::ViewSnapshot);
     }
 
@@ -272,7 +281,7 @@ Result<void> ServerList::update(ViewId id, const ViewSpec& spec) {
     }
     const u64 feeds_before = impl_->next_feed;
     if (Result<void> subscribed = impl_->subscribe_missing(id, view); !subscribed) {
-        impl_->set_loading(id);
+        impl_->fail(id, subscribed.error());
         return subscribed;
     }
     changed = changed || impl_->next_feed != feeds_before;

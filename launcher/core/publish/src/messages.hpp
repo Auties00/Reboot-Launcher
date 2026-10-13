@@ -34,5 +34,6 @@ REBOOT_MESSAGE_DECL(kIdentityNotRegistered);
 REBOOT_MESSAGE_DECL(kExportDestinationExists);
 REBOOT_MESSAGE_DECL(kIdentityFileInvalid);
 REBOOT_MESSAGE_DECL(kIdentityUnreadable);
+REBOOT_MESSAGE_DECL(kIdentityAlreadyImported);
 
 }  // namespace rb::publish::msg

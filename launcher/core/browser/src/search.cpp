@@ -8,7 +8,6 @@
 #include "reboot/browser/browser_session.hpp"
 #include "reboot/browser/deep_link.hpp"
 #include "reboot/browser/own_servers.hpp"
-#include "reboot/browser/token_bucket.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "text_util.hpp"
 #include "wire_mapping.hpp"
@@ -49,9 +48,8 @@ struct Search::Impl {
 
     using RunPtr = std::shared_ptr<Run>;
 
-    Impl(BrowserSession& session_in, const IOwnServers& own_in, TimerService& timers_in, const IClock& clock_in)
-        : session(session_in), own(own_in), timers(timers_in), rate(clock_in, kQueryRate),
-          alive(std::make_shared<Alive>(Alive{this})) {}
+    Impl(BrowserSession& session_in, const IOwnServers& own_in, TimerService& timers_in)
+        : session(session_in), own(own_in), timers(timers_in), alive(std::make_shared<Alive>(Alive{this})) {}
 
     ~Impl() { alive->impl = nullptr; }
 
@@ -80,7 +78,7 @@ struct Search::Impl {
             finish(run, std::unexpected(cancelled()));
             return;
         }
-        if (const auto wait = rate.try_take()) {
+        if (const auto wait = session.query_rate().try_take()) {
             arm(run, *wait);
             return;
         }
@@ -114,7 +112,7 @@ struct Search::Impl {
             run->rate_retries >= kRateLimitRetries)
             return false;
         ++run->rate_retries;
-        rate.hold_off(error.retry_after);
+        session.query_rate().hold_off(error.retry_after);
         arm(run, error.retry_after);
         return true;
     }
@@ -164,15 +162,13 @@ struct Search::Impl {
     BrowserSession& session;
     const IOwnServers& own;
     TimerService& timers;
-    // Mirrors the edge's per-connection query limiter, shared by every client's searches.
-    TokenBucket rate;
     std::shared_ptr<Alive> alive;
     u64 next_run = 1;
     std::map<ConnectionId, RunPtr> runs;
 };
 
-Search::Search(BrowserSession& session, const IOwnServers& own, TimerService& timers, const IClock& clock)
-    : impl_(std::make_unique<Impl>(session, own, timers, clock)) {}
+Search::Search(BrowserSession& session, const IOwnServers& own, TimerService& timers)
+    : impl_(std::make_unique<Impl>(session, own, timers)) {}
 
 Search::~Search() = default;
 

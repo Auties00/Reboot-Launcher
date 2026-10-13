@@ -21,6 +21,8 @@ enum class CatalogIssueKind : u8 {
     MalformedTemplate,
     // An id the registry declares more than once with different English templates.
     ConflictingDeclarations,
+    // A core-owned key whose text is no declaration's English template; render() refreshes it.
+    StaleTemplate,
 };
 
 struct CatalogIssue {
@@ -41,8 +43,8 @@ public:
     // The new l10n/en.json: registry templates, UI-owned keys of `existing_catalog` kept, orphans dropped.
     [[nodiscard]] Result<std::string> render(std::optional<std::string_view> existing_catalog) const;
 
-    // Every registry id present and declared alike, no orphans, no empty templates, placeholders equal by name,
-    // plurals limited to one/other.
+    // Every registry id present, declared alike and holding its English template, no orphans, no empty
+    // templates, placeholders equal by name, plurals limited to one/other.
     [[nodiscard]] Result<std::vector<CatalogIssue>> check(std::string_view catalog_json) const;
 
 private:

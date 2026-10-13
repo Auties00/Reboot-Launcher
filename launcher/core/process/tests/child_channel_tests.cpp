@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <optional>
 #include <span>
 #include <string>
 #include <utility>
@@ -58,6 +59,32 @@ TEST_CASE("a matching Hello opens the channel and gets the Welcome", "[process][
     const std::vector<Frame> sent = h.sent();
     REQUIRE(sent.size() == 1);
     CHECK(sent[0].type == contract_frame_type_v<be::BackendWelcome>);
+}
+
+TEST_CASE("the Welcome's scrub runs once the frame is encoded", "[process][channel]") {
+    std::vector<std::string> scrubbed;
+    ChildHandshake handshake = make_child_handshake<be::BackendHello>(
+        be::kBackendProtocol, [](const be::BackendHello& hello) { return hello.protocol; },
+        [](const be::BackendHello&) -> Result<be::BackendWelcome> { return be::BackendWelcome{"127.0.0.1", {}, {}}; },
+        [&](be::BackendWelcome& welcome) { scrubbed.push_back(std::exchange(welcome.bind_address, {})); });
+    std::vector<u8> written;
+    ChildChannel channel{"reboot-backend", handshake,
+                         [&](std::span<const u8> bytes) {
+                             CHECK(scrubbed.size() == 1);
+                             written.assign(bytes.begin(), bytes.end());
+                         },
+                         [](const RawFrame&) {}};
+    REQUIRE(channel.feed(hello(be::kBackendProtocol)).has_value());
+    CHECK(scrubbed == std::vector<std::string>{"127.0.0.1"});
+    Framer framer(kChildFrameCap);
+    std::optional<Result<be::BackendWelcome>> welcome;
+    (void)framer.feed(written, [&](const RawFrame& frame) {
+        welcome = decode_contract<be::BackendWelcome>(frame);
+        return true;
+    });
+    REQUIRE(welcome.has_value());
+    REQUIRE(welcome->has_value());
+    CHECK((*welcome)->bind_address == "127.0.0.1");
 }
 
 TEST_CASE("another protocol closes the channel with child_protocol_mismatch", "[process][channel]") {

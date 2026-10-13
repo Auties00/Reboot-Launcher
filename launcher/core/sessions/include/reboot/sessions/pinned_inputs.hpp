@@ -15,7 +15,7 @@ struct PinnedInputs {
     storage::SettingsSnapshot settings;
     // Absent for a host whose game server needs only the game version.
     std::optional<BuildId> build;
-    // Play only: the client DLL payload.
+    // Play only: the client DLL payload, pinned by SessionRegistry::pin_payload during preflight.
     std::optional<SemVer> payload_version;
     // Play under Wine only: the runtime component id.
     std::optional<std::string> runtime_id;

@@ -184,6 +184,61 @@ TEST_CASE("more buckets than the edge allows fall back to every version filtered
     CHECK(update->total_approximate);
 }
 
+TEST_CASE("a view the edge refuses is Failed with the reason", "[browser][list]") {
+    ListRig rig;
+    testing::EventRecorder recorder(rig.rt.events(), EventFilter{{EventKind::ViewSnapshot}, {}, {}});
+    BrowserLease lease = rig.session.acquire();
+    Edge& edge = rig.connect();
+    auto opened = rig.list.open(spec_for());
+    REQUIRE(opened);
+    edge.send(wire::Error{edge.expect<wire::Subscribe>().req_id, wire::ErrorCode::unavailable, {}, 0});
+    rig.rt.run_until_idle();
+    const ViewUpdate* failed = rig.list.current(*opened);
+    CHECK(failed->state == ListState::Failed);
+    REQUIRE(failed->error);
+    CHECK(failed->error->id == "browser.edge_unavailable");
+    recorder.pump();
+    CHECK(recorder.count(EventKind::ViewSnapshot) == 2);
+}
+
+TEST_CASE("a refused fallback is Failed until a closed view frees a slot", "[browser][list]") {
+    ListRig rig;
+    BrowserLease lease = rig.session.acquire();
+    Edge& edge = rig.connect();
+    auto other = rig.list.open(spec_for());
+    REQUIRE(other);
+    const wire::Subscribe other_sub = edge.expect<wire::Subscribe>();
+    edge.send(wire::SubOpen{other_sub.req_id, other_sub.sub_id, 1, 50});
+
+    auto opened = rig.list.open(spec_for({GameVersion::parse("8.51")->bucket(), GameVersion::parse("9.10")->bucket()}));
+    REQUIRE(opened);
+    const wire::Subscribe first = edge.expect<wire::Subscribe>();
+    const wire::Subscribe second = edge.expect<wire::Subscribe>();
+    edge.send(wire::Error{first.req_id, wire::ErrorCode::limit_exceeded, {}, 0});
+    rig.rt.run_until_idle();
+    CHECK(edge.expect<wire::Unsubscribe>().sub_id == second.sub_id);
+    const wire::Subscribe fallback = edge.expect<wire::Subscribe>();
+    CHECK(fallback.view.bucket == wire::kBucketAll);
+    CHECK(rig.list.current(*opened)->state == ListState::Loading);
+
+    edge.send(wire::Error{fallback.req_id, wire::ErrorCode::limit_exceeded, {}, 0});
+    rig.rt.run_until_idle();
+    REQUIRE(rig.list.current(*opened)->state == ListState::Failed);
+    CHECK(rig.list.current(*opened)->error->id == "browser.too_many_views");
+
+    rig.list.close(*other);
+    rig.rt.run_until_idle();
+    CHECK(edge.expect<wire::Unsubscribe>().sub_id == other_sub.sub_id);
+    const wire::Subscribe retried = edge.expect<wire::Subscribe>();
+    CHECK(retried.view.bucket == wire::kBucketAll);
+    edge.send(wire::SubOpen{retried.req_id, retried.sub_id, 2, 50});
+    edge.snapshot(wire::Snapshot{2, 1, 1, {entry(1, 1, "Back", "8.51")}});
+    rig.rt.run_until_idle();
+    CHECK(rig.list.current(*opened)->state == ListState::Ready);
+    CHECK_FALSE(rig.list.current(*opened)->error);
+    CHECK(rig.names(*opened) == std::vector<std::string>{"Back"});
+}
+
 TEST_CASE("update re-subscribes only what changed", "[browser][list]") {
     ListRig rig;
     ViewId id;

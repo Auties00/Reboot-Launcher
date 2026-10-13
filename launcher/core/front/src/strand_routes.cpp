@@ -1,5 +1,6 @@
 #include "strand_routes.hpp"
 
+#include <algorithm>
 #include <utility>
 #include <variant>
 
@@ -18,6 +19,13 @@ namespace {
 constexpr std::string_view kNeedsConsent = "net.plain_http_needs_consent";
 
 [[nodiscard]] std::string session_text(SessionId session) { return format_uuid(session.value); }
+
+// Seen on https, so plain http is refused whatever was consented.
+[[nodiscard]] bool downgrade_refused(const net::HostTlsMemory& tls, const UpstreamOrigin& origin) {
+    if (origin.scheme != net::UrlScheme::Http) return false;
+    const Result<void> allowed = tls.check(net::UrlScheme::Http, origin.host);
+    return !allowed && allowed.error().id != kNeedsConsent;
+}
 
 }  // namespace
 
@@ -86,7 +94,18 @@ void StrandRoutes::learn(SessionId session, std::string_view path, std::span<con
     publish(state->second);
 }
 
-void StrandRoutes::remember_https(std::string_view host) { tls_.remember_https(host); }
+void StrandRoutes::remember_https(std::string_view host) {
+    tls_.remember_https(host);
+    // A consent never outlives the host being seen on https; the configured backend is not in `consented`.
+    const auto downgrade = [this](const UpstreamOrigin& origin) { return downgrade_refused(tls_, origin); };
+    for (auto& [session, state] : routes_) {
+        if (std::ranges::none_of(state.consented, downgrade)) continue;
+        for (const UpstreamOrigin& origin : state.consented)
+            if (downgrade(origin)) state.declined.push_back(origin);
+        std::erase_if(state.consented, downgrade);
+        publish(state);
+    }
+}
 
 void StrandRoutes::publish(const RouteState& state) {
     auto snapshot = std::make_shared<RouteSnapshot>();
@@ -135,7 +154,8 @@ Result<void> StrandRoutes::answered(SessionId session, const UpstreamOrigin& ori
             .fail();
     const auto state = routes_.find(session);
     if (state == routes_.end()) return {};
-    if (reply->accept) {
+    // The host may have been seen on https while the question was up.
+    if (reply->accept && !downgrade_refused(tls_, origin)) {
         state->second.consented.push_back(origin);
         if (reply->remember) tls_.remember_http_acknowledged(origin.host);
     } else {

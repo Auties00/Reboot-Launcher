@@ -102,14 +102,16 @@ struct RemoteLogin::Impl {
 
     void require(std::shared_ptr<Login> login, secrets::NeedsSecretReason reason) {
         secrets::SecretWait wait{login->request.wait.session, login->request.wait.op, reason};
-        const std::optional<RequestId> raised = secrets.require(
+        secrets.require(
             login->target, wait, login->token,
+            [alive_token = alive.token(), login](RequestId raised) {
+                if (!alive_token.cancelled() && login->request.awaiting_user) login->request.awaiting_user(raised);
+            },
             [this, alive_token = alive.token(), login](Result<SecretBytes> password) mutable {
                 if (alive_token.cancelled()) return;
                 if (!password) return login->done(std::unexpected(std::move(password.error())));
                 grant(std::move(login), *password);
             });
-        if (raised && login->request.awaiting_user) login->request.awaiting_user(*raised);
     }
 
     void grant(std::shared_ptr<Login> login, const SecretBytes& password) {

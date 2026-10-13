@@ -9,6 +9,7 @@
 #include "reboot/contracts/common.hpp"
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/flat_map.hpp"
+#include "reboot/foundation/secret.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/process/child_channel.hpp"
 #include "reboot/process/child_observer.hpp"
@@ -33,6 +34,10 @@ struct CorrelationHeader {
 }
 
 [[nodiscard]] LogLevel clamp_level(LogLevel level) { return level > LogLevel::Error ? LogLevel::Error : level; }
+
+// A failed terminate_tree is tried this often, a graceful-stop deadline apart, before the child is
+// given up on.
+constexpr u32 kKillAttempts = 3;
 
 }  // namespace
 
@@ -74,6 +79,10 @@ struct ChildSupervisor::Impl {
     // Set once the child is being ended on purpose; its exit reports this cause.
     std::optional<ChildExitCause> ending;
     std::optional<Diagnostic> ending_error;
+    // During a requested stop's grace, Log frames and replies are still read; events and child
+    // requests are dropped.
+    bool draining = false;
+    u32 failed_kills = 0;
 
     TimerHandle hello_timer;
     TimerHandle ping_timer;
@@ -105,6 +114,8 @@ struct ChildSupervisor::Impl {
         generation_alive = CancelSource{};
         ending.reset();
         ending_error.reset();
+        draining = false;
+        failed_kills = 0;
         missed_pings = 0;
         ping_outstanding = false;
         state = ChildState::Starting;
@@ -150,7 +161,12 @@ struct ChildSupervisor::Impl {
     }
 
     void on_stdout(std::span<const u8> bytes) {
-        if (!channel || ending) return;
+        if (!channel) return;
+        if (ending) {
+            if (!draining || channel->phase() != ChannelPhase::Open) return;
+            if (Result<void> fed = channel->feed(bytes); !fed) protocol_error(std::move(fed.error()));
+            return;
+        }
         const bool awaiting_hello = channel->phase() == ChannelPhase::AwaitingHello;
         Result<void> fed = channel->feed(bytes);
         if (!fed) {
@@ -194,8 +210,17 @@ struct ChildSupervisor::Impl {
         schedule_ping();
     }
 
+    // Kills the child; during a stop's grace it only stops reading, so the exit stays Requested.
+    void protocol_error(Diagnostic error) {
+        if (!draining) return end_child(ChildExitCause::ProtocolError, std::move(error));
+        draining = false;
+        if (Logger::enabled(LogLevel::Warn))
+            Logger::write(LogLevel::Warn, options.log_category, spec.session,
+                          std::format("{} output ignored while it stops: {}", program, error.id));
+    }
+
     void on_frame(const RawFrame& frame) {
-        if (ending) return;
+        if (ending && !draining) return;
         if (state == ChildState::Starting) mark_running();
 
         if (is_frame<common::Pong>(frame)) {
@@ -205,19 +230,19 @@ struct ChildSupervisor::Impl {
         }
         if (is_frame<common::Log>(frame)) {
             Result<common::Log> log = decode_contract<common::Log>(frame.payload);
-            if (!log) return end_child(ChildExitCause::ProtocolError, std::move(log.error()));
+            if (!log) return protocol_error(std::move(log.error()));
             const LogLevel level = clamp_level(log->level);
             if (Logger::enabled(level)) Logger::write(level, options.log_category, spec.session, std::move(log->text));
             return;
         }
         if (is_frame<common::CommandResult>(frame)) {
             Result<common::CommandResult> result = decode_contract<common::CommandResult>(frame.payload);
-            if (!result) return end_child(ChildExitCause::ProtocolError, std::move(result.error()));
+            if (!result) return protocol_error(std::move(result.error()));
             return on_command_result(frame, *result);
         }
         if (is_frame<common::Unsupported>(frame)) {
             Result<common::Unsupported> unsupported = decode_contract<common::Unsupported>(frame.payload);
-            if (!unsupported) return end_child(ChildExitCause::ProtocolError, std::move(unsupported.error()));
+            if (!unsupported) return protocol_error(std::move(unsupported.error()));
             return complete(unsupported->req_id, [&](const PendingRequest& request) -> Result<ReplyFrame> {
                 return make_diag(ErrorDomain::Process, msg::kChildRequestUnsupported)
                     .arg("program", program)
@@ -230,6 +255,7 @@ struct ChildSupervisor::Impl {
             return entry.second.reply_type == frame.type;
         });
         if (is_reply) return on_typed_reply(frame);
+        if (ending) return;
         if (requests != nullptr && requests->handles(frame.type)) {
             const std::optional<u64> req_id = read_req_id(frame.payload);
             if (!req_id)
@@ -258,8 +284,8 @@ struct ChildSupervisor::Impl {
     void on_typed_reply(const RawFrame& frame) {
         const std::optional<u64> req_id = read_req_id(frame.payload);
         if (!req_id)
-            return end_child(ChildExitCause::ProtocolError,
-                             make_diag(ErrorDomain::Process, msg::kChildMalformedOutput).arg("program", program).build());
+            return protocol_error(
+                make_diag(ErrorDomain::Process, msg::kChildMalformedOutput).arg("program", program).build());
         complete(*req_id, [&](const PendingRequest& request) -> Result<ReplyFrame> {
             if (request.reply_type != frame.type) return unexpected_reply(request, frame.type);
             return ReplyFrame{frame.type, std::vector<u8>(frame.payload.begin(), frame.payload.end())};
@@ -287,6 +313,7 @@ struct ChildSupervisor::Impl {
     void send_request(u64 req_id, u64 request_type, std::vector<u8> frame, std::optional<u64> reply_type,
                       UniqueFunction<void(Result<ReplyFrame>)> done) {
         if (state != ChildState::Running || !open()) {
+            secure_wipe(frame.data(), frame.size());
             Diagnostic error = make_diag(ErrorDomain::Process, msg::kChildNotRunning).arg("program", program).build();
             strand.post([alive = supervisor_alive.token(), done = std::move(done), error = std::move(error)]() mutable {
                 if (!alive.cancelled()) done(std::unexpected(std::move(error)));
@@ -295,11 +322,15 @@ struct ChildSupervisor::Impl {
         }
         pending.emplace(req_id, PendingRequest{request_type, reply_type, std::move(done)});
         channel->send(frame);
+        secure_wipe(frame.data(), frame.size());
     }
 
+    // The state is Stopping until the exit, so owners never take a dying child for a live one.
     void end_child(ChildExitCause cause, Diagnostic error) {
         ending = cause;
         ending_error = std::move(error);
+        draining = false;
+        state = ChildState::Stopping;
         hello_timer.cancel();
         ping_timer.cancel();
         kill_child();
@@ -307,10 +338,53 @@ struct ChildSupervisor::Impl {
 
     void kill_child() {
         if (!child) return;
+        draining = false;
         Result<void> killed = child->terminate_tree();
-        if (!killed && Logger::enabled(LogLevel::Warn))
-            Logger::write(LogLevel::Warn, options.log_category, spec.session,
-                          std::format("terminate_tree of {} (pid {}) failed: {}", program, child->pid(), killed.error().id));
+        if (killed) return;
+        ++failed_kills;
+        if (Logger::enabled(LogLevel::Error))
+            Logger::write(LogLevel::Error, options.log_category, spec.session,
+                          std::format("terminate_tree of {} (pid {}) failed, attempt {} of {}: {}", program,
+                                      child->pid(), failed_kills, kKillAttempts, killed.error().id));
+        // The first failure may come from inside ChildChannel::feed, so giving up always waits for a timer.
+        if (failed_kills < kKillAttempts) {
+            stop_timer = timers.after(default_deadline(OpKind::GracefulStop), [this] { kill_child(); });
+            return;
+        }
+        abandon_child(std::move(killed.error()));
+    }
+
+    // Reports a child that cannot be killed as Failed. Its record stays, so the next engine start
+    // reaps it, as after the destructor's failed kill.
+    void abandon_child(Diagnostic kill_error) {
+        hello_timer.cancel();
+        ping_timer.cancel();
+        stop_timer.cancel();
+        if (stderr_lines) stderr_lines->finish();
+        generation_alive.cancel(CancelReason::Shutdown);
+
+        ChildExitInfo info;
+        info.generation = generation;
+        info.pid = child->pid();
+        info.cause = ending.value_or(ChildExitCause::Requested);
+        info.after = AfterExit::Failed;
+        Diagnostic error =
+            make_diag(ErrorDomain::Process, msg::kChildKillFailed).arg("program", program).arg("pid", child->pid()).build();
+        if (ending_error) error.causes.push_back(std::move(*ending_error));
+        error.causes.push_back(std::move(kill_error));
+        info.error = std::move(error);
+
+        spawned.reset();
+        channel.reset();
+        stderr_lines.reset();
+        child.reset();
+        ending.reset();
+        ending_error.reset();
+        state = ChildState::Failed;
+        FlatMap<u64, PendingRequest> gone = std::move(pending);
+        pending.clear();
+        fail_pending(gone);
+        observer.on_exit(info);
     }
 
     void on_child_exit(ports::ChildExit status) {
@@ -430,6 +504,7 @@ struct ChildSupervisor::Impl {
         state = ChildState::Stopping;
         // A child already being killed needs no grace.
         if (already_ending) return true;
+        draining = true;
         child->close_stdin();
         stop_timer = timers.after(grace, [this] { kill_child(); });
         return true;
