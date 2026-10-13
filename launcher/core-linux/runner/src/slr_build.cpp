@@ -18,6 +18,9 @@ constexpr std::array<std::pair<std::string_view, std::string_view>, 3> kRuntimes
     {"4183110", "steamrt4"},
 }};
 
+// umu keeps its runtimes in UMU_FOLDERS_PATH/umu, not in UMU_FOLDERS_PATH itself.
+constexpr std::string_view kUmuLocal = "umu";
+
 std::string_view trim(std::string_view text) {
     constexpr std::string_view kSpace = " \t\r";
     const std::size_t first = text.find_first_not_of(kSpace);
@@ -68,7 +71,7 @@ Result<SlrBuild> SlrBuild::read(const NativePath& proton_root, const NativePath&
     const auto runtime = runtime_for(*toolmanifest);
     if (!runtime) return make_diag(ErrorDomain::Platform, kSlrRuntimeUnknown).arg("path", proton_root).fail();
 
-    const NativePath versions_file = folders / *runtime / "VERSIONS.txt";
+    const NativePath versions_file = folders / kUmuLocal / *runtime / "VERSIONS.txt";
     const auto versions = read_text(versions_file);
     if (!versions) return std::unexpected(versions.error());
     auto version = depot_version(*versions);

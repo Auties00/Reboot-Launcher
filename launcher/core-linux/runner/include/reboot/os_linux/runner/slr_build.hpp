@@ -10,7 +10,7 @@
 namespace rb::os_linux::runner {
 
 // Covers no capability ids (decision linux-compat-layer).
-// The Steam Linux Runtime build that GE-Proton runs in, as installed under UMU_FOLDERS_PATH.
+// The Steam Linux Runtime build that GE-Proton runs in, as umu installs it under UMU_FOLDERS_PATH/umu.
 struct SlrBuild {
     // umu's directory for the runtime, e.g. "steamrt3" for sniper.
     std::string runtime;

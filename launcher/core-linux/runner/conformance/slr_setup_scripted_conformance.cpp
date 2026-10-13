@@ -160,7 +160,7 @@ struct Runtime {
     }
 
     [[nodiscard]] NativePath scratch_prefix() const { return folders / SlrSetup::kScratchPrefix; }
-    void install_build() const { write_file(folders / "steamrt3" / "VERSIONS.txt", kVersions); }
+    void install_build() const { write_file(folders / "umu" / "steamrt3" / "VERSIONS.txt", kVersions); }
 
     NativePath folders;
     rb::ports::RuntimeLayout layout;
@@ -297,7 +297,7 @@ TEST_CASE("a clean exit without a runtime build is a read failure", "[slr_setup]
 TEST_CASE("a runtime build without a depot line is reported", "[slr_setup]") {
     Fixture fixture;
     fixture.processes.on_exe("umu-run", [&](ScriptedChild& child) -> SpawnResult {
-        write_file(fixture.runtime.folders / "steamrt3" / "VERSIONS.txt", "#Name\tVersion\n");
+        write_file(fixture.runtime.folders / "umu" / "steamrt3" / "VERSIONS.txt", "#Name\tVersion\n");
         child.exit(ChildExit{0, std::nullopt});
         return {};
     });

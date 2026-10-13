@@ -46,8 +46,8 @@ echo "runtime update $UMU_RUNTIME_UPDATE"
 [ "$UMU_RUNTIME_UPDATE" = 1 ] && [ -d "$WINEPREFIX" ] || exit 8
 : > "$UMU_FOLDERS_PATH/started"
 [ -n "$FAKE_SLEEP" ] && exec sleep 30
-mkdir -p "$UMU_FOLDERS_PATH/steamrt3"
-printf 'depot\t0.20240806.99006\t-\t-\n' > "$UMU_FOLDERS_PATH/steamrt3/VERSIONS.txt"
+mkdir -p "$UMU_FOLDERS_PATH/umu/steamrt3"
+printf 'depot\t0.20240806.99006\t-\t-\n' > "$UMU_FOLDERS_PATH/umu/steamrt3/VERSIONS.txt"
 exit "${FAKE_EXIT:-0}"
 )";
 
