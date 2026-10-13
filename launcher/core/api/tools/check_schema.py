@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """The reboot.api.v1 CI gate.
 
-1. The committed C++ under core/api, core/api_dispatch and the client's client_methods.h matches a fresh
-   protoc-gen-reboot-cpp run (which also enforces contiguity).
+1. The committed C++ (core/api, core/api_dispatch, core/sdk and the client's client_methods.h) matches
+   a fresh protoc-gen-reboot-cpp run (which also enforces contiguity).
 2. The committed golden vectors match protoc's encoding of tests/data/*.txtpb.
 3. buf lint passes on launcher/schema.
 4. buf breaking passes against the newest release tag that has the schema; skipped before the first.

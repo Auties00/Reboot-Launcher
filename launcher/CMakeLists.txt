@@ -69,7 +69,7 @@ set(REBOOT_CORE_PACKAGES
   api api_dispatch posix logging trust storage ux net components catalog support builds
   process secrets identity injection game_channel compat backend front gameserver
   sessions browser publish host play updates integration
-  ipc engine client testing)
+  ipc engine client testing sdk)
 
 if(WIN32)
   set(REBOOT_OS windows)

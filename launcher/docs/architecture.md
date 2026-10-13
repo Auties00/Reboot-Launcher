@@ -461,7 +461,7 @@ The schema lives in `launcher/schema/proto/reboot/api/v1/*.proto`: one file per 
 - `api/include/reboot/api/v1/method_table.hpp`: the `MethodTable` and the `k<Service><Method>` ids;
 - `api_dispatch/include/reboot/api_dispatch/v1/handlers.hpp` (one handler interface per service), `api_dispatch/include/reboot/api_dispatch/v1/dispatch.hpp` and `api_dispatch/src/dispatch.cpp`;
 - `client/include/reboot/client_methods.h`: the `RB_METHOD_<SERVICE>_<METHOD>` ids and `RB_SCHEMA_FINGERPRINT`, a 64-bit FNV-1a hash over every enum, message, field and method;
-- `sdk/include/reboot/sdk/methods.hpp`: one typed member per method for `rb::sdk::Context` (§9.3).
+- `sdk/include/reboot/sdk/methods.hpp` (one typed member per method for `rb::sdk::Context`) and `sdk/include/reboot/sdk/event_data.hpp` (the `EventData` variant) (§9.3).
 
 `DecodeError` is plain data in `reboot/api`; `api_dispatch` turns it into a `Diagnostic` with the `api.*` messages.
 
@@ -575,19 +575,37 @@ Engine details (build, pid, image path, data root and schema fingerprint) come f
 
 The SDK is the interface every C++ client uses: the WinUI 3 C++/WinRT app, the CLI and, later, the Linux client. To UI code the core is a C++ API; the process boundary shows up only as async calls and connection state.
 
-- **Header-only, compiled by each consumer** with its own toolchain and CRT. It depends only on `reboot/client.h`, the header-only api types (`core/api`), `core/base` and the header-only sb codec with Boost.PFR. It links no core static library, no Asio and no message registry, and nothing of the core's crosses the DLL boundary except C.
-- **Generated members.** `methods.hpp` is a CRTP `Methods<Self>` mixin with one typed member per method: a call returns `std::expected<Response, sdk::Error>`; an operation returns an `Op<Response>`, with an `attach_` variant for an op started elsewhere.
-- **Hand-written parts:**
-  - `Context`: RAII over `rb_ctx`. Connect options are the data root, client kind, launch mode and deadline. It refuses an ABI major mismatch and compares `RB_SCHEMA_FINGERPRINT` with `Engine.info`'s `schema_fingerprint` and the engine build.
-  - `sdk::Error`: decoded from the Diagnostic bytes, with the id, args, English text, kind and retryable flag, plus the `rb_status`.
-  - RAII buffers over `rb_buffer`.
-  - `Op<T>`: progress, cancel, attach and the typed outcome (completed value, failure, cancellation or timeout).
-  - `Event`: a typed variant over the event payloads plus the client-raised Resync, ConnectionLost and Reconnected.
-  - Subscriptions driven by the wake callback through a small `Dispatcher` adapter interface, so WinUI's `DispatcherQueue`, GLib, Qt or an FTXUI loop can plug in. A std-only blocking/callback adapter ships for the CLI.
-  - `LiveList<T>`: a snapshot call, then deltas, then a re-snapshot on Resync, Reconnected or ConnectionLost.
-  - Secrets in wiped buffers, and the connection state.
+- **Header-only, compiled by each consumer** with its own toolchain and CRT, as C++23. It depends only on `reboot/client.h`, the header-only api types (`core/api`), `core/base` and the header-only sb codec with Boost.PFR. It links no core static library, no Asio and no message registry, and nothing of the core's crosses the DLL boundary except C. `reboot/sdk/sdk.hpp` includes all of it.
+- **Generated:** `methods.hpp` (a CRTP `Methods<Self>` mixin with one typed member per method) and `event_data.hpp` (the `EventData` variant) from protoc-gen-reboot-cpp; `english_catalog.hpp` (every registered message's English template) from `reboot-l10n render`, which the `l10n_catalog_complete` gate keeps current.
+- **Shape:**
+
+| Type | What it does |
+|---|---|
+| `Context::connect(ConnectOptions)` → `Expected<Context>` | RAII over `rb_ctx`, shared by copies, ops and subscriptions. Options: data root, client kind, launch mode, deadline, the ABI and schema fingerprint the client was built for, and whether a bootstrap-only engine is acceptable. It refuses another ABI major (`sdk.abi_mismatch`) and another schema (`sdk.schema_mismatch`, against `Engine.info`), and keeps the connect warning |
+| `ctx.<service>_<method>(request[, timeout])` → `Expected<Response>` | a CALL; `ctx.call<Response>(id, request)` underneath |
+| `ctx.<service>_<method>(request[, Disconnect])` → `Expected<Op<Response>>` | an OPERATION; `attach_<service>_<method>(op_id)` attaches one started elsewhere |
+| `Expected<T>` = `std::expected<T, Error>` | `Error` holds the `rb_status`, the Diagnostic's id, args, detail, kind, retryable flag and OS code, and `english()`, the English template rendered with the args |
+| `Op<T>` | `cancel()`, `poll()`, `wait(timeout, on_progress)`, `observe(event)`, `progress()`; the outcome is `Outcome<T>`: the response, an `Error`, `Cancelled{reason}` or `TimedOut{phase}`, or `into_expected()` |
+| `Subscription` | `next(timeout)` to pull, or `deliver(dispatcher, handler)` to have the wake callback push events through a `Dispatcher`; events this build cannot read are skipped and counted |
+| `Event` | the envelope plus `data`, an `EventData` variant over every payload type, the client-raised `Resync`, `ConnectionLost` and `Reconnected`, and the SDK's `Closed` |
+| `Dispatcher` | one `post()`; a UI adapts its loop (WinUI `DispatcherQueue::TryEnqueue`, GLib `g_idle_add`, Qt `QMetaObject::invokeMethod`, FTXUI `Post`). `QueueDispatcher` (drained by the caller, for a blocking CLI) and `ThreadDispatcher` (its own thread, for callbacks) ship with the SDK |
+| `LiveList<T>` | a snapshot call, then deltas; a Resync or Reconnected takes a new snapshot and a ConnectionLost marks it stale. `sessions_source()` keeps `Sessions.list` current |
+| `put_secret` / `reveal_secret` | secrets travel as `SecretString`, wiped when dropped; reboot_client wipes its buffers |
+| `connection()` | `Connected`, `Reconnecting` or `Closed`, followed from the subscriptions' events |
+
+```cpp
+rb::sdk::Expected<rb::sdk::Context> ctx = rb::sdk::Context::connect({.client_kind = rb::sdk::ClientKind::Cli});
+if (!ctx) return fail(ctx.error().english());
+auto profiles = ctx->host_profiles_list();                        // Expected<api::HostProfilesListResponse>
+auto op = ctx->host_start({.profile = profiles->profiles[0].id}); // Expected<Op<api::HostStartResponse>>
+auto outcome = op->wait(std::chrono::minutes{2}, [](const rb::api::Progress& p) { show(p.phase, p.done); });
+
+rb::sdk::QueueDispatcher ui;                                      // or an adapter over the UI loop
+auto sessions = rb::sdk::LiveList<rb::api::SessionSummary>::open(*ctx, ui, rb::sdk::sessions_source(), redraw);
+```
+
 - **No extra tolerance.** Unknown oneof cases and conflicting cases fail decoding; events of unknown kinds are skipped (§9.0).
-- **Closure check.** A CI step builds a minimal consumer from only the SDK headers and the `reboot_client` DLL: with the dynamic CRT (`/MD`) on Windows and with the system toolchain on Linux and macOS.
+- **Closure check.** `cmake --install <build> --component sdk` lays out the SDK headers, the api types, base, `client.h`, the sb codec headers, Boost.PFR and `reboot_client`. CI builds `core/sdk/consumer` against only that: with the dynamic CRT (`/MD`) on Windows and with the system toolchain on Linux and macOS.
 
 ### 9.4 CLI
 
@@ -877,7 +895,7 @@ The DLL erases them after reading.
    - the language floor on three toolchains (`REBOOT_FLOOR_CHECK`);
    - the link DAG and include check (`dag_check`), including the lean-consumer rule (§4.2);
    - the `reboot_client` import check (part of `dag_check`);
-   - message catalog completeness: `l10n_catalog_complete` runs `reboot-l10n check l10n/en.json`, which compiles every package's `messages.cpp` and fails on a missing, orphaned or mismatched id, or on a `MessageId` literal no package registers. `reboot-l10n render` regenerates the committed `en.json`;
+   - message catalog completeness: `l10n_catalog_complete` runs `reboot-l10n check l10n/en.json`, which compiles every package's `messages.cpp` and fails on a missing, orphaned or mismatched id, on a `MessageId` literal no package registers, or on an SDK English catalog that differs from the registry. `reboot-l10n render l10n/en.json <launcher root>` regenerates the committed `en.json` and `core/sdk/include/reboot/sdk/english_catalog.hpp`;
    - the secret grep: `reboot_engine_secret_gate` (`core/engine/gates`) runs host and play flows on the engine rig with a known backend password and join password, collects the tokens and credentials the engine hands its children (the game's `-AUTH_PASSWORD`, `REBOOT_CTL_TOKEN`, the game server's service token), then greps the LogRing, the session log files, every entry of a `Logs.export` archive and every file under the data and cache roots;
    - the data root is never inside the Velopack package: `data_root_outside_package` (Windows and macOS; Linux installs have no package) copies `reboot-engine` and `reboot-data-root-probe` into a Velopack layout or an app bundle, checks the default data, cache and logs roots are outside it, and checks the engine refuses a `REBOOT_LAUNCHER_HOME` inside it (also through `..` and, on Windows, in another case) with `storage.root_inside_package`.
 8. **Wine integration.** The real winhost (`payload/winhost`) under pinned Kron4ek Wine on Linux CI, with `reboot-fake-game`. An engine SIGKILL must end in winhost EOF and then the Job kill. A second job runs the same winhost through pinned umu-launcher and GE-Proton, with the Steam Linux Runtime umu downloads, under a private `$XDG_RUNTIME_DIR` tmpfs, so winhost is proven to read its token file through the read-only `PRESSURE_VESSEL_FILESYSTEMS_RO` share inside the container, and the file is proven gone once winhost connects. On the Linux runner the engine tests also run a Wine-shaped composed play flow: a fake runtime archive, a fake wineboot seeding the prefix, and `FakeWinhost` over the real game channel.

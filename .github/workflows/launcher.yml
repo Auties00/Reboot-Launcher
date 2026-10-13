@@ -125,6 +125,14 @@ jobs:
       - name: DAG check
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
         run: cmake --build --preset %PRESET% --target dag_check
+      # A client as the WinUI app builds: the dynamic CRT, the installed SDK headers and reboot_client only.
+      - name: SDK consumer
+        if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
+        run: |
+          cmake --install build/%PRESET% --component sdk --prefix "%RUNNER_TEMP%\reboot-sdk" || exit /b 1
+          cmake -S core/sdk/consumer -B "%RUNNER_TEMP%\sdk-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release "-DREBOOT_SDK_ROOT=%RUNNER_TEMP%\reboot-sdk" || exit /b 1
+          cmake --build "%RUNNER_TEMP%\sdk-consumer" || exit /b 1
+          "%RUNNER_TEMP%\sdk-consumer\reboot-sdk-consumer.exe"
       # A second local account for the IPC conformance's peer rejection and pipe squatting checks.
       # Windows PowerShell, whose LocalAccounts module is native; Users grants the interactive logon.
       - name: Other-user account
@@ -294,6 +302,15 @@ jobs:
       - name: DAG check
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
         run: cmake --build --preset "$PRESET" --target dag_check
+      # A client built with the system toolchain from the installed SDK headers and reboot_client only.
+      - name: SDK consumer
+        if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
+        run: |
+          set -e
+          cmake --install "build/$PRESET" --component sdk --prefix "$RUNNER_TEMP/reboot-sdk"
+          cmake -S core/sdk/consumer -B "$RUNNER_TEMP/sdk-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release -DREBOOT_SDK_ROOT="$RUNNER_TEMP/reboot-sdk"
+          cmake --build "$RUNNER_TEMP/sdk-consumer"
+          "$RUNNER_TEMP/sdk-consumer/reboot-sdk-consumer"
       # The runner's passwordless sudo gives the IPC suite its root helper; without it the
       # other-user checks fail instead of skipping.
       - name: Test

@@ -48,6 +48,10 @@ RUN --mount=type=cache,target=/root/.cache/vcpkg \
     cmake --preset ${PRESET} -DVCPKG_INSTALLED_DIR=/opt/vcpkg_installed -DREBOOT_FLOOR_CHECK=ON
 RUN cmake --build --preset ${PRESET} -- -k 0; echo $? > /tmp/build.rc
 RUN cmake --build --preset ${PRESET} --target dag_check; echo $? > /tmp/dag.rc
+# A client built with the system toolchain from the installed SDK headers and reboot_client only.
+RUN (set -e; cmake --install build/${PRESET} --component sdk --prefix /tmp/reboot-sdk; \
+     cmake -S core/sdk/consumer -B /tmp/sdk-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DREBOOT_SDK_ROOT=/tmp/reboot-sdk; \
+     cmake --build /tmp/sdk-consumer; /tmp/sdk-consumer/reboot-sdk-consumer); echo $? > /tmp/sdk.rc
 
 # ---- test: unit, contract and conformance suites, then the CI gates, as a regular user -----------
 # The gates here are message catalog completeness and the secret grep; Linux has no Velopack package.
@@ -57,5 +61,6 @@ RUN useradd --create-home ci && chown -R ci /src/launcher/build
 USER ci
 RUN ctest --preset ${PRESET} --no-tests=error -LE gate; test=$?; \
     ctest --preset ${PRESET} --no-tests=error -L gate; gates=$?; \
-    echo "build: $(cat /tmp/build.rc), dag_check: $(cat /tmp/dag.rc), ctest: $test, gates: $gates"; \
-    [ "$(cat /tmp/build.rc)" = 0 ] && [ "$(cat /tmp/dag.rc)" = 0 ] && [ "$test" = 0 ] && [ "$gates" = 0 ]
+    echo "build: $(cat /tmp/build.rc), dag_check: $(cat /tmp/dag.rc), sdk consumer: $(cat /tmp/sdk.rc), ctest: $test, gates: $gates"; \
+    [ "$(cat /tmp/build.rc)" = 0 ] && [ "$(cat /tmp/dag.rc)" = 0 ] && [ "$(cat /tmp/sdk.rc)" = 0 ] && [ "$test" = 0 ] && \
+    [ "$gates" = 0 ]

@@ -1,6 +1,6 @@
 //! Generates the C++ side of reboot.api.v1: the header-only aggregates and method table (core/api),
-//! the engine's handler interfaces and dispatch (core/api_dispatch), and the method-id header of the
-//! public C ABI. Each generated header holds every type of one .proto file, the one exception to the
+//! the engine's handler interfaces and dispatch (core/api_dispatch), the method-id header of the
+//! public C ABI, and the typed methods and event data of the C++ SDK (core/sdk). Each generated header holds every type of one .proto file, the one exception to the
 //! one-main-type-per-header rule.
 //!
 //! As a protoc plugin it reads a CodeGeneratorRequest on stdin. Standalone it runs protoc itself:

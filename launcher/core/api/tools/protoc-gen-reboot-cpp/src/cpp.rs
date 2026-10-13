@@ -17,6 +17,10 @@ pub const DISPATCH_HEADER_DIR: &str = "include/reboot/api_dispatch/v1";
 const DISPATCH_INCLUDE_PREFIX: &str = "reboot/api_dispatch/v1";
 // The method ids of the public C ABI, in the client package, which never includes api headers.
 const C_METHODS_HEADER: &str = "client/include/reboot/client_methods.h";
+// The typed members and event data of the C++ SDK over that ABI.
+const SDK_METHODS_HEADER: &str = "sdk/include/reboot/sdk/methods.hpp";
+const SDK_EVENT_DATA_HEADER: &str = "sdk/include/reboot/sdk/event_data.hpp";
+const SDK_NAMESPACE: &str = "rb::sdk";
 const NAMESPACE: &str = "rb::api";
 const MAX_LINE: usize = 120;
 
@@ -311,9 +315,13 @@ impl<'a> Generator<'a> {
         let kind_names: BTreeSet<String> = kinds.values.iter()
             .map(|v| v.name.strip_prefix(&prefix).unwrap_or(&v.name).to_ascii_lowercase())
             .collect();
+        let mut types = BTreeSet::new();
         for field in &payload.fields {
             if !kind_names.contains(&field.name) {
                 self.error(format!("{EVENT_PAYLOAD}.{}", field.name), format!("has no {EVENT_KIND_ENUM} value of the same name"));
+            }
+            if !types.insert(field.type_name.clone()) {
+                self.error(format!("{EVENT_PAYLOAD}.{}", field.name), "repeats the type of another member");
             }
         }
     }
@@ -709,6 +717,139 @@ impl<'a> Generator<'a> {
         join(out)
     }
 
+    // One typed member per method, mixed into rb::sdk::Context, whose call, start and attach do the rest.
+    fn sdk_methods(&self) -> String {
+        let rows = self.all_methods();
+        let mut local: Vec<String> = vec![
+            format!("{INCLUDE_PREFIX}/method_table.hpp"),
+            "reboot/sdk/error.hpp".to_owned(),
+            "reboot/sdk/op.hpp".to_owned(),
+        ];
+        local.extend(self.service_files().iter().map(|f| format!("{INCLUDE_PREFIX}/{}.hpp", f.stem())));
+        local.sort();
+        let local: Vec<&str> = local.iter().map(String::as_str).collect();
+        let mut out = vec![banner(None), "#pragma once".to_owned(), String::new()];
+        out.extend(include_block(&["chrono", "cstdint"], &local));
+        out.extend([
+            String::new(),
+            format!("namespace {SDK_NAMESPACE} {{"),
+            String::new(),
+            "// Every reboot.api.v1 method as a typed member of Context, which supplies call, start and attach.".to_owned(),
+            "template <class Self>".to_owned(),
+            "class Methods {".to_owned(),
+            "public:".to_owned(),
+        ]);
+        for (_, s, m) in &rows {
+            let id = format!("api::{}", constant(s, m));
+            let name = format!("{}_{}", snake(&s.name), snake(&m.name));
+            let request = format!("api::{}", short_name(&m.input_type));
+            let response = format!("api::{}", short_name(&m.output_type));
+            if is_call(m) {
+                out.extend([
+                    format!("    // {}.{}: call.", snake(&s.name), snake(&m.name)),
+                    format!("    [[nodiscard]] Expected<{response}> {name}("),
+                    format!("        const {request}& request = {{}}, std::chrono::milliseconds timeout = {{}}) const {{"),
+                ]);
+                out.extend(fit(&format!("        return self().template call<{response}>("), &format!("{id}, request, timeout);")));
+                out.push("    }".to_owned());
+            } else {
+                let disconnect = m.info.as_ref().map_or(0, |info| info.disconnect);
+                let policy = if self.options.disconnect[&disconnect] == "Detached" { "detached" } else { "bound" };
+                out.extend([
+                    format!("    // {}.{}: operation, {policy} by default.", snake(&s.name), snake(&m.name)),
+                    format!("    [[nodiscard]] Expected<Op<{response}>> {name}("),
+                    format!("        const {request}& request = {{}}, Disconnect disconnect = Disconnect::Default) const {{"),
+                ]);
+                out.extend(fit(&format!("        return self().template start<{response}>("), &format!("{id}, request, disconnect);")));
+                out.push("    }".to_owned());
+                out.extend(fit(&format!("    [[nodiscard]] Expected<Op<{response}>> attach_{name}("),
+                               "std::uint64_t op_id) const {"));
+                out.extend(fit(&format!("        return self().template attach<{response}>("), &format!("{id}, op_id);")));
+                out.push("    }".to_owned());
+            }
+            out.push(String::new());
+        }
+        out.extend([
+            "private:".to_owned(),
+            "    [[nodiscard]] const Self& self() const noexcept { return static_cast<const Self&>(*this); }".to_owned(),
+            "};".to_owned(),
+            String::new(),
+            format!("}}  // namespace {SDK_NAMESPACE}"),
+            String::new(),
+        ]);
+        join(out)
+    }
+
+    // Every event's data as one variant: the SDK's Closed, the kinds reboot_client raises without a
+    // payload, then each EventPayload member, whose types check_events keeps distinct.
+    fn sdk_event_data(&self) -> String {
+        let payload = self.messages[EVENT_PAYLOAD];
+        let kinds = self.enums[EVENT_KIND_ENUM];
+        let prefix = enum_prefix(EVENT_KIND_ENUM);
+        let members: BTreeSet<&str> = payload.fields.iter().map(|field| field.name.as_str()).collect();
+        let markers: Vec<String> = kinds.values.iter()
+            .filter(|v| v.number != 0)
+            .map(|v| v.name.strip_prefix(&prefix).unwrap_or(&v.name))
+            .filter(|name| !members.contains(name.to_ascii_lowercase().as_str()))
+            .map(pascal)
+            .collect();
+        let mut out = vec![banner(None), "#pragma once".to_owned(), String::new()];
+        out.extend(include_block(&["optional", "utility", "variant"],
+                                 &[&format!("{INCLUDE_PREFIX}/common.hpp"), &format!("{INCLUDE_PREFIX}/events.hpp")]));
+        out.extend([
+            String::new(),
+            format!("namespace {SDK_NAMESPACE} {{"),
+            String::new(),
+            "// The subscription ended: its context closed or will not reconnect. The SDK raises it.".to_owned(),
+            "struct Closed {};".to_owned(),
+            String::new(),
+            "// reboot_client raises these kinds, which carry no payload.".to_owned(),
+        ]);
+        out.extend(markers.iter().map(|marker| format!("struct {marker} {{}};")));
+        out.extend([
+            String::new(),
+            "// One alternative per event: Closed, the kinds without a payload, then each EventPayload member.".to_owned(),
+            "using EventData = std::variant<".to_owned(),
+            "    Closed,".to_owned(),
+        ]);
+        out.extend(markers.iter().map(|marker| format!("    {marker},")));
+        let types: Vec<String> = payload.fields.iter().map(|field| format!("api::{}", short_name(&field.type_name))).collect();
+        for (i, ty) in types.iter().enumerate() {
+            out.push(format!("    {ty}{}", if i + 1 == types.len() { ">;" } else { "," }));
+        }
+        out.extend([
+            String::new(),
+            "// The data of a kind without a payload; nullopt for any other kind.".to_owned(),
+            format!("[[nodiscard]] inline std::optional<EventData> marker_data(api::{EVENT_KIND_ENUM} kind) {{"),
+            "    switch (kind) {".to_owned(),
+        ]);
+        for marker in &markers {
+            out.push(format!("        case api::{EVENT_KIND_ENUM}::{marker}:"));
+            out.push(format!("            return EventData{{{marker}{{}}}};"));
+        }
+        out.extend([
+            "        default:".to_owned(),
+            "            return std::nullopt;".to_owned(),
+            "    }".to_owned(),
+            "}".to_owned(),
+            String::new(),
+            "// Moves out the member that is set; nullopt when none is.".to_owned(),
+            format!("[[nodiscard]] inline std::optional<EventData> take_data(api::{EVENT_PAYLOAD}&& payload) {{"),
+        ]);
+        for (field, ty) in payload.fields.iter().zip(&types) {
+            out.push(format!("    if (payload.{}) return EventData{{std::in_place_type<{ty}>, std::move(*payload.{})}};",
+                             field.name, field.name));
+        }
+        out.extend([
+            "    return std::nullopt;".to_owned(),
+            "}".to_owned(),
+            String::new(),
+            format!("}}  // namespace {SDK_NAMESPACE}"),
+            String::new(),
+        ]);
+        join(out)
+    }
+
     fn services(&self) -> Vec<&'a Service> {
         self.files.iter().flat_map(|f| &f.services).collect()
     }
@@ -893,8 +1034,21 @@ impl<'a> Generator<'a> {
         out.insert(format!("{DISPATCH_DIR}/{DISPATCH_HEADER_DIR}/dispatch.hpp"), self.dispatch_header());
         out.insert(format!("{DISPATCH_DIR}/src/dispatch.cpp"), self.dispatch_source());
         out.insert(C_METHODS_HEADER.to_owned(), self.c_methods_header());
+        out.insert(SDK_METHODS_HEADER.to_owned(), self.sdk_methods());
+        if self.messages.contains_key(EVENT_PAYLOAD) && self.enums.contains_key(EVENT_KIND_ENUM) {
+            out.insert(SDK_EVENT_DATA_HEADER.to_owned(), self.sdk_event_data());
+        }
         Ok(out)
     }
+}
+
+// `head` and `tail` on one line, or `tail` on the next, four columns deeper, when that is too long.
+fn fit(head: &str, tail: &str) -> Vec<String> {
+    if head.len() + tail.len() <= MAX_LINE {
+        return vec![format!("{head}{tail}")];
+    }
+    let indent = head.len() - head.trim_start().len() + 4;
+    vec![head.to_owned(), format!("{}{tail}", " ".repeat(indent))]
 }
 
 fn handler_method_name(method: &Method) -> String {
