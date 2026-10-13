@@ -23,6 +23,28 @@ allow 1024-65535 0.0.0.0/0 1024-65535
 deny 0-65535 0.0.0.0/0 0-65535
 EOF
 
-# The tables and chains miniupnpd adds its rules to.
-if [ -x /etc/miniupnpd/nft_init.sh ]; then /etc/miniupnpd/nft_init.sh; fi
+# The table and chains miniupnpd adds its rules to, by its default names. Debian's nft_init.sh
+# cannot do it: bookworm ships it without the miniupnpd_functions.sh it sources.
+nft -f /dev/stdin <<'NFT'
+table inet filter {
+    chain forward {
+        type filter hook forward priority 0; policy accept;
+        jump miniupnpd
+    }
+    chain miniupnpd {
+    }
+    chain prerouting {
+        type nat hook prerouting priority -100; policy accept;
+        jump prerouting_miniupnpd
+    }
+    chain postrouting {
+        type nat hook postrouting priority 100; policy accept;
+        jump postrouting_miniupnpd
+    }
+    chain prerouting_miniupnpd {
+    }
+    chain postrouting_miniupnpd {
+    }
+}
+NFT
 exec miniupnpd -d -f /run/miniupnpd/test.conf
