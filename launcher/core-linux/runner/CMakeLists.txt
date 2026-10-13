@@ -33,4 +33,17 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND REBOOT_BUILD_TESTS)
     endif()
     catch_discover_tests(reboot_os_linux_runner_conformance)
   endif()
+
+  # CI gate (spec 14.6): the Windows-built winhost and fake game under the pinned Kron4ek Wine. The
+  # wine job runs it through ci/wine/run.sh; elsewhere its cases skip.
+  if(NOT COMMAND catch_discover_tests)
+    include(Catch)
+  endif()
+  add_executable(reboot_os_linux_runner_wine_gate gates/wine_gate.cpp)
+  _reboot_record_target(reboot_os_linux_runner_wine_gate test
+    DEPS reboot::os_linux_runner reboot::os_linux_platform reboot::testing
+    SOURCES gates/wine_gate.cpp)
+  target_link_libraries(reboot_os_linux_runner_wine_gate PRIVATE
+    reboot_os_linux_runner reboot_os_linux_platform Catch2::Catch2WithMain reboot_warnings reboot_testing)
+  catch_discover_tests(reboot_os_linux_runner_wine_gate PROPERTIES LABELS gate)
 endif()

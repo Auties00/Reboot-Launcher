@@ -45,7 +45,9 @@ public:
     // Values are base64 through secret_password_storev_sync, which EL8's libsecret 0.18 has.
     // Writing removes any copy in the other backend.
     Result<void> put(std::string_view key, std::span<const u8> value) override;
-    // The active backend first, then the other one.
+    // The fallback file first in either mode, since it is newer than any keyring copy (a put that
+    // reaches the keyring removes it); in Os mode a file value moves into the keyring. Then the
+    // keyring.
     Result<std::optional<SecretBytes>> get(std::string_view key) override;
     // Erases from both backends; a missing key is success.
     Result<void> erase(std::string_view key) override;

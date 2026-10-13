@@ -1,11 +1,13 @@
 #pragma once
 
 #include "reboot/foundation/diag.hpp"
+#include "reboot/ports/ipc.hpp"
 
 namespace rb::posix {
 
 // Registered once by core/posix, whose public headers do not declare them; these bind to those objects.
-REBOOT_MESSAGE_DECL(kEndpointUntrusted);
+// ipc.endpoint_untrusted is the IPC port's, registered by the foundation.
+using ports::kEndpointUntrusted;
 REBOOT_MESSAGE_DECL(kNotADirectory);
 REBOOT_MESSAGE_DECL(kDirectoryNotPrivate);
 REBOOT_MESSAGE_DECL(kEngineNotListening);

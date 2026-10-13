@@ -20,7 +20,9 @@ public:
     // and fuse.sshfs; the label comes from /dev/disk/by-label. A mount statvfs cannot reach is skipped.
     Result<std::vector<ports::VolumeInfo>> volumes() override;
     // The mount with the longest mount point containing the canonical `path`, so bind mounts
-    // and the Steam Deck's microSD under /run/media resolve to their own volume.
+    // and the Steam Deck's microSD under /run/media resolve to their own volume. tmpfs, ramfs
+    // and squashfs count here, though volumes() leaves them out, so a path on a tmpfs /tmp gets
+    // that tmpfs's free space and one in the AppImage's squashfs reads read-only.
     Result<ports::VolumeInfo> volume_of(const NativePath& path) override;
 };
 

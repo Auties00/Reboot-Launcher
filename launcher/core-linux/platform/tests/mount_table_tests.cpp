@@ -53,6 +53,11 @@ TEST_CASE("pseudo and network file systems are told apart", "[mount_table]") {
     CHECK(is_pseudo_fs("squashfs"));
     CHECK_FALSE(is_pseudo_fs("ext4"));
     CHECK_FALSE(is_pseudo_fs("overlay"));
+    CHECK(holds_no_storage("proc"));
+    CHECK(holds_no_storage("cgroup2"));
+    CHECK_FALSE(holds_no_storage("tmpfs"));
+    CHECK_FALSE(holds_no_storage("squashfs"));
+    CHECK_FALSE(holds_no_storage("ext4"));
     CHECK(is_network_fs("nfs4"));
     CHECK(is_network_fs("fuse.sshfs"));
     CHECK_FALSE(is_network_fs("btrfs"));
@@ -81,4 +86,17 @@ TEST_CASE("the longest containing mount point wins", "[mount_table]") {
     CHECK(mount_of("/run/media/deck/SD Card/steamapps") == NativePath{"/run/media/deck/SD Card"});
     CHECK(mount_of("/homework") == NativePath{"/"});
     CHECK(mount_of("/tmp/x") == NativePath{"/"});
+}
+
+TEST_CASE("volume_of's candidates include tmpfs and binds but no pseudo file system", "[mount_table]") {
+    const std::vector<MountEntry> entries = parse_mountinfo(kMountInfo);
+    const std::vector<std::size_t> candidates = storage_mounts(entries);
+    const auto mount_of = [&](const NativePath& path) {
+        const auto index = containing_mount(entries, candidates, path);
+        return index ? entries[*index].mount_point : NativePath{};
+    };
+    CHECK(mount_of("/tmp/x") == NativePath{"/tmp"});
+    CHECK(mount_of("/srv/games/x") == NativePath{"/srv/games"});
+    CHECK(mount_of("/proc/self") == NativePath{"/"});
+    CHECK(candidates.size() == 6);
 }

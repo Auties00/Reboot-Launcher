@@ -1,10 +1,12 @@
 #include "reboot/os_linux/ipc/systemd_engine_starter.hpp"
 
+#include <chrono>
 #include <optional>
 #include <span>
 #include <string>
 #include <string_view>
 #include <sys/stat.h>
+#include <thread>
 #include <vector>
 
 #include "detached_spawn.hpp"
@@ -34,6 +36,23 @@ namespace {
 [[nodiscard]] bool socket_present(const NativePath& path) {
     struct stat info {};
     return ::lstat(path.c_str(), &info) == 0 && S_ISSOCK(info.st_mode);
+}
+
+// Until the engine holds engine.lock or `deadline` passes; spawn.lock is held meanwhile, so a
+// racing client then finds it running instead of spawning a second one.
+void wait_for_engine_lock(const NativePath& engine_lock, std::chrono::milliseconds deadline) {
+    constexpr std::chrono::milliseconds kPoll{25};
+    const auto until = std::chrono::steady_clock::now() + deadline;
+    for (;;) {
+        const Result<bool> held = is_ofd_locked(engine_lock);
+        if (!held || *held) return;
+        if (std::chrono::steady_clock::now() >= until) {
+            REBOOT_LOG_DEBUG(Client, "the engine did not take {} within {} ms", engine_lock.string(),
+                             deadline.count());
+            return;
+        }
+        std::this_thread::sleep_for(kPoll);
+    }
 }
 
 [[nodiscard]] std::vector<std::string_view> inherited_environment() {
@@ -92,7 +111,7 @@ Result<ports::StartResult> SystemdEngineStarter::ensure_started(const NativePath
     const EngineEnvironmentInputs inputs = environment_inputs(paths_);
     const std::vector<std::string> command = engine_command(engine_exe, paths_.appimage());
     if (runtime_base.from_xdg_runtime_dir) {
-        const std::vector<std::string> pinned = pinned_engine_variables(inputs, root);
+        const std::vector<std::string> pinned = transient_unit_variables(inputs, root, runtime_base.path);
         if (const std::optional<ports::StartResult> started = start_transient_unit(root_hash, pinned, command))
             return *started;
     }
@@ -109,6 +128,7 @@ Result<ports::StartResult> SystemdEngineStarter::ensure_started(const NativePath
         });
         !spawned)
         return std::unexpected(std::move(spawned.error()));
+    wait_for_engine_lock(layout.engine_lock(), kEngineReadyWait);
     return ports::StartResult::Started;
 }
 

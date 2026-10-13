@@ -1,7 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 #include <cerrno>
 #include <fcntl.h>
 #include <filesystem>
+#include <memory>
 #include <optional>
 #include <string>
 #include <sys/stat.h>
@@ -77,6 +79,11 @@ TEST_CASE("PosixFileSystem passes the file system conformance suite") {
         .make_symlink = [](const NativePath& link, const NativePath& target) -> Result<void> {
             if (::symlink(target.c_str(), link.c_str()) != 0) return std::unexpected(call_failed("symlink", errno, link));
             return {};
+        },
+        .make_failing_backup = []() -> std::unique_ptr<ports::IFileSystem> {
+            return std::make_unique<PosixFileSystem>(fsync_fd, fsync_fd, [](const NativePath&, const NativePath&) {
+                return EIO;
+            });
         }};
     const testing::ConformanceReport report =
         testing::run_file_system_conformance(fs, {.waiter = waiter, .scratch = scratch.path()}, std::move(hooks));
@@ -158,6 +165,81 @@ TEST_CASE("keep_backup hard-links the previous file and replaces an older backup
     CHECK(kept->file_id == before->file_id);
     CHECK(contents(fs, backup) == "first");
     CHECK(contents(fs, target) == "second");
+}
+
+TEST_CASE("keep_backup leaves no staging link when the backup already links the target") {
+    const auto scratch = make_scratch("posix-fs");
+    PosixFileSystem fs = make_file_system();
+    const NativePath target = scratch.path() / "doc.json";
+    const NativePath backup = scratch.path() / "doc.json.bak";
+    // As a crash between the backup's rename and the target's leaves them.
+    write_raw(target, "first");
+    REQUIRE(::link(target.c_str(), backup.c_str()) == 0);
+
+    REQUIRE(fs.atomic_replace(target, as_bytes("second"), true).has_value());
+    CHECK(contents(fs, backup) == "first");
+    CHECK(contents(fs, target) == "second");
+    CHECK(entries_in(scratch.path()) == 2);
+}
+
+TEST_CASE("keep_backup copies the previous file where the file system has no hard links") {
+    const auto scratch = make_scratch("posix-fs");
+    const NativePath target = scratch.path() / "doc.json";
+    const NativePath backup = scratch.path() / "doc.json.bak";
+    // Larger than one copy chunk.
+    const std::string first(150 * 1024, 'f');
+    write_raw(target, first);
+    write_raw(backup, "ancient");
+    const int error = GENERATE(EPERM, ENOTSUP, EMLINK);
+    int synced = 0;
+    PosixFileSystem fs{[&](int fd) {
+                           ++synced;
+                           return fsync_fd(fd);
+                       },
+                       fsync_fd, [=](const NativePath&, const NativePath&) { return error; }};
+    const auto before = fs.revision(target);
+    REQUIRE(before.has_value());
+
+    REQUIRE(fs.atomic_replace(target, as_bytes("second"), true).has_value());
+    CHECK(contents(fs, backup) == first);
+    CHECK(contents(fs, target) == "second");
+    const auto kept = fs.revision(backup);
+    REQUIRE(kept.has_value());
+    CHECK(kept->file_id != before->file_id);
+    CHECK(mode_of(backup) == 0600U);
+    // The written file and the backup copy.
+    CHECK(synced == 2);
+    CHECK(entries_in(scratch.path()) == 2);
+}
+
+TEST_CASE("a failed backup step keeps the old backup and the target") {
+    const auto scratch = make_scratch("posix-fs");
+    const NativePath target = scratch.path() / "doc.json";
+    const NativePath backup = scratch.path() / "doc.json.bak";
+    write_raw(target, "first");
+    write_raw(backup, "ancient");
+    PosixFileSystem reader = make_file_system();
+
+    SECTION("the link fails with an error other than a missing hard link support") {
+        PosixFileSystem fs{fsync_fd, fsync_fd, [](const NativePath&, const NativePath&) { return EIO; }};
+        const auto result = fs.atomic_replace(target, as_bytes("second"), true);
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().is(kCallFailed));
+        CHECK(result.error().os_error == errno_error(EIO));
+    }
+    SECTION("the copy fallback fails to sync") {
+        int synced = 0;
+        PosixFileSystem fs{[&](int fd) -> Result<void> {
+                               if (++synced == 2) return std::unexpected(call_failed("fsync", EIO));
+                               return fsync_fd(fd);
+                           },
+                           fsync_fd, [](const NativePath&, const NativePath&) { return EPERM; }};
+        REQUIRE_FALSE(fs.atomic_replace(target, as_bytes("second"), true).has_value());
+        CHECK(synced == 2);
+    }
+    CHECK(contents(reader, backup) == "ancient");
+    CHECK(contents(reader, target) == "first");
+    CHECK(entries_in(scratch.path()) == 2);
 }
 
 TEST_CASE("read_all reads past its growth step and reports a missing file as NotFound") {

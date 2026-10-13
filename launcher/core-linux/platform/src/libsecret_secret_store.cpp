@@ -9,6 +9,7 @@
 #include "base64.hpp"
 #include "glib_runtime.hpp"
 #include "messages.hpp"
+#include "secret_read_order.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/ports/file_system.hpp"
 
@@ -257,6 +258,9 @@ struct LibsecretSecretStore::Impl {
         return kind == ports::SecretStoreKind::Os;
     }
 
+    // Without a probe.
+    [[nodiscard]] bool os_active() const { return kind == ports::SecretStoreKind::Os; }
+
     // After an Os call failed: true when the provider has gone since the probe, so the file takes
     // over; a deadline passed never falls back. Requires `mutex`.
     [[nodiscard]] bool fell_back(const Diagnostic& failure) {
@@ -289,17 +293,7 @@ Result<void> LibsecretSecretStore::put(std::string_view key, std::span<const u8>
 
 Result<std::optional<SecretBytes>> LibsecretSecretStore::get(std::string_view key) {
     const std::lock_guard lock(impl_->mutex);
-    const std::string name{key};
-    if (impl_->kind == ports::SecretStoreKind::Os) {
-        Result<std::optional<SecretBytes>> found = impl_->lookup_os(name);
-        if (found && *found) return found;
-        if (!found && !impl_->fell_back(found.error())) return found;
-        return impl_->lookup_file(key);
-    }
-    Result<std::optional<SecretBytes>> found = impl_->lookup_file(key);
-    if (!found || *found) return found;
-    if (!impl_->os_reachable()) return std::nullopt;
-    return impl_->lookup_os(name);
+    return read_newest(*impl_, std::string{key});
 }
 
 Result<void> LibsecretSecretStore::erase(std::string_view key) {

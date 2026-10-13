@@ -31,7 +31,9 @@ struct MountEntry {
 // \x20-style escapes as udev writes /dev/disk/by-label names.
 [[nodiscard]] std::string unescape_hex(std::string_view text);
 
-// proc, sysfs, cgroup, tmpfs, squashfs and the like, which hold no user data.
+// proc, sysfs, cgroup and the like, which hold no files a user writes.
+[[nodiscard]] bool holds_no_storage(std::string_view fs_type) noexcept;
+// holds_no_storage, plus tmpfs, ramfs and squashfs: storage, but no volume to list.
 [[nodiscard]] bool is_pseudo_fs(std::string_view fs_type) noexcept;
 // nfs, nfs4, cifs, smb3 and fuse.sshfs.
 [[nodiscard]] bool is_network_fs(std::string_view fs_type) noexcept;
@@ -39,6 +41,9 @@ struct MountEntry {
 // Indexes of the entries that are not pseudo file systems, in order; with `skip_binds`, also not
 // bind mounts: a mount whose device an earlier listed mount shows at an ancestor (or the same) root.
 [[nodiscard]] std::vector<std::size_t> real_mounts(const std::vector<MountEntry>& entries, bool skip_binds);
+
+// Indexes of every entry that holds storage, tmpfs, squashfs and bind mounts included, in order.
+[[nodiscard]] std::vector<std::size_t> storage_mounts(const std::vector<MountEntry>& entries);
 
 // The index in `candidates` of the entry with the longest mount point containing `path`.
 [[nodiscard]] std::optional<std::size_t> containing_mount(const std::vector<MountEntry>& entries,

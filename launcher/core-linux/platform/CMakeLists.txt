@@ -26,6 +26,7 @@ reboot_add_package(os_linux/platform
     src/linux_resolver.cpp
     src/linux_system_info.cpp
     src/linux_update_applier.cpp
+    src/locale_env_language_source.cpp
     src/make_platform.cpp
     src/messages.cpp
     src/mount_table.cpp
@@ -70,6 +71,12 @@ if(REBOOT_BUILD_TESTS)
     if(NOT COMMAND catch_discover_tests)
       include(Catch)
     endif()
+    # The contract case runs them.
+    foreach(fake reboot-fake-backend reboot-fake-game-server)
+      if(TARGET ${fake})
+        add_dependencies(reboot_os_linux_conformance ${fake})
+      endif()
+    endforeach()
     catch_discover_tests(reboot_os_linux_conformance)
   endif()
 endif()

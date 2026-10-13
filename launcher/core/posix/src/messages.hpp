@@ -1,11 +1,12 @@
 #pragma once
 
 #include "reboot/foundation/diag.hpp"
+#include "reboot/ports/ipc.hpp"
 
 namespace rb::posix {
 
-// Registered here for macOS and Linux and by os_windows/ipc on Windows; core/ipc leaves it to them.
-REBOOT_MESSAGE_DECL(kEndpointUntrusted);
+// Declared by the IPC port and registered by the foundation.
+using ports::kEndpointUntrusted;
 REBOOT_MESSAGE_DECL(kCallFailed);
 REBOOT_MESSAGE_DECL(kCallFailedOnPath);
 REBOOT_MESSAGE_DECL(kSocketPathTooLong);

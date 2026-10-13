@@ -16,16 +16,19 @@ namespace rb::posix {
 class PosixFileSystem final : public ports::IFileSystem {
 public:
     using SyncFd = UniqueFunction<Result<void>(int fd)>;
+    // Makes `link` a hard link to `existing`; returns 0 or an errno value.
+    using LinkFile = UniqueFunction<int(const NativePath& existing, const NativePath& link)>;
 
-    // Both hooks are required; atomic_replace fails with internal.bug rather than call an unset one.
-    // `sync_file` flushes a written file to stable storage: F_FULLFSYNC on macOS, fsync on Linux.
-    // `sync_directory` makes a rename durable on every POSIX system: F_FULLFSYNC of the directory
-    // on macOS, fsync on Linux.
-    PosixFileSystem(SyncFd sync_file, SyncFd sync_directory) noexcept
-        : sync_file_(std::move(sync_file)), sync_directory_(std::move(sync_directory)) {}
+    // Both sync hooks are required; atomic_replace fails with internal.bug rather than call an
+    // unset one. `sync_file` flushes a written file to stable storage: F_FULLFSYNC on macOS, fsync
+    // on Linux. `sync_directory` makes a rename durable on every POSIX system: F_FULLFSYNC of the
+    // directory on macOS, fsync on Linux. `link_file` defaults to linkat; tests replace it.
+    PosixFileSystem(SyncFd sync_file, SyncFd sync_directory, LinkFile link_file = {}) noexcept;
 
-    // A 0600 temp file beside the target, sync_file, a hard-linked <target>.bak when asked and a
-    // previous file exists, rename over the target, then sync_directory.
+    // A 0600 temp file beside the target, sync_file, then, when asked and a previous file exists,
+    // a new <target>.bak: a hard link to the previous file, or a synced copy where the file system
+    // has no hard links (exFAT, FAT32), staged under a temp name and renamed over the old backup,
+    // so a failed backup step leaves the old one. Then rename over the target and sync_directory.
     Result<void> atomic_replace(const NativePath& target, std::span<const u8> bytes, bool keep_backup) override;
     Result<std::vector<u8>> read_all(const NativePath& path) override;
     // flock on a 0600 lock file, created when missing. The lock belongs to the open file
@@ -47,8 +50,14 @@ public:
     Result<void> remove_tree(const NativePath& path) override;
 
 private:
+    // Leaves the previous file as <target>.bak; a missing previous file keeps the old backup.
+    [[nodiscard]] Result<void> replace_backup(const NativePath& target);
+    // False when the target is gone.
+    [[nodiscard]] Result<bool> copy_for_backup(const NativePath& target, const NativePath& staging);
+
     SyncFd sync_file_;
     SyncFd sync_directory_;
+    LinkFile link_file_;
 };
 
 // Covers no capability ids; IFileRevisionReader over stat, for reboot_client.

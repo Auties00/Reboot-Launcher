@@ -358,6 +358,7 @@ TEST_CASE("make_platform composes every engine port Linux provides", "[linux_con
     CHECK(services->security);
     CHECK(services->prerequisites);
     CHECK(services->system);
+    CHECK(services->languages);
     CHECK(services->updater);
     CHECK(services->random);
     const auto security = services->security->probe();

@@ -17,6 +17,9 @@ public:
     // Each systemctl or systemd-run child is SIGKILLed past this, so a hung user bus cannot hold
     // spawn.lock for the whole connect deadline.
     static constexpr std::chrono::seconds kSystemdCallDeadline{3};
+    // After a self-spawn, spawn.lock is kept until the engine holds engine.lock, so the next
+    // holder finds it running.
+    static constexpr std::chrono::seconds kEngineReadyWait{4};
 
     // `caller` is the context captured once at rb_ctx_create. `paths` gives the runtime base,
     // the XDG homes, the passwd fields and the AppImage. `under_steam_reaper`: an ancestor is
@@ -42,7 +45,10 @@ public:
     //    or reloading. Otherwise `systemd-run --user --unit=reboot-engine-<hash16> --collect
     //    --quiet` running the engine with run --origin=on-demand and --setenv for XDG_DATA_HOME,
     //    XDG_CACHE_HOME and XDG_STATE_HOME as `paths` resolved them (the user manager's
-    //    environment often lacks them) and REBOOT_LAUNCHER_HOME=<root> when overridden. Started.
+    //    environment often lacks them), XDG_RUNTIME_DIR as the client's runtime base (so the
+    //    engine listens where the client looks, whatever the manager's own is) and
+    //    REBOOT_LAUNCHER_HOME=<root> when overridden. Started; a second client finds the unit
+    //    running.
     // 3. ConnectOnly under a Steam reaper and NoInteractiveSession for a non-interactive caller;
     //    steps 1 and 2 serve both, since the engine they start is the user manager's child.
     //    Otherwise a setsid double fork whose grandchild resets every signal disposition and the
@@ -55,7 +61,8 @@ public:
     //    XDG_CONFIG_DIRS, DBUS_SESSION_BUS_ADDRESS (libsecret), LANG and LC_* from this process.
     //    argv, envp and the fd limit are built before fork, so the children make only
     //    async-signal-safe calls. An exec errno travels back over the CLOEXEC pipe; any failure is
-    //    platform.ipc_engine_spawn_failed. Started.
+    //    platform.ipc_engine_spawn_failed. Then spawn.lock stays held until the engine holds
+    //    engine.lock, for at most kEngineReadyWait. Started, even past that wait.
     // Steps 2 and 3 run `<appimage> engine run ...` from an AppImage, since the mount behind
     // engine_exe goes away when the client's AppImage exits.
     Result<ports::StartResult> ensure_started(const NativePath& engine_exe, const DataRoot& root) override;

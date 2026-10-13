@@ -39,11 +39,28 @@ Result<XdgPaths> XdgPaths::detect() {
     const NativePath exe = std::filesystem::read_symlink(self, error);
     if (error) return std::unexpected(posix::call_failed("readlink", error.value(), self));
     paths.exe_dir_ = without_deleted_suffix(exe).parent_path().lexically_normal();
-
-    InstallFacts facts = detect_install(paths.exe_dir_, env_value("APPIMAGE"), env_value("APPDIR"));
-    paths.appimage_ = std::move(facts.appimage);
-    paths.tarball_root_ = std::move(facts.tarball_root);
+    paths.detect_install_kind(env_value("APPIMAGE"), env_value("APPDIR"));
     return paths;
+}
+
+XdgPaths XdgPaths::for_layout(NativePath home, NativePath exe_dir, std::optional<std::string_view> appimage,
+                              std::optional<std::string_view> appdir) {
+    XdgPaths paths;
+    paths.uid_ = static_cast<u32>(::geteuid());
+    paths.home_ = std::move(home);
+    paths.config_home_ = xdg_base(std::nullopt, paths.home_, ".config");
+    paths.data_home_ = xdg_base(std::nullopt, paths.home_, ".local/share");
+    paths.cache_home_ = xdg_base(std::nullopt, paths.home_, ".cache");
+    paths.state_home_ = xdg_base(std::nullopt, paths.home_, ".local/state");
+    paths.exe_dir_ = exe_dir.lexically_normal();
+    paths.detect_install_kind(appimage, appdir);
+    return paths;
+}
+
+void XdgPaths::detect_install_kind(std::optional<std::string_view> appimage, std::optional<std::string_view> appdir) {
+    InstallFacts facts = detect_install(exe_dir_, appimage, appdir);
+    appimage_ = std::move(facts.appimage);
+    tarball_root_ = std::move(facts.tarball_root);
 }
 
 NativePath XdgPaths::default_data_root() const { return data_home_ / kAppDir; }

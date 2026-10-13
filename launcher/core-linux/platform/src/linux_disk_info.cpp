@@ -61,7 +61,8 @@ using Labels = std::map<NativePath, std::string>;
     volume.fs_type = entry.fs_type;
     volume.free_bytes = static_cast<u64>(stats.f_bavail) * static_cast<u64>(stats.f_frsize);
     volume.total_bytes = static_cast<u64>(stats.f_blocks) * static_cast<u64>(stats.f_frsize);
-    volume.read_only = entry.read_only;
+    // A squashfs image is never writable, whatever its mount options say.
+    volume.read_only = entry.read_only || entry.fs_type == "squashfs";
     volume.network = is_network_fs(entry.fs_type);
     if (const std::optional<NativePath> device = source_device(entry)) {
         volume.removable = removable(*device);
@@ -94,7 +95,7 @@ Result<ports::VolumeInfo> LinuxDiskInfo::volume_of(const NativePath& path) {
     Result<std::string> text = read_text_file(kMountInfo);
     if (!text) return std::unexpected(std::move(text.error()));
     const std::vector<MountEntry> entries = parse_mountinfo(*text);
-    const std::optional<std::size_t> index = containing_mount(entries, real_mounts(entries, false), canonical);
+    const std::optional<std::size_t> index = containing_mount(entries, storage_mounts(entries), canonical);
     if (!index) return std::unexpected(posix::call_failed("statvfs", ENOENT, canonical));
     return describe(entries[*index], read_labels());
 }

@@ -1,6 +1,8 @@
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <chrono>
+#include <future>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -163,6 +165,40 @@ TEST_CASE("the self-spawned engine runs on demand with a fixed environment", "[e
     CHECK_FALSE(has_prefix(lines, "env:REBOOT_LAUNCHER_TEST_LEAK="));
     CHECK_FALSE(has_prefix(lines, "env:XDG_CONFIG_HOME="));
     CHECK_FALSE(has_prefix(lines, "env:LISTEN_PID="));
+}
+
+TEST_CASE("spawn.lock is held after a self-spawn until the engine holds engine.lock", "[engine_starter]") {
+    const StarterFixture fixture;
+    REQUIRE(create_private_dirs(fixture.engine_exe.parent_path()));
+    write_text(fixture.engine_exe, kFakeEngine, 0700);
+
+    const auto began = std::chrono::steady_clock::now();
+    std::future<Result<ports::StartResult>> started = std::async(std::launch::async, [&] { return fixture.start(); });
+    REQUIRE(wait_for([&] { return path_exists(fixture.root.root / "report"); }));
+    // The fake engine never takes engine.lock, so the call still waits and still holds spawn.lock.
+    CHECK(started.wait_for(std::chrono::milliseconds{0}) == std::future_status::timeout);
+    CHECK(locked(fixture.state_dir() / "spawn.lock"));
+
+    SECTION("the engine taking engine.lock ends the wait") {
+        const auto engine_lock = lock_ofd_exclusive(fixture.state_dir() / "engine.lock");
+        REQUIRE(engine_lock);
+        const auto taken = std::chrono::steady_clock::now();
+        const Result<ports::StartResult> result = started.get();
+        REQUIRE(result);
+        CHECK(*result == ports::StartResult::Started);
+        CHECK(std::chrono::steady_clock::now() - taken < std::chrono::seconds{2});
+        // The next client finds it running instead of spawning a second engine.
+        const auto again = fixture.start();
+        REQUIRE(again);
+        CHECK(*again == ports::StartResult::AlreadyRunning);
+    }
+    SECTION("an engine that never takes it is still Started once the wait runs out") {
+        const Result<ports::StartResult> result = started.get();
+        REQUIRE(result);
+        CHECK(*result == ports::StartResult::Started);
+        CHECK(std::chrono::steady_clock::now() - began >= SystemdEngineStarter::kEngineReadyWait);
+    }
+    CHECK_FALSE(locked(fixture.state_dir() / "spawn.lock"));
 }
 
 TEST_CASE("an engine that cannot be executed is platform.ipc_engine_spawn_failed", "[engine_starter]") {

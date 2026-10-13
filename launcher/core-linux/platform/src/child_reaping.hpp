@@ -2,6 +2,8 @@
 
 #include <mutex>
 #include <optional>
+#include <string_view>
+#include <vector>
 
 #include "reboot/foundation/types.hpp"
 
@@ -50,7 +52,13 @@ struct PeekResult {
 // reap_listed_child without reaping: an ended child stays listed and a zombie.
 [[nodiscard]] PeekResult peek_listed_child(u32 pid);
 
-// For PID 1: reaps every zombie child, recording listed ones in ChildTable for their waiters.
+// For PID 1: reaps every unlisted zombie child, such as a re-parented orphan. Listed children are
+// left to their waiters, so a leader stays a zombie and its group id cannot be reused before
+// terminate_tree's group kill. The children come from /proc/self/task/*/children; without that
+// file (CONFIG_PROC_CHILDREN off) every zombie is reaped, listed ones recorded in ChildTable.
 void reap_zombies();
+
+// The pids of a /proc/<pid>/task/<tid>/children file: decimal, space separated.
+[[nodiscard]] std::vector<u32> parse_child_pids(std::string_view text);
 
 }  // namespace rb::os_linux::platform

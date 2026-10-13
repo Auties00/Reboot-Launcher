@@ -138,7 +138,83 @@ struct DirCloser {
     return {};
 }
 
+[[nodiscard]] int link_with_linkat(const NativePath& existing, const NativePath& link) {
+    return ::linkat(AT_FDCWD, existing.c_str(), AT_FDCWD, link.c_str(), 0) == 0 ? 0 : errno;
+}
+
+// The errors of a file system without hard links: exFAT and FAT32 report EPERM, some FUSE and
+// network mounts the others.
+[[nodiscard]] bool hard_links_unsupported(int error) noexcept {
+#if ENOTSUP != EOPNOTSUPP
+    if (error == EOPNOTSUPP) return true;
+#endif
+    return error == EPERM || error == ENOTSUP || error == EMLINK || error == EXDEV || error == ENOSYS;
+}
+
 }  // namespace
+
+PosixFileSystem::PosixFileSystem(SyncFd sync_file, SyncFd sync_directory, LinkFile link_file) noexcept
+    : sync_file_(std::move(sync_file)),
+      sync_directory_(std::move(sync_directory)),
+      link_file_(link_file ? std::move(link_file) : LinkFile{&link_with_linkat}) {}
+
+Result<bool> PosixFileSystem::copy_for_backup(const NativePath& target, const NativePath& staging) {
+    const UniqueFd from{::open(target.c_str(), O_RDONLY | O_CLOEXEC)};
+    if (!from.valid()) {
+        if (errno == ENOENT) return false;
+        return std::unexpected(call_failed("open", errno, target));
+    }
+    UniqueFd to{::open(staging.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600)};
+    if (!to.valid()) return std::unexpected(call_failed("open", errno, staging));
+    std::vector<u8> chunk(kReadGrowth);
+    for (;;) {
+        const auto got = ::read(from.get(), chunk.data(), chunk.size());
+        if (got < 0) {
+            if (errno == EINTR) continue;
+            return std::unexpected(call_failed("read", errno, target));
+        }
+        if (got == 0) break;
+        if (auto written = write_all(to.get(), std::span{chunk}.first(static_cast<std::size_t>(got)), staging); !written)
+            return std::unexpected(std::move(written.error()));
+    }
+    if (auto synced = sync_file_(to.get()); !synced) return std::unexpected(std::move(synced.error()));
+    if (::close(to.release()) != 0) return std::unexpected(call_failed("close", errno, staging));
+    return true;
+}
+
+Result<void> PosixFileSystem::replace_backup(const NativePath& target) {
+    const NativePath backup{target.native() + ".bak"};
+    struct stat previous {};
+    if (::lstat(target.c_str(), &previous) != 0) {
+        // Without a previous file an older backup may be the only copy left, so it stays.
+        if (errno == ENOENT) return {};
+        return std::unexpected(call_failed("lstat", errno, target));
+    }
+
+    std::string staging_name = backup.native() + ".XXXXXX";
+    if (UniqueFd reserved{::mkostemp(staging_name.data(), O_CLOEXEC)}; !reserved.valid())
+        return std::unexpected(call_failed("mkostemp", errno, backup));
+    const NativePath staging{staging_name};
+    // A link needs a free name; the owner-only data directory keeps anyone else from taking it.
+    if (::unlink(staging.c_str()) != 0) return std::unexpected(call_failed("unlink", errno, staging));
+
+    auto staged = [&]() -> Result<bool> {
+        const int linked = link_file_(target, staging);
+        if (linked == ENOENT) return false;
+        if (linked != 0 && !hard_links_unsupported(linked)) return std::unexpected(call_failed("linkat", linked, backup));
+        if (linked != 0) {
+            auto copied = copy_for_backup(target, staging);
+            if (!copied || !*copied) return copied;
+        }
+        if (::rename(staging.c_str(), backup.c_str()) != 0) return std::unexpected(call_failed("rename", errno, backup));
+        // rename does nothing when both names link one file, as after a crash between the two renames.
+        ::unlink(staging.c_str());
+        return true;
+    }();
+    if (!staged || !*staged) ::unlink(staging.c_str());
+    if (!staged) return std::unexpected(std::move(staged.error()));
+    return {};
+}
 
 Result<void> PosixFileSystem::atomic_replace(const NativePath& target, std::span<const u8> bytes, bool keep_backup) {
     if (!sync_file_ || !sync_directory_) return std::unexpected(internal_bug("posix.atomic_replace_hooks"));
@@ -154,17 +230,7 @@ Result<void> PosixFileSystem::atomic_replace(const NativePath& target, std::span
         // close can report a deferred write error, on NFS for instance.
         if (::close(file.release()) != 0) return std::unexpected(call_failed("close", errno, temp));
         if (keep_backup) {
-            const NativePath backup = NativePath{target.native() + ".bak"};
-            struct stat previous {};
-            // Without a previous file an older backup may be the only copy left, so it stays.
-            if (::lstat(target.c_str(), &previous) == 0) {
-                if (::unlink(backup.c_str()) != 0 && errno != ENOENT)
-                    return std::unexpected(call_failed("unlink", errno, backup));
-                if (::linkat(AT_FDCWD, target.c_str(), AT_FDCWD, backup.c_str(), 0) != 0 && errno != ENOENT)
-                    return std::unexpected(call_failed("linkat", errno, backup));
-            } else if (errno != ENOENT) {
-                return std::unexpected(call_failed("lstat", errno, target));
-            }
+            if (auto kept = replace_backup(target); !kept) return kept;
         }
         if (::rename(temp.c_str(), target.c_str()) != 0) return std::unexpected(call_failed("rename", errno, target));
         return {};

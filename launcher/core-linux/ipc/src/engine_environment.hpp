@@ -29,6 +29,12 @@ struct EngineEnvironmentInputs {
 [[nodiscard]] std::vector<std::string> pinned_engine_variables(const EngineEnvironmentInputs& inputs,
                                                                const DataRoot& root);
 
+// The systemd-run --setenv entries: the pinned variables and XDG_RUNTIME_DIR=<runtime_dir>, since
+// the user manager's own runtime directory may differ from the client's and the engine listens
+// under the one it sees.
+[[nodiscard]] std::vector<std::string> transient_unit_variables(const EngineEnvironmentInputs& inputs,
+                                                                const DataRoot& root, const NativePath& runtime_dir);
+
 // The self-spawned engine's whole envp: HOME, USER, LOGNAME and SHELL from `inputs`, the pinned
 // variables, then from `inherited` ("NAME=value"; the first of a name wins, as in getenv) only
 // non-empty PATH, XDG_DATA_DIRS, XDG_CONFIG_DIRS, DBUS_SESSION_BUS_ADDRESS, LANG and LC_*, and

@@ -17,6 +17,7 @@
 #include "reboot/os_linux/platform/linux_resolver.hpp"
 #include "reboot/os_linux/platform/linux_system_info.hpp"
 #include "reboot/os_linux/platform/linux_update_applier.hpp"
+#include "reboot/os_linux/platform/locale_env_language_source.hpp"
 #include "reboot/os_linux/platform/no_security_product_probe.hpp"
 #include "reboot/os_linux/platform/pidfd_process_launcher.hpp"
 #include "reboot/os_linux/platform/sock_diag_peer_inspector.hpp"
@@ -71,9 +72,13 @@ Result<PlatformServices> make_platform(const PlatformOptions& options) {
     auto system = std::make_unique<LinuxSystemInfo>();
     services.updater = std::make_unique<LinuxUpdateApplier>(*paths, system->in_container());
     services.system = std::move(system);
+    services.languages = std::make_unique<LocaleEnvLanguageSource>();
     services.random = std::make_unique<OsRandom>();
     services.paths = std::move(paths);
     return services;
 }
+
+// AppImage and tarball installs have no installer that calls the engine back.
+void run_package_hooks(UniqueFunction<void(PackageHook)>) {}
 
 }  // namespace rb::ports

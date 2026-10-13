@@ -18,6 +18,7 @@
 #include "messages.hpp"
 #include "proc_stat.hpp"
 #include "reboot/os_linux/platform/pidfd_process_launcher.hpp"
+#include "reboot/testing/contract_conformance.hpp"
 #include "text_files.hpp"
 
 using namespace rb;
@@ -84,6 +85,16 @@ TEST_CASE("PidfdProcessLauncher passes the process launcher suite", "[linux_conf
     subject.spawns_grandchild = shell("sleep 1000 & echo $!; wait");
     subject.process_exists = process_exists;
     require_passed(testing::run_process_launcher_conformance(launcher, std::move(subject), scratch.env()));
+}
+
+TEST_CASE("the fake backend and game server pass the contract suites through PidfdProcessLauncher", "[linux_conformance]") {
+    Scratch scratch;
+    PidfdProcessLauncher launcher(std::nullopt);
+    const auto reports = testing::run_fake_contract_conformance(launcher, scratch.waiter, scratch.dir.path());
+    if (reports.empty()) {
+        SKIP("this build has no fake backend or game server");
+    }
+    for (const testing::ConformanceReport& report : reports) require_passed(report);
 }
 
 TEST_CASE("output written before anyone listens is delivered, then the exit", "[linux_conformance]") {

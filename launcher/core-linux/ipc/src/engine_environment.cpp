@@ -9,8 +9,8 @@ namespace rb::os_linux::ipc {
 namespace {
 
 constexpr std::string_view kPathName = "PATH";
-constexpr std::array<std::string_view, 5> kCopiedNames{
-    kPathName, "XDG_DATA_DIRS", "XDG_CONFIG_DIRS", "DBUS_SESSION_BUS_ADDRESS", "LANG",
+constexpr std::array<std::string_view, 6> kCopiedNames{
+    kPathName, "XDG_DATA_DIRS", "XDG_CONFIG_DIRS", "DBUS_SESSION_BUS_ADDRESS", "LANG", "LANGUAGE",
 };
 constexpr std::string_view kLocalePrefix = "LC_";
 // Relative values would resolve against the engine's cwd, its install directory.
@@ -39,6 +39,13 @@ std::vector<std::string> pinned_engine_variables(const EngineEnvironmentInputs& 
         entry("XDG_STATE_HOME", inputs.state_home.string()),
     };
     if (root.overridden) variables.push_back(entry("REBOOT_LAUNCHER_HOME", root.root.string()));
+    return variables;
+}
+
+std::vector<std::string> transient_unit_variables(const EngineEnvironmentInputs& inputs, const DataRoot& root,
+                                                  const NativePath& runtime_dir) {
+    std::vector<std::string> variables = pinned_engine_variables(inputs, root);
+    variables.push_back(entry("XDG_RUNTIME_DIR", runtime_dir.string()));
     return variables;
 }
 

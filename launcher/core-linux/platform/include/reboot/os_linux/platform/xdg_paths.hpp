@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/native_path.hpp"
@@ -18,6 +19,11 @@ public:
     // and XDG_RUNTIME_DIR count only when absolute, as the XDG spec requires. The exe comes from
     // /proc/self/exe.
     [[nodiscard]] static Result<XdgPaths> detect();
+    // For tests: what detect() resolves for the passwd home `home` with no XDG variables and the
+    // exe in `exe_dir`, with `appimage` and `appdir` as $APPIMAGE and $APPDIR.
+    [[nodiscard]] static XdgPaths for_layout(NativePath home, NativePath exe_dir,
+                                             std::optional<std::string_view> appimage = std::nullopt,
+                                             std::optional<std::string_view> appdir = std::nullopt);
 
     // $XDG_DATA_HOME/reboot-launcher (default ~/.local/share/reboot-launcher).
     [[nodiscard]] NativePath default_data_root() const override;
@@ -56,6 +62,8 @@ public:
 
 private:
     XdgPaths() = default;
+
+    void detect_install_kind(std::optional<std::string_view> appimage, std::optional<std::string_view> appdir);
 
     NativePath home_;
     NativePath config_home_;

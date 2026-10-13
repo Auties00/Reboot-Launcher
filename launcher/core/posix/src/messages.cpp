@@ -2,7 +2,6 @@
 
 namespace rb::posix {
 
-REBOOT_MESSAGE(kEndpointUntrusted, "ipc.endpoint_untrusted", "The engine endpoint is not trusted.");
 REBOOT_MESSAGE(kCallFailed, "posix.call_failed", "{call} failed.");
 REBOOT_MESSAGE(kCallFailedOnPath, "posix.call_failed_on_path", "{call} failed on {path}.");
 REBOOT_MESSAGE(kSocketPathTooLong, "posix.socket_path_too_long",

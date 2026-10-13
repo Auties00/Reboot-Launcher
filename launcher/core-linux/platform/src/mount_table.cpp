@@ -11,11 +11,14 @@ namespace rb::os_linux::platform {
 
 namespace {
 
-constexpr std::array<std::string_view, 27> kPseudoTypes{
-    "proc",      "sysfs",       "cgroup",     "cgroup2",  "tmpfs",   "devtmpfs",  "devpts",
-    "securityfs", "pstore",     "efivarfs",   "bpf",      "tracefs", "debugfs",   "configfs",
-    "fusectl",   "mqueue",      "hugetlbfs",  "autofs",   "binfmt_misc", "squashfs", "ramfs",
-    "rpc_pipefs", "nsfs",       "selinuxfs",  "fuse.gvfsd-fuse", "fuse.portal", "fuse.lxcfs"};
+constexpr std::array<std::string_view, 24> kNoStorageTypes{
+    "proc",      "sysfs",       "cgroup",     "cgroup2",  "devtmpfs", "devpts",    "securityfs",
+    "pstore",    "efivarfs",    "bpf",        "tracefs",  "debugfs",  "configfs",  "fusectl",
+    "mqueue",    "hugetlbfs",   "autofs",     "binfmt_misc", "rpc_pipefs", "nsfs", "selinuxfs",
+    "fuse.gvfsd-fuse", "fuse.portal", "fuse.lxcfs"};
+
+// RAM-backed or an image (the AppImage's own mount): real free space, but no volume to list.
+constexpr std::array<std::string_view, 3> kUnlistedStorageTypes{"tmpfs", "ramfs", "squashfs"};
 
 constexpr std::array<std::string_view, 5> kNetworkTypes{"nfs", "nfs4", "cifs", "smb3", "fuse.sshfs"};
 
@@ -121,7 +124,11 @@ std::vector<MountEntry> parse_mountinfo(std::string_view text) {
     return entries;
 }
 
-bool is_pseudo_fs(std::string_view fs_type) noexcept { return std::ranges::contains(kPseudoTypes, fs_type); }
+bool holds_no_storage(std::string_view fs_type) noexcept { return std::ranges::contains(kNoStorageTypes, fs_type); }
+
+bool is_pseudo_fs(std::string_view fs_type) noexcept {
+    return holds_no_storage(fs_type) || std::ranges::contains(kUnlistedStorageTypes, fs_type);
+}
 
 bool is_network_fs(std::string_view fs_type) noexcept { return std::ranges::contains(kNetworkTypes, fs_type); }
 
@@ -137,6 +144,13 @@ std::vector<std::size_t> real_mounts(const std::vector<MountEntry>& entries, boo
         if (skip_binds && bind) continue;
         kept.push_back(i);
     }
+    return kept;
+}
+
+std::vector<std::size_t> storage_mounts(const std::vector<MountEntry>& entries) {
+    std::vector<std::size_t> kept;
+    for (std::size_t i = 0; i < entries.size(); ++i)
+        if (!holds_no_storage(entries[i].fs_type)) kept.push_back(i);
     return kept;
 }
 

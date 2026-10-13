@@ -11,6 +11,7 @@ using rb::NativePath;
 using rb::os_linux::ipc::engine_environment;
 using rb::os_linux::ipc::EngineEnvironmentInputs;
 using rb::os_linux::ipc::pinned_engine_variables;
+using rb::os_linux::ipc::transient_unit_variables;
 
 namespace {
 
@@ -53,6 +54,14 @@ TEST_CASE("an overridden root is pinned too", "[engine_environment]") {
     CHECK(pinned.back() == "REBOOT_LAUNCHER_HOME=/games/reboot");
 }
 
+TEST_CASE("systemd-run also pins the client's runtime directory", "[engine_environment]") {
+    const DataRoot root{NativePath{"/games/reboot"}, true};
+    CHECK(transient_unit_variables(kInputs, root, NativePath{"/run/user/1000"}) ==
+          Entries{"XDG_DATA_HOME=/home/ada/.local/share", "XDG_CACHE_HOME=/home/ada/.cache",
+                  "XDG_STATE_HOME=/home/ada/.local/state", "REBOOT_LAUNCHER_HOME=/games/reboot",
+                  "XDG_RUNTIME_DIR=/run/user/1000"});
+}
+
 TEST_CASE("only the allowed variables of the client reach the engine", "[engine_environment]") {
     const std::vector<std::string_view> inherited{
         "PATH=/usr/bin:/bin",
@@ -75,6 +84,7 @@ TEST_CASE("only the allowed variables of the client reach the engine", "[engine_
         "XDG_RUNTIME_DIR=/run/user/1000",
         "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus",
         "LANG=it_IT.UTF-8",
+        "LANGUAGE=it:en",
         "LC_TIME=en_GB.UTF-8",
         "DISPLAY=:0",
     };
@@ -88,6 +98,7 @@ TEST_CASE("only the allowed variables of the client reach the engine", "[engine_
               "XDG_RUNTIME_DIR=/run/user/1000",
               "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus",
               "LANG=it_IT.UTF-8",
+              "LANGUAGE=it:en",
               "LC_TIME=en_GB.UTF-8",
           }));
 }

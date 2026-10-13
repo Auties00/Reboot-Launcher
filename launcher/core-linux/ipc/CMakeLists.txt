@@ -31,3 +31,28 @@ reboot_add_package(os_linux/ipc
     reboot::posix
   DEPS
     ${CMAKE_DL_LIBS})
+
+# Real-socket engine starter suite against a fake engine; runs on the Linux CI runner only.
+if(REBOOT_BUILD_TESTS)
+  set(conformance_sources conformance/engine_starter_conformance.cpp)
+  add_executable(reboot_os_linux_ipc_conformance ${conformance_sources})
+  _reboot_record_target(reboot_os_linux_ipc_conformance test DEPS reboot::os_linux_ipc reboot::testing
+    SOURCES ${conformance_sources})
+  target_include_directories(reboot_os_linux_ipc_conformance PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+  target_link_libraries(reboot_os_linux_ipc_conformance PRIVATE
+    reboot_os_linux_ipc Catch2::Catch2WithMain reboot_warnings $<TARGET_NAME_IF_EXISTS:reboot_testing>)
+  # Stands in for reboot-engine in the engine starter check.
+  add_executable(reboot-fake-unix-engine conformance/fake_engine/fake_unix_engine_main.cpp)
+  _reboot_record_target(reboot-fake-unix-engine test DEPS reboot::os_linux_ipc
+    SOURCES conformance/fake_engine/fake_unix_engine_main.cpp)
+  target_include_directories(reboot-fake-unix-engine PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+  target_link_libraries(reboot-fake-unix-engine PRIVATE reboot_os_linux_ipc reboot_warnings)
+  add_dependencies(reboot_os_linux_ipc_conformance reboot-fake-unix-engine)
+  target_compile_definitions(reboot_os_linux_ipc_conformance PRIVATE
+    REBOOT_FAKE_UNIX_ENGINE_EXE="$<TARGET_FILE:reboot-fake-unix-engine>")
+  if(NOT COMMAND catch_discover_tests)
+    include(Catch)
+  endif()
+  catch_discover_tests(reboot_os_linux_ipc_conformance)
+endif()
