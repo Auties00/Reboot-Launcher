@@ -17,6 +17,7 @@
 #include <array>
 #include <chrono>
 #include <condition_variable>
+#include <cstdio>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -37,6 +38,7 @@
 #include "reboot/contracts/winhost.hpp"
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/framing.hpp"
+#include "reboot/foundation/log.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/foundation/version.hpp"
@@ -456,6 +458,18 @@ struct Winhost {
     }
 };
 
+// The runtime setup's umu output reaches only the log, so the job's console carries it.
+class StderrSink final : public LogSink {
+public:
+    void write(std::span<const LogRecord> records) override {
+        for (const LogRecord& record : records) {
+            const std::string_view category = log_category_name(record.category);
+            std::fprintf(stderr, "[%.*s] %s\n", static_cast<int>(category.size()), category.data(), record.text.c_str());
+        }
+    }
+    void flush() override { std::fflush(stderr); }
+};
+
 // The daemon base and umu's runner layer; pressure-vessel also shares the game's directory, as
 // WineSessionHost shares the build's.
 [[nodiscard]] ports::EnvBlock umu_env(const ports::RuntimeLayout& layout, const NativePath& game) {
@@ -563,6 +577,9 @@ TEST_CASE("winhost under Wine starts the game with the env overlay, relays it, a
 TEST_CASE("under umu and GE-Proton winhost reads its token from stdin and runs the game until a Stop", "[umu]") {
     const std::optional<UmuInputs> in = umu_inputs();
     if (!in) SKIP(kNoUmu);
+    Logger::add_sink(std::make_unique<StderrSink>());
+    Logger::install(1 << 20);
+    Logger::set_level(LogLevel::Info);
     OsRandom random;
     auto scratch = testing::ScratchDir::create(random, "reboot-umu-gate");
     REQUIRE(scratch);
@@ -573,6 +590,7 @@ TEST_CASE("under umu and GE-Proton winhost reads its token from stdin and runs t
     REQUIRE(layout);
 
     const auto runtime = runner.runtime_setup(*layout, CancelToken{});
+    Logger::flush();
     INFO((runtime ? std::string() : runtime.error().id));
     REQUIRE(runtime);
     REQUIRE(*runtime);
