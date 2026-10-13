@@ -19,8 +19,8 @@ namespace {
 constexpr std::string_view kFilesystemsRw = "PRESSURE_VESSEL_FILESYSTEMS_RW";
 // Relative to the GE-Proton root.
 constexpr std::string_view kProtonWineServer = "files/bin/wineserver";
-// Proton's default verb starts a unix path through umu.exe, which gives a console program its own
-// console, so winhost would never read the token on its stdin; runinprefix runs `wine <winhost>`.
+// Proton's default verb starts a unix path through umu.exe, which gives a console program a console
+// of its own and so cuts winhost off from the runner's pipes; runinprefix runs `wine <winhost>`.
 constexpr std::string_view kProtonVerb = "PROTON_VERB";
 constexpr std::string_view kWinhostVerb = "runinprefix";
 
