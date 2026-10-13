@@ -230,9 +230,7 @@ private:
             if (auto request = decoded<be::RegisterAccount>(frame)) {
                 {
                     const std::scoped_lock lock(mutex);
-                    adopt_record(*request);
-                    std::erase_if(accounts, [&](const be::RegisterAccount& a) { return a.account_id == request->account_id; });
-                    accounts.push_back(*request);
+                    register_account(*request);
                 }
                 reply([this, id = request->req_id] { ok(id); });
             }
@@ -341,13 +339,16 @@ private:
         return it == last_logins.end() ? 0 : it->second;
     }
 
-    // Called with `mutex` held. A record registered under a new id takes its data along, unless
-    // the new id already has some; a nil record names none.
-    void adopt_record(const be::RegisterAccount& request) {
-        if (request.record_id.is_nil()) return;
+    // Called with `mutex` held; follows the RegisterAccount contract.
+    void register_account(const be::RegisterAccount& request) {
         if (std::ranges::find(accounts, request.account_id, &be::RegisterAccount::account_id) != accounts.end()) return;
-        const auto held = std::ranges::find(accounts, request.record_id, &be::RegisterAccount::record_id);
-        if (held == accounts.end()) return;
+        const auto held = request.record_id.is_nil()
+                              ? accounts.end()
+                              : std::ranges::find(accounts, request.record_id, &be::RegisterAccount::record_id);
+        if (held == accounts.end()) {
+            accounts.push_back(request);
+            return;
+        }
         if (auto login = last_logins.extract(held->account_id)) {
             login.key() = request.account_id;
             last_logins.insert(std::move(login));

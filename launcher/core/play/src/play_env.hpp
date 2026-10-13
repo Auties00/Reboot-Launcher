@@ -88,7 +88,8 @@ public:
     [[nodiscard]] virtual identity::AccountRecord client_account() const = 0;
     [[nodiscard]] virtual identity::LoginTarget login_target(const storage::BackendTarget& backend,
                                                              identity::UpstreamFlavor flavor, bool custom_auth_dll) const = 0;
-    [[nodiscard]] virtual bool secret_present(const secrets::SecretTarget& target) const = 0;
+    // secrets.not_ready while the saved secrets load.
+    [[nodiscard]] virtual Result<bool> secret_present(const secrets::SecretTarget& target) const = 0;
 
     virtual void resolve_layout(BuildId id, CancelToken token, UniqueFunction<void(Result<builds::BuildLayout>)> done) = 0;
     virtual void acquire_payload(SessionId session, CancelToken token, components::ProgressSink progress,

@@ -154,6 +154,21 @@ void log_failure(std::string_view what, const Result<void>& result) {
 
 [[nodiscard]] std::string signature_url(std::string_view url) { return std::string(url) + ".sig"; }
 
+// What support rates play against: the manifest's client DLL and a pin for each runner that has a runtime.
+void refresh_support_inputs(support::SupportPolicy& support, const components::ManifestService& manifest,
+                            const compat::RuntimeService& runtimes, bool native) {
+    support::SupportInputs inputs = support.inputs();
+    if (Result<components::PayloadEntry> payload = manifest.payload())
+        if (const components::PayloadFile* dll = payload->find(components::PayloadRole::ClientDll))
+            inputs.client_dll_sha256 = dll->file.sha256;
+    inputs.runners.clear();
+    if (native) inputs.runners.push_back(support::RunnerPin{ports::RunnerKind::Native, {}});
+    for (const ports::RunnerKind kind : runtimes.supported())
+        if (Result<compat::RunnerProfile> profile = runtimes.profile(kind))
+            inputs.runners.push_back(support::RunnerPin{kind, profile->runtime.value});
+    support.set_inputs(std::move(inputs));
+}
+
 }  // namespace
 
 EngineServices::EngineServices(EngineRuntime runtime) : runtime_(std::move(runtime)) {
@@ -208,8 +223,13 @@ process::OrphanReapReport EngineServices::reap_orphans() {
 }
 
 void EngineServices::load_components_and_catalog() {
-    manifest_->load([](Result<components::ManifestOrigin> loaded) {
-        if (!loaded) REBOOT_LOG_WARN(Update, "no release manifest is in use: {}", loaded.error().id);
+    manifest_->load([this](Result<components::ManifestOrigin> loaded) {
+        if (!loaded) {
+            REBOOT_LOG_WARN(Update, "no release manifest is in use: {}", loaded.error().id);
+            return;
+        }
+        // A manifest adopted at startup reaches no listener.
+        refresh_support_inputs(*support_, *manifest_, *runtimes_, runtime_.platform.session_host != nullptr);
     });
     components_->load([](Result<void> loaded) { log_failure("loading the component store", loaded); });
     if (Result<OpHandle> refresh = catalog_->start_refresh(catalog::CatalogRefresh::IfExpired, DisconnectPolicy::Detached); !refresh)
@@ -379,7 +399,7 @@ void EngineServices::build_services() {
         builds::ImportServiceDeps{*library_, *catalog_, *cl_table_, fs, *requests_, workers, strand, *ops_});
 
     secret_store_worker_ = std::make_unique<WorkerPool>(1);
-    secrets_ = std::make_unique<secrets::SecretService>(*platform.secrets, *secret_store_worker_, workers, strand, timers,
+    secrets_ = std::make_unique<secrets::SecretService>(*platform.secrets, *secret_store_worker_, strand, timers,
                                                         *requests_, *events_, redactor, info.root_hash16);
     identity_ = std::make_unique<identity::IdentityService>(stores_->accounts, stores_->backend_logins, random, *events_);
 
@@ -839,22 +859,9 @@ void EngineServices::start() {
             browser_->set_endpoint(edge);
             publisher_->set_edge(edge);
         }
-        support::SupportInputs inputs = support_->inputs();
-        if (Result<components::PayloadEntry> payload = manifest_->payload())
-            if (const components::PayloadFile* dll = payload->find(components::PayloadRole::ClientDll))
-                inputs.client_dll_sha256 = dll->file.sha256;
-        inputs.runners.clear();
-        if (runtime_.platform.session_host) inputs.runners.push_back(support::RunnerPin{ports::RunnerKind::Native, {}});
-        for (const ports::RunnerKind kind : runtimes_->supported())
-            if (Result<compat::RunnerProfile> profile = runtimes_->profile(kind))
-                inputs.runners.push_back(support::RunnerPin{kind, profile->runtime.value});
-        support_->set_inputs(std::move(inputs));
+        refresh_support_inputs(*support_, *manifest_, *runtimes_, runtime_.platform.session_host != nullptr);
     });
-    {
-        support::SupportInputs inputs = support_->inputs();
-        if (runtime_.platform.session_host) inputs.runners.push_back(support::RunnerPin{ports::RunnerKind::Native, {}});
-        support_->set_inputs(std::move(inputs));
-    }
+    refresh_support_inputs(*support_, *manifest_, *runtimes_, runtime_.platform.session_host != nullptr);
 
     reactions_ = events_->subscribe(EventFilter{{EventKind::SettingsChanged, EventKind::IdentityChanged}, std::nullopt, std::nullopt},
                                     kReactionBudget);

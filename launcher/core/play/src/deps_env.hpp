@@ -26,7 +26,7 @@ public:
     [[nodiscard]] identity::AccountRecord client_account() const override;
     [[nodiscard]] identity::LoginTarget login_target(const storage::BackendTarget& backend, identity::UpstreamFlavor flavor,
                                                      bool custom_auth_dll) const override;
-    [[nodiscard]] bool secret_present(const secrets::SecretTarget& target) const override;
+    [[nodiscard]] Result<bool> secret_present(const secrets::SecretTarget& target) const override;
 
     void resolve_layout(BuildId id, CancelToken token, UniqueFunction<void(Result<builds::BuildLayout>)> done) override;
     void acquire_payload(SessionId session, CancelToken token, components::ProgressSink progress,

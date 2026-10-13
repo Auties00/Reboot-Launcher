@@ -43,7 +43,8 @@ public:
     [[nodiscard]] bool cancelled() const noexcept;
     [[nodiscard]] std::optional<CancelReason> reason() const noexcept;
 
-    // Runs `callback` on the cancelling thread, or immediately if already cancelled.
+    // Runs `callback` on the cancelling thread, or immediately if already cancelled; either way
+    // one that throws is logged, not thrown.
     [[nodiscard]] CancelRegistration on_cancel(UniqueFunction<void(CancelReason)> callback) const;
 
 private:

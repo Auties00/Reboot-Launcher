@@ -326,6 +326,24 @@ TEST_CASE("the plan names its blockers, warnings and the questions start will as
         CHECK(std::ranges::none_of(with_secret.decisions,
                                    [](const RequiredDecision& d) { return d.kind == UserRequestKind::NeedsSecret; }));
     }
+    SECTION("while the saved secrets load, a plan that depends on them fails retryable instead of guessing") {
+        Harness h;
+        h.env.secrets_loading = failure("secrets.not_ready");
+        h.env.secrets_loading->retryable = true;
+        // The embedded backend needs no stored password, so its plan is unaffected.
+        CHECK(h.core->plan(Harness::request()).has_value());
+        use_remote_backend(h);
+        h.env.remote_login_name = "user@mail.test";
+        const Result<PlayPlan> plan = h.core->plan(Harness::request());
+        REQUIRE_FALSE(plan.has_value());
+        CHECK(plan.error().id == "secrets.not_ready");
+        CHECK(plan.error().retryable);
+        h.env.secrets_loading.reset();
+        const Result<PlayPlan> loaded = h.core->plan(Harness::request());
+        REQUIRE(loaded.has_value());
+        CHECK(std::ranges::find(loaded->decisions, RequiredDecision{UserRequestKind::NeedsSecret, remote_password()}) !=
+              loaded->decisions.end());
+    }
     SECTION("a plain-http remote not yet running asks ConfirmUnencryptedUpstream") {
         Harness h;
         use_remote_backend(h);

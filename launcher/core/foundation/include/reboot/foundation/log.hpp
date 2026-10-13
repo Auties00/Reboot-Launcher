@@ -8,6 +8,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "reboot/foundation/types.hpp"
 
@@ -47,13 +48,32 @@ public:
 
     void add_secret(std::span<const u8> value);
     // On Logger::redactor() the secret stays masked until the writer has written every record
-    // queued before the call; any other Redactor stops masking it at once.
+    // whose LogTicket was taken before the call; any other Redactor stops masking it at once.
     virtual void remove_secret(std::span<const u8> value);
     [[nodiscard]] std::string apply(std::string_view text) const;
 
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
+};
+
+// Taken before a line's text is built: a remove_secret made after it still masks that line.
+// One not handed to Logger::write releases its hold when destroyed.
+class LogTicket {
+public:
+    LogTicket() = default;
+    LogTicket(LogTicket&& other) noexcept;
+    LogTicket& operator=(LogTicket&& other) noexcept;
+    LogTicket(const LogTicket&) = delete;
+    LogTicket& operator=(const LogTicket&) = delete;
+    ~LogTicket();
+
+private:
+    friend class Logger;
+    explicit LogTicket(u64 epoch) : epoch_(epoch), held_(true) {}
+
+    u64 epoch_ = 0;
+    bool held_ = false;
 };
 
 // The one process-wide service. A bounded MPSC queue feeds a single writer thread; when it is
@@ -69,6 +89,10 @@ public:
     static void set_level(LogLevel minimum);
     [[nodiscard]] static bool enabled(LogLevel level) noexcept;
 
+    [[nodiscard]] static LogTicket begin();
+    static void write(LogTicket ticket, LogLevel level, LogCategory category, std::optional<SessionId> session,
+                      std::string text);
+    // Takes its ticket on entry, so `text` must not hold a secret removed before the call.
     static void write(LogLevel level, LogCategory category, std::optional<SessionId> session, std::string text);
     static void flush();
     // Drains the queue synchronously, stops the writer and destroys the sinks.
@@ -80,10 +104,13 @@ public:
 
 }  // namespace rb
 
-#define REBOOT_LOG_AT(level, category, session, ...)                                                       \
-    do {                                                                                                      \
-        if (::rb::Logger::enabled(level))                                                                 \
-            ::rb::Logger::write(level, ::rb::LogCategory::category, session, std::format(__VA_ARGS__)); \
+#define REBOOT_LOG_AT(level, category, session, ...)                                                    \
+    do {                                                                                                \
+        if (::rb::Logger::enabled(level)) {                                                             \
+            ::rb::LogTicket rb_log_ticket_ = ::rb::Logger::begin();                                     \
+            ::rb::Logger::write(std::move(rb_log_ticket_), level, ::rb::LogCategory::category, session, \
+                                std::format(__VA_ARGS__));                                              \
+        }                                                                                               \
     } while (false)
 
 #define REBOOT_LOG_TRACE(category, ...) REBOOT_LOG_AT(::rb::LogLevel::Trace, category, std::nullopt, __VA_ARGS__)

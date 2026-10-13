@@ -22,6 +22,7 @@
 #include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/text.hpp"
+#include "reboot/ports/ipc.hpp"
 #include "reboot/testing/port_conformance.hpp"
 
 namespace rb::testing {
@@ -589,10 +590,13 @@ ConformanceReport run_ipc_conformance(IpcConformanceSubject subject, const Confo
         auto other_listener = subject.make_listener();
         auto other_accepted = make_shared_state<Accepted>();
         if (report.expect_ok("listen for the other user", listen_watched(*other_listener, guarded, other_accepted))) {
+            // Without a connect, or an OS refusal, nothing here would show a rejection.
             auto stranger = subject.connect_as_other_user(guarded);
-            const bool handed_over = env.waiter.wait_until(
-                [&] { return other_accepted->with([](const Accepted& a) { return !a.streams.empty(); }); }, quiet(env));
-            report.expect("another user's client is dropped", !handed_over);
+            if (report.expect_ok("another user's client connects or the OS refuses it", stranger)) {
+                const bool handed_over = env.waiter.wait_until(
+                    [&] { return other_accepted->with([](const Accepted& a) { return !a.streams.empty(); }); }, quiet(env));
+                report.expect("another user's client is dropped", !handed_over);
+            }
         }
     } else {
         report.skip("another user's client is dropped", "the runner cannot act as another user");
@@ -603,7 +607,7 @@ ConformanceReport run_ipc_conformance(IpcConformanceSubject subject, const Confo
         if (report.expect_ok("squat as another user", subject.squat_as_other_user(squatted))) {
             const auto refused = subject.connector->connect(squatted, 1s);
             report.expect("an endpoint another user squats is refused with ipc.endpoint_untrusted",
-                          !refused && refused.error().is(msg::kEndpointUntrusted));
+                          !refused && refused.error().is(ports::kEndpointUntrusted));
         }
     } else {
         report.skip("an endpoint another user squats is refused", "the runner cannot act as another user");

@@ -181,8 +181,8 @@ struct Fixture {
         service.reset();
     }
 
-    SecretService& make(std::string_view root = kRootHash, void (*flush_logs)() = &Logger::flush) {
-        service.emplace(store, store_worker, workers, strand, timers, requests, events, redactor, root, flush_logs);
+    SecretService& make(std::string_view root = kRootHash) {
+        service.emplace(store, store_worker, strand, timers, requests, events, redactor, root);
         return *service;
     }
 
@@ -241,7 +241,6 @@ struct Fixture {
     EventBus events{EngineEpoch{1}};
     UserRequestRegistry requests{events};
     TimerService timers{clock, strand};
-    WorkerPool workers{1};
     WorkerPool store_worker{1};
     std::optional<SecretService> service;
 };

@@ -522,8 +522,8 @@ TEST_CASE("a reconnect to a new epoch fails the old epoch's ops", "[client][cont
 }
 
 TEST_CASE("an op attached once the new epoch's link is up is not failed with the old epoch's", "[client][context]") {
-    // Attaches from inside on_reconnected, before it fails the lost ops: the window in which a
-    // caller's attach reaches the new engine first.
+    // Attaches from inside on_reconnected, the earliest a caller's attach reaches the new engine;
+    // the new engine's op 41 shares its id with the old engine's lost one.
     class AttachingCaller final : public ports::ICallerContextProbe {
     public:
         [[nodiscard]] ports::CallerContext capture() const override { return {"1", false, true, {}}; }
@@ -550,21 +550,73 @@ TEST_CASE("an op attached once the new epoch's link is up is not failed with the
     REQUIRE(*connected);
     const u64 old_op = start_op(f, 41);
 
+    const u64 sub = *f.context->subscribe({});
+
     f.engine.ack.epoch = 8;
-    caller.attach = [&f] { REQUIRE(f.context->attach(99)); };
+    caller.attach = [&f, old_op] { REQUIRE(f.context->attach(old_op)); };
     f.sever();
     f.executor.advance(ipc::kReconnectBackoffMin);
     f.executor.run_all();
     REQUIRE(f.engine.connections == 2);
-    CHECK(f.engine.last<wire::Attach>().op_id == 99);
+    CHECK(f.engine.last<wire::Attach>().op_id == old_op);
 
-    CHECK(std::holds_alternative<std::vector<u8>>(*f.context->op_state(old_op)));
-    REQUIRE(std::holds_alternative<OpPending>(*f.context->op_state(99)));
-    f.engine.send(wire::OpResult{99, bytes_of("done")});
+    // The old op failed with the lost link, then the new engine's op took over its id.
+    std::vector<wire::WireEvent> events;
+    while (auto event = next(f, sub)) events.push_back(std::move(*event));
+    REQUIRE(events.size() == 4);
+    CHECK(events[2].kind == kind(ApiEventKind::OpCompleted));
+    ApiOutcome failed;
+    REQUIRE(sb::wire::decode(outcome_of(events[2]), failed));
+    REQUIRE(failed.failed);
+    CHECK(failed.failed->id == "ipc.connection_lost");
+    REQUIRE(std::holds_alternative<OpPending>(*f.context->op_state(old_op)));
+    f.engine.send(wire::OpResult{old_op, bytes_of("done")});
     f.executor.run_all();
-    const auto state = f.context->op_state(99);
+    const auto state = f.context->op_state(old_op);
     REQUIRE(std::holds_alternative<std::vector<u8>>(*state));
     CHECK(std::get<std::vector<u8>>(*state) == bytes_of("done"));
+    auto completed = next(f, sub);
+    REQUIRE(completed);
+    CHECK(outcome_of(*completed) == bytes_of("done"));
+}
+
+TEST_CASE("a new engine's op with the id of an old engine's op is tracked afresh", "[client][context]") {
+    ContextFixture f;
+    f.connected();
+    const u64 ended = start_op(f, 41);
+    f.engine.send(wire::OpResult{ended, bytes_of("old")});
+    f.executor.run_all();
+    const u64 lost = start_op(f, 42);
+
+    f.engine.ack.epoch = 8;
+    f.sever();
+    f.executor.advance(ipc::kReconnectBackoffMin);
+    f.executor.run_all();
+    REQUIRE(f.engine.connections == 2);
+    REQUIRE(std::holds_alternative<std::vector<u8>>(*f.context->op_state(lost)));
+
+    // Engines number their ops afresh, so the new one hands out both ids again.
+    CHECK(start_op(f, 41) == 41);
+    CHECK(start_op(f, 42) == 42);
+    CHECK(std::holds_alternative<OpPending>(*f.context->op_state(41)));
+    CHECK(std::holds_alternative<OpPending>(*f.context->op_state(42)));
+    f.engine.send(wire::OpResult{41, bytes_of("new")});
+    f.executor.run_all();
+    const auto state = f.context->op_state(41);
+    REQUIRE(std::holds_alternative<std::vector<u8>>(*state));
+    CHECK(std::get<std::vector<u8>>(*state) == bytes_of("new"));
+}
+
+TEST_CASE("an attach between a loss and its reconnect is refused like one with no link", "[client][context]") {
+    ContextFixture f;
+    f.connected();
+    const u64 op = start_op(f, 41);
+    f.sever();
+    auto refused = f.context->attach(77);
+    REQUIRE_FALSE(refused);
+    CHECK(refused.error().is(ipc::kConnectionLost));
+    CHECK(f.context->op_state(77).error().is(ipc::kUnknownOp));
+    CHECK(std::holds_alternative<OpPending>(*f.context->op_state(op)));
 }
 
 TEST_CASE("a reconnect to another build ends the subscriptions it can no longer feed", "[client][context]") {

@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "call_failure.hpp"
@@ -127,14 +128,21 @@ private:
     template <class Frame>
     std::optional<u64> send_call(Frame frame, AnswerDone done);
 
-    // Every subscription follows an op from the moment it is tracked; false when already tracked.
-    bool track_op(u64 op_id, u32 method_id);
+    // Every subscription follows an op from the moment it is tracked, for the engine of the current
+    // link. While the link is lost an op Started on it joins the lost ops, and an attach (`started`
+    // false) is refused with nullopt. Otherwise whether the op was not tracked yet.
+    std::optional<bool> track_op(u64 op_id, u32 method_id, bool started);
     void on_event_batch(contracts::ipc::EventBatch batch);
     void on_resync(u64 sub_id);
+    using Woken = std::vector<std::pair<EventSubscription*, PushEffects>>;
     // Records the outcome once and hands its OpCompleted to every following subscription.
-    void deliver_outcome(u64 op_id, std::vector<u8> outcome);
+    void deliver_outcome(u64 op_id, u64 epoch, std::vector<u8> outcome);
     void fail_pending_ops(const std::vector<PendingOp>& ops, const Diagnostic& reason);
     void push_local_to_all(contracts::ipc::WireEvent event);
+    // With subs_mutex_ held; `woken` is handed to wake() once it is released.
+    void push_local_locked(const contracts::ipc::WireEvent& event, Woken& woken);
+    void push_outcome_locked(u64 op_id, const contracts::ipc::WireEvent& event, Woken& woken);
+    void wake(const Woken& woken);
     void resubscribe_all();
     void close_subscriptions();
     // Runs the wake and sends Credit for `effects`, with no lock held.

@@ -44,9 +44,9 @@ struct SecretWait {
 
 // Capabilities: none assigned (decisions credential-security, shared-store-cli-gui, logging-redaction).
 // Strand-only. The engine's only holder of secrets; no value is ever logged.
-// - Every held value is registered with the Redactor. A dropped value (cleared, replaced, taken,
-//   or its request resolved) is removed once a Logger::flush on the WorkerPool has written the
-//   records queued before the drop. Values under 4 bytes are never masked (logging-redaction).
+// - Every held value is registered with the Redactor and removed from it when dropped (cleared,
+//   replaced, taken, or its request resolved); Logger::redactor() still masks it in lines begun
+//   before the drop. Values under 4 bytes are never masked (logging-redaction).
 // - Store calls run one at a time on a worker of their own under kStoreCallDeadline, so time
 //   queued behind other work never counts against it; writes for one target apply in call order.
 // - Every change of a target's SecretState publishes a SecretStateChangedEvent.
@@ -56,10 +56,9 @@ class SecretService {
 public:
     // `store_worker` is a one-thread pool used for nothing else, so a call stuck in a prompt holds
     // no shared worker. `root_hash16` namespaces the store keys, so engines on different data roots
-    // never share them. `flush_logs` runs before a mask is lifted; tests replace it to see the order.
-    SecretService(ports::ISecretStore& store, WorkerPool& store_worker, WorkerPool& workers, Executor& strand,
-                  TimerService& timers, UserRequestRegistry& requests, EventBus& events, Redactor& redactor,
-                  std::string_view root_hash16, void (*flush_logs)() = &Logger::flush);
+    // never share them.
+    SecretService(ports::ISecretStore& store, WorkerPool& store_worker, Executor& strand, TimerService& timers,
+                  UserRequestRegistry& requests, EventBus& events, Redactor& redactor, std::string_view root_hash16);
     ~SecretService();
     SecretService(const SecretService&) = delete;
     SecretService& operator=(const SecretService&) = delete;
@@ -104,7 +103,8 @@ public:
     // (starting it if needed) so a stored value is handed over without asking. Otherwise, or with
     // nothing held, raises NeedsSecret and gives its id to `raised` (may be empty), for the op's
     // awaiting_user(); the answer is accepted only after a value newer than the request was put.
-    // Cancelling `token` withdraws the request and `done` gets secrets.request_withdrawn.
+    // Cancelling `token` withdraws the request and `done` gets secrets.request_withdrawn, at once
+    // also while the call waits for the load.
     void require(const SecretTarget& target, SecretWait wait, CancelToken token, UniqueFunction<void(RequestId)> raised,
                  UniqueFunction<void(Result<SecretBytes>)> done);
 

@@ -75,7 +75,7 @@ public:
     void call(Executor& strand, Done done) {
         ++calls;
         if (hold) {
-            pending.push_back(std::move(done));
+            pending.push_back({std::move(done)});
             return;
         }
         Result<T> result = answer();
@@ -85,16 +85,22 @@ public:
     // Answers the oldest held call.
     void release(Result<T> result) {
         REQUIRE_FALSE(pending.empty());
-        Done done = std::move(pending.front());
+        Done done = std::move(pending.front().done);
         pending.pop_front();
         done(std::move(result));
     }
     void release() { release(answer()); }
 
+    // Not a template, so libc++'s deque iterators do not reach std::expected's operator==, whose
+    // constraint recurses.
+    struct Held {
+        Done done;
+    };
+
     UniqueFunction<Result<T>()> answer;
     bool hold = false;
     int calls = 0;
-    std::deque<Done> pending;
+    std::deque<Held> pending;
 };
 
 [[nodiscard]] inline Diagnostic failure(std::string_view id) {
@@ -171,7 +177,8 @@ public:
         out.custom_auth_dll = custom_auth_dll;
         return out;
     }
-    [[nodiscard]] bool secret_present(const secrets::SecretTarget& target) const override {
+    [[nodiscard]] Result<bool> secret_present(const secrets::SecretTarget& target) const override {
+        if (secrets_loading) return std::unexpected(*secrets_loading);
         for (const secrets::SecretTarget& present : secrets_present)
             if (present == target) return true;
         return false;
@@ -327,6 +334,7 @@ public:
     std::optional<std::string> remote_login_name;
     identity::CredentialPolicy credential_policy = identity::CredentialPolicy::Ticket;
     std::vector<secrets::SecretTarget> secrets_present;
+    std::optional<Diagnostic> secrets_loading;
     std::string stored_password = "stored-password";
 
     // The steps.

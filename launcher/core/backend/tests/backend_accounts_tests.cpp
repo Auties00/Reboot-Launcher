@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "backend_test_support.hpp"
@@ -78,6 +79,12 @@ struct AccountsHarness : ProcessHarness {
             out.push_back(account.account_id);
         std::ranges::sort(out);
         return out;
+    }
+
+    [[nodiscard]] std::optional<AccountRecordId> record_of(std::string_view account_id) const {
+        for (const contracts::backend::RegisterAccount& account : backends.back()->registered_accounts())
+            if (account.account_id == account_id) return AccountRecordId{account.record_id};
+        return std::nullopt;
     }
 
     [[nodiscard]] std::optional<UserRequest> pending(UserRequestKind kind) {
@@ -200,12 +207,43 @@ TEST_CASE("registering a record under a new id moves its data, so a lost rename 
     h.rt.run_until_idle();
     CHECK(h.ids() == std::vector<std::string>{"Beta-aaaaa2", "Gamma-aaaaa1"});
 
-    // An id that already has data keeps it, and the record's old data stays where it is.
+    CHECK(h.record_of("Gamma-aaaaa1") == record_id(1));
+
+    // An id already mapped keeps its record and data, and the record's old data stays where it is.
     h.process->register_account(AccountRegistration{"Delta-aaaaa9", record_id(9), AccountRole::Client});
     h.rt.run_until_idle();
     h.process->register_account(AccountRegistration{"Delta-aaaaa9", record_id(2), AccountRole::Host});
     h.rt.run_until_idle();
     CHECK(h.ids() == std::vector<std::string>{"Beta-aaaaa2", "Delta-aaaaa9", "Gamma-aaaaa1"});
+    CHECK(h.record_of("Delta-aaaaa9") == record_id(9));
+    CHECK(h.record_of("Beta-aaaaa2") == record_id(2));
+}
+
+TEST_CASE("chained renames lost together never hand one record's data to another", "[backend][accounts]") {
+    // Record 1 went Alpha -> Gamma and record 2 Beta -> Alpha; the backend saw neither.
+    for (const bool gamma_first : {false, true}) {
+        AccountsHarness h;
+        h.accounts->register_identity(kIdentity);
+        REQUIRE(h.service->start_backend(true, DisconnectPolicy::Detached));
+        h.rt.run_until_idle();
+        const AccountRegistration gamma{"Gamma-aaaaa1", record_id(1), AccountRole::Client};
+        const AccountRegistration alpha{"Alpha-aaaaa1", record_id(2), AccountRole::Host};
+        h.process->register_account(gamma_first ? gamma : alpha);
+        h.rt.run_until_idle();
+        h.process->register_account(gamma_first ? alpha : gamma);
+        h.rt.run_until_idle();
+
+        CHECK(h.record_of("Gamma-aaaaa1") == record_id(1));
+        // Registered last, Alpha finds its id free and adopts record 2; registered first, it found
+        // the id still held by record 1, so record 2 stays under Beta.
+        if (gamma_first) {
+            CHECK(h.ids() == std::vector<std::string>{"Alpha-aaaaa1", "Gamma-aaaaa1"});
+            CHECK(h.record_of("Alpha-aaaaa1") == record_id(2));
+        } else {
+            CHECK(h.ids() == std::vector<std::string>{"Beta-aaaaa2", "Gamma-aaaaa1"});
+            CHECK(h.record_of("Beta-aaaaa2") == record_id(2));
+        }
+    }
 }
 
 TEST_CASE("a rename op asks on conflict and completes with the new id", "[backend][accounts]") {

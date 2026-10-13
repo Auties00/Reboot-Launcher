@@ -68,9 +68,10 @@ identity::LoginTarget DepsEnv::login_target(const storage::BackendTarget& backen
     return deps_.identity.login_target(backend, flavor, custom_auth_dll);
 }
 
-bool DepsEnv::secret_present(const secrets::SecretTarget& target) const {
-    const Result<secrets::SecretState> state = deps_.secrets.state(target);
-    return state && state->present();
+Result<bool> DepsEnv::secret_present(const secrets::SecretTarget& target) const {
+    Result<secrets::SecretState> state = deps_.secrets.state(target);
+    if (!state) return std::unexpected(std::move(state.error()));
+    return state->present();
 }
 
 void DepsEnv::resolve_layout(BuildId id, CancelToken token, UniqueFunction<void(Result<builds::BuildLayout>)> done) {

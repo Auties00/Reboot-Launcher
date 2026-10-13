@@ -143,6 +143,16 @@ struct SecretService::Impl {
         u64 generation = 0;
     };
 
+    // A require() waiting for start()'s load.
+    struct Deferred {
+        SecretTarget target;
+        SecretWait wait;
+        CancelToken token;
+        UniqueFunction<void(RequestId)> raised;
+        UniqueFunction<void(Result<SecretBytes>)> done;
+        CancelRegistration on_cancel;
+    };
+
     struct Wait {
         RequestId request;
         SecretTarget target;
@@ -151,18 +161,16 @@ struct SecretService::Impl {
         UniqueFunction<void(Result<SecretBytes>)> done;
     };
 
-    Impl(ports::ISecretStore& secret_store, WorkerPool& store_pool, WorkerPool& worker_pool, Executor& strand_executor,
+    Impl(ports::ISecretStore& secret_store, WorkerPool& store_pool, Executor& strand_executor,
          TimerService& timer_service, UserRequestRegistry& request_registry, EventBus& bus, Redactor& masks,
-         std::string_view root_hash16, void (*flush)())
+         std::string_view root_hash16)
         : store(secret_store),
           store_worker(store_pool),
-          workers(worker_pool),
           strand(strand_executor),
           timers(timer_service),
           requests(request_registry),
           events(bus),
           redactor(masks),
-          flush_logs(flush),
           layout(root_hash16),
           resolutions(bus.subscribe(EventFilter{.kinds = {EventKind::UserActionResolved}}, kResolutionBudget)) {
         resolutions->set_notify([this] { post([this] { drain_resolutions(); }); });
@@ -170,7 +178,7 @@ struct SecretService::Impl {
 
     ~Impl() {
         alive.cancel(CancelReason::Shutdown);
-        for (auto& [target, entry] : entries) release(std::move(entry.value));
+        for (const auto& [target, entry] : entries) release(entry.value);
     }
 
     template <class F>
@@ -198,21 +206,12 @@ struct SecretService::Impl {
                        EventScope{{}, {}, coalesce_key(target)});
     }
 
-    // The mask is lifted only after the logger has written what was queued while it applied.
-    void release(SecretBytes value) {
-        workers.submit<void>(
-            [&masks = redactor, flush = flush_logs, value = std::move(value)](CancelToken) -> Result<void> {
-                flush();
-                masks.remove_secret(value.reveal());
-                return {};
-            },
-            CancelToken{}, strand, [](Result<void>) {});
-    }
+    void release(const SecretBytes& value) { redactor.remove_secret(value.reveal()); }
 
     u64 hold(const SecretTarget& target, SecretBytes value, SecretState state, u64 put_seq) {
         redactor.add_secret(value.reveal());
         auto [it, inserted] = entries.try_emplace(target);
-        if (!inserted) release(std::move(it->second.value));
+        if (!inserted) release(it->second.value);
         it->second.value = std::move(value);
         it->second.state = state;
         it->second.put_seq = put_seq;
@@ -224,9 +223,8 @@ struct SecretService::Impl {
         const auto it = entries.find(target);
         if (it == entries.end()) return;
         const SecretState before = it->second.state;
-        SecretBytes value = std::move(it->second.value);
+        release(it->second.value);
         entries.erase(it);
-        release(std::move(value));
         publish_if_changed(target, before);
     }
 
@@ -369,6 +367,27 @@ struct SecretService::Impl {
         start_waiters.clear();
         for (auto& waiter : waiters)
             if (waiter) waiter(availability);
+        std::map<u64, Deferred> resumed = std::move(deferred);
+        deferred.clear();
+        for (auto& [key, wait] : resumed) {
+            wait.on_cancel.reset();
+            if (wait.token.cancelled()) withdrawn(wait.target, std::move(wait.done));
+            else require(wait.target, wait.wait, std::move(wait.token), std::move(wait.raised), std::move(wait.done));
+        }
+    }
+
+    void withdrawn(const SecretTarget& target, UniqueFunction<void(Result<SecretBytes>)> done) {
+        post_result(std::move(done), Result<SecretBytes>(std::unexpected(
+                                         kind_diag(msg::kRequestWithdrawn, target.kind, ErrorKind::Cancelled))));
+    }
+
+    // A require() cancelled while it waits for the load ends now, not when the load does.
+    void withdraw_deferred(u64 key) {
+        const auto it = deferred.find(key);
+        if (it == deferred.end()) return;
+        Deferred wait = std::move(it->second);
+        deferred.erase(it);
+        withdrawn(wait.target, std::move(wait.done));
     }
 
     StoreJob write_job(const SecretTarget& target, u64 generation, UniqueFunction<void(Result<SecretState>)> saved) {
@@ -518,14 +537,11 @@ struct SecretService::Impl {
             }
             // A request raised before the load would ask for a value the store may hold.
             if (phase != Phase::Loaded) {
-                start_waiters.push_back([this, target, wait, token = std::move(token), raised = std::move(raised),
-                                         done = std::move(done)](SecretsAvailability) mutable {
-                    if (token.cancelled())
-                        return post_result(std::move(done),
-                                           Result<SecretBytes>(std::unexpected(kind_diag(
-                                               msg::kRequestWithdrawn, target.kind, ErrorKind::Cancelled))));
-                    require(target, wait, std::move(token), std::move(raised), std::move(done));
-                });
+                const u64 key = ++last_deferred;
+                const auto held =
+                    deferred.emplace(key, Deferred{target, wait, token, std::move(raised), std::move(done), {}}).first;
+                held->second.on_cancel =
+                    token.on_cancel([this, key](CancelReason) { post([this, key] { withdraw_deferred(key); }); });
                 if (phase == Phase::Idle) load();
                 return;
             }
@@ -597,13 +613,11 @@ struct SecretService::Impl {
 
     ports::ISecretStore& store;
     WorkerPool& store_worker;
-    WorkerPool& workers;
     Executor& strand;
     TimerService& timers;
     UserRequestRegistry& requests;
     EventBus& events;
     Redactor& redactor;
-    void (*flush_logs)();
     detail::StoreLayout layout;
     CancelSource alive;
 
@@ -635,13 +649,15 @@ struct SecretService::Impl {
     std::map<u64, Wait> waits;
     u64 last_wait = 0;
     std::shared_ptr<Subscription> resolutions;
+    // Last, so its registrations are reset while every member their callbacks use still exists.
+    std::map<u64, Deferred> deferred;
+    u64 last_deferred = 0;
 };
 
-SecretService::SecretService(ports::ISecretStore& store, WorkerPool& store_worker, WorkerPool& workers, Executor& strand,
+SecretService::SecretService(ports::ISecretStore& store, WorkerPool& store_worker, Executor& strand,
                              TimerService& timers, UserRequestRegistry& requests, EventBus& events, Redactor& redactor,
-                             std::string_view root_hash16, void (*flush_logs)())
-    : impl_(std::make_unique<Impl>(store, store_worker, workers, strand, timers, requests, events, redactor,
-                                   root_hash16, flush_logs)) {}
+                             std::string_view root_hash16)
+    : impl_(std::make_unique<Impl>(store, store_worker, strand, timers, requests, events, redactor, root_hash16)) {}
 
 SecretService::~SecretService() = default;
 
@@ -728,9 +744,7 @@ Result<SecretBytes> SecretService::take(const SecretTarget& target) {
         return std::unexpected(kind_diag(msg::kRevealForbidden, target.kind, ErrorKind::Unsupported));
     const auto it = s.entries.find(target);
     if (it == s.entries.end()) return std::unexpected(scoped_diag(msg::kNotFound, target, ErrorKind::NotFound));
-    SecretBytes value = std::move(it->second.value);
-    // drop() releases this copy, so the mask outlives the records logged before the handover.
-    it->second.value = copy_of(value);
+    SecretBytes value = copy_of(it->second.value);
     s.drop(target);
     return value;
 }

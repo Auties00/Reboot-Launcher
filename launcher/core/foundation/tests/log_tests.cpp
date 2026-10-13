@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <catch2/catch_test_macros.hpp>
@@ -271,6 +272,87 @@ TEST_CASE("A secret removed while a line holding it is queued is still masked in
     Logger::redactor().add_secret(bytes_of("idle-token-5678"));
     Logger::redactor().remove_secret(bytes_of("idle-token-5678"));
     CHECK(Logger::redactor().apply("idle-token-5678") == "idle-token-5678");
+    Logger::shutdown();
+}
+
+TEST_CASE("A secret removed while a Warn producer waits past the hard cap is still masked in its line",
+          "[foundation][log][redact]") {
+    const auto captured = std::make_shared<Captured>();
+    const auto gate = std::make_shared<Gate>();
+    Logger::add_sink(std::make_unique<GateSink>(gate));
+    Logger::add_sink(std::make_unique<CaptureSink>(captured));
+    Logger::install(1);
+    Logger::redactor().add_secret(bytes_of("capped-token-1234"));
+    {
+        const std::lock_guard lock(gate->mutex);
+        gate->armed = true;
+    }
+    Logger::write(LogLevel::Warn, LogCategory::Engine, std::nullopt, "held by the writer");
+    {
+        std::unique_lock lock(gate->mutex);
+        gate->changed.wait(lock, [&] { return gate->entered; });
+    }
+    Logger::write(LogLevel::Warn, LogCategory::Engine, std::nullopt, "queued");
+    std::thread producer(
+        [] { Logger::write(LogLevel::Error, LogCategory::Engine, std::nullopt, "waits with capped-token-1234"); });
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    Logger::redactor().remove_secret(bytes_of("capped-token-1234"));
+    {
+        const std::lock_guard lock(gate->mutex);
+        gate->armed = false;
+    }
+    gate->changed.notify_all();
+    producer.join();
+    Logger::flush();
+
+    bool seen = false;
+    for (const LogRecord& record : captured->take()) {
+        CHECK(record.text.find("capped-token-1234") == std::string::npos);
+        seen = seen || record.text == "waits with ***";
+    }
+    CHECK(seen);
+    CHECK(Logger::redactor().apply("capped-token-1234") == "capped-token-1234");
+    Logger::shutdown();
+}
+
+TEST_CASE("A line whose ticket predates a secret's removal stays masked", "[foundation][log][redact]") {
+    const auto captured = std::make_shared<Captured>();
+    Logger::add_sink(std::make_unique<CaptureSink>(captured));
+    Logger::install(1 << 20);
+    Logger::redactor().add_secret(bytes_of("built-token-1234"));
+    // Nothing is queued, so without the ticket this removal would be immediate.
+    LogTicket ticket = Logger::begin();
+    Logger::redactor().remove_secret(bytes_of("built-token-1234"));
+    CHECK(Logger::redactor().apply("built-token-1234") == "***");
+    Logger::write(std::move(ticket), LogLevel::Info, LogCategory::Engine, std::nullopt, "built with built-token-1234");
+    Logger::flush();
+    auto records = captured->take();
+    REQUIRE(records.size() == 1);
+    CHECK(records[0].text == "built with ***");
+    CHECK(Logger::redactor().apply("built-token-1234") == "built-token-1234");
+
+    // An unused ticket lets go when destroyed.
+    Logger::redactor().add_secret(bytes_of("unused-token-1234"));
+    {
+        const LogTicket unused = Logger::begin();
+        Logger::redactor().remove_secret(bytes_of("unused-token-1234"));
+        CHECK(Logger::redactor().apply("unused-token-1234") == "***");
+    }
+    CHECK(Logger::redactor().apply("unused-token-1234") == "unused-token-1234");
+
+    // A ticket taken after the removal does not hold it back.
+    Logger::redactor().add_secret(bytes_of("older-token-1234"));
+    LogTicket older = Logger::begin();
+    Logger::redactor().remove_secret(bytes_of("older-token-1234"));
+    LogTicket newer = Logger::begin();
+    Logger::write(std::move(older), LogLevel::Info, LogCategory::Engine, std::nullopt, "older");
+    Logger::flush();
+    CHECK(Logger::redactor().apply("older-token-1234") == "older-token-1234");
+    Logger::write(std::move(newer), LogLevel::Info, LogCategory::Engine, std::nullopt, "newer");
+    Logger::flush();
+    records = captured->take();
+    REQUIRE(records.size() == 2);
+    CHECK(records[1].text == "newer");
     Logger::shutdown();
 }
 

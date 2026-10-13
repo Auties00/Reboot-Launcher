@@ -1,6 +1,5 @@
 #include "reboot/ipc/ipc_codec.hpp"
 
-#include <algorithm>
 #include <optional>
 #include <string_view>
 #include <utility>
@@ -95,60 +94,23 @@ void wipe_dropped(std::vector<EngineMessage>&) {}
 
 IpcCodec::IpcCodec() : framer_(kIpcFrameCap) {}
 
-IpcCodec::~IpcCodec() { secure_wipe(pending_.data(), pending_.size()); }
-
 template <class Message, class Decode>
 Result<std::vector<Message>> IpcCodec::feed(std::span<const u8> bytes, Decode decode) {
-    std::span<const u8> in = bytes;
-    const bool held = !pending_.empty();
-    if (held) {
-        pending_.insert(pending_.end(), bytes.begin(), bytes.end());
-        in = pending_;
-    }
-
-    // Only whole frames reach the Framer, so it never keeps a copy of a partial one.
-    std::size_t complete = 0;
-    std::optional<Diagnostic> error;
-    for (;;) {
-        sb::wire::Reader reader(in.subspan(complete));
-        const u64 type = reader.quic_varint();
-        const u64 length = reader.quic_varint();
-        if (!reader.ok()) break;
-        if (length > kIpcFrameCap) {
-            error = malformed(type);
-            break;
-        }
-        if (reader.remaining() < length) break;
-        complete = static_cast<std::size_t>(reader.pos() - in.data()) + static_cast<std::size_t>(length);
-    }
-
     std::vector<Message> messages;
-    if (!error && complete > 0) {
-        const Framer::Status status = framer_.feed(in.first(complete), [&](const RawFrame& frame) {
-            Result<Message> message = decode(frame);
-            if (!message) {
-                error = std::move(message.error());
-                return false;
-            }
-            messages.push_back(std::move(*message));
-            return true;
-        });
-        if (!error && status != Framer::Status::ok) error = malformed(0);
-    }
-
+    std::optional<Diagnostic> error;
+    const Framer::Status status = framer_.feed(bytes, [&](const RawFrame& frame) {
+        Result<Message> message = decode(frame);
+        if (!message) {
+            error = std::move(message.error());
+            return false;
+        }
+        messages.push_back(std::move(*message));
+        return true;
+    });
+    if (!error && status != Framer::Status::ok) error = malformed(0);
     if (error) {
         wipe_dropped(messages);
-        secure_wipe(pending_.data(), pending_.size());
-        pending_.clear();
         return std::unexpected(std::move(*error));
-    }
-    if (!held) {
-        pending_.assign(in.begin() + static_cast<std::ptrdiff_t>(complete), in.end());
-    } else if (complete > 0) {
-        const std::size_t remain = pending_.size() - complete;
-        std::copy(pending_.begin() + static_cast<std::ptrdiff_t>(complete), pending_.end(), pending_.begin());
-        secure_wipe(pending_.data() + remain, complete);
-        pending_.resize(remain);
     }
     return messages;
 }
@@ -161,7 +123,7 @@ Result<std::vector<EngineMessage>> IpcCodec::feed_from_engine(std::span<const u8
     return feed<EngineMessage>(bytes, [](const RawFrame& frame) { return decode_engine(frame); });
 }
 
-std::size_t IpcCodec::buffered() const noexcept { return pending_.size(); }
+std::size_t IpcCodec::buffered() const noexcept { return framer_.buffered(); }
 
 Result<ClientMessage> IpcCodec::decode_client(const RawFrame& frame) {
     return decode_alternative<ClientMessage>(frame, "ipc.client");

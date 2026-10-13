@@ -93,7 +93,7 @@ public:
                 .kind(ErrorKind::EngineUnavailable)
                 .fail();
         // Checked before anything is written, as the real connectors check the endpoint's owner.
-        if (it->second.owner.user_id != hub_->self.user_id) return make_diag(ErrorDomain::Ipc, msg::kEndpointUntrusted).fail();
+        if (it->second.owner.user_id != hub_->self.user_id) return make_diag(ErrorDomain::Ipc, ports::kEndpointUntrusted).fail();
 
         const ports::PeerIdentity client = hub_->client;
         LinkedPair pair = make_linked_pair(hub_->deliver_on, it->second.owner, client);

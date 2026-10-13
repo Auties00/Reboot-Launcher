@@ -30,7 +30,6 @@ using EngineMessage =
 class IpcCodec {
 public:
     IpcCodec();
-    ~IpcCodec();
     IpcCodec(const IpcCodec&) = delete;
     IpcCodec& operator=(const IpcCodec&) = delete;
 
@@ -61,9 +60,8 @@ private:
     template <class Message, class Decode>
     Result<std::vector<Message>> feed(std::span<const u8> bytes, Decode decode);
 
+    // Wipes the partial frames it holds, which may carry a SecretPut.
     Framer framer_;
-    // Holds partial frames itself so the Framer never buffers a copy; consumed bytes are wiped.
-    WipedBytes pending_;
 };
 
 }  // namespace rb::ipc

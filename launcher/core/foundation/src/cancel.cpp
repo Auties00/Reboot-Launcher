@@ -30,6 +30,20 @@ struct CancelState {
 
 }  // namespace detail
 
+namespace {
+
+void run_logged(UniqueFunction<void(CancelReason)>& callback, CancelReason reason) noexcept {
+    try {
+        callback(reason);
+    } catch (const std::exception& error) {
+        REBOOT_LOG_ERROR(Engine, "a cancel callback threw: {}", error.what());
+    } catch (...) {
+        REBOOT_LOG_ERROR(Engine, "a cancel callback threw");
+    }
+}
+
+}  // namespace
+
 CancelRegistration::CancelRegistration(std::shared_ptr<detail::CancelState> state, u64 id)
     : state_(std::move(state)), id_(id) {}
 
@@ -84,7 +98,7 @@ CancelRegistration CancelToken::on_cancel(UniqueFunction<void(CancelReason)> cal
     const int reason = state_->reason.load(std::memory_order_acquire);
     if (reason != detail::CancelState::kNotCancelled) {
         lock.unlock();
-        callback(static_cast<CancelReason>(reason));
+        run_logged(callback, static_cast<CancelReason>(reason));
         return {};
     }
     const u64 id = state_->next_id++;
@@ -112,13 +126,7 @@ bool CancelSource::cancel(CancelReason reason) {
         state->callbacks.erase(next);
         lock.unlock();
         // A throw must not skip the remaining callbacks or leave a reset() waiting on this one.
-        try {
-            callback(reason);
-        } catch (const std::exception& error) {
-            REBOOT_LOG_ERROR(Engine, "a cancel callback threw: {}", error.what());
-        } catch (...) {
-            REBOOT_LOG_ERROR(Engine, "a cancel callback threw");
-        }
+        run_logged(callback, reason);
         callback = nullptr;
         lock.lock();
         state->running = 0;

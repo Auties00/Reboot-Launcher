@@ -93,6 +93,8 @@ struct Inputs {
     backend::BackendConfig backend_config;
     support::SupportQuery query;
     identity::AccountRecord account;
+    // Whether start asks for the stored password is unknown until the saved secrets have loaded.
+    std::optional<Diagnostic> secrets_loading;
 };
 
 [[nodiscard]] Diagnostic play_diag(MessageId message, ErrorKind kind = ErrorKind::Generic) {
@@ -423,7 +425,9 @@ struct PlayCore::Impl {
             plan.decisions.push_back(RequiredDecision{UserRequestKind::ConfirmJoin, std::nullopt});
         if (plan.login && identity::needs_stored_password(plan.login->delivery))
             if (const std::optional<secrets::SecretTarget> target = password_target(in.backend_config)) {
-                if (!deps.env.secret_present(*target)) plan.decisions.push_back(RequiredDecision{UserRequestKind::NeedsSecret, *target});
+                Result<bool> present = deps.env.secret_present(*target);
+                if (!present) in.secrets_loading = std::move(present.error());
+                else if (!*present) plan.decisions.push_back(RequiredDecision{UserRequestKind::NeedsSecret, *target});
             }
         if (config && unencrypted_upstream_pending(in.backend_config))
             plan.decisions.push_back(RequiredDecision{UserRequestKind::ConfirmUnencryptedUpstream, std::nullopt});
@@ -1398,6 +1402,8 @@ PlayCore::~PlayCore() = default;
 Result<PlayPlan> PlayCore::plan(const PlayRequest& request) const {
     Result<Inputs> in = impl_->evaluate(request);
     if (!in) return std::unexpected(std::move(in.error()));
+    // Start waits for the load, so the plan does not guess what it will ask.
+    if (in->secrets_loading) return std::unexpected(std::move(*in->secrets_loading));
     return std::move(in->plan);
 }
 

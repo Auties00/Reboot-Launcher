@@ -1,7 +1,10 @@
 #include <any>
+#include <algorithm>
 #include <atomic>
+#include <condition_variable>
 #include <format>
-#include <future>
+#include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <span>
@@ -14,17 +17,20 @@
 
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/events.hpp"
+#include "reboot/foundation/log.hpp"
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/secrets/needs_secret.hpp"
 #include "reboot/secrets/secret_error.hpp"
 #include "reboot/secrets/secret_state_changed_event.hpp"
 #include "reboot/testing/event_recorder.hpp"
+#include "reboot/testing/expected_checks.hpp"
 #include "service_fixture.hpp"
 
 using namespace rb;
 using namespace rb::secrets;
 using namespace rb::secrets::test;
 using rb::testing::SecretStoreOperation;
+using rb::testing::held_value;
 
 namespace {
 
@@ -56,30 +62,48 @@ SecretTarget numbered_host_target(int i) {
     return SecretTarget::parse(SecretKind::HostJoinPassword, std::format("0a1b2c3d-4e5f-6071-8293-{:012}", i)).value();
 }
 
-// Blocks a pool's only worker until released, like an install hashing on the shared pool.
-class WorkerGate {
-public:
-    WorkerGate(WorkerPool& pool, Executor& strand) {
-        pool.submit<void>(
-            [opened = opened_.get_future()](CancelToken) -> Result<void> {
-                opened.wait();
-                return {};
-            },
-            CancelToken{}, strand, [](Result<void>) {});
-    }
-    WorkerGate(const WorkerGate&) = delete;
-    WorkerGate& operator=(const WorkerGate&) = delete;
-    // The pool's destructor must not wait on a gate a failed REQUIRE left closed.
-    ~WorkerGate() { release(); }
+// Holds the logger's writer inside write() while armed, and keeps what it was given.
+struct LogGate {
+    std::mutex mutex;
+    std::condition_variable changed;
+    bool armed = false;
+    bool entered = false;
 
-    void release() {
-        if (std::exchange(released_, true)) return;
-        opened_.set_value();
+    void arm() {
+        const std::lock_guard lock(mutex);
+        armed = true;
     }
+    void wait_entered() {
+        std::unique_lock lock(mutex);
+        changed.wait(lock, [&] { return entered; });
+    }
+    void open() {
+        {
+            const std::lock_guard lock(mutex);
+            armed = false;
+        }
+        changed.notify_all();
+    }
+};
+
+class GateSink final : public LogSink {
+public:
+    GateSink(std::shared_ptr<LogGate> gate, std::shared_ptr<std::vector<std::string>> written)
+        : gate_(std::move(gate)), written_(std::move(written)) {}
+
+    void write(std::span<const LogRecord> records) override {
+        std::unique_lock lock(gate_->mutex);
+        for (const LogRecord& record : records) written_->push_back(record.text);
+        if (!gate_->armed) return;
+        gate_->entered = true;
+        gate_->changed.notify_all();
+        gate_->changed.wait(lock, [&] { return !gate_->armed; });
+    }
+    void flush() override {}
 
 private:
-    std::promise<void> opened_;
-    bool released_ = false;
+    std::shared_ptr<LogGate> gate_;
+    std::shared_ptr<std::vector<std::string>> written_;
 };
 
 // Notes whether a stored value was ever missing from the index chunks a load would read.
@@ -119,23 +143,6 @@ private:
 
     rb::testing::FakeSecretStore& inner_;
 };
-
-// What a release saw when it flushed the logs; the hook is a plain function, so this is global.
-struct FlushProbe {
-    const Redactor* redactor = nullptr;
-    std::string value;
-    std::atomic<int> flushes{0};
-    std::atomic<bool> masked_at_flush{true};
-};
-
-FlushProbe g_flush_probe;
-
-void probe_flush() {
-    const FlushProbe& probe = g_flush_probe;
-    const std::string line = "logged " + probe.value;
-    if (probe.redactor->apply(line) == line) g_flush_probe.masked_at_flush = false;
-    ++g_flush_probe.flushes;
-}
 
 }  // namespace
 
@@ -504,7 +511,7 @@ TEST_CASE("a join password is taken once and dropped when its request resolves",
     SecretService& service = f.make();
     f.start();
     const RequestId first = ask_join_password(f.requests);
-    REQUIRE(f.put_saved(join_target(first), "join-password") == kSessionOnly);
+    REQUIRE(held_value(f.put_saved(join_target(first), "join-password")) == kSessionOnly);
     CHECK(has_error(service.reveal(join_target(first)).error(), SecretError::RevealForbidden));
     const Result<SecretBytes> taken = service.take(join_target(first));
     REQUIRE(taken.has_value());
@@ -583,10 +590,25 @@ TEST_CASE("require starts the load and asks once it found nothing stored", "[sec
     const std::size_t pending = f.requests.pending().size();
     std::optional<Result<SecretBytes>> withdrawn;
     CHECK_FALSE(require(*f.service, remote_target(), SecretWait{}, cancel.token(), withdrawn).has_value());
+    // Withdrawn at once, while the load is still held in the store.
     cancel.cancel(CancelReason::User);
-    f.store.open();
     f.strand.run_until([&] { return withdrawn.has_value(); });
     CHECK(has_error(withdrawn->error(), SecretError::RequestWithdrawn));
+    f.store.open();
+    f.start();
+    CHECK(f.requests.pending().size() == pending);
+
+    // One cancelled before the call is withdrawn the same way.
+    CancelSource already;
+    already.cancel(CancelReason::Shutdown);
+    f.make();
+    f.store.close(SecretStoreOperation::Get);
+    std::optional<Result<SecretBytes>> late;
+    CHECK_FALSE(require(*f.service, remote_target(), SecretWait{}, already.token(), late).has_value());
+    f.strand.run_until([&] { return late.has_value(); });
+    CHECK(has_error(late->error(), SecretError::RequestWithdrawn));
+    f.store.open();
+    f.start();
     CHECK(f.requests.pending().size() == pending);
 }
 
@@ -692,7 +714,7 @@ TEST_CASE("resolutions lost to a Resync are recovered from the pending requests"
     CHECK(f.state(join_target(join)) == SecretState{});
 }
 
-TEST_CASE("held values are masked in logs until a drop has been flushed", "[secrets][service]") {
+TEST_CASE("held values are masked until dropped", "[secrets][service]") {
     Fixture f;
     f.make();
     f.start();
@@ -701,16 +723,18 @@ TEST_CASE("held values are masked in logs until a drop has been flushed", "[secr
     };
     REQUIRE(f.put_saved(remote_target(), "first-secret").has_value());
     CHECK(masked("first-secret"));
-    REQUIRE(f.put_saved(remote_target(), "second-secret").has_value());
-    f.strand.run_until([&] { return !masked("first-secret"); });
+    // The put itself drops the old value, before any store call.
+    REQUIRE(f.service->put(remote_target(), bytes("second-secret"), std::nullopt, nullptr).has_value());
+    CHECK_FALSE(masked("first-secret"));
     CHECK(masked("second-secret"));
+    f.settle();
 
     REQUIRE(f.clear(remote_target()).has_value());
-    f.strand.run_until([&] { return !masked("second-secret"); });
+    CHECK_FALSE(masked("second-secret"));
 
     REQUIRE(f.put_saved(host_target(), "hunter22").has_value());
     f.make();
-    f.strand.run_until([&] { return !masked("hunter22"); });
+    CHECK_FALSE(masked("hunter22"));
     f.start();
     CHECK(masked("hunter22"));
 }
@@ -728,19 +752,6 @@ TEST_CASE("a service destroyed during a store call ignores the late reply", "[se
     CHECK(f.stored(value_key(host_target())) == "hunter22");
     f.strand.advance(kStoreCallDeadline);
     CHECK_FALSE(saved);
-}
-
-TEST_CASE("a store call never waits behind the shared workers", "[secrets][service]") {
-    Fixture f;
-    f.make();
-    f.start();
-    WorkerGate busy(f.workers, f.strand);
-    // On the shared pool this call would wait behind `busy` until its deadline.
-    const Result<SecretState> saved = f.put_saved(host_target(), "hunter22");
-    REQUIRE(saved.has_value());
-    CHECK(*saved == kRemembered);
-    CHECK(f.stored(value_key(host_target())) == "hunter22");
-    busy.release();
 }
 
 TEST_CASE("an index past what one store value holds is kept in chunks", "[secrets][service]") {
@@ -773,23 +784,47 @@ TEST_CASE("an index past what one store value holds is kept in chunks", "[secret
     CHECK(f.inner.keys().empty());
 }
 
-TEST_CASE("a dropped value stays masked until the logs were flushed", "[secrets][service]") {
+TEST_CASE("a line logged before a drop stays masked when the logger writes it later", "[secrets][service]") {
+    const auto gate = std::make_shared<LogGate>();
+    const auto written = std::make_shared<std::vector<std::string>>();
+    Logger::add_sink(std::make_unique<GateSink>(gate, written));
+    Logger::install(1 << 20);
+    // Declared first, so it runs last, also when a REQUIRE fails.
+    const struct LoggerStop {
+        LogGate& gate;
+        ~LoggerStop() {
+            gate.open();
+            Logger::shutdown();
+        }
+    } stop{*gate};
     Fixture f;
-    g_flush_probe.redactor = &f.redactor;
-    g_flush_probe.value = "first-secret";
-    g_flush_probe.flushes = 0;
-    g_flush_probe.masked_at_flush = true;
-    f.make(kRootHash, &probe_flush);
-    f.start();
-    const auto masked = [&](std::string_view value) {
-        return f.redactor.apply("before " + std::string(value) + " after").find(value) == std::string::npos;
-    };
-    REQUIRE(f.put_saved(remote_target(), "first-secret").has_value());
-    REQUIRE(f.put_saved(remote_target(), "second-secret").has_value());
-    f.strand.run_until([&] { return !masked("first-secret"); });
-    CHECK(g_flush_probe.flushes.load() == 1);
-    CHECK(g_flush_probe.masked_at_flush.load());
-    CHECK(masked("second-secret"));
+    std::optional<SecretService> service;
+    service.emplace(f.store, f.store_worker, f.strand, f.timers, f.requests, f.events, Logger::redactor(), kRootHash);
+    bool started = false;
+    service->start([&](SecretsAvailability) { started = true; });
+    f.strand.run_until([&] { return started; });
+    std::optional<Result<SecretState>> saved;
+    REQUIRE(service->put(host_target(), bytes("first-secret"), std::nullopt,
+                         [&](Result<SecretState> result) { saved = std::move(result); }));
+    f.strand.run_until([&] { return saved.has_value(); });
+
+    gate->arm();
+    Logger::write(LogLevel::Info, LogCategory::Engine, std::nullopt, "held by the writer");
+    gate->wait_entered();
+    REBOOT_LOG_INFO(Engine, "joining with {}", "first-secret");
+    // Replacing the value drops the first one while its line is still queued.
+    saved.reset();
+    REQUIRE(service->put(host_target(), bytes("second-secret"), std::nullopt,
+                         [&](Result<SecretState> result) { saved = std::move(result); }));
+    f.strand.run_until([&] { return saved.has_value(); });
+    gate->open();
+    Logger::flush();
+
+    CHECK(std::ranges::count(*written, std::string("joining with ***")) == 1);
+    CHECK(std::ranges::none_of(*written, [](const std::string& line) { return line.contains("first-secret"); }));
+    CHECK(Logger::redactor().apply("first-secret") == "first-secret");
+    CHECK(Logger::redactor().apply("second-secret") == "***");
+    service.reset();
 }
 
 TEST_CASE("a write after a load that found stale index lines never leaves a value unlisted", "[secrets][service]") {
@@ -804,7 +839,7 @@ TEST_CASE("a write after a load that found stale index lines never leaves a valu
 
     ListingCheckStore checked(f.inner);
     std::optional<SecretService> service;
-    service.emplace(checked, f.store_worker, f.workers, f.strand, f.timers, f.requests, f.events, f.redactor, kRootHash);
+    service.emplace(checked, f.store_worker, f.strand, f.timers, f.requests, f.events, f.redactor, kRootHash);
     bool started = false;
     service->start([&](SecretsAvailability) { started = true; });
     f.strand.run_until([&] { return started; });

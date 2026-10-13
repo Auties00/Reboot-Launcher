@@ -153,6 +153,19 @@ TEST_CASE("A throwing callback neither stops the others nor blocks its reset", "
     other.join();
 }
 
+TEST_CASE("A callback registered after the cancel that throws is logged, not thrown", "[foundation][cancel]") {
+    CancelSource source;
+    source.cancel(CancelReason::Shutdown);
+    std::optional<CancelReason> seen;
+    CancelRegistration registration;
+    CHECK_NOTHROW(registration = source.token().on_cancel([&](CancelReason reason) {
+        seen = reason;
+        throw std::runtime_error("callback failed");
+    }));
+    REQUIRE(seen.has_value());
+    CHECK(*seen == CancelReason::Shutdown);
+}
+
 TEST_CASE("Racing cancels from many threads pick exactly one winner", "[foundation][cancel][race]") {
     for (int round = 0; round < 50; ++round) {
         CancelSource source;

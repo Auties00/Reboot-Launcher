@@ -172,7 +172,8 @@ public:
     PlayService(const PlayService&) = delete;
     PlayService& operator=(const PlayService&) = delete;
 
-    // Play.plan. Fails only for an unknown build; every other problem is a blocker in the plan.
+    // Play.plan. Fails for an unknown build, and with the retryable secrets.not_ready while the saved
+    // secrets its NeedsSecret question depends on still load; every other problem is a blocker in the plan.
     [[nodiscard]] Result<PlayPlan> plan(const PlayRequest& request) const;
 
     // Play.start, an OpKind::Play op scaled by the runner multiplier; completes with the SessionId

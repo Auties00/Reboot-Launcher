@@ -161,7 +161,7 @@ void ClientContext::start(u32 method, std::span<const u8> request, std::optional
         if (!answer) return done(std::unexpected(local_failure(answer.error())));
         if (auto* started = std::get_if<wire::Started>(&*answer)) {
             // On the reader thread, before any OpResult for the op is handled.
-            track_op(started->op_id, method);
+            track_op(started->op_id, method, true);
             return done(started->op_id);
         }
         auto& reply = std::get<wire::Reply>(*answer);
@@ -188,10 +188,12 @@ Result<void> ClientContext::attach(u64 op_id) {
         std::lock_guard lock(link_mutex_);
         if (closed_) return std::unexpected(closed_diag());
     }
-    const bool tracked = track_op(op_id, 0);
+    // Until on_reconnected has run, the engine the attach would reach is not known.
+    const std::optional<bool> tracked = track_op(op_id, 0, false);
+    if (!tracked) return std::unexpected(connection_lost_diag());
     if (auto sent = link_->send(wire::Attach{op_id}); !sent) {
         // An op tracked before this call stays attached.
-        if (tracked) static_cast<void>(release(op_id));
+        if (*tracked) static_cast<void>(release(op_id));
         return sent;
     }
     return {};
@@ -333,7 +335,14 @@ void ClientContext::on_frame(ipc::EngineMessage message) {
                    },
                    [this](wire::Reply& reply) { calls_.answer(reply.req_id, std::move(reply)); },
                    [this](wire::Started& started) { calls_.answer(started.req_id, started); },
-                   [this](wire::OpResult& result) { deliver_outcome(result.op_id, std::move(result.outcome)); },
+                   [this](wire::OpResult& result) {
+                       u64 epoch = 0;
+                       {
+                           std::lock_guard lock(link_mutex_);
+                           epoch = hello_.epoch;
+                       }
+                       deliver_outcome(result.op_id, epoch, std::move(result.outcome));
+                   },
                    [this](wire::EventBatch& batch) { on_event_batch(std::move(batch)); },
                    [this](wire::Resync& resync) { on_resync(resync.sub_id); },
                    [this](wire::ForegroundHint& hint) { deps_.caller.allow_foreground(hint.pid); },
@@ -349,7 +358,7 @@ void ClientContext::on_lost(const Diagnostic& reason, ipc::LinkLoss loss) {
         std::lock_guard lock(link_mutex_);
         lost_reason_ = reason;
         epoch = hello_.epoch;
-        // An attach while the link is down adds nothing, so these are all the lost link's ops.
+        // track_op adds any op Started on the lost link later, and refuses attaches until on_reconnected.
         if (loss == ipc::LinkLoss::Final) lost_ops_.clear();
         else
             for (const PendingOp& op : ops_.pending()) lost_ops_.push_back(op);
@@ -367,30 +376,36 @@ void ClientContext::on_lost(const Diagnostic& reason, ipc::LinkLoss loss) {
 
 void ClientContext::on_reconnected(const ipc::Handshake& handshake) {
     bool new_epoch = false;
-    u64 link = 0;
-    Diagnostic reason = connection_lost_diag();
-    std::vector<PendingOp> lost;
+    Woken woken;
     {
-        std::lock_guard lock(link_mutex_);
-        new_epoch = handshake.hello.epoch != hello_.epoch;
-        hello_ = handshake.hello;
-        link = ++link_generation_;
-        if (lost_reason_) reason = std::move(*lost_reason_);
-        lost_reason_.reset();
-        lost = std::exchange(lost_ops_, {});
+        // Held throughout, so an op tracked from the new link never meets a lost op still pending.
+        std::lock_guard subs_lock(subs_mutex_);
+        u64 link = 0;
+        Diagnostic reason = connection_lost_diag();
+        std::vector<PendingOp> lost;
+        {
+            std::lock_guard lock(link_mutex_);
+            new_epoch = handshake.hello.epoch != hello_.epoch;
+            hello_ = handshake.hello;
+            link = ++link_generation_;
+            if (lost_reason_) reason = std::move(*lost_reason_);
+            lost_reason_.reset();
+            lost = std::exchange(lost_ops_, {});
+        }
+        for (auto& [sub_id, sub] : subs_) sub->set_link(link);
+        push_local_locked(library_event(ApiEventKind::Reconnected, handshake.hello.epoch), woken);
+        if (new_epoch) {
+            for (const PendingOp& op : lost) {
+                std::vector<u8> outcome = encode_failed_outcome(op.op_id, op.method_id, reason);
+                const wire::WireEvent event = op_completed_event(handshake.hello.epoch, op.op_id, outcome);
+                if (ops_.complete(op.op_id, op.epoch, std::move(outcome))) push_outcome_locked(op.op_id, event, woken);
+            }
+            for (auto& [sub_id, sub] : subs_) sub->forget_delivered();
+        }
     }
     deps_.caller.allow_foreground(handshake.hello.pid);
-    {
-        std::lock_guard lock(subs_mutex_);
-        for (auto& [sub_id, sub] : subs_) sub->set_link(link);
-    }
-    push_local_to_all(library_event(ApiEventKind::Reconnected, handshake.hello.epoch));
-    if (new_epoch) {
-        // An op attached once this link was up belongs to the new engine, which answers it.
-        fail_pending_ops(lost, reason);
-        std::lock_guard lock(subs_mutex_);
-        for (auto& [sub_id, sub] : subs_) sub->forget_delivered();
-    } else {
+    wake(woken);
+    if (!new_epoch) {
         // The engine replays the OpResult of an op that ended meanwhile.
         for (const PendingOp& op : ops_.pending()) static_cast<void>(link_->send(wire::Attach{op.op_id}));
     }
@@ -429,9 +444,15 @@ std::optional<u64> ClientContext::send_call(Frame frame, AnswerDone done) {
     return req_id;
 }
 
-bool ClientContext::track_op(u64 op_id, u32 method_id) {
+std::optional<bool> ClientContext::track_op(u64 op_id, u32 method_id, bool started) {
     std::lock_guard lock(subs_mutex_);
-    if (!ops_.track(op_id, method_id)) return false;
+    {
+        // With the link's state, so on_lost lists either this op or none of it.
+        std::lock_guard link_lock(link_mutex_);
+        if (lost_reason_ && !started) return std::nullopt;
+        if (!ops_.track(op_id, method_id, hello_.epoch)) return false;
+        if (lost_reason_) lost_ops_.push_back(PendingOp{op_id, method_id, hello_.epoch});
+    }
     for (auto& [sub_id, sub] : subs_) sub->follow(op_id);
     return true;
 }
@@ -460,51 +481,61 @@ void ClientContext::on_resync(u64 sub_id) {
     sub->release();
 }
 
-void ClientContext::deliver_outcome(u64 op_id, std::vector<u8> outcome) {
-    u64 epoch = 0;
+void ClientContext::deliver_outcome(u64 op_id, u64 epoch, std::vector<u8> outcome) {
+    u64 current = 0;
     {
         std::lock_guard lock(link_mutex_);
-        epoch = hello_.epoch;
+        current = hello_.epoch;
     }
-    const wire::WireEvent event = op_completed_event(epoch, op_id, outcome);
-    std::vector<std::pair<EventSubscription*, PushEffects>> woken;
+    const wire::WireEvent event = op_completed_event(current, op_id, outcome);
+    Woken woken;
     {
         // Under subs_mutex_, so a subscription made meanwhile either follows the op or sees it ended.
         std::lock_guard lock(subs_mutex_);
-        if (!ops_.complete(op_id, std::move(outcome))) return;
-        for (auto& [sub_id, sub] : subs_) {
-            PushEffects effects = sub->push_outcome(op_id, event);
-            if (!effects.wake) continue;
-            sub->acquire();
-            woken.emplace_back(sub.get(), effects);
-        }
+        if (!ops_.complete(op_id, epoch, std::move(outcome))) return;
+        push_outcome_locked(op_id, event, woken);
     }
-    for (auto& [sub, effects] : woken) {
-        apply(sub->id(), effects);
-        sub->release();
-    }
+    wake(woken);
 }
 
 void ClientContext::fail_pending_ops(const std::vector<PendingOp>& ops, const Diagnostic& reason) {
     // deliver_outcome skips an op that has ended or was released meanwhile.
-    for (const PendingOp& op : ops) deliver_outcome(op.op_id, encode_failed_outcome(op.op_id, op.method_id, reason));
+    for (const PendingOp& op : ops)
+        deliver_outcome(op.op_id, op.epoch, encode_failed_outcome(op.op_id, op.method_id, reason));
 }
 
-void ClientContext::push_local_to_all(wire::WireEvent event) {
-    std::vector<std::pair<EventSubscription*, PushEffects>> woken;
-    {
-        std::lock_guard lock(subs_mutex_);
-        for (auto& [sub_id, sub] : subs_) {
-            PushEffects effects = sub->push_local(event);
-            if (!effects.wake) continue;
-            sub->acquire();
-            woken.emplace_back(sub.get(), effects);
-        }
+void ClientContext::push_local_locked(const wire::WireEvent& event, Woken& woken) {
+    for (auto& [sub_id, sub] : subs_) {
+        PushEffects effects = sub->push_local(event);
+        if (!effects.wake) continue;
+        sub->acquire();
+        woken.emplace_back(sub.get(), effects);
     }
-    for (auto& [sub, effects] : woken) {
+}
+
+void ClientContext::push_outcome_locked(u64 op_id, const wire::WireEvent& event, Woken& woken) {
+    for (auto& [sub_id, sub] : subs_) {
+        PushEffects effects = sub->push_outcome(op_id, event);
+        if (!effects.wake) continue;
+        sub->acquire();
+        woken.emplace_back(sub.get(), effects);
+    }
+}
+
+void ClientContext::wake(const Woken& woken) {
+    for (const auto& [sub, effects] : woken) {
         apply(sub->id(), effects);
         sub->release();
     }
+}
+
+void ClientContext::push_local_to_all(wire::WireEvent event) {
+    Woken woken;
+    {
+        std::lock_guard lock(subs_mutex_);
+        push_local_locked(event, woken);
+    }
+    wake(woken);
 }
 
 void ClientContext::resubscribe_all() {

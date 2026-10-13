@@ -4,15 +4,19 @@
 
 namespace rb::client {
 
-bool OpTable::track(u64 op_id, u32 method_id) {
+bool OpTable::track(u64 op_id, u32 method_id, u64 epoch) {
     std::lock_guard lock(mutex_);
-    return ops_.try_emplace(op_id, Entry{method_id, std::nullopt}).second;
+    const auto [it, inserted] = ops_.try_emplace(op_id, Entry{method_id, epoch, std::nullopt});
+    if (inserted) return true;
+    if (it->second.epoch == epoch) return false;
+    it->second = Entry{method_id, epoch, std::nullopt};
+    return true;
 }
 
-bool OpTable::complete(u64 op_id, std::vector<u8> outcome) {
+bool OpTable::complete(u64 op_id, u64 epoch, std::vector<u8> outcome) {
     std::lock_guard lock(mutex_);
     const auto it = ops_.find(op_id);
-    if (it == ops_.end() || it->second.outcome) return false;
+    if (it == ops_.end() || it->second.epoch != epoch || it->second.outcome) return false;
     it->second.outcome = std::move(outcome);
     return true;
 }
@@ -34,7 +38,7 @@ std::vector<PendingOp> OpTable::pending() const {
     std::lock_guard lock(mutex_);
     std::vector<PendingOp> out;
     for (const auto& [op_id, entry] : ops_)
-        if (!entry.outcome) out.push_back(PendingOp{op_id, entry.method_id});
+        if (!entry.outcome) out.push_back(PendingOp{op_id, entry.method_id, entry.epoch});
     return out;
 }
 

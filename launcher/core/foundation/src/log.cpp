@@ -87,8 +87,10 @@ private:
 };
 
 struct LoggerState {
+    // Applied once no ticket of `epoch` or older is held and the writer has passed record `after`.
     struct Removal {
         u64 after = 0;
+        u64 epoch = 0;
         SecretBytes value;
     };
 
@@ -106,6 +108,10 @@ struct LoggerState {
     u64 enqueued = 0;
     u64 written = 0;
     std::vector<Removal> removals;
+    // Held tickets as (epoch, count), oldest first. Parking a removal starts a new epoch, so later
+    // tickets never hold it back.
+    u64 epoch = 0;
+    std::vector<std::pair<u64, u64>> tickets;
     bool started = false;
     bool stopping = false;
     std::thread writer;
@@ -143,14 +149,31 @@ struct LoggerState {
 
     // With `mutex` held.
     void remove_secret(std::span<const u8> value) {
-        if (!started || written == enqueued) return redactor.remove_now(value);
-        removals.push_back(Removal{enqueued, SecretBytes(std::vector<u8>(value.begin(), value.end()))});
+        if (!started || (written == enqueued && tickets.empty())) return redactor.remove_now(value);
+        removals.push_back(Removal{enqueued, epoch++, SecretBytes(std::vector<u8>(value.begin(), value.end()))});
+    }
+
+    // With `mutex` held.
+    u64 take_ticket() {
+        if (tickets.empty() || tickets.back().first != epoch) tickets.emplace_back(epoch, 0);
+        ++tickets.back().second;
+        return epoch;
+    }
+
+    // With `mutex` held, after the ticket's record (if any) is queued.
+    void release_ticket(u64 held, bool queued) {
+        const auto it = std::ranges::find(tickets, held, &std::pair<u64, u64>::first);
+        if (it != tickets.end() && --it->second == 0) tickets.erase(it);
+        if (queued)
+            for (Removal& removal : removals)
+                if (removal.epoch >= held) removal.after = std::max(removal.after, enqueued);
+        apply_removals();
     }
 
     // With `mutex` held.
     void apply_removals() {
         std::erase_if(removals, [this](const Removal& removal) {
-            if (removal.after > written) return false;
+            if (removal.after > written || (!tickets.empty() && tickets.front().first <= removal.epoch)) return false;
             redactor.remove_now(removal.value.reveal());
             return true;
         });
@@ -307,6 +330,31 @@ void Logger::add_sink(std::unique_ptr<LogSink> sink) {
 
 Redactor& Logger::redactor() { return state().redactor; }
 
+LogTicket::LogTicket(LogTicket&& other) noexcept : epoch_(other.epoch_), held_(std::exchange(other.held_, false)) {}
+
+LogTicket& LogTicket::operator=(LogTicket&& other) noexcept {
+    if (this != &other) {
+        LogTicket released = std::move(*this);
+        epoch_ = other.epoch_;
+        held_ = std::exchange(other.held_, false);
+    }
+    return *this;
+}
+
+LogTicket::~LogTicket() {
+    if (!held_) return;
+    LoggerState& s = state();
+    const std::lock_guard lock(s.mutex);
+    s.release_ticket(epoch_, false);
+}
+
+LogTicket Logger::begin() {
+    LoggerState& s = state();
+    const std::lock_guard lock(s.mutex);
+    if (!s.started || s.stopping) return {};
+    return LogTicket(s.take_ticket());
+}
+
 void Logger::set_level(LogLevel minimum) { state().minimum.store(minimum); }
 
 bool Logger::enabled(LogLevel level) noexcept {
@@ -315,17 +363,29 @@ bool Logger::enabled(LogLevel level) noexcept {
 }
 
 void Logger::write(LogLevel level, LogCategory category, std::optional<SessionId> session, std::string text) {
+    write(LogTicket{}, level, category, session, std::move(text));
+}
+
+void Logger::write(LogTicket ticket, LogLevel level, LogCategory category, std::optional<SessionId> session,
+                   std::string text) {
     LoggerState& s = state();
     LogRecord record{std::chrono::system_clock::now(), level, category, session, std::move(text)};
     const std::size_t bytes = cost(record);
     {
         std::unique_lock lock(s.mutex);
-        if (!s.started || s.stopping) return;
+        const auto release = [&](bool queued) {
+            if (ticket.held_) s.release_ticket(ticket.epoch_, queued);
+            ticket.held_ = false;
+        };
+        const auto drop = [&](LogCategory counted) {
+            ++s.dropped[slot_of(counted)];
+            release(false);
+        };
+        if (!s.started || s.stopping) return release(false);
+        // Taken before any wait below, so a removal made meanwhile still covers this record.
+        if (!ticket.held_) ticket = LogTicket(s.take_ticket());
         if (s.queue_bytes + bytes > s.byte_budget) {
-            if (droppable(record)) {
-                ++s.dropped[slot_of(record.category)];
-                return;
-            }
+            if (droppable(record)) return drop(record.category);
             for (auto it = s.queue.begin(); it != s.queue.end() && s.queue_bytes + bytes > s.byte_budget;) {
                 if (!droppable(*it)) {
                     ++it;
@@ -335,10 +395,7 @@ void Logger::write(LogLevel level, LogCategory category, std::optional<SessionId
                 ++s.dropped[slot_of(it->category)];
                 it = s.queue.erase(it);
             }
-            if (s.queue_bytes + bytes > s.byte_budget && level < LogLevel::Warn) {
-                ++s.dropped[slot_of(category)];
-                return;
-            }
+            if (s.queue_bytes + bytes > s.byte_budget && level < LogLevel::Warn) return drop(category);
             if (!on_writer(s))
                 s.drained.wait(lock, [&] {
                     return s.stopping || s.queue.empty() || s.queue_bytes + bytes <= s.byte_budget * kHardCapBudgets;
@@ -347,6 +404,7 @@ void Logger::write(LogLevel level, LogCategory category, std::optional<SessionId
         s.queue_bytes += bytes;
         s.queue.push_back(std::move(record));
         ++s.enqueued;
+        release(true);
     }
     s.wake.notify_one();
 }
