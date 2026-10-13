@@ -84,4 +84,10 @@ std::string normalize_host(std::string_view host) {
     return lowercase(host);
 }
 
+bool is_literal_loopback(std::string_view normalized_host) {
+    if (normalized_host == "localhost") return true;
+    const std::optional<IpAddress> address = IpAddress::parse(normalized_host);
+    return address && address->is_loopback();
+}
+
 }  // namespace rb::net

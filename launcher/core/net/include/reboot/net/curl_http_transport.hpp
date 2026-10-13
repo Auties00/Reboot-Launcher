@@ -17,7 +17,9 @@ namespace rb::net {
 // - Windows: Schannel with the OS root store.
 // - macOS: OpenSSL with USE_APPLE_SECTRUST (curl 8.17 or later), so the keychain decides trust.
 // - Linux: OpenSSL with the CA bundle that ISystemInfo probed.
-// Peer and host verification are never turned off, and redirects never leave https. Request
+// A request's TlsPolicy::ca_bundle replaces all three. Peer and host verification are never
+// turned off, and redirects never leave https; a plain http chain is held to
+// HttpRequest::plain_http_hosts hop by hop. Request
 // bodies and header values are wiped once a transfer ends and are never logged, since
 // HttpClient::send_secret passes credentials through them. Failures are HttpError diagnostics.
 class CurlHttpTransport final : public ports::IHttpTransport {

@@ -122,6 +122,7 @@ private:
     out.connect_timeout = limits.connect;
     out.total_timeout = limits.total.value_or(std::chrono::milliseconds{0});
     out.stall = limits.stall;
+    out.tls.ca_bundle = request.ca_bundle;
     return out;
 }
 
@@ -197,6 +198,12 @@ struct HttpClient::Impl {
             auto attempt = std::make_shared<Attempt>(exchange->request.max_body, exchange->secrets.has_value());
 
             ports::HttpRequest request = to_port_request(exchange->request, exchange->limits);
+            if (exchange->url.scheme == UrlScheme::Http) {
+                request.plain_http_hosts = tls.plain_http_hosts();
+                if (std::ranges::find(request.plain_http_hosts, exchange->url.host) == request.plain_http_hosts.end())
+                    request.plain_http_hosts.push_back(exchange->url.host);
+                request.https_hosts = tls.https_hosts();
+            }
             if (exchange->secrets) {
                 // Growing the vector would move short values out of buffers that are never wiped.
                 request.headers.reserve(request.headers.size() + exchange->secrets->headers.size());

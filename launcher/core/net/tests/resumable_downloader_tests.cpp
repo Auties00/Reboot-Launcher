@@ -15,6 +15,7 @@
 #include "download_support.hpp"
 #include "net_test_support.hpp"
 #include "reboot/foundation/cancel.hpp"
+#include "reboot/foundation/random.hpp"
 #include "reboot/net/host_tls_memory.hpp"
 #include "reboot/net/http_client.hpp"
 #include "reboot/net/resumable_downloader.hpp"
@@ -36,8 +37,9 @@ namespace {
 constexpr std::string_view kUrl = "https://builds.test/12.41.zip";
 const std::string kBody = "0123456789abcdefghijklmnopqrstuvwxyz";
 
+// OS randomness: ctest runs the cases of this binary in parallel processes.
 testing::ScratchDir make_scratch() {
-    testing::FakeRandom random(99);
+    OsRandom random;
     Result<testing::ScratchDir> dir = testing::ScratchDir::create(random, "reboot-net-dl");
     REQUIRE(dir);
     return std::move(*dir);
@@ -441,4 +443,11 @@ TEST_CASE("without a stated size the catalog size decides: short resumes, long f
     REQUIRE_FALSE(g.result->has_value());
     CHECK(g.result->error().id == "net.download_size_mismatch");
     CHECK(g.transport.requests().size() == 1);
+}
+
+// ScratchDir::create tries 8 names; a fixed seed would offer the same 8 on every call.
+TEST_CASE("scratch directories never repeat a name", "[net][download]") {
+    std::vector<testing::ScratchDir> dirs;
+    for (int i = 0; i < 9; ++i) dirs.push_back(make_scratch());
+    CHECK(dirs.front().path() != dirs.back().path());
 }

@@ -24,7 +24,8 @@ class HostTlsMemory;
 // Capabilities: matchmaking-networking.http-timeouts, matchmaking-networking.+72, matchmaking-networking.+84.
 // The engine's one HTTP client. Strand-only. Every call is bounded by its kind's limits and
 // cancellable; TLS is always verified by the transport; HostTlsMemory gates the scheme and learns
-// https hosts from successful responses.
+// https hosts from successful responses. A plain http request carries the hosts HostTlsMemory lets
+// through, so the transport holds each redirect hop to the same rule.
 class HttpClient {
 public:
     HttpClient(ports::IHttpTransport& transport, HostTlsMemory& tls, Executor& strand, TimerService& timers,

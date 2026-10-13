@@ -22,6 +22,7 @@
 namespace rb {
 class EventBus;
 class Executor;
+class TimerService;
 class WorkerPool;
 }  // namespace rb
 
@@ -46,6 +47,7 @@ struct ComponentStoreDeps {
     net::ResumableDownloader& downloader;
     WorkerPool& workers;
     Executor& strand;
+    TimerService& timers;
     OpRegistry& ops;
     EventBus& events;
     ManifestService& manifest;
@@ -67,11 +69,17 @@ struct ComponentStoreDeps {
 //   good session (N-1); everything else is removed.
 // - A DeletionGuard report or a failed hold is re-verified first (exists, same size and sha256).
 //   Only a file still missing, unreadable or mismatched is re-fetched and published as a
-//   ComponentChangedEvent carrying a ComponentProblem; a file in use raises none.
+//   ComponentChangedEvent carrying a ComponentProblem; a file in use raises none. A version load
+//   found broken (quarantined while the launcher was closed) raises one on its next fetch.
+// - A rename into the store that another process briefly blocks (sharing, lock or access denied)
+//   is tried again, up to 5 times over about 750 ms.
 // - ISecurityProductProbe is asked only for a missing or access-denied file.
 // - An index.json of a newer schema leaves the store read-only for the run: it fetches what it
 //   needs, but collects, removes and rewrites nothing (start_remove fails with
-//   components.store_failed).
+//   components.store_failed). An unreadable index.json starts the store empty but deletes no
+//   version directory.
+// - A removal waits only for fetches of the same component or into a directory it deletes, and
+//   reports progress while it waits; an op that ended first (cancelled, timed out) removes nothing.
 class ComponentStore {
 public:
     ComponentStore(ComponentStoreDeps deps, const AppLayout& layout);
@@ -84,10 +92,14 @@ public:
     void load(UniqueFunction<void(Result<void>)> done);
 
     [[nodiscard]] std::vector<ComponentInfo> list() const;
+    // False before load() finished and for a run with a newer index.json, when list() can miss
+    // stored versions.
+    [[nodiscard]] bool listing_complete() const noexcept;
 
     // Components.ensure: fetches the version the manifest selects; completes with its ComponentRef.
     [[nodiscard]] Result<OpHandle> start_ensure(std::string_view component_id, DisconnectPolicy policy);
     // Components.remove: removes every unpinned version; components.pinned while a session uses one.
+    // Once the files are being deleted, a cancel no longer stops it.
     [[nodiscard]] Result<OpHandle> start_remove(std::string_view component_id, DisconnectPolicy policy);
 
     // Play preflight: the selected payload's required_payload_roles() files for this platform,

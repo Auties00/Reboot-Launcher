@@ -15,6 +15,7 @@
 #include <msquic.h>
 
 #include "messages.hpp"
+#include "quic_peer_verifier.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/text.hpp"
@@ -78,6 +79,8 @@ struct Connection {
     const bool ipv4_only;
     HQUIC handle = nullptr;
     HQUIC configuration = nullptr;
+    // An explicit CA bundle; MsQuic then hands us the chain instead of checking it.
+    std::unique_ptr<QuicPeerVerifier> verifier;
 
     std::mutex api_mutex;
     // Set under api_mutex once the handle is being closed; no call into MsQuic follows.
@@ -92,7 +95,8 @@ struct Connection {
     bool detached = false;
     ports::QuicCallbacks callbacks;
     std::optional<Diagnostic> failure;
-    // Open streams; a stream leaves when its shutdown completes, and its callback closes it.
+    // Open streams; a stream leaves when its shutdown completes and its callback closes it, or when
+    // close_handle closes what is left.
     std::map<u64, HQUIC> streams;
 
     template <class F>
@@ -146,11 +150,13 @@ QUIC_STATUS QUIC_API on_stream_event(HQUIC stream, void* context, QUIC_STREAM_EV
         case QUIC_STREAM_EVENT_SEND_COMPLETE: delete static_cast<SendBuffer*>(event->SEND_COMPLETE.ClientContext); break;
         case QUIC_STREAM_EVENT_PEER_SEND_ABORTED: connection.api->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0); break;
         case QUIC_STREAM_EVENT_SHUTDOWN_COMPLETE: {
+            bool owned = false;
             {
                 const std::scoped_lock lock(connection.mutex);
-                connection.streams.erase(stream_context->id);
+                owned = connection.streams.erase(stream_context->id) != 0;
             }
-            // MsQuic allows StreamClose here; during ConnectionClose it closes the handle itself.
+            // A stream close_handle took out of the map is closed and freed there.
+            if (!owned) break;
             if (!event->SHUTDOWN_COMPLETE.AppCloseInProgress) connection.api->StreamClose(stream);
             delete stream_context;
             break;
@@ -204,6 +210,17 @@ QUIC_STATUS QUIC_API on_connection_event(HQUIC, void* context, QUIC_CONNECTION_E
             connection.api->SetCallbackHandler(stream, reinterpret_cast<void*>(&on_stream_event), new StreamContext{&connection, id});
             break;
         }
+        case QUIC_CONNECTION_EVENT_PEER_CERTIFICATE_RECEIVED: {
+            if (!connection.verifier) break;
+            const auto as_bytes = [](const void* portable) {
+                const auto* buffer = static_cast<const QUIC_BUFFER*>(portable);
+                return buffer == nullptr ? std::span<const u8>() : std::span<const u8>(buffer->Buffer, buffer->Length);
+            };
+            if (!connection.verifier->verify(as_bytes(event->PEER_CERTIFICATE_RECEIVED.Certificate),
+                                             as_bytes(event->PEER_CERTIFICATE_RECEIVED.Chain)))
+                return QUIC_STATUS_BAD_CERTIFICATE;
+            break;
+        }
         case QUIC_CONNECTION_EVENT_DATAGRAM_RECEIVED: {
             const QUIC_BUFFER* buffer = event->DATAGRAM_RECEIVED.Buffer;
             connection.deliver([&](ports::QuicCallbacks& callbacks) {
@@ -250,6 +267,19 @@ void close_handle(Connection& connection) {
             lock.lock();
             connection.shutdown_done.wait_for(lock, kShutdownWait, [&] { return connection.complete; });
         }
+    }
+    // MsQuic may complete the connection's shutdown before its streams'; a stream handle left open
+    // then keeps the connection, and RegistrationClose, waiting forever.
+    std::map<u64, HQUIC> open;
+    {
+        const std::scoped_lock lock(connection.mutex);
+        open.swap(connection.streams);
+    }
+    for (const auto& [id, stream] : open) {
+        auto* context = static_cast<StreamContext*>(connection.api->GetContext(stream));
+        // Waits for a callback of this stream that is running.
+        connection.api->StreamClose(stream);
+        delete context;
     }
     connection.api->ConnectionClose(connection.handle);
     if (connection.configuration != nullptr) connection.api->ConfigurationClose(connection.configuration);
@@ -439,9 +469,17 @@ Result<std::unique_ptr<ports::IQuicConnection>> MsQuicTransport::open_connection
     QUIC_CREDENTIAL_CONFIG credentials{};
     credentials.Type = QUIC_CREDENTIAL_TYPE_NONE;
     credentials.Flags = QUIC_CREDENTIAL_FLAG_CLIENT;
-    const std::optional<NativePath>& ca = options.ca_bundle ? options.ca_bundle : impl_->system_ca;
-    const std::string ca_text = ca ? display_utf8(*ca) : std::string();
-    if (ca) {
+    const std::string ca_text = impl_->system_ca ? display_utf8(*impl_->system_ca) : std::string();
+    if (options.ca_bundle) {
+        auto verifier = QuicPeerVerifier::create(*options.ca_bundle, options.host);
+        if (!verifier) {
+            api->ConfigurationClose(connection->configuration);
+            return std::unexpected(std::move(verifier.error()));
+        }
+        connection->verifier = std::move(*verifier);
+        credentials.Flags |= QUIC_CREDENTIAL_FLAG_NO_CERTIFICATE_VALIDATION | QUIC_CREDENTIAL_FLAG_INDICATE_CERTIFICATE_RECEIVED |
+                             QUIC_CREDENTIAL_FLAG_USE_PORTABLE_CERTIFICATES;
+    } else if (impl_->system_ca) {
         credentials.Flags |= QUIC_CREDENTIAL_FLAG_SET_CA_CERTIFICATE_FILE;
         credentials.CaCertificateFile = ca_text.c_str();
     }

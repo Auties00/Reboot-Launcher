@@ -21,6 +21,10 @@ set(REBOOT_BUILD_ID "${PROJECT_VERSION}-dev" CACHE STRING "Build identity; engin
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
+# Apple Clang otherwise targets the build host's macOS, and the binaries refuse to run on older ones.
+if(APPLE AND (NOT CMAKE_OSX_DEPLOYMENT_TARGET OR CMAKE_OSX_DEPLOYMENT_TARGET VERSION_GREATER 14.0))
+  message(FATAL_ERROR "macOS builds need CMAKE_OSX_DEPLOYMENT_TARGET 14.0, the oldest macOS the launcher supports")
+endif()
 
 include(RebootWarnings)
 include(RebootPackage)

@@ -1,23 +1,11 @@
 #include "reboot/net/host_tls_memory.hpp"
 
-#include <optional>
 #include <utility>
 
-#include "reboot/foundation/net_types.hpp"
 #include "reboot/net/http_error.hpp"
 #include "url.hpp"
 
 namespace rb::net {
-
-namespace {
-
-[[nodiscard]] bool is_literal_loopback(const std::string& host) {
-    if (host == "localhost") return true;
-    const std::optional<IpAddress> address = IpAddress::parse(host);
-    return address && address->is_loopback();
-}
-
-}  // namespace
 
 HostTlsMemory::HostTlsMemory(std::vector<storage::UpstreamTlsMemory> loaded,
                              UniqueFunction<void(std::vector<storage::UpstreamTlsMemory>)> persist)
@@ -29,6 +17,7 @@ HostTlsMemory::HostTlsMemory(std::vector<storage::UpstreamTlsMemory> loaded,
         entry.host = std::move(host);
         entry.https_seen = entry.https_seen || record.https_seen;
         entry.http_acknowledged = entry.http_acknowledged || record.http_acknowledged;
+        for (const auto& member : record.unknown) entry.unknown.emplace(member.key(), member.value());
     }
 }
 
@@ -61,6 +50,20 @@ void HostTlsMemory::remember_http_acknowledged(std::string_view host) {
     entry.host = std::move(key);
     entry.http_acknowledged = true;
     if (persist_) persist_(records());
+}
+
+std::vector<std::string> HostTlsMemory::plain_http_hosts() const {
+    std::vector<std::string> out;
+    for (const auto& [host, record] : records_)
+        if (record.http_acknowledged && !record.https_seen) out.push_back(host);
+    return out;
+}
+
+std::vector<std::string> HostTlsMemory::https_hosts() const {
+    std::vector<std::string> out;
+    for (const auto& [host, record] : records_)
+        if (record.https_seen) out.push_back(host);
+    return out;
 }
 
 std::vector<storage::UpstreamTlsMemory> HostTlsMemory::records() const {

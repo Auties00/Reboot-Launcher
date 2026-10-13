@@ -1,5 +1,6 @@
 #include "reboot/components/release_manifest.hpp"
 
+#include <array>
 #include <limits>
 #include <string>
 #include <utility>
@@ -19,6 +20,11 @@ namespace json = boost::json;
 using json_fields::index_path;
 using json_fields::malformed;
 using json_fields::Reader;
+
+constexpr std::array<json_fields::Named<ports::BootStrategy>, 2> kBootStrategyNames{{
+    {"early_bird_apc", ports::BootStrategy::EarlyBirdApc},
+    {"after_resume", ports::BootStrategy::AfterResume},
+}};
 
 [[nodiscard]] Result<Reader> element(const json::array& array, std::size_t index, std::string_view parent) {
     return Reader::of(array[index], index_path(parent, index));
@@ -116,6 +122,12 @@ using json_fields::Reader;
     auto archive = json_fields::read_remote_file(*archive_in);
     if (!archive) return std::unexpected(std::move(archive.error()));
     entry.archive = std::move(*archive);
+
+    if (in.find("boot_inject") != nullptr) {
+        auto boot = in.string_at("boot_inject");
+        if (!boot) return std::unexpected(std::move(boot.error()));
+        entry.boot_inject = json_fields::find_named(kBootStrategyNames, *boot);
+    }
 
     bool unknown_platform = false;
     if (const json::value* platform_value = in.find("platform")) {

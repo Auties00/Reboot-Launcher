@@ -66,3 +66,19 @@ TEST_CASE("loaded records are normalised and merged", "[net][tls]") {
     CHECK(records[1] == storage::UpstreamTlsMemory{"b.test", false, true});
     CHECK(f.saved.empty());
 }
+
+TEST_CASE("members a newer engine added to a loaded record are saved back", "[net][tls]") {
+    storage::UpstreamTlsMemory loaded{"keep.test", false, true};
+    loaded.unknown["future"] = 7;
+    Fixture f({loaded});
+    f.memory.remember_https("keep.test");
+    REQUIRE(f.saved.size() == 1);
+    REQUIRE(f.saved.back().size() == 1);
+    CHECK(f.saved.back()[0].unknown == loaded.unknown);
+}
+
+TEST_CASE("plain_http_hosts lists the acknowledged hosts never seen on https", "[net][tls]") {
+    Fixture f({{"seen.test", true, true}, {"plain.test", false, true}, {"new.test", true, false}});
+    CHECK(f.memory.plain_http_hosts() == std::vector<std::string>{"plain.test"});
+    CHECK(f.memory.https_hosts() == std::vector<std::string>{"new.test", "seen.test"});
+}

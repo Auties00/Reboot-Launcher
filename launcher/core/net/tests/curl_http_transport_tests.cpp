@@ -17,14 +17,18 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/read.hpp>
 #include <boost/asio/read_until.hpp>
+#include <boost/asio/ssl/context.hpp>
+#include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/write.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <openssl/ssl.h>
 
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/net/curl_http_transport.hpp"
 #include "reboot/net/http_response.hpp"
 #include "reboot/testing/fake_system_info.hpp"
+#include "test_pki.hpp"
 
 using namespace rb;
 using namespace rb::net;
@@ -118,6 +122,63 @@ private:
     std::vector<std::string> requests_;
     // Only the accepting thread adds to it; the destructor joins them after that thread ends.
     std::vector<std::thread> connections_;
+    std::thread thread_;
+};
+
+// An https server on 127.0.0.1 with the test PKI's localhost certificate: one connection at a
+// time, each answered with what `answer` returns for its request head.
+class LoopbackHttpsServer {
+public:
+    using Answer = std::function<std::string(const std::string& request)>;
+
+    LoopbackHttpsServer(const net::test::TestPki& pki, Answer answer)
+        : answer_(std::move(answer)),
+          tls_(asio::ssl::context::tls_server),
+          acceptor_(io_, tcp::endpoint(asio::ip::address_v4::loopback(), 0)),
+          port_(acceptor_.local_endpoint().port()) {
+        REQUIRE(SSL_CTX_use_certificate(tls_.native_handle(), pki.server_certificate.get()) == 1);
+        REQUIRE(SSL_CTX_use_PrivateKey(tls_.native_handle(), pki.server_key.get()) == 1);
+        thread_ = std::thread([this] { serve(); });
+    }
+
+    ~LoopbackHttpsServer() {
+        stopping_ = true;
+        asio::io_context poke_io;
+        tcp::socket poke(poke_io);
+        boost::system::error_code ignored;
+        poke.connect(tcp::endpoint(asio::ip::address_v4::loopback(), port_), ignored);
+        thread_.join();
+    }
+
+    [[nodiscard]] std::string url(std::string_view host, std::string_view path) const {
+        return "https://" + std::string(host) + ":" + std::to_string(port_) + std::string(path);
+    }
+
+private:
+    void serve() {
+        while (!stopping_) {
+            asio::ssl::stream<tcp::socket> stream(io_, tls_);
+            boost::system::error_code error;
+            acceptor_.accept(stream.next_layer(), error);
+            if (stopping_ || error) return;
+            // A client that refuses the certificate ends the handshake here.
+            stream.handshake(asio::ssl::stream_base::server, error);
+            if (error) continue;
+            asio::streambuf buffer;
+            asio::read_until(stream, buffer, "\r\n\r\n", error);
+            if (error) continue;
+            const std::string reply = answer_(std::string(asio::buffers_begin(buffer.data()), asio::buffers_end(buffer.data())));
+            asio::write(stream, asio::buffer(reply), error);
+            stream.shutdown(error);
+        }
+    }
+
+    Answer answer_;
+    asio::io_context io_;
+    asio::ssl::context tls_;
+    tcp::acceptor acceptor_;
+    u16 port_;
+    std::atomic<bool> stopping_{false};
     std::thread thread_;
 };
 
@@ -328,4 +389,79 @@ TEST_CASE("a throwing receiver ends its transfer with internal.bug and the trans
     const Result<ports::HttpStatus> answered = next.wait();
     REQUIRE(answered);
     CHECK(next.body == "ok");
+}
+
+TEST_CASE("https is verified against a request's own CA bundle", "[net][curl][tls]") {
+    const net::test::TestPki pki = net::test::make_test_pki();
+    LoopbackHttpsServer server(pki, [](const std::string&) {
+        return std::string("HTTP/1.1 200 OK\r\nContent-Length: 6\r\nConnection: close\r\n\r\nsecure");
+    });
+    const auto transport = make_transport();
+    const auto fetch = [&](std::string url, std::optional<NativePath> ca) {
+        Exchange exchange;
+        ports::HttpRequest request = request_to(std::move(url));
+        request.tls.ca_bundle = std::move(ca);
+        transport->perform(std::move(request), exchange.callbacks(), {});
+        Result<ports::HttpStatus> result = exchange.wait();
+        if (result) CHECK(exchange.body == "secure");
+        return result;
+    };
+
+    SECTION("a certificate the bundle signed for the host") {
+        const auto trusted = fetch(server.url("localhost", "/"), pki.ca_file);
+        REQUIRE(trusted);
+        CHECK(trusted->code == 200);
+    }
+    SECTION("no bundle: the system store does not know the test CA") {
+        const auto untrusted = fetch(server.url("localhost", "/"), std::nullopt);
+        REQUIRE_FALSE(untrusted);
+        CHECK(untrusted.error().id == "net.tls_failed");
+    }
+    SECTION("a bundle that did not sign it") {
+        const auto other = fetch(server.url("localhost", "/"), pki.other_ca_file);
+        REQUIRE_FALSE(other);
+        CHECK(other.error().id == "net.tls_failed");
+    }
+    SECTION("a certificate for another host") {
+        const auto wrong_host = fetch(server.url("127.0.0.1", "/"), pki.ca_file);
+        REQUIRE_FALSE(wrong_host);
+        CHECK(wrong_host.error().id == "net.tls_failed");
+    }
+}
+
+TEST_CASE("an https redirect to plain http is refused", "[net][curl][tls]") {
+    const net::test::TestPki pki = net::test::make_test_pki();
+    LoopbackHttpServer plain([](tcp::socket& socket, const std::string&, LoopbackHttpServer&) {
+        respond(socket, "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nplain");
+    });
+    LoopbackHttpsServer secure(pki, [&](const std::string&) {
+        return "HTTP/1.1 302 Found\r\nLocation: " + plain.url("/leak") + "\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+    });
+    const auto transport = make_transport();
+    Exchange exchange;
+    ports::HttpRequest request = request_to(secure.url("localhost", "/start"));
+    request.tls.ca_bundle = pki.ca_file;
+    transport->perform(std::move(request), exchange.callbacks(), {});
+    const Result<ports::HttpStatus> result = exchange.wait();
+    REQUIRE_FALSE(result);
+    CHECK(result.error().id == "net.https_downgrade_refused");
+    CHECK(plain.requests().empty());
+}
+
+TEST_CASE("a plain http chain still follows redirects to the hosts it may reach", "[net][curl][redirect]") {
+    LoopbackHttpServer server([](tcp::socket& socket, const std::string& request, LoopbackHttpServer& self) {
+        if (request.starts_with("GET /hop"))
+            respond(socket, "HTTP/1.1 302 Found\r\nLocation: http://localhost:" + std::to_string(self.port()) +
+                                "/end\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+        else
+            respond(socket, "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok");
+    });
+    const auto transport = make_transport();
+    Exchange exchange;
+    // Literal loopback needs no listing, as in HostTlsMemory.
+    transport->perform(request_to(server.url("/hop")), exchange.callbacks(), {});
+    const Result<ports::HttpStatus> result = exchange.wait();
+    REQUIRE(result);
+    CHECK(exchange.body == "ok");
+    CHECK(server.requests().size() == 2);
 }

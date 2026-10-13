@@ -720,3 +720,36 @@ TEST_CASE("destroying the service ends its ops and drops their late callbacks", 
         CHECK_FALSE(rig.state.get().last_update_check);
     }
 }
+
+TEST_CASE("an auto-apply whose stage stops making progress fails the stage", "[updates][apply]") {
+    Rig rig;
+    rig.serve_manifest(1, {AppSpec{}});
+    rig.serve_package();
+    rig.stage_gate.close();
+    rig.make_service();
+    REQUIRE(check_now(rig));
+    const auto running = apply_op(rig);
+    REQUIRE(running);
+    rig.strand.run_until([&] { return rig.stage_gate.entered() == 1; });
+
+    rig.strand.advance(default_deadline(OpKind::UpdateApply) + 1s);
+    CHECK(std::holds_alternative<TimedOut>(*rig.ops.outcome(*running)));
+    rig.stage_gate.open();
+    wait_phase(rig, UpdatePhase::Failed);
+    const UpdateState state = rig.service->state();
+    REQUIRE(state.last_error);
+    CHECK(state.last_error->id == "updates.stage_failed");
+    CHECK(state.last_error->retryable);
+    const auto failures = rig.published<UpdateFailed>(EventKind::UpdateFailed);
+    REQUIRE(failures.size() == 1);
+    CHECK(failures[0].stage == UpdateStage::Stage);
+    CHECK(failures[0].error.id == "updates.stage_failed");
+    CHECK(std::holds_alternative<TimedOut>(*last_apply_outcome(rig)));
+}
+
+// ScratchDir::create tries 8 names; a fixed seed would offer the same 8 on every call.
+TEST_CASE("scratch directories never repeat a name", "[updates]") {
+    std::vector<testing::ScratchDir> dirs;
+    for (int i = 0; i < 9; ++i) dirs.push_back(make_scratch());
+    CHECK(dirs.front().path() != dirs.back().path());
+}

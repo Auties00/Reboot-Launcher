@@ -340,3 +340,23 @@ TEST_CASE("destroying the client cancels its transfers and never calls back", "[
     CHECK(f.calls == 0);
     CHECK(f.transport.in_flight() == 0);
 }
+
+TEST_CASE("a plain http request carries the hosts its redirects may reach; any request its CA", "[net][http][tls]") {
+    Fixture f({{"acked.test", false, true}, {"seen.test", true, true}});
+    f.transport.route("GET", "http://acked.test/a", answer(200));
+    f.transport.route("GET", "https://edge.test/status", answer(200));
+    f.send(request_to("http://acked.test/a"));
+    HttpRequest secure = request_to("https://edge.test/status");
+    secure.ca_bundle = NativePath("private-ca.pem");
+    f.send(std::move(secure));
+    f.runtime.run_until_idle();
+
+    const std::vector<ports::HttpRequest> sent = f.transport.requests();
+    REQUIRE(sent.size() == 2);
+    CHECK(sent[0].plain_http_hosts == std::vector<std::string>{"acked.test"});
+    CHECK(sent[0].https_hosts == std::vector<std::string>{"seen.test"});
+    CHECK_FALSE(sent[0].tls.ca_bundle);
+    CHECK(sent[1].plain_http_hosts.empty());
+    CHECK(sent[1].https_hosts.empty());
+    CHECK(sent[1].tls.ca_bundle == NativePath("private-ca.pem"));
+}

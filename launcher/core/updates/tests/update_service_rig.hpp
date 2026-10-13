@@ -31,11 +31,13 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/paths.hpp"
+#include "reboot/foundation/random.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/net/host_tls_memory.hpp"
 #include "reboot/net/http_client.hpp"
 #include "reboot/net/resumable_downloader.hpp"
+#include "reboot/ports/os_services.hpp"
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/resume_document.hpp"
 #include "reboot/storage/state_document.hpp"
@@ -195,6 +197,50 @@ private:
     UniqueFunction<void()> on_change_;
 };
 
+// The fake applier behind a gate a test can close, so a stage runs as long as the test wants.
+// Entering posts to `wake`, so a strand waiting in run_until sees it.
+class GatedApplier final : public ports::IUpdateApplier {
+public:
+    GatedApplier(ports::IUpdateApplier& inner, Executor& wake) : inner_(inner), wake_(wake) {}
+
+    Result<void> stage(const NativePath& package) override {
+        std::unique_lock lock(mutex_);
+        ++entered_;
+        wake_.post([] {});
+        // A bound, not a sleep: a test that never opens the gate fails instead of hanging.
+        if (!changed_.wait_for(lock, std::chrono::seconds{20}, [this] { return open_; }))
+            return std::unexpected(internal_bug("updates test: the stage gate stayed closed"));
+        lock.unlock();
+        return inner_.stage(package);
+    }
+    Result<void> apply_and_restart(std::vector<std::string> args) override {
+        return inner_.apply_and_restart(std::move(args));
+    }
+    [[nodiscard]] bool supports_in_place() const override { return inner_.supports_in_place(); }
+
+    void close() {
+        const std::scoped_lock lock(mutex_);
+        open_ = false;
+    }
+    void open() {
+        const std::scoped_lock lock(mutex_);
+        open_ = true;
+        changed_.notify_all();
+    }
+    [[nodiscard]] int entered() const {
+        const std::scoped_lock lock(mutex_);
+        return entered_;
+    }
+
+private:
+    ports::IUpdateApplier& inner_;
+    Executor& wake_;
+    mutable std::mutex mutex_;
+    std::condition_variable changed_;
+    bool open_ = true;
+    int entered_ = 0;
+};
+
 inline constexpr std::string_view kManifestUrl = "https://updates.test/manifest.json";
 inline constexpr std::string_view kSignatureUrl = "https://updates.test/manifest.json.sig";
 inline constexpr std::string_view kPackageUrl = "https://cdn.test/RebootLauncher-1.1.0-full.nupkg";
@@ -244,8 +290,9 @@ struct AppSpec {
     return boost::json::serialize(root);
 }
 
+// OS randomness: ctest runs the cases of this binary in parallel processes.
 [[nodiscard]] inline testing::ScratchDir make_scratch() {
-    testing::FakeRandom random(41);
+    OsRandom random;
     Result<testing::ScratchDir> dir = testing::ScratchDir::create(random, "reboot-updates");
     REQUIRE(dir);
     return std::move(*dir);
@@ -275,6 +322,7 @@ struct Rig {
 
     ~Rig() {
         service.reset();
+        stage_gate.open();
         workers.shutdown();
     }
 
@@ -283,7 +331,7 @@ struct Rig {
         service.reset();
         service = std::make_unique<UpdateService>(
             UpdateServiceDeps{
-                .applier = applier,
+                .applier = stage_gate,
                 .fs = fs,
                 .manifest = manifest,
                 .downloader = downloader,
@@ -366,6 +414,7 @@ struct Rig {
     testing::InMemoryFileSystem fs;
     testing::FakeDiskInfo disk;
     testing::FakeUpdateApplier applier;
+    GatedApplier stage_gate{applier, strand};
     FakeActivity activity{ops};
     TestSigner signer;
     trust::KeyRing keys{trust::SignedDocumentKind::ReleaseManifest, trust::PinnedKeys{signer.public_key(), std::nullopt}};

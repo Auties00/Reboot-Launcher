@@ -1,6 +1,7 @@
 #include "reboot/components/component_store.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <deque>
 #include <filesystem>
 #include <map>
@@ -27,6 +28,7 @@
 #include "reboot/ports/file_system.hpp"
 #include "reboot/ports/os_services.hpp"
 #include "store_index.hpp"
+#include "store_rename.hpp"
 
 namespace rb::components {
 
@@ -35,6 +37,7 @@ namespace {
 constexpr std::string_view kPhaseVerify = "verify";
 constexpr std::string_view kPhaseDownload = "download";
 constexpr std::string_view kPhaseExtract = "extract";
+constexpr std::string_view kPhaseWaiting = "waiting";
 
 // Extraction reports progress at most this often, in archive bytes.
 constexpr u64 kExtractProgressStep = 4u << 20;
@@ -45,12 +48,21 @@ constexpr u64 kExtractProgressStep = 4u << 20;
     return std::move(builder).build();
 }
 
+// Retryable when another process only holds the file for now.
 [[nodiscard]] Diagnostic store_failed(const NativePath& path, const std::error_code& error) {
     return make_diag(ErrorDomain::Components, kStoreFailed)
         .arg("path", path)
         .os(SystemError{SystemError::Origin::Host, error.value()})
         .detail(error.message())
+        .retryable(transient_rename_error(error))
         .build();
+}
+
+// A scanner or indexer that holds a fresh file for a moment fails its rename.
+constexpr u32 kRenameAttempts = 5;
+
+[[nodiscard]] std::chrono::milliseconds rename_backoff(u32 failed) noexcept {
+    return std::min(std::chrono::milliseconds{50 << (failed - 1)}, std::chrono::milliseconds{500});
 }
 
 [[nodiscard]] Diagnostic cancelled_fetch(const ComponentRef& ref) {
@@ -94,8 +106,8 @@ struct ComponentStore::Impl {
     // One fetch per component version; later callers join it.
     struct Fetch {
         StoreEntry target;
-        // The version was stored and believed good when the fetch started.
-        bool was_ready = false;
+        // The index named the version when the fetch started, even one load found broken.
+        bool was_stored = false;
         bool started = false;
         CancelSource cancel;
         std::vector<Waiter> waiters;
@@ -103,6 +115,7 @@ struct ComponentStore::Impl {
         u64 done_bytes = 0;
         u64 total_bytes = 0;
         bool vanish_retried = false;
+        TimerHandle retry;
         // Callbacks of an earlier fetch of the same version find a different generation.
         u64 generation = 0;
     };
@@ -310,8 +323,7 @@ struct ComponentStore::Impl {
 
     void start_fetch(Fetch& f) {
         f.started = true;
-        const StoreEntry* stored = find_entry(f.target.ref);
-        f.was_ready = stored != nullptr && !stored->broken;
+        f.was_stored = find_entry(f.target.ref) != nullptr;
         if (f.target.ref.kind == ComponentKind::Payload) {
             f.total_bytes = f.target.size_bytes;
             return next_payload_file(f);
@@ -322,6 +334,9 @@ struct ComponentStore::Impl {
     void report(Fetch& f, Progress progress) {
         for (Waiter& waiter : f.waiters)
             if (waiter.progress) waiter.progress(progress);
+        // A removal waiting on this fetch is as live as the fetch.
+        for (const RemoveJob& job : remove_jobs)
+            if (conflicts(job, f)) job.op->progress(Progress{.phase = kPhaseWaiting});
     }
 
     [[nodiscard]] bool stop_if_cancelled(Fetch& f) {
@@ -353,7 +368,7 @@ struct ComponentStore::Impl {
                     ++live->next_file;
                     return next_payload_file(*live);
                 }
-                if (live->was_ready && !refetching(ref))
+                if (live->was_stored && !refetching(ref))
                     raise_problem(ref, path, file.role, ComponentProblemKind::FileVanishedAfterVerify, (*verified)->kind);
                 download(*live, file.file, staged_path(ref, file.file.sha256), 0, std::nullopt, file.role,
                          [this, file, path](Fetch& owner, NativePath staged) {
@@ -448,7 +463,20 @@ struct ComponentStore::Impl {
             });
     }
 
-    void store_payload_file(Fetch& f, NativePath staged, const PayloadFile& file, const NativePath& final_path) {
+    // A retryable rename failure (a transient lock) runs `again` after a short wait.
+    [[nodiscard]] bool retry_later(Fetch& f, const Diagnostic& error, u32 attempt, UniqueFunction<void(Fetch&)> again) {
+        if (!error.retryable || attempt >= kRenameAttempts) return false;
+        f.retry = deps.timers.after(rename_backoff(attempt),
+                                    [this, ref = f.target.ref, gen = f.generation, again = std::move(again)]() mutable {
+                                        Fetch* live = live_fetch(ref, gen);
+                                        if (live == nullptr || stop_if_cancelled(*live)) return;
+                                        again(*live);
+                                    });
+        return true;
+    }
+
+    void store_payload_file(Fetch& f, NativePath staged, const PayloadFile& file, const NativePath& final_path,
+                            u32 attempt = 1) {
         const ComponentRef ref = f.target.ref;
         const u64 gen = f.generation;
         deps.workers.submit<void>(
@@ -460,11 +488,17 @@ struct ComponentStore::Impl {
                 if (error) return std::unexpected(store_failed(final_path, error));
                 return {};
             },
-            CancelToken{}, deps.strand, [this, ref, gen, size = file.file.size](Result<void> stored) {
+            CancelToken{}, deps.strand, [this, ref, gen, staged, file, final_path, attempt](Result<void> stored) {
                 Fetch* live = live_fetch(ref, gen);
                 if (live == nullptr) return;
-                if (!stored) return finish(*live, std::move(stored));
-                live->done_bytes += size;
+                if (!stored) {
+                    const auto again = [this, staged, file, final_path, attempt](Fetch& owner) {
+                        store_payload_file(owner, staged, file, final_path, attempt + 1);
+                    };
+                    if (retry_later(*live, stored.error(), attempt, again)) return;
+                    return finish(*live, std::move(stored));
+                }
+                live->done_bytes += file.file.size;
                 ++live->next_file;
                 next_payload_file(*live);
             });
@@ -473,8 +507,7 @@ struct ComponentStore::Impl {
     void check_runtime(Fetch& f) {
         const ComponentRef ref = f.target.ref;
         const u64 gen = f.generation;
-        const StoreEntry* stored = find_entry(ref);
-        if (stored == nullptr || stored->broken) return download_runtime(f);
+        if (!f.was_stored) return download_runtime(f);
         deps.workers.submit<Verified>(
             [fs = &deps.fs, path = runtime_root(f.target.archive.sha256)](CancelToken) -> Result<Verified> {
                 auto revision = fs->revision(path);
@@ -486,7 +519,7 @@ struct ComponentStore::Impl {
                 if (live == nullptr || stop_if_cancelled(*live)) return;
                 if (!verified) return finish(*live, std::unexpected(std::move(verified.error())));
                 if (!*verified) return finish(*live, {});
-                if (live->was_ready && !refetching(ref))
+                if (!refetching(ref))
                     raise_problem(ref, (*verified)->file, std::nullopt, ComponentProblemKind::FileVanishedAfterVerify,
                                   (*verified)->kind);
                 download_runtime(*live);
@@ -504,12 +537,11 @@ struct ComponentStore::Impl {
         const ComponentRef ref = f.target.ref;
         const Sha256Digest sha = f.target.archive.sha256;
         const NativePath tree = staged_tree(ref, sha);
-        const NativePath final_root = runtime_root(sha);
         const u64 archive_size = f.target.archive.size;
         const u64 gen = f.generation;
         report(f, Progress{.phase = kPhaseExtract, .done = 0, .total = archive_size});
         deps.workers.submit<u64>(
-            [this, ref, gen, staged, tree, final_root, archive_size](CancelToken token) -> Result<u64> {
+            [this, ref, gen, staged, tree, archive_size](CancelToken token) -> Result<u64> {
                 const auto extract_failed = [&](std::string detail) {
                     return make_diag(ErrorDomain::Components, kExtractFailed)
                         .arg("component", ref.id)
@@ -534,22 +566,43 @@ struct ComponentStore::Impl {
                     if (unpacked.error().cancelled) return std::unexpected(cancelled_fetch(ref));
                     return extract_failed(std::move(unpacked.error().detail));
                 }
-                if (auto created = deps.fs.create_dirs_owner_only(final_root.parent_path()); !created)
+                return *unpacked;
+            },
+            f.cancel.token(), deps.strand, [this, ref, gen, staged, tree](Result<u64> unpacked) {
+                Fetch* live = live_fetch(ref, gen);
+                if (live == nullptr) return;
+                if (!unpacked) return finish(*live, std::unexpected(std::move(unpacked.error())));
+                live->target.size_bytes = *unpacked;
+                place_runtime(*live, staged, tree);
+            });
+    }
+
+    void place_runtime(Fetch& f, NativePath staged, NativePath tree, u32 attempt = 1) {
+        const ComponentRef ref = f.target.ref;
+        const u64 gen = f.generation;
+        deps.workers.submit<void>(
+            [fs = &deps.fs, staged, tree, final_root = runtime_root(f.target.archive.sha256)](CancelToken) -> Result<void> {
+                if (auto created = fs->create_dirs_owner_only(final_root.parent_path()); !created)
                     return std::unexpected(store_failed(final_root.parent_path(), std::move(created.error())));
                 // A broken copy is replaced whole.
-                if (auto cleared = deps.fs.remove_tree(final_root); !cleared && cleared.error().kind != ErrorKind::NotFound)
+                if (auto cleared = fs->remove_tree(final_root); !cleared && cleared.error().kind != ErrorKind::NotFound)
                     return std::unexpected(store_failed(final_root, std::move(cleared.error())));
                 std::error_code error;
                 std::filesystem::rename(tree, final_root, error);
                 if (error) return std::unexpected(store_failed(final_root, error));
                 remove_file(staged);
-                return *unpacked;
+                return {};
             },
-            f.cancel.token(), deps.strand, [this, ref, gen](Result<u64> unpacked) {
+            CancelToken{}, deps.strand, [this, ref, gen, staged, tree, attempt](Result<void> placed) {
                 Fetch* live = live_fetch(ref, gen);
                 if (live == nullptr) return;
-                if (!unpacked) return finish(*live, std::unexpected(std::move(unpacked.error())));
-                live->target.size_bytes = *unpacked;
+                if (!placed) {
+                    const auto again = [this, staged, tree, attempt](Fetch& owner) {
+                        place_runtime(owner, staged, tree, attempt + 1);
+                    };
+                    if (retry_later(*live, placed.error(), attempt, again)) return;
+                    return finish(*live, std::move(placed));
+                }
                 finish(*live, {});
             });
     }
@@ -602,7 +655,7 @@ struct ComponentStore::Impl {
             waiter.done(result);
         }
         if (result) request_maintenance();
-        if (fetches.empty()) post_maintenance();
+        if (fetches.empty() || !remove_jobs.empty()) post_maintenance();
     }
 
     // The deletion guard
@@ -686,20 +739,57 @@ struct ComponentStore::Impl {
         return pin_count(entry.ref) == 0 && !entry.last_good && !is_selected(entry.ref);
     }
 
+    // The content-addressed directories of a version.
+    [[nodiscard]] std::vector<NativePath> version_dirs(const StoreEntry& entry) const {
+        if (entry.ref.kind == ComponentKind::Runtime) return {runtime_root(entry.archive.sha256)};
+        std::vector<NativePath> out;
+        for (const PayloadFile& file : entry.files) out.push_back(payload_path(file).parent_path());
+        return out;
+    }
+
+    // A fetch of the component, or one writing into a directory the removal would delete.
+    [[nodiscard]] bool conflicts(const RemoveJob& job, const Fetch& f) const {
+        if (f.target.ref.id == job.component_id) return true;
+        const std::vector<NativePath> written = version_dirs(f.target);
+        for (const StoreEntry& entry : entries) {
+            if (entry.ref.id != job.component_id) continue;
+            for (const NativePath& dir : version_dirs(entry))
+                if (std::ranges::find(written, dir) != written.end()) return true;
+        }
+        return false;
+    }
+
+    [[nodiscard]] bool blocked(const RemoveJob& job) const {
+        for (const auto& [ref, f] : fetches)
+            if (conflicts(job, *f)) return true;
+        return false;
+    }
+
     void run_maintenance() {
-        if (!loaded || maintenance_running || !fetches.empty()) return;
+        if (!loaded || maintenance_running) return;
+        // A removal whose op already ended (cancelled, timed out) removes nothing.
+        for (auto it = remove_jobs.begin(); it != remove_jobs.end();) {
+            if (!it->op->done()) {
+                ++it;
+                continue;
+            }
+            complete_remove(*it, {});
+            it = remove_jobs.erase(it);
+        }
         std::vector<ComponentRef> targets;
         std::optional<RemoveJob> job;
-        if (!remove_jobs.empty()) {
-            job = remove_jobs.front();
-            remove_jobs.pop_front();
+        // Only fetches that touch what a removal deletes hold it back; collection waits for all.
+        const auto ready = std::ranges::find_if(remove_jobs, [this](const RemoveJob& queued) { return !blocked(queued); });
+        if (ready != remove_jobs.end()) {
+            job = *ready;
+            remove_jobs.erase(ready);
             if (index_read_only) {
                 complete_remove(*job, std::unexpected(read_only_error()));
                 return post_maintenance_if_pending();
             }
             for (const StoreEntry& entry : entries)
                 if (entry.ref.id == job->component_id && pin_count(entry.ref) == 0) targets.push_back(entry.ref);
-        } else if (gc_requested) {
+        } else if (gc_requested && fetches.empty()) {
             gc_requested = false;
             // Directories a newer index names stay.
             if (index_read_only) return;
@@ -722,17 +812,10 @@ struct ComponentStore::Impl {
         }
         // Content-addressed directories shared with a kept version stay.
         std::set<NativePath> dirs;
-        for (const StoreEntry& entry : removed) {
-            if (entry.ref.kind == ComponentKind::Runtime) {
-                dirs.insert(runtime_root(entry.archive.sha256));
-                continue;
-            }
-            for (const PayloadFile& file : entry.files) dirs.insert(payload_path(file).parent_path());
-        }
-        for (const StoreEntry& entry : entries) {
-            if (entry.ref.kind == ComponentKind::Runtime) dirs.erase(runtime_root(entry.archive.sha256));
-            for (const PayloadFile& file : entry.files) dirs.erase(payload_path(file).parent_path());
-        }
+        for (const StoreEntry& entry : removed)
+            for (NativePath& dir : version_dirs(entry)) dirs.insert(std::move(dir));
+        for (const StoreEntry& entry : entries)
+            for (const NativePath& dir : version_dirs(entry)) dirs.erase(dir);
         // Untracking a removed version also dropped the files it shared with a kept one.
         for (const StoreEntry& entry : entries)
             if (!entry.broken) track(entry);
@@ -949,7 +1032,8 @@ void ComponentStore::load(UniqueFunction<void(Result<void>)> done) {
                 }
             }
 
-            if (loaded.read_only) return loaded;
+            // Without a readable index every directory would look orphaned.
+            if (loaded.read_only || loaded.index_problem) return loaded;
             // Version directories the index does not name are leftovers of an interrupted removal.
             std::set<NativePath> known;
             for (const StoreEntry& entry : loaded.entries) {
@@ -971,7 +1055,7 @@ void ComponentStore::load(UniqueFunction<void(Result<void>)> done) {
             if (loaded->read_only)
                 REBOOT_LOG_WARN(Update, "The component index has a newer schema; the store runs read-only");
             else if (loaded->index_problem)
-                REBOOT_LOG_WARN(Update, "The component index is unreadable ({}); starting empty",
+                REBOOT_LOG_WARN(Update, "The component index is unreadable ({}); starting empty, files kept",
                                 loaded->index_problem->id);
             impl->entries = std::move(loaded->entries);
             impl->index_read_only = loaded->read_only;
@@ -993,6 +1077,8 @@ std::vector<ComponentInfo> ComponentStore::list() const {
         if (impl_->find_entry(ref) == nullptr && !impl_->is_selected(ref)) out.push_back(impl_->info_for(ref));
     return out;
 }
+
+bool ComponentStore::listing_complete() const noexcept { return impl_->loaded && !impl_->index_read_only; }
 
 Result<OpHandle> ComponentStore::start_ensure(std::string_view component_id, DisconnectPolicy policy) {
     StoreEntry target;
@@ -1072,13 +1158,15 @@ void ComponentStore::acquire_runtime(SessionId session, std::string_view runtime
     StoreEntry target = Impl::runtime_target(*runtime);
     const ComponentRef ref = target.ref;
     impl_->fetch(std::move(target), std::move(token), std::move(progress),
-                 [this, impl = impl_.get(), ref, session, done = std::move(done)](Result<void> fetched) mutable {
+                 [this, impl = impl_.get(), ref, session, boot = runtime->boot_inject,
+                  done = std::move(done)](Result<void> fetched) mutable {
                      if (!fetched) return done(std::unexpected(std::move(fetched.error())));
                      const StoreEntry* entry = impl->find_entry(ref);
                      if (entry == nullptr) return done(std::unexpected(internal_bug("components: fetched runtime not stored")));
                      InstalledRuntime installed{.ref = ref,
                                                 .kind = entry->runtime_kind,
-                                                .root = impl->runtime_root(entry->archive.sha256)};
+                                                .root = impl->runtime_root(entry->archive.sha256),
+                                                .boot_inject = boot};
                      done(PinnedRuntime{.runtime = std::move(installed),
                                         .pin = ComponentPin(*this, impl->add_pin(ref, session), ref, session)});
                  });

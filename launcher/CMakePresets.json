@@ -24,8 +24,9 @@
       "inherits": "base",
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "arm64-osx",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-reboot",
         "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "14.0",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       }
@@ -41,7 +42,7 @@
       "name": "macos-clang-x64-release",
       "description": "x86_64 slice; the release job merges it with macos-clang-release into a universal binary with lipo",
       "inherits": "macos-base",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "VCPKG_TARGET_TRIPLET": "x64-osx", "CMAKE_OSX_ARCHITECTURES": "x86_64" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "VCPKG_TARGET_TRIPLET": "x64-osx-reboot", "CMAKE_OSX_ARCHITECTURES": "x86_64" }
     },
     {
       "name": "linux-base",

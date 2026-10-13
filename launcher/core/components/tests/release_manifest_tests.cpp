@@ -179,6 +179,24 @@ TEST_CASE("runtime ids are unique and only VcRedist has no platform", "[componen
     CHECK(parsed->runtimes[0].platform == ManifestPlatform{ManifestOs::MacOs, ManifestArch::Arm64});
 }
 
+TEST_CASE("a runtime's boot_inject is read; an unknown strategy forces the safe default", "[components][manifest]") {
+    const auto runtime = [](std::string_view boot) {
+        return R"({"id":"wine","kind":"mac_wine","version":"1","archive":{)" + remote() +
+               R"(},"platform":{"os":"macos","arch":"arm64"})" + std::string(boot) + "}";
+    };
+    const auto boot_of = [&](std::string_view boot) {
+        const auto parsed = parse(with(R"("runtimes":[)" + runtime(boot) + "]"));
+        REQUIRE(parsed);
+        REQUIRE(parsed->runtimes.size() == 1);
+        return parsed->runtimes[0].boot_inject;
+    };
+    CHECK_FALSE(boot_of(""));
+    CHECK(boot_of(R"(,"boot_inject":"early_bird_apc")") == ports::BootStrategy::EarlyBirdApc);
+    CHECK(boot_of(R"(,"boot_inject":"after_resume")") == ports::BootStrategy::AfterResume);
+    CHECK_FALSE(boot_of(R"(,"boot_inject":"warp_inject")"));
+    check_malformed(with(R"("runtimes":[)" + runtime(R"(,"boot_inject":1)") + "]"), "runtimes[0].boot_inject");
+}
+
 TEST_CASE("the endpoint override needs a host and a port", "[components][manifest]") {
     check_malformed(with(R"("endpoint":{"host":"","port":443})"), "endpoint.host");
     check_malformed(with(R"("endpoint":{"host":"sb.test","port":0})"), "endpoint.port");

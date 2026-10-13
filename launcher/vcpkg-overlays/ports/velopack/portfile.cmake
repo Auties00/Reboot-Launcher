@@ -23,13 +23,21 @@ foreach(dir IN ITEMS lib debug/lib)
     file(INSTALL "${source_path}/lib-static/${release_lib}" DESTINATION "${CURRENT_PACKAGES_DIR}/${dir}" RENAME "${lib_name}")
 endforeach()
 
+# The library asks for the release static CRT; a Debug consumer links the debug one, and two CRTs
+# in one image is LNK4098 at best.
+set(debug_crt "")
+if(VCPKG_TARGET_IS_WINDOWS)
+    set(debug_crt "
+  set_property(TARGET velopack::velopack PROPERTY INTERFACE_LINK_OPTIONS \"$<$<CONFIG:Debug>:/NODEFAULTLIB:libcmt.lib>\")")
+endif()
+
 file(WRITE "${CURRENT_PACKAGES_DIR}/share/${PORT}/velopack-config.cmake" "\
 get_filename_component(_velopack_prefix \"\${CMAKE_CURRENT_LIST_DIR}/../..\" ABSOLUTE)
 if(NOT TARGET velopack::velopack)
   add_library(velopack::velopack STATIC IMPORTED)
   set_target_properties(velopack::velopack PROPERTIES
     IMPORTED_LOCATION \"\${_velopack_prefix}/lib/${lib_name}\"
-    INTERFACE_INCLUDE_DIRECTORIES \"\${_velopack_prefix}/include\")
+    INTERFACE_INCLUDE_DIRECTORIES \"\${_velopack_prefix}/include\")${debug_crt}
 endif()
 unset(_velopack_prefix)
 ")

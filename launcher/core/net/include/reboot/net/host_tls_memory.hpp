@@ -28,6 +28,11 @@ public:
     // Fails with net.https_downgrade_refused or net.plain_http_needs_consent.
     [[nodiscard]] Result<void> check(UrlScheme scheme, std::string_view host) const;
 
+    // The hosts check() lets through over plain http, loopback aside.
+    [[nodiscard]] std::vector<std::string> plain_http_hosts() const;
+    // The hosts check() refuses over plain http as a downgrade.
+    [[nodiscard]] std::vector<std::string> https_hosts() const;
+
     void remember_https(std::string_view host);
     void remember_http_acknowledged(std::string_view host);
 

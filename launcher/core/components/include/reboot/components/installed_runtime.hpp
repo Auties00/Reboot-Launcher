@@ -1,7 +1,10 @@
 #pragma once
 
+#include <optional>
+
 #include "reboot/components/component_ref.hpp"
 #include "reboot/foundation/native_path.hpp"
+#include "reboot/ports/session_host.hpp"
 
 namespace rb::components {
 
@@ -10,6 +13,8 @@ struct InstalledRuntime {
     ComponentRef ref;
     RuntimeKind kind{};
     NativePath root;
+    // The manifest entry's boot_inject when the runtime was acquired.
+    std::optional<ports::BootStrategy> boot_inject;
 };
 
 }  // namespace rb::components

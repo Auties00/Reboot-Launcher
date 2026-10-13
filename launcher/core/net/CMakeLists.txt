@@ -16,11 +16,18 @@ reboot_add_package(net
     src/port_mapper_service.cpp
     src/port_owner_service.cpp
     src/port_preflight.cpp
+    src/quic_peer_verifier.cpp
+    src/redirect_guard.cpp
     src/resumable_downloader.cpp
     src/udp_beacon_prober.cpp
     src/url.cpp
-  DEPS CURL::libcurl MsQuic::MsQuic miniupnpc::miniupnpc libnatpmp::natpmp
+  DEPS CURL::libcurl MsQuic::MsQuic miniupnpc::miniupnpc libnatpmp::natpmp OpenSSL::Crypto
   PUBLIC_DEPS reboot::storage)
+
+if(TARGET reboot_net_tests)
+  # The TLS tests make their own CA and serve https and QUIC with it.
+  target_link_libraries(reboot_net_tests PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+endif()
 
 # macOS verifies TLS through the keychain (USE_APPLE_SECTRUST), which curl has since 8.17.
 if(APPLE AND CURL_VERSION VERSION_LESS 8.17)

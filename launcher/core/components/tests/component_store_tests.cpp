@@ -4,10 +4,12 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <system_error>
 #include <utility>
 #include <vector>
 
 #include "components_test_support.hpp"
+#include "store_rename.hpp"
 #include "test_archives.hpp"
 #include "reboot/components/component_changed_event.hpp"
 #include "reboot/components/component_store.hpp"
@@ -159,7 +161,7 @@ struct Fixture {
         REQUIRE(*origin);
 
         store = std::make_unique<ComponentStore>(
-            ComponentStoreDeps{disk, watcher, security, downloader, workers, strand, ops, events, *manifest}, layout);
+            ComponentStoreDeps{disk, watcher, security, downloader, workers, strand, timers, ops, events, *manifest}, layout);
     }
 
     Result<PinnedPayload> acquire_payload(CancelToken token = {}) {
@@ -303,6 +305,7 @@ TEST_CASE("a fresh store lists what the manifest selects as missing", "[componen
     REQUIRE(runtime);
     CHECK(runtime->state == ComponentState::Missing);
     CHECK(runtime->ref.kind == ComponentKind::Runtime);
+    CHECK(f.store->listing_complete());
 }
 
 TEST_CASE("ensure fetches the selected payload into the content-addressed store", "[components][store]") {
@@ -650,6 +653,17 @@ TEST_CASE("runtimes are unpacked into their own directory", "[components][store]
     CHECK(wrong.error().id == "components.unknown_runtime");
 }
 
+TEST_CASE("an acquired runtime carries its manifest entry's boot_inject", "[components][store]") {
+    ManifestJson json = payload_manifest();
+    json.runtimes.back().insert(json.runtimes.back().size() - 1, R"(,"boot_inject":"early_bird_apc")");
+    Fixture f;
+    f.publish(json);
+    f.start();
+    auto pinned = f.acquire_runtime("kron-10");
+    REQUIRE(pinned);
+    CHECK(pinned->runtime.boot_inject == ports::BootStrategy::EarlyBirdApc);
+}
+
 TEST_CASE("an archive entry that escapes the runtime root fails the unpack", "[components][store]") {
     const std::string evil = make_tar_gz({{"bin/wine", "x"}, {"../../escape", "boom"}});
     ManifestJson json;
@@ -742,13 +756,64 @@ TEST_CASE("a restarted store reads its index, checks every file and clears lefto
     CHECK(second.info("payload", "1.0.0")->state == ComponentState::Broken);
     CHECK(second.info("kron-10", "1")->state == ComponentState::Ready);
 
-    // A broken version found at startup is re-fetched quietly on its next use.
+    // A file quarantined while the launcher was closed is reported on its next use, then restored.
+    second.security.set(std::optional(ports::SecurityProducts{{"Defender"}, ports::SmartAppControl::Off}));
     auto pinned = second.acquire_payload();
     REQUIRE(pinned);
     CHECK(read_text(second.payload_file(kClientV1, PayloadRole::ClientDll)) == kClientV1);
     CHECK(second.info("payload", "1.0.0")->state == ComponentState::Ready);
-    second.drain();
-    for (const ComponentChangedEvent& event : second.seen) CHECK_FALSE(event.problem);
+    const auto event = second.wait_event([](const ComponentChangedEvent& e) {
+        return e.problem && e.problem->security && e.problem->recovery == RecoveryState::Recovered;
+    });
+    CHECK(event.problem->kind == ComponentProblemKind::FileVanishedAfterVerify);
+    CHECK(event.problem->file == second.payload_file(kClientV1, PayloadRole::ClientDll));
+    CHECK_FALSE(event.problem->remediation.empty());
+}
+
+TEST_CASE("a runtime removed while the launcher was closed is reported on its next use", "[components][store]") {
+    testing::ScratchDir dir = make_scratch();
+    {
+        Fixture first(dir.path());
+        first.publish(payload_manifest());
+        first.start();
+        REQUIRE(first.acquire_runtime("kron-10"));
+        first.settle();
+    }
+
+    Fixture second(dir.path());
+    std::filesystem::remove_all(second.layout.components_dir() / "runtime" / sha_hex(wine_archive()));
+    second.publish(payload_manifest());
+    second.start();
+    CHECK(second.info("kron-10", "1")->state == ComponentState::Broken);
+    auto pinned = second.acquire_runtime("kron-10");
+    REQUIRE(pinned);
+    CHECK(read_text(pinned->runtime.root / "bin" / "wine") == "#!wine");
+    const auto event = second.wait_event([](const ComponentChangedEvent& e) {
+        return e.problem && e.problem->recovery == RecoveryState::Recovered;
+    });
+    CHECK(event.problem->kind == ComponentProblemKind::FileVanishedAfterVerify);
+    CHECK(event.problem->component == ComponentRef{ComponentKind::Runtime, "kron-10", "1"});
+}
+
+TEST_CASE("an index that cannot be read deletes no stored version", "[components][store]") {
+    testing::ScratchDir dir = make_scratch();
+    {
+        Fixture first(dir.path(), kWindows);
+        first.publish(payload_manifest());
+        first.start();
+        REQUIRE(first.acquire_payload());
+        first.settle();
+    }
+
+    Fixture second(dir.path(), kWindows);
+    second.publish(payload_manifest());
+    second.disk.faults().fail_next(FsOperation::ReadAll, DiskFileSystem::error({}, ErrorKind::Conflict));
+    second.start();
+    CHECK(read_text(second.payload_file(kClientV1, PayloadRole::ClientDll)) == kClientV1);
+    // The kept file is verified and adopted again, not downloaded.
+    REQUIRE(second.acquire_payload());
+    CHECK(second.requests_to(client_url("1.0.0")) == 0);
+    CHECK(second.info("payload", "1.0.0")->state == ComponentState::Ready);
 }
 
 TEST_CASE("an unreadable index starts the store empty", "[components][store]") {
@@ -802,12 +867,14 @@ TEST_CASE("a fetch asked for before load starts once the index is read", "[compo
     Fixture f;
     f.publish(payload_manifest());
     f.create();
+    CHECK_FALSE(f.store->listing_complete());
     std::optional<Result<PinnedPayload>> pinned;
     f.store->acquire_payload(SessionId{}, {}, nullptr, [&](Result<PinnedPayload> r) { pinned = std::move(r); });
     std::optional<Result<void>> loaded;
     f.store->load([&](Result<void> result) { loaded = std::move(result); });
     f.strand.run_until([&] { return pinned.has_value() && loaded.has_value(); });
     REQUIRE(*loaded);
+    CHECK(f.store->listing_complete());
     REQUIRE(*pinned);
     const auto info = f.info("payload", "1.0.0");
     REQUIRE(info);
@@ -826,6 +893,7 @@ TEST_CASE("an index of a newer schema leaves the store read-only", "[components]
     f.start();
     CHECK(read_text(foreign) == "named by the newer index");
     CHECK(f.info("payload", "1.0.0")->state == ComponentState::Missing);
+    CHECK_FALSE(f.store->listing_complete());
 
     auto pinned = f.acquire_payload();
     REQUIRE(pinned);
@@ -837,4 +905,124 @@ TEST_CASE("an index of a newer schema leaves the store read-only", "[components]
     const auto removed = f.store->start_remove("payload", DisconnectPolicy::Detached);
     REQUIRE_FALSE(removed);
     CHECK(removed.error().id == "components.store_failed");
+}
+
+TEST_CASE("a removal does not wait for a fetch of another component", "[components][store]") {
+    Fixture f;
+    f.publish(payload_manifest());
+    FakeHttpResponse slow = ok_body(wine_archive());
+    slow.delay = 5s;
+    f.transport.route("GET", "https://cdn.test/kron-10.tar.gz", slow);
+    f.start();
+    auto pinned = f.acquire_payload();
+    REQUIRE(pinned);
+    pinned->pin.release();
+
+    std::optional<Result<PinnedRuntime>> runtime;
+    f.store->acquire_runtime(SessionId{}, "kron-10", {}, nullptr, [&](Result<PinnedRuntime> r) { runtime = std::move(r); });
+    f.strand.run_until([&] { return f.transport.in_flight() == 1; });
+    auto handle = f.store->start_remove("payload", DisconnectPolicy::Detached);
+    REQUIRE(handle);
+    CHECK(std::holds_alternative<Completed<std::any>>(f.run_op(*handle)));
+    CHECK_FALSE(runtime.has_value());
+    CHECK(gone(f.payload_file(kClientV1, PayloadRole::ClientDll)));
+
+    f.strand.advance(5s);
+    f.strand.run_until([&] { return runtime.has_value(); });
+    REQUIRE(*runtime);
+}
+
+TEST_CASE("a removal waits for a fetch of the same component", "[components][store]") {
+    Fixture f(kWindows);
+    f.publish(payload_manifest());
+    f.start();
+    auto pinned = f.acquire_payload();
+    REQUIRE(pinned);
+    pinned->pin.release();
+
+    // The changed file is fetched again, slowly, and the removal waits for that fetch.
+    write_text(f.payload_file(kClientV1, PayloadRole::ClientDll), "tampered");
+    FakeHttpResponse slow = ok_body(kClientV1);
+    slow.delay = 5s;
+    f.transport.route("GET", client_url("1.0.0"), slow);
+    auto ensure = f.store->start_ensure("payload", DisconnectPolicy::Detached);
+    REQUIRE(ensure);
+    f.strand.run_until([&] { return f.transport.in_flight() == 1; });
+    auto remove = f.store->start_remove("payload", DisconnectPolicy::BoundToConnection);
+    REQUIRE(remove);
+    f.strand.run_ready();
+    CHECK_FALSE(f.ops.outcome(remove->id()).has_value());
+
+    SECTION("a removal cancelled while it waits removes nothing") {
+        REQUIRE(f.ops.cancel(remove->id(), CancelReason::Disconnect));
+        CHECK(std::holds_alternative<Cancelled>(f.run_op(*remove)));
+        f.strand.advance(5s);
+        CHECK(std::holds_alternative<Completed<std::any>>(f.run_op(*ensure)));
+        f.settle();
+        CHECK(read_text(f.payload_file(kClientV1, PayloadRole::ClientDll)) == kClientV1);
+        CHECK(f.info("payload", "1.0.0")->state == ComponentState::Ready);
+    }
+    SECTION("the fetch's progress keeps the waiting removal alive") {
+        const auto progress = f.events.subscribe(EventFilter{{EventKind::OpProgress}, {}, {}}, 1u << 20);
+        f.strand.advance(5s);
+        CHECK(std::holds_alternative<Completed<std::any>>(f.run_op(*ensure)));
+        CHECK(std::holds_alternative<Completed<std::any>>(f.run_op(*remove)));
+        std::vector<EventEnvelope> raw;
+        progress->drain(raw, 1000);
+        const auto waited = std::ranges::find_if(raw, [&](const EventEnvelope& event) {
+            const auto& step = std::any_cast<const OpProgressEvent&>(event.payload);
+            return step.op == remove->id() && step.phase == "waiting";
+        });
+        CHECK(waited != raw.end());
+        CHECK(gone(f.payload_file(kClientV1, PayloadRole::ClientDll)));
+    }
+}
+
+TEST_CASE("a rename a scanner blocks for a moment is tried again", "[components][store]") {
+#if !defined(_WIN32)
+    SKIP("an open file blocks its rename only on Windows");
+#else
+    Fixture f(kWindows);
+    f.publish(payload_manifest());
+    f.start();
+    f.disk.linger_in(f.layout.components_dir() / ".staging");
+    std::optional<Result<PinnedPayload>> pinned;
+    f.store->acquire_payload(SessionId{}, {}, nullptr, [&](Result<PinnedPayload> r) { pinned = std::move(r); });
+    f.strand.run_until([&] { return f.disk.lingering() == 1; });
+    // The rename failed and waits for its retry.
+    f.settle();
+    CHECK_FALSE(pinned.has_value());
+
+    SECTION("the scanner lets go") {
+        f.disk.release_lingering();
+        f.strand.advance(1s);
+        f.strand.run_until([&] { return pinned.has_value(); });
+        REQUIRE(*pinned);
+        CHECK(read_text(f.payload_file(kClientV1, PayloadRole::ClientDll)) == kClientV1);
+        CHECK(f.requests_to(client_url("1.0.0")) == 1);
+    }
+    SECTION("the scanner keeps it") {
+        for (int i = 0; i < 5 && !pinned; ++i) {
+            f.strand.advance(1s);
+            f.settle();
+        }
+        REQUIRE(pinned.has_value());
+        REQUIRE_FALSE(*pinned);
+        CHECK(pinned->error().id == "components.store_failed");
+        CHECK(pinned->error().retryable);
+        f.disk.release_lingering();
+    }
+#endif
+}
+
+TEST_CASE("only sharing, lock and access errors count as a transient rename failure", "[components][store]") {
+    CHECK(transient_rename_error(std::make_error_code(std::errc::permission_denied)));
+    CHECK(transient_rename_error(std::make_error_code(std::errc::device_or_resource_busy)));
+    CHECK_FALSE(transient_rename_error(std::make_error_code(std::errc::no_such_file_or_directory)));
+    CHECK_FALSE(transient_rename_error(std::make_error_code(std::errc::no_space_on_device)));
+#if defined(_WIN32)
+    // ERROR_SHARING_VIOLATION and ERROR_LOCK_VIOLATION, as MoveFileEx reports them.
+    CHECK(transient_rename_error(std::error_code(32, std::system_category())));
+    CHECK(transient_rename_error(std::error_code(33, std::system_category())));
+#endif
 }

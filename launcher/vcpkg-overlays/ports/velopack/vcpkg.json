@@ -1,6 +1,7 @@
 {
   "name": "velopack",
   "version": "1.2.161",
+  "port-version": 1,
   "description": "Velopack's C library, from the prebuilt velopack_libc release",
   "homepage": "https://github.com/velopack/velopack",
   "license": "MIT",

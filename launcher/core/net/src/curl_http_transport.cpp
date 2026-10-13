@@ -21,6 +21,7 @@
 #include "reboot/foundation/text.hpp"
 #include "reboot/net/http_error.hpp"
 #include "reboot/ports/os_services.hpp"
+#include "redirect_guard.hpp"
 #include "url.hpp"
 
 namespace rb::net {
@@ -63,6 +64,9 @@ struct Transfer {
     bool headers_delivered = false;
     bool aborted_by_receiver = false;
     bool callback_threw = false;
+    // Plain http transfers only.
+    std::optional<RedirectGuard> redirects;
+    std::optional<HttpError> refused_hop;
     std::array<char, CURL_ERROR_SIZE> error_buffer{};
 };
 
@@ -130,6 +134,21 @@ std::size_t on_body(char* data, std::size_t size, std::size_t count, void* user)
     return length;
 }
 
+// Runs before each request of the chain, once its connection is up.
+int on_request_ready(void* user, char*, char*, int, int) noexcept {
+    auto& transfer = *static_cast<Transfer*>(user);
+    try {
+        char* url = nullptr;
+        if (curl_easy_getinfo(transfer.easy, CURLINFO_EFFECTIVE_URL, &url) != CURLE_OK || url == nullptr)
+            return CURL_PREREQFUNC_ABORT;
+        transfer.refused_hop = transfer.redirects->admit(url);
+    } catch (...) {
+        transfer.callback_threw = true;
+        return CURL_PREREQFUNC_ABORT;
+    }
+    return transfer.refused_hop ? CURL_PREREQFUNC_ABORT : CURL_PREREQFUNC_OK;
+}
+
 [[nodiscard]] HttpErrorCode timeout_kind(const Transfer& transfer) {
     curl_off_t connect_us = 0;
     curl_off_t total_us = 0;
@@ -146,6 +165,7 @@ std::size_t on_body(char* data, std::size_t size, std::size_t count, void* user)
 
 [[nodiscard]] Diagnostic transfer_error(const Transfer& transfer, CURLcode code) {
     if (transfer.callback_threw) return internal_bug("curl_http_transport");
+    if (code == CURLE_ABORTED_BY_CALLBACK && transfer.refused_hop) return to_diagnostic(*transfer.refused_hop);
     HttpError error;
     error.host = transfer.url.host;
     switch (code) {
@@ -245,13 +265,19 @@ struct CurlHttpTransport::Impl {
                   set(CURLOPT_WRITEFUNCTION, &on_body) && set(CURLOPT_WRITEDATA, static_cast<void*>(&transfer)) &&
                   set(CURLOPT_CONNECTTIMEOUT_MS, static_cast<long>(request.connect_timeout.count()));
 #ifdef _WIN32
-        // Schannel otherwise fails whenever a revocation server cannot be reached.
+        // Schannel otherwise fails whenever a revocation server cannot be reached. With CAINFO set
+        // it trusts only that file.
         ok = ok && set(CURLOPT_SSL_OPTIONS, static_cast<long>(CURLSSLOPT_REVOKE_BEST_EFFORT));
 #elif defined(__APPLE__)
-        ok = ok && set(CURLOPT_SSL_OPTIONS, static_cast<long>(CURLSSLOPT_NATIVE_CA));
+        // A request's own bundle replaces the keychain, so it is checked against that file alone.
+        if (!request.tls.ca_bundle) ok = ok && set(CURLOPT_SSL_OPTIONS, static_cast<long>(CURLSSLOPT_NATIVE_CA));
 #endif
         const std::optional<NativePath>& ca = request.tls.ca_bundle ? request.tls.ca_bundle : system_ca;
         if (ca) ok = ok && set(CURLOPT_CAINFO, ca_path_text(*ca).c_str());
+        if (transfer.url.scheme == UrlScheme::Http) {
+            transfer.redirects.emplace(request.plain_http_hosts, request.https_hosts);
+            ok = ok && set(CURLOPT_PREREQFUNCTION, &on_request_ready) && set(CURLOPT_PREREQDATA, static_cast<void*>(&transfer));
+        }
         if (request.total_timeout > std::chrono::milliseconds::zero())
             ok = ok && set(CURLOPT_TIMEOUT_MS, static_cast<long>(request.total_timeout.count()));
         if (request.stall && request.stall->bytes_per_s > 0 && request.stall->window > std::chrono::milliseconds::zero()) {

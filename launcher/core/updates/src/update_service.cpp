@@ -99,6 +99,8 @@ struct UpdateService::Impl {
         ApplyWhen when{};
         AppEntry entry;
         CancelRegistration on_cancel;
+        // The stage a liveness timeout is blamed on.
+        UpdateStage stage = UpdateStage::Download;
     };
 
     // A pending ConfirmStopSessions; cancelling `withdraw` withdraws it.
@@ -422,6 +424,7 @@ struct UpdateService::Impl {
             deps.strand.post(guarded([this, id] { on_apply_cancelled(id); }));
         });
         if (staged == apply_job->entry) {
+            apply_job->stage = UpdateStage::Stage;
             if (!gate.armed()) phase = UpdatePhase::Staged;
             deps.strand.post(guarded([this, id = handle.id()] {
                 if (apply_job && apply_job->handle.id() == id) arm_staged();
@@ -437,11 +440,26 @@ struct UpdateService::Impl {
 
     void abandon_job() {
         if (!apply_job) return;
+        // No progress for the liveness bound is the stage's failure, not a cancel: an auto-apply has
+        // nobody watching its op.
+        if (apply_job->op->token().reason() == CancelReason::Deadline) return fail_timed_out();
         ApplyJob job = std::move(*std::exchange(apply_job, std::nullopt));
         // A drain already under way stays consented.
         if (phase != UpdatePhase::Draining) consented = false;
         if (!gate.armed()) phase = offer ? UpdatePhase::Available : UpdatePhase::Idle;
         job.op->complete(Cancelled{job.op->token().reason().value_or(CancelReason::User)});
+    }
+
+    void fail_timed_out() {
+        const UpdateStage stage = apply_job->stage;
+        const std::string_view name = stage == UpdateStage::Download ? "download"
+                                      : stage == UpdateStage::Verify ? "verify"
+                                                                     : "stage";
+        fail_job(stage, updates_diag(stage == UpdateStage::Stage ? msg::kStageFailed : msg::kDownloadFailed)
+                            .arg("version", apply_job->entry.version)
+                            .retryable()
+                            .detail("no progress in the " + std::string(name) + " phase")
+                            .build());
     }
 
     void fail_job(UpdateStage stage, Diagnostic error) {
@@ -450,7 +468,7 @@ struct UpdateService::Impl {
         REBOOT_LOG_WARN(Update, "Launcher update {} failed: {}", job.entry.version.to_string(), error.id);
         consented = false;
         last_error = error;
-        phase = UpdatePhase::Failed;
+        if (!gate.armed()) phase = UpdatePhase::Failed;
         publish(deps.events, UpdateFailed{stage, error});
         job.op->complete(Failed{std::move(error)});
     }
@@ -517,6 +535,7 @@ struct UpdateService::Impl {
     }
 
     void verify(NativePath file) {
+        apply_job->stage = UpdateStage::Verify;
         const RemoteFile& package = apply_job->entry.package;
         apply_job->op->progress(Progress{.phase = "verify", .done = 0, .total = package.size});
         deps.workers.submit<void>(
@@ -535,6 +554,7 @@ struct UpdateService::Impl {
     }
 
     void stage(NativePath file) {
+        apply_job->stage = UpdateStage::Stage;
         apply_job->op->progress(Progress{.phase = "stage"});
         deps.workers.submit<void>(
             [&applier = deps.applier, file = std::move(file)](CancelToken) { return applier.stage(file); },

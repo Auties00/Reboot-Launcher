@@ -26,4 +26,7 @@ struct ParsedUrl {
 // Lowercase, without brackets or a trailing ":port".
 [[nodiscard]] std::string normalize_host(std::string_view host);
 
+// "localhost", 127.0.0.0/8 or ::1 as written, never a name that merely resolves to loopback.
+[[nodiscard]] bool is_literal_loopback(std::string_view normalized_host);
+
 }  // namespace rb::net

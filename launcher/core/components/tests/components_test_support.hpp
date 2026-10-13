@@ -265,7 +265,27 @@ public:
         auto handle = std::make_unique<StreamHandle>(path);
         if (!handle->in) return fail(path, ErrorKind::Generic);
         ++opened_;
+        {
+            const std::scoped_lock lock(mutex_);
+            if (!lingering_dir_.empty() && path.parent_path() == lingering_dir_) lingering_.emplace_back(path, std::ios::binary);
+        }
         return ports::HeldFile(std::move(handle));
+    }
+
+    // Every file opened in `dir` from now on stays open as a scanner would keep it; on Windows that
+    // blocks its rename.
+    void linger_in(const NativePath& dir) {
+        const std::scoped_lock lock(mutex_);
+        lingering_dir_ = dir;
+    }
+    [[nodiscard]] std::size_t lingering() const {
+        const std::scoped_lock lock(mutex_);
+        return lingering_.size();
+    }
+    void release_lingering() {
+        const std::scoped_lock lock(mutex_);
+        lingering_dir_.clear();
+        lingering_.clear();
     }
 
     Result<ports::FileRevision> revision(const NativePath& path) override {
@@ -333,6 +353,9 @@ private:
 
     testing::FaultPlan<testing::FsOperation> faults_;
     std::atomic<u64> opened_{0};
+    mutable std::mutex mutex_;
+    NativePath lingering_dir_;
+    std::deque<std::ifstream> lingering_;
 };
 
 [[nodiscard]] inline std::string read_text(const NativePath& path) {

@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
@@ -66,6 +67,8 @@ struct HttpRequest {
     std::optional<HttpLimits> limits;
     RetryPolicy retry;
     std::size_t max_body = kHttpDefaultMaxBody;
+    // The only trust anchors for this request (an expert endpoint's private CA).
+    std::optional<NativePath> ca_bundle;
 };
 
 }  // namespace rb::net
