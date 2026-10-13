@@ -132,7 +132,7 @@ TEST_CASE("an umu prefix is built by umu and runs programs from exposed director
                                                       {rb::ports::PrefixVerb::Boot, {}, {}}, {});
     REQUIRE(boot);
     CHECK(boot->exe == NativePath{"/rt/umu/umu-run"});
-    CHECK(boot->args == std::vector<std::string>{"createprefix"});
+    CHECK(boot->args == std::vector<std::string>{"wineboot", "-u"});
 
     const auto kill = fixture.platform.prefix_command(umu_layout(), NativePath{"/data/prefixes/umu"},
                                                       {rb::ports::PrefixVerb::KillServer, {}, {}}, {});

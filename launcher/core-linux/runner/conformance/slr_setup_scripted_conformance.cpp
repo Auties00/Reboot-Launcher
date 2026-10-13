@@ -227,7 +227,7 @@ TEST_CASE("the setup runs umu-run with the runtime update on and a fresh scratch
     REQUIRE(umu);
     const rb::ports::ProcessLaunch& launch = umu->launch();
     CHECK(launch.exe == fixture.runtime.layout.entry);
-    CHECK(launch.args == std::vector<std::string>{""});
+    CHECK(launch.args == std::vector<std::string>{"wineboot", "-u"});
     CHECK(launch.cwd == fixture.runtime.folders);
     CHECK(launch.stdio == rb::ports::StdioMode::Capture);
     CHECK(launch.own_group);

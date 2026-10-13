@@ -154,8 +154,8 @@ Result<SlrBuild> SlrSetup::run(const ports::RuntimeLayout& layout, CancelToken t
 
     ports::ProcessLaunch setup;
     setup.exe = layout.entry;
-    // An empty executable makes umu set up the runtime and the prefix, and run nothing.
-    setup.args = {""};
+    // As umu's own install check: an empty exe sets up the prefix too, but then fails to start.
+    setup.args = {"wineboot", "-u"};
     setup.env = base_;
     for (const auto& [name, value] : layout.env) set_var(setup.env, name, value);
     set_var(setup.env, "UMU_RUNTIME_UPDATE", "1");

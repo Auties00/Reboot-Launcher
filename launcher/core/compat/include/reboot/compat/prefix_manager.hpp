@@ -44,7 +44,7 @@ struct PrefixManagerDeps {
 // persistence-format-migration).
 // Strand-only. One prefix per Wine runner at data/prefixes/<runner_name>; Native has none and is
 // refused with compat.no_prefix. Every prefix command goes through IRunnerPlatform::prefix_command,
-// so under Umu umu and Proton create and upgrade the prefix (createprefix), never raw wineboot.
+// so under Umu umu and Proton create and upgrade the prefix before its wineboot runs, never raw Wine.
 // prepare() brings the prefix to the session's runtime, one prepare per prefix at a time:
 // - missing or unusable (no drive_c or system.reg): created; FortniteGame/Saved moves over from
 //   the old tree's AppData/Local, then the old tree is removed;

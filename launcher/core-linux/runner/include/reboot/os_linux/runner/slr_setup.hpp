@@ -22,8 +22,9 @@ public:
     // `base` is EnvBuilder's daemon-base layer; `folders` is UMU_FOLDERS_PATH.
     SlrSetup(ports::IProcessLauncher& processes, ports::EnvBlock base, NativePath folders);
 
-    // Blocking, so callers run it on a worker. Runs `<layout.entry> ""` with UMU_RUNTIME_UPDATE=1,
-    // which sets up only the runtime and the scratch prefix; output goes to the Wine log.
+    // Blocking, so callers run it on a worker. Runs `<layout.entry> wineboot -u` with
+    // UMU_RUNTIME_UPDATE=1, which sets up only the runtime and the scratch prefix; output goes to
+    // the Wine log.
     // Cancelling kills the process tree. Errors: platform.linux_scratch_prefix_failed,
     // platform.linux_slr_setup_not_started, platform.linux_slr_setup_failed,
     // platform.linux_slr_setup_killed, platform.linux_slr_setup_cancelled, or SlrBuild::read's.

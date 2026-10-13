@@ -599,9 +599,9 @@ TEST_CASE("under umu and GE-Proton winhost reads its token from stdin and runs t
         REQUIRE(boot);
         auto spawned = winhost.launcher.spawn(*boot);
         REQUIRE(spawned);
-        Child createprefix(std::move(*spawned));
-        const auto exit = createprefix.exit_within(kUmuSetup);
-        INFO(createprefix.output());
+        Child wineboot(std::move(*spawned));
+        const auto exit = wineboot.exit_within(kUmuSetup);
+        INFO(wineboot.output());
         REQUIRE(exit);
         REQUIRE(exit->code == 0);
     }

@@ -93,7 +93,7 @@ Result<ports::ProcessLaunch> LinuxRunnerPlatform::prefix_command(const ports::Ru
     launch.cwd = prefix.parent_path();
     switch (command.verb) {
         case ports::PrefixVerb::Boot:
-            launch.args = umu ? std::vector<std::string>{"createprefix"} : std::vector<std::string>{"wineboot", "-u"};
+            launch.args = {"wineboot", "-u"};
             break;
         case ports::PrefixVerb::KillServer:
             // -k signals the server named in the prefix's lock file, which the container shares with the host.

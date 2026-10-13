@@ -37,9 +37,10 @@ public:
     Result<ports::ProcessLaunch> runner_launch(const ports::RuntimeLayout& layout, const NativePath& prefix,
                                                const NativePath& winhost_exe, ports::EnvBlock base) override;
 
-    // Boot: `umu-run createprefix` for an umu layout, so umu and Proton build or upgrade the prefix;
-    // `wine wineboot -u` for a Wine layout. KillServer runs the runtime's own `wineserver -k`. Run
-    // exposes the exe's directory to pressure-vessel as runner_launch does winhost's.
+    // Boot: `wineboot -u` through the entry; under umu, Proton builds or upgrades the prefix before
+    // running the prefix's wineboot (umu's `createprefix` hands Proton an empty exe that fails to
+    // start). KillServer runs the runtime's own `wineserver -k`. Run exposes the exe's directory to
+    // pressure-vessel as runner_launch does winhost's.
     Result<ports::ProcessLaunch> prefix_command(const ports::RuntimeLayout& layout, const NativePath& prefix,
                                                 const ports::PrefixCommand& command, ports::EnvBlock base) override;
 
