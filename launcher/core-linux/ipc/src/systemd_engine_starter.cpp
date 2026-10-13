@@ -128,7 +128,7 @@ Result<ports::StartResult> SystemdEngineStarter::ensure_started(const NativePath
         });
         !spawned)
         return std::unexpected(std::move(spawned.error()));
-    wait_for_engine_lock(layout.engine_lock(), kEngineReadyWait);
+    wait_for_engine_lock(layout.engine_lock(), engine_ready_wait_);
     return ports::StartResult::Started;
 }
 

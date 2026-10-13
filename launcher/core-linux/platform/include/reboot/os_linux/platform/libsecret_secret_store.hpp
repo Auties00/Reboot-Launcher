@@ -46,10 +46,12 @@ public:
     // Writing removes any copy in the other backend.
     Result<void> put(std::string_view key, std::span<const u8> value) override;
     // The fallback file first in either mode, since it is newer than any keyring copy (a put that
-    // reaches the keyring removes it); in Os mode a file value moves into the keyring. Then the
-    // keyring.
+    // reaches the keyring removes it); in Os mode a file value moves into the keyring. Then a
+    // tombstone, which reads as a miss; then the keyring.
     Result<std::optional<SecretBytes>> get(std::string_view key) override;
-    // Erases from both backends; a missing key is success.
+    // Erases from both backends; a missing key is success. While the keyring cannot be reached it
+    // leaves an empty 0600 <sha256>.erased tombstone, so a keyring copy never comes back; the next
+    // call that reaches the keyring clears that copy and the tombstone.
     Result<void> erase(std::string_view key) override;
 
 private:

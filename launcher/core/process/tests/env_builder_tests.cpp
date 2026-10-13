@@ -62,7 +62,7 @@ TEST_CASE("the Windows base is taken whole except invalid names", "[process][env
 TEST_CASE("client and profile layers pass only their lists, and later layers win", "[process][env]") {
     EnvBuilder builder(EnvSyntax::Posix);
     contracts::ipc::CallerContext caller;
-    caller.display_env = {{"DISPLAY", ":0"}, {"LC_ALL", "C"}, {"SSH_AUTH_SOCK", "/s"}};
+    caller.display_env = {{"DISPLAY", ":0"}, {"LC_ALL", "C"}, {"LANGUAGE", "de:en"}, {"SSH_AUTH_SOCK", "/s"}};
     builder.daemon_base(block({{"PATH", "/usr/bin"}}))
         .client(caller)
         .profile(block({{"DXVK_HUD", "1"}, {"DISPLAY", ":9"}, {"PATH", "/evil"}}))
@@ -70,6 +70,7 @@ TEST_CASE("client and profile layers pass only their lists, and later layers win
     const BuiltEnv env = build(std::move(builder));
     CHECK(value_of(env, "DISPLAY") == ":0");
     CHECK(has(env, "LC_ALL"));
+    CHECK(value_of(env, "LANGUAGE") == "de:en");
     CHECK_FALSE(has(env, "SSH_AUTH_SOCK"));
     CHECK(value_of(env, "DXVK_HUD") == "1");
     CHECK(value_of(env, "PATH") == "/runtime/bin");

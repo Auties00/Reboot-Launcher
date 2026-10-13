@@ -7,7 +7,7 @@ namespace rb::os_linux::ipc {
 
 // Must equal process::kClientAllowList, linux-compat-layer's client allow-list, which this
 // package may not include. Steam*, LD_*, WINE* and UMU_* are never on it.
-inline constexpr std::array<std::string_view, 10> kDisplayEnvNames{
+inline constexpr std::array<std::string_view, 11> kDisplayEnvNames{
     "DISPLAY",
     "WAYLAND_DISPLAY",
     "XAUTHORITY",
@@ -18,6 +18,7 @@ inline constexpr std::array<std::string_view, 10> kDisplayEnvNames{
     "PULSE_SERVER",
     "DBUS_SESSION_BUS_ADDRESS",
     "LANG",
+    "LANGUAGE",
 };
 inline constexpr std::array<std::string_view, 2> kDisplayEnvPrefixes{"PIPEWIRE_", "LC_"};
 

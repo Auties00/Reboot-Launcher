@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <memory>
@@ -213,6 +214,19 @@ TEST_CASE("engine flow: the resolved UI language asks the user's OS languages") 
     CHECK(languages->selected == "system");
     CHECK(languages->resolved == "en");
     CHECK(rig.languages->queries() > 0);
+}
+
+TEST_CASE("engine flow: the UI language is the calling session's") {
+    EngineRig rig;
+    rig.boot();
+    contracts::ipc::CallerContext caller = EngineRig::default_caller();
+    caller.display_env.push_back({"LANG", "de_DE.UTF-8"});
+    auto client = rig.connect(caller);
+    REQUIRE(rig.call<api::SettingsLanguagesResponse>(*client, api::kSettingsLanguages, api::SettingsLanguagesRequest{}));
+    const std::vector<contracts::ipc::EnvVar> seen = rig.languages->last_display_env();
+    CHECK(std::ranges::any_of(seen, [](const contracts::ipc::EnvVar& var) {
+        return var.name == "LANG" && var.value == "de_DE.UTF-8";
+    }));
 }
 
 TEST_CASE("engine flow: host profiles are created, listed and deleted") {

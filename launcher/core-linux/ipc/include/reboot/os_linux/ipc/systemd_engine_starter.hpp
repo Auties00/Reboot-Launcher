@@ -24,8 +24,13 @@ public:
     // `caller` is the context captured once at rb_ctx_create. `paths` gives the runtime base,
     // the XDG homes, the passwd fields and the AppImage. `under_steam_reaper`: an ancestor is
     // Steam's reaper, whose teardown would kill a self-spawned engine and every host in it.
-    SystemdEngineStarter(ports::CallerContext caller, LinuxClientPaths paths, bool under_steam_reaper)
-        : caller_(std::move(caller)), paths_(std::move(paths)), under_steam_reaper_(under_steam_reaper) {}
+    // `engine_ready_wait` replaces kEngineReadyWait in tests.
+    SystemdEngineStarter(ports::CallerContext caller, LinuxClientPaths paths, bool under_steam_reaper,
+                         std::chrono::milliseconds engine_ready_wait = kEngineReadyWait)
+        : caller_(std::move(caller)),
+          paths_(std::move(paths)),
+          under_steam_reaper_(under_steam_reaper),
+          engine_ready_wait_(engine_ready_wait) {}
 
     // An elevated caller gets ElevatedRefused before anything starts. Otherwise the missing
     // directories up to <root>/state are created 0700, since the first autostart precedes any
@@ -58,11 +63,12 @@ public:
     //    run --origin=on-demand and a fixed environment: HOME, USER, LOGNAME and SHELL from the
     //    passwd entry; the step 2 variables; and only PATH (/usr/local/bin:/usr/bin:/bin when
     //    unset), TMPDIR, XDG_CONFIG_HOME and XDG_RUNTIME_DIR when absolute, XDG_DATA_DIRS,
-    //    XDG_CONFIG_DIRS, DBUS_SESSION_BUS_ADDRESS (libsecret), LANG and LC_* from this process.
+    //    XDG_CONFIG_DIRS, DBUS_SESSION_BUS_ADDRESS (libsecret), LANG, LANGUAGE and LC_* from this
+    //    process.
     //    argv, envp and the fd limit are built before fork, so the children make only
     //    async-signal-safe calls. An exec errno travels back over the CLOEXEC pipe; any failure is
     //    platform.ipc_engine_spawn_failed. Then spawn.lock stays held until the engine holds
-    //    engine.lock, for at most kEngineReadyWait. Started, even past that wait.
+    //    engine.lock, for at most engine_ready_wait. Started, even past that wait.
     // Steps 2 and 3 run `<appimage> engine run ...` from an AppImage, since the mount behind
     // engine_exe goes away when the client's AppImage exits.
     Result<ports::StartResult> ensure_started(const NativePath& engine_exe, const DataRoot& root) override;
@@ -71,6 +77,7 @@ private:
     ports::CallerContext caller_;
     LinuxClientPaths paths_;
     bool under_steam_reaper_;
+    std::chrono::milliseconds engine_ready_wait_;
 };
 
 }  // namespace rb::os_linux::ipc

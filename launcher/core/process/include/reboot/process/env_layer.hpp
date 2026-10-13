@@ -51,7 +51,7 @@ inline constexpr std::array<EnvNamePattern, 9> kPosixBaseNames{{
 }};
 
 // Layer 2: what CallerContext.display_env may contribute.
-inline constexpr std::array<EnvNamePattern, 12> kClientAllowList{{
+inline constexpr std::array<EnvNamePattern, 13> kClientAllowList{{
     {"DISPLAY"},
     {"WAYLAND_DISPLAY"},
     {"XAUTHORITY"},
@@ -63,6 +63,7 @@ inline constexpr std::array<EnvNamePattern, 12> kClientAllowList{{
     {"PIPEWIRE_", true},
     {"DBUS_SESSION_BUS_ADDRESS"},
     {"LANG"},
+    {"LANGUAGE"},
     {"LC_", true},
 }};
 

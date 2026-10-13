@@ -37,8 +37,9 @@ struct EngineEnvironmentInputs {
 
 // The self-spawned engine's whole envp: HOME, USER, LOGNAME and SHELL from `inputs`, the pinned
 // variables, then from `inherited` ("NAME=value"; the first of a name wins, as in getenv) only
-// non-empty PATH, XDG_DATA_DIRS, XDG_CONFIG_DIRS, DBUS_SESSION_BUS_ADDRESS, LANG and LC_*, and
-// TMPDIR, XDG_CONFIG_HOME and XDG_RUNTIME_DIR when absolute. PATH defaults to kDefaultEnginePath.
+// non-empty PATH, XDG_DATA_DIRS, XDG_CONFIG_DIRS, DBUS_SESSION_BUS_ADDRESS, LANG, LANGUAGE and
+// LC_*, and TMPDIR, XDG_CONFIG_HOME and XDG_RUNTIME_DIR when absolute. PATH defaults to
+// kDefaultEnginePath.
 [[nodiscard]] std::vector<std::string> engine_environment(std::span<const std::string_view> inherited,
                                                           const EngineEnvironmentInputs& inputs, const DataRoot& root);
 

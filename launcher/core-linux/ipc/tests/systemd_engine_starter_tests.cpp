@@ -75,10 +75,12 @@ struct StarterFixture {
     LinuxClientPaths paths = detect_paths();
     DataRoot root{scratch.path() / "data" / "root", true};
     NativePath engine_exe = scratch.path() / "bin" / "reboot-engine";
+    // The shell fake engines never take engine.lock, so each self-spawn waits this long.
+    std::chrono::milliseconds ready_wait{100};
 
     [[nodiscard]] Result<ports::StartResult> start(ports::CallerContext caller = desktop_caller(),
                                                    bool under_steam_reaper = false) const {
-        SystemdEngineStarter starter{std::move(caller), paths, under_steam_reaper};
+        SystemdEngineStarter starter{std::move(caller), paths, under_steam_reaper, ready_wait};
         return starter.ensure_started(engine_exe, root);
     }
 
@@ -168,36 +170,45 @@ TEST_CASE("the self-spawned engine runs on demand with a fixed environment", "[e
 }
 
 TEST_CASE("spawn.lock is held after a self-spawn until the engine holds engine.lock", "[engine_starter]") {
-    const StarterFixture fixture;
+    StarterFixture fixture;
+    fixture.ready_wait = SystemdEngineStarter::kEngineReadyWait;
     REQUIRE(create_private_dirs(fixture.engine_exe.parent_path()));
     write_text(fixture.engine_exe, kFakeEngine, 0700);
 
-    const auto began = std::chrono::steady_clock::now();
     std::future<Result<ports::StartResult>> started = std::async(std::launch::async, [&] { return fixture.start(); });
     REQUIRE(wait_for([&] { return path_exists(fixture.root.root / "report"); }));
     // The fake engine never takes engine.lock, so the call still waits and still holds spawn.lock.
     CHECK(started.wait_for(std::chrono::milliseconds{0}) == std::future_status::timeout);
     CHECK(locked(fixture.state_dir() / "spawn.lock"));
 
-    SECTION("the engine taking engine.lock ends the wait") {
-        const auto engine_lock = lock_ofd_exclusive(fixture.state_dir() / "engine.lock");
-        REQUIRE(engine_lock);
-        const auto taken = std::chrono::steady_clock::now();
-        const Result<ports::StartResult> result = started.get();
-        REQUIRE(result);
-        CHECK(*result == ports::StartResult::Started);
-        CHECK(std::chrono::steady_clock::now() - taken < std::chrono::seconds{2});
-        // The next client finds it running instead of spawning a second engine.
-        const auto again = fixture.start();
-        REQUIRE(again);
-        CHECK(*again == ports::StartResult::AlreadyRunning);
-    }
-    SECTION("an engine that never takes it is still Started once the wait runs out") {
-        const Result<ports::StartResult> result = started.get();
-        REQUIRE(result);
-        CHECK(*result == ports::StartResult::Started);
-        CHECK(std::chrono::steady_clock::now() - began >= SystemdEngineStarter::kEngineReadyWait);
-    }
+    const auto engine_lock = lock_ofd_exclusive(fixture.state_dir() / "engine.lock");
+    REQUIRE(engine_lock);
+    const auto taken = std::chrono::steady_clock::now();
+    const Result<ports::StartResult> result = started.get();
+    REQUIRE(result);
+    CHECK(*result == ports::StartResult::Started);
+    CHECK(std::chrono::steady_clock::now() - taken < std::chrono::seconds{2});
+    CHECK_FALSE(locked(fixture.state_dir() / "spawn.lock"));
+    // The next client finds it running instead of spawning a second engine.
+    const auto again = fixture.start();
+    REQUIRE(again);
+    CHECK(*again == ports::StartResult::AlreadyRunning);
+}
+
+TEST_CASE("an engine that never takes engine.lock is still Started once the wait runs out", "[engine_starter]") {
+    StarterFixture fixture;
+    fixture.ready_wait = std::chrono::milliseconds{400};
+    REQUIRE(create_private_dirs(fixture.engine_exe.parent_path()));
+    write_text(fixture.engine_exe, kFakeEngine, 0700);
+
+    const auto began = std::chrono::steady_clock::now();
+    const Result<ports::StartResult> result = fixture.start();
+    REQUIRE(result);
+    CHECK(*result == ports::StartResult::Started);
+    const auto waited = std::chrono::steady_clock::now() - began;
+    CHECK(waited >= fixture.ready_wait);
+    // The injected wait, not kEngineReadyWait.
+    CHECK(waited < SystemdEngineStarter::kEngineReadyWait);
     CHECK_FALSE(locked(fixture.state_dir() / "spawn.lock"));
 }
 

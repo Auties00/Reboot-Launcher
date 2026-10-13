@@ -111,9 +111,18 @@ private:
     std::string text_;
 };
 
-[[nodiscard]] NativePath fallback_file(const NativePath& dir, std::string_view key) {
+[[nodiscard]] NativePath fallback_file(const NativePath& dir, std::string_view key, std::string_view extension) {
     const auto digest = sha256({reinterpret_cast<const u8*>(key.data()), key.size()});
-    return dir / (to_hex(digest) + ".secret");
+    return dir / (to_hex(digest) + std::string{extension});
+}
+
+[[nodiscard]] NativePath secret_file(const NativePath& dir, std::string_view key) {
+    return fallback_file(dir, key, ".secret");
+}
+
+// Empty; marks an erase that could not reach the keyring.
+[[nodiscard]] NativePath tombstone_file(const NativePath& dir, std::string_view key) {
+    return fallback_file(dir, key, ".erased");
 }
 
 }  // namespace
@@ -232,15 +241,18 @@ struct LibsecretSecretStore::Impl {
         return std::unexpected(failed("secret_password_clearv_sync", error));
     }
 
-    [[nodiscard]] Result<void> store_file(std::string_view key, std::span<const u8> value) {
+    [[nodiscard]] Result<void> write_owner_only(const NativePath& file, std::span<const u8> value) {
         if (auto made = fs.create_dirs_owner_only(fallback_dir); !made) return made;
-        const NativePath file = fallback_file(fallback_dir, key);
         if (auto written = fs.atomic_replace(file, value, false); !written) return written;
         return fs.restrict_to_owner(file);
     }
 
+    [[nodiscard]] Result<void> store_file(std::string_view key, std::span<const u8> value) {
+        return write_owner_only(secret_file(fallback_dir, key), value);
+    }
+
     [[nodiscard]] Result<std::optional<SecretBytes>> lookup_file(std::string_view key) {
-        Result<std::vector<u8>> bytes = fs.read_all(fallback_file(fallback_dir, key));
+        Result<std::vector<u8>> bytes = fs.read_all(secret_file(fallback_dir, key));
         if (!bytes) {
             if (bytes.error().kind == ErrorKind::NotFound) return std::nullopt;
             return std::unexpected(std::move(bytes.error()));
@@ -248,8 +260,21 @@ struct LibsecretSecretStore::Impl {
         return SecretBytes{std::move(*bytes)};
     }
 
-    [[nodiscard]] Result<void> clear_file(std::string_view key) {
-        return fs.remove_tree(fallback_file(fallback_dir, key));
+    [[nodiscard]] Result<void> clear_file(std::string_view key) { return fs.remove_tree(secret_file(fallback_dir, key)); }
+
+    [[nodiscard]] Result<bool> tombstoned(std::string_view key) {
+        Result<std::vector<u8>> marker = fs.read_all(tombstone_file(fallback_dir, key));
+        if (marker) return true;
+        if (marker.error().kind == ErrorKind::NotFound) return false;
+        return std::unexpected(std::move(marker.error()));
+    }
+
+    [[nodiscard]] Result<void> write_tombstone(std::string_view key) {
+        return write_owner_only(tombstone_file(fallback_dir, key), {});
+    }
+
+    [[nodiscard]] Result<void> clear_tombstone(std::string_view key) {
+        return fs.remove_tree(tombstone_file(fallback_dir, key));
     }
 
     // In File mode the service may have come up since; requires `mutex`.
@@ -282,13 +307,7 @@ ports::SecretStoreKind LibsecretSecretStore::kind() const { return impl_->kind; 
 
 Result<void> LibsecretSecretStore::put(std::string_view key, std::span<const u8> value) {
     const std::lock_guard lock(impl_->mutex);
-    const std::string name{key};
-    if (impl_->os_reachable()) {
-        Result<void> stored = impl_->store_os(name, value);
-        if (stored) return impl_->clear_file(key);
-        if (!impl_->fell_back(stored.error())) return stored;
-    }
-    return impl_->store_file(key, value);
+    return write_newest(*impl_, std::string{key}, value);
 }
 
 Result<std::optional<SecretBytes>> LibsecretSecretStore::get(std::string_view key) {
@@ -298,11 +317,7 @@ Result<std::optional<SecretBytes>> LibsecretSecretStore::get(std::string_view ke
 
 Result<void> LibsecretSecretStore::erase(std::string_view key) {
     const std::lock_guard lock(impl_->mutex);
-    const std::string name{key};
-    if (impl_->os_reachable()) {
-        if (Result<void> cleared = impl_->clear_os(name); !cleared && !impl_->fell_back(cleared.error())) return cleared;
-    }
-    return impl_->clear_file(key);
+    return erase_everywhere(*impl_, std::string{key});
 }
 
 }  // namespace rb::os_linux::platform

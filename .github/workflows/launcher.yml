@@ -144,9 +144,11 @@ jobs:
           "REBOOT_CONFORMANCE_OTHER_PASSWORD=$password" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Test
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
-        # A throwaway VM, so the registrar round trip may register and remove the user's entries.
+        # A throwaway VM, so the registrar and engine task cases may register and remove the user's
+        # entries. The other-user IPC checks fail instead of skipping when the account is missing.
         env:
           REBOOT_CONFORMANCE_MUTATES_USER: "1"
+          REBOOT_CONFORMANCE_OTHER_USER_REQUIRED: "1"
         run: ctest --preset %PRESET% --no-tests=error -LE gate
       # Message catalog completeness, the secret grep and the data root outside the Velopack package.
       - name: CI gates
@@ -190,6 +192,61 @@ jobs:
           tar -xJf "$RUNNER_TEMP/$KRON4EK_ARCHIVE" -C "$RUNNER_TEMP/wine"
       - name: Wine gate
         run: sh launcher/ci/wine/run.sh reboot-launcher-build:ci "$RUNNER_TEMP/wine" "$RUNNER_TEMP/payload"
+
+  # The same winhost through the layers play uses on Linux: umu-run, pressure-vessel in the Steam
+  # Linux Runtime (umu downloads it) and GE-Proton's umu.exe, each between the engine's stdin pipe
+  # and winhost's.
+  umu:
+    name: Linux, winhost under umu and GE-Proton
+    needs: [linux, windows]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      UMU_RELEASE: "1.4.4"
+      UMU_ARCHIVE: umu-launcher-1.4.4-zipapp.tar
+      UMU_SHA256: eb590691841f7fad3fc3ad8fd5db4ccb87849fe7948e62b28ece7a4ee48cc851
+      GE_PROTON_RELEASE: GE-Proton11-7
+      GE_PROTON_ARCHIVE: GE-Proton11-7-x86_64.tar.gz
+      GE_PROTON_SHA256: c5448b76a230384e2d7bc6beb5ccb97bafb7e2c3b6c527cb03a1a546bbcb00a0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: launcher/ci/linux.Dockerfile
+          target: build
+          load: true
+          tags: reboot-launcher-build:ci
+          build-args: VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
+          cache-from: type=gha,scope=launcher-linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: launcher-wine-payload
+          path: ${{ runner.temp }}/payload
+      - name: Fetch the pinned umu-launcher and GE-Proton
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/$UMU_ARCHIVE" \
+            "https://github.com/Open-Wine-Components/umu-launcher/releases/download/$UMU_RELEASE/$UMU_ARCHIVE"
+          echo "$UMU_SHA256  $RUNNER_TEMP/$UMU_ARCHIVE" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/umu"
+          tar -xf "$RUNNER_TEMP/$UMU_ARCHIVE" -C "$RUNNER_TEMP/umu"
+          curl -fsSL -o "$RUNNER_TEMP/$GE_PROTON_ARCHIVE" \
+            "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/$GE_PROTON_RELEASE/$GE_PROTON_ARCHIVE"
+          echo "$GE_PROTON_SHA256  $RUNNER_TEMP/$GE_PROTON_ARCHIVE" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/proton"
+          tar -xzf "$RUNNER_TEMP/$GE_PROTON_ARCHIVE" -C "$RUNNER_TEMP/proton"
+          rm "$RUNNER_TEMP/$GE_PROTON_ARCHIVE"
+      # Ubuntu 24.04 denies unconfined processes a user namespace, which bubblewrap needs as a non-root user.
+      - name: Allow unprivileged user namespaces
+        run: |
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: umu gate
+        run: sh launcher/ci/umu/run.sh reboot-launcher-build:ci "$RUNNER_TEMP/umu" "$RUNNER_TEMP/proton" "$RUNNER_TEMP/payload"
 
   macos:
     name: macOS, Apple Clang (build, floor, DAG, tests)
@@ -237,8 +294,12 @@ jobs:
       - name: DAG check
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
         run: cmake --build --preset "$PRESET" --target dag_check
+      # The runner's passwordless sudo gives the IPC suite its root helper; without it the
+      # other-user checks fail instead of skipping.
       - name: Test
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
+        env:
+          REBOOT_CONFORMANCE_OTHER_USER_REQUIRED: "1"
         run: ctest --preset "$PRESET" --no-tests=error -LE gate
       # Message catalog completeness, the secret grep and the data root outside the app bundle.
       - name: CI gates

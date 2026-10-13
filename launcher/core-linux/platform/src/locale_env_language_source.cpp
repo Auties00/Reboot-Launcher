@@ -50,4 +50,10 @@ std::vector<std::string> LocaleEnvLanguageSource::preferred_ui_languages() {
                                                .lang = env_value("LANG")});
 }
 
+std::vector<std::string> LocaleEnvLanguageSource::caller_ui_languages(
+    std::span<const contracts::ipc::EnvVar> display_env) {
+    if (const std::optional<LocaleVariables> caller = locale_variables_in(display_env)) return preferred_languages(*caller);
+    return preferred_ui_languages();
+}
+
 }  // namespace rb::os_linux::platform

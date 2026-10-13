@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -200,7 +201,20 @@ TEST_CASE("fallback secrets are 0600 files in a 0700 directory", "[linux_conform
     CHECK(files == 1);
     REQUIRE(store.erase("account/1"));
     CHECK(store.erase("account/1"));
-    CHECK(fs::is_empty(dir));
+    CHECK_FALSE(store.get("account/1").value().has_value());
+    // The keyring may hold a copy from an earlier session, so the erase leaves an empty tombstone.
+    std::vector<fs::path> left;
+    for (const auto& entry : fs::directory_iterator(dir)) left.push_back(entry.path());
+    REQUIRE(left.size() == 1);
+    CHECK(left.front().extension() == ".erased");
+    CHECK(fs::file_size(left.front()) == 0);
+    REQUIRE(::stat(left.front().c_str(), &info) == 0);
+    CHECK((info.st_mode & 0777) == 0600);
+    REQUIRE(store.put("account/1", value));
+    CHECK(store.get("account/1").value().has_value());
+    REQUIRE(fs::directory_iterator(dir) != fs::directory_iterator{});
+    CHECK(fs::directory_iterator(dir)->path().extension() == ".secret");
+    CHECK(std::distance(fs::directory_iterator(dir), fs::directory_iterator{}) == 1);
 }
 
 TEST_CASE("LinuxSystemInfo passes the system info suite", "[linux_conformance]") {

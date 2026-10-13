@@ -1,7 +1,8 @@
 // CI gate (spec 14.6): the real reboot-winhost.exe and reboot-fake-game.exe under the pinned Kron4ek
 // Wine, launched through LinuxRunnerPlatform and PidfdProcessLauncher and driven over loopback as the
 // engine drives them. The wine job (ci/wine/run.sh) sets REBOOT_WINE_RUNTIME, REBOOT_WINHOST_EXE and
-// REBOOT_FAKE_GAME_EXE; everywhere else every case skips.
+// REBOOT_FAKE_GAME_EXE; the umu job (ci/umu/run.sh) sets REBOOT_UMU_LAUNCHER and REBOOT_GE_PROTON
+// instead of REBOOT_WINE_RUNTIME for the [umu] case. Everywhere else every case skips.
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <poll.h>
@@ -34,6 +35,7 @@
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/contracts/winhost.hpp"
+#include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/text.hpp"
@@ -89,6 +91,29 @@ struct Inputs {
 }
 
 constexpr std::string_view kNoWine = "REBOOT_WINE_RUNTIME, REBOOT_WINHOST_EXE and REBOOT_FAKE_GAME_EXE name no Wine to test under";
+
+// umu-launcher's extracted zipapp and an extracted GE-Proton, as the component store holds them.
+struct UmuInputs {
+    NativePath launcher;
+    NativePath proton;
+    NativePath winhost;
+    NativePath game;
+};
+
+[[nodiscard]] std::optional<UmuInputs> umu_inputs() {
+    auto launcher = env_value("REBOOT_UMU_LAUNCHER");
+    auto proton = env_value("REBOOT_GE_PROTON");
+    auto winhost = env_value("REBOOT_WINHOST_EXE");
+    auto game = env_value("REBOOT_FAKE_GAME_EXE");
+    if (!launcher || !proton || !winhost || !game) return std::nullopt;
+    return UmuInputs{NativePath(*launcher), NativePath(*proton), NativePath(*winhost), NativePath(*game)};
+}
+
+constexpr std::string_view kNoUmu =
+    "REBOOT_UMU_LAUNCHER, REBOOT_GE_PROTON, REBOOT_WINHOST_EXE and REBOOT_FAKE_GAME_EXE name no umu to test under";
+
+// umu downloads the Steam Linux Runtime, and Proton's first prefix setup is slower than wineboot.
+constexpr auto kUmuSetup = 900s;
 
 [[nodiscard]] ports::EnvBlock base_env() {
     ports::EnvBlock env;
@@ -412,9 +437,15 @@ struct Winhost {
         LinuxRunnerPlatform runner{launcher, base_env(), prefix_dir.parent_path() / "umu"};
         const auto layout = runner.layout(ports::RunnerKind::Wine, {in.runtime, std::nullopt});
         if (!layout) return "layout: " + layout.error().id;
-        ports::EnvBlock env = base_env();
+        return start_under(runner, *layout, prefix_dir, in.winhost, engine, base_env());
+    }
+
+    // `env` holds the runner layer, as EnvBuilder's runner layer does.
+    [[nodiscard]] std::string start_under(LinuxRunnerPlatform& runner, const ports::RuntimeLayout& layout,
+                                          const NativePath& prefix_dir, const NativePath& winhost,
+                                          const Loopback& engine, ports::EnvBlock env) {
         env.vars.emplace_back(gc::kEnvCtl, engine.url());
-        auto launch = runner.runner_launch(*layout, prefix_dir, in.winhost, std::move(env));
+        auto launch = runner.runner_launch(layout, prefix_dir, winhost, std::move(env));
         if (!launch) return "runner_launch: " + launch.error().id;
         launch->stdio = ports::StdioMode::ControlChannel;
         auto spawned = launcher.spawn(*launch);
@@ -424,6 +455,15 @@ struct Winhost {
         return {};
     }
 };
+
+// The daemon base and umu's runner layer; pressure-vessel also shares the game's directory, as
+// WineSessionHost shares the build's.
+[[nodiscard]] ports::EnvBlock umu_env(const ports::RuntimeLayout& layout, const NativePath& game) {
+    ports::EnvBlock env = base_env();
+    for (const auto& variable : layout.env) env.vars.push_back(variable);
+    env.vars.emplace_back("PRESSURE_VESSEL_FILESYSTEMS_RW", game.parent_path().string());
+    return env;
+}
 
 // The game's bootstrap, as play's channel layer sets it.
 [[nodiscard]] std::vector<u8> game_env_block(const Loopback& game_channel, const std::array<u8, 32>& token) {
@@ -516,6 +556,58 @@ TEST_CASE("winhost under Wine starts the game with the env overlay, relays it, a
     REQUIRE(exit);
     CHECK(exit->code == kStopped);
     CHECK(wait_until_gone(dir, kGameName, kExit));
+}
+
+// umu-run, pressure-vessel, Proton's umu.exe and Wine all sit between the runner's stdin and
+// winhost's, so this proves the token line still reaches winhost and the game still starts.
+TEST_CASE("under umu and GE-Proton winhost reads its token from stdin and runs the game until a Stop", "[umu]") {
+    const std::optional<UmuInputs> in = umu_inputs();
+    if (!in) SKIP(kNoUmu);
+    OsRandom random;
+    auto scratch = testing::ScratchDir::create(random, "reboot-umu-gate");
+    REQUIRE(scratch);
+    const NativePath prefix_dir = scratch->path() / "prefix";
+    Winhost winhost;
+    LinuxRunnerPlatform runner{winhost.launcher, base_env(), scratch->path() / "umu"};
+    const auto layout = runner.layout(ports::RunnerKind::Umu, {in->proton, in->launcher});
+    REQUIRE(layout);
+
+    const auto runtime = runner.runtime_setup(*layout, CancelToken{});
+    INFO((runtime ? std::string() : runtime.error().id));
+    REQUIRE(runtime);
+    REQUIRE(*runtime);
+    {
+        const auto boot = runner.prefix_command(*layout, prefix_dir, {ports::PrefixVerb::Boot, {}, {}}, umu_env(*layout, in->game));
+        REQUIRE(boot);
+        auto spawned = winhost.launcher.spawn(*boot);
+        REQUIRE(spawned);
+        Child createprefix(std::move(*spawned));
+        const auto exit = createprefix.exit_within(kUmuSetup);
+        INFO(createprefix.output());
+        REQUIRE(exit);
+        REQUIRE(exit->code == 0);
+    }
+
+    Loopback engine;
+    Loopback game_channel;
+    REQUIRE(engine.port() != 0);
+    REQUIRE(game_channel.port() != 0);
+    const std::array<u8, 32> game_token = fresh_token();
+    REQUIRE(winhost.start_under(runner, *layout, prefix_dir, in->winhost, engine, umu_env(*layout, in->game)).empty());
+    const std::string launched = launch_game(engine, winhost.token, spawn_game(in->game, game_env_block(game_channel, game_token)));
+    INFO(winhost.child->output());
+    REQUIRE(launched.empty());
+    expect_game_hello(game_channel, game_token);
+
+    engine.send(wh::Stop{2, 500});
+    const auto stopped = engine.expect<common::CommandResult>();
+    REQUIRE(stopped);
+    CHECK(stopped->ok);
+    CHECK(engine.drain_to_eof());
+    const auto exited = engine.seen_of<wh::Exited>();
+    CHECK(std::ranges::any_of(exited, [](const wh::Exited& e) { return e.role == wh::ProcessRole::Game; }));
+    // umu-run waits for Proton's wineserver, which lingers a few seconds after the last process.
+    CHECK(winhost.child->exit_within(kWineStart).has_value());
 }
 
 TEST_CASE("a failed launch under Wine ends winhost with LaunchFailed", "[wine]") {
