@@ -19,8 +19,13 @@ struct ConnectionFixture {
         connection = std::make_shared<ipc::IpcConnection>(ConnectionId{3}, std::move(pair.a), engine.executor,
                                                           engine.clock, engine.api);
         client = std::make_unique<RawClient>(std::move(pair.b));
-        connection->start([this](ipc::IpcConnection&, ipc::ClientMessage message) { messages.push_back(std::move(message)); },
-                          [this](ipc::IpcConnection&) { ++closes; });
+        connection->start(
+            [this](ipc::IpcConnection& from, ipc::ClientMessage message) {
+                messages.push_back(std::move(message));
+                // As IpcServer does, which answers every call before the next message.
+                if (finish_each) from.finish_request();
+            },
+            [this](ipc::IpcConnection&) { ++closes; });
     }
 
     void run() { engine.executor.run_all(); }
@@ -29,6 +34,7 @@ struct ConnectionFixture {
     std::shared_ptr<ipc::IpcConnection> connection;
     std::unique_ptr<RawClient> client;
     std::vector<ipc::ClientMessage> messages;
+    bool finish_each = false;
     int closes = 0;
 };
 
@@ -72,6 +78,26 @@ TEST_CASE("calls past kMaxOutstandingCalls are answered with ipc.too_many_calls"
     f.run();
     CHECK(f.messages.size() == limit + 1);
     CHECK(f.client->all<wire::Reply>().size() == 1);
+}
+
+TEST_CASE("a flood is capped before the strand, even when each call finishes as it is handled", "[ipc][connection]") {
+    ConnectionFixture f;
+    f.finish_each = true;
+    const u64 limit = contracts::ipc::kMaxOutstandingCalls;
+    const u64 sent = limit + 50;
+    for (u64 req = 1; req <= sent; ++req) f.client->send(wire::Call{req, kMethod, {}, 0});
+    f.run();
+
+    CHECK(f.messages.size() == limit);
+    const auto replies = f.client->all<wire::Reply>();
+    REQUIRE(replies.size() == sent - limit);
+    CHECK(replies.front().req_id == limit + 1);
+    CHECK(replies.back().error->id == "ipc.too_many_calls");
+
+    // Every admitted call finished, so the next one is admitted again.
+    f.client->send(wire::Call{sent + 1, kMethod, {}, 0});
+    f.run();
+    CHECK(f.messages.size() == limit + 1);
 }
 
 TEST_CASE("close sends Goodbye once and reports the close once, after the last message", "[ipc][connection]") {

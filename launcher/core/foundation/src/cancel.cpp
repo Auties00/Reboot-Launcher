@@ -2,10 +2,13 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <exception>
 #include <map>
 #include <mutex>
 #include <thread>
 #include <utility>
+
+#include "reboot/foundation/log.hpp"
 
 namespace rb {
 
@@ -108,7 +111,14 @@ bool CancelSource::cancel(CancelReason reason) {
         UniqueFunction<void(CancelReason)> callback = std::move(next->second);
         state->callbacks.erase(next);
         lock.unlock();
-        callback(reason);
+        // A throw must not skip the remaining callbacks or leave a reset() waiting on this one.
+        try {
+            callback(reason);
+        } catch (const std::exception& error) {
+            REBOOT_LOG_ERROR(Engine, "a cancel callback threw: {}", error.what());
+        } catch (...) {
+            REBOOT_LOG_ERROR(Engine, "a cancel callback threw");
+        }
         callback = nullptr;
         lock.lock();
         state->running = 0;

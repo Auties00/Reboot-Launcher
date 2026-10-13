@@ -1,14 +1,16 @@
 #pragma once
 
 #include "reboot/foundation/diag.hpp"
+#include "reboot/ports/ipc.hpp"
 
-// The one declaration of every ipc.* id; reboot_client and the OS ipc packages use these.
+// The one declaration of every ipc.* id but ipc.endpoint_untrusted, which the IPC port declares so
+// the OS ipc packages reach it too; reboot_client uses these.
 namespace rb::ipc {
 
 // {field}: "user_id" or "root_hash16".
 REBOOT_MESSAGE_DECL(kInvalidEndpointInput);
 // The endpoint's owner is not the caller's user.
-REBOOT_MESSAGE_DECL(kEndpointUntrusted);
+using ports::kEndpointUntrusted;
 // {method}, {engine_build}
 REBOOT_MESSAGE_DECL(kVersionMismatch);
 // {limit}

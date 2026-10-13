@@ -37,7 +37,8 @@ public:
     UeLogTail& operator=(const UeLogTail&) = delete;
 
     // `ready` runs on the strand once the baseline is recorded; only then may the game launch.
-    // A missing file is waited for; a read error is logged once (game_channel.log_unreadable).
+    // A missing file is waited for; a read error is logged once per outage
+    // (game_channel.log_unreadable).
     void start(UniqueFunction<void()> ready);
 
 private:

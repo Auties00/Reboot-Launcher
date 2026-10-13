@@ -221,7 +221,11 @@ rb_status rb_secret_put(rb_ctx* ctx, const uint8_t* target, size_t target_size, 
         if (ctx == nullptr) return fail(invalid_argument("ctx"));
         if (!target_bytes) return fail(invalid_argument("target"));
         if (!secret_bytes) return fail(invalid_argument("secret"));
-        return status_of(ctx->context->put_secret(*target_bytes, *secret_bytes));
+        CompletionLatch<CallResult<void>> latch;
+        ctx->context->put_secret(*target_bytes, *secret_bytes,
+                                 [&latch](CallResult<void> result) { latch.set(std::move(result)); });
+        if (CallResult<void> result = latch.wait(); !result) return fail(result.error());
+        return RB_OK;
     });
 }
 

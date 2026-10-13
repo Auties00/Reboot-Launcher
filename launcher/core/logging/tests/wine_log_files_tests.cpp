@@ -167,11 +167,15 @@ TEST_CASE("close_session racing the writer loses no line", "[logging][wine][race
     WineFixture f;
     const SessionId session = test::session_of(8);
     constexpr int kLines = 2000;
+    // Catch2 assertions are not thread-safe, so the writer only counts.
+    std::atomic<int> failed{0};
     std::thread writer([&] {
-        for (int i = 0; i < kLines; ++i) REQUIRE(f.wine.append(session, "line\n"));
+        for (int i = 0; i < kLines; ++i)
+            if (!f.wine.append(session, "line\n")) failed.fetch_add(1);
     });
     for (int i = 0; i < kLines; ++i) f.wine.close_session(session);
     writer.join();
+    CHECK(failed.load() == 0);
     const auto text = f.files.text(f.path_of(session));
     REQUIRE(text);
     CHECK(text->size() == kLines * std::string("line\n").size());

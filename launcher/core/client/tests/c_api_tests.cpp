@@ -270,6 +270,8 @@ TEST_CASE("secrets go to the engine and only the join password comes back", "[cl
     const std::vector<u8> secret = bytes_of("hunter2");
     REQUIRE(rb_secret_put(f.ctx, kRevealableTarget.data(), kRevealableTarget.size(), secret.data(), secret.size()) == RB_OK);
     CHECK(rb_secret_put(f.ctx, nullptr, 1, secret.data(), secret.size()) == RB_E_INVALID_ARG);
+    CHECK(rb_secret_put(f.ctx, kRefusedTarget.data(), kRefusedTarget.size(), secret.data(), secret.size()) == RB_E_REMOTE);
+    CHECK(last_error_id() == "client_test.secret_refused");
 
     rb_buffer out{};
     REQUIRE(rb_secret_reveal(f.ctx, kRevealableTarget.data(), kRevealableTarget.size(), &out) == RB_OK);

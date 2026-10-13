@@ -127,16 +127,7 @@ struct IpcServer::Impl {
                        [&](wire::Credit& credit) {
                            static_cast<void>(connection.credit(SubscriptionId{credit.sub_id}, credit.n));
                        },
-                       [&](wire::SecretPut& put) {
-                           SecretBytes secret{std::move(put.bytes)};
-                           // The target is reboot.api.v1 bytes, which only the same build reads right.
-                           Result<void> stored = connection.info().compatibility == Compatibility::Full
-                                                     ? deps.api.put_secret(connection.info(), put.target, std::move(secret))
-                                                     : std::unexpected(version_mismatch(contract_frame_type_v<wire::SecretPut>));
-                           if (!stored)
-                               REBOOT_LOG_WARN(Ipc, "a secret from connection {} was not stored: {}",
-                                               connection.id().value, stored.error().id);
-                       },
+                       [&](wire::SecretPut& put) { on_secret_put(connection, put); },
                        [&](wire::SecretReveal& reveal) {
                            Result<SecretBytes> secret =
                                connection.info().compatibility == Compatibility::Full
@@ -217,6 +208,22 @@ struct IpcServer::Impl {
         }
         if (refused) connection.send(wire::Reply{start.req_id, std::nullopt, contracts::common::to_wire(*refused)});
         connection.finish_request();
+    }
+
+    void on_secret_put(IpcConnection& connection, wire::SecretPut& put) {
+        SecretBytes secret{std::move(put.bytes)};
+        // A store write may end after the connection closed, or after the server stopped.
+        auto reply = [weak = connection.weak_from_this(), token = std::weak_ptr<char>(alive),
+                      req_id = put.req_id](Result<void> stored) {
+            const std::shared_ptr<IpcConnection> to = weak.lock();
+            if (token.expired() || !to) return;
+            if (stored) to->send(wire::Reply{req_id, wire::Bytes{}, std::nullopt});
+            else to->send(wire::Reply{req_id, std::nullopt, contracts::common::to_wire(stored.error())});
+        };
+        // The target is reboot.api.v1 bytes, which only the same build reads right.
+        if (connection.info().compatibility != Compatibility::Full)
+            return reply(std::unexpected(version_mismatch(contract_frame_type_v<wire::SecretPut>)));
+        deps.api.put_secret(connection.info(), put.target, std::move(secret), std::move(reply));
     }
 
     void on_attach(IpcConnection& connection, OpId op) {
@@ -332,6 +339,13 @@ void IpcServer::stop(wire::GoodbyeReason reason) {
 void IpcServer::set_secrets_available(bool available) {
     if (impl_->hello.secrets_available == available) return;
     impl_->hello.secrets_available = available;
+    for (const auto& [id, connection] : impl_->connections)
+        if (connection->greeted()) connection->send(impl_->hello_ack(connection->info().compatibility));
+}
+
+void IpcServer::set_storage_mode(wire::StorageMode mode) {
+    if (impl_->hello.storage_mode == mode) return;
+    impl_->hello.storage_mode = mode;
     for (const auto& [id, connection] : impl_->connections)
         if (connection->greeted()) connection->send(impl_->hello_ack(connection->info().compatibility));
 }

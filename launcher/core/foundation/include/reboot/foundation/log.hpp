@@ -17,6 +17,9 @@ enum class LogLevel : u8 { Trace, Debug, Info, Warn, Error };
 
 enum class LogCategory : u8 { Engine, Ipc, Net, Storage, Builds, Play, Host, Backend, GameOutput, Wine, Browser, Update, Client, Ui };
 
+// "engine", "game_output" and so on, as log lines print it.
+[[nodiscard]] std::string_view log_category_name(LogCategory category) noexcept;
+
 struct LogRecord {
     std::chrono::system_clock::time_point time;
     LogLevel level{};
@@ -38,12 +41,14 @@ public:
 class Redactor {
 public:
     Redactor();
-    ~Redactor();
+    virtual ~Redactor();
     Redactor(const Redactor&) = delete;
     Redactor& operator=(const Redactor&) = delete;
 
     void add_secret(std::span<const u8> value);
-    void remove_secret(std::span<const u8> value);
+    // On Logger::redactor() the secret stays masked until the writer has written every record
+    // queued before the call; any other Redactor stops masking it at once.
+    virtual void remove_secret(std::span<const u8> value);
     [[nodiscard]] std::string apply(std::string_view text) const;
 
 private:
@@ -52,8 +57,9 @@ private:
 };
 
 // The one process-wide service. A bounded MPSC queue feeds a single writer thread; when it is
-// full, GameOutput, Wine, Debug and Trace records drop first (counted). Warn and above never drop;
-// past twice the budget their producers wait for the writer.
+// full, GameOutput, Wine, Debug and Trace records drop first, counted per category and reported
+// as "[diag] N dropped (category)". Warn and above never drop; past twice the budget their
+// producers wait for the writer.
 class Logger {
 public:
     static void install(std::size_t byte_budget);
@@ -65,7 +71,7 @@ public:
 
     static void write(LogLevel level, LogCategory category, std::optional<SessionId> session, std::string text);
     static void flush();
-    // Drains the queue synchronously and stops the writer.
+    // Drains the queue synchronously, stops the writer and destroys the sinks.
     static void shutdown();
     // The std::terminate path: on the calling thread, writes the queue then one Error line to the sinks
     // and flushes them, never waiting on the writer for long.

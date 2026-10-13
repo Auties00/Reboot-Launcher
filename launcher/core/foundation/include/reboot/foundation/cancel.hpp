@@ -60,7 +60,7 @@ public:
     [[nodiscard]] CancelToken token() const;
 
     // Only the first call wins; its reason is stored by CAS before any callback runs. Callbacks
-    // run one at a time on the calling thread.
+    // run one at a time on the calling thread; one that throws is logged and the rest still run.
     bool cancel(CancelReason reason);
     [[nodiscard]] bool cancelled() const noexcept;
 

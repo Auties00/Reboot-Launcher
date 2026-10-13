@@ -97,16 +97,19 @@ public:
         return decoded;
     }
 
-    std::optional<wire::WireEvent> encode_event(const EventEnvelope& event) override {
+    std::optional<wire::WireEvent> encode_event(const EventEnvelope& event, ConnectionId) override {
         const auto* payload = std::any_cast<TestEvent>(&event.payload);
         if (payload == nullptr) return std::nullopt;
         return wire::WireEvent{static_cast<u32>(event.kind), event.epoch.value, event.seq, std::nullopt,
                                event.op ? std::optional<u64>(event.op->value) : std::nullopt, payload->bytes};
     }
 
-    Result<void> put_secret(const ConnectionInfo&, std::span<const u8> target, SecretBytes secret) override {
+    void put_secret(const ConnectionInfo&, std::span<const u8> target, SecretBytes secret,
+                    UniqueFunction<void(Result<void>)> done) override {
+        if (std::ranges::equal(target, bytes_of("refused"))) return done(make_diag(ErrorDomain::Ipc, kRevealRefused).fail());
         secrets.emplace_back(wire::Bytes(target.begin(), target.end()), secret.reveal());
-        return {};
+        if (defer_secret_puts) secret_answers.push_back(std::move(done));
+        else done(Result<void>{});
     }
 
     Result<SecretBytes> reveal_secret(const ConnectionInfo&, std::span<const u8> target) override {
@@ -120,6 +123,9 @@ public:
     std::vector<std::optional<DisconnectPolicy>> policies;
     std::vector<Operation<void>*> started;
     std::vector<std::pair<wire::Bytes, std::vector<u8>>> secrets;
+    // Held instead of answered at once, as a store write that is still running.
+    bool defer_secret_puts = false;
+    std::vector<UniqueFunction<void(Result<void>)>> secret_answers;
     // A Completed outcome encodes to kIpcFrameCap bytes, so its OpResult frame is over the cap.
     bool huge_outcomes = false;
 

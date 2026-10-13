@@ -65,7 +65,9 @@ REBOOT_CONTRACT_FRAME(Ready, 0x202)
 
 // engine -> backend
 
-// Replayed after every backend restart.
+// Replayed after every backend restart. The backend keeps the account_id -> record_id map under
+// data_root: when it holds data for `record_id` under another account_id, that data moves to
+// `account_id` (a rename the engine lost); when `account_id` already has data, nothing moves.
 struct RegisterAccount {
     u64 req_id = 0;
     std::string account_id;

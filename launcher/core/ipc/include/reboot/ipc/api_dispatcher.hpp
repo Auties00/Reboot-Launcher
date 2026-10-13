@@ -6,6 +6,7 @@
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
+#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
@@ -33,11 +34,14 @@ public:
     [[nodiscard]] virtual contracts::ipc::Bytes encode_outcome(OpId op, const ErasedOutcome& outcome) = 0;
     // Drops EventKind values this build does not know; an error only drops that one Subscribe.
     virtual Result<EventFilter> decode_filter(std::span<const u8> filter) = 0;
-    // nullopt for an event the API does not carry.
-    [[nodiscard]] virtual std::optional<contracts::ipc::WireEvent> encode_event(const EventEnvelope& event) = 0;
+    // nullopt for an event the API does not carry, or not to `receiver`.
+    [[nodiscard]] virtual std::optional<contracts::ipc::WireEvent> encode_event(const EventEnvelope& event,
+                                                                              ConnectionId receiver) = 0;
 
-    // `target` is an encoded reboot.api.v1 SecretTarget.
-    virtual Result<void> put_secret(const ConnectionInfo& from, std::span<const u8> target, SecretBytes secret) = 0;
+    // `target` is an encoded reboot.api.v1 SecretTarget. `done` runs on the strand exactly once,
+    // when the secret is stored or with why it was not, which becomes the SecretPut's Reply.
+    virtual void put_secret(const ConnectionInfo& from, std::span<const u8> target, SecretBytes secret,
+                            UniqueFunction<void(Result<void>)> done) = 0;
     // Only the host join password; anything else is ipc.reveal_refused.
     virtual Result<SecretBytes> reveal_secret(const ConnectionInfo& from, std::span<const u8> target) = 0;
 };

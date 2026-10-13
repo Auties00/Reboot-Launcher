@@ -1,6 +1,7 @@
 #include "reboot/foundation/log.hpp"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -12,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/text.hpp"
 
 namespace rb {
@@ -51,7 +53,45 @@ bool droppable(const LogRecord& record) {
 
 std::size_t cost(const LogRecord& record) { return sizeof(LogRecord) + record.text.size(); }
 
+constexpr std::size_t kCategoryCount = static_cast<std::size_t>(LogCategory::Ui) + 1;
+using DropCounts = std::array<u64, kCategoryCount>;
+
+// A category decoded from another process may be out of range.
+std::size_t slot_of(LogCategory category) {
+    const auto index = static_cast<std::size_t>(category);
+    return index < kCategoryCount ? index : 0;
+}
+
+void add_drop_notices(std::vector<LogRecord>& batch, const DropCounts& lost) {
+    std::vector<LogRecord> notices;
+    for (std::size_t i = 0; i < lost.size(); ++i) {
+        if (lost[i] == 0) continue;
+        notices.push_back(LogRecord{std::chrono::system_clock::now(), LogLevel::Warn, LogCategory::Engine, std::nullopt,
+                                    std::format("[diag] {} dropped ({})", lost[i],
+                                                log_category_name(static_cast<LogCategory>(i)))});
+    }
+    batch.insert(batch.begin(), std::make_move_iterator(notices.begin()), std::make_move_iterator(notices.end()));
+}
+
+struct LoggerState;
+
+class LogRedactor final : public Redactor {
+public:
+    explicit LogRedactor(LoggerState& state) : state_(state) {}
+
+    void remove_secret(std::span<const u8> value) override;
+    void remove_now(std::span<const u8> value) { Redactor::remove_secret(value); }
+
+private:
+    LoggerState& state_;
+};
+
 struct LoggerState {
+    struct Removal {
+        u64 after = 0;
+        SecretBytes value;
+    };
+
     std::mutex mutex;
     std::condition_variable wake;
     std::condition_variable flushed;
@@ -59,9 +99,13 @@ struct LoggerState {
     std::deque<LogRecord> queue;
     std::size_t queue_bytes = 0;
     std::size_t byte_budget = 0;
-    u64 dropped = 0;
+    DropCounts dropped{};
     u64 flush_requested = 0;
     u64 flush_done = 0;
+    // Records ever queued, and how many of them the sinks have been given.
+    u64 enqueued = 0;
+    u64 written = 0;
+    std::vector<Removal> removals;
     bool started = false;
     bool stopping = false;
     std::thread writer;
@@ -72,7 +116,7 @@ struct LoggerState {
 
     std::atomic<bool> running{false};
     std::atomic<LogLevel> minimum{LogLevel::Info};
-    Redactor redactor;
+    LogRedactor redactor{*this};
 
     ~LoggerState() { stop(); }
 
@@ -86,8 +130,30 @@ struct LoggerState {
         wake.notify_all();
         writer.join();
         flush_sinks();
+        // Sinks hold references to their owner's objects, which do not outlive the shutdown.
+        std::vector<std::unique_ptr<LogSink>> released;
+        {
+            const std::lock_guard lock(sinks_mutex);
+            released.swap(sinks);
+        }
+        released.clear();
         const std::lock_guard lock(mutex);
         started = false;
+    }
+
+    // With `mutex` held.
+    void remove_secret(std::span<const u8> value) {
+        if (!started || written == enqueued) return redactor.remove_now(value);
+        removals.push_back(Removal{enqueued, SecretBytes(std::vector<u8>(value.begin(), value.end()))});
+    }
+
+    // With `mutex` held.
+    void apply_removals() {
+        std::erase_if(removals, [this](const Removal& removal) {
+            if (removal.after > written) return false;
+            redactor.remove_now(removal.value.reveal());
+            return true;
+        });
     }
 
     void write_batch(std::vector<LogRecord>& batch) {
@@ -119,19 +185,20 @@ struct LoggerState {
             std::vector<LogRecord> batch(std::make_move_iterator(queue.begin()), std::make_move_iterator(queue.end()));
             queue.clear();
             queue_bytes = 0;
-            const u64 lost = std::exchange(dropped, 0);
+            const DropCounts lost = std::exchange(dropped, DropCounts{});
+            const u64 batch_end = enqueued;
             const u64 flush_target = flush_requested;
             const bool exit = stopping;
             lock.unlock();
             drained.notify_all();
 
-            if (lost != 0)
-                batch.insert(batch.begin(), LogRecord{std::chrono::system_clock::now(), LogLevel::Warn, LogCategory::Engine,
-                                                      std::nullopt, std::format("{} log records were dropped", lost)});
+            add_drop_notices(batch, lost);
             if (!batch.empty()) write_batch(batch);
             if (flush_target != flush_done) flush_sinks();
 
             lock.lock();
+            written = batch_end;
+            apply_removals();
             flush_done = flush_target;
             flushed.notify_all();
             if (exit && queue.empty()) return;
@@ -147,7 +214,20 @@ LoggerState& state() {
 // A sink that logs runs on the writer, which must never wait for itself.
 bool on_writer(const LoggerState& s) { return s.writer.get_id() == std::this_thread::get_id(); }
 
+void LogRedactor::remove_secret(std::span<const u8> value) {
+    const std::lock_guard lock(state_.mutex);
+    state_.remove_secret(value);
+}
+
 }  // namespace
+
+std::string_view log_category_name(LogCategory category) noexcept {
+    static constexpr std::array<std::string_view, kCategoryCount> kNames{
+        "engine",  "ipc",         "net",  "storage", "builds", "play",   "host",
+        "backend", "game_output", "wine", "browser", "update", "client", "ui"};
+    const auto index = static_cast<std::size_t>(category);
+    return index < kNames.size() ? kNames[index] : "?";
+}
 
 struct Redactor::Impl {
     mutable std::shared_mutex mutex;
@@ -243,7 +323,7 @@ void Logger::write(LogLevel level, LogCategory category, std::optional<SessionId
         if (!s.started || s.stopping) return;
         if (s.queue_bytes + bytes > s.byte_budget) {
             if (droppable(record)) {
-                ++s.dropped;
+                ++s.dropped[slot_of(record.category)];
                 return;
             }
             for (auto it = s.queue.begin(); it != s.queue.end() && s.queue_bytes + bytes > s.byte_budget;) {
@@ -252,11 +332,11 @@ void Logger::write(LogLevel level, LogCategory category, std::optional<SessionId
                     continue;
                 }
                 s.queue_bytes -= cost(*it);
+                ++s.dropped[slot_of(it->category)];
                 it = s.queue.erase(it);
-                ++s.dropped;
             }
             if (s.queue_bytes + bytes > s.byte_budget && level < LogLevel::Warn) {
-                ++s.dropped;
+                ++s.dropped[slot_of(category)];
                 return;
             }
             if (!on_writer(s))
@@ -266,6 +346,7 @@ void Logger::write(LogLevel level, LogCategory category, std::optional<SessionId
         }
         s.queue_bytes += bytes;
         s.queue.push_back(std::move(record));
+        ++s.enqueued;
     }
     s.wake.notify_one();
 }
@@ -306,18 +387,18 @@ void Logger::drain_for_terminate(LogCategory category, std::string text) noexcep
                 batch.assign(std::make_move_iterator(s.queue.begin()), std::make_move_iterator(s.queue.end()));
                 s.queue.clear();
                 s.queue_bytes = 0;
-                if (const u64 lost = std::exchange(s.dropped, 0); lost != 0)
-                    batch.insert(batch.begin(), LogRecord{std::chrono::system_clock::now(), LogLevel::Warn, LogCategory::Engine,
-                                                          std::nullopt, std::format("{} log records were dropped", lost)});
+                add_drop_notices(batch, std::exchange(s.dropped, DropCounts{}));
+                // Under the lock: the writer's next batch counts these as written and may lift their masks.
+                for (LogRecord& record : batch) record.text = s.redactor.apply(record.text);
             }
         }
         s.drained.notify_all();
-        batch.push_back(LogRecord{std::chrono::system_clock::now(), LogLevel::Error, category, std::nullopt, std::move(text)});
+        batch.push_back(LogRecord{std::chrono::system_clock::now(), LogLevel::Error, category, std::nullopt,
+                                  s.redactor.apply(text)});
         // The writer may have died inside a sink, still holding the sinks' lock.
         if (on_writer(s)) return;
         std::unique_lock sinks_lock(s.sinks_mutex, std::defer_lock);
         if (!lock_for_terminate(sinks_lock)) return;
-        for (LogRecord& record : batch) record.text = s.redactor.apply(record.text);
         for (const auto& sink : s.sinks) {
             try {
                 sink->write(batch);

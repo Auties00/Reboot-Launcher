@@ -257,9 +257,10 @@ TEST_CASE("a BootstrapOnly engine is asked only the bootstrap subset", "[client]
     auto sub = f.context->subscribe({});
     REQUIRE_FALSE(sub);
     CHECK(sub.error().is(ipc::kVersionMismatch));
-    auto put = f.context->put_secret(kRevealableTarget, bytes_of("pw"));
-    REQUIRE_FALSE(put);
-    CHECK(put.error().is(ipc::kVersionMismatch));
+    std::optional<CallResult<void>> put;
+    f.context->put_secret(kRevealableTarget, bytes_of("pw"), [&put](CallResult<void> result) { put = std::move(result); });
+    REQUIRE(put);
+    CHECK(put->error().diagnostic.id == "ipc.version_mismatch");
     std::optional<CallResult<SecretBytes>> revealed;
     f.context->reveal_secret(kRevealableTarget, [&revealed](CallResult<SecretBytes> result) { revealed = std::move(result); });
     REQUIRE(revealed);
@@ -520,6 +521,52 @@ TEST_CASE("a reconnect to a new epoch fails the old epoch's ops", "[client][cont
     CHECK(outcome_of(events[2]) == std::get<std::vector<u8>>(*state));
 }
 
+TEST_CASE("an op attached once the new epoch's link is up is not failed with the old epoch's", "[client][context]") {
+    // Attaches from inside on_reconnected, before it fails the lost ops: the window in which a
+    // caller's attach reaches the new engine first.
+    class AttachingCaller final : public ports::ICallerContextProbe {
+    public:
+        [[nodiscard]] ports::CallerContext capture() const override { return {"1", false, true, {}}; }
+        void allow_foreground(u32) override {
+            if (attach) attach();
+        }
+        UniqueFunction<void()> attach;
+    };
+
+    // Outlives the context, which borrows it.
+    AttachingCaller caller;
+    ContextFixture f;
+    f.engine.listen();
+    ClientDeps deps = f.deps();
+    auto created = ClientContext::create(ClientDeps{deps.connector, deps.starter, caller, deps.paths, deps.files, deps.clock,
+                                                    deps.executor, deps.link_executor, deps.self, std::nullopt},
+                                         settings(ipc::LaunchMode::Autostart, std::chrono::seconds{2}));
+    REQUIRE(created);
+    f.context = std::move(*created);
+    std::optional<Result<Connected>> connected;
+    f.context->connect([&connected](Result<Connected> result) { connected = std::move(result); });
+    f.executor.run_all();
+    REQUIRE(connected);
+    REQUIRE(*connected);
+    const u64 old_op = start_op(f, 41);
+
+    f.engine.ack.epoch = 8;
+    caller.attach = [&f] { REQUIRE(f.context->attach(99)); };
+    f.sever();
+    f.executor.advance(ipc::kReconnectBackoffMin);
+    f.executor.run_all();
+    REQUIRE(f.engine.connections == 2);
+    CHECK(f.engine.last<wire::Attach>().op_id == 99);
+
+    CHECK(std::holds_alternative<std::vector<u8>>(*f.context->op_state(old_op)));
+    REQUIRE(std::holds_alternative<OpPending>(*f.context->op_state(99)));
+    f.engine.send(wire::OpResult{99, bytes_of("done")});
+    f.executor.run_all();
+    const auto state = f.context->op_state(99);
+    REQUIRE(std::holds_alternative<std::vector<u8>>(*state));
+    CHECK(std::get<std::vector<u8>>(*state) == bytes_of("done"));
+}
+
 TEST_CASE("a reconnect to another build ends the subscriptions it can no longer feed", "[client][context]") {
     ContextFixture f;
     f.connected();
@@ -638,11 +685,19 @@ TEST_CASE("unsubscribe releases a reader blocked on that subscription", "[client
 TEST_CASE("secrets travel in their own frames", "[client][context]") {
     ContextFixture f;
     f.connected();
-    REQUIRE(f.context->put_secret(kRevealableTarget, bytes_of("hunter2")));
+    std::optional<CallResult<void>> stored;
+    f.context->put_secret(kRevealableTarget, bytes_of("hunter2"), [&stored](CallResult<void> result) { stored = std::move(result); });
     f.executor.run_all();
     const auto put = f.engine.last<wire::SecretPut>();
     CHECK(put.target == kRevealableTarget);
     CHECK(put.bytes == bytes_of("hunter2"));
+    // The put waits for the engine's answer, which may be a refusal.
+    CHECK_FALSE(stored);
+    f.engine.send(wire::Reply{put.req_id, std::nullopt, contracts::common::WireDiagnostic{"client_test.secret_refused"}});
+    f.executor.run_all();
+    REQUIRE(stored);
+    REQUIRE_FALSE(*stored);
+    CHECK(stored->error().diagnostic.id == "client_test.secret_refused");
 
     std::optional<CallResult<SecretBytes>> revealed;
     f.context->reveal_secret(kRevealableTarget, [&revealed](CallResult<SecretBytes> result) { revealed = std::move(result); });

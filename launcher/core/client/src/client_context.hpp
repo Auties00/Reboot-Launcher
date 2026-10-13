@@ -107,8 +107,9 @@ public:
     // Posts the wake to the executor when events are already queued; an unknown sub is ignored.
     void set_wake(u64 sub_id, WakeCallback wake);
 
-    // ipc.version_mismatch outside Full compatibility, since the engine drops such a SecretPut.
-    [[nodiscard]] Result<void> put_secret(std::span<const u8> target, std::span<const u8> secret);
+    // `done` gets the engine's Reply once the secret is stored or refused; ipc.version_mismatch
+    // outside Full compatibility.
+    void put_secret(std::span<const u8> target, std::span<const u8> secret, UniqueFunction<void(CallResult<void>)> done);
     void log_write(LogLevel level, std::string_view utf8);
 
     void on_frame(ipc::EngineMessage message) override;
@@ -132,7 +133,7 @@ private:
     void on_resync(u64 sub_id);
     // Records the outcome once and hands its OpCompleted to every following subscription.
     void deliver_outcome(u64 op_id, std::vector<u8> outcome);
-    void fail_pending_ops(const Diagnostic& reason);
+    void fail_pending_ops(const std::vector<PendingOp>& ops, const Diagnostic& reason);
     void push_local_to_all(contracts::ipc::WireEvent event);
     void resubscribe_all();
     void close_subscriptions();
@@ -151,6 +152,8 @@ private:
     // Counts handshakes, so events queued before a reconnect earn no credit.
     u64 link_generation_ = 0;
     std::optional<Diagnostic> lost_reason_;
+    // The ops pending when the link was lost; only these fail on a reconnect to a new epoch.
+    std::vector<PendingOp> lost_ops_;
     bool closed_ = false;
 
     PendingCalls calls_;

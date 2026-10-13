@@ -4,7 +4,6 @@ namespace rb::ipc {
 
 REBOOT_MESSAGE(kInvalidEndpointInput, "ipc.invalid_endpoint_input",
                "The engine endpoint cannot be named from this {field}.");
-REBOOT_MESSAGE(kEndpointUntrusted, "ipc.endpoint_untrusted", "The engine endpoint is not trusted.");
 REBOOT_MESSAGE(kVersionMismatch, "ipc.version_mismatch",
                "The running engine ({engine_build}) is a different build and cannot serve method {method}.");
 REBOOT_MESSAGE(kTooManyCalls, "ipc.too_many_calls", "More than {limit} requests are waiting for the engine.");

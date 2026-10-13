@@ -11,7 +11,6 @@
 #include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
-#include "reboot/ipc/wiping_allocator.hpp"
 
 namespace rb::ipc {
 
@@ -55,7 +54,7 @@ public:
     [[nodiscard]] static bool fits_frame_cap(std::span<const u8> frame) noexcept;
 
     // Secret frames are written into a buffer sized up front, so encoding never reallocates.
-    [[nodiscard]] static SecretBytes encode_secret_put(std::span<const u8> target, const SecretBytes& secret);
+    [[nodiscard]] static SecretBytes encode_secret_put(u64 req_id, std::span<const u8> target, const SecretBytes& secret);
     [[nodiscard]] static SecretBytes encode_secret_reply(u64 req_id, const SecretBytes& secret);
 
 private:

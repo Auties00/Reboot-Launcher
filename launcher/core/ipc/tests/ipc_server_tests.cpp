@@ -289,7 +289,7 @@ TEST_CASE("SecretPut reaches the dispatcher and SecretReveal only returns what i
     Fixture f;
     auto client = f.greeted();
     const SecretBytes secret{bytes_of("hunter2")};
-    const SecretBytes put = ipc::IpcCodec::encode_secret_put(bytes_of("target"), secret);
+    const SecretBytes put = ipc::IpcCodec::encode_secret_put(4, bytes_of("target"), secret);
     client->send_raw(put.reveal());
     client->send(wire::SecretReveal{5, kRevealableTarget});
     client->send(wire::SecretReveal{6, bytes_of("other")});
@@ -299,11 +299,45 @@ TEST_CASE("SecretPut reaches the dispatcher and SecretReveal only returns what i
     CHECK(text(f.engine.api.secrets[0].first) == "target");
     CHECK(text(f.engine.api.secrets[0].second) == "hunter2");
     const auto replies = client->all<wire::Reply>();
+    REQUIRE(replies.size() == 3);
+    CHECK(replies[0].req_id == 4);
+    CHECK_FALSE(replies[0].error);
+    REQUIRE(replies[1].payload);
+    CHECK(text(*replies[1].payload) == "join-pw");
+    REQUIRE(replies[2].error);
+    CHECK(replies[2].error->id == "ipc.reveal_refused");
+}
+
+TEST_CASE("a SecretPut is answered once the dispatcher has stored the secret, or with why not", "[ipc][server]") {
+    Fixture f;
+    f.engine.api.defer_secret_puts = true;
+    auto client = f.greeted();
+    client->send_raw(ipc::IpcCodec::encode_secret_put(4, bytes_of("target"), SecretBytes{bytes_of("hunter2")}).reveal());
+    client->send_raw(ipc::IpcCodec::encode_secret_put(5, bytes_of("refused"), SecretBytes{bytes_of("hunter2")}).reveal());
+    f.run();
+    auto replies = client->all<wire::Reply>();
+    REQUIRE(replies.size() == 1);
+    CHECK(replies[0].req_id == 5);
+    REQUIRE(replies[0].error);
+    CHECK(replies[0].error->id == "ipc.reveal_refused");
+
+    REQUIRE(f.engine.api.secret_answers.size() == 1);
+    f.engine.api.secret_answers.front()(Result<void>{});
+    f.run();
+    replies = client->all<wire::Reply>();
     REQUIRE(replies.size() == 2);
-    REQUIRE(replies[0].payload);
-    CHECK(text(*replies[0].payload) == "join-pw");
-    REQUIRE(replies[1].error);
-    CHECK(replies[1].error->id == "ipc.reveal_refused");
+    CHECK(replies[1].req_id == 4);
+    CHECK_FALSE(replies[1].error);
+
+    // An answer for a connection that has gone is dropped.
+    client->send_raw(ipc::IpcCodec::encode_secret_put(6, bytes_of("target"), SecretBytes{bytes_of("x")}).reveal());
+    f.run();
+    REQUIRE(f.engine.api.secret_answers.size() == 2);
+    client.reset();
+    f.run();
+    REQUIRE(f.engine.server->connection_count() == 0);
+    f.engine.api.secret_answers.back()(Result<void>{});
+    f.run();
 }
 
 TEST_CASE("secrets_available changes send every greeted connection a fresh HelloAck", "[ipc][server]") {
@@ -317,6 +351,21 @@ TEST_CASE("secrets_available changes send every greeted connection a fresh Hello
     REQUIRE(acks.size() == 2);
     CHECK(acks[1].secrets_available);
     CHECK(silent->received.empty());
+}
+
+TEST_CASE("a storage mode change reaches greeted connections and every later HelloAck", "[ipc][server]") {
+    Fixture f;
+    auto client = f.greeted();
+    f.engine.server->set_storage_mode(wire::StorageMode::InMemory);
+    f.engine.server->set_storage_mode(wire::StorageMode::InMemory);
+    f.run();
+    const auto acks = client->all<wire::HelloAck>();
+    REQUIRE(acks.size() == 2);
+    CHECK(acks[1].storage_mode == wire::StorageMode::InMemory);
+
+    auto later = f.greeted();
+    REQUIRE(later->all<wire::HelloAck>().size() == 1);
+    CHECK(later->all<wire::HelloAck>().front().storage_mode == wire::StorageMode::InMemory);
 }
 
 TEST_CASE("send_foreground_hint reaches greeted connections", "[ipc][server]") {
@@ -517,7 +566,7 @@ TEST_CASE("an outcome over kIpcFrameCap reaches the client as Failed", "[ipc][se
 TEST_CASE("another build is refused secrets and subscriptions", "[ipc][server]") {
     Fixture f;
     auto client = f.greeted("0.9.0+old");
-    const SecretBytes put = ipc::IpcCodec::encode_secret_put(bytes_of("target"), SecretBytes{bytes_of("hunter2")});
+    const SecretBytes put = ipc::IpcCodec::encode_secret_put(4, bytes_of("target"), SecretBytes{bytes_of("hunter2")});
     client->send_raw(put.reveal());
     client->send(wire::SecretReveal{5, kRevealableTarget});
     client->send(wire::Subscribe{1, {}});
@@ -527,9 +576,11 @@ TEST_CASE("another build is refused secrets and subscriptions", "[ipc][server]")
 
     CHECK(f.engine.api.secrets.empty());
     const auto replies = client->all<wire::Reply>();
-    REQUIRE(replies.size() == 1);
-    REQUIRE(replies[0].error);
-    CHECK(replies[0].error->id == "ipc.version_mismatch");
+    REQUIRE(replies.size() == 2);
+    for (const wire::Reply& reply : replies) {
+        REQUIRE(reply.error);
+        CHECK(reply.error->id == "ipc.version_mismatch");
+    }
     CHECK(client->all<wire::EventBatch>().empty());
     CHECK_FALSE(client->closed);
 }

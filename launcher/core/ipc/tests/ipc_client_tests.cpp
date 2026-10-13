@@ -242,13 +242,18 @@ TEST_CASE("send fails with connection_lost until the link is up, then reaches th
     CHECK(*replies[0].payload == bytes_of("re:x"));
 }
 
-TEST_CASE("send_secret_put reaches the engine", "[ipc][client]") {
+TEST_CASE("send_secret_put reaches the engine, which answers it", "[ipc][client]") {
     ClientFixture f;
     REQUIRE(f.connect().has_value());
-    REQUIRE(f.client->send_secret_put(bytes_of("acct"), SecretBytes{bytes_of("hunter2")}));
+    REQUIRE(f.client->send_secret_put(3, bytes_of("acct"), SecretBytes{bytes_of("hunter2")}));
     f.run();
     REQUIRE(f.engine.api.secrets.size() == 1);
     CHECK(f.engine.api.secrets[0].second == bytes_of("hunter2"));
+    // The engine answers once the secret is stored.
+    const auto replies = f.sink.all<wire::Reply>();
+    REQUIRE(replies.size() == 1);
+    CHECK(replies[0].req_id == 3);
+    CHECK_FALSE(replies[0].error);
 }
 
 TEST_CASE("frames after the handshake reach the sink, including a later HelloAck", "[ipc][client]") {
@@ -466,7 +471,7 @@ TEST_CASE("a frame over kIpcFrameCap is refused before it is sent and the link s
     REQUIRE_FALSE(sent);
     CHECK(sent.error().is(ipc::kMessageTooLarge));
     CHECK(sent.error().kind == ErrorKind::InvalidInput);
-    CHECK(f.client->send_secret_put(bytes_of("t"), SecretBytes{wire::Bytes(kIpcFrameCap, 0x41)}).error().is(
+    CHECK(f.client->send_secret_put(1, bytes_of("t"), SecretBytes{wire::Bytes(kIpcFrameCap, 0x41)}).error().is(
         ipc::kMessageTooLarge));
 
     REQUIRE(f.client->send(wire::Call{2, kMethod, bytes_of("x"), 0}));

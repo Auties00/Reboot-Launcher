@@ -66,6 +66,7 @@ public:
 
     // On a change, sends every greeted connection a fresh HelloAck.
     void set_secrets_available(bool available);
+    void set_storage_mode(contracts::ipc::StorageMode mode);
 
     // The API carries no ForegroundHint event, so the engine forwards EventKind::ForegroundHint here.
     void send_foreground_hint(u32 pid);

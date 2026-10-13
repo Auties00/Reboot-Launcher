@@ -51,7 +51,19 @@ private:
     std::shared_ptr<Captured> captured_;
 };
 
-// Sinks stay installed for the whole process, so this one only holds the writer while armed.
+class TrackedSink final : public LogSink {
+public:
+    explicit TrackedSink(std::shared_ptr<std::atomic<bool>> destroyed) : destroyed_(std::move(destroyed)) {}
+    ~TrackedSink() override { destroyed_->store(true); }
+
+    void write(std::span<const LogRecord>) override {}
+    void flush() override {}
+
+private:
+    std::shared_ptr<std::atomic<bool>> destroyed_;
+};
+
+// Holds the writer only while armed.
 struct Gate {
     std::mutex mutex;
     std::condition_variable changed;
@@ -174,11 +186,14 @@ TEST_CASE("Logger redacts, drops by priority under pressure and drains on shutdo
     records = captured->take();
     std::vector<std::string> texts;
     for (const LogRecord& record : records) texts.push_back(record.text);
-    REQUIRE(texts.size() == 3);
-    CHECK(texts[0] == "4 log records were dropped");
+    REQUIRE(texts.size() == 5);
+    CHECK(texts[0] == "[diag] 2 dropped (engine)");
     CHECK(records[0].level == LogLevel::Warn);
-    CHECK(texts[1] == "warn");
-    CHECK(texts[2] == "error");
+    CHECK(records[0].category == LogCategory::Engine);
+    CHECK(texts[1] == "[diag] 1 dropped (game_output)");
+    CHECK(texts[2] == "[diag] 1 dropped (wine)");
+    CHECK(texts[3] == "warn");
+    CHECK(texts[4] == "error");
 
     // Writes after shutdown go nowhere and do not block.
     Logger::write(LogLevel::Error, LogCategory::Engine, std::nullopt, "late");
@@ -220,4 +235,96 @@ TEST_CASE("Past the hard cap a Warn producer waits for the writer", "[foundation
     producer.join();
     CHECK(returned.load());
     Logger::shutdown();
+}
+
+TEST_CASE("A secret removed while a line holding it is queued is still masked in that line", "[foundation][log][redact]") {
+    const auto captured = std::make_shared<Captured>();
+    const auto gate = std::make_shared<Gate>();
+    Logger::add_sink(std::make_unique<GateSink>(gate));
+    Logger::add_sink(std::make_unique<CaptureSink>(captured));
+    Logger::install(1 << 20);
+    Logger::redactor().add_secret(bytes_of("game-token-1234"));
+    {
+        const std::lock_guard lock(gate->mutex);
+        gate->armed = true;
+    }
+    Logger::write(LogLevel::Info, LogCategory::Engine, std::nullopt, "held by the writer");
+    {
+        std::unique_lock lock(gate->mutex);
+        gate->changed.wait(lock, [&] { return gate->entered; });
+    }
+    Logger::write(LogLevel::Info, LogCategory::GameOutput, std::nullopt, "last line with game-token-1234");
+    Logger::redactor().remove_secret(bytes_of("game-token-1234"));
+    CHECK(Logger::redactor().apply("game-token-1234") == "***");
+    {
+        const std::lock_guard lock(gate->mutex);
+        gate->armed = false;
+    }
+    gate->changed.notify_all();
+    Logger::flush();
+
+    const auto records = captured->take();
+    REQUIRE(records.size() == 2);
+    CHECK(records[1].text == "last line with ***");
+    // Once written, the mask goes; with nothing queued a removal is immediate.
+    CHECK(Logger::redactor().apply("game-token-1234") == "game-token-1234");
+    Logger::redactor().add_secret(bytes_of("idle-token-5678"));
+    Logger::redactor().remove_secret(bytes_of("idle-token-5678"));
+    CHECK(Logger::redactor().apply("idle-token-5678") == "idle-token-5678");
+    Logger::shutdown();
+}
+
+TEST_CASE("A terminate drain masks what it takes before the writer can lift the mask", "[foundation][log][redact]") {
+    const auto captured = std::make_shared<Captured>();
+    const auto gate = std::make_shared<Gate>();
+    Logger::add_sink(std::make_unique<GateSink>(gate));
+    Logger::add_sink(std::make_unique<CaptureSink>(captured));
+    Logger::install(1 << 20);
+    Logger::redactor().add_secret(bytes_of("drain-token-1234"));
+    {
+        const std::lock_guard lock(gate->mutex);
+        gate->armed = true;
+    }
+    Logger::write(LogLevel::Info, LogCategory::Engine, std::nullopt, "held by the writer");
+    {
+        std::unique_lock lock(gate->mutex);
+        gate->changed.wait(lock, [&] { return gate->entered; });
+    }
+    Logger::write(LogLevel::Info, LogCategory::GameOutput, std::nullopt, "taken by the drain drain-token-1234");
+    Logger::redactor().remove_secret(bytes_of("drain-token-1234"));
+    // The drain takes the queue, then waits for the sinks the gated writer holds.
+    std::thread terminating([] { Logger::drain_for_terminate(LogCategory::Engine, "terminating"); });
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    // Meanwhile the writer finishes, writes a later line and lifts the mask.
+    Logger::write(LogLevel::Info, LogCategory::Engine, std::nullopt, "after the drain");
+    {
+        const std::lock_guard lock(gate->mutex);
+        gate->armed = false;
+    }
+    gate->changed.notify_all();
+    terminating.join();
+    Logger::flush();
+
+    bool drained = false;
+    for (const LogRecord& record : captured->take()) {
+        CHECK(record.text.find("drain-token-1234") == std::string::npos);
+        drained = drained || record.text == "taken by the drain ***";
+    }
+    CHECK(drained);
+    Logger::shutdown();
+}
+
+TEST_CASE("Shutdown destroys the sinks, so a later terminate drain reaches none", "[foundation][log][logger]") {
+    const auto destroyed = std::make_shared<std::atomic<bool>>(false);
+    const auto captured = std::make_shared<Captured>();
+    Logger::add_sink(std::make_unique<TrackedSink>(destroyed));
+    Logger::add_sink(std::make_unique<CaptureSink>(captured));
+    Logger::install(1 << 20);
+    Logger::write(LogLevel::Info, LogCategory::Engine, std::nullopt, "before");
+    Logger::shutdown();
+    CHECK(destroyed->load());
+    CHECK(captured->take().size() == 1);
+
+    Logger::drain_for_terminate(LogCategory::Engine, "after shutdown");
+    CHECK(captured->take().empty());
 }

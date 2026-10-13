@@ -97,8 +97,10 @@ struct Credit {
 };
 REBOOT_CONTRACT_FRAME(Credit, 0x108)
 
-// The engine wipes the frame buffer once the secret is stored.
+// The engine wipes the frame buffer once the secret is stored, then answers with an empty Reply,
+// or with the Diagnostic of why it was not stored.
 struct SecretPut {
+    u64 req_id = 0;
     Bytes target;
     Bytes bytes;
 };

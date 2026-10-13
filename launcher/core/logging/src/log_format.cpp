@@ -1,6 +1,5 @@
 #include "reboot/logging/log_format.hpp"
 
-#include <array>
 #include <chrono>
 #include <format>
 #include <type_traits>
@@ -75,13 +74,7 @@ std::string_view level_name(LogLevel level) noexcept {
     return "?";
 }
 
-std::string_view category_name(LogCategory category) noexcept {
-    static constexpr std::array<std::string_view, 14> kNames{
-        "engine",  "ipc",  "net",     "storage", "builds", "play",   "host",
-        "backend", "game_output", "wine", "browser", "update", "client", "ui"};
-    const auto index = static_cast<std::size_t>(category);
-    return index < kNames.size() ? kNames[index] : "?";
-}
+std::string_view category_name(LogCategory category) noexcept { return log_category_name(category); }
 
 LogLevel level_for(Severity severity) noexcept {
     switch (severity) {

@@ -1,3 +1,4 @@
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -14,6 +15,7 @@
 
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/executor.hpp"
+#include "reboot/foundation/log.hpp"
 #include "game_channel_test_kit.hpp"
 #include "reboot/game_channel/ue_log_tail.hpp"
 #include "reboot/ports/file_system.hpp"
@@ -89,6 +91,40 @@ private:
     bool failing_ = false;
 };
 
+// Counts game_channel.log_unreadable warnings for as long as it lives.
+class UnreadableLogCapture {
+public:
+    UnreadableLogCapture() {
+        Logger::add_sink(std::make_unique<Sink>(counted_));
+        Logger::install(1 << 20);
+        Logger::set_level(LogLevel::Info);
+    }
+    ~UnreadableLogCapture() { Logger::shutdown(); }
+    UnreadableLogCapture(const UnreadableLogCapture&) = delete;
+    UnreadableLogCapture& operator=(const UnreadableLogCapture&) = delete;
+
+    [[nodiscard]] int count() const {
+        Logger::flush();
+        return counted_->load();
+    }
+
+private:
+    class Sink final : public LogSink {
+    public:
+        explicit Sink(std::shared_ptr<std::atomic<int>> counted) : counted_(std::move(counted)) {}
+        void write(std::span<const LogRecord> records) override {
+            for (const LogRecord& record : records)
+                if (record.text.starts_with("game_channel.log_unreadable")) counted_->fetch_add(1);
+        }
+        void flush() override {}
+
+    private:
+        std::shared_ptr<std::atomic<int>> counted_;
+    };
+
+    std::shared_ptr<std::atomic<int>> counted_ = std::make_shared<std::atomic<int>>(0);
+};
+
 struct Fixture {
     Fixture() {
         tail = std::make_unique<UeLogTail>(log, workers, strand, timers, NativePath("FortniteGame.log"),
@@ -162,13 +198,17 @@ TEST_CASE("a new file id or a shorter file restarts at offset zero", "[game_chan
 }
 
 TEST_CASE("an unreadable log still lets the game launch and is read once it recovers", "[game_channel][ue_log]") {
+    const UnreadableLogCapture logged;
     Fixture f;
     f.log.write("stale\n", 1);
     f.log.fail_reads(true);
     f.start();
     f.settle();
-    f.strand.advance(kUeLogPollInterval);
-    f.settle();
+    for (int poll = 0; poll < 3; ++poll) {
+        f.strand.advance(kUeLogPollInterval);
+        f.settle();
+    }
+    CHECK(logged.count() == 1);
 
     f.log.fail_reads(false);
     f.strand.advance(kUeLogPollInterval);
@@ -176,6 +216,14 @@ TEST_CASE("an unreadable log still lets the game launch and is read once it reco
     CHECK(f.received.empty());
     f.log.append("fresh\n");
     f.poll_until("fresh\n");
+
+    // A later outage is a new one.
+    f.log.fail_reads(true);
+    for (int poll = 0; poll < 2; ++poll) {
+        f.strand.advance(kUeLogPollInterval);
+        f.settle();
+    }
+    CHECK(logged.count() == 2);
 }
 
 TEST_CASE("a backlog longer than one read is drained without waiting for the poll", "[game_channel][ue_log]") {

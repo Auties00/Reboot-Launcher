@@ -305,9 +305,20 @@ void ClientContext::set_wake(u64 sub_id, WakeCallback wake) {
     });
 }
 
-Result<void> ClientContext::put_secret(std::span<const u8> target, std::span<const u8> secret) {
-    if (auto allowed = check_full(contract_frame_type_v<wire::SecretPut>); !allowed) return allowed;
-    return link_->send_secret_put(target, SecretBytes{std::vector<u8>(secret.begin(), secret.end())});
+void ClientContext::put_secret(std::span<const u8> target, std::span<const u8> secret,
+                               UniqueFunction<void(CallResult<void>)> done) {
+    if (auto allowed = check_full(contract_frame_type_v<wire::SecretPut>); !allowed) {
+        done(std::unexpected(local_failure(allowed.error())));
+        return;
+    }
+    const std::optional<u64> req_id = calls_.open([done = std::move(done)](Result<Answer> answer) mutable {
+        auto payload = reply_payload(std::move(answer));
+        if (!payload) return done(std::unexpected(std::move(payload.error())));
+        done(CallResult<void>{});
+    });
+    if (!req_id) return;
+    const SecretBytes value{std::vector<u8>(secret.begin(), secret.end())};
+    if (auto sent = link_->send_secret_put(*req_id, target, value); !sent) calls_.fail(*req_id, sent.error());
 }
 
 void ClientContext::log_write(LogLevel level, std::string_view utf8) {
@@ -338,9 +349,13 @@ void ClientContext::on_lost(const Diagnostic& reason, ipc::LinkLoss loss) {
         std::lock_guard lock(link_mutex_);
         lost_reason_ = reason;
         epoch = hello_.epoch;
+        // An attach while the link is down adds nothing, so these are all the lost link's ops.
+        if (loss == ipc::LinkLoss::Final) lost_ops_.clear();
+        else
+            for (const PendingOp& op : ops_.pending()) lost_ops_.push_back(op);
     }
     calls_.fail_all(reason);
-    if (loss == ipc::LinkLoss::Final) fail_pending_ops(reason);
+    if (loss == ipc::LinkLoss::Final) fail_pending_ops(ops_.pending(), reason);
     push_local_to_all(library_event(ApiEventKind::ConnectionLost, epoch));
     if (loss != ipc::LinkLoss::Final) return;
     {
@@ -354,6 +369,7 @@ void ClientContext::on_reconnected(const ipc::Handshake& handshake) {
     bool new_epoch = false;
     u64 link = 0;
     Diagnostic reason = connection_lost_diag();
+    std::vector<PendingOp> lost;
     {
         std::lock_guard lock(link_mutex_);
         new_epoch = handshake.hello.epoch != hello_.epoch;
@@ -361,6 +377,7 @@ void ClientContext::on_reconnected(const ipc::Handshake& handshake) {
         link = ++link_generation_;
         if (lost_reason_) reason = std::move(*lost_reason_);
         lost_reason_.reset();
+        lost = std::exchange(lost_ops_, {});
     }
     deps_.caller.allow_foreground(handshake.hello.pid);
     {
@@ -369,7 +386,8 @@ void ClientContext::on_reconnected(const ipc::Handshake& handshake) {
     }
     push_local_to_all(library_event(ApiEventKind::Reconnected, handshake.hello.epoch));
     if (new_epoch) {
-        fail_pending_ops(reason);
+        // An op attached once this link was up belongs to the new engine, which answers it.
+        fail_pending_ops(lost, reason);
         std::lock_guard lock(subs_mutex_);
         for (auto& [sub_id, sub] : subs_) sub->forget_delivered();
     } else {
@@ -467,9 +485,9 @@ void ClientContext::deliver_outcome(u64 op_id, std::vector<u8> outcome) {
     }
 }
 
-void ClientContext::fail_pending_ops(const Diagnostic& reason) {
-    for (const PendingOp& op : ops_.pending())
-        deliver_outcome(op.op_id, encode_failed_outcome(op.op_id, op.method_id, reason));
+void ClientContext::fail_pending_ops(const std::vector<PendingOp>& ops, const Diagnostic& reason) {
+    // deliver_outcome skips an op that has ended or was released meanwhile.
+    for (const PendingOp& op : ops) deliver_outcome(op.op_id, encode_failed_outcome(op.op_id, op.method_id, reason));
 }
 
 void ClientContext::push_local_to_all(wire::WireEvent event) {

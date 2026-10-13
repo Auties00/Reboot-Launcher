@@ -2,6 +2,7 @@
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <thread>
 #include <vector>
 
@@ -135,6 +136,21 @@ TEST_CASE("A callback may reset its own registration", "[foundation][cancel]") {
     source.cancel(CancelReason::User);
     CHECK(ran == 1);
     CHECK_FALSE(self.has_value());
+}
+
+TEST_CASE("A throwing callback neither stops the others nor blocks its reset", "[foundation][cancel]") {
+    CancelSource source;
+    CancelRegistration thrower = source.token().on_cancel([](CancelReason) { throw std::runtime_error("callback failed"); });
+    bool later_ran = false;
+    const CancelRegistration later = source.token().on_cancel([&](CancelReason) { later_ran = true; });
+
+    bool cancelled = false;
+    CHECK_NOTHROW(cancelled = source.cancel(CancelReason::Deadline));
+    CHECK(cancelled);
+    CHECK(later_ran);
+    // Off the cancelling thread, reset() waits while the callback counts as running.
+    std::thread other([&] { thrower.reset(); });
+    other.join();
 }
 
 TEST_CASE("Racing cancels from many threads pick exactly one winner", "[foundation][cancel][race]") {

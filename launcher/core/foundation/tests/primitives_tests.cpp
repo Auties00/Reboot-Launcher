@@ -198,6 +198,8 @@ TEST_CASE("The message registry is sorted and lists the foundation's ids", "[fou
     for (const char* id : {"foundation.invalid_uuid", "foundation.op_not_found", "requests.already_resolved",
                            "requests.not_found", "contracts.malformed_frame"})
         CHECK(find(id) != nullptr);
+    // Every IPC adapter fails with this id; the foundation is the one package they all reach.
+    CHECK(std::ranges::count(registry, std::string_view{"ipc.endpoint_untrusted"}, &MessageSpec::id) == 1);
 }
 
 TEST_CASE("Placeholders are counted once each, in order", "[foundation][diag]") {
@@ -235,6 +237,52 @@ TEST_CASE("Contract frames encode, split across reads and decode", "[foundation]
     const auto wrong = decode_contract<contracts::common::Ping>(pong_frame);
     REQUIRE_FALSE(wrong);
     CHECK(wrong.error().id == "contracts.unexpected_frame");
+}
+
+namespace rb {
+
+// Reads the framer's whole buffer, spare capacity included.
+struct FramerProbe {
+    [[nodiscard]] static std::span<const u8> storage(const Framer& framer) {
+        return {framer.pending_.data(), framer.pending_.capacity()};
+    }
+};
+
+}  // namespace rb
+
+namespace {
+
+[[nodiscard]] bool holds(std::span<const u8> haystack, std::string_view needle) {
+    const auto bytes = std::as_bytes(haystack);
+    const auto* begin = reinterpret_cast<const char*>(bytes.data());
+    return std::string_view(begin, bytes.size()).find(needle) != std::string_view::npos;
+}
+
+}  // namespace
+
+TEST_CASE("The framer wipes the bytes of a partial frame once it lets go of them", "[foundation][framing]") {
+    // The text ends the frame, so a frame short of its last byte still holds this much of it.
+    constexpr std::string_view kToken = "tok-0123456789abcde";
+    const std::vector<u8> secret = encode_contract_frame(contracts::common::Log{LogLevel::Info, 1, std::string(kToken) + "f"});
+    const std::vector<u8> next = encode_contract_frame(contracts::common::Pong{9});
+    const auto accept = [](const RawFrame&) { return true; };
+    const std::span<const u8> whole(secret);
+
+    Framer framer(kChildFrameCap);
+    REQUIRE(framer.feed(whole.first(secret.size() - 1), accept) == Framer::Status::ok);
+    REQUIRE(holds(FramerProbe::storage(framer), kToken));
+    // The rest of the frame and the start of the next: the token's bytes leave the buffer.
+    std::vector<u8> rest{secret.back()};
+    rest.insert(rest.end(), next.begin(), next.begin() + 3);
+    REQUIRE(framer.feed(rest, accept) == Framer::Status::ok);
+    CHECK(framer.buffered() == 3);
+    CHECK_FALSE(holds(FramerProbe::storage(framer), kToken));
+
+    Framer refused(kChildFrameCap);
+    REQUIRE(refused.feed(whole.first(secret.size() - 1), accept) == Framer::Status::ok);
+    CHECK(refused.feed(whole.last(1), [](const RawFrame&) { return false; }) == Framer::Status::malformed);
+    CHECK(refused.buffered() == 0);
+    CHECK_FALSE(holds(FramerProbe::storage(refused), kToken));
 }
 
 TEST_CASE("A frame over the cap is too large", "[foundation][framing]") {

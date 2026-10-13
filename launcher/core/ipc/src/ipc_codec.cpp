@@ -186,17 +186,22 @@ bool IpcCodec::fits_frame_cap(std::span<const u8> frame) noexcept {
     return reader.ok() && length <= kIpcFrameCap;
 }
 
-// Byte-identical to encode(SecretPut{target, secret}), without a copy of the secret in a message.
-SecretBytes IpcCodec::encode_secret_put(std::span<const u8> target, const SecretBytes& secret) {
+// Byte-identical to encode(SecretPut{req_id, target, secret}), without a copy of the secret in a message.
+SecretBytes IpcCodec::encode_secret_put(u64 req_id, std::span<const u8> target, const SecretBytes& secret) {
     const std::span<const u8> bytes = secret.reveal();
-    const std::size_t payload = (target.empty() ? 0 : field_bytes_size(1, target.size())) +
-                                (bytes.empty() ? 0 : field_bytes_size(2, bytes.size()));
+    const std::size_t id_size = req_id == 0 ? 0 : 1 + sb::wire::varint_size(req_id);
+    const std::size_t payload = id_size + (target.empty() ? 0 : field_bytes_size(2, target.size())) +
+                                (bytes.empty() ? 0 : field_bytes_size(3, bytes.size()));
     constexpr u64 kType = contract_frame_type_v<wire::SecretPut>;
     ExactWriter out(frame_size(kType, payload));
     out.quic_varint(kType);
     out.length4(payload);
-    if (!target.empty()) out.field_bytes(1, target);
-    if (!bytes.empty()) out.field_bytes(2, bytes);
+    if (req_id != 0) {
+        out.byte(u8{1} << 3 | kVarintWireType);
+        out.varint(req_id);
+    }
+    if (!target.empty()) out.field_bytes(2, target);
+    if (!bytes.empty()) out.field_bytes(3, bytes);
     return SecretBytes{out.take()};
 }
 

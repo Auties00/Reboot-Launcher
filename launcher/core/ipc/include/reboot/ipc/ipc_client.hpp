@@ -86,7 +86,7 @@ public:
         return write(IpcCodec::encode(message));
     }
     // The frame is wiped once written.
-    Result<void> send_secret_put(std::span<const u8> target, const SecretBytes& secret);
+    Result<void> send_secret_put(u64 req_id, std::span<const u8> target, const SecretBytes& secret);
 
 private:
     Result<void> write(contracts::ipc::Bytes frame);

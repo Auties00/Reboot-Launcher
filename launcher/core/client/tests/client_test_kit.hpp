@@ -45,6 +45,9 @@ inline constexpr u32 kEngineEventKind = 15;
 inline constexpr u32 kMethod = wire::method_id(2, 1);
 inline constexpr u32 kFailingMethod = wire::method_id(2, 2);
 inline const wire::Bytes kRevealableTarget{1};
+// EchoDispatcher refuses to store a secret for this target.
+inline const wire::Bytes kRefusedTarget{3};
+inline constexpr MessageId kSecretRefused{"client_test.secret_refused"};
 inline const ports::PeerIdentity kSelf{"1000", 77};
 inline constexpr u32 kEnginePid = 4321;
 
@@ -230,15 +233,17 @@ public:
 
     Result<EventFilter> decode_filter(std::span<const u8>) override { return EventFilter{}; }
 
-    std::optional<wire::WireEvent> encode_event(const EventEnvelope& event) override {
+    std::optional<wire::WireEvent> encode_event(const EventEnvelope& event, ConnectionId) override {
         const auto* payload = std::any_cast<TestEvent>(&event.payload);
         if (payload == nullptr) return std::nullopt;
         return wire::WireEvent{kEngineEventKind, event.epoch.value, event.seq, std::nullopt, std::nullopt, payload->bytes};
     }
 
-    Result<void> put_secret(const ipc::ConnectionInfo&, std::span<const u8> target, SecretBytes secret) override {
+    void put_secret(const ipc::ConnectionInfo&, std::span<const u8> target, SecretBytes secret,
+                    UniqueFunction<void(Result<void>)> done) override {
+        if (std::ranges::equal(target, kRefusedTarget)) return done(make_diag(ErrorDomain::Ipc, kSecretRefused).fail());
         secrets.emplace_back(wire::Bytes(target.begin(), target.end()), secret.reveal());
-        return {};
+        done(Result<void>{});
     }
 
     Result<SecretBytes> reveal_secret(const ipc::ConnectionInfo&, std::span<const u8> target) override {

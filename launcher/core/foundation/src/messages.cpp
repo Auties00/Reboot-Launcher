@@ -20,4 +20,7 @@ REBOOT_MESSAGE(kMalformedFrame, "contracts.malformed_frame", "A message of type 
 REBOOT_MESSAGE(kUnexpectedFrame, "contracts.unexpected_frame",
                "A message of type {actual} arrived where type {expected} was expected.");
 
+// reboot/ports/ipc.hpp names this id for core/ipc and the OS ipc packages; it is registered here.
+REBOOT_MESSAGE(kEndpointUntrusted, "ipc.endpoint_untrusted", "The engine endpoint is not trusted.");
+
 }  // namespace rb::msg

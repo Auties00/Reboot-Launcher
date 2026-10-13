@@ -39,7 +39,8 @@ public:
     IpcConnection(const IpcConnection&) = delete;
     IpcConnection& operator=(const IpcConnection&) = delete;
 
-    // A Call or Start over kMaxOutstandingCalls is answered with ipc.too_many_calls here.
+    // A Call or Start over kMaxOutstandingCalls is answered with ipc.too_many_calls on the I/O
+    // thread and never reaches `on_message`.
     // `on_closed` runs once, after the last message.
     void start(MessageHandler on_message, CloseHandler on_closed);
 
@@ -79,7 +80,6 @@ public:
     void close(contracts::ipc::GoodbyeReason reason);
 
 private:
-    void deliver(ClientMessage message);
     void write(contracts::ipc::Bytes frame);
     void report_closed();
 

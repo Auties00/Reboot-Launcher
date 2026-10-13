@@ -196,7 +196,8 @@ RB_API rb_status rb_events_next(rb_ctx* ctx, uint64_t sub, uint32_t timeout_ms, 
 RB_API void rb_events_set_wake(rb_ctx* ctx, uint64_t sub, void (*wake)(uintptr_t user), uintptr_t user) RB_NOEXCEPT;
 
 /* Hands a secret to the engine in its own frame; `target` is an encoded reboot.api.v1
- * SecretTarget. The library wipes its copy once written. */
+ * SecretTarget. The library wipes its copy once written, then waits until the engine has stored
+ * the secret: RB_E_REMOTE, with the Diagnostic in rb_last_error, when it was refused or not saved. */
 RB_API rb_status rb_secret_put(rb_ctx* ctx, const uint8_t* target, size_t target_size, const uint8_t* secret,
                                size_t secret_size) RB_NOEXCEPT;
 

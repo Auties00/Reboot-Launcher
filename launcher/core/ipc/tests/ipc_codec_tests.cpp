@@ -39,7 +39,7 @@ TEST_CASE("every client message survives encode and decode", "[ipc][codec]") {
         wire::Subscribe{6, bytes_of("filter")},
         wire::Unsubscribe{6},
         wire::Credit{6, 17},
-        wire::SecretPut{bytes_of("t"), bytes_of("s")},
+        wire::SecretPut{8, bytes_of("t"), bytes_of("s")},
         wire::SecretReveal{7, bytes_of("t")},
         wire::LogWrite{LogLevel::Warn, "hello"},
         contracts::common::Ping{9},
@@ -170,9 +170,11 @@ TEST_CASE("secret frames match the generic encoding and are sized exactly", "[ip
         {bytes_of("big"), wire::Bytes(300, 0x41)},
     };
     for (const auto& [target, secret] : cases) {
-        const SecretBytes frame = IpcCodec::encode_secret_put(target, SecretBytes{secret});
-        CHECK(frame.reveal() == IpcCodec::encode(wire::SecretPut{target, secret}));
-        CHECK(frame.reveal().capacity() == frame.reveal().size());
+        for (const u64 req_id : {u64{0}, u64{1}, u64{300}}) {
+            const SecretBytes frame = IpcCodec::encode_secret_put(req_id, target, SecretBytes{secret});
+            CHECK(frame.reveal() == IpcCodec::encode(wire::SecretPut{req_id, target, secret}));
+            CHECK(frame.reveal().capacity() == frame.reveal().size());
+        }
     }
     for (const u64 req_id : {u64{0}, u64{1}, u64{300}, u64{1} << 40}) {
         const SecretBytes reply = IpcCodec::encode_secret_reply(req_id, SecretBytes{bytes_of("pw")});
@@ -184,12 +186,13 @@ TEST_CASE("secret frames match the generic encoding and are sized exactly", "[ip
 }
 
 TEST_CASE("a decoded SecretPut carries the secret bytes", "[ipc][codec]") {
-    const SecretBytes frame = IpcCodec::encode_secret_put(bytes_of("target"), SecretBytes{bytes_of("hunter2")});
+    const SecretBytes frame = IpcCodec::encode_secret_put(9, bytes_of("target"), SecretBytes{bytes_of("hunter2")});
     IpcCodec codec;
     auto decoded = codec.feed_from_client(frame.reveal());
     REQUIRE(decoded.has_value());
     REQUIRE(decoded->size() == 1);
     const auto& put = std::get<wire::SecretPut>(decoded->front());
+    CHECK(put.req_id == 9);
     CHECK(put.target == bytes_of("target"));
     CHECK(put.bytes == bytes_of("hunter2"));
 }

@@ -600,8 +600,8 @@ void IpcClient::connect(UniqueFunction<void(Result<Handshake>)> done) { impl_->c
 
 void IpcClient::close() { impl_->core->close(); }
 
-Result<void> IpcClient::send_secret_put(std::span<const u8> target, const SecretBytes& secret) {
-    const SecretBytes frame = IpcCodec::encode_secret_put(target, secret);
+Result<void> IpcClient::send_secret_put(u64 req_id, std::span<const u8> target, const SecretBytes& secret) {
+    const SecretBytes frame = IpcCodec::encode_secret_put(req_id, target, secret);
     return impl_->core->write(frame.reveal());
 }
 

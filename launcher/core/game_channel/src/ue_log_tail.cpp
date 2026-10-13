@@ -82,6 +82,7 @@ struct Tail : std::enable_shared_from_this<Tail> {
         const std::weak_ptr<Tail> weak = weak_from_this();
         if (result) {
             position = result->next;
+            error_logged = false;
         } else if (!error_logged) {
             error_logged = true;
             const Diagnostic diag = to_diagnostic(GameChannelError{.code = GameChannelErrorCode::LogUnreadable,

@@ -1,6 +1,7 @@
 #include "reboot/ipc/ipc_connection.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <deque>
 #include <limits>
 #include <map>
@@ -45,6 +46,27 @@ struct Decoded {
     Result<std::vector<ClientMessage>> messages;
 };
 
+// I/O thread: drops each Call or Start past the cap and answers it there, so a flood never
+// queues more than kMaxOutstandingCalls of them on the strand.
+void admit_requests(std::vector<ClientMessage>& messages, std::atomic<std::size_t>& in_flight,
+                    ports::IByteStream& stream) {
+    std::erase_if(messages, [&](const ClientMessage& message) {
+        const auto* call = std::get_if<wire::Call>(&message);
+        const auto* start = std::get_if<wire::Start>(&message);
+        if (call == nullptr && start == nullptr) return false;
+        if (in_flight.fetch_add(1) < wire::kMaxOutstandingCalls) return false;
+        in_flight.fetch_sub(1);
+        const Diagnostic refused = make_diag(ErrorDomain::Ipc, kTooManyCalls)
+                                       .arg("limit", wire::kMaxOutstandingCalls)
+                                       .kind(ErrorKind::Conflict)
+                                       .retryable()
+                                       .build();
+        stream.write(IpcCodec::encode(wire::Reply{call != nullptr ? call->req_id : start->req_id, std::nullopt,
+                                                  contracts::common::to_wire(refused)}));
+        return true;
+    });
+}
+
 }  // namespace
 
 struct IpcConnection::Impl {
@@ -66,6 +88,9 @@ struct IpcConnection::Impl {
           budget(clock_ref) {}
 
     ConnectionId id;
+    // Calls and Starts admitted on the I/O thread and not yet finished. Declared before `stream`,
+    // whose destruction may wait for a read callback that counts here.
+    std::atomic<std::size_t> in_flight{0};
     std::unique_ptr<ports::IByteStream> stream;
     Executor& strand;
     IApiDispatcher& api;
@@ -73,7 +98,6 @@ struct IpcConnection::Impl {
     std::optional<ConnectionInfo> info;
     MessageHandler on_message;
     CloseHandler on_closed;
-    std::size_t outstanding = 0;
     std::map<SubscriptionId, Sub> subs;
     std::set<OpId> attached;
     OutboundBudget budget;
@@ -96,9 +120,12 @@ void IpcConnection::start(MessageHandler on_message, CloseHandler on_closed) {
     const std::weak_ptr<IpcConnection> weak = weak_from_this();
     Executor& strand = impl_->strand;
 
-    // I/O thread: decode here, act on the strand.
-    impl_->stream->on_read([weak, &strand, codec = std::make_unique<IpcCodec>()](std::span<const u8> bytes) mutable {
-        strand.post([weak, decoded = Decoded(codec->feed_from_client(bytes))]() mutable {
+    // I/O thread: decode and admit here, act on the strand. The stream outlives its own callbacks.
+    impl_->stream->on_read([weak, &strand, stream = impl_->stream.get(), in_flight = &impl_->in_flight,
+                            codec = std::make_unique<IpcCodec>()](std::span<const u8> bytes) mutable {
+        Decoded decoded(codec->feed_from_client(bytes));
+        if (decoded.messages) admit_requests(*decoded.messages, *in_flight, *stream);
+        strand.post([weak, decoded = std::move(decoded)]() mutable {
             const std::shared_ptr<IpcConnection> self = weak.lock();
             if (!decoded.messages) {
                 if (self && !self->impl_->closed) {
@@ -110,7 +137,7 @@ void IpcConnection::start(MessageHandler on_message, CloseHandler on_closed) {
             }
             for (ClientMessage& message : *decoded.messages) {
                 if (!self || self->impl_->closed) break;
-                self->deliver(std::move(message));
+                self->impl_->on_message(*self, std::move(message));
             }
         });
     });
@@ -122,25 +149,6 @@ void IpcConnection::start(MessageHandler on_message, CloseHandler on_closed) {
             }
         });
     });
-}
-
-void IpcConnection::deliver(ClientMessage message) {
-    const auto* call = std::get_if<wire::Call>(&message);
-    const auto* start = std::get_if<wire::Start>(&message);
-    if (call != nullptr || start != nullptr) {
-        if (impl_->outstanding >= wire::kMaxOutstandingCalls) {
-            const Diagnostic refused = make_diag(ErrorDomain::Ipc, kTooManyCalls)
-                                           .arg("limit", wire::kMaxOutstandingCalls)
-                                           .kind(ErrorKind::Conflict)
-                                           .retryable()
-                                           .build();
-            send(wire::Reply{call != nullptr ? call->req_id : start->req_id, std::nullopt,
-                             contracts::common::to_wire(refused)});
-            return;
-        }
-        ++impl_->outstanding;
-    }
-    impl_->on_message(*this, std::move(message));
 }
 
 ConnectionId IpcConnection::id() const noexcept { return impl_->id; }
@@ -162,7 +170,7 @@ void IpcConnection::reply_secret(u64 req_id, SecretBytes secret) {
 }
 
 void IpcConnection::finish_request() {
-    if (impl_->outstanding > 0) --impl_->outstanding;
+    if (impl_->in_flight.load() > 0) impl_->in_flight.fetch_sub(1);
 }
 
 Result<void> IpcConnection::add_subscription(SubscriptionId sub, std::shared_ptr<Subscription> subscription) {
@@ -258,7 +266,7 @@ void IpcConnection::pump(SubscriptionId sub) {
     while (!impl_->closed && entry.credit > batch.events.size()) {
         events.clear();
         if (entry.subscription->drain(events, 1) == 0) break;
-        std::optional<wire::WireEvent> encoded = impl_->api.encode_event(events.front());
+        std::optional<wire::WireEvent> encoded = impl_->api.encode_event(events.front(), impl_->id);
         if (!encoded) continue;
         const std::size_t size = encoded->payload.size() + kEventOverhead;
         if (size > kMaxBatchBytes) {

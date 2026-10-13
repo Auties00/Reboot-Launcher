@@ -6,7 +6,7 @@
 
 /* The schema these ids and their messages come from; a facade compares it with
  * EngineInfoResponse.schema_fingerprint. */
-#define RB_SCHEMA_FINGERPRINT "0a4a6eaa9ef739b7"
+#define RB_SCHEMA_FINGERPRINT "914a52336fd1731e"
 
 /* engine.status: call; EngineStatusRequest -> EngineStatusResponse */
 #define RB_METHOD_ENGINE_STATUS 0x00010001u
@@ -100,7 +100,7 @@
 #define RB_METHOD_HOST_PROFILES_DELETE 0x000b0004u
 /* host.share_link: call; HostShareLinkRequest -> HostShareLinkResponse */
 #define RB_METHOD_HOST_SHARE_LINK 0x000b0005u
-/* host.command: call; HostCommandRequest -> HostCommandResponse */
+/* host.command: operation (bound); HostCommandRequest -> HostCommandResponse */
 #define RB_METHOD_HOST_COMMAND 0x000b0006u
 /* host.start: operation (detached); HostStartRequest -> HostStartResponse */
 #define RB_METHOD_HOST_START 0x000b0007u
@@ -150,6 +150,8 @@
 #define RB_METHOD_BROWSER_STATE 0x000e0004u
 /* browser.resolve: operation (bound); BrowserResolveRequest -> BrowserResolveResponse */
 #define RB_METHOD_BROWSER_RESOLVE 0x000e0005u
+/* browser.search: operation (bound); BrowserSearchRequest -> BrowserSearchResponse */
+#define RB_METHOD_BROWSER_SEARCH 0x000e0006u
 /* join.parse_address: call; JoinParseAddressRequest -> JoinParseAddressResponse */
 #define RB_METHOD_JOIN_PARSE_ADDRESS 0x000f0001u
 /* join.target: call; JoinTargetRequest -> JoinTargetResponse */
