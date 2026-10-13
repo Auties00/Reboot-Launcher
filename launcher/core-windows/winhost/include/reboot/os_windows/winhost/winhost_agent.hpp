@@ -35,9 +35,8 @@ inline constexpr i64 kInjectHashMismatch = 577;
 //   sha256 before the load, under Wine as on Windows; the handle is held until the session ends.
 //   A mismatch is Injected{ok = false, error = kInjectHashMismatch} and nothing is loaded.
 // - The argv and environment bytes are wiped once CreateProcessW has them. Wine may still copy
-//   the Windows command line and environment into the game's Unix argv and envp, so the
-//   macOS/Linux spike must check /proc/<game pid>/cmdline and environ for -AUTH_PASSWORD and
-//   REBOOT_CTL_TOKEN.
+//   the Windows command line and environment into the game's Unix argv and envp; core-linux/runner's
+//   Wine gate checks /proc/<game pid>/cmdline and environ for -AUTH_PASSWORD and REBOOT_CTL_TOKEN.
 // - The run() thread reads frames and answers Ping with Pong itself. Resume, Inject and Stop run
 //   in arrival order on one request thread, so a waited remote load or a Stop grace never delays
 //   a Pong. Each gets a CommandResult (failed_reply on failure); any other type gets Unsupported.
@@ -50,8 +49,9 @@ inline constexpr i64 kInjectHashMismatch = 577;
 //   most kOutputChunkBytes; Exited{role, code} follows each process exit. Exited has no pid, so
 //   two companions' exits cannot be told apart. A game that exits on its own leaves winhost
 //   serving until Stop or EOF.
-// - EOF, or a socket error, calls TerminateJobObject, waits until the Job has no active
-//   process and returns EngineClosed, so an engine crash ends the game.
+// - EOF, or a socket error, calls TerminateJobObject at once, also while a request is still
+//   waiting on the game, then waits until the Job has no active process and returns
+//   EngineClosed, so an engine crash ends the game.
 class WinhostAgent {
 public:
     explicit WinhostAgent(ControlConnection& connection);

@@ -57,6 +57,16 @@ std::string narrow(std::wstring_view wide) {
     return utf16_to_utf8(units);
 }
 
+std::vector<std::string> split_multi_string(std::wstring_view list) {
+    std::vector<std::string> out;
+    while (!list.empty() && list.front() != L'\0') {
+        const std::size_t end = std::min(list.find(L'\0'), list.size());
+        out.push_back(narrow(list.substr(0, end)));
+        list.remove_prefix(std::min(end + 1, list.size()));
+    }
+    return out;
+}
+
 std::wstring shell_path(const NativePath& path) {
     std::wstring text = absolute_normal(path).native();
     if (text.starts_with(kExtendedPrefix)) text.erase(0, kExtendedPrefix.size());

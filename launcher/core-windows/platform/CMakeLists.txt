@@ -14,6 +14,7 @@ reboot_add_package(os_windows/platform
     src/job_process_launcher.cpp
     src/make_platform.cpp
     src/messages.cpp
+    src/mui_language_source.cpp
     src/os_version.cpp
     src/process_token.cpp
     src/registrar_rules.cpp
@@ -34,13 +35,14 @@ reboot_add_package(os_windows/platform
     src/windows_port_inspector.cpp
     src/windows_prerequisites.cpp
     src/windows_resolver.cpp
+    src/windows_session_end_watch.cpp
     src/windows_shell.cpp
     src/windows_system_info.cpp
     src/wmi_security_product_probe.cpp
   DEPS
     reboot::os_windows_win32session
     velopack::velopack
-    advapi32 crypt32 iphlpapi ntdll ole32 oleaut32 shell32 taskschd userenv wbemuuid ws2_32)
+    advapi32 crypt32 iphlpapi ntdll ole32 oleaut32 shell32 taskschd user32 userenv wbemuuid ws2_32)
 
 # Real-adapter suite (atomic replace, lock exclusivity, watcher delivery, Job tree kill); runs on
 # the Windows CI runner only.
@@ -57,10 +59,12 @@ if(WIN32 AND REBOOT_BUILD_TESTS)
     if(NOT COMMAND catch_discover_tests)
       include(Catch)
     endif()
-    # The session host case runs it.
-    if(TARGET reboot-fake-game)
-      add_dependencies(reboot_os_windows_conformance reboot-fake-game)
-    endif()
+    # The session host and contract cases run them.
+    foreach(fake reboot-fake-game reboot-fake-backend reboot-fake-game-server)
+      if(TARGET ${fake})
+        add_dependencies(reboot_os_windows_conformance ${fake})
+      endif()
+    endforeach()
     catch_discover_tests(reboot_os_windows_conformance)
   endif()
 endif()

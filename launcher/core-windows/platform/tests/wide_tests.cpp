@@ -80,6 +80,14 @@ TEST_CASE("an empty environment block still ends in two NULs", "[wide]") {
     CHECK(build_environment_block({}, {}) == std::wstring(2, L'\0'));
 }
 
+TEST_CASE("a NUL-separated list splits in order, with or without its terminator", "[wide]") {
+    using namespace std::string_view_literals;
+    CHECK(split_multi_string(L"de-DE\0en-US\0\0"sv) == std::vector<std::string>{"de-DE", "en-US"});
+    CHECK(split_multi_string(L"fr-FR"sv) == std::vector<std::string>{"fr-FR"});
+    CHECK(split_multi_string(L"\0"sv).empty());
+    CHECK(split_multi_string(L""sv).empty());
+}
+
 TEST_CASE("FILETIME ticks convert both ways", "[wide]") {
     const auto epoch = from_filetime(116444736000000000ull);
     CHECK(epoch.time_since_epoch() == std::chrono::system_clock::duration::zero());

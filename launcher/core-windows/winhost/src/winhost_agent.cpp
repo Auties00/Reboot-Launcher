@@ -83,7 +83,8 @@ struct WinhostAgent::Impl {
     std::optional<WinhostExit> outcome;
     std::thread worker;
 
-    // Request thread only.
+    // Changed by the request thread only, under session_mutex so run() may terminate it meanwhile.
+    std::mutex session_mutex;
     std::unique_ptr<win32session::Win32Session> session;
 
     template <ContractMessage T>
@@ -140,11 +141,28 @@ struct WinhostAgent::Impl {
                 std::visit([this](auto& typed) { handle(typed); }, request);
             }
             // EOF, an error or a Stop: the Job goes now and its last events are sent first.
-            session.reset();
+            end_session();
         } catch (...) {
-            session.reset();
+            end_session();
             finish(WinhostExit::InternalError);
         }
+    }
+
+    // Destroyed outside the lock: the teardown drains for up to drain_timeout_ms.
+    void end_session() {
+        std::unique_ptr<win32session::Win32Session> ending;
+        {
+            const std::scoped_lock lock(session_mutex);
+            ending = std::move(session);
+        }
+        ending.reset();
+    }
+
+    // From run(): kills the game at once, so a request waiting on it returns instead of running out
+    // its own bound.
+    void terminate_session() {
+        const std::scoped_lock lock(session_mutex);
+        if (session) session->terminate();
     }
 
     void handle(LaunchRequest& request) {
@@ -162,6 +180,7 @@ struct WinhostAgent::Impl {
             finish(WinhostExit::LaunchFailed);
             return;
         }
+        const std::scoped_lock lock(session_mutex);
         session = std::move(*launched);
     }
 
@@ -198,7 +217,7 @@ struct WinhostAgent::Impl {
         }
         wake.notify_one();
         if (worker.joinable()) worker.join();
-        session.reset();
+        end_session();
     }
 
     [[nodiscard]] std::optional<WinhostExit> final_outcome() {
@@ -274,6 +293,9 @@ WinhostExit WinhostAgent::run() {
     }
 
     if (*ended == WinhostExit::ProtocolError) impl.send(to_fatal({FailureStep::Protocol, std::nullopt}));
+    // The engine is gone or broke the protocol: the game must not outlive it (a launch still in
+    // progress has no session yet and keeps its own bound).
+    impl.terminate_session();
     impl.close();
     impl.connection.shutdown();
     return impl.final_outcome().value_or(*ended);

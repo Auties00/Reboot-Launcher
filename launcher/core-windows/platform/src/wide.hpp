@@ -16,6 +16,8 @@ using EnvVars = std::vector<std::pair<std::string, std::string>>;
 
 [[nodiscard]] std::wstring widen(std::string_view utf8);
 [[nodiscard]] std::string narrow(std::wstring_view wide);
+// The strings of a NUL-separated, double-NUL terminated list, in order; the terminator may be absent.
+[[nodiscard]] std::vector<std::string> split_multi_string(std::wstring_view list);
 
 // The \\?\ form of `path`, absolute and normalised, so MAX_PATH never applies. A drive root keeps
 // its backslash, since \\?\C: names the volume device.

@@ -1,9 +1,14 @@
 #include "loopback_engine.hpp"  // first: pulls in win32.hpp before any std header
 
+#include <bcrypt.h>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <future>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
@@ -82,6 +87,23 @@ wh::SpawnGame spawn_of(std::wstring_view exe, std::initializer_list<std::wstring
 
 // A game that keeps running for a minute unless it is killed.
 wh::SpawnGame long_running_game() { return spawn_of(system_path(L"PING.EXE"), {L"-n", L"60", L"127.0.0.1"}); }
+
+// The 32-bit build of a system DLL: its hash checks out, but a 64-bit game never loads it.
+std::optional<std::wstring> wow64_dll(std::wstring_view file) {
+    std::array<wchar_t, MAX_PATH> dir{};
+    const UINT length = GetSystemWow64DirectoryW(dir.data(), static_cast<UINT>(dir.size()));
+    if (length == 0 || length >= dir.size()) return std::nullopt;
+    return std::wstring(dir.data(), length) + L"\\" + std::wstring(file);
+}
+
+std::array<u8, 32> sha256_of(const std::wstring& path) {
+    std::ifstream in(std::filesystem::path(path), std::ios::binary);
+    const std::vector<char> bytes{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+    std::array<u8, 32> digest{};
+    REQUIRE(BCryptHash(BCRYPT_SHA256_ALG_HANDLE, nullptr, 0, reinterpret_cast<PUCHAR>(const_cast<char*>(bytes.data())),
+                       static_cast<ULONG>(bytes.size()), digest.data(), static_cast<ULONG>(digest.size())) == 0);
+    return digest;
+}
 
 struct OwnedProcess {
     HANDLE handle = nullptr;
@@ -236,6 +258,47 @@ TEST_CASE("EOF after Welcome terminates the Job and returns EngineClosed") {
     harness.engine.close_peer();
     CHECK(harness.exit_within(15s) == WinhostExit::EngineClosed);
     CHECK(game.ended_within(5000));
+}
+
+TEST_CASE("EOF while a Stop waits out its grace ends the game at once") {
+    Harness harness;
+    harness.start();
+    harness.engine.send(wh::WhWelcome{long_running_game()});
+    const auto spawned = harness.engine.expect<wh::Spawned>();
+    REQUIRE(spawned);
+    const OwnedProcess game(spawned->pid);
+    harness.engine.send(wh::Resume{1});
+    REQUIRE(harness.engine.expect<common::CommandResult>());
+
+    // The grace outlasts the game, so only the kill on EOF ends it soon.
+    harness.engine.send(wh::Stop{2, 60000});
+    REQUIRE(harness.engine.expect<common::CommandResult>());
+    harness.engine.close_peer();
+    CHECK(game.ended_within(3000));
+    CHECK(harness.exit_within(10s).has_value());
+}
+
+TEST_CASE("EOF while an Early DLL's load is being confirmed ends the game at once") {
+    const auto dll = wow64_dll(L"version.dll");
+    if (!dll) {
+        SKIP("this Windows has no WoW64 system directory");
+    }
+    Harness harness;
+    harness.start();
+    auto spawn = long_running_game();
+    spawn.inject_timeout_ms = 60000;
+    spawn.inject.push_back(wh::InjectSpec{utf16(*dll), sha256_of(*dll), wh::BootStrategy::EarlyBirdApc, wh::InjectPhase::Early});
+    harness.engine.send(wh::WhWelcome{std::move(spawn)});
+    const auto spawned = harness.engine.expect<wh::Spawned>();
+    REQUIRE(spawned);
+    const OwnedProcess game(spawned->pid);
+
+    // The load never shows up, so Resume would wait out the whole inject timeout.
+    harness.engine.send(wh::Resume{1});
+    std::this_thread::sleep_for(500ms);
+    harness.engine.close_peer();
+    CHECK(game.ended_within(3000));
+    CHECK(harness.exit_within(10s).has_value());
 }
 
 TEST_CASE("Stop is answered at once, the game's Exited follows and winhost disconnects with Stopped") {

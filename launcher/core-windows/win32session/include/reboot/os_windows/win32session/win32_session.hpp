@@ -33,7 +33,8 @@ struct StuckProcesses {
 // the Job, waits at most drain_timeout_ms for it to empty, stops the threads, then restores the
 // parked files. A thread that cannot be stopped within drain_timeout_ms is left running with the
 // sink cleared, so no event reaches the caller once stop() or destruction returns. Not
-// thread-safe: inject, resume and stop are called from one thread at a time.
+// thread-safe: inject, resume and stop are called from one thread at a time; only terminate() may
+// come from another.
 class Win32Session {
 public:
     virtual ~Win32Session() = default;
@@ -56,6 +57,10 @@ public:
     // that does not empty is reported. The readers then get drain_timeout_ms to reach EOF and as
     // long again once their reads are cancelled, so stop() returns within grace + 3 x drain.
     virtual std::expected<void, StuckProcesses> stop(std::chrono::milliseconds grace) = 0;
+
+    // Terminates the Job and returns without waiting. Safe from any thread while another call is
+    // in progress, which then returns as the game dies; stop() or destruction still drains.
+    virtual void terminate() noexcept = 0;
 };
 
 // Parks each SpawnGame::park_utf16 file as <name>.reboot-parked, replacing a leftover from a

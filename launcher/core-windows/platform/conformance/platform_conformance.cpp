@@ -34,9 +34,11 @@
 #include "reboot/os_windows/platform/windows_port_inspector.hpp"
 #include "reboot/os_windows/platform/windows_prerequisites.hpp"
 #include "reboot/os_windows/platform/windows_resolver.hpp"
+#include "reboot/os_windows/platform/windows_session_end_watch.hpp"
 #include "reboot/os_windows/platform/windows_shell.hpp"
 #include "reboot/os_windows/platform/windows_system_info.hpp"
 #include "reboot/os_windows/platform/wmi_security_product_probe.hpp"
+#include "reboot/testing/contract_conformance.hpp"
 #include "reboot/testing/fake_executables.hpp"
 #include "reboot/testing/fake_game_script.hpp"
 #include "reboot/testing/port_binder.hpp"
@@ -104,6 +106,28 @@ struct Fixture {
     launch.exe = system_tool(L"WindowsPowerShell\\v1.0\\powershell.exe");
     launch.args = {"-NoProfile", "-NonInteractive", "-Command", std::move(script)};
     return launch;
+}
+
+// The session end watch's hidden window in this process.
+[[nodiscard]] HWND session_end_window() {
+    struct Search {
+        DWORD pid = GetCurrentProcessId();
+        HWND found = nullptr;
+    } search;
+    EnumWindows(
+        [](HWND window, LPARAM param) -> BOOL {
+            auto& wanted = *reinterpret_cast<Search*>(param);
+            DWORD pid = 0;
+            GetWindowThreadProcessId(window, &pid);
+            std::array<wchar_t, 64> name{};
+            if (pid != wanted.pid || GetClassNameW(window, name.data(), static_cast<int>(name.size())) == 0 ||
+                std::wstring_view(name.data()) != kSessionEndWindowClass)
+                return TRUE;
+            wanted.found = window;
+            return FALSE;
+        },
+        reinterpret_cast<LPARAM>(&search));
+    return search.found;
 }
 
 }  // namespace
@@ -435,6 +459,33 @@ TEST_CASE("a child may be destroyed from its own output callback", "[conformance
     CHECK(exits.load() == 0);
 }
 
+TEST_CASE("stdin written after the child closed its end is dropped, not queued", "[conformance][process]") {
+    JobProcessLauncher launcher;
+    ports::ProcessLaunch launch = cmd("exit 0");
+    launch.stdio = ports::StdioMode::ControlChannel;
+    auto spawned = launcher.spawn(launch);
+    REQUIRE(spawned);
+    ports::ChildProcess& child = **spawned;
+    std::atomic<bool> exited{false};
+    child.on_exit([&](ports::ChildExit) { exited = true; });
+    testing::WallClockWaiter waiter;
+    REQUIRE(waiter.wait_until([&] { return exited.load(); }, 10s));
+    // The first write meets the closed pipe and stops the writer.
+    child.write_stdin(bytes("ping"));
+    std::this_thread::sleep_for(500ms);
+    const auto private_bytes = [] {
+        PROCESS_MEMORY_COUNTERS_EX counters{};
+        counters.cb = sizeof counters;
+        REQUIRE(GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&counters), sizeof counters) != 0);
+        return counters.PrivateUsage;
+    };
+    const SIZE_T before = private_bytes();
+    const std::vector<u8> chunk(1024 * 1024, 0x41);
+    for (int i = 0; i < 256; ++i) child.write_stdin(chunk);
+    const SIZE_T after = private_bytes();
+    CHECK(after < before + 64 * 1024 * 1024);
+}
+
 TEST_CASE("the environment overlay reaches the child over the user's base", "[conformance][process]") {
     JobProcessLauncher launcher;
     ports::ProcessLaunch launch = cmd("echo %SystemRoot%^|%REBOOT_X%");
@@ -471,6 +522,16 @@ TEST_CASE("a missing executable fails NotFound", "[conformance][process]") {
     auto child = launcher.spawn(launch);
     REQUIRE_FALSE(child);
     CHECK(child.error().kind == ErrorKind::NotFound);
+}
+
+TEST_CASE("the fake backend and game server pass the contract suites through JobProcessLauncher", "[conformance][process][contract]") {
+    Fixture fixture = make_fixture();
+    JobProcessLauncher launcher;
+    const auto reports = testing::run_fake_contract_conformance(launcher, fixture.waiter, fixture.scratch.path());
+    if (reports.empty()) {
+        SKIP("this build has no fake backend or game server");
+    }
+    for (const testing::ConformanceReport& report : reports) require_passed(report);
 }
 
 TEST_CASE("Win32SessionHost passes the session host suite with reboot-fake-game", "[conformance][session]") {
@@ -564,6 +625,86 @@ TEST_CASE("the integration registrar reads every kind without changing it", "[co
     CHECK(registrar.remove(ports::IntegrationKind::DesktopEntry));
 }
 
+TEST_CASE("the integration registrar applies and removes every kind", "[conformance][integration]") {
+    // It changes the user's real registrations, so it runs only where that is allowed, as on CI.
+    std::array<wchar_t, 4> opted_in{};
+    if (GetEnvironmentVariableW(L"REBOOT_CONFORMANCE_MUTATES_USER", opted_in.data(), static_cast<DWORD>(opted_in.size())) != 1 ||
+        opted_in[0] != L'1') {
+        SKIP("set REBOOT_CONFORMANCE_MUTATES_USER=1 to change this user's registrations");
+    }
+    Fixture fixture = make_fixture();
+    WindowsFileSystem fs;
+    const NativePath root = fixture.scratch.path() / "install";
+    const NativePath exe = root / "current" / "Reboot Launcher.exe";
+    REQUIRE(fs.create_dirs_owner_only(exe.parent_path()));
+    REQUIRE(fs.atomic_replace(exe, bytes("MZ"), false));
+    auto sid = UserSid::current();
+    REQUIRE(sid);
+    auto text = sid->to_string();
+    REQUIRE(text);
+    WindowsIntegrationRegistrar registrar(root, *text);
+    static constexpr std::array kinds{ports::IntegrationKind::UrlScheme, ports::IntegrationKind::Autostart,
+                                      ports::IntegrationKind::EngineAgent};
+    // Never clobber a real install's entries.
+    for (const auto kind : kinds) {
+        const auto found = registrar.status(kind);
+        REQUIRE(found);
+        if (found->state != ports::IntegrationState::Absent) {
+            SKIP("this user already has a registration of kind " << static_cast<int>(kind) << ": " << found->detail);
+        }
+    }
+    struct Cleanup {
+        WindowsIntegrationRegistrar& registrar;
+        ~Cleanup() {
+            for (const auto kind : kinds) (void)registrar.remove(kind);
+        }
+    } cleanup{registrar};
+    require_passed(testing::run_integration_registrar_conformance(registrar, exe, kinds));
+}
+
+TEST_CASE("the session end watch agrees to a logoff and holds it until released", "[conformance][session_end]") {
+    std::atomic<int> ends{0};
+    auto watch = std::make_unique<WindowsSessionEndWatch>();
+    REQUIRE(watch->start([&] { ++ends; }));
+    const HWND window = session_end_window();
+    REQUIRE(window != nullptr);
+    DWORD_PTR agreed = 0;
+    REQUIRE(SendMessageTimeoutW(window, WM_QUERYENDSESSION, 0, ENDSESSION_LOGOFF, SMTO_BLOCK, 5000, &agreed) != 0);
+    CHECK(agreed == TRUE);
+    CHECK(ends.load() == 0);
+
+    // Windows ends the process once WM_ENDSESSION is answered, so the answer waits for the release.
+    std::atomic<bool> answered{false};
+    std::thread windows([&] {
+        SendMessageW(window, WM_ENDSESSION, TRUE, ENDSESSION_LOGOFF);
+        answered = true;
+    });
+    testing::WallClockWaiter waiter;
+    CHECK(waiter.wait_until([&] { return ends.load() == 1; }, 5s));
+    std::this_thread::sleep_for(300ms);
+    CHECK_FALSE(answered.load());
+    watch.reset();
+    CHECK(waiter.wait_until([&] { return answered.load(); }, 5s));
+    windows.join();
+    CHECK(ends.load() == 1);
+}
+
+TEST_CASE("the session end watch ignores a cancelled end and gives up a hold after its budget", "[conformance][session_end]") {
+    std::atomic<int> ends{0};
+    WindowsSessionEndWatch watch(300ms);
+    REQUIRE(watch.start([&] { ++ends; }));
+    CHECK_FALSE(watch.start([] {}));
+    const HWND window = session_end_window();
+    REQUIRE(window != nullptr);
+    SendMessageW(window, WM_ENDSESSION, FALSE, ENDSESSION_LOGOFF);
+    CHECK(ends.load() == 0);
+    const auto sent = std::chrono::steady_clock::now();
+    SendMessageW(window, WM_ENDSESSION, TRUE, ENDSESSION_LOGOFF);
+    CHECK(std::chrono::steady_clock::now() - sent < 5s);
+    SendMessageW(window, WM_ENDSESSION, TRUE, 0);
+    CHECK(ends.load() == 1);
+}
+
 TEST_CASE("WmiSecurityProductProbe passes the security probe suite", "[conformance][security]") {
     Fixture fixture = make_fixture();
     WmiSecurityProductProbe probe;
@@ -619,7 +760,9 @@ TEST_CASE("make_platform composes every Windows port", "[conformance][platform]"
     CHECK(services->security);
     CHECK(services->prerequisites);
     CHECK(services->system);
+    CHECK(services->languages);
     CHECK(services->updater);
     CHECK(services->random);
+    CHECK(services->session_end);
     require_passed(testing::run_random_conformance(*services->random));
 }

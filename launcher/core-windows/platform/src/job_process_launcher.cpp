@@ -53,6 +53,8 @@ struct ChildState {
     std::condition_variable writer_wake;
     std::deque<Bytes> outbox;
     bool stdin_closing = false;
+    // Set once the writer returned, so later bytes are dropped instead of queued.
+    bool writer_gone = false;
     bool stopping = false;
 
     // Runs `call` with output_mutex held by the caller.
@@ -127,6 +129,9 @@ void write_loop(const std::shared_ptr<ChildState>& state, UniqueHandle pipe) {
             }
         }
     });
+    std::scoped_lock lock(state->writer_mutex);
+    state->writer_gone = true;
+    state->outbox.clear();
 }
 
 void wait_loop(const std::shared_ptr<ChildState>& state, UniqueHandle process) {
@@ -231,7 +236,7 @@ public:
         if (!has_stdin_ || bytes.empty()) return;
         {
             std::scoped_lock lock(state_->writer_mutex);
-            if (state_->stdin_closing || state_->stopping) return;
+            if (state_->stdin_closing || state_->writer_gone || state_->stopping) return;
             state_->outbox.emplace_back(bytes.begin(), bytes.end());
         }
         state_->writer_wake.notify_one();

@@ -12,6 +12,7 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/os_windows/platform/credential_manager_store.hpp"
 #include "reboot/os_windows/platform/job_process_launcher.hpp"
+#include "reboot/os_windows/platform/mui_language_source.hpp"
 #include "reboot/os_windows/platform/unsupported_peer_inspector.hpp"
 #include "reboot/os_windows/platform/velopack_applier.hpp"
 #include "reboot/os_windows/platform/win32_session_host.hpp"
@@ -24,6 +25,7 @@
 #include "reboot/os_windows/platform/windows_port_inspector.hpp"
 #include "reboot/os_windows/platform/windows_prerequisites.hpp"
 #include "reboot/os_windows/platform/windows_resolver.hpp"
+#include "reboot/os_windows/platform/windows_session_end_watch.hpp"
 #include "reboot/os_windows/platform/windows_shell.hpp"
 #include "reboot/os_windows/platform/windows_system_info.hpp"
 #include "reboot/os_windows/platform/wmi_security_product_probe.hpp"
@@ -82,10 +84,24 @@ Result<PlatformServices> make_platform(const PlatformOptions& options) {
     services.security = std::make_unique<win::WmiSecurityProductProbe>();
     services.prerequisites = std::make_unique<win::WindowsPrerequisites>();
     services.system = std::make_unique<win::WindowsSystemInfo>();
+    services.languages = std::make_unique<win::MuiLanguageSource>();
     services.updater = std::make_unique<win::VelopackApplier>(velopack_root, state_dir / "update-feed");
     services.random = std::make_unique<OsRandom>();
+    services.session_end = std::make_unique<win::WindowsSessionEndWatch>();
     services.paths = std::make_unique<win::WindowsPaths>(std::move(*paths));
     return services;
+}
+
+void run_package_hooks(UniqueFunction<void(PackageHook)> on_hook) {
+    win::run_velopack_startup([on_hook = std::move(on_hook)](win::VelopackHook hook) mutable {
+        switch (hook) {
+            case win::VelopackHook::AfterInstall: on_hook(PackageHook::AfterInstall); break;
+            case win::VelopackHook::AfterUpdate: on_hook(PackageHook::AfterUpdate); break;
+            case win::VelopackHook::BeforeUninstall: on_hook(PackageHook::BeforeUninstall); break;
+            // The running engine was drained before the update started; nothing is left to do.
+            case win::VelopackHook::BeforeUpdate: break;
+        }
+    });
 }
 
 }  // namespace rb::ports

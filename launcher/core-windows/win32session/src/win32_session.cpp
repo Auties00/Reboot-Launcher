@@ -160,6 +160,9 @@ public:
         return stuck;
     }
 
+    // job_ is set before the session is handed out and only released by the destructor.
+    void terminate() noexcept override { TerminateJobObject(job_.get(), 1); }
+
 private:
     Proc& game() { return procs_.front(); }
 
@@ -180,8 +183,14 @@ private:
     }
 
     std::expected<void, InjectError> confirm_early(InjectedDll& dll) {
-        const bool ok = poll_until([&] { return module_loaded(game().process.get(), dll.base_name); }, sleep_for,
-                                   steady_now, inject_timeout_, kConfirmStep);
+        // A game that died, e.g. by terminate(), will never load it.
+        bool died = false;
+        const auto settled = [&] {
+            if (module_loaded(game().process.get(), dll.base_name)) return true;
+            died = WaitForSingleObject(game().process.get(), 0) == WAIT_OBJECT_0;
+            return died;
+        };
+        const bool ok = poll_until(settled, sleep_for, steady_now, inject_timeout_, kConfirmStep) && !died;
         // An unconfirmed APC may still run and read the path, so its buffer stays until the Job dies.
         if (ok && dll.remote_path != nullptr) {
             VirtualFreeEx(game().process.get(), dll.remote_path, 0, MEM_RELEASE);

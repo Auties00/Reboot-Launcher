@@ -44,13 +44,17 @@ using namespace rb::os_windows::ipc;
 }
 
 // A second local account the CI runner provides through REBOOT_CONFORMANCE_OTHER_USER and
-// REBOOT_CONFORMANCE_OTHER_PASSWORD; without one the other-user checks are skipped.
+// REBOOT_CONFORMANCE_OTHER_PASSWORD; without one the other-user checks are skipped. A named account
+// that cannot log on fails the case, so CI never skips them silently.
 [[nodiscard]] std::shared_ptr<UniqueHandle> other_user_token() {
     const std::optional<std::wstring> user = environment_variable(L"REBOOT_CONFORMANCE_OTHER_USER");
     const std::optional<std::wstring> password = environment_variable(L"REBOOT_CONFORMANCE_OTHER_PASSWORD");
     if (!user || !password) return nullptr;
     HANDLE token = nullptr;
-    if (!LogonUserW(user->c_str(), L".", password->c_str(), LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &token)) return nullptr;
+    if (!LogonUserW(user->c_str(), L".", password->c_str(), LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &token)) {
+        const DWORD error = GetLastError();
+        FAIL("LogonUserW failed for REBOOT_CONFORMANCE_OTHER_USER with error " << error);
+    }
     return std::make_shared<UniqueHandle>(token);
 }
 

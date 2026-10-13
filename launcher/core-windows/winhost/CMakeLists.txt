@@ -48,7 +48,7 @@ if(REBOOT_BUILD_TESTS)
     add_executable(reboot_os_windows_winhost_tests ${winhost_tests})
     target_include_directories(reboot_os_windows_winhost_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(reboot_os_windows_winhost_tests PRIVATE
-      reboot_os_windows_winhost Catch2::Catch2WithMain reboot_warnings)
+      reboot_os_windows_winhost Catch2::Catch2WithMain reboot_warnings bcrypt)
     # The kill-chain tests run the real executable.
     add_dependencies(reboot_os_windows_winhost_tests reboot-winhost)
     target_compile_definitions(reboot_os_windows_winhost_tests PRIVATE

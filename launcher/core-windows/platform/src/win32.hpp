@@ -19,6 +19,7 @@
 #include <iphlpapi.h>
 #include <objbase.h>
 #include <oleauto.h>
+#include <psapi.h>
 #include <sddl.h>
 #include <shellapi.h>
 #include <shlobj.h>
