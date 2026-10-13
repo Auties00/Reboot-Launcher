@@ -22,6 +22,8 @@ if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 # Apple Clang otherwise targets the build host's macOS, and the binaries refuse to run on older ones.
+# Every Apple API the launcher calls exists on macOS 14; a newer one fails the build through
+# -Wunguarded-availability-new under -Werror and needs an @available guard.
 if(APPLE AND (NOT CMAKE_OSX_DEPLOYMENT_TARGET OR CMAKE_OSX_DEPLOYMENT_TARGET VERSION_GREATER 14.0))
   message(FATAL_ERROR "macOS builds need CMAKE_OSX_DEPLOYMENT_TARGET 14.0, the oldest macOS the launcher supports")
 endif()

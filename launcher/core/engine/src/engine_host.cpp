@@ -39,7 +39,9 @@
 #include "reboot/logging/wine_log_files.hpp"
 #include "reboot/net/curl_http_transport.hpp"
 #include "reboot/net/msquic_transport.hpp"
+#include "reboot/ports/os_services.hpp"
 #include "reboot/process/env_layer.hpp"
+#include "reboot/sessions/shutdown_budget.hpp"
 #include "reboot/storage/data_root.hpp"
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/resume_document.hpp"
@@ -50,6 +52,9 @@ namespace {
 
 constexpr std::size_t kLoggerBudget = std::size_t{8} << 20;
 constexpr std::chrono::milliseconds kSignalPoll{250};
+// The rest of a held session end covers the teardown after the shutdown's own flush steps.
+static_assert(kSignalPoll + sessions::kOsSignalShutdownBudget + std::chrono::milliseconds{200} <= ports::kSessionEndHold,
+              "an OsSignal shutdown after a logoff must end before the session end watch lets Windows end the engine");
 constexpr std::chrono::seconds kSelfTestDeadline{10};
 
 std::atomic<bool> g_signalled{false};

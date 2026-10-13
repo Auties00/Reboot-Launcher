@@ -5,6 +5,7 @@
 #include <optional>
 #include <string_view>
 #include <variant>
+#include <vector>
 
 #include "engine_start_rules.hpp"
 #include "messages.hpp"
@@ -23,6 +24,9 @@ using rb::os_macos::ipc::AgentStatus;
 using rb::os_macos::ipc::AgentStep;
 using rb::os_macos::ipc::kickstart_outcome;
 using rb::os_macos::ipc::kickstart_retry_after_register;
+using rb::os_macos::ipc::kickstart_with_retries;
+using rb::os_macos::ipc::KickstartCalls;
+using rb::os_macos::ipc::kKickstartMinTry;
 using rb::os_macos::ipc::kLaunchctlServiceDisabled;
 using rb::os_macos::ipc::kLaunchctlServiceNotFound;
 using rb::os_macos::ipc::LaunchctlRun;
@@ -69,6 +73,33 @@ void check_placeholders(const Diagnostic& diag) {
 Result<StartResult> outcome(LaunchctlRun::End end, int code) {
     return kickstart_outcome(LaunchctlRun{.end = end, .code = code}, kLabel, kDeadline);
 }
+
+// launchctl under a scripted clock: each try takes `try_takes` and exits with the next code.
+struct ScriptedKickstart {
+    std::vector<int> exits;
+    std::chrono::milliseconds try_takes{0};
+    std::chrono::milliseconds pause_takes{0};
+    std::chrono::steady_clock::time_point clock{};
+    std::vector<std::chrono::milliseconds> deadlines;
+    int pauses = 0;
+
+    KickstartCalls calls() {
+        return KickstartCalls{
+            .run = [this](std::chrono::milliseconds deadline) -> Result<LaunchctlRun> {
+                deadlines.push_back(deadline);
+                clock += try_takes;
+                const int code = exits.at(deadlines.size() - 1);
+                return LaunchctlRun{.end = LaunchctlRun::End::Exited, .code = code};
+            },
+            .pause = [this](std::chrono::milliseconds) {
+                ++pauses;
+                clock += pause_takes;
+            },
+            .now = [this] { return clock; }};
+    }
+};
+
+constexpr std::chrono::milliseconds kInterval{100};
 
 }  // namespace
 
@@ -119,6 +150,55 @@ TEST_CASE("only an unknown label right after registering is kickstarted again", 
     CHECK_FALSE(kickstart_retry_after_register(LaunchctlRun{.end = LaunchctlRun::End::TimedOut, .code = 0}, true));
     CHECK_FALSE(kickstart_retry_after_register(
         LaunchctlRun{.end = LaunchctlRun::End::Signalled, .code = kLaunchctlServiceNotFound}, true));
+}
+
+TEST_CASE("a label launchd loads late is kicked again within what is left of the budget", "[engine_start_rules]") {
+    ScriptedKickstart launchctl{.exits = {kLaunchctlServiceNotFound, kLaunchctlServiceNotFound, 0},
+                                .try_takes = std::chrono::milliseconds{50},
+                                .pause_takes = std::chrono::milliseconds{120}};
+    KickstartCalls calls = launchctl.calls();
+    const Result<LaunchctlRun> run = kickstart_with_retries(calls, true, kDeadline, kInterval);
+    REQUIRE(run);
+    CHECK(run->code == 0);
+    // The second pause overshot by 20 ms; each try gets only what is left after it.
+    const std::vector<std::chrono::milliseconds> expected{kDeadline, std::chrono::milliseconds{2830}, std::chrono::milliseconds{2660}};
+    CHECK(launchctl.deadlines == expected);
+}
+
+TEST_CASE("a pause that overshoots the budget leaves the unknown label standing", "[engine_start_rules]") {
+    ScriptedKickstart launchctl{.exits = {kLaunchctlServiceNotFound, kLaunchctlServiceNotFound},
+                                .try_takes = std::chrono::milliseconds{2000},
+                                .pause_takes = std::chrono::milliseconds{1500}};
+    KickstartCalls calls = launchctl.calls();
+    const Result<LaunchctlRun> run = kickstart_with_retries(calls, true, kDeadline, kInterval);
+    REQUIRE(run);
+    CHECK(launchctl.pauses == 1);
+    CHECK(launchctl.deadlines.size() == 1);
+    CHECK(run->code == kLaunchctlServiceNotFound);
+    const Result<StartResult> result = kickstart_outcome(*run, kLabel, kDeadline);
+    REQUIRE(result);
+    CHECK(*result == StartResult::AwaitingUser);
+}
+
+TEST_CASE("no retry is made with less than the shortest try left", "[engine_start_rules]") {
+    // 2700 ms gone leaves 300 ms: the pause would leave under kKickstartMinTry.
+    ScriptedKickstart launchctl{.exits = {kLaunchctlServiceNotFound}, .try_takes = std::chrono::milliseconds{2700}};
+    KickstartCalls calls = launchctl.calls();
+    const Result<LaunchctlRun> run = kickstart_with_retries(calls, true, kDeadline, kInterval);
+    REQUIRE(run);
+    CHECK(launchctl.pauses == 0);
+    CHECK(launchctl.deadlines.size() == 1);
+    CHECK(run->code == kLaunchctlServiceNotFound);
+    STATIC_CHECK(kKickstartMinTry + kInterval > std::chrono::milliseconds{300});
+}
+
+TEST_CASE("a label this call did not register is kicked once", "[engine_start_rules]") {
+    ScriptedKickstart launchctl{.exits = {kLaunchctlServiceNotFound}};
+    KickstartCalls calls = launchctl.calls();
+    const Result<LaunchctlRun> run = kickstart_with_retries(calls, false, kDeadline, kInterval);
+    REQUIRE(run);
+    CHECK(launchctl.deadlines.size() == 1);
+    CHECK(launchctl.pauses == 0);
 }
 
 TEST_CASE("a clean kickstart exit is Started", "[engine_start_rules]") {

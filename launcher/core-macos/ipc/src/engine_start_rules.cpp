@@ -28,6 +28,23 @@ bool kickstart_retry_after_register(const LaunchctlRun& run, bool registered_now
     return registered_now && run.end == LaunchctlRun::End::Exited && run.code == kLaunchctlServiceNotFound;
 }
 
+Result<LaunchctlRun> kickstart_with_retries(KickstartCalls& calls, bool registered_now, std::chrono::milliseconds budget,
+                                            std::chrono::milliseconds interval) {
+    using std::chrono::milliseconds;
+    const auto until = calls.now() + budget;
+    milliseconds deadline = budget;
+    for (;;) {
+        Result<LaunchctlRun> run = calls.run(deadline);
+        if (!run || !kickstart_retry_after_register(*run, registered_now)) return run;
+        if (until - calls.now() < interval + kKickstartMinTry) return run;
+        calls.pause(interval);
+        // Measured again: the pause may have overshot.
+        const auto left = std::chrono::duration_cast<milliseconds>(until - calls.now());
+        if (left < kKickstartMinTry) return run;
+        deadline = left;
+    }
+}
+
 Result<ports::StartResult> kickstart_outcome(const LaunchctlRun& run, std::string_view label,
                                              std::chrono::milliseconds deadline) {
     switch (run.end) {

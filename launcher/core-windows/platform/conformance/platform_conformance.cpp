@@ -1,5 +1,6 @@
 #include "win32.hpp"  // first: sets _WIN32_WINNT before any std header pulls in <windows.h>
 
+#include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
@@ -643,22 +644,25 @@ TEST_CASE("the integration registrar applies and removes every kind", "[conforma
     auto text = sid->to_string();
     REQUIRE(text);
     WindowsIntegrationRegistrar registrar(root, *text);
-    static constexpr std::array kinds{ports::IntegrationKind::UrlScheme, ports::IntegrationKind::Autostart,
-                                      ports::IntegrationKind::EngineAgent};
-    // Never clobber a real install's entries.
-    for (const auto kind : kinds) {
+    // Only kinds this user has no entry of, so a real install's entries are never touched.
+    std::vector<ports::IntegrationKind> kinds;
+    for (const auto kind : {ports::IntegrationKind::UrlScheme, ports::IntegrationKind::Autostart,
+                            ports::IntegrationKind::EngineAgent}) {
         const auto found = registrar.status(kind);
         REQUIRE(found);
-        if (found->state != ports::IntegrationState::Absent) {
-            SKIP("this user already has a registration of kind " << static_cast<int>(kind) << ": " << found->detail);
-        }
+        if (found->state == ports::IntegrationState::Absent)
+            kinds.push_back(kind);
+        else
+            WARN("left alone: this user already has a registration of kind " << static_cast<int>(kind) << ": " << found->detail);
     }
+    if (kinds.empty()) SKIP("this user already has a registration of every kind");
     struct Cleanup {
         WindowsIntegrationRegistrar& registrar;
+        const std::vector<ports::IntegrationKind>& kinds;
         ~Cleanup() {
             for (const auto kind : kinds) (void)registrar.remove(kind);
         }
-    } cleanup{registrar};
+    } cleanup{registrar, kinds};
     require_passed(testing::run_integration_registrar_conformance(registrar, exe, kinds));
 }
 
@@ -703,6 +707,22 @@ TEST_CASE("the session end watch ignores a cancelled end and gives up a hold aft
     CHECK(std::chrono::steady_clock::now() - sent < 5s);
     SendMessageW(window, WM_ENDSESSION, TRUE, 0);
     CHECK(ends.load() == 1);
+}
+
+TEST_CASE("an unreleased hold answers WM_ENDSESSION before Windows ends a windowless engine", "[conformance][session_end]") {
+    // Windows terminates a process with no visible window 5 s into an unanswered WM_ENDSESSION.
+    STATIC_CHECK(WindowsSessionEndWatch::kDefaultBudget < 5s);
+    std::atomic<int> ends{0};
+    WindowsSessionEndWatch watch;
+    REQUIRE(watch.start([&] { ++ends; }));
+    const HWND window = session_end_window();
+    REQUIRE(window != nullptr);
+    const auto sent = std::chrono::steady_clock::now();
+    SendMessageW(window, WM_ENDSESSION, TRUE, ENDSESSION_LOGOFF);
+    const auto answered = std::chrono::steady_clock::now() - sent;
+    CHECK(ends.load() == 1);
+    CHECK(answered >= WindowsSessionEndWatch::kDefaultBudget - 50ms);
+    CHECK(answered < 5s);
 }
 
 TEST_CASE("WmiSecurityProductProbe passes the security probe suite", "[conformance][security]") {

@@ -1,6 +1,7 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <string_view>
 #include <string>
 #include <utility>
 #include <vector>
@@ -8,6 +9,7 @@
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/foundation/function.hpp"
 #include "reboot/ports/ipc.hpp"
 #include "reboot/testing/deterministic_runtime.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
@@ -65,6 +67,53 @@ TEST_CASE("InMemoryIpc passes the IPC suite, other-user checks included", "[test
     const ConformanceReport report = run_ipc_conformance(std::move(subject), {waiter, default_fake_root()});
     INFO(report.describe());
     CHECK(report.passed());
+}
+
+namespace {
+
+// The IPC suite over InMemoryIpc, with `stranger` standing in for another user's connect.
+[[nodiscard]] ConformanceReport run_with_stranger(
+    UniqueFunction<Result<std::unique_ptr<ports::IByteStream>>(const std::string&)> stranger) {
+    DeterministicRuntime runtime;
+    ManualWaiter waiter(runtime);
+    InMemoryIpc ipc(runtime.strand(), kSelf);
+    int next = 0;
+    IpcConformanceSubject subject;
+    subject.make_listener = [&ipc] { return ipc.make_listener(); };
+    subject.connector = ipc.make_connector();
+    subject.make_endpoint = [&next] { return "reboot-engine-test-" + std::to_string(next++); };
+    subject.self_user_id = kSelf.user_id;
+    subject.connect_as_other_user = std::move(stranger);
+    return run_ipc_conformance(std::move(subject), {waiter, default_fake_root()});
+}
+
+[[nodiscard]] const ConformanceCheck* find_check(const ConformanceReport& report, std::string_view name) {
+    for (const ConformanceCheck& check : report.checks())
+        if (check.name == name) return &check;
+    return nullptr;
+}
+
+}  // namespace
+
+TEST_CASE("a stranger that never got to connect fails the other-user check", "[testing][conformance][ipc]") {
+    const ConformanceReport report = run_with_stranger([](const std::string&) -> Result<std::unique_ptr<ports::IByteStream>> {
+        return std::unexpected(make_diag(ErrorDomain::Internal, MessageId{"internal.bug"}).build());
+    });
+    INFO(report.describe());
+    CHECK_FALSE(report.passed());
+    const ConformanceCheck* connected = find_check(report, "another user's client connects or the OS refuses it");
+    REQUIRE(connected != nullptr);
+    CHECK(connected->status == CheckStatus::Failed);
+    CHECK(find_check(report, "another user's client is dropped") == nullptr);
+}
+
+TEST_CASE("a connect the OS refuses counts as a dropped stranger", "[testing][conformance][ipc]") {
+    const ConformanceReport report = run_with_stranger(
+        [](const std::string&) -> Result<std::unique_ptr<ports::IByteStream>> { return std::unique_ptr<ports::IByteStream>{}; });
+    INFO(report.describe());
+    const ConformanceCheck* dropped = find_check(report, "another user's client is dropped");
+    REQUIRE(dropped != nullptr);
+    CHECK(dropped->status == CheckStatus::Passed);
 }
 
 TEST_CASE("a memory stream pair delivers in order and closes both ends once", "[testing][ipc]") {

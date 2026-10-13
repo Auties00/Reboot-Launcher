@@ -143,6 +143,8 @@ struct IpcConformanceSubject {
     UniqueFunction<std::string()> make_endpoint;
     std::string self_user_id;
     // Absent where the runner cannot act as another OS user; those checks are then skipped.
+    // The stranger's stream once its connect succeeded, or nullptr when the OS refused the connect
+    // (the endpoint's ACL); an error means no stranger could try, and fails the check.
     UniqueFunction<Result<std::unique_ptr<ports::IByteStream>>(const std::string& endpoint)> connect_as_other_user;
     UniqueFunction<Result<void>(const std::string& endpoint)> squat_as_other_user;
 };

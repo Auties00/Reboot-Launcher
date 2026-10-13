@@ -65,6 +65,9 @@ if(WIN32 AND REBOOT_BUILD_TESTS)
         add_dependencies(reboot_os_windows_conformance ${fake})
       endif()
     endforeach()
-    catch_discover_tests(reboot_os_windows_conformance)
+    # The registrar cases and os_windows/ipc's engine task cases share this user's registrations.
+    catch_discover_tests(reboot_os_windows_conformance TEST_SPEC "[integration]"
+      PROPERTIES RESOURCE_LOCK reboot_user_integrations)
+    catch_discover_tests(reboot_os_windows_conformance TEST_SPEC "~[integration]")
   endif()
 endif()

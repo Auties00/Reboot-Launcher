@@ -11,10 +11,12 @@
 #include <array>
 #include <cerrno>
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <memory>
 #include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -126,8 +128,13 @@ TEST_CASE("the AF_UNIX adapters pass the IPC port suite", "[ipc]") {
     subject.connector = std::make_unique<UnixSocketConnector>(temp);
     subject.make_endpoint = [&random] { return fresh_endpoint(random); };
     subject.self_user_id = std::to_string(::geteuid());
-    // Without passwordless sudo the other-user checks are skipped.
-    if (passwordless_sudo()) act_as_root(subject);
+    // Without passwordless sudo the other-user checks are skipped, unless CI requires them.
+    if (passwordless_sudo()) {
+        act_as_root(subject);
+    } else if (const char* required = std::getenv("REBOOT_CONFORMANCE_OTHER_USER_REQUIRED");
+               required != nullptr && std::string_view{required} == "1") {
+        FAIL("REBOOT_CONFORMANCE_OTHER_USER_REQUIRED is set but sudo -n cannot run the root helper");
+    }
     const auto report = testing::run_ipc_conformance(std::move(subject), {waiter, scratch.path()});
     INFO(report.describe());
     CHECK(report.passed());

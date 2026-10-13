@@ -1,7 +1,7 @@
 #include "reboot/os_macos/ipc/sm_app_service_engine_starter.hpp"
 
-#include <algorithm>
 #include <array>
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <string>
@@ -86,21 +86,18 @@ Result<ports::StartResult> SmAppServiceEngineStarter::ensure_started(const Nativ
 
     const std::array<std::string, 2> arguments{
         "kickstart", "gui/" + std::to_string(uid_) + "/" + std::string(kEngineAgentLabel)};
-    const auto until = std::chrono::steady_clock::now() + kLaunchctlDeadline;
-    for (;;) {
-        const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(until - std::chrono::steady_clock::now());
-        const Result<LaunchctlRun> run = run_launchctl(arguments, std::max(left, std::chrono::milliseconds::zero()));
-        if (!run) {
-            return make_diag(ErrorDomain::Platform, kAgentKickstartFailed)
-                .arg("label", kEngineAgentLabel)
-                .cause(run.error())
-                .fail();
-        }
-        if (!kickstart_retry_after_register(*run, registered_now) ||
-            std::chrono::steady_clock::now() + kKickstartRetryInterval >= until)
-            return kickstart_outcome(*run, kEngineAgentLabel, kLaunchctlDeadline);
-        std::this_thread::sleep_for(kKickstartRetryInterval);
+    KickstartCalls calls{
+        .run = [&arguments](std::chrono::milliseconds deadline) { return run_launchctl(arguments, deadline); },
+        .pause = [](std::chrono::milliseconds pause) { std::this_thread::sleep_for(pause); },
+        .now = [] { return std::chrono::steady_clock::now(); }};
+    const Result<LaunchctlRun> run = kickstart_with_retries(calls, registered_now, kLaunchctlDeadline, kKickstartRetryInterval);
+    if (!run) {
+        return make_diag(ErrorDomain::Platform, kAgentKickstartFailed)
+            .arg("label", kEngineAgentLabel)
+            .cause(run.error())
+            .fail();
     }
+    return kickstart_outcome(*run, kEngineAgentLabel, kLaunchctlDeadline);
 }
 
 }  // namespace rb::os_macos::ipc

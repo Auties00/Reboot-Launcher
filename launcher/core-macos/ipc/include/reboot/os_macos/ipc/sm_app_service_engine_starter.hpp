@@ -52,8 +52,9 @@ public:
     //    running engine alone). A label unknown to the domain, because the app never registered
     //    it, or disabled in Login Items, gives AwaitingUser; when this call has just registered
     //    it, the kickstart is retried every kKickstartRetryInterval first, since launchd may load
-    //    the job late. Past kLaunchctlDeadline, for all tries together, the child is SIGKILLed
-    //    and reaped: platform.agent_kickstart_timed_out (retryable). Anything else is
+    //    the job late, while a retry still gets kKickstartMinTry; the last exit stands otherwise.
+    //    Past kLaunchctlDeadline, for all tries together, the child is SIGKILLed and reaped:
+    //    platform.agent_kickstart_timed_out (retryable). Anything else is
     //    platform.agent_kickstart_failed.
     // Both AwaitingUser cases reach IpcClient alike, since ports::StartResult carries no reason.
     Result<ports::StartResult> ensure_started(const NativePath& engine_exe, const DataRoot& root) override;

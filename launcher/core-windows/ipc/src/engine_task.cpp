@@ -73,6 +73,8 @@ struct Watch {
     // Past the deadline no further call starts, so a late answer never reaches RunEx.
     bool cancelled = false;
     std::optional<Result<TaskRun>> result;
+    // Set before the thread starts.
+    TaskCallHook before_call;
 };
 
 class TaskDriver {
@@ -148,6 +150,7 @@ private:
             watch_.call = name;
             watch_.since = std::chrono::steady_clock::now();
         }
+        if (watch_.before_call) watch_.before_call(name);
         const HRESULT result = body();
         const std::lock_guard lock{watch_.mutex};
         watch_.call.clear();
@@ -217,8 +220,9 @@ void run_on_mta(const std::shared_ptr<Watch>& watch, const std::string& task_nam
 }  // namespace
 
 Result<TaskRun> run_engine_task(const std::string& task_name, const NativePath& engine_exe, u32 session_id,
-                                std::chrono::milliseconds call_deadline) {
+                                std::chrono::milliseconds call_deadline, TaskCallHook before_call) {
     auto watch = std::make_shared<Watch>();
+    watch->before_call = std::move(before_call);
     std::thread worker;
     try {
         worker = std::thread([watch, task_name, engine_exe, session_id] {

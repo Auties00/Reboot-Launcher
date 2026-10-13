@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -97,6 +98,10 @@ public:
     [[nodiscard]] virtual bool supports_in_place() const = 0;
 };
 
+// The longest a session end is held. Windows terminates a process without a visible window that
+// has not answered WM_ENDSESSION within 5 s, and such a process cannot cancel the end.
+inline constexpr std::chrono::milliseconds kSessionEndHold{4500};
+
 // A logoff or shutdown on Windows terminates every process once it has answered WM_ENDSESSION, and
 // a windowless engine gets no console signal; macOS and Linux session managers send SIGTERM.
 class ISessionEndWatch {
@@ -105,7 +110,7 @@ public:
     virtual ~ISessionEndWatch() = default;
 
     // Calls `on_end` once, on the watch's own thread, when the user's session is ending, then
-    // holds the end until this watch is destroyed or its budget runs out.
+    // holds the end until this watch is destroyed or its budget (at most kSessionEndHold) runs out.
     virtual Result<void> start(UniqueFunction<void()> on_end) = 0;
 };
 

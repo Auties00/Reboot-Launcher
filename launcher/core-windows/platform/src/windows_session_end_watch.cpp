@@ -26,9 +26,6 @@ struct SessionEndState {
 
 namespace {
 
-// Shown by Windows while the engine holds the logoff or shutdown.
-constexpr const wchar_t* kBlockReason = L"Reboot Launcher is stopping its game servers and saving its state.";
-
 void hold(SessionEndState& state) {
     UniqueFunction<void()> on_end;
     {
@@ -54,13 +51,10 @@ LRESULT CALLBACK session_end_proc(HWND window, UINT message, WPARAM wparam, LPAR
     }
     auto* state = reinterpret_cast<SessionEndState*>(GetWindowLongPtrW(window, GWLP_USERDATA));
     switch (message) {
-        case WM_QUERYENDSESSION:
-            ShutdownBlockReasonCreate(window, kBlockReason);
-            return TRUE;
+        case WM_QUERYENDSESSION: return TRUE;
         case WM_ENDSESSION:
             // Windows terminates the process once this returns, so the shutdown runs inside it.
             if (wparam != FALSE && state != nullptr) hold(*state);
-            ShutdownBlockReasonDestroy(window);
             return 0;
         case WM_CLOSE: DestroyWindow(window); return 0;
         case WM_DESTROY: PostQuitMessage(0); return 0;

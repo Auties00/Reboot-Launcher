@@ -1,5 +1,6 @@
 // Stands in for reboot-engine in the engine starter conformance: listens on the endpoint of
-// REBOOT_LAUNCHER_HOME for a while, then exits.
+// REBOOT_LAUNCHER_HOME for a while, then exits. Run by the on-demand task, which passes no
+// REBOOT_LAUNCHER_HOME, it only stays alive a little, so the task reads as running, and exits 7.
 #include <chrono>
 #include <memory>
 #include <optional>
@@ -18,6 +19,8 @@
 namespace {
 
 constexpr std::chrono::seconds kLifetime{10};
+constexpr std::chrono::seconds kTaskLifetime{4};
+constexpr int kRanAsTask = 7;
 
 [[nodiscard]] std::optional<std::wstring> variable(const wchar_t* name) {
     const DWORD size = GetEnvironmentVariableW(name, nullptr, 0);
@@ -34,7 +37,10 @@ int wmain(int argc, wchar_t** argv) {
     if (argc != 3 || std::wstring_view{argv[1]} != L"run" || std::wstring_view{argv[2]} != L"--origin=on-demand") return 2;
     if (variable(L"REBOOT_CONFORMANCE_LEAK")) return 3;
     const std::optional<std::wstring> home = variable(L"REBOOT_LAUNCHER_HOME");
-    if (!home) return 4;
+    if (!home) {
+        std::this_thread::sleep_for(kTaskLifetime);
+        return kRanAsTask;
+    }
     auto trust = rb::os_windows::ipc::PipeTrust::for_current_process();
     if (!trust) return 5;
     const rb::DataRoot root{rb::NativePath{*home}, true};

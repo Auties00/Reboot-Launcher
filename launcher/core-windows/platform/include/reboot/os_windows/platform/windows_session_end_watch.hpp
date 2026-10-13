@@ -16,13 +16,14 @@ inline constexpr wchar_t kSessionEndWindowClass[] = L"RebootLauncherSessionEnd";
 struct SessionEndState;
 
 // Covers no capability ids; ISessionEndWatch over a hidden top-level window on its own thread
-// (message-only windows get no session broadcast). WM_QUERYENDSESSION registers a shutdown block
-// reason and agrees; WM_ENDSESSION calls on_end and does not return until the watch is destroyed
-// or `budget` has passed, since Windows terminates the process once it returns.
+// (message-only windows get no session broadcast). WM_QUERYENDSESSION agrees at once; WM_ENDSESSION
+// calls on_end and does not return until the watch is destroyed or `budget` has passed, since
+// Windows terminates the process once it returns. The window is never visible, so Windows lists
+// no shutdown block reason for it and ends the process 5 s into an unanswered WM_ENDSESSION.
 class WindowsSessionEndWatch final : public ports::ISessionEndWatch {
 public:
-    // An OsSignal shutdown fits in 5 s; the rest covers the signal poll, teardown and log flush.
-    static constexpr std::chrono::milliseconds kDefaultBudget{8000};
+    // Answers before Windows' 5 s; the engine's signal poll plus its OsSignal shutdown fit inside.
+    static constexpr std::chrono::milliseconds kDefaultBudget = ports::kSessionEndHold;
 
     explicit WindowsSessionEndWatch(std::chrono::milliseconds budget = kDefaultBudget);
     ~WindowsSessionEndWatch() override;

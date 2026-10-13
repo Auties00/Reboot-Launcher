@@ -44,12 +44,17 @@ using namespace rb::os_windows::ipc;
 }
 
 // A second local account the CI runner provides through REBOOT_CONFORMANCE_OTHER_USER and
-// REBOOT_CONFORMANCE_OTHER_PASSWORD; without one the other-user checks are skipped. A named account
-// that cannot log on fails the case, so CI never skips them silently.
+// REBOOT_CONFORMANCE_OTHER_PASSWORD; without one the other-user checks are skipped, unless
+// REBOOT_CONFORMANCE_OTHER_USER_REQUIRED=1 (CI) makes that a failure. A named account that cannot
+// log on fails the case too.
 [[nodiscard]] std::shared_ptr<UniqueHandle> other_user_token() {
     const std::optional<std::wstring> user = environment_variable(L"REBOOT_CONFORMANCE_OTHER_USER");
     const std::optional<std::wstring> password = environment_variable(L"REBOOT_CONFORMANCE_OTHER_PASSWORD");
-    if (!user || !password) return nullptr;
+    if (!user || !password) {
+        if (environment_variable(L"REBOOT_CONFORMANCE_OTHER_USER_REQUIRED") == L"1")
+            FAIL("REBOOT_CONFORMANCE_OTHER_USER_REQUIRED is set but no other user is configured");
+        return nullptr;
+    }
     HANDLE token = nullptr;
     if (!LogonUserW(user->c_str(), L".", password->c_str(), LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &token)) {
         const DWORD error = GetLastError();
@@ -99,6 +104,8 @@ TEST_CASE("the named pipe adapters pass the IPC port suite", "[ipc]") {
                                           FILE_FLAG_OVERLAPPED | SECURITY_SQOS_PRESENT | SECURITY_IDENTIFICATION, nullptr)};
             const DWORD error = GetLastError();
             RevertToSelf();
+            // The owner-only DACL turns the stranger away before the listener sees it.
+            if (!pipe && error == ERROR_ACCESS_DENIED) return std::unique_ptr<ports::IByteStream>{};
             if (!pipe) {
                 SetLastError(error);
                 return std::unexpected(last_error("CreateFileW", endpoint));

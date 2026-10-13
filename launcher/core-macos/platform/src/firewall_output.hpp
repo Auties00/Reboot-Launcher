@@ -8,6 +8,8 @@ namespace rb::os_macos::platform {
 
 // The firewall's settings, tried in order: System Settings > Network > Firewall since macOS 13,
 // then the pre-13 Security pane anchor, which macOS 14 opens on Privacy & Security instead.
+// System Settings takes the first URL even when a release drops its Firewall anchor (reported for
+// macOS 26) and then shows Network, which lists Firewall; the second runs only if openURL refuses.
 inline constexpr std::array<std::string_view, 2> kFirewallPanes{
     "x-apple.systempreferences:com.apple.Network-Settings.extension?Firewall",
     "x-apple.systempreferences:com.apple.preference.security?Firewall",

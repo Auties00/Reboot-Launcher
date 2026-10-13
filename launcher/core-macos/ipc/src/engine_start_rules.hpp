@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "reboot/foundation/diag.hpp"
+#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/types.hpp"
 #include "reboot/ports/ipc.hpp"
@@ -48,6 +49,23 @@ struct LaunchctlRun {
 // True for a label the domain does not know yet right after this call registered it: launchd may
 // load the job after register() returns.
 [[nodiscard]] bool kickstart_retry_after_register(const LaunchctlRun& run, bool registered_now);
+
+// A retried kickstart gets at least this, or is not made: launchctl itself needs some of it.
+inline constexpr std::chrono::milliseconds kKickstartMinTry{250};
+
+struct KickstartCalls {
+    // One launchctl kickstart, SIGKILLed past `deadline`.
+    UniqueFunction<Result<LaunchctlRun>(std::chrono::milliseconds deadline)> run;
+    UniqueFunction<void(std::chrono::milliseconds pause)> pause;
+    UniqueFunction<std::chrono::steady_clock::time_point()> now;
+};
+
+// Kickstarts within `budget` for all tries together. Only kickstart_retry_after_register retries,
+// after `interval`, and only while kKickstartMinTry of the budget is left once the pause is over;
+// otherwise the last try stands, so a pause that overshoots never turns 113 into a time-out.
+[[nodiscard]] Result<LaunchctlRun> kickstart_with_retries(KickstartCalls& calls, bool registered_now,
+                                                          std::chrono::milliseconds budget,
+                                                          std::chrono::milliseconds interval);
 
 // platform.app_translocated (Conflict): move the app to Applications and open it again.
 [[nodiscard]] Diagnostic app_translocated();

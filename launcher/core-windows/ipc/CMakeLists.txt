@@ -27,17 +27,19 @@ reboot_add_package(os_windows/ipc
     advapi32 ole32 oleaut32 shell32 taskschd user32)
 
 # Real-pipe suite (port_conformance's IPC, caller-context and engine starter suites, squatting, anonymous clients,
-# other-user peers when the runner provides a second account); runs on the Windows CI runner only.
+# other-user peers when the runner provides a second account, and the engine task that os_windows/platform's
+# registrar registers); runs on the Windows CI runner only.
 if(WIN32 AND REBOOT_BUILD_TESTS)
   file(GLOB conformance_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/conformance/*.cpp")
   if(conformance_sources)
     add_executable(reboot_os_windows_ipc_conformance ${conformance_sources})
-    _reboot_record_target(reboot_os_windows_ipc_conformance test DEPS reboot::os_windows_ipc reboot::testing
+    _reboot_record_target(reboot_os_windows_ipc_conformance test
+      DEPS reboot::os_windows_ipc reboot::os_windows_platform reboot::testing
       SOURCES ${conformance_sources})
     target_include_directories(reboot_os_windows_ipc_conformance PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(reboot_os_windows_ipc_conformance PRIVATE
-      reboot_os_windows_ipc advapi32 Catch2::Catch2WithMain reboot_warnings
-      $<TARGET_NAME_IF_EXISTS:reboot_testing>)
+      reboot_os_windows_ipc reboot_os_windows_platform advapi32 ole32 oleaut32 taskschd Catch2::Catch2WithMain
+      reboot_warnings $<TARGET_NAME_IF_EXISTS:reboot_testing>)
     # Stands in for reboot-engine in the engine starter check.
     add_executable(reboot-fake-pipe-engine conformance/fake_engine/fake_pipe_engine_main.cpp)
     _reboot_record_target(reboot-fake-pipe-engine test DEPS reboot::os_windows_ipc
@@ -50,6 +52,9 @@ if(WIN32 AND REBOOT_BUILD_TESTS)
     if(NOT COMMAND catch_discover_tests)
       include(Catch)
     endif()
-    catch_discover_tests(reboot_os_windows_ipc_conformance)
+    # The engine task cases and os_windows/platform's registrar round trip share this user's task.
+    catch_discover_tests(reboot_os_windows_ipc_conformance TEST_SPEC "[engine_task]"
+      PROPERTIES RESOURCE_LOCK reboot_user_integrations)
+    catch_discover_tests(reboot_os_windows_ipc_conformance TEST_SPEC "~[engine_task]")
   endif()
 endif()
