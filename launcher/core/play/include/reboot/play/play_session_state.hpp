@@ -10,6 +10,7 @@
 #include "reboot/injection/net_mode.hpp"
 #include "reboot/sessions/session_exit.hpp"
 #include "reboot/sessions/session_phase.hpp"
+#include "reboot/support/support_tier.hpp"
 
 namespace rb::play {
 
@@ -36,6 +37,8 @@ struct PlaySessionState {
     SessionId session;
     PlayPhase phase = PlayPhase::Preparing;
     injection::NetMode net_mode = injection::NetMode::Isolated;
+    // The verdict the start was planned with.
+    support::SupportTier tier = support::SupportTier::Tested;
     // Ids of the optional patches and hooks that failed.
     std::vector<std::string> degraded;
     bool console_ready = false;

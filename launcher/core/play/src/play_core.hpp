@@ -17,6 +17,7 @@ class EventBus;
 class Executor;
 class IRandom;
 class Redactor;
+class TimerService;
 class UserRequestRegistry;
 }  // namespace rb
 
@@ -49,6 +50,7 @@ struct PlayCoreDeps {
     OpRegistry& ops;
     EventBus& events;
     Executor& strand;
+    TimerService& timers;
 };
 
 // PlayService's state machine over PlayEnv; see PlayService for the rules it keeps.

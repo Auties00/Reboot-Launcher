@@ -176,6 +176,7 @@ inline constexpr MessageId kDiskLocked{"engine_test.disk_locked"};
 class DiskFileSystem final : public ports::IFileSystem {
 public:
     Result<void> atomic_replace(const NativePath& target, std::span<const u8> bytes, bool keep_backup) override {
+        if (fail_writes.load()) return fail(target, ErrorKind::Generic);
         std::error_code error;
         std::filesystem::create_directories(target.parent_path(), error);
         NativePath temp = target;
@@ -197,6 +198,7 @@ public:
     }
 
     Result<std::vector<u8>> read_all(const NativePath& path) override {
+        if (fail_reads.load()) return fail(path, ErrorKind::Generic);
         std::error_code error;
         if (!std::filesystem::is_regular_file(path, error)) return fail(path, ErrorKind::NotFound);
         std::ifstream in(path, std::ios::binary);
@@ -261,6 +263,11 @@ public:
         if (error) return fail(path, ErrorKind::Generic);
         return {};
     }
+
+    // Every atomic_replace fails while set, as on a full disk.
+    std::atomic<bool> fail_writes{false};
+    // Every read_all fails while set, as on a file the user cannot read.
+    std::atomic<bool> fail_reads{false};
 
 private:
     struct LockState {

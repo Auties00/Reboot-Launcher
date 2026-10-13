@@ -2,6 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <memory>
 #include <optional>
@@ -16,6 +17,7 @@
 #include "reboot/api/v1/library.hpp"
 #include "reboot/api/v1/play.hpp"
 #include "reboot/api/v1/sessions.hpp"
+#include "reboot/api/v1/support.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/testing/fake_client_dll.hpp"
@@ -183,6 +185,8 @@ TEST_CASE("play flow: an imported build is planned, launched with our DLL, and r
     REQUIRE(session);
     CHECK(session->summary.kind == api::SessionKind::Play);
     CHECK(session->summary.phase == api::SessionPhase::Running);
+    CHECK(session->detail.tier != api::SupportTier::Unknown);
+    CHECK(session->detail.tier == plan->tier);
 
     // A second play session is refused while one runs.
     const Result<u64> second = p.rig.start(*p.client, api::kPlayStart, api::PlayStartRequest{api::PlayRequest{}});
@@ -192,6 +196,41 @@ TEST_CASE("play flow: an imported build is planned, launched with our DLL, and r
     REQUIRE(stop);
     static_cast<void>(EngineRig::completed<api::SessionsStopResponse>(p.rig.settle_op(*p.client, *stop)));
     CHECK(p.rig.session_host->last()->stop_grace().has_value());
+}
+
+TEST_CASE("play flow: a build above the version cap is offered the opt-in, which Library.Update grants") {
+    PlayRig p;
+    const api::Build build = p.import_build();
+    CHECK_FALSE(build.allow_above_cap);
+    api::LibraryUpdateRequest newer;
+    newer.id = build.id;
+    newer.version = api::GameVersion{31, 0, std::nullopt};
+    REQUIRE(p.rig.call<api::LibraryUpdateResponse>(*p.client, api::kLibraryUpdate, newer));
+
+    api::SupportQueryRequest query;
+    query.build = build.id;
+    query.role = api::GameRole::Client;
+    const Result<api::SupportQueryResponse> blocked =
+        p.rig.call<api::SupportQueryResponse>(*p.client, api::kSupportQuery, query);
+    REQUIRE(blocked);
+    CHECK(blocked->tier == api::SupportTier::Blocked);
+    CHECK(blocked->opt_in_available);
+
+    api::LibraryUpdateRequest allow;
+    allow.id = build.id;
+    allow.allow_above_cap = true;
+    const Result<api::LibraryUpdateResponse> allowed =
+        p.rig.call<api::LibraryUpdateResponse>(*p.client, api::kLibraryUpdate, allow);
+    REQUIRE(allowed);
+    CHECK(allowed->build.allow_above_cap);
+
+    const Result<api::SupportQueryResponse> opted =
+        p.rig.call<api::SupportQueryResponse>(*p.client, api::kSupportQuery, query);
+    REQUIRE(opted);
+    CHECK(opted->tier == api::SupportTier::Untested);
+    CHECK_FALSE(opted->opt_in_available);
+    CHECK(std::ranges::any_of(opted->reasons,
+                              [](const api::Diagnostic& reason) { return reason.id == "support.above_version_cap_opted_in"; }));
 }
 
 TEST_CASE("play flow: a game that exits before logging in fails the start") {

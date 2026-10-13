@@ -22,6 +22,7 @@ reboot_add_package(engine
     src/host_platform.cpp
     src/idle_policy.cpp
     src/messages.cpp
+    src/package_hooks.cpp
     src/runtime_recorder.cpp
     src/state_extras.cpp
     src/state_guidance_store.cpp

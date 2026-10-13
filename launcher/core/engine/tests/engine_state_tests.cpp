@@ -147,12 +147,13 @@ TEST_CASE("engine stores: engine extras survive in state.json beside the typed m
     CHECK(state_extra(reread.stores.state.get(), kJoinTargetKey) == nullptr);
 }
 
-TEST_CASE("engine stores: a mode change reaches the bus once published") {
+TEST_CASE("engine stores: a mode change reaches the bus once published, and the stores' mode follows it") {
     StoresFixture f;
     static_cast<void>(f.stores.load(std::nullopt));
     EventBus bus(EngineEpoch{1});
     testing::EventRecorder recorder(bus, EventFilter{{EventKind::StorageModeChanged}, std::nullopt, std::nullopt});
-    f.stores.publish_mode_changes(bus);
+    std::vector<storage::StorageMode> modes;
+    f.stores.publish_mode_changes(bus, [&modes](storage::StorageMode mode) { modes.push_back(mode); });
     f.fs.faults().fail_next(testing::FsOperation::AtomicReplace,
                             make_diag(ErrorDomain::Storage, MessageId{"storage.write_failed"}).build());
     REQUIRE(f.stores.settings.update([](storage::SettingsDocument& document) { document.values.ui.language = "de"; }));
@@ -164,6 +165,8 @@ TEST_CASE("engine stores: a mode change reaches the bus once published") {
     REQUIRE_FALSE(changes.empty());
     CHECK(changes.front()->document == "settings");
     CHECK(changes.front()->mode == storage::StorageMode::InMemory);
+    CHECK(f.stores.mode() == storage::StorageMode::InMemory);
+    CHECK(modes == std::vector<storage::StorageMode>{storage::StorageMode::InMemory});
 }
 
 TEST_CASE("runtime recorder: children are recorded, forgotten when reaped, and the engine's start is written") {

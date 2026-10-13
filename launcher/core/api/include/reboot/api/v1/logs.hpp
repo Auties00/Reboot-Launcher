@@ -81,7 +81,6 @@ struct LogsReadResponse {
 
 struct LogsExportRequest {
     Path destination;
-    bool include_crash_dumps = false;
 
     bool operator==(const LogsExportRequest&) const = default;
 };

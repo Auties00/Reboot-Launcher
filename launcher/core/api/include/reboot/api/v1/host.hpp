@@ -408,8 +408,6 @@ struct HostCommandResponse {
 struct HostStartRequest {
     HostProfileId profile;
     HostOverrides overrides;
-    // The caller's environment at this launch, filtered as PlayRequest.environment is.
-    std::vector<EnvVar> environment;
     // The running play session this server is for; set exactly with the auto profile, and the
     // server stops with that session.
     std::optional<SessionId> linked_to;
@@ -573,7 +571,10 @@ public:
     virtual ::rb::Result<HostProfilesUpdateResponse> profiles_update(const CallContext& context, const HostProfilesUpdateRequest& request) = 0;
     virtual ::rb::Result<HostProfilesDeleteResponse> profiles_delete(const CallContext& context, const HostProfilesDeleteRequest& request) = 0;
     virtual ::rb::Result<HostShareLinkResponse> share_link(const CallContext& context, const HostShareLinkRequest& request) = 0;
-    virtual ::rb::Result<HostCommandResponse> command(const CallContext& context, const HostCommandRequest& request) = 0;
+    // Completes once the game server answers: failed with its error, with
+    // gameserver.command_timeout or gameserver.not_running, or with engine.command_unsupported.
+    // Completes with HostCommandResponse.
+    virtual ::rb::Result<::rb::OpHandle> start_command(const CallContext& context, const HostCommandRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with HostStartResponse.
     virtual ::rb::Result<::rb::OpHandle> start(const CallContext& context, const HostStartRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     virtual ::rb::Result<HostStatusResponse> status(const CallContext& context, const HostStatusRequest& request) = 0;

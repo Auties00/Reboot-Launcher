@@ -40,6 +40,9 @@ message SupportQueryResponse {
   GameVersion version = 3;
   // Why the tier is not Tested.
   repeated Diagnostic reasons = 4;
+  // Above the newest supported version for a library build without the opt-in, which
+  // Library.Update's allow_above_cap grants.
+  bool opt_in_available = 5;
 }
 
 // Support tiers per version, role and runner.

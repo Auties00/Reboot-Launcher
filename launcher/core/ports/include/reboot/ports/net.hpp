@@ -56,7 +56,8 @@ struct StallPolicy {
     std::chrono::milliseconds window{0};
 };
 
-// Verification is always on; `ca_bundle` replaces the system store only where the OS has none.
+// Verification is always on. A set `ca_bundle` replaces the trust store on every OS; without one
+// the system store applies (ISystemInfo::ca_bundle() where the OS has no store of its own).
 struct TlsPolicy {
     std::optional<NativePath> ca_bundle;
 };
@@ -70,6 +71,11 @@ struct HttpRequest {
     std::chrono::milliseconds total_timeout{0};
     std::optional<StallPolicy> stall;
     TlsPolicy tls;
+    // A plain http request's redirects may reach only these hosts (and literal loopback) over plain
+    // http, never one the chain already reached over https; HttpClient fills it from HostTlsMemory.
+    std::vector<std::string> plain_http_hosts;
+    // Hosts seen on https before, which a plain http hop to is a downgrade.
+    std::vector<std::string> https_hosts;
 };
 
 struct HttpStatus {

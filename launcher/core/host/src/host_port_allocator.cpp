@@ -47,7 +47,7 @@ struct HostPortAllocator::Impl {
     };
 
     Impl(net::PortPreflight& preflight_in, WorkerPool& workers_in, Executor& strand_in)
-        : preflight(preflight_in), workers(workers_in), strand(strand_in) {}
+        : strand(strand_in), preflight(preflight_in), workers(workers_in) {}
 
     template <class F>
     void post(F&& task) {
@@ -60,11 +60,14 @@ struct HostPortAllocator::Impl {
         job->id = ++last_job;
         Job& queued = *job;
         queue.push_back(std::move(job));
-        // The callback may run on another thread; the strand settles it.
-        queued.on_cancel = queued.token.on_cancel([this, alive_token = alive.token(), id = queued.id](CancelReason) {
-            if (alive_token.cancelled()) return;
-            post([this, id] { cancel_queued(id); });
-        });
+        // The callback may run on another thread during destruction, so it reads no member.
+        queued.on_cancel = queued.token.on_cancel(
+            [this, &target = strand, alive_token = alive.token(), id = queued.id](CancelReason) {
+                if (alive_token.cancelled()) return;
+                target.post([this, alive_token, id] {
+                    if (!alive_token.cancelled()) cancel_queued(id);
+                });
+            });
         post([this] { pump(); });
         return {};
     }
@@ -169,14 +172,15 @@ struct HostPortAllocator::Impl {
         pump();
     }
 
+    // Declared first: destroyed last, after the registrations that wait for a running callback.
+    CancelSource alive;
+    Executor& strand;
     net::PortPreflight& preflight;
     WorkerPool& workers;
-    Executor& strand;
     std::deque<std::unique_ptr<Job>> queue;
     std::unique_ptr<Job> running;
     u64 last_job = 0;
     std::vector<std::pair<SessionId, PortBlock>> blocks;
-    CancelSource alive;
 };
 
 HostPortAllocator::HostPortAllocator(net::PortPreflight& preflight, WorkerPool& workers, Executor& strand)

@@ -65,7 +65,6 @@ message LogsReadResponse {
 
 message LogsExportRequest {
   Path destination = 1;
-  bool include_crash_dumps = 2;
 }
 
 message LogsExportResponse {

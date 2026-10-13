@@ -13,7 +13,7 @@
 namespace rb::api {
 
 // Changes with every change to the schema's payloads or methods; Engine.info reports the engine's.
-inline constexpr std::string_view kSchemaFingerprint = "0a4a6eaa9ef739b7";
+inline constexpr std::string_view kSchemaFingerprint = "914a52336fd1731e";
 
 inline constexpr u32 kEngineStatus = 0x00010001;
 inline constexpr u32 kEngineInfo = 0x00010002;
@@ -86,6 +86,7 @@ inline constexpr u32 kBrowserUpdateView = 0x000e0002;
 inline constexpr u32 kBrowserCloseView = 0x000e0003;
 inline constexpr u32 kBrowserState = 0x000e0004;
 inline constexpr u32 kBrowserResolve = 0x000e0005;
+inline constexpr u32 kBrowserSearch = 0x000e0006;
 inline constexpr u32 kJoinParseAddress = 0x000f0001;
 inline constexpr u32 kJoinTarget = 0x000f0002;
 inline constexpr u32 kJoinSetCustomTarget = 0x000f0003;
@@ -116,7 +117,7 @@ inline constexpr u32 kRequestsPending = 0x00150001;
 inline constexpr u32 kRequestsRespond = 0x00150002;
 
 // Sorted by id.
-inline constexpr std::array<MethodSpec, 99> kMethods{{
+inline constexpr std::array<MethodSpec, 100> kMethods{{
     MethodSpec{
         .id = kEngineStatus,
         .service = "reboot.api.v1.Engine",
@@ -581,7 +582,7 @@ inline constexpr std::array<MethodSpec, 99> kMethods{{
         .id = kHostCommand,
         .service = "reboot.api.v1.Host",
         .name = "host.command",
-        .kind = MethodKind::Call,
+        .kind = MethodKind::Operation,
         .default_disconnect = ::rb::DisconnectPolicy::BoundToConnection,
         .progress = ProgressUnit::NoProgress,
         .request_type = "reboot.api.v1.HostCommandRequest",
@@ -826,6 +827,16 @@ inline constexpr std::array<MethodSpec, 99> kMethods{{
         .progress = ProgressUnit::NoProgress,
         .request_type = "reboot.api.v1.BrowserResolveRequest",
         .response_type = "reboot.api.v1.BrowserResolveResponse",
+    },
+    MethodSpec{
+        .id = kBrowserSearch,
+        .service = "reboot.api.v1.Browser",
+        .name = "browser.search",
+        .kind = MethodKind::Operation,
+        .default_disconnect = ::rb::DisconnectPolicy::BoundToConnection,
+        .progress = ProgressUnit::NoProgress,
+        .request_type = "reboot.api.v1.BrowserSearchRequest",
+        .response_type = "reboot.api.v1.BrowserSearchResponse",
     },
     MethodSpec{
         .id = kJoinParseAddress,

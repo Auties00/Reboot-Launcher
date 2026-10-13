@@ -1,7 +1,6 @@
 #include "reboot/engine/api_router.hpp"
 
 #include <algorithm>
-#include <cctype>
 #include <limits>
 #include <string>
 #include <utility>
@@ -56,18 +55,6 @@ namespace rb::engine {
 namespace {
 
 constexpr std::size_t kWatchBudget = std::size_t{1} << 20;
-
-[[nodiscard]] std::string lowercase(std::string_view text) {
-    std::string out(text);
-    for (char& c : out) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return out;
-}
-
-[[nodiscard]] bool matches_text(const browser::ServerRow& row, const std::string& lowered) {
-    if (lowered.empty()) return true;
-    return lowercase(row.name).find(lowered) != std::string::npos ||
-           lowercase(row.author).find(lowered) != std::string::npos;
-}
 
 [[nodiscard]] api::LogLine log_line(const logging::LogLineEvent& event) {
     api::LogLine out;
@@ -160,13 +147,20 @@ void ApiRouter::on_connected(const ipc::ConnectionInfo& connection) {
         case contracts::ipc::ClientKind::Unknown:
         case contracts::ipc::ClientKind::Test: break;
     }
-    if (shell.empty() || state_->frontend.contains(std::string(shell))) return;
-    Result<storage::ShellName> name = storage::ShellName::parse(shell);
-    if (!name) return;
+    if (shell.empty()) return;
+    if (Result<storage::ShellName> name = storage::ShellName::parse(shell)) read_frontend_state(*name);
+}
+
+void ApiRouter::read_frontend_state(const storage::ShellName& shell) {
+    if (state_->frontend.contains(shell.value) || !state_->frontend_reading.insert(shell.value).second) return;
     const CancelToken alive = state_->alive.token();
-    deps_.frontend_state.get(*name, alive, [this, alive, key = std::string(shell)](Result<std::vector<u8>> blob) {
-        if (alive.cancelled() || !blob || state_->frontend.contains(key)) return;
-        state_->frontend.insert_or_assign(key, std::move(*blob));
+    deps_.frontend_state.get(shell, alive, [this, alive, key = shell.value](Result<std::vector<u8>> blob) {
+        if (alive.cancelled()) return;
+        state_->frontend_reading.erase(key);
+        // A put that answered meanwhile is newer than the file.
+        if (state_->frontend.contains(key)) return;
+        if (blob) state_->frontend.insert_or_assign(key, std::move(*blob));
+        else state_->frontend_errors.insert_or_assign(key, std::move(blob.error()));
     });
 }
 
@@ -174,7 +168,7 @@ void ApiRouter::on_disconnected(ConnectionId connection) {
     connections_.erase(connection);
     deps_.sessions.on_connection_closed(connection);
     for (auto it = state_->views.begin(); it != state_->views.end();) {
-        if (it->second.owner == connection) {
+        if (it->second == connection) {
             deps_.views.close(browser::ViewId{it->first});
             it = state_->views.erase(it);
         } else {
@@ -412,7 +406,7 @@ Result<EventFilter> ApiRouter::decode_filter(std::span<const u8> filter) {
     return out;
 }
 
-std::optional<contracts::ipc::WireEvent> ApiRouter::encode_event(const EventEnvelope& event) {
+std::optional<contracts::ipc::WireEvent> ApiRouter::encode_event(const EventEnvelope& event, ConnectionId receiver) {
     const std::optional<api::EventKind> kind = convert::event_kind(event.kind);
     if (!kind) return std::nullopt;
     api::EventPayload payload;
@@ -562,18 +556,17 @@ std::optional<contracts::ipc::WireEvent> ApiRouter::encode_event(const EventEnve
         case EventKind::ViewDelta:
             if (const auto* p = std::any_cast<browser::ViewUpdate>(&any)) {
                 const auto view = state_->views.find(p->view.value);
-                // Views another engine client opened, and closed ones, are no one's business here.
-                if (view == state_->views.end()) return std::nullopt;
-                const std::string lowered = lowercase(view->second.text);
+                // Closed views, and views another client opened, are no one's business here.
+                if (view == state_->views.end() || view->second != receiver) return std::nullopt;
                 std::vector<api::ServerEntry> rows;
-                for (const browser::ServerRow& row : p->rows)
-                    if (matches_text(row, lowered)) rows.push_back(requests::server_entry(deps_, row));
-                const u32 total = lowered.empty() ? p->total : static_cast<u32>(rows.size());
-                if (event.kind == EventKind::ViewSnapshot)
-                    payload.view_snapshot = api::ViewSnapshot{p->view.value, total, 0, std::move(rows),
-                                                              p->state == browser::ListState::Stale};
-                else
-                    payload.view_delta = api::ViewDelta{p->view.value, total, 0, std::move(rows)};
+                for (const browser::ServerRow& row : p->rows) rows.push_back(requests::server_entry(deps_, row));
+                if (event.kind == EventKind::ViewSnapshot) {
+                    payload.view_snapshot = api::ViewSnapshot{p->view.value, p->total, 0, std::move(rows),
+                                                              p->state == browser::ListState::Stale, std::nullopt};
+                    if (p->error) payload.view_snapshot->error = convert::diagnostic(*p->error);
+                } else {
+                    payload.view_delta = api::ViewDelta{p->view.value, p->total, 0, std::move(rows)};
+                }
             } else {
                 known = false;
             }
@@ -725,23 +718,25 @@ std::optional<contracts::ipc::WireEvent> ApiRouter::encode_event(const EventEnve
     return out;
 }
 
-Result<void> ApiRouter::put_secret(const ipc::ConnectionInfo&, std::span<const u8> target, SecretBytes secret) {
+void ApiRouter::put_secret(const ipc::ConnectionInfo&, std::span<const u8> target, SecretBytes secret,
+                           UniqueFunction<void(Result<void>)> done) {
     auto decoded = api::decode<api::SecretTarget>(target);
-    if (!decoded) return std::unexpected(api::to_diagnostic(decoded.error(), 0));
+    if (!decoded) return done(std::unexpected(api::to_diagnostic(decoded.error(), 0)));
     Result<secrets::SecretTarget> parsed = convert::secret_target(*decoded);
-    if (!parsed) return std::unexpected(std::move(parsed.error()));
+    if (!parsed) return done(std::unexpected(std::move(parsed.error())));
     const secrets::SecretTarget held = *parsed;
+    // put() keeps `saved` only when it accepts the value, so `done` is shared with the refusal.
+    auto shared = std::make_shared<UniqueFunction<void(Result<void>)>>(std::move(done));
     Result<void> put = deps_.secrets.put(*parsed, std::move(secret), std::nullopt,
-                                         [held](Result<secrets::SecretState> saved) {
-                                             if (!saved)
-                                                 REBOOT_LOG_WARN(Engine, "a {} secret was not saved: {}",
-                                                                 secrets::kind_name(held.kind), saved.error().id);
+                                         [shared, alive = state_->alive.token()](Result<secrets::SecretState> saved) {
+                                             if (alive.cancelled()) return;
+                                             if (saved) (*shared)(Result<void>{});
+                                             else (*shared)(std::unexpected(std::move(saved.error())));
                                          });
-    if (!put) return put;
+    if (!put) return (*shared)(std::move(put));
     if (held.kind == secrets::SecretKind::HostJoinPassword && decoded->host_profile)
         if (Result<void> refreshed = deps_.hosts.refresh_join_password(convert::id(*decoded->host_profile)); !refreshed)
             REBOOT_LOG_WARN(Host, "live sessions keep their join password: {}", refreshed.error().id);
-    return {};
 }
 
 Result<SecretBytes> ApiRouter::reveal_secret(const ipc::ConnectionInfo&, std::span<const u8> target) {

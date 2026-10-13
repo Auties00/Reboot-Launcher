@@ -32,9 +32,10 @@ struct PlaySessionHooks {
 };
 
 // Strand-only. The registry's handle on one play session, which owns what start() took for it.
-// Self-ends reach the registry as report_exit: our DLL's peer lost is Fatal, unresponsive is
-// Unresponsive, a HostFatal is Fatal. A linked auto-server that ends first only raises
-// play.linked_server_ended as a degraded condition.
+// Self-ends reach the registry as report_exit: our DLL's peer lost is Fatal unless the game's exit
+// follows within a short wait and decides the end, unresponsive is Unresponsive, a HostFatal is
+// Fatal. A linked auto-server that ends first only raises play.linked_server_ended as a degraded
+// condition.
 class PlaySessionDriver final : public sessions::ISessionDriver {
 public:
     PlaySessionDriver(PlaySessionReleases releases, PlaySessionHooks hooks);

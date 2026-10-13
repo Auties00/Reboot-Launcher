@@ -2,10 +2,22 @@
 
 #include <cstdlib>
 #include <string_view>
+#include <utility>
 
 #include "reboot/foundation/native_path.hpp"
 
 namespace rb::engine {
+
+integration::IntegrationTargets integration_targets(NativePath engine_exe) {
+    integration::IntegrationTargets targets;
+    switch (kHostOs) {
+        case components::ManifestOs::Windows: targets.flavor = integration::EntryFlavor::Windows; break;
+        case components::ManifestOs::MacOs: targets.flavor = integration::EntryFlavor::Apple; break;
+        case components::ManifestOs::Linux: targets.flavor = integration::EntryFlavor::FreeDesktop; break;
+    }
+    targets.engine_exe = std::move(engine_exe);
+    return targets;
+}
 
 std::optional<std::string> own_environment(const char* name) {
 #ifdef _WIN32

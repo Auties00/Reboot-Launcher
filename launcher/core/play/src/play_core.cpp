@@ -53,12 +53,17 @@ namespace gc = contracts::game_client;
 
 constexpr std::size_t kEventBudget = std::size_t{256} * 1024;
 constexpr std::chrono::milliseconds kStopGrace = default_deadline(OpKind::GracefulStop);
+// How long a lost DLL connection waits for the game's exit, whose code says how the session ended.
+constexpr std::chrono::milliseconds kExitAfterPeerLost{2000};
 // The client DLL rewrites a URL whose host ends with one of these to the session origin.
 constexpr std::array<std::string_view, 7> kRedirectHostSuffixes{
     "ol.epicgames.com", "ol.epicgames.net", "on.epicgames.com",   "epicgames.dev",
     "ak.epicgames.com", "superawesome.com", "game-social.epicgames.com"};
 // The loopback endpoints builds and hotfixes target; a connect to any of them goes to the session too.
-constexpr std::array<std::string_view, 4> kSentinels{"127.0.0.1:3551", "127.0.0.1:80", "[::1]:3551", "[::1]:80"};
+// The DLL matches text, so a dual-stack socket's IPv4-mapped form is listed as well.
+constexpr std::array<std::string_view, 6> kSentinels{"127.0.0.1:3551",           "127.0.0.1:80",
+                                                     "[::1]:3551",               "[::1]:80",
+                                                     "[::ffff:127.0.0.1]:3551", "[::ffff:127.0.0.1]:80"};
 
 // A browser server, joined through JoinService.
 struct BrowserJoin {
@@ -197,6 +202,9 @@ struct PlayCore::Impl {
         std::vector<NativePath> pending_inject;
         sessions::Incarnation incarnation;
         std::optional<sessions::SpawnedProcess> game_process;
+        // Our DLL's connection closed while the game had not exited yet.
+        std::optional<Diagnostic> peer_lost;
+        TimerHandle peer_lost_wait;
     };
 
     Impl(PlayCoreDeps deps_in, PlayServiceOptions options_in) : deps(deps_in), options(std::move(options_in)) {
@@ -381,6 +389,7 @@ struct PlayCore::Impl {
         query.role = support::SupportRole::Play;
         query.runner = in.runner.kind;
         query.imported = in.build.has_value();
+        query.above_cap_opt_in = in.build && in.build->allow_above_cap;
         query.custom_auth_dll = plan.net_mode == injection::NetMode::LegacyFixed;
         query.embedded_backend = in.stored_backend.kind == storage::BackendKind::Embedded;
         plan.support = verdict_for(query, auto_server);
@@ -615,6 +624,7 @@ struct PlayCore::Impl {
         again->driver = raw;
         raw->bind(*id);
         raw->state().net_mode = again->in.plan.net_mode;
+        raw->state().tier = again->in.plan.support.tier;
         REBOOT_LOG_AT(LogLevel::Info, Play, again->id, "starting {} ({})", again->in.build->name,
                       again->in.build->version->canonical());
         resolve_layout(*again);
@@ -640,6 +650,8 @@ struct PlayCore::Impl {
                                             Launch* found = live(key);
                                             if (found == nullptr) return;
                                             if (!payload) return fail_launch(*found, std::move(payload.error()));
+                                            if (Result<SemVer> version = SemVer::parse(payload->set.ref.version))
+                                                (void)deps.sessions.pin_payload(*found->id, *version);
                                             found->preflight.payload = std::move(*payload);
                                             verify_custom_auth(*found);
                                         }));
@@ -828,16 +840,14 @@ struct PlayCore::Impl {
         Result<secrets::SecretTarget> target = upstream_secret(l);
         if (!target) return fail_launch(l, std::move(target.error()));
         const u64 key = l.key;
-        const std::optional<RequestId> raised = deps.env.require_secret(
-            *target, secrets::SecretWait{l.id, l.op->id(), secrets::NeedsSecretReason::Missing}, l.work.token(),
-            guard([this, key](Result<SecretBytes> password) {
-                Launch* found = live(key);
-                if (found == nullptr) return;
-                if (!password) return fail_launch(*found, std::move(password.error()));
-                found->credential = secret_text(*password);
-                resolve_target(*found);
-            }));
-        if (raised && l.op != nullptr) l.op->awaiting_user(*raised);
+        deps.env.require_secret(*target, secrets::SecretWait{l.id, l.op->id(), secrets::NeedsSecretReason::Missing},
+                                l.work.token(), awaiting_user(key), guard([this, key](Result<SecretBytes> password) {
+                                    Launch* found = live(key);
+                                    if (found == nullptr) return;
+                                    if (!password) return fail_launch(*found, std::move(password.error()));
+                                    found->credential = secret_text(*password);
+                                    resolve_target(*found);
+                                }));
     }
 
     // ---- target ----
@@ -1067,6 +1077,7 @@ struct PlayCore::Impl {
         inputs.version = *l.in.build->version;
         inputs.build_boot = build_boot(l.in.flags, l.in.runner.kind);
         if (l.in.runner.kind == ports::RunnerKind::Native) inputs.runtime_boot = injection::kNativeBootDefault;
+        else if (pf.wine) inputs.runtime_boot = injection::RuntimeBootDefault{pf.wine->runtime.wine.runtime.boot_inject};
         inputs.client_runtime = injection::PinnedDll{client->path, client->sha256};
         inputs.custom_auth = l.custom_auth;
         pf.injection = injection::plan_injection(inputs);
@@ -1221,6 +1232,8 @@ struct PlayCore::Impl {
 
     // The session ends on its own: before Running the op fails with the same error.
     void end_session(Launch& l, sessions::SessionExit exit) {
+        l.peer_lost_wait.cancel();
+        l.peer_lost.reset();
         if (l.driver != nullptr) l.driver->state().ending = true;
         if (l.op != nullptr) complete_op(l, Failed{exit.error ? *exit.error : internal_bug("play.end_session: no error")});
         REBOOT_LOG_AT(LogLevel::Info, Play, l.id, "the session ends: {}",
@@ -1255,9 +1268,19 @@ struct PlayCore::Impl {
         end_session(*l, sessions::SessionExit{.reason = sessions::ExitReason::Unresponsive, .exit_code = std::nullopt, .error = std::nullopt});
     }
 
+    // A dying process loses its sockets before its exit is reported, so the exit gets a chance to end it.
     void on_peer_lost(u64 key, Diagnostic error) {
         Launch* l = running(key);
-        if (l == nullptr || l->driver->game_exited()) return;
+        if (l == nullptr || l->driver->game_exited() || l->peer_lost) return;
+        l->peer_lost = std::move(error);
+        l->peer_lost_wait = deps.timers.after(scaled(kExitAfterPeerLost, l->in.runner.multiplier()),
+                                              guard([this, key] { on_peer_lost_timeout(key); }));
+    }
+
+    void on_peer_lost_timeout(u64 key) {
+        Launch* l = running(key);
+        if (l == nullptr || !l->peer_lost) return;
+        Diagnostic error = std::move(*l->peer_lost);
         end_session(*l, sessions::SessionExit{.reason = sessions::ExitReason::Fatal, .exit_code = std::nullopt, .error = std::move(error)});
     }
 

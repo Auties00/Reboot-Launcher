@@ -55,6 +55,9 @@ struct SupportQueryResponse {
     GameVersion version;
     // Why the tier is not Tested.
     std::vector<Diagnostic> reasons;
+    // Above the newest supported version for a library build without the opt-in, which
+    // Library.Update's allow_above_cap grants.
+    bool opt_in_available = false;
 
     bool operator==(const SupportQueryResponse&) const = default;
 };

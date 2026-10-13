@@ -4,6 +4,7 @@
 #include <optional>
 
 #include "reboot/foundation/diag.hpp"
+#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/random.hpp"
@@ -17,6 +18,7 @@
 #include "reboot/ports/runner.hpp"
 #include "reboot/ports/secret_store.hpp"
 #include "reboot/ports/session_host.hpp"
+#include "reboot/ports/ui_language_source.hpp"
 
 namespace rb::ports {
 
@@ -48,12 +50,22 @@ struct PlatformServices {
     std::unique_ptr<ISecurityProductProbe> security;
     std::unique_ptr<IPrerequisiteProbe> prerequisites;
     std::unique_ptr<ISystemInfo> system;
+    std::unique_ptr<IUiLanguageSource> languages;
     std::unique_ptr<IUpdateApplier> updater;
     std::unique_ptr<IRandom> random;
+    // Windows only; elsewhere SIGTERM announces the end of the session.
+    std::unique_ptr<ISessionEndWatch> session_end;
 };
 
 // Defined by core-<os>/platform for the engine.
 [[nodiscard]] Result<PlatformServices> make_platform(const PlatformOptions& options);
+
+// The installer's calls into the package's main program, the engine.
+enum class PackageHook : u8 { AfterInstall, AfterUpdate, BeforeUninstall };
+
+// Defined by core-<os>/platform; the engine's first call. Where an installer runs the engine for a
+// hook (Velopack on Windows), runs `on_hook` and exits the process; otherwise returns at once.
+void run_package_hooks(UniqueFunction<void(PackageHook)> on_hook);
 
 // The engine's end of its endpoint, which make_platform leaves to the OS ipc module.
 struct EngineEndpoint {

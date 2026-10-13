@@ -46,6 +46,9 @@ struct Build {
     u64 added_unix_ms = 0;
     // False when the layout no longer resolves on disk.
     bool present = false;
+    // The user allowed this build above the newest supported version, so support rates it
+    // Untested instead of Blocked.
+    bool allow_above_cap = false;
 
     bool operator==(const Build&) const = default;
 };
@@ -92,6 +95,8 @@ struct LibraryUpdateRequest {
     std::optional<std::string> name;
     std::optional<GameVersion> version;
     std::optional<u32> changelist;
+    // "Allow unsupported versions for this build", offered by a verdict's opt_in_available.
+    std::optional<bool> allow_above_cap;
 
     bool operator==(const LibraryUpdateRequest&) const = default;
 };

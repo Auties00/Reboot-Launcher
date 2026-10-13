@@ -27,5 +27,8 @@ REBOOT_MESSAGE(kWriteFailed, "engine.write_failed", "The engine could not save {
 REBOOT_MESSAGE(kCancelled, "engine.cancelled", "The {what} was cancelled");
 REBOOT_MESSAGE(kNoWineRunner, "engine.no_wine_runner", "This system runs the game natively and has no Wine runner");
 REBOOT_MESSAGE(kSelfTestFailed, "engine.self_test_failed", "The engine could not reach itself at {endpoint}");
+REBOOT_MESSAGE(kCommandUnsupported, "engine.command_unsupported", "This game server does not support that command");
+REBOOT_MESSAGE(kApplyDetachedOnly, "engine.apply_detached_only",
+               "A launcher update keeps running when the window closes, so it cannot be bound to it");
 
 }  // namespace rb::engine::msg

@@ -21,6 +21,7 @@
 #include "reboot/backend/account_rename_request.hpp"
 #include "reboot/backend/backend_accounts.hpp"
 #include "reboot/backend/backend_config.hpp"
+#include "reboot/backend/backend_directory.hpp"
 #include "reboot/backend/backend_service.hpp"
 #include "reboot/backend/console_key.hpp"
 #include "reboot/backend/hid_usage.hpp"
@@ -31,6 +32,7 @@
 #include "reboot/browser/join_outcome.hpp"
 #include "reboot/browser/own_servers.hpp"
 #include "reboot/browser/rbsb_request_error.hpp"
+#include "reboot/browser/search.hpp"
 #include "reboot/browser/server_row.hpp"
 #include "reboot/browser/server_list.hpp"
 #include "reboot/builds/build_installer.hpp"
@@ -48,7 +50,9 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/foundation/user_request.hpp"
+#include "reboot/gameserver/command_result.hpp"
 #include "reboot/gameserver/game_server_binary.hpp"
+#include "reboot/gameserver/game_server_process.hpp"
 #include "reboot/host/host_command.hpp"
 #include "reboot/host/host_error.hpp"
 #include "reboot/host/host_service.hpp"
@@ -68,6 +72,7 @@
 #include "reboot/play/play_plan.hpp"
 #include "reboot/play/play_request.hpp"
 #include "reboot/play/play_service.hpp"
+#include "reboot/ports/ui_language_source.hpp"
 #include "reboot/publish/host_identity_store.hpp"
 #include "reboot/secrets/secret_service.hpp"
 #include "reboot/sessions/session_phase.hpp"
@@ -193,11 +198,13 @@ constexpr u32 kMaxLogPage = 5000;
     return patch;
 }
 
-[[nodiscard]] ux::LanguageTag ui_language(const storage::Settings& settings) {
+// ui.language, then the user's OS languages, then English.
+[[nodiscard]] ux::LanguageTag ui_language(const storage::Settings& settings, ports::IUiLanguageSource& languages) {
     const std::string selected = settings.snapshot().values.ui.language;
     ux::LanguagePreference preference;
     if (Result<ux::LanguagePreference> parsed = ux::LanguagePreference::parse(selected)) preference = *parsed;
-    return ux::resolve_language(preference, {}, ux::shipped_languages()).tag;
+    const std::vector<ux::LanguageTag> os_preferred = convert::language_tags(languages.preferred_ui_languages());
+    return ux::resolve_language(preference, os_preferred, ux::shipped_languages()).tag;
 }
 
 [[nodiscard]] Result<host::HostCommand> host_command(const api::OperatorCommand& command) {
@@ -225,6 +232,17 @@ constexpr u32 kMaxLogPage = 5000;
     }
     if (command.console) return host::HostCommand{gameserver::RunCommand{command.console->text}};
     return std::unexpected(convert::invalid_request("command"));
+}
+
+// The game server's answer as the Host.command op's outcome.
+[[nodiscard]] Outcome<void> command_outcome(gameserver::CommandResult result) {
+    switch (result.status) {
+        case gameserver::CommandStatus::Ok: return Completed<void>{};
+        case gameserver::CommandStatus::Failed:
+            return Failed{std::move(result.error).value_or(internal_bug("engine.command_outcome"))};
+        case gameserver::CommandStatus::Unsupported: break;
+    }
+    return Failed{make_diag(ErrorDomain::Engine, msg::kCommandUnsupported).kind(ErrorKind::Unsupported).build()};
 }
 
 [[nodiscard]] Result<std::vector<ports::IntegrationKind>> integration_kinds(const std::vector<api::IntegrationItem>& items) {
@@ -272,7 +290,7 @@ Result<api::BackendStatusResponse> ApiRouter::status(const api::CallContext&, co
 }
 
 Result<api::BackendDataDirResponse> ApiRouter::data_dir(const api::CallContext&, const api::BackendDataDirRequest&) {
-    return api::BackendDataDirResponse{convert::path(deps_.layout.backend_dir())};
+    return api::BackendDataDirResponse{convert::path(deps_.backend_directory.data_dir())};
 }
 
 Result<api::BackendSetTargetResponse> ApiRouter::set_target(const api::CallContext&, const api::BackendSetTargetRequest& request) {
@@ -351,35 +369,40 @@ Result<api::BrowserOpenViewResponse> ApiRouter::open_view(const api::CallContext
         if (state_->views.empty()) state_->browser_lease.release();
         return std::unexpected(std::move(view.error()));
     }
-    state_->views.insert_or_assign(view->value, State::View{context.connection, request.spec.text});
+    state_->views.insert_or_assign(view->value, context.connection);
     return api::BrowserOpenViewResponse{view->value};
 }
 
-Result<api::BrowserUpdateViewResponse> ApiRouter::update_view(const api::CallContext&, const api::BrowserUpdateViewRequest& request) {
+Result<api::BrowserUpdateViewResponse> ApiRouter::update_view(const api::CallContext& context,
+                                                              const api::BrowserUpdateViewRequest& request) {
     const auto view = state_->views.find(request.view_id);
-    if (view == state_->views.end())
+    // Another client's view is as unknown to this one as a closed view.
+    if (view == state_->views.end() || view->second != context.connection)
         return make_diag(ErrorDomain::Engine, msg::kUnknownView).arg("view", request.view_id).kind(ErrorKind::NotFound).fail();
     Result<browser::ViewSpec> spec = convert::view_spec(request.spec);
     if (!spec) return std::unexpected(std::move(spec.error()));
     if (Result<void> updated = deps_.views.update(browser::ViewId{request.view_id}, *spec); !updated)
         return std::unexpected(std::move(updated.error()));
-    view->second.text = request.spec.text;
     return api::BrowserUpdateViewResponse{};
 }
 
-Result<api::BrowserCloseViewResponse> ApiRouter::close_view(const api::CallContext&, const api::BrowserCloseViewRequest& request) {
-    if (state_->views.erase(request.view_id) == 0)
+Result<api::BrowserCloseViewResponse> ApiRouter::close_view(const api::CallContext& context,
+                                                            const api::BrowserCloseViewRequest& request) {
+    const auto view = state_->views.find(request.view_id);
+    if (view == state_->views.end() || view->second != context.connection)
         return make_diag(ErrorDomain::Engine, msg::kUnknownView).arg("view", request.view_id).kind(ErrorKind::NotFound).fail();
+    state_->views.erase(view);
     deps_.views.close(browser::ViewId{request.view_id});
     if (state_->views.empty()) state_->browser_lease.release();
     return api::BrowserCloseViewResponse{};
 }
 
-Result<api::BrowserStateResponse> ApiRouter::state(const api::CallContext&, const api::BrowserStateRequest&) {
+Result<api::BrowserStateResponse> ApiRouter::state(const api::CallContext& context, const api::BrowserStateRequest&) {
     const browser::ConnectionStatus& status = deps_.browser.status();
     api::BrowserStateResponse out;
     out.state = convert::connection_state(status.state);
-    for (const auto& [view, owner] : state_->views) out.open_views.push_back(view);
+    for (const auto& [id, owner] : state_->views)
+        if (owner == context.connection) out.open_views.push_back(id);
     if (status.error) out.error = convert::diagnostic(*status.error);
     return out;
 }
@@ -412,6 +435,62 @@ Result<OpHandle> ApiRouter::start_resolve(const api::CallContext&, const api::Br
         const browser::ServerDetails details = browser::make_server_details(*resolved->details, offset);
         op.complete(Completed<std::any>{std::any(api::BrowserResolveResponse{requests::server_entry(deps_, details.row),
                                                                              details.row.hidden})});
+    });
+    return handle;
+}
+
+Result<OpHandle> ApiRouter::start_search(const api::CallContext& context, const api::BrowserSearchRequest& request,
+                                         DisconnectPolicy disconnect) {
+    Result<browser::SearchRequest> search = convert::search_request(request);
+    if (!search) return std::unexpected(std::move(search.error()));
+
+    // Search refuses bad text before an op exists; its answer always comes later, by which time
+    // the op does.
+    struct Pending {
+        Operation<std::any>* op = nullptr;
+        CancelSource cancel;
+        CancelRegistration link;
+    };
+    auto pending = std::make_shared<Pending>();
+    // The browse connection only lives while a lease is held. The state keeps it, since Search may
+    // drop this callback uncalled after the browser session is gone.
+    const u64 lease = ++state_->next_search;
+    state_->search_leases.insert_or_assign(lease, deps_.browser.acquire());
+    Result<void> started = deps_.search.run(
+        context.connection, std::move(*search), pending->cancel.token(),
+        [this, pending, lease, alive = state_->alive.token()](Result<browser::SearchPage> page) {
+            pending->link.reset();
+            Operation<std::any>& op = *pending->op;
+            if (alive.cancelled()) {
+                op.complete(Cancelled{CancelReason::Shutdown});
+                return;
+            }
+            state_->search_leases.erase(lease);
+            if (!page) {
+                // Without a reason of the op's own, a newer search from the same client ended it.
+                if (page.error().kind == ErrorKind::Cancelled)
+                    op.complete(Cancelled{op.token().reason().value_or(CancelReason::Superseded)});
+                else
+                    op.complete(Failed{std::move(page.error())});
+                return;
+            }
+            api::BrowserSearchResponse response;
+            for (const browser::ServerRow& row : page->rows) response.rows.push_back(requests::server_entry(deps_, row));
+            if (page->next) response.next_cursor = std::move(page->next->bytes);
+            response.total = page->total;
+            response.resolved_by_id = page->resolved_by_id;
+            op.complete(Completed<std::any>{std::any(std::move(response))});
+        });
+    if (!started) {
+        state_->search_leases.erase(lease);
+        return std::unexpected(std::move(started.error()));
+    }
+    // The debounce comes first, then the edge's own request bounds.
+    auto [handle, op] = deps_.ops.create<std::any>(OpKind::QuicConnect, disconnect, std::nullopt, RunnerMultiplier::Native,
+                                                   std::chrono::seconds{30} + browser::kSearchDebounce);
+    pending->op = &op;
+    pending->link = op.token().on_cancel([weak = std::weak_ptr<Pending>(pending)](CancelReason reason) {
+        if (const std::shared_ptr<Pending> held = weak.lock()) held->cancel.cancel(reason);
     });
     return handle;
 }
@@ -626,7 +705,7 @@ Result<api::GuidanceOnboardingSkipResponse> ApiRouter::onboarding_skip(const api
 }
 
 Result<api::GuidanceLinksResponse> ApiRouter::links(const api::CallContext&, const api::GuidanceLinksRequest&) {
-    const ux::LanguageTag language = ui_language(deps_.settings);
+    const ux::LanguageTag language = ui_language(deps_.settings, deps_.languages);
     api::GuidanceLinksResponse out;
     for (const ux::AppLinkEntry& entry : deps_.app_links.list(language)) {
         std::string id;
@@ -697,20 +776,24 @@ Result<api::HostShareLinkResponse> ApiRouter::share_link(const api::CallContext&
     return api::HostShareLinkResponse{link->url(), convert::id(link->server)};
 }
 
-Result<api::HostCommandResponse> ApiRouter::command(const api::CallContext&, const api::HostCommandRequest& request) {
+Result<OpHandle> ApiRouter::start_command(const api::CallContext&, const api::HostCommandRequest& request,
+                                          DisconnectPolicy disconnect) {
     Result<host::HostCommand> command = host_command(request.command);
     if (!command) return std::unexpected(std::move(command.error()));
     const SessionId session = convert::id(request.session);
+    // The server's answer always comes later, by which time the op exists.
+    auto answering = std::make_shared<Operation<void>*>(nullptr);
     if (Result<void> sent = deps_.hosts.command(session, std::move(*command),
-                                                [session](gameserver::CommandResult result) {
-                                                    if (result.status == gameserver::CommandStatus::Ok) return;
-                                                    REBOOT_LOG_WARN(Host, "an operator command to {} failed: {}",
-                                                                    format_uuid(session.value),
-                                                                    result.error ? result.error->id : "unsupported");
+                                                [answering](gameserver::CommandResult result) {
+                                                    (*answering)->complete(command_outcome(std::move(result)));
                                                 });
         !sent)
         return std::unexpected(std::move(sent.error()));
-    return api::HostCommandResponse{};
+    // A margin past the server's own deadline, so its command_timeout is what the client sees.
+    auto [handle, op] = deps_.ops.create<void>(OpKind::Generic, disconnect, session, RunnerMultiplier::Native,
+                                               gameserver::kOperatorCommandDeadline + std::chrono::seconds{5});
+    *answering = &op;
+    return handle;
 }
 
 Result<OpHandle> ApiRouter::start(const api::CallContext&, const api::HostStartRequest& request, DisconnectPolicy disconnect) {
@@ -1068,6 +1151,7 @@ Result<api::LibraryUpdateResponse> ApiRouter::update(const api::CallContext&, co
         patch.version = *version;
     }
     if (request.changelist) patch.cl = Changelist{*request.changelist};
+    patch.allow_above_cap = request.allow_above_cap;
     Result<builds::InstalledBuild> updated = deps_.library.update(convert::id(request.id), patch);
     if (!updated) return std::unexpected(std::move(updated.error()));
     return api::LibraryUpdateResponse{convert::build(*updated)};
@@ -1235,7 +1319,10 @@ Result<api::SecretsStateResponse> ApiRouter::state(const api::CallContext&, cons
 Result<api::SecretsClearResponse> ApiRouter::clear(const api::CallContext&, const api::SecretsClearRequest& request) {
     Result<secrets::SecretTarget> target = convert::secret_target(request.target);
     if (!target) return std::unexpected(std::move(target.error()));
-    deps_.secrets.clear(*target, [](Result<void> cleared) { log_failure("erasing a stored secret", cleared); });
+    // The held value is gone now; the stored copy is erased after this answers.
+    deps_.secrets.clear(*target, [&errors = deps_.errors](Result<void> cleared) {
+        if (!cleared) errors.report(std::move(cleared.error()), LogCategory::Storage, std::nullopt);
+    });
     if (target->kind == secrets::SecretKind::HostJoinPassword && request.target.host_profile)
         if (Result<void> refreshed = deps_.hosts.refresh_join_password(convert::id(*request.target.host_profile)); !refreshed)
             REBOOT_LOG_WARN(Host, "live sessions keep their join password: {}", refreshed.error().id);
@@ -1260,11 +1347,16 @@ Result<api::SessionsGetResponse> ApiRouter::get(const api::CallContext&, const a
     if (info->pinned.build) detail.build = convert::id(*info->pinned.build);
     detail.version = convert::game_version(info->version);
     detail.runner = convert::runner(info->runner);
-    if (info->kind == sessions::SessionKind::Play)
-        if (const std::optional<play::PlaySessionState> play_state = deps_.play.state(info->id))
+    detail.tier = api::SupportTier::Unknown;
+    if (info->kind == sessions::SessionKind::Play) {
+        if (const std::optional<play::PlaySessionState> play_state = deps_.play.state(info->id)) {
             detail.net_mode =
                 play_state->net_mode == injection::NetMode::LegacyFixed ? api::NetMode::LegacyFixed : api::NetMode::PerSession;
-    detail.tier = api::SupportTier::Unknown;
+            detail.tier = convert::tier(play_state->tier);
+        }
+    } else if (Result<host::HostSnapshot> host_state = deps_.hosts.status(info->id)) {
+        detail.tier = convert::tier(host_state->tier);
+    }
     if (info->profile) detail.profile = convert::id(*info->profile);
     for (const sessions::SpawnedProcess& process : info->processes)
         detail.processes.push_back(api::SessionProcess{convert::process_role(process.role), process.pid});
@@ -1365,11 +1457,13 @@ Result<api::SettingsFrontendStateGetResponse> ApiRouter::frontend_state_get(cons
     if (!shell) return std::unexpected(std::move(shell.error()));
     if (const auto cached = state_->frontend.find(shell->value); cached != state_->frontend.end())
         return api::SettingsFrontendStateGetResponse{cached->second};
-    const CancelToken alive = state_->alive.token();
-    deps_.frontend_state.get(*shell, alive, [this, alive, key = shell->value](Result<std::vector<u8>> blob) {
-        if (alive.cancelled() || !blob || state_->frontend.contains(key)) return;
-        state_->frontend.insert_or_assign(key, std::move(*blob));
-    });
+    // Answered once, so the call after it reads the file again.
+    if (const auto failed = state_->frontend_errors.find(shell->value); failed != state_->frontend_errors.end()) {
+        Diagnostic error = std::move(failed->second);
+        state_->frontend_errors.erase(failed);
+        return std::unexpected(std::move(error));
+    }
+    read_frontend_state(*shell);
     return std::unexpected(not_ready("the frontend state"));
 }
 
@@ -1384,8 +1478,11 @@ Result<api::SettingsFrontendStatePutResponse> ApiRouter::frontend_state_put(cons
     static_cast<void>(json::parse(text, error));
     if (!is_valid_utf8(text) || error) return std::unexpected(convert::invalid_request("state"));
     state_->frontend.insert_or_assign(shell->value, request.state);
-    deps_.frontend_state.put(*shell, request.state, CancelToken{},
-                             [](Result<void> written) { log_failure("saving the frontend state", written); });
+    state_->frontend_errors.erase(shell->value);
+    // Write-behind: get answers the new state at once.
+    deps_.frontend_state.put(*shell, request.state, CancelToken{}, [&errors = deps_.errors](Result<void> written) {
+        if (!written) errors.report(std::move(written.error()), LogCategory::Storage, std::nullopt);
+    });
     return api::SettingsFrontendStatePutResponse{};
 }
 
@@ -1398,7 +1495,7 @@ Result<api::SettingsLanguagesResponse> ApiRouter::languages(const api::CallConte
         preference && preference->tag() &&
         std::ranges::none_of(out.languages, [&](const api::Language& known) { return known.tag == preference->tag()->str(); }))
         out.languages.push_back(api::Language{preference->tag()->str(), false});
-    out.resolved = ui_language(deps_.settings).str();
+    out.resolved = ui_language(deps_.settings, deps_.languages).str();
     return out;
 }
 
@@ -1456,6 +1553,7 @@ Result<api::SupportQueryResponse> ApiRouter::query(const api::CallContext&, cons
         if (build->version_confirmed()) query.version = build->version;
         query.cl = build->cl;
         query.imported = true;
+        query.above_cap_opt_in = build->allow_above_cap;
     } else if (request.version) {
         Result<GameVersion> version = convert::game_version(request.version->version, "version");
         if (!version) return std::unexpected(std::move(version.error()));
@@ -1498,7 +1596,11 @@ Result<OpHandle> ApiRouter::start_check(const api::CallContext&, const api::Upda
     return deps_.updates.start_check(updates::CheckTrigger::User, disconnect);
 }
 
-Result<OpHandle> ApiRouter::start_apply(const api::CallContext&, const api::UpdatesApplyRequest& request, DisconnectPolicy) {
+Result<OpHandle> ApiRouter::start_apply(const api::CallContext&, const api::UpdatesApplyRequest& request,
+                                        DisconnectPolicy disconnect) {
+    // The automatic update shares the one apply op, so no client's disconnect may end it.
+    if (disconnect != DisconnectPolicy::Detached)
+        return make_diag(ErrorDomain::Engine, msg::kApplyDetachedOnly).kind(ErrorKind::InvalidInput).fail();
     return deps_.updates.start_apply(request.when == api::ApplyWhen::Now ? updates::ApplyWhen::Now : updates::ApplyWhen::WhenIdle);
 }
 

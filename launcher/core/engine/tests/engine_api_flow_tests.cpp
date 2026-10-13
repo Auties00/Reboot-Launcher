@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "engine_rig.hpp"
+#include "reboot/api/v1/browser.hpp"
 #include "reboot/api/v1/engine.hpp"
 #include "reboot/api/v1/guidance.hpp"
 #include "reboot/api/v1/host.hpp"
@@ -16,6 +17,7 @@
 #include "reboot/api/v1/integration.hpp"
 #include "reboot/api/v1/sessions.hpp"
 #include "reboot/api/v1/settings.hpp"
+#include "reboot/api/v1/updates.hpp"
 #include "reboot/foundation/types.hpp"
 #include "reboot/updates/update_event.hpp"
 
@@ -127,6 +129,90 @@ TEST_CASE("engine flow: frontend state is stored per shell") {
     const Result<api::SettingsFrontendStateGetResponse> unknown = rig.call<api::SettingsFrontendStateGetResponse>(
         *client, api::kSettingsFrontendStateGet, api::SettingsFrontendStateGetRequest{"Not A Shell"});
     CHECK_FALSE(unknown);
+}
+
+TEST_CASE("engine flow: a frontend state that cannot be read is answered with why, once") {
+    EngineRig rig;
+    rig.boot();
+    auto client = rig.connect();
+    rig.fs->fail_reads = true;
+    const auto get = [&] {
+        return rig.call<api::SettingsFrontendStateGetResponse>(*client, api::kSettingsFrontendStateGet,
+                                                               api::SettingsFrontendStateGetRequest{"cli"});
+    };
+    const Result<api::SettingsFrontendStateGetResponse> reading = get();
+    REQUIRE_FALSE(reading);
+    CHECK(reading.error().id == "engine.not_ready");
+    CHECK(reading.error().retryable);
+
+    std::optional<Diagnostic> failed;
+    REQUIRE(rig.strand.pump_until([&] {
+        Result<api::SettingsFrontendStateGetResponse> got = get();
+        if (!got && got.error().id != "engine.not_ready") failed = got.error();
+        return failed.has_value();
+    }));
+    CHECK(failed->id == "engine_test.disk_error");
+    CHECK_FALSE(failed->retryable);
+
+    // The next call reads again, and a readable file is then answered.
+    rig.fs->fail_reads = false;
+    std::optional<api::Bytes> state;
+    REQUIRE(rig.strand.pump_until([&] {
+        if (Result<api::SettingsFrontendStateGetResponse> got = get()) state = got->state;
+        return state.has_value();
+    }));
+    CHECK(state->empty());
+}
+
+TEST_CASE("engine flow: a store that stops saving changes the storage mode every client sees") {
+    EngineRig rig;
+    rig.boot();
+    auto client = rig.connect();
+    const auto storage_mode = [&] {
+        Result<api::EngineInfoResponse> info = rig.call<api::EngineInfoResponse>(*client, api::kEngineInfo, api::EngineInfoRequest{});
+        REQUIRE(info);
+        return info->storage_mode;
+    };
+    REQUIRE(storage_mode() == api::StorageMode::ReadWrite);
+
+    rig.fs->fail_writes = true;
+    const Result<api::SettingsSnapshotResponse> snapshot =
+        rig.call<api::SettingsSnapshotResponse>(*client, api::kSettingsSnapshot, api::SettingsSnapshotRequest{});
+    REQUIRE(snapshot);
+    api::SettingsPatchRequest patch;
+    patch.expected_revision = snapshot->revision;
+    patch.changes.push_back(text_setting("ui.language", "de"));
+    REQUIRE(rig.call<api::SettingsPatchResponse>(*client, api::kSettingsPatch, patch));
+    REQUIRE(rig.strand.pump_until([&] { return storage_mode() == api::StorageMode::InMemory; }, 5min));
+    CHECK(client->hello_ack()->storage_mode == contracts::ipc::StorageMode::InMemory);
+    auto later = rig.connect();
+    CHECK(later->hello_ack()->storage_mode == contracts::ipc::StorageMode::InMemory);
+}
+
+TEST_CASE("engine flow: a launcher update cannot be bound to the client that asked for it") {
+    EngineRig rig;
+    rig.boot();
+    auto client = rig.connect();
+    const Result<u64> bound = rig.start(*client, api::kUpdatesApply, api::UpdatesApplyRequest{}, false);
+    REQUIRE_FALSE(bound);
+    CHECK(bound.error().id == "engine.apply_detached_only");
+    // Detached, as by default, it reaches the update service, which has nothing to apply.
+    const Result<u64> detached = rig.start(*client, api::kUpdatesApply, api::UpdatesApplyRequest{});
+    REQUIRE_FALSE(detached);
+    CHECK(detached.error().id != "engine.apply_detached_only");
+}
+
+TEST_CASE("engine flow: the resolved UI language asks the user's OS languages") {
+    EngineRig rig;
+    rig.languages->set({"de_DE.UTF-8", "en-GB"});
+    rig.boot();
+    auto client = rig.connect();
+    const Result<api::SettingsLanguagesResponse> languages =
+        rig.call<api::SettingsLanguagesResponse>(*client, api::kSettingsLanguages, api::SettingsLanguagesRequest{});
+    REQUIRE(languages);
+    CHECK(languages->selected == "system");
+    CHECK(languages->resolved == "en");
+    CHECK(rig.languages->queries() > 0);
 }
 
 TEST_CASE("engine flow: host profiles are created, listed and deleted") {
@@ -313,4 +399,38 @@ TEST_CASE("engine flow: the idle exit waits for a detached op that started witho
     REQUIRE(rig.strand.pump_until([&] { return rig.exit.has_value(); }, 30min));
     CHECK(*rig.exit == EngineExit::Ok);
     static_cast<void>(handle);
+}
+
+TEST_CASE("engine flow: a browser view belongs to the connection that opened it") {
+    EngineRig rig;
+    rig.boot();
+    auto owner = rig.connect();
+    auto other = rig.connect();
+    const api::EventFilter snapshots{{api::EventKind::ViewSnapshot}, std::nullopt, std::nullopt};
+    const u64 owner_sub = owner->subscribe(snapshots);
+    const u64 other_sub = other->subscribe(snapshots);
+    rig.settle();
+
+    const Result<api::BrowserOpenViewResponse> opened =
+        rig.call<api::BrowserOpenViewResponse>(*owner, api::kBrowserOpenView, api::BrowserOpenViewRequest{});
+    REQUIRE(opened);
+    REQUIRE(rig.strand.pump_until([&] { return !owner->events(owner_sub).empty(); }));
+    rig.settle();
+    CHECK(other->events(other_sub).empty());
+
+    const Result<api::BrowserUpdateViewResponse> updated = rig.call<api::BrowserUpdateViewResponse>(
+        *other, api::kBrowserUpdateView, api::BrowserUpdateViewRequest{opened->view_id, {}});
+    REQUIRE_FALSE(updated);
+    CHECK(updated.error().id == "engine.unknown_view");
+    const Result<api::BrowserCloseViewResponse> closed = rig.call<api::BrowserCloseViewResponse>(
+        *other, api::kBrowserCloseView, api::BrowserCloseViewRequest{opened->view_id});
+    REQUIRE_FALSE(closed);
+    CHECK(closed.error().id == "engine.unknown_view");
+    const Result<api::BrowserStateResponse> state =
+        rig.call<api::BrowserStateResponse>(*other, api::kBrowserState, api::BrowserStateRequest{});
+    REQUIRE(state);
+    CHECK(state->open_views.empty());
+
+    CHECK(rig.call<api::BrowserCloseViewResponse>(*owner, api::kBrowserCloseView,
+                                                  api::BrowserCloseViewRequest{opened->view_id}));
 }

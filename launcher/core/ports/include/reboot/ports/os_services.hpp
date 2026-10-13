@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "reboot/foundation/diag.hpp"
+#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/types.hpp"
 
@@ -94,6 +95,18 @@ public:
     // Does not return on success: the process is replaced or exits for the updater.
     virtual Result<void> apply_and_restart(std::vector<std::string> args) = 0;
     [[nodiscard]] virtual bool supports_in_place() const = 0;
+};
+
+// A logoff or shutdown on Windows terminates every process once it has answered WM_ENDSESSION, and
+// a windowless engine gets no console signal; macOS and Linux session managers send SIGTERM.
+class ISessionEndWatch {
+public:
+    // Releases a held session end.
+    virtual ~ISessionEndWatch() = default;
+
+    // Calls `on_end` once, on the watch's own thread, when the user's session is ending, then
+    // holds the end until this watch is destroyed or its budget runs out.
+    virtual Result<void> start(UniqueFunction<void()> on_end) = 0;
 };
 
 }  // namespace rb::ports

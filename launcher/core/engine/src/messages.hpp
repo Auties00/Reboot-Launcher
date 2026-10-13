@@ -24,5 +24,7 @@ REBOOT_MESSAGE_DECL(kWriteFailed);
 REBOOT_MESSAGE_DECL(kCancelled);
 REBOOT_MESSAGE_DECL(kNoWineRunner);
 REBOOT_MESSAGE_DECL(kSelfTestFailed);
+REBOOT_MESSAGE_DECL(kCommandUnsupported);
+REBOOT_MESSAGE_DECL(kApplyDetachedOnly);
 
 }  // namespace rb::engine::msg

@@ -44,14 +44,16 @@ public:
     // Blocking, step 4; nothing aborts it. With `memory_only` every store stays in memory.
     [[nodiscard]] std::vector<storage::LoadReport> load(std::optional<Diagnostic> memory_only);
 
-    // The most restricted mode of the last load().
-    [[nodiscard]] storage::StorageMode mode() const noexcept { return mode_; }
+    // The most restricted mode of all stores now: a failed write turns a store InMemory until a
+    // later write succeeds.
+    [[nodiscard]] storage::StorageMode mode() const noexcept;
 
     // `done` runs on the strand with the first write error, if any.
     void flush_all(UniqueFunction<void(Result<void>)> done);
 
-    // From then on every store's StorageModeChanged goes out as EventKind::StorageModeChanged.
-    void publish_mode_changes(EventBus& events);
+    // From then on every store's StorageModeChanged goes out as EventKind::StorageModeChanged,
+    // after `on_mode` got the new mode().
+    void publish_mode_changes(EventBus& events, UniqueFunction<void(storage::StorageMode)> on_mode);
 
     storage::DocumentStore<storage::SettingsDocument> settings;
     storage::DocumentStore<storage::LibraryDocument> library;
@@ -63,9 +65,6 @@ public:
     storage::DocumentStore<storage::ResumeDocument> resume;
     storage::DocumentStore<compat::CompatDocument> compat;
     storage::DocumentStore<gameserver::DescribeCacheDocument> describe_cache;
-
-private:
-    storage::StorageMode mode_ = storage::StorageMode::ReadWrite;
 };
 
 }  // namespace rb::engine

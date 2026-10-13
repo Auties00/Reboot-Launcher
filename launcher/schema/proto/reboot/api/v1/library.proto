@@ -38,6 +38,9 @@ message Build {
   uint64 added_unix_ms = 8;
   // False when the layout no longer resolves on disk.
   bool present = 9;
+  // The user allowed this build above the newest supported version, so support rates it
+  // Untested instead of Blocked.
+  bool allow_above_cap = 10;
 }
 
 message LibraryListRequest {}
@@ -70,6 +73,8 @@ message LibraryUpdateRequest {
   optional string name = 2;
   optional GameVersion version = 3;
   optional uint32 changelist = 4;
+  // "Allow unsupported versions for this build", offered by a verdict's opt_in_available.
+  optional bool allow_above_cap = 5;
 }
 
 message LibraryUpdateResponse {

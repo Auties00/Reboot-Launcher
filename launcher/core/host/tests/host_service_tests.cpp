@@ -11,6 +11,7 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/system/error_code.hpp>
 
 #include "host_test_support.hpp"
 #include "reboot/builds/cl_table.hpp"
@@ -174,10 +175,22 @@ public:
     void stop(const sessions::StopRequest&, sessions::StopDone done) override { done(Result<void>{}); }
 };
 
+// A UDP wildcard socket on an OS-chosen port whose 20 ports above were free when it was picked.
 asio::ip::udp::socket bind_with_room(asio::io_context& io) {
+    const auto room_free = [&io](u16 held) {
+        for (u16 offset = 1; offset <= 20; ++offset) {
+            asio::ip::udp::socket probe(io);
+            boost::system::error_code error;
+            probe.open(asio::ip::udp::v4(), error);
+            if (!error) probe.bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), static_cast<u16>(held + offset)), error);
+            if (error) return false;
+        }
+        return true;
+    };
     while (true) {
         asio::ip::udp::socket socket(io, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0));
-        if (socket.local_endpoint().port() <= 65000) return socket;
+        const u16 held = socket.local_endpoint().port();
+        if (held <= 65000 && room_free(held)) return socket;
     }
 }
 
@@ -485,6 +498,7 @@ TEST_CASE("a start runs the server through Listening to a published Live session
 
     const HostSnapshot snapshot = *f.service->status(session);
     CHECK(snapshot.phase.phase == HostPhase::Live);
+    CHECK(snapshot.tier == support::SupportTier::Untested);
     CHECK(snapshot.listening.has_value());
     CHECK(snapshot.publish.has_value());
     CHECK(f.service->share_link(session)->server == published->server);
@@ -580,6 +594,23 @@ TEST_CASE("a build outside the described range is blocked", "[host][service]") {
     CHECK(blocked.domain == ErrorDomain::Support);
     CHECK(f.registry.list().empty());
     CHECK(f.servers().empty());
+}
+
+TEST_CASE("a build above the version cap hosts only with its opt-in", "[host][service]") {
+    Fixture f;
+    f.script.description.supports = {gs::VersionSupport{"3.5", "40.0", {}}};
+    const Result<builds::InstalledBuild> build = f.library.add(builds::NewBuild{
+        .name = "Next", .root = testing::default_fake_root() / "builds" / "31.0",
+        .version = builds::DetectedVersion{.version = *GameVersion::parse("31.0")}});
+    REQUIRE(build);
+    REQUIRE(f.library.select(support::SupportRole::Host, build->id));
+    const HostProfile profile = f.profile("Next", [](HostProfile& draft) { draft.version.reset(); });
+    const Diagnostic blocked = f.failed(f.start(f.request(profile)));
+    CHECK(blocked.id == "support.above_version_cap_opt_in_required");
+
+    REQUIRE(f.library.update(build->id, builds::BuildPatch{.allow_above_cap = true}));
+    const SessionId session = f.started(f.start(f.request(profile)));
+    CHECK(f.registry.get(session)->pinned.build == build->id);
 }
 
 TEST_CASE("a server that never listens fails the start with a listen timeout", "[host][service]") {
@@ -962,6 +993,20 @@ TEST_CASE("an update drain follows each session's update policy", "[host][servic
     f.strand.run_until([&] { return stopped; });
     CHECK(f.ended(kept)->reason == sessions::StopReason::EngineShutdown);
     CHECK(f.registry.list().empty());
+}
+
+TEST_CASE("a shutdown drain also waits for a session that was already stopping", "[host][service]") {
+    Fixture f;
+    const SessionId session = f.live(f.profile("Stopping"));
+    REQUIRE(f.registry.stop(session, sessions::StopRequest{.reason = sessions::StopReason::User, .grace = 5s}, nullptr));
+    REQUIRE(f.registry.get(session)->phase == sessions::SessionPhase::Stopping);
+
+    std::optional<bool> ended_first;
+    f.service->drain(sessions::ShutdownCause::Requested,
+                     [&] { ended_first = !f.registry.get(session).has_value(); });
+    f.strand.run_until([&] { return ended_first.has_value(); });
+    CHECK(*ended_first);
+    CHECK(f.ended(session)->reason == sessions::StopReason::User);
 }
 
 TEST_CASE("profile writes publish HostProfilesChanged and a join password refresh reads the secret", "[host][service]") {

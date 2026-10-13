@@ -1,5 +1,6 @@
 #include "reboot/engine/engine_stores.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 
@@ -44,8 +45,13 @@ std::vector<storage::LoadReport> EngineStores::load(std::optional<Diagnostic> me
     reports.push_back(load_one(resume, memory_only));
     reports.push_back(load_one(compat, memory_only));
     reports.push_back(load_one(describe_cache, memory_only));
-    mode_ = storage::combined_mode(reports);
     return reports;
+}
+
+storage::StorageMode EngineStores::mode() const noexcept {
+    // Enumerators run from least to most restricted.
+    return std::max({settings.mode(), library.mode(), accounts.mode(), backend_logins.mode(), host_profiles.mode(),
+                     state.mode(), runtime.mode(), resume.mode(), compat.mode(), describe_cache.mode()});
 }
 
 void EngineStores::flush_all(UniqueFunction<void(Result<void>)> done) {
@@ -75,8 +81,10 @@ void EngineStores::flush_all(UniqueFunction<void(Result<void>)> done) {
     describe_cache.flush(CancelToken{}, one);
 }
 
-void EngineStores::publish_mode_changes(EventBus& events) {
-    auto publish = [&events](const storage::StorageModeChanged& changed) {
+void EngineStores::publish_mode_changes(EventBus& events, UniqueFunction<void(storage::StorageMode)> on_mode) {
+    auto shared = std::make_shared<UniqueFunction<void(storage::StorageMode)>>(std::move(on_mode));
+    auto publish = [this, &events, shared](const storage::StorageModeChanged& changed) {
+        if (*shared) (*shared)(mode());
         events.publish(EventKind::StorageModeChanged, changed, EventScope{.coalesce_key = changed.document});
     };
     settings.set_on_mode_changed(publish);

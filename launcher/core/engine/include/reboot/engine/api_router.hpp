@@ -44,13 +44,12 @@ class IClock;
 class OpRegistry;
 class UserRequestRegistry;
 class WorkerPool;
-struct InstallLayout;
-class AppLayout;
 }  // namespace rb
 
 namespace rb::ports {
 class ISecurityProductProbe;
-}
+class IUiLanguageSource;
+}  // namespace rb::ports
 
 namespace rb::logging {
 class ErrorRouter;
@@ -63,6 +62,7 @@ class FrontendStateStore;
 class ResetService;
 class Settings;
 class SettingsRegistry;
+struct ShellName;
 }  // namespace rb::storage
 
 namespace rb::ux {
@@ -104,6 +104,7 @@ class IdentityService;
 
 namespace rb::backend {
 class BackendAccounts;
+class BackendDirectory;
 class BackendService;
 }  // namespace rb::backend
 
@@ -133,6 +134,7 @@ class DeepLinkService;
 class GameServerTarget;
 class IOwnServers;
 class JoinService;
+class Search;
 class ServerList;
 }  // namespace rb::browser
 
@@ -164,7 +166,6 @@ struct ApiRouterDeps {
     Executor& strand;
     WorkerPool& workers;
     const IClock& clock;
-    const AppLayout& layout;
     logging::LogRing& log_ring;
     logging::LogExporter& log_exporter;
     // Background failures are listed as notices and acknowledged by dismissing them.
@@ -188,6 +189,7 @@ struct ApiRouterDeps {
     identity::IdentityService& identity;
     backend::BackendService& backend;
     backend::BackendAccounts& backend_accounts;
+    const backend::BackendDirectory& backend_directory;
     sessions::SessionRegistry& sessions;
     play::PlayService& play;
     host::HostService& hosts;
@@ -195,6 +197,7 @@ struct ApiRouterDeps {
     const gameserver::GameServerBinary& game_server;
     browser::BrowserSession& browser;
     browser::ServerList& views;
+    browser::Search& search;
     browser::JoinService& join;
     browser::DeepLinkService& deep_links;
     browser::GameServerTarget& addresses;
@@ -206,6 +209,8 @@ struct ApiRouterDeps {
     integration::PurgeService& purge;
     integration::ShellService& shell;
     ports::ISecurityProductProbe& security;
+    // The user's preferred UI languages, between ui.language and English.
+    ports::IUiLanguageSource& languages;
 };
 
 // Capabilities: none. Strand-only; the only place domain types, events and UserRequest payloads
@@ -214,9 +219,12 @@ struct ApiRouterDeps {
 //   environment for this launch.
 // - Calls answer at once: what a service reads off the strand (integration status, prerequisites,
 //   a shell's frontend state) is kept up to date here, and is engine.not_ready until first read.
+//   A failed frontend state read is answered once, then read again.
 // - Each started op's method id is kept, so its Outcome carries that method's response; its
 //   request is kept too, for Engine.operations and the OpStarted event.
 // - EventKind::ForegroundHint is no API event, so encode_event skips it.
+// - A browser view belongs to the connection that opened it: only it gets the view's events and
+//   may update or close it.
 class ApiRouter final : public ipc::IApiDispatcher,
                         public api::IBackendHandler,
                         public api::IBrowserHandler,
@@ -252,8 +260,10 @@ public:
                            std::optional<DisconnectPolicy> disconnect) override;
     [[nodiscard]] contracts::ipc::Bytes encode_outcome(OpId op, const ErasedOutcome& outcome) override;
     Result<EventFilter> decode_filter(std::span<const u8> filter) override;
-    [[nodiscard]] std::optional<contracts::ipc::WireEvent> encode_event(const EventEnvelope& event) override;
-    Result<void> put_secret(const ipc::ConnectionInfo& from, std::span<const u8> target, SecretBytes secret) override;
+    [[nodiscard]] std::optional<contracts::ipc::WireEvent> encode_event(const EventEnvelope& event,
+                                                                      ConnectionId receiver) override;
+    void put_secret(const ipc::ConnectionInfo& from, std::span<const u8> target, SecretBytes secret,
+                    UniqueFunction<void(Result<void>)> done) override;
     Result<SecretBytes> reveal_secret(const ipc::ConnectionInfo& from, std::span<const u8> target) override;
 
     // Backend
@@ -273,6 +283,7 @@ public:
     Result<api::BrowserCloseViewResponse> close_view(const api::CallContext& context, const api::BrowserCloseViewRequest& request) override;
     Result<api::BrowserStateResponse> state(const api::CallContext& context, const api::BrowserStateRequest& request) override;
     Result<OpHandle> start_resolve(const api::CallContext& context, const api::BrowserResolveRequest& request, DisconnectPolicy disconnect) override;
+    Result<OpHandle> start_search(const api::CallContext& context, const api::BrowserSearchRequest& request, DisconnectPolicy disconnect) override;
     // Catalog
     Result<api::CatalogListResponse> list(const api::CallContext& context, const api::CatalogListRequest& request) override;
     Result<OpHandle> start_refresh(const api::CallContext& context, const api::CatalogRefreshRequest& request, DisconnectPolicy disconnect) override;
@@ -301,7 +312,7 @@ public:
     Result<api::HostProfilesUpdateResponse> profiles_update(const api::CallContext& context, const api::HostProfilesUpdateRequest& request) override;
     Result<api::HostProfilesDeleteResponse> profiles_delete(const api::CallContext& context, const api::HostProfilesDeleteRequest& request) override;
     Result<api::HostShareLinkResponse> share_link(const api::CallContext& context, const api::HostShareLinkRequest& request) override;
-    Result<api::HostCommandResponse> command(const api::CallContext& context, const api::HostCommandRequest& request) override;
+    Result<OpHandle> start_command(const api::CallContext& context, const api::HostCommandRequest& request, DisconnectPolicy disconnect) override;
     Result<OpHandle> start(const api::CallContext& context, const api::HostStartRequest& request, DisconnectPolicy disconnect) override;
     Result<api::HostStatusResponse> status(const api::CallContext& context, const api::HostStatusRequest& request) override;
     Result<api::HostCancelMatchEndResponse> cancel_match_end(const api::CallContext& context, const api::HostCancelMatchEndRequest& request) override;
@@ -384,6 +395,8 @@ private:
     Result<OpHandle> started(Result<OpHandle> handle, u32 method_id, std::span<const u8> request,
                              DisconnectPolicy disconnect);
     [[nodiscard]] u32 method_of(OpId op) const noexcept;
+    // Fills the shell's cache, or keeps the read's error for its next frontend_state_get.
+    void read_frontend_state(const storage::ShellName& shell);
 
     ApiRouterDeps deps_;
     // Each live connection's Hello, which outlives the calls made on it.

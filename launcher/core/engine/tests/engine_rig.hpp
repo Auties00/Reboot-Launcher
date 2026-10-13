@@ -52,6 +52,7 @@
 #include "reboot/testing/fake_session_host.hpp"
 #include "reboot/testing/fake_shell.hpp"
 #include "reboot/testing/fake_system_info.hpp"
+#include "reboot/testing/fake_ui_language_source.hpp"
 #include "reboot/testing/fake_update_applier.hpp"
 #include "reboot/testing/in_memory_ipc.hpp"
 #include "reboot/testing/in_memory_log_file_system.hpp"
@@ -122,7 +123,9 @@ public:
         port_inspector = inspector_owner.get();
         platform.ports = std::move(inspector_owner);
         platform.peer_inspector = std::make_unique<testing::FakeLoopbackPeerInspector>(false);
-        platform.resolver = std::make_unique<testing::FakeResolver>(strand);
+        auto resolver_owner = std::make_unique<testing::FakeResolver>(strand);
+        resolver = resolver_owner.get();
+        platform.resolver = std::move(resolver_owner);
         platform.ipc_listener = ipc.make_listener();
         platform.shell = std::make_unique<testing::FakeShell>();
         platform.integration = std::make_unique<testing::FakeRegistrar>();
@@ -131,6 +134,9 @@ public:
         auto system_owner = std::make_unique<testing::FakeSystemInfo>();
         system = system_owner.get();
         platform.system = std::move(system_owner);
+        auto languages_owner = std::make_unique<testing::FakeUiLanguageSource>();
+        languages = languages_owner.get();
+        platform.languages = std::move(languages_owner);
         platform.updater = std::make_unique<testing::FakeUpdateApplier>(true);
         platform.random = std::make_unique<testing::FakeRandom>(7);
 
@@ -296,6 +302,7 @@ public:
         write_file(install.game_server_exe, "game server v1");
         processes->on_exe(install.game_server_exe.filename().string(), [this](testing::ScriptedChild& child) -> Result<void> {
             testing::FakeGameServerScript script{.bind_sockets = false};
+            script.child = game_server_misbehaviour;
             script.description.capabilities.needs_backend = true;
             script.description.capabilities.operator_commands = {"run_command"};
             if (child.launch().args == std::vector<std::string>{"--describe"}) {
@@ -388,7 +395,9 @@ public:
     testing::ScriptedProcessLauncher* processes = nullptr;
     testing::FakeSessionHost* session_host = nullptr;
     testing::FakePortInspector* port_inspector = nullptr;
+    testing::FakeResolver* resolver = nullptr;
     testing::FakeSystemInfo* system = nullptr;
+    testing::FakeUiLanguageSource* languages = nullptr;
 
     DataRoot root;
     std::optional<AppLayout> layout;
@@ -398,6 +407,8 @@ public:
     std::unique_ptr<EngineServices> services;
 
     int backends_spawned = 0;
+    // Applied to every game server spawned after it is set.
+    testing::ChildMisbehaviour game_server_misbehaviour;
     // Owned by their ScriptedChild, so valid only while it runs.
     std::vector<testing::FakeGameServer*> game_servers;
     testing::ApiTestClient* accepting = nullptr;

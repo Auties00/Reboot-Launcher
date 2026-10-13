@@ -8,6 +8,7 @@
 #include "reboot/net/port_mapping.hpp"
 #include "reboot/publish/publish_state.hpp"
 #include "reboot/publish/reachability_changed.hpp"
+#include "reboot/support/support_tier.hpp"
 
 namespace rb::host {
 
@@ -16,6 +17,8 @@ struct HostSnapshot {
     HostPhaseChanged phase;
     // Absent before Listening and during a respawn.
     std::optional<HostListening> listening;
+    // The verdict the start was checked against.
+    support::SupportTier tier = support::SupportTier::Tested;
     // Absent while the session is not published.
     std::optional<publish::PublishState> publish;
     std::optional<publish::ReachabilityChanged> reachability;

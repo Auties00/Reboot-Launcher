@@ -214,7 +214,8 @@ public:
     // update policy, the profile's or else host.update_policy: AfterMatch sends Drain, hides the
     // entry (Draining) and stops the session with Update at its next MatchEnded, or at once with
     // no player connected; Manual leaves it running until the user stops it. Any other cause stops
-    // every host session now. `done` runs on the strand once every session it stops has ended.
+    // every host session now. `done` runs on the strand once every session it stops has ended,
+    // and for any other cause also every session that was already stopping.
     void drain(sessions::ShutdownCause cause, UniqueFunction<void()> done);
 
 private:

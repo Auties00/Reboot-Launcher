@@ -36,6 +36,10 @@ enum ConnectionState {
   CONNECTION_STATE_BACKOFF = 3;
   CONNECTION_STATE_DRAINING = 4;
   CONNECTION_STATE_UDP_BLOCKED = 5;
+  // This machine reaches no network; retried on the backoff.
+  CONNECTION_STATE_OFFLINE = 6;
+  // The network works but the server browser does not answer; retried on the backoff.
+  CONNECTION_STATE_SERVICE_DOWN = 7;
 }
 
 // Text fields come from strangers: sanitized, but render each one in its own isolated element.
@@ -67,8 +71,6 @@ message ViewSpec {
   ServerSort sort = 4;
   // Rows kept live; the engine clamps it to the edge's limit.
   uint32 window = 5;
-  // Free-text search; empty lists everything.
-  string text = 6;
 }
 
 message BrowserOpenViewRequest {
@@ -110,6 +112,33 @@ message BrowserResolveResponse {
   bool hidden = 2;
 }
 
+// A free-text search: a one-off page, not a live view.
+message BrowserSearchRequest {
+  // 1 to 64 bytes once trimmed, matched against name, author and id; a reboot:// link or a bare
+  // server id is resolved by id instead.
+  string text = 1;
+  // One rbsb/1 bucket, 0 for every version: the cursor pages a single bucket.
+  uint32 bucket = 2;
+  PasswordFilter password = 3;
+  Region region = 4;
+  ServerSort sort = 5;
+  // The previous page's next_cursor; empty for the first page.
+  bytes cursor = 6;
+  // 0 is the edge's default page size; larger values are clamped to the edge's limit.
+  uint32 limit = 7;
+}
+
+message BrowserSearchResponse {
+  // This user's own servers are left out.
+  repeated ServerEntry rows = 1;
+  // Empty on the last page.
+  bytes next_cursor = 2;
+  // The edge's count, which still includes this user's own servers.
+  uint32 total = 3;
+  // The text was a link or an id; hidden and offline servers answer too.
+  bool resolved_by_id = 4;
+}
+
 message BrowserConnectionChanged {
   ConnectionState state = 1;
   optional uint32 retry_in_ms = 2;
@@ -123,6 +152,8 @@ message ViewSnapshot {
   repeated ServerEntry rows = 4;
   // The edge is unreachable; rows are the last known ones.
   bool stale = 5;
+  // The edge refused the view; there are no rows until a retry it accepts.
+  optional Diagnostic error = 6;
 }
 
 // Replaces the whole window, so a newer delta supersedes an older one.
@@ -152,6 +183,14 @@ service Browser {
   rpc Resolve(BrowserResolveRequest) returns (BrowserResolveResponse) {
     option (method_info) = {
       id: 5
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  // Waits out a short debounce; a newer search from the same connection cancels this one
+  // (CANCEL_REASON_SUPERSEDED).
+  rpc Search(BrowserSearchRequest) returns (BrowserSearchResponse) {
+    option (method_info) = {
+      id: 6
       kind: METHOD_KIND_OPERATION
     };
   }

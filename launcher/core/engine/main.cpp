@@ -1,12 +1,14 @@
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include "reboot/engine/engine_command_line.hpp"
 #include "reboot/engine/engine_host.hpp"
+#include "reboot/engine/package_hooks.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/ports/ipc.hpp"
 #include "reboot/ports/platform_services.hpp"
@@ -23,6 +25,17 @@ int fail(const rb::Diagnostic& diag) {
 
 int main(int argc, char** argv) {
     using namespace rb;
+
+    // Velopack runs its hooks through the engine, its mainExe; such a run ends inside this call.
+    ports::run_package_hooks([](ports::PackageHook hook) {
+        Result<ports::PlatformServices> platform = ports::make_platform(ports::PlatformOptions{});
+        if (!platform) {
+            static_cast<void>(fail(platform.error()));
+            return;
+        }
+        if (std::optional<Diagnostic> failed = engine::run_package_hook(hook, *platform->integration, *platform->paths))
+            static_cast<void>(fail(*failed));
+    });
 
     const std::vector<std::string_view> args(argv + 1, argv + argc);
     Result<engine::EngineCommandLine> command_line = engine::parse_command_line(args);

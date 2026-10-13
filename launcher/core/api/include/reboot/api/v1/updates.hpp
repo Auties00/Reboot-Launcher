@@ -2,7 +2,6 @@
 #pragma once
 
 #include <optional>
-#include <string>
 
 #include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
@@ -33,7 +32,6 @@ enum class ApplyWhen : u32 {
 struct UpdateInfo {
     SemVer version;
     u64 size_bytes = 0;
-    std::string notes_url;
     // This build is below the manifest's min_supported, so new sessions are blocked.
     bool required = false;
 

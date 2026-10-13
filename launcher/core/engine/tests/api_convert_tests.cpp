@@ -177,6 +177,50 @@ TEST_CASE("api conversion: background failures become dismissible notices keyed 
     CHECK_FALSE(convert::background_failure_of(api::NoticeKey{"background_failure:x", std::nullopt}));
 }
 
+TEST_CASE("api conversion: OS languages become tags in order, without C or repeats") {
+    const std::vector<ux::LanguageTag> tags = convert::language_tags({"de_DE.UTF-8", "C", "pt-BR", "de-DE", "not a locale!"});
+    REQUIRE(tags.size() == 2);
+    CHECK(tags[0].str() == "de-DE");
+    CHECK(tags[1].str() == "pt-BR");
+}
+
+TEST_CASE("api conversion: a search keeps its filters and refuses values this build does not know") {
+    api::BrowserSearchRequest request;
+    request.text = "arena";
+    request.bucket = 3;
+    request.password = api::PasswordFilter::Without;
+    request.region = api::Region::Europe;
+    request.sort = api::ServerSort::Name;
+    request.cursor = {1, 2};
+    request.limit = 20;
+    const Result<browser::SearchRequest> search = convert::search_request(request);
+    REQUIRE(search);
+    CHECK(search->text == "arena");
+    CHECK(search->bucket == 3);
+    CHECK(search->password == browser::PasswordFilter::Without);
+    CHECK(search->region == browser::Region::Europe);
+    CHECK(search->sort == browser::ServerSort::Name);
+    CHECK(search->cursor == browser::SearchCursor{{1, 2}});
+    CHECK(search->limit == 20);
+
+    request.sort = static_cast<api::ServerSort>(9);
+    const Result<browser::SearchRequest> unknown = convert::search_request(request);
+    REQUIRE_FALSE(unknown);
+    CHECK(unknown.error().id == "engine.invalid_request");
+}
+
+TEST_CASE("api conversion: each browser connection state keeps its own API state") {
+    using browser::ConnectionState;
+    CHECK(convert::connection_state(ConnectionState::Idle) == api::ConnectionState::Idle);
+    CHECK(convert::connection_state(ConnectionState::Connecting) == api::ConnectionState::Connecting);
+    CHECK(convert::connection_state(ConnectionState::Connected) == api::ConnectionState::Connected);
+    CHECK(convert::connection_state(ConnectionState::Backoff) == api::ConnectionState::Backoff);
+    CHECK(convert::connection_state(ConnectionState::Draining) == api::ConnectionState::Draining);
+    CHECK(convert::connection_state(ConnectionState::UdpBlocked) == api::ConnectionState::UdpBlocked);
+    CHECK(convert::connection_state(ConnectionState::Offline) == api::ConnectionState::Offline);
+    CHECK(convert::connection_state(ConnectionState::ServiceDown) == api::ConnectionState::ServiceDown);
+}
+
 TEST_CASE("api requests: an answer becomes the payload's own answer type, or is refused") {
     const UserRequest join = request(UserRequestKind::ConfirmJoin, browser::ConfirmJoinPrompt{});
     api::RequestAnswer accept;

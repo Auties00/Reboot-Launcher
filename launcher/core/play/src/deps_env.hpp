@@ -52,8 +52,8 @@ public:
     void remote_login(backend::RemoteLoginRequest request, CancelToken token,
                       UniqueFunction<void(Result<backend::RemoteLoginResult>)> done) override;
     [[nodiscard]] Result<SecretBytes> provide_secret(const secrets::SecretTarget& target) const override;
-    std::optional<RequestId> require_secret(const secrets::SecretTarget& target, secrets::SecretWait wait, CancelToken token,
-                                            UniqueFunction<void(Result<SecretBytes>)> done) override;
+    void require_secret(const secrets::SecretTarget& target, secrets::SecretWait wait, CancelToken token,
+                        UniqueFunction<void(RequestId)> raised, UniqueFunction<void(Result<SecretBytes>)> done) override;
 
     Result<void> join(browser::JoinRequest request, OperationBase& op, std::optional<SessionId> session,
                       UniqueFunction<void(Result<browser::JoinOutcome>)> done) override;

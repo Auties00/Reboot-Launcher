@@ -408,6 +408,7 @@ api::Build build(const builds::InstalledBuild& build) {
     out.catalog_entry = build.catalog_entry;
     out.added_unix_ms = unix_ms(build.added_at);
     out.present = build.presence != builds::BuildPresence::Missing;
+    out.allow_above_cap = build.allow_above_cap;
     return out;
 }
 
@@ -907,9 +908,9 @@ api::ConnectionState connection_state(browser::ConnectionState state) {
         case browser::ConnectionState::Connected: return api::ConnectionState::Connected;
         case browser::ConnectionState::Draining: return api::ConnectionState::Draining;
         case browser::ConnectionState::UdpBlocked: return api::ConnectionState::UdpBlocked;
-        case browser::ConnectionState::Backoff:
-        case browser::ConnectionState::Offline:
-        case browser::ConnectionState::ServiceDown: return api::ConnectionState::Backoff;
+        case browser::ConnectionState::Backoff: return api::ConnectionState::Backoff;
+        case browser::ConnectionState::Offline: return api::ConnectionState::Offline;
+        case browser::ConnectionState::ServiceDown: return api::ConnectionState::ServiceDown;
     }
     return api::ConnectionState::Idle;
 }
@@ -922,6 +923,32 @@ Result<browser::ViewSpec> view_spec(const api::ViewSpec& spec) {
     out.sort = same_order<browser::ServerSort>(spec.sort);
     out.window = spec.window == 0 ? browser::kSmallWindow : spec.window;
     if (Result<void> valid = out.validate(); !valid) return std::unexpected(std::move(valid.error()));
+    return out;
+}
+
+std::vector<ux::LanguageTag> language_tags(const std::vector<std::string>& locales) {
+    std::vector<ux::LanguageTag> out;
+    for (const std::string& locale : locales)
+        if (std::optional<ux::LanguageTag> tag = ux::LanguageTag::from_os_locale(locale);
+            tag && std::ranges::find(out, *tag) == out.end())
+            out.push_back(std::move(*tag));
+    return out;
+}
+
+Result<browser::SearchRequest> search_request(const api::BrowserSearchRequest& request) {
+    if (std::to_underlying(request.password) > std::to_underlying(api::PasswordFilter::Only))
+        return std::unexpected(invalid_request("password"));
+    if (std::to_underlying(request.region) > std::to_underlying(api::Region::SouthAmerica))
+        return std::unexpected(invalid_request("region"));
+    if (std::to_underlying(request.sort) > std::to_underlying(api::ServerSort::Name)) return std::unexpected(invalid_request("sort"));
+    browser::SearchRequest out;
+    out.text = request.text;
+    out.bucket = request.bucket;
+    out.password = same_order<browser::PasswordFilter>(request.password);
+    out.region = same_order<browser::Region>(request.region);
+    out.sort = same_order<browser::ServerSort>(request.sort);
+    out.cursor = browser::SearchCursor{request.cursor};
+    out.limit = request.limit;
     return out;
 }
 
@@ -1001,6 +1028,7 @@ api::SupportQueryResponse support_answer(const support::SupportQuery& query, con
     if (query.version) out.version = game_version(*query.version);
     for (const support::SupportReason reason : verdict.reasons)
         out.reasons.push_back(diagnostic(support::to_diagnostic(reason, query)));
+    out.opt_in_available = verdict.opt_in_available;
     return out;
 }
 

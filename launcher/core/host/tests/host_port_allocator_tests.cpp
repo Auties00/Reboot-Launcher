@@ -2,11 +2,13 @@
 
 #include <memory>
 #include <optional>
+#include <thread>
 #include <utility>
 #include <vector>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/system/error_code.hpp>
 
 #include "host_test_support.hpp"
 #include "reboot/host/host_port_allocator.hpp"
@@ -28,11 +30,22 @@ SessionId session_id(u8 seed) {
     return id;
 }
 
-// A UDP wildcard socket on an OS-chosen port with room above it, where the ports are most likely free.
+// A UDP wildcard socket on an OS-chosen port whose 20 ports above were free when it was picked.
 asio::ip::udp::socket bind_with_room(asio::io_context& io) {
+    const auto room_free = [&io](u16 held) {
+        for (u16 offset = 1; offset <= 20; ++offset) {
+            asio::ip::udp::socket probe(io);
+            boost::system::error_code error;
+            probe.open(asio::ip::udp::v4(), error);
+            if (!error) probe.bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), static_cast<u16>(held + offset)), error);
+            if (error) return false;
+        }
+        return true;
+    };
     while (true) {
         asio::ip::udp::socket socket(io, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0));
-        if (socket.local_endpoint().port() <= 65000) return socket;
+        const u16 held = socket.local_endpoint().port();
+        if (held <= 65000 && room_free(held)) return socket;
     }
 }
 
@@ -187,6 +200,22 @@ TEST_CASE("a cancelled reservation completes once with host.cancelled", "[host][
     f.strand.run_ready();
     CHECK(second_calls == 1);
     CHECK_FALSE(f.allocator.block(session_id(2)));
+}
+
+TEST_CASE("a cancel on another thread racing the allocator's destruction completes nothing", "[host][ports]") {
+    Fixture f;
+    for (int round = 0; round < 200; ++round) {
+        std::optional<HostPortAllocator> allocator(std::in_place, f.preflight, f.workers, f.strand);
+        CancelSource cancel;
+        bool done = false;
+        REQUIRE(allocator->reserve({.session = session_id(1), .policy = f.range(1, 12), .size = 1}, cancel.token(),
+                                   [&done](Result<PortBlock>) { done = true; }));
+        std::thread canceller([&cancel] { cancel.cancel(CancelReason::User); });
+        allocator.reset();
+        canceller.join();
+        f.strand.run_ready();
+        CHECK_FALSE(done);
+    }
 }
 
 TEST_CASE("recheck preflights the block a session already holds", "[host][ports]") {

@@ -278,11 +278,9 @@ message HostCommandResponse {}
 message HostStartRequest {
   HostProfileId profile = 1;
   HostOverrides overrides = 2;
-  // The caller's environment at this launch, filtered as PlayRequest.environment is.
-  repeated EnvVar environment = 3;
   // The running play session this server is for; set exactly with the auto profile, and the
   // server stops with that session.
-  optional SessionId linked_to = 4;
+  optional SessionId linked_to = 3;
 }
 
 // Sent once the game server is listening; publication continues in the session.
@@ -410,8 +408,13 @@ service Host {
   rpc ShareLink(HostShareLinkRequest) returns (HostShareLinkResponse) {
     option (method_info) = {id: 5};
   }
+  // Completes once the game server answers: failed with its error, with
+  // gameserver.command_timeout or gameserver.not_running, or with engine.command_unsupported.
   rpc Command(HostCommandRequest) returns (HostCommandResponse) {
-    option (method_info) = {id: 6};
+    option (method_info) = {
+      id: 6
+      kind: METHOD_KIND_OPERATION
+    };
   }
   rpc Start(HostStartRequest) returns (HostStartResponse) {
     option (method_info) = {

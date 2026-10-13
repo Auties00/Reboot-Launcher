@@ -177,8 +177,6 @@ struct SettingsResetResponse {
 
 struct SettingsSearchRequest {
     std::string text;
-    // The UI language the text was typed in; empty means the engine's resolved language.
-    std::string language;
 
     bool operator==(const SettingsSearchRequest&) const = default;
 };
@@ -282,6 +280,8 @@ public:
     virtual ::rb::Result<SettingsResetResponse> reset(const CallContext& context, const SettingsResetRequest& request) = 0;
     virtual ::rb::Result<SettingsSearchResponse> search(const CallContext& context, const SettingsSearchRequest& request) = 0;
     virtual ::rb::Result<SettingsFrontendStateGetResponse> frontend_state_get(const CallContext& context, const SettingsFrontendStateGetRequest& request) = 0;
+    // Write-behind: FrontendStateGet answers the new state at once, and a failed write becomes a
+    // notice.
     virtual ::rb::Result<SettingsFrontendStatePutResponse> frontend_state_put(const CallContext& context, const SettingsFrontendStatePutRequest& request) = 0;
     virtual ::rb::Result<SettingsLanguagesResponse> languages(const CallContext& context, const SettingsLanguagesRequest& request) = 0;
     virtual ::rb::Result<SettingsDescriptorsResponse> descriptors(const CallContext& context, const SettingsDescriptorsRequest& request) = 0;

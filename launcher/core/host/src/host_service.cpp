@@ -115,11 +115,14 @@ struct HostService::Impl {
         PortPolicy port;
         std::optional<BuildId> build;
         gs::GameTarget target;
+        // The build's above-cap opt-in, as it stood at start.
+        bool above_cap_opt_in = false;
         storage::SettingsSnapshot settings;
         HostUpdatePolicy update_policy = HostUpdatePolicy::AfterMatch;
         std::optional<SessionId> linked_to;
         sessions::Lease lease;
         bool untested_confirmed = false;
+        support::SupportTier tier = support::SupportTier::Tested;
         std::optional<gs::DescribedBinary> binary;
         std::vector<gs::SocketRole> roles;
         std::optional<SecretString> password;
@@ -297,12 +300,15 @@ struct HostService::Impl {
         if (s.op != nullptr) s.op->progress(Progress{.phase = phase});
     }
 
-    [[nodiscard]] Result<gs::GameTarget> resolve_build(BuildId id) const {
+    [[nodiscard]] Result<void> pin_build(Session& s, BuildId id) const {
         Result<builds::InstalledBuild> build = deps.library.get(id);
         if (!build) return std::unexpected(std::move(build.error()));
         if (!build->version_confirmed())
             return std::unexpected(error_of({.code = HostErrorCode::BuildVersionUnknown, .name = build->name}));
-        return gs::GameTarget{*build->version, build->cl.value_or(Changelist{}), build->root};
+        s.build = id;
+        s.target = gs::GameTarget{*build->version, build->cl.value_or(Changelist{}), build->root};
+        s.above_cap_opt_in = build->allow_above_cap;
+        return {};
     }
 
     Result<OpHandle> start(HostStartRequest request) {
@@ -319,17 +325,11 @@ struct HostService::Impl {
 
         auto s = std::make_unique<Session>();
         if (const std::optional<BuildId> build = request.overrides.build ? request.overrides.build : profile->build) {
-            Result<gs::GameTarget> target = resolve_build(*build);
-            if (!target) return std::unexpected(std::move(target.error()));
-            s->build = build;
-            s->target = std::move(*target);
+            if (Result<void> pinned = pin_build(*s, *build); !pinned) return std::unexpected(std::move(pinned.error()));
         } else if (profile->version) {
             s->target = gs::GameTarget{profile->version->version, profile->version->cl, std::nullopt};
         } else if (const std::optional<BuildId> selected = deps.library.selected(support::SupportRole::Host)) {
-            Result<gs::GameTarget> target = resolve_build(*selected);
-            if (!target) return std::unexpected(std::move(target.error()));
-            s->build = selected;
-            s->target = std::move(*target);
+            if (Result<void> pinned = pin_build(*s, *selected); !pinned) return std::unexpected(std::move(pinned.error()));
         } else {
             return std::unexpected(error_of({.code = HostErrorCode::NoBuildSelected}));
         }
@@ -412,10 +412,12 @@ struct HostService::Impl {
         query.role = support::SupportRole::Host;
         query.runner = ports::RunnerKind::Native;
         query.imported = s->build.has_value();
+        query.above_cap_opt_in = s->above_cap_opt_in;
         query.server = std::move(*inputs);
         const support::SupportVerdict verdict = deps.support.evaluate(query);
         if (Result<void> allowed = support::check_not_blocked(query, verdict); !allowed)
             return fail_launch(*s, std::move(allowed.error()));
+        s->tier = verdict.tier;
         if (verdict.tier == support::SupportTier::Untested && !s->untested_confirmed)
             return ask_untested(*s, std::move(query), verdict);
         open_session(*s);
@@ -1101,7 +1103,15 @@ struct HostService::Impl {
         for (const auto& session : sessions) keys.push_back(session->key);
         for (const u64 key : keys) {
             Session* s = find(key);
-            if (s == nullptr || s->stopping) continue;
+            if (s == nullptr) continue;
+            if (s->stopping) {
+                // Its stop already runs; a shutdown still waits for its end.
+                if (cause != sessions::ShutdownCause::DrainUpdate) {
+                    ++barrier->left;
+                    s->on_ended.push_back(join());
+                }
+                continue;
+            }
             const bool after_match = cause == sessions::ShutdownCause::DrainUpdate &&
                                      s->update_policy == HostUpdatePolicy::AfterMatch;
             if (cause == sessions::ShutdownCause::DrainUpdate && !after_match) continue;
@@ -1283,6 +1293,7 @@ struct HostService::Impl {
         HostSnapshot snapshot;
         snapshot.phase = HostPhaseChanged{id, s.phase, s.reason};
         snapshot.listening = s.listening;
+        snapshot.tier = s.tier;
         snapshot.publish = deps.publisher.state(id);
         snapshot.reachability = deps.publisher.reachability(id);
         snapshot.mappings = deps.mapper.mappings(id);

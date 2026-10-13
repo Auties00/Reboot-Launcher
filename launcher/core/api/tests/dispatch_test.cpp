@@ -93,7 +93,7 @@ using rb::u64;
     X_CALL(kHostProfilesUpdate, profiles_update, HostProfilesUpdateRequest, HostProfilesUpdateResponse) \
     X_CALL(kHostProfilesDelete, profiles_delete, HostProfilesDeleteRequest, HostProfilesDeleteResponse) \
     X_CALL(kHostShareLink, share_link, HostShareLinkRequest, HostShareLinkResponse) \
-    X_CALL(kHostCommand, command, HostCommandRequest, HostCommandResponse) \
+    X_OP(kHostCommand, start_command, HostCommandRequest) \
     X_OP(kHostStart, start, HostStartRequest) \
     X_CALL(kHostStatus, status, HostStatusRequest, HostStatusResponse) \
     X_CALL(kHostCancelMatchEnd, cancel_match_end, HostCancelMatchEndRequest, HostCancelMatchEndResponse) \
@@ -118,6 +118,7 @@ using rb::u64;
     X_CALL(kBrowserCloseView, close_view, BrowserCloseViewRequest, BrowserCloseViewResponse) \
     X_CALL(kBrowserState, state, BrowserStateRequest, BrowserStateResponse) \
     X_OP(kBrowserResolve, start_resolve, BrowserResolveRequest) \
+    X_OP(kBrowserSearch, start_search, BrowserSearchRequest) \
     X_CALL(kJoinParseAddress, parse_address, JoinParseAddressRequest, JoinParseAddressResponse) \
     X_CALL(kJoinTarget, target, JoinTargetRequest, JoinTargetResponse) \
     X_CALL(kJoinSetCustomTarget, set_custom_target, JoinSetCustomTargetRequest, JoinSetCustomTargetResponse) \

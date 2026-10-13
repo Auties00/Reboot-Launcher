@@ -20,6 +20,7 @@ class EventBus;
 class Executor;
 class IRandom;
 class Redactor;
+class TimerService;
 class UserRequestRegistry;
 class WorkerPool;
 }  // namespace rb
@@ -143,6 +144,7 @@ struct PlayServiceDeps {
     EventBus& events;
     WorkerPool& workers;
     Executor& strand;
+    TimerService& timers;
 };
 
 struct PlayServiceOptions {

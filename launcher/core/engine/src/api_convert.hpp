@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -33,6 +34,7 @@
 #include "reboot/browser/connection_state.hpp"
 #include "reboot/browser/join_target.hpp"
 #include "reboot/browser/list_state.hpp"
+#include "reboot/browser/search.hpp"
 #include "reboot/browser/server_row.hpp"
 #include "reboot/browser/view_spec.hpp"
 #include "reboot/builds/destination_suggestion.hpp"
@@ -71,6 +73,7 @@
 #include "reboot/support/support_verdict.hpp"
 #include "reboot/updates/update_offer.hpp"
 #include "reboot/updates/update_state.hpp"
+#include "reboot/ux/language_tag.hpp"
 #include "reboot/ux/notice.hpp"
 #include "reboot/ux/onboarding.hpp"
 #include "reboot/ux/suggested_action.hpp"
@@ -177,7 +180,12 @@ namespace rb::engine::convert {
 [[nodiscard]] api::ServerEntry server_entry(const browser::ServerRow& row, std::optional<BuildId> compatible, bool own);
 [[nodiscard]] api::ConnectionState connection_state(browser::ConnectionState state);
 [[nodiscard]] Result<browser::ViewSpec> view_spec(const api::ViewSpec& spec);
+// engine.invalid_request for a filter or sort this build does not know; Search checks the text.
+[[nodiscard]] Result<browser::SearchRequest> search_request(const api::BrowserSearchRequest& request);
 [[nodiscard]] api::JoinTarget join_target(const browser::JoinTarget& target);
+
+// The OS's preferred languages as tags, in order; an entry that is no locale is left out.
+[[nodiscard]] std::vector<ux::LanguageTag> language_tags(const std::vector<std::string>& locales);
 
 // Integration, logs, updates.
 [[nodiscard]] api::IntegrationStatusEntry integration_entry(const integration::EntryStatus& entry);

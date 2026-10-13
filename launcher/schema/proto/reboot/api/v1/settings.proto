@@ -122,8 +122,6 @@ message SettingsResetResponse {
 
 message SettingsSearchRequest {
   string text = 1;
-  // The UI language the text was typed in; empty means the engine's resolved language.
-  string language = 2;
 }
 
 message SettingsSearchResponse {
@@ -206,6 +204,8 @@ service Settings {
   rpc FrontendStateGet(SettingsFrontendStateGetRequest) returns (SettingsFrontendStateGetResponse) {
     option (method_info) = {id: 5};
   }
+  // Write-behind: FrontendStateGet answers the new state at once, and a failed write becomes a
+  // notice.
   rpc FrontendStatePut(SettingsFrontendStatePutRequest) returns (SettingsFrontendStatePutResponse) {
     option (method_info) = {id: 6};
   }

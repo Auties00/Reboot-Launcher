@@ -26,9 +26,8 @@ enum ApplyWhen {
 message UpdateInfo {
   SemVer version = 1;
   uint64 size_bytes = 2;
-  string notes_url = 3;
   // This build is below the manifest's min_supported, so new sessions are blocked.
-  bool required = 4;
+  bool required = 3;
 }
 
 message UpdatesStatusRequest {}

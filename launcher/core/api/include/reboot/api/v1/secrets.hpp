@@ -113,6 +113,8 @@ public:
     virtual ~ISecretsHandler() = default;
 
     virtual ::rb::Result<SecretsStateResponse> state(const CallContext& context, const SecretsStateRequest& request) = 0;
+    // Drops the held value at once; the stored copy is erased after the answer, and a failure to
+    // erase it becomes a notice.
     virtual ::rb::Result<SecretsClearResponse> clear(const CallContext& context, const SecretsClearRequest& request) = 0;
 };
 

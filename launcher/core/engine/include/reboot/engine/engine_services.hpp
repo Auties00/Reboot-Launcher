@@ -120,6 +120,7 @@ class WineSessionHost;
 
 namespace rb::backend {
 class BackendAccounts;
+class BackendDirectory;
 class BackendProcess;
 class BackendService;
 class IBackendSessions;
@@ -146,6 +147,7 @@ class BrowserSession;
 class DeepLinkService;
 class GameServerTarget;
 class JoinService;
+class Search;
 class ServerList;
 }  // namespace rb::browser
 
@@ -321,6 +323,8 @@ private:
     std::unique_ptr<builds::BuildInstaller> installer_;
     std::unique_ptr<builds::ImportService> build_import_;
 
+    // The secret store's own worker, so installs on the shared pool never hold its calls past their deadline.
+    std::unique_ptr<WorkerPool> secret_store_worker_;
     std::unique_ptr<secrets::SecretService> secrets_;
     std::unique_ptr<identity::IdentityService> identity_;
 
@@ -334,6 +338,7 @@ private:
     std::unique_ptr<compat::WineSessionHost> wine_session_host_;
 
     std::unique_ptr<backend::IBackendSessions> backend_sessions_;
+    std::unique_ptr<backend::BackendDirectory> backend_directory_;
     std::unique_ptr<backend::BackendProcess> backend_process_;
     std::unique_ptr<backend::RemoteBackendProbe> backend_probe_;
     std::unique_ptr<backend::BackendService> backend_;
@@ -356,6 +361,7 @@ private:
     std::unique_ptr<browser::GameServerTarget> addresses_;
     std::unique_ptr<browser::DeepLinkService> deep_links_;
     std::unique_ptr<browser::ServerList> server_list_;
+    std::unique_ptr<browser::Search> search_;
 
     std::unique_ptr<host::HostPortAllocator> port_allocator_;
     std::unique_ptr<EngineHostBackendLink> host_backend_link_;

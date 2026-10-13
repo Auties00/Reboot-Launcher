@@ -242,12 +242,12 @@ public:
         if (provide_error) return std::unexpected(*provide_error);
         return SecretBytes(std::vector<u8>(stored_password.begin(), stored_password.end()));
     }
-    std::optional<RequestId> require_secret(const secrets::SecretTarget& target, secrets::SecretWait wait, CancelToken,
-                                            UniqueFunction<void(Result<SecretBytes>)> done) override {
+    void require_secret(const secrets::SecretTarget& target, secrets::SecretWait wait, CancelToken,
+                        UniqueFunction<void(RequestId)> raised, UniqueFunction<void(Result<SecretBytes>)> done) override {
         required_targets.push_back(target);
         required_waits.push_back(wait);
+        if (secret_request && raised) raised(*secret_request);
         required.call(strand_, std::move(done));
-        return secret_request;
     }
 
     Result<void> join(browser::JoinRequest request, OperationBase&, std::optional<SessionId>,
@@ -493,7 +493,8 @@ struct Harness {
                                                        .requests = rt.requests(),
                                                        .ops = rt.ops(),
                                                        .events = rt.events(),
-                                                       .strand = rt.strand()},
+                                                       .strand = rt.strand(),
+                                                       .timers = rt.timers()},
                                           std::move(options));
     }
 

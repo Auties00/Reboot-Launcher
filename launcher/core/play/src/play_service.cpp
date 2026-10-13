@@ -21,7 +21,8 @@ struct PlayService::Impl {
                             .requests = deps.requests,
                             .ops = deps.ops,
                             .events = deps.events,
-                            .strand = deps.strand},
+                            .strand = deps.strand,
+                            .timers = deps.timers},
                std::move(options)) {}
 
     PlayServiceDeps deps;

@@ -17,6 +17,7 @@
 #include "reboot/api/v1/guidance.hpp"
 #include "reboot/backend/backend_accounts.hpp"
 #include "reboot/backend/backend_config.hpp"
+#include "reboot/backend/backend_directory.hpp"
 #include "reboot/backend/backend_launch.hpp"
 #include "reboot/backend/backend_process.hpp"
 #include "reboot/backend/backend_service.hpp"
@@ -27,6 +28,7 @@
 #include "reboot/browser/game_server_target.hpp"
 #include "reboot/browser/join_service.hpp"
 #include "reboot/browser/rbsb_endpoint.hpp"
+#include "reboot/browser/search.hpp"
 #include "reboot/browser/server_list.hpp"
 #include "reboot/builds/build_installer.hpp"
 #include "reboot/builds/cl_table.hpp"
@@ -346,8 +348,8 @@ void EngineServices::build_services() {
         components::ManifestServiceDeps{fs, *http_, workers, strand, clock, *manifest_keys_, *manifest_serials_},
         std::move(manifest_options), layout, install);
     components_ = std::make_unique<components::ComponentStore>(
-        components::ComponentStoreDeps{fs, *platform.watcher, *platform.security, *downloader_, workers, strand, *ops_,
-                                       *events_, *manifest_},
+        components::ComponentStoreDeps{fs, *platform.watcher, *platform.security, *downloader_, workers, strand, timers,
+                                       *ops_, *events_, *manifest_},
         layout);
     remote_catalog_ = std::make_unique<catalog::SignedRemoteCatalogSource>(
         catalog::RemoteCatalogLocation{std::string(kCatalogUrl), signature_url(kCatalogUrl)}, layout, *http_, fs, workers,
@@ -376,8 +378,9 @@ void EngineServices::build_services() {
     build_import_ = std::make_unique<builds::ImportService>(
         builds::ImportServiceDeps{*library_, *catalog_, *cl_table_, fs, *requests_, workers, strand, *ops_});
 
-    secrets_ = std::make_unique<secrets::SecretService>(*platform.secrets, workers, strand, timers, *requests_, *events_,
-                                                        redactor, info.root_hash16);
+    secret_store_worker_ = std::make_unique<WorkerPool>(1);
+    secrets_ = std::make_unique<secrets::SecretService>(*platform.secrets, *secret_store_worker_, workers, strand, timers,
+                                                        *requests_, *events_, redactor, info.root_hash16);
     identity_ = std::make_unique<identity::IdentityService>(stores_->accounts, stores_->backend_logins, random, *events_);
 
     // Play's channel and runners.
@@ -398,10 +401,11 @@ void EngineServices::build_services() {
 
     // Backend.
     backend_sessions_ = std::make_unique<EngineBackendSessions>(*sessions_, strand);
+    backend_directory_ = std::make_unique<backend::BackendDirectory>(layout, install);
     backend::BackendLaunch launch;
     launch.exe = install.backend_exe;
-    launch.content_dir = install.backend_content_dir;
-    launch.data_dir = layout.backend_dir();
+    launch.content_dir = backend_directory_->content_dir();
+    launch.data_dir = backend_directory_->data_dir();
     launch.user_environment = runtime_.user_environment;
     launch.env_syntax = env_syntax();
     Result<process::ProcessSpec> backend_spec = backend::make_backend_spec(launch);
@@ -487,6 +491,7 @@ void EngineServices::build_services() {
             log_failure("saving the browse choices",
                         put_state_extra(stores_->state, kBrowseChoicesKey, browse_choices_to_json(choices)));
         });
+    search_ = std::make_unique<browser::Search>(*browser_, *own_servers_, timers);
 
     // Hosting.
     port_allocator_ = std::make_unique<host::HostPortAllocator>(*port_preflight_, workers, strand);
@@ -553,7 +558,7 @@ void EngineServices::build_services() {
                               *front_,           *legacy_listeners_, *game_channel_,   *sessions_,        *join_,
                               *addresses_,       *hosts_,           *game_server_binary_, *match_targets_, fs,
                               *platform.system,  random,            redactor,         *requests_,        *ops_,
-                              *events_,          workers,           strand},
+                              *events_,          workers,           strand,           timers},
         std::move(play_options));
     backend_->set_login_observer([this](const backend::LoginObservedEvent& event) { play_->on_login_observed(event); });
 
@@ -571,15 +576,8 @@ void EngineServices::build_services() {
     app_links_ = std::make_unique<ux::AppLinks>();
 
     // OS integration.
-    integration::IntegrationTargets targets;
-    switch (kHostOs) {
-        case components::ManifestOs::Windows: targets.flavor = integration::EntryFlavor::Windows; break;
-        case components::ManifestOs::MacOs: targets.flavor = integration::EntryFlavor::Apple; break;
-        case components::ManifestOs::Linux: targets.flavor = integration::EntryFlavor::FreeDesktop; break;
-    }
-    targets.engine_exe = info.self.image_path;
     integration_ = std::make_unique<integration::IntegrationService>(*platform.integration, stores_->state, workers, strand,
-                                                                     *ops_, *events_, std::move(targets));
+                                                                     *ops_, *events_, integration_targets(info.self.image_path));
     prerequisites_ = std::make_unique<integration::PrerequisiteService>(*platform.prerequisites, workers, strand, *ops_, *events_);
     integration::PurgeHooks purge_hooks;
     purge_hooks.find_blockers = [this](integration::PurgeScope scope) {
@@ -693,7 +691,6 @@ void EngineServices::build_services() {
         .strand = strand,
         .workers = workers,
         .clock = clock,
-        .layout = layout,
         .log_ring = runtime_.log_ring,
         .log_exporter = *log_exporter_,
         .errors = *error_router_,
@@ -716,6 +713,7 @@ void EngineServices::build_services() {
         .identity = *identity_,
         .backend = *backend_,
         .backend_accounts = *backend_accounts_,
+        .backend_directory = *backend_directory_,
         .sessions = *sessions_,
         .play = *play_,
         .hosts = *hosts_,
@@ -723,6 +721,7 @@ void EngineServices::build_services() {
         .game_server = *game_server_binary_,
         .browser = *browser_,
         .views = *server_list_,
+        .search = *search_,
         .join = *join_,
         .deep_links = *deep_links_,
         .addresses = *addresses_,
@@ -732,7 +731,8 @@ void EngineServices::build_services() {
         .prerequisites = *prerequisites_,
         .purge = *purge_,
         .shell = *shell_,
-        .security = *platform.security});
+        .security = *platform.security,
+        .languages = *platform.languages});
 }
 
 void EngineServices::register_shutdown_steps() {
@@ -802,7 +802,10 @@ void EngineServices::register_shutdown_steps() {
 
 void EngineServices::start() {
     register_shutdown_steps();
-    stores_->publish_mode_changes(*events_);
+    stores_->publish_mode_changes(*events_, [this](storage::StorageMode mode) {
+        runtime_.info.storage_mode = mode;
+        if (ipc_) ipc_->set_storage_mode(mode);
+    });
     error_router_->set_on_change([this](const logging::BackgroundFailureChange& change) {
         if (change.failure)
             events_->publish(EventKind::NoticeAdded, convert::background_notice(*change.failure),

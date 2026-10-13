@@ -146,8 +146,6 @@ template <class Response>
             return call(handlers.host, &IHostHandler::profiles_delete, context, method_id, request);
         case kHostShareLink:
             return call(handlers.host, &IHostHandler::share_link, context, method_id, request);
-        case kHostCommand:
-            return call(handlers.host, &IHostHandler::command, context, method_id, request);
         case kHostStatus:
             return call(handlers.host, &IHostHandler::status, context, method_id, request);
         case kHostCancelMatchEnd:
@@ -251,6 +249,8 @@ template <class Response>
             return start(handlers.components, &IComponentsHandler::start_runtime_setup, context, method_id, request, policy);
         case kPlayStart:
             return start(handlers.play, &IPlayHandler::start, context, method_id, request, policy);
+        case kHostCommand:
+            return start(handlers.host, &IHostHandler::start_command, context, method_id, request, policy);
         case kHostStart:
             return start(handlers.host, &IHostHandler::start, context, method_id, request, policy);
         case kHostIdentityExport:
@@ -273,6 +273,8 @@ template <class Response>
             return start(handlers.backend, &IBackendHandler::start_accounts_rename, context, method_id, request, policy);
         case kBrowserResolve:
             return start(handlers.browser, &IBrowserHandler::start_resolve, context, method_id, request, policy);
+        case kBrowserSearch:
+            return start(handlers.browser, &IBrowserHandler::start_search, context, method_id, request, policy);
         case kJoinResolveLink:
             return start(handlers.join, &IJoinHandler::start_resolve_link, context, method_id, request, policy);
         case kJoinGrant:
@@ -322,6 +324,8 @@ template <class Response>
             return encode_result<ComponentsRuntimeSetupResponse>(value);
         case kPlayStart:
             return encode_result<PlayStartResponse>(value);
+        case kHostCommand:
+            return encode_result<HostCommandResponse>(value);
         case kHostStart:
             return encode_result<HostStartResponse>(value);
         case kHostIdentityExport:
@@ -344,6 +348,8 @@ template <class Response>
             return encode_result<BackendAccountsRenameResponse>(value);
         case kBrowserResolve:
             return encode_result<BrowserResolveResponse>(value);
+        case kBrowserSearch:
+            return encode_result<BrowserSearchResponse>(value);
         case kJoinResolveLink:
             return encode_result<JoinResolveLinkResponse>(value);
         case kJoinGrant:

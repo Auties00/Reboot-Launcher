@@ -9,6 +9,7 @@
 #include "reboot/components/component_problem.hpp"
 #include "reboot/engine/api_router.hpp"
 #include "reboot/foundation/cancel.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/flat_map.hpp"
 #include "reboot/integration/entry_status.hpp"
@@ -20,22 +21,23 @@ namespace rb::engine {
 
 // What ApiRouter keeps besides the connections and started ops. Strand-only.
 struct ApiRouter::State {
-    struct View {
-        ConnectionId owner;
-        // Free-text search, matched locally against the name and the author.
-        std::string text;
-    };
-
     // An op that ends with another op's outcome, such as a purge that first stops the sessions.
     struct Relay {
         std::shared_ptr<Subscription> inner_events;
         CancelRegistration cancel;
     };
 
-    FlatMap<u64, View> views;
+    // Each open view's owner.
+    FlatMap<u64, ConnectionId> views;
     // Held while any view is open, so the browse connection lives exactly as long as the views.
     browser::BrowserLease browser_lease;
+    // Each running search's hold on the browse connection; the router outlives none of them.
+    FlatMap<u64, browser::BrowserLease> search_leases;
+    u64 next_search = 0;
     FlatMap<std::string, std::vector<u8>> frontend;
+    FlatSet<std::string> frontend_reading;
+    // A failed read, answered once by the shell's next frontend_state_get, which then reads again.
+    FlatMap<std::string, Diagnostic> frontend_errors;
     std::optional<std::vector<integration::EntryStatus>> integration;
     std::optional<std::vector<integration::Prerequisite>> prerequisites;
     std::optional<ports::SecurityProducts> security;

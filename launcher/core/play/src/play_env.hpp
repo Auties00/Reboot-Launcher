@@ -116,8 +116,8 @@ public:
     virtual void remote_login(backend::RemoteLoginRequest request, CancelToken token,
                               UniqueFunction<void(Result<backend::RemoteLoginResult>)> done) = 0;
     [[nodiscard]] virtual Result<SecretBytes> provide_secret(const secrets::SecretTarget& target) const = 0;
-    virtual std::optional<RequestId> require_secret(const secrets::SecretTarget& target, secrets::SecretWait wait,
-                                                    CancelToken token, UniqueFunction<void(Result<SecretBytes>)> done) = 0;
+    virtual void require_secret(const secrets::SecretTarget& target, secrets::SecretWait wait, CancelToken token,
+                                UniqueFunction<void(RequestId)> raised, UniqueFunction<void(Result<SecretBytes>)> done) = 0;
 
     virtual Result<void> join(browser::JoinRequest request, OperationBase& op, std::optional<SessionId> session,
                               UniqueFunction<void(Result<browser::JoinOutcome>)> done) = 0;

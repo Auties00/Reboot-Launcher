@@ -52,12 +52,6 @@ constexpr std::size_t kLoggerBudget = std::size_t{8} << 20;
 constexpr std::chrono::milliseconds kSignalPoll{250};
 constexpr std::chrono::seconds kSelfTestDeadline{10};
 
-#ifdef _WIN32
-constexpr std::string_view kEngineExe = "reboot-engine.exe";
-#else
-constexpr std::string_view kEngineExe = "reboot-engine";
-#endif
-
 std::atomic<bool> g_signalled{false};
 
 void on_signal(int) { g_signalled.store(true); }
@@ -67,6 +61,14 @@ void on_signal(int) { g_signalled.store(true); }
     std::fprintf(stderr, "reboot-engine: %s\n", diag.id.c_str());
     return exit_code_for(diag);
 }
+
+// The sinks reach the clock and the log file system, so the logger stops before they go.
+struct LoggerShutdown {
+    LoggerShutdown() = default;
+    LoggerShutdown(const LoggerShutdown&) = delete;
+    LoggerShutdown& operator=(const LoggerShutdown&) = delete;
+    ~LoggerShutdown() { Logger::shutdown(); }
+};
 
 [[nodiscard]] int failure(const Diagnostic& diag) {
     REBOOT_LOG_ERROR(Engine, "the engine cannot start: {}", diag.id);
@@ -216,6 +218,7 @@ int EngineHost::run() {
     SystemClock clock;
     static logging::LogFilesInUse files_in_use;
     Logger::install(kLoggerBudget);
+    const LoggerShutdown logger_shutdown;
     logging::install_terminate_handler();
     auto ring = std::make_unique<logging::LogRing>();
     logging::LogRing& log_ring = *ring;
@@ -256,9 +259,7 @@ int EngineHost::run() {
     Result<std::unique_ptr<net::CurlHttpTransport>> http = net::CurlHttpTransport::create(*platform.system);
     if (!http) {
         stop_threads();
-        const int code = failure(http.error());
-        Logger::shutdown();
-        return code;
+        return failure(http.error());
     }
     std::unique_ptr<ports::IQuicTransport> quic;
     if (Result<std::unique_ptr<net::MsQuicTransport>> msquic = net::MsQuicTransport::create(*platform.system)) {
@@ -281,9 +282,7 @@ int EngineHost::run() {
     Result<std::string> endpoint = ipc::endpoint_for(impl.self, info.root_hash16);
     if (!endpoint) {
         stop_threads();
-        const int code = failure(endpoint.error());
-        Logger::shutdown();
-        return code;
+        return failure(endpoint.error());
     }
     info.endpoint = std::move(*endpoint);
     info.origin = resumed_origin(impl.command_line.origin, recorded_origin(*platform.fs, workers, strand, clock, layout));
@@ -330,9 +329,7 @@ int EngineHost::run() {
         services.reconcile_integration();
         if (Result<void> opened = services.open_endpoint(); !opened) {
             stop_threads();
-            const int code = failure(opened.error());
-            Logger::shutdown();
-            return code;
+            return failure(opened.error());
         }
         Result<updates::StartupResume> resume = services.begin_resume();
         if (!resume) REBOOT_LOG_WARN(Update, "the update marker and resume.json were not read: {}", resume.error().id);
@@ -340,6 +337,10 @@ int EngineHost::run() {
 
         std::signal(SIGINT, on_signal);
         std::signal(SIGTERM, on_signal);
+        // A windowless Windows engine gets neither signal; its watch holds a logoff until the platform goes.
+        const auto on_session_end = [] { g_signalled.store(true); };
+        if (Result<void> watched = platform.session_end ? platform.session_end->start(on_session_end) : Result<void>{}; !watched)
+            REBOOT_LOG_WARN(Engine, "a logoff will end the engine without a shutdown: {}", watched.error().id);
         signals.emplace(timers, services);
 
         // Steps 9 to 11, on the strand.
@@ -370,7 +371,6 @@ int EngineHost::run() {
         stop_threads();
     }
     REBOOT_LOG_INFO(Engine, "engine stopped with code {}", exit_code);
-    Logger::shutdown();
     return exit_code;
 }
 

@@ -85,12 +85,11 @@ void DepsEnv::acquire_payload(SessionId session, CancelToken token, components::
 void DepsEnv::verify_custom_auth(NativePath path, CancelToken token, UniqueFunction<void(Result<CustomAuth>)> done) {
     deps_.workers.submit<CustomAuth>(
         [&fs = deps_.fs, path = std::move(path)](CancelToken) -> Result<CustomAuth> {
-            Result<injection::PinnedDll> validated = injection::DllPathValidator(fs).validate(path);
-            if (!validated) return std::unexpected(std::move(validated.error()));
-            auto hold = components::IntegrityHold::acquire(fs, validated->path);
+            if (Result<void> valid = injection::DllPathValidator(fs).validate(path); !valid)
+                return std::unexpected(std::move(valid.error()));
+            auto hold = components::IntegrityHold::acquire(fs, path);
             if (!hold) return std::unexpected(components::to_diagnostic(hold.error()));
-            // The inject digest is of the held bytes, not of the validator's earlier read.
-            injection::PinnedDll dll{validated->path, hold->sha256()};
+            injection::PinnedDll dll{path, hold->sha256()};
             return CustomAuth{std::move(dll), std::move(*hold)};
         },
         std::move(token), deps_.strand, std::move(done));
@@ -162,9 +161,9 @@ Result<SecretBytes> DepsEnv::provide_secret(const secrets::SecretTarget& target)
     return deps_.secrets.provide(target);
 }
 
-std::optional<RequestId> DepsEnv::require_secret(const secrets::SecretTarget& target, secrets::SecretWait wait,
-                                                 CancelToken token, UniqueFunction<void(Result<SecretBytes>)> done) {
-    return deps_.secrets.require(target, wait, std::move(token), std::move(done));
+void DepsEnv::require_secret(const secrets::SecretTarget& target, secrets::SecretWait wait, CancelToken token,
+                             UniqueFunction<void(RequestId)> raised, UniqueFunction<void(Result<SecretBytes>)> done) {
+    deps_.secrets.require(target, wait, std::move(token), std::move(raised), std::move(done));
 }
 
 Result<void> DepsEnv::join(browser::JoinRequest request, OperationBase& op, std::optional<SessionId> session,

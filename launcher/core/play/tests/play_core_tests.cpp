@@ -4,6 +4,7 @@
 #include <any>
 #include <chrono>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -85,6 +86,7 @@ TEST_CASE("a start pins the session, launches the game and completes at LoggedIn
     REQUIRE(id);
     CHECK(h.phase(*id) == sessions::SessionPhase::Launching);
     CHECK_FALSE(h.outcome(op));
+    CHECK(h.registry.get(*id)->pinned.payload_version == SemVer::parse("1.0.0").value());
 
     const ports::SessionLaunch& launch = control.launch();
     const NativePath binaries = build_root() / "FortniteGame/Binaries/Win64";
@@ -150,7 +152,8 @@ TEST_CASE("a start pins the session, launches the game and completes at LoggedIn
     CHECK(welcome.ws_rewrite);
     CHECK(welcome.console_key == "F8");
     CHECK_FALSE(welcome.host_suffixes.empty());
-    CHECK_FALSE(welcome.sentinels.empty());
+    for (const std::string_view sentinel : {"127.0.0.1:80", "[::1]:80", "[::ffff:127.0.0.1]:80", "[::ffff:127.0.0.1]:3551"})
+        CHECK(std::ranges::find(welcome.sentinels, sentinel) != welcome.sentinels.end());
     CHECK(h.env.good == 1);
     CHECK_FALSE(h.targets.find(*id));
 }
@@ -352,6 +355,22 @@ TEST_CASE("the plan names its blockers, warnings and the questions start will as
     }
 }
 
+TEST_CASE("a build above the version cap plays only with its opt-in", "[play][core][plan]") {
+    Harness h;
+    h.env.builds[0].version = GameVersion{31, 0, std::nullopt};
+    const PlayPlan blocked = *h.core->plan(Harness::request());
+    CHECK(blocked.support.tier == support::SupportTier::Blocked);
+    CHECK(blocked.support.opt_in_available);
+    CHECK_FALSE(blocked.startable());
+
+    h.env.builds[0].allow_above_cap = true;
+    const PlayPlan allowed = *h.core->plan(Harness::request());
+    CHECK(allowed.support.tier == support::SupportTier::Untested);
+    CHECK(std::ranges::find(allowed.support.reasons, support::SupportReason::AboveVersionCapOptedIn) !=
+          allowed.support.reasons.end());
+    CHECK(allowed.startable());
+}
+
 TEST_CASE("an untested build asks first and a refusal ends the start", "[play][core]") {
     Harness h;
     h.untested();
@@ -373,7 +392,11 @@ TEST_CASE("an untested build asks first and a refusal ends the start", "[play][c
     CHECK(h.failed(op).id == "play.untested_declined");
     CHECK(h.registry.list().empty());
     CHECK(h.env.layout.calls == 0);
-    CHECK(h.core->start(Harness::request()));
+    REQUIRE(h.core->start(Harness::request()));
+    REQUIRE(h.answer(UserRequestKind::ConfirmUntested, true));
+    const std::optional<SessionId> id = h.session();
+    REQUIRE(id);
+    CHECK(h.core->state(*id)->tier == support::SupportTier::Untested);
 }
 
 TEST_CASE("the linked auto-server needs consent, then runs as the session's child", "[play][core][auto]") {
@@ -675,14 +698,30 @@ TEST_CASE("a running session ends on its own as the game says", "[play][core][ru
         CHECK(ended->reason == sessions::StopReason::Crashed);
         CHECK(ended->error->id == "play.crashed");
     }
-    SECTION("losing our DLL is fatal") {
+    SECTION("losing our DLL with the game still running is fatal") {
         Harness h;
         const SessionId id = h.running();
         h.dlls.back()->disconnect();
         h.run();
+        CHECK(h.phase(id) == sessions::SessionPhase::Running);
+        h.rt.advance(std::chrono::seconds{2});
         const std::optional<sessions::SessionEnded> ended = h.ended(id);
+        REQUIRE(ended);
         CHECK(ended->reason == sessions::StopReason::Fatal);
         CHECK(ended->error->id == "game_channel.peer_lost");
+    }
+    SECTION("a crash that closes our DLL's connection first is still a crash") {
+        Harness h;
+        const SessionId id = h.running();
+        h.dlls.back()->disconnect();
+        h.run();
+        h.host.last()->game_exits(static_cast<int>(0xC0000005u));
+        const std::optional<sessions::SessionEnded> ended = h.ended(id);
+        REQUIRE(ended);
+        CHECK(ended->reason == sessions::StopReason::Crashed);
+        CHECK(ended->error->id == "play.crashed");
+        h.rt.advance(std::chrono::seconds{2});
+        CHECK(h.ended(id)->reason == sessions::StopReason::Crashed);
     }
     SECTION("a hung game is not reported while it travels") {
         Harness h;
@@ -930,6 +969,24 @@ TEST_CASE("under Wine the runtime and prefix are pinned and winhost carries the 
     h.connect(control);
     CHECK(h.completed(op) == id);
     CHECK(h.env.good == 1);
+}
+
+TEST_CASE("under Wine the pinned runtime's manifest entry sets the boot strategy", "[play][core][wine]") {
+    Harness h;
+    h.env.runner_value = RunnerChoice{ports::RunnerKind::Wine,
+                                      compat::RunnerProfile{compat::RunnerKind::Wine, compat::RuntimeId{"kron-10"}, std::nullopt, false}};
+    h.env.policy.set_inputs(Harness::tested_inputs(ports::RunnerKind::Wine, "kron-10"));
+    // The default runtime step leaves boot_inject unset, which forces AfterResume (see the test above).
+    UniqueFunction<Result<compat::PreparedRuntime>()> unproven = std::move(h.env.runtime.answer);
+    h.env.runtime.answer = [unproven = std::move(unproven)]() mutable {
+        Result<compat::PreparedRuntime> prepared = unproven();
+        prepared->wine.runtime.boot_inject = ports::BootStrategy::EarlyBirdApc;
+        return prepared;
+    };
+    h.start();
+    testing::FakeSessionControl& control = h.launched();
+    REQUIRE(control.launch().inject.size() == 1);
+    CHECK(control.launch().inject[0].strategy == ports::BootStrategy::EarlyBirdApc);
 }
 
 TEST_CASE("a stop during Wine preflight never stages the session", "[play][core][wine]") {

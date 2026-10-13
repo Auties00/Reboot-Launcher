@@ -253,12 +253,9 @@ public:
     SecretGate& operator=(const SecretGate&) = delete;
 
     void put_secret(const api::SecretTarget& target, std::string_view secret) {
-        client->secret_put(api::encode(target), bytes_of(secret));
-        REQUIRE(rig.strand.pump_until([&] {
-            const Result<api::SecretsStateResponse> state =
-                rig.call<api::SecretsStateResponse>(*client, api::kSecretsState, api::SecretsStateRequest{target});
-            return state && state->present;
-        }));
+        const u64 put = client->secret_put(api::encode(target), bytes_of(secret));
+        REQUIRE(rig.strand.pump_until([&] { return client->reply(put).has_value(); }));
+        REQUIRE(*client->reply_payload(put));
     }
 
     void stop(const api::SessionId& session) {

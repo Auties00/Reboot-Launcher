@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "reboot/api/call_context.hpp"
+#include "reboot/api/codec.hpp"
 #include "reboot/api/v1/common.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/result_fwd.hpp"
@@ -44,6 +45,10 @@ enum class ConnectionState : u32 {
     Backoff = 3,
     Draining = 4,
     UdpBlocked = 5,
+    // This machine reaches no network; retried on the backoff.
+    Offline = 6,
+    // The network works but the server browser does not answer; retried on the backoff.
+    ServiceDown = 7,
 };
 
 // Text fields come from strangers: sanitized, but render each one in its own isolated element.
@@ -77,8 +82,6 @@ struct ViewSpec {
     ServerSort sort{};
     // Rows kept live; the engine clamps it to the edge's limit.
     u32 window = 0;
-    // Free-text search; empty lists everything.
-    std::string text;
 
     bool operator==(const ViewSpec&) const = default;
 };
@@ -142,6 +145,37 @@ struct BrowserResolveResponse {
     bool operator==(const BrowserResolveResponse&) const = default;
 };
 
+// A free-text search: a one-off page, not a live view.
+struct BrowserSearchRequest {
+    // 1 to 64 bytes once trimmed, matched against name, author and id; a reboot:// link or a bare
+    // server id is resolved by id instead.
+    std::string text;
+    // One rbsb/1 bucket, 0 for every version: the cursor pages a single bucket.
+    u32 bucket = 0;
+    PasswordFilter password{};
+    Region region{};
+    ServerSort sort{};
+    // The previous page's next_cursor; empty for the first page.
+    Bytes cursor;
+    // 0 is the edge's default page size; larger values are clamped to the edge's limit.
+    u32 limit = 0;
+
+    bool operator==(const BrowserSearchRequest&) const = default;
+};
+
+struct BrowserSearchResponse {
+    // This user's own servers are left out.
+    std::vector<ServerEntry> rows;
+    // Empty on the last page.
+    Bytes next_cursor;
+    // The edge's count, which still includes this user's own servers.
+    u32 total = 0;
+    // The text was a link or an id; hidden and offline servers answer too.
+    bool resolved_by_id = false;
+
+    bool operator==(const BrowserSearchResponse&) const = default;
+};
+
 struct BrowserConnectionChanged {
     ConnectionState state{};
     std::optional<u32> retry_in_ms;
@@ -157,6 +191,8 @@ struct ViewSnapshot {
     std::vector<ServerEntry> rows;
     // The edge is unreachable; rows are the last known ones.
     bool stale = false;
+    // The edge refused the view; there are no rows until a retry it accepts.
+    std::optional<Diagnostic> error;
 
     bool operator==(const ViewSnapshot&) const = default;
 };
@@ -182,6 +218,10 @@ public:
     virtual ::rb::Result<BrowserStateResponse> state(const CallContext& context, const BrowserStateRequest& request) = 0;
     // Completes with BrowserResolveResponse.
     virtual ::rb::Result<::rb::OpHandle> start_resolve(const CallContext& context, const BrowserResolveRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
+    // Waits out a short debounce; a newer search from the same connection cancels this one
+    // (CANCEL_REASON_SUPERSEDED).
+    // Completes with BrowserSearchResponse.
+    virtual ::rb::Result<::rb::OpHandle> start_search(const CallContext& context, const BrowserSearchRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

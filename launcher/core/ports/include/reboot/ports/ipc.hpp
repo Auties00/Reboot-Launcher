@@ -16,6 +16,10 @@
 
 namespace rb::ports {
 
+// The endpoint's owner is not the caller's user. Registered by the foundation, as every IPC adapter
+// and core/ipc fail with it.
+inline constexpr MessageId kEndpointUntrusted{"ipc.endpoint_untrusted"};
+
 // `user_id` is the SID string on Windows and the decimal uid on POSIX.
 struct PeerIdentity {
     std::string user_id;
