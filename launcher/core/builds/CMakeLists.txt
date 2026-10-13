@@ -26,7 +26,8 @@ target_link_libraries(reboot_builds PRIVATE LibArchive::LibArchive)
 
 if(TARGET reboot_builds_tests)
   target_compile_definitions(reboot_builds_tests
-    PRIVATE REBOOT_BUILDS_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
+    PRIVATE REBOOT_BUILDS_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/tests/data"
+            REBOOT_PE_FUZZ_CORPUS="${PROJECT_SOURCE_DIR}/core/testing/fuzz/corpus/pe_version_reader")
   # The archive tests write their ZIP and 7z fixtures with libarchive.
   target_link_libraries(reboot_builds_tests PRIVATE LibArchive::LibArchive)
 endif()

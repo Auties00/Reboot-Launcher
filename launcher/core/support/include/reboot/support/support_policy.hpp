@@ -37,8 +37,9 @@ public:
     // `play.server`.
     [[nodiscard]] AutoServerVerdict evaluate_with_auto_server(const SupportQuery& play) const;
 
-    // One cell per evidence cell of this OS and per range `server` describes. A version outside
-    // every cell is Untested up to kMaxSupportedVersion and Blocked above it.
+    // One cell per evidence cell of this OS and per range `server` describes. A host cell that no
+    // one described range wholly holds is Blocked. A version outside every cell is Untested up to
+    // kMaxSupportedVersion and Blocked above it.
     [[nodiscard]] std::vector<SupportCell> cells(const std::optional<HostInputs>& server) const;
 
     [[nodiscard]] const SupportInputs& inputs() const noexcept { return inputs_; }

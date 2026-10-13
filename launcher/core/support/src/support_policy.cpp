@@ -36,6 +36,29 @@ void add_key(std::vector<SupportCellKey>& keys, const SupportCellKey& key) {
     return std::ranges::any_of(server.ranges, [&](const VersionRange& range) { return range.contains(version, cl); });
 }
 
+// A max without a patch reaches every patch of its major.minor, so only another such max holds it.
+[[nodiscard]] bool max_within(const GameVersion& inner, const GameVersion& outer) noexcept {
+    if (!outer.patch) return inner.major < outer.major || (inner.major == outer.major && inner.minor <= outer.minor);
+    return inner.patch && inner <= outer;
+}
+
+[[nodiscard]] bool changelists_within(const VersionRange& inner, const VersionRange& outer) {
+    if (outer.changelists.empty()) return true;
+    if (inner.changelists.empty()) return false;
+    return std::ranges::all_of(inner.changelists, [&](const ChangelistRange& cls) {
+        return std::ranges::any_of(outer.changelists, [&](const ChangelistRange& range) {
+            return range.first <= cls.first && cls.last <= range.last;
+        });
+    });
+}
+
+// The whole cell lies in one range the server describes.
+[[nodiscard]] bool covers(const HostInputs& server, const VersionRange& cell) {
+    return std::ranges::any_of(server.ranges, [&](const VersionRange& range) {
+        return range.min <= cell.min && max_within(cell.max, range.max) && changelists_within(cell, range);
+    });
+}
+
 }  // namespace
 
 SupportCell SupportPolicy::rate_cell(const SupportCellKey& key, const std::optional<HostInputs>& server) const {
@@ -59,6 +82,8 @@ SupportCell SupportPolicy::rate_cell(const SupportCellKey& key, const std::optio
         add_reason(cell.reasons, SupportReason::RunnerUnavailable);
     } else if (!server) {
         add_reason(cell.reasons, SupportReason::GameServerUnavailable);
+    } else if (!covers(*server, key.range)) {
+        add_reason(cell.reasons, SupportReason::NotCoveredByGameServer);
     } else {
         current = server->pin;
     }

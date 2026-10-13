@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "messages.hpp"
 #include "reboot/compat/prefix_manager.hpp"
@@ -90,9 +91,16 @@ struct RuntimeCore::Impl {
         return it == records.end() ? nullptr : &*it;
     }
 
+    // Also drops the records of runtimes the store no longer lists, so the document stays bounded.
     void update_record(const RuntimeId& runtime, UniqueFunction<void(RuntimeRecord&)> change) {
-        const auto written = deps.document.update(
-            [&](CompatDocument& document) { change(runtime_record(document, runtime)); });
+        const std::optional<std::vector<std::string>> stored = deps.catalog.stored_runtimes();
+        const auto written = deps.document.update([&](CompatDocument& document) {
+            if (stored)
+                std::erase_if(document.runtimes, [&](const RuntimeRecord& record) {
+                    return record.runtime != runtime && std::ranges::find(*stored, record.runtime.value) == stored->end();
+                });
+            change(runtime_record(document, runtime));
+        });
         if (!written)
             REBOOT_LOG_WARN(Play, "the record of runtime {} was not saved: {}", runtime.value, written.error().id);
     }

@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "reboot/foundation/paths.hpp"
@@ -170,6 +171,29 @@ TEST_CASE("to_wire fills the ServerConfig", "[gameserver][config]") {
     CHECK_FALSE(manual.backend.has_value());
     REQUIRE(manual.game.build_root.has_value());
     CHECK(*manual.game.build_root == to_wire(*config.game.build_root));
+}
+
+TEST_CASE("wipe_secrets clears the backend service token and nothing else", "[gameserver][config]") {
+    GameServerConfig config = valid_config();
+    config.backend = BackendAccess{"http://127.0.0.1:3551", "host-account", SecretString(std::string(40, 't'))};
+    const SessionId session{*parse_uuid("9a3e7c51-2d44-4c1b-8f0a-61b2d5e9c3f7")};
+    gs::ServerConfig wire = to_wire(config, session, testing::default_fake_root() / "logs");
+    REQUIRE(wire.backend.has_value());
+    const char* token = wire.backend->service_token.data();
+
+    wipe_secrets(wire);
+    REQUIRE(wire.backend.has_value());
+    CHECK(wire.backend->service_token.empty());
+    // Wiped in place, not just released.
+    CHECK(wire.backend->service_token.data() == token);
+    CHECK(std::string_view(token, 40) == std::string(40, '\0'));
+    CHECK(wire.backend->origin == "http://127.0.0.1:3551");
+    CHECK(wire.backend->account_id == "host-account");
+
+    config.backend.reset();
+    gs::ServerConfig without = to_wire(config, session, testing::default_fake_root() / "logs");
+    wipe_secrets(without);
+    CHECK_FALSE(without.backend.has_value());
 }
 
 TEST_CASE("same_description compares every field", "[gameserver][description]") {

@@ -90,7 +90,8 @@ struct Library::Impl {
                               .catalog_entry = entry.catalog_entry,
                               .added_at = entry.added_at,
                               .needs_relocation = entry.needs_relocation,
-                              .presence = known == presence.end() ? BuildPresence::Unchecked : known->second};
+                              .presence = known == presence.end() ? BuildPresence::Unchecked : known->second,
+                              .allow_above_cap = entry.allow_above_cap};
     }
 
     [[nodiscard]] std::vector<InstalledBuild> others(BuildId except) const {
@@ -318,6 +319,7 @@ Result<InstalledBuild> Library::update(BuildId id, const BuildPatch& patch) {
             entry->version_source = std::string(version_source_name(VersionSource::User));
         }
         if (patch.cl) entry->changelist = patch.cl;
+        if (patch.allow_above_cap) entry->allow_above_cap = *patch.allow_above_cap;
     });
     if (!written) return std::unexpected(std::move(written.error()));
     impl_->publish(LibraryChange::Updated, id);

@@ -160,7 +160,8 @@ struct GameServerProcess::Impl final {
                     return std::unexpected(
                         error_of({.code = GameServerErrorCode::DescriptionMismatch, .path = impl.binary.exe}));
                 return gs::ServerWelcome{to_wire(impl.config, impl.session, impl.session_dir)};
-            });
+            },
+            [](gs::ServerWelcome& welcome) { wipe_secrets(welcome.config); });
     }
 
     // False when the sink destroyed the process.

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "builds_test_support.hpp"
@@ -116,6 +117,21 @@ TEST_CASE("a version set by hand becomes the user's") {
     CHECK(s.library.update(BuildId{}, BuildPatch{}).error().id == "builds.not_found");
     add(s, "b", s.dir.path() / "b");
     CHECK(s.library.update(build.id, BuildPatch{.name = "B"}).error().id == "builds.name_taken");
+}
+
+TEST_CASE("the above-cap opt-in is stored per build and kept by other edits") {
+    Services s;
+    const InstalledBuild build = add(s, "next", s.dir.path() / "next", detected("31.00"));
+    CHECK_FALSE(build.allow_above_cap);
+    const Result<InstalledBuild> allowed = s.library.update(build.id, BuildPatch{.allow_above_cap = true});
+    REQUIRE(allowed);
+    CHECK(allowed->allow_above_cap);
+    CHECK(s.store.get().builds[0].allow_above_cap);
+    const Result<InstalledBuild> renamed = s.library.update(build.id, BuildPatch{.name = "renamed"});
+    REQUIRE(renamed);
+    CHECK(renamed->allow_above_cap);
+    REQUIRE(s.library.update(build.id, BuildPatch{.allow_above_cap = false}));
+    CHECK_FALSE(s.library.get(build.id)->allow_above_cap);
 }
 
 TEST_CASE("compatible builds: the exact version first, then its bucket, newest first") {
@@ -240,6 +256,27 @@ TEST_CASE("relocation gives an unknown version the one the files settle") {
                                                   DisconnectPolicy::Detached);
     REQUIRE(missing);
     CHECK(s.failed(*missing).id == "builds.io");
+}
+
+TEST_CASE("a relocation cancelled after its walk keeps the old root") {
+    Services s;
+    const NativePath old_root = s.dir.path() / "old";
+    const NativePath new_root = s.dir.path() / "new";
+    write_build(new_root, "++Fortnite+Release-12.41-CL-12905909");
+    const InstalledBuild build = add(s, "moved", old_root, detected("12.41"));
+
+    const auto relocation =
+        s.library.start_relocate(build.id, new_root, RunningPolicy::Refuse, DisconnectPolicy::Detached);
+    REQUIRE(relocation);
+    // The walk's result is posted but not yet run when the cancel lands.
+    wait_idle(s.workers);
+    REQUIRE(s.ops.cancel(relocation->id(), CancelReason::User));
+    s.wait(*relocation);
+    CHECK(std::holds_alternative<Cancelled>(*s.ops.outcome(relocation->id())));
+    const Result<InstalledBuild> kept = s.library.get(build.id);
+    REQUIRE(kept);
+    CHECK(kept->root == build.root);
+    CHECK_FALSE(s.store.get().builds[0].layout);
 }
 
 TEST_CASE("resolve_layout reuses a valid stored layout and marks a vanished build missing") {

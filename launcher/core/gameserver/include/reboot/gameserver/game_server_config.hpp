@@ -69,8 +69,11 @@ struct GameServerConfig {
 [[nodiscard]] Result<void> validate(const GameServerConfig& config, const GameServerDescription& description);
 
 // The ServerWelcome payload. It copies the backend token into plain strings, so the caller
-// encodes it at once and drops it.
+// encodes it at once and then calls wipe_secrets.
 [[nodiscard]] contracts::game_server::ServerConfig to_wire(const GameServerConfig& config, const SessionId& session,
                                                            const NativePath& log_dir);
+
+// Overwrites the backend service token, leaving it empty.
+void wipe_secrets(contracts::game_server::ServerConfig& wire) noexcept;
 
 }  // namespace rb::gameserver

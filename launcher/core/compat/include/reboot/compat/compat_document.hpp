@@ -16,8 +16,8 @@
 namespace rb::compat {
 
 // Covers no capability ids (decisions persistence-format-migration, update-mechanism).
-// data/prefixes/compat.json: engine state shared by RuntimeService and PrefixManager. A record
-// naming a runtime the store no longer has is kept until the store collects it.
+// data/prefixes/compat.json: engine state shared by RuntimeService and PrefixManager. A runtime
+// record goes at the next record write once the component store no longer lists its runtime.
 struct CompatDocument {
     static constexpr std::string_view kName = "compat";
     static constexpr u32 kSchema = 1;

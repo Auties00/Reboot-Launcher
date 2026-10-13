@@ -115,6 +115,44 @@ TEST_CASE("every offset, size and count is checked before it is followed") {
     }
 }
 
+// CI only replays the committed corpus, so it must hold seeds that reach the walk and the raw scan.
+TEST_CASE("the fuzz corpus seeds reach the resource walk and the raw scan") {
+    const NativePath corpus(REBOOT_PE_FUZZ_CORPUS);
+    const PeVersionReader reader;
+    for (const std::string_view name : {"version_cert", "version_next", "version_release_34_10_cl",
+                                        "version_release_3_5", "version_release_8_51"}) {
+        INFO(name);
+        const std::vector<u8> blob = golden_blob(std::string(name) + ".bin");
+        auto seed = testing::read_golden(corpus / ("pe_" + std::string(name)));
+        REQUIRE(seed);
+        CHECK(testing::golden_mismatch(make_pe(blob), *seed).empty());
+        MemoryByteSource source(*seed);
+        auto resource = reader.read_version_resource(source);
+        REQUIRE(resource);
+        CHECK(*resource == blob);
+    }
+
+    const std::string marker = "4.20.0-4008490+++Fortnite+Release-3.5";
+    std::vector<u8> trailer = utf16le(marker);
+    trailer.insert(trailer.end(), {0, 0});
+    auto in_trailer = testing::read_golden(corpus / "pe_marker_in_trailer");
+    REQUIRE(in_trailer);
+    CHECK(testing::golden_mismatch(make_pe(version_blob("CompanyName Epic Games"), trailer), *in_trailer).empty());
+    auto raw = testing::read_golden(corpus / "raw_marker");
+    REQUIRE(raw);
+    CHECK(testing::golden_mismatch(raw_with(256, 37, marker), *raw).empty());
+
+    for (const std::vector<u8>* bytes : {&*in_trailer, &*raw}) {
+        MemoryByteSource source(*bytes);
+        auto from_resource = reader.read_marker(source);
+        CHECK_FALSE((from_resource && *from_resource));
+        auto scanned = reader.scan_for_marker(source, CancelToken{});
+        REQUIRE(scanned);
+        REQUIRE(*scanned);
+        CHECK((*scanned)->tail == "3.5");
+    }
+}
+
 TEST_CASE("a missing RT_VERSION is reported as such") {
     std::vector<u8> pe = make_pe(version_blob("x"));
     put32(pe, 0x200 + 16, 3);

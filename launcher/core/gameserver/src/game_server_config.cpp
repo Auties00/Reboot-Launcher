@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "address_text.hpp"
+#include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/gameserver/game_server_error.hpp"
 
@@ -54,6 +55,15 @@ Result<void> validate(const GameServerConfig& config, const GameServerDescriptio
     if (config.game.build_root && !config.game.build_root->is_absolute())
         return fail({.code = GameServerErrorCode::PathNotAbsolute, .path = *config.game.build_root});
     return {};
+}
+
+void wipe_secrets(gs::ServerConfig& wire) noexcept {
+    if (!wire.backend) return;
+    std::string& token = wire.backend->service_token;
+    // Growing to capacity also clears bytes a short-string move left behind.
+    token.resize(token.capacity());
+    secure_wipe(token.data(), token.size());
+    token.clear();
 }
 
 gs::ServerConfig to_wire(const GameServerConfig& config, const SessionId& session, const NativePath& log_dir) {

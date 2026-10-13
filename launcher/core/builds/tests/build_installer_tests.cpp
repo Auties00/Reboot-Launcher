@@ -331,6 +331,36 @@ TEST_CASE("a cancel once the files are extracted keeps them, drops the staging a
     CHECK_FALSE(std::filesystem::exists(destination));
 }
 
+TEST_CASE("a cancel that lands while the detection's result waits on the strand registers nothing") {
+    InstallFixture f(build_zip(), false);
+    f.scripted.files = {{kWin64 / std::string(kShippingExe), make_pe(version_blob("++Fortnite+Release-12.41"))}};
+    const NativePath destination = f.dir.path() / "detected";
+    const OpHandle handle = f.install_at(destination);
+    const auto phase = [&] {
+        for (const LiveOp& op : f.ops.live())
+            if (op.op == handle.id() && op.progress) return op.progress->phase;
+        return std::string();
+    };
+    // One task at a time, so the detection's result is posted but not yet run.
+    while (phase() != "detecting") f.strand.run_one();
+    wait_idle(f.workers);
+    REQUIRE(f.ops.cancel(handle.id(), CancelReason::User));
+
+    f.strand.run_until([&] { return !std::filesystem::exists(f.staging_of(destination)); });
+    f.wait(handle);
+    CHECK(std::holds_alternative<Cancelled>(*f.ops.outcome(handle.id())));
+    CHECK(f.library.list().empty());
+    CHECK(std::filesystem::is_regular_file(destination / kWin64 / std::string(kShippingExe)));
+    // The folder is known as unregistered once the cancelled install ended on the strand.
+    std::optional<OpHandle> deletion;
+    f.strand.run_until([&] {
+        Result<OpHandle> started = f.installer->start_delete_unregistered(destination, DisconnectPolicy::Detached);
+        if (started) deletion = *started;
+        return deletion.has_value();
+    });
+    f.completed<void>(*deletion);
+}
+
 TEST_CASE("discarding staging never takes a volume root, whose staging path holds every archive") {
     InstallFixture f;
     const Result<OpHandle> root = f.installer->start_discard_staging(f.dir.path().root_path(), DisconnectPolicy::Detached);

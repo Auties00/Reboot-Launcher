@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <filesystem>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -8,6 +10,7 @@
 
 #include "builds_test_support.hpp"
 #include "reboot/builds/archive_probe.hpp"
+#include "reboot/builds/byte_source.hpp"
 #include "reboot/builds/libarchive_extractor.hpp"
 #include "reboot/builds/memory_byte_source.hpp"
 #include "reboot/foundation/cancel.hpp"
@@ -99,6 +102,75 @@ std::vector<u8> zip64_wrapping(const std::vector<u8>& payload) {
     return out;
 }
 
+// The ZIP64 end records of a file of `size` bytes whose directory is `directory_size` bytes at
+// `directory_offset`, holding `entries`; the records end the file.
+std::vector<u8> zip64_tail(u64 size, u64 entries, u64 directory_size, u64 directory_offset) {
+    std::vector<u8> out;
+    add(out, 0x06064B50, 4);
+    add(out, 44, 8);
+    add(out, 45, 2);
+    add(out, 45, 2);
+    add(out, 0, 4);
+    add(out, 0, 4);
+    add(out, entries, 8);
+    add(out, entries, 8);
+    add(out, directory_size, 8);
+    add(out, directory_offset, 8);
+    add(out, 0x07064B50, 4);
+    add(out, 0, 4);
+    add(out, size - 98, 8);
+    add(out, 1, 4);
+    add(out, 0x06054B50, 4);
+    add(out, 0, 2);
+    add(out, 0, 2);
+    add(out, 0xFFFF, 2);
+    add(out, 0xFFFF, 2);
+    add(out, 0xFFFF'FFFF, 4);
+    add(out, 0xFFFF'FFFF, 4);
+    add(out, 0, 2);
+    return out;
+}
+
+// Claims `size` bytes but holds only a head and a tail, zeros between; records every read.
+class SparseByteSource final : public IByteSource {
+public:
+    SparseByteSource(u64 size, std::vector<u8> head, std::vector<u8> tail)
+        : size_(size), head_(std::move(head)), tail_(std::move(tail)) {}
+
+    [[nodiscard]] u64 size() const noexcept override { return size_; }
+
+    Result<void> read_at(u64 offset, std::span<u8> out) override {
+        reads.emplace_back(offset, out.size());
+        const u64 tail_start = size_ - tail_.size();
+        for (std::size_t i = 0; i < out.size(); ++i) {
+            const u64 at = offset + i;
+            if (at < head_.size()) out[i] = head_[static_cast<std::size_t>(at)];
+            else if (at >= tail_start) out[i] = tail_[static_cast<std::size_t>(at - tail_start)];
+            else out[i] = 0;
+        }
+        return {};
+    }
+
+    std::vector<std::pair<u64, std::size_t>> reads;
+
+private:
+    u64 size_;
+    std::vector<u8> head_;
+    std::vector<u8> tail_;
+};
+
+// libarchive's own test_read_format_rar5_win32.rar: non-solid, one folder, test.bin stored and
+// test1.bin to test6.bin compressed.
+const NativePath kRar5 = NativePath(REBOOT_BUILDS_TEST_DATA) / "rar5_win32.rar";
+
+// The bytes libarchive's verify_data() expects of the RAR5 fixture's files.
+std::vector<u8> rar5_contents(i64 magic, std::size_t size) {
+    std::vector<u8> out;
+    for (i64 k = 1; k <= static_cast<i64>(size / 4); ++k)
+        add(out, static_cast<u64>(std::max<i64>(k * k - 3 * k + 1 + magic, 0)), 4);
+    return out;
+}
+
 struct Fixture {
     testing::ScratchDir dir = make_scratch("reboot-builds-archive");
     NativePath archive = dir.path() / "archive";
@@ -144,7 +216,7 @@ TEST_CASE("the probe reads signatures, never extensions") {
     REQUIRE(seven_probe);
     CHECK(seven_probe->format == catalog::ArchiveFormat::SevenZip);
 
-    const std::vector<u8> rar5{'R', 'a', 'r', '!', 0x1A, 0x07, 0x01, 0x00, 0, 0};
+    const std::vector<u8> rar5 = read_file(kRar5);
     MemoryByteSource rar_source(rar5);
     auto rar_probe = probe_archive(rar_source);
     REQUIRE(rar_probe);
@@ -197,6 +269,71 @@ TEST_CASE("a ZIP whose directory is damaged is corrupt") {
     auto probe = probe_archive(source);
     REQUIRE_FALSE(probe);
     CHECK(probe.error().id == "builds.corrupt_archive");
+}
+
+TEST_CASE("a ZIP directory above the size cap is corrupt before anything is read from it") {
+    constexpr u64 kSize = u64{1} << 30;
+    constexpr u64 kCap = u64{256} << 20;
+    const std::vector<u8> head{'P', 'K', 3, 4};
+
+    const u64 oversized_at = kSize - 98 - (kCap + 1);
+    SparseByteSource oversized(kSize, head, zip64_tail(kSize, 1, kCap + 1, oversized_at));
+    auto refused = probe_archive(oversized);
+    REQUIRE_FALSE(refused);
+    CHECK(refused.error().id == "builds.corrupt_archive");
+    for (const auto& [offset, length] : oversized.reads) {
+        CHECK(offset != oversized_at);
+        CHECK(length <= 22 + 0xFFFF);
+    }
+
+    // More entries than the directory's size can hold would size a reserve() from damage.
+    const u64 crowded_at = kSize - 98 - 92;
+    SparseByteSource crowded(kSize, head, zip64_tail(kSize, u64{1} << 40, 92, crowded_at));
+    auto crowded_probe = probe_archive(crowded);
+    REQUIRE_FALSE(crowded_probe);
+    CHECK(crowded_probe.error().id == "builds.corrupt_archive");
+    for (const auto& [offset, length] : crowded.reads) CHECK(offset != crowded_at);
+}
+
+TEST_CASE("a RAR5 archive extracts its folder, stored and compressed files") {
+    Fixture f;
+    auto summary = f.extract(read_file(kRar5));
+    REQUIRE(summary);
+    CHECK(summary->probe.format == catalog::ArchiveFormat::Rar);
+    CHECK(summary->entries == 8);
+    CHECK(summary->bytes == 1200 + 6 * 4096);
+    CHECK(std::filesystem::is_directory(f.destination / "testdir"));
+    CHECK(read_file(f.destination / "test.bin") == rar5_contents(0, 1200));
+    for (int n = 1; n <= 6; ++n) {
+        INFO(n);
+        CHECK(read_file(f.destination / ("test" + std::to_string(n) + ".bin")) == rar5_contents(n, 4096));
+    }
+    std::size_t files = 0;
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(f.destination))
+        if (entry.is_regular_file()) ++files;
+    CHECK(files == 7);
+    REQUIRE_FALSE(f.progress.empty());
+    CHECK(f.progress.back().entries_done == 8);
+    CHECK(f.progress.back().bytes_done == 1200 + 6 * 4096);
+    // Only a ZIP's directory states the total up front.
+    CHECK_FALSE(f.progress.back().bytes_total);
+}
+
+TEST_CASE("a cancelled RAR5 extraction stops before its next entry") {
+    Fixture f;
+    write_file(f.archive, read_file(kRar5));
+    CancelSource cancel;
+    auto cancelled = f.extractor.extract(
+        ExtractRequest{.archive = f.archive, .destination = f.destination}, cancel.token(),
+        [&](const ExtractProgress& progress) {
+            f.progress.push_back(progress);
+            if (progress.entries_done == 2) cancel.cancel(CancelReason::User);
+        });
+    REQUIRE_FALSE(cancelled);
+    CHECK(cancelled.error().id == "builds.cancelled");
+    CHECK(f.progress.back().entries_done == 2);
+    CHECK(std::filesystem::is_regular_file(f.destination / "test.bin"));
+    CHECK_FALSE(std::filesystem::exists(f.destination / "test1.bin"));
 }
 
 TEST_CASE("ZIP, 7z and a ZIP-wrapped 7z extract the same tree") {
@@ -285,4 +422,11 @@ TEST_CASE("extraction fails cleanly on bad input and stops when cancelled") {
     auto cancelled = f.extract(make_archive("zip", kBuild), cancel.token());
     REQUIRE_FALSE(cancelled);
     CHECK(cancelled.error().id == "builds.cancelled");
+}
+
+// ScratchDir::create tries 8 names; a fixed seed would offer the same 8 on every call.
+TEST_CASE("scratch directories never repeat a name") {
+    std::vector<testing::ScratchDir> dirs;
+    for (int i = 0; i < 9; ++i) dirs.push_back(make_scratch("reboot-builds-scratch"));
+    CHECK(dirs.front().path() != dirs.back().path());
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -41,6 +43,9 @@ public:
 
     // The runtimes the manifest selects for this platform.
     [[nodiscard]] virtual std::vector<components::RuntimeEntry> runtimes() const = 0;
+    // The ids of the runtimes the store holds or the manifest selects; nullopt while the store
+    // cannot list every one it holds.
+    [[nodiscard]] virtual std::optional<std::vector<std::string>> stored_runtimes() const = 0;
     virtual void acquire(SessionId session, std::string_view runtime_id, CancelToken token,
                          components::ProgressSink progress,
                          UniqueFunction<void(Result<components::PinnedRuntime>)> done) = 0;

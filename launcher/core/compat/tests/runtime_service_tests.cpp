@@ -40,6 +40,13 @@ public:
 
     [[nodiscard]] std::vector<components::RuntimeEntry> runtimes() const override { return entries; }
 
+    [[nodiscard]] std::optional<std::vector<std::string>> stored_runtimes() const override {
+        if (!listing_complete) return std::nullopt;
+        std::vector<std::string> out = kept;
+        for (const components::RuntimeEntry& entry : entries) out.push_back(entry.id);
+        return out;
+    }
+
     void acquire(SessionId, std::string_view runtime_id, CancelToken token, components::ProgressSink progress,
                  UniqueFunction<void(Result<components::PinnedRuntime>)> done) override {
         acquired.emplace_back(runtime_id);
@@ -67,6 +74,9 @@ public:
     void mark_good(const components::ComponentPin&) override { ++marked_good; }
 
     std::vector<components::RuntimeEntry> entries;
+    // Stored beside the manifest's runtimes.
+    std::vector<std::string> kept;
+    bool listing_complete = true;
     std::vector<std::string> acquired;
     bool fail_fetch = false;
     int marked_good = 0;
@@ -337,6 +347,31 @@ TEST_CASE("a completed session ends the Rosetta first run and lets the store col
     REQUIRE(f.record("mac-wine-11") != nullptr);
     CHECK(f.record("mac-wine-11")->completed_session);
     CHECK(f.core.profile(RunnerKind::MacRuntime)->multiplier() == RunnerMultiplier::Wine);
+}
+
+TEST_CASE("a record write drops the records of runtimes the store no longer lists", "[compat][runtime_service]") {
+    Fixture f({RunnerKind::MacRuntime});
+    const auto seed = [&f](std::string id) {
+        REQUIRE(f.document.update([&](CompatDocument& document) {
+            document.runtimes.push_back(RuntimeRecord{RuntimeId{std::move(id)}, true, std::nullopt});
+        }));
+    };
+    seed("mac-wine-9");
+    seed("mac-wine-10");
+    f.catalog.kept = {"mac-wine-10"};
+    auto prepared = f.prepare(RunnerKind::MacRuntime);
+    REQUIRE(prepared);
+    f.core.mark_good(*prepared);
+    CHECK(f.record("mac-wine-9") == nullptr);
+    REQUIRE(f.record("mac-wine-10") != nullptr);
+    CHECK(f.record("mac-wine-10")->completed_session);
+    CHECK(f.record("mac-wine-11") != nullptr);
+
+    // A store that cannot list everything it holds keeps every record.
+    seed("mac-wine-8");
+    f.catalog.listing_complete = false;
+    f.core.mark_good(*prepared);
+    CHECK(f.record("mac-wine-8") != nullptr);
 }
 
 TEST_CASE("the VC++ source pins the manifest's redistributable to the session", "[compat][runtime_service]") {

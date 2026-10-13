@@ -54,6 +54,7 @@ struct BuildPatch {
     std::optional<std::string> name;
     std::optional<GameVersion> version;
     std::optional<Changelist> cl;
+    std::optional<bool> allow_above_cap;
 };
 
 struct NewBuild {

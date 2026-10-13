@@ -428,6 +428,59 @@ TEST_CASE("cells without a described server block the host evidence cells") {
     CHECK_FALSE(cells[0].evidence);
 }
 
+TEST_CASE("cells block a host cell the described game server does not wholly cover") {
+    // With the server's own binary or another one, so neither a match nor staleness decides it.
+    for (const u8 sha_fill : {u8{9}, u8{8}}) {
+        INFO(int{sha_fill});
+        for (const VersionRange& outside :
+             {range(version(12, 0), version(12, 41)), range(version(10, 0), version(10, 50)),
+              range(version(8, 0), version(10, 41)), range(version(3, 0), version(8, 51))}) {
+            EvidenceRecord record = host_record(EvidenceResult::Pass, 10, sha_fill);
+            record.cell.range = outside;
+            const SupportPolicy policy(windows_inputs({record}));
+            const std::vector<SupportCell> cells = policy.cells(server());
+            REQUIRE(cells.size() == 2);
+            CHECK(cells[0].key == record.cell);
+            CHECK(cells[0].tier == SupportTier::Blocked);
+            CHECK(cells[0].reasons == std::vector{SupportReason::NotCoveredByGameServer});
+            CHECK_FALSE(cells[0].evidence);
+        }
+    }
+
+    // A cell inside a described range keeps its evidence.
+    EvidenceRecord inside = host_record(EvidenceResult::Pass, 10);
+    inside.cell.range = range(version(8, 0), version(10, 40, 7));
+    const SupportPolicy policy(windows_inputs({inside}));
+    std::vector<SupportCell> cells = policy.cells(server());
+    REQUIRE(cells.size() == 2);
+    CHECK(cells[0].tier == SupportTier::Tested);
+    CHECK(cells[0].evidence);
+
+    // A max without a patch reaches patches a patched max does not.
+    HostInputs patched = server();
+    patched.ranges[0].max = version(10, 40, 7);
+    CHECK(policy.cells(patched)[0].tier == SupportTier::Tested);
+    inside.cell.range.max = version(10, 40);
+    cells = SupportPolicy(windows_inputs({inside})).cells(patched);
+    CHECK(cells[0].reasons == std::vector{SupportReason::NotCoveredByGameServer});
+}
+
+TEST_CASE("a range limited to changelists covers only cells within them") {
+    HostInputs limited = server();
+    limited.ranges[0].changelists = {{Changelist{100}, Changelist{200}}};
+    EvidenceRecord record = host_record(EvidenceResult::Pass, 10);
+    record.cell.range = range(version(8, 0), version(8, 51));
+    for (const auto& [changelists, tier] :
+         {std::pair{std::vector<ChangelistRange>{}, SupportTier::Blocked},
+          std::pair{std::vector<ChangelistRange>{{Changelist{150}, Changelist{250}}}, SupportTier::Blocked},
+          std::pair{std::vector<ChangelistRange>{{Changelist{120}, Changelist{180}}}, SupportTier::Tested}}) {
+        record.cell.range.changelists = changelists;
+        const std::vector<SupportCell> cells = SupportPolicy(windows_inputs({record})).cells(limited);
+        REQUIRE(cells.size() == 2);
+        CHECK(cells[0].tier == tier);
+    }
+}
+
 TEST_CASE("check_not_blocked lists the other Blocked reasons as causes") {
     SupportInputs inputs = windows_inputs();
     inputs.runners.clear();

@@ -27,6 +27,8 @@ struct InstalledBuild {
     // From another OS or a missing drive; kept and shown, never dropped.
     bool needs_relocation = false;
     BuildPresence presence = BuildPresence::Unchecked;
+    // The user's opt-in: above kMaxSupportedVersion, support rates it Untested instead of Blocked.
+    bool allow_above_cap = false;
 
     // Gates (support, chapter one, S20) run only on a confirmed version.
     [[nodiscard]] bool version_confirmed() const noexcept {

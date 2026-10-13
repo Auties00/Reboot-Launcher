@@ -1,8 +1,12 @@
 #include "reboot/compat/runtime_service.hpp"
 
+#include <optional>
+#include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
+#include "reboot/components/component_info.hpp"
 #include "reboot/components/component_store.hpp"
 #include "reboot/components/manifest_service.hpp"
 #include "runtime_core.hpp"
@@ -17,6 +21,14 @@ public:
         : store_(store), manifest_(manifest) {}
 
     [[nodiscard]] std::vector<components::RuntimeEntry> runtimes() const override { return manifest_.runtimes(); }
+
+    [[nodiscard]] std::optional<std::vector<std::string>> stored_runtimes() const override {
+        if (!store_.listing_complete()) return std::nullopt;
+        std::vector<std::string> out;
+        for (const components::ComponentInfo& info : store_.list())
+            if (info.ref.kind == components::ComponentKind::Runtime) out.push_back(info.ref.id);
+        return out;
+    }
 
     void acquire(SessionId session, std::string_view runtime_id, CancelToken token, components::ProgressSink progress,
                  UniqueFunction<void(Result<components::PinnedRuntime>)> done) override {

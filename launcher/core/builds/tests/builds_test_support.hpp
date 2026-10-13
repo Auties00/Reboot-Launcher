@@ -16,6 +16,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -29,9 +30,9 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
+#include "reboot/foundation/random.hpp"
 #include "reboot/foundation/types.hpp"
 #include "reboot/foundation/version.hpp"
-#include "reboot/testing/fake_random.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 
@@ -60,6 +61,13 @@ public:
             ++ran;
         }
         return ran;
+    }
+
+    // Runs a single task, waiting for another thread to post one if none is ready.
+    void run_one() {
+        UniqueFunction<void()> task = next(true);
+        REQUIRE(static_cast<bool>(task));
+        task();
     }
 
     // Runs tasks, waiting for other threads to post, until `done` holds.
@@ -114,6 +122,15 @@ private:
     std::deque<UniqueFunction<void()>> ready_;
     std::multimap<SteadyTime, UniqueFunction<void()>> timed_;
 };
+
+// Runs nothing: returns once every job of `workers` ended, so each has posted its result.
+inline void wait_idle(const WorkerPool& workers) {
+    const auto give_up = std::chrono::steady_clock::now() + std::chrono::seconds{30};
+    while (!workers.idle()) {
+        if (std::chrono::steady_clock::now() >= give_up) FAIL("the workers never went idle");
+        std::this_thread::yield();
+    }
+}
 
 // InMemoryFileSystem for documents, but remove_tree on the real disk, where build trees live.
 class TreeFileSystem final : public ports::IFileSystem {
@@ -196,8 +213,9 @@ private:
     return *parsed;
 }
 
+// OS randomness: ctest runs the cases of this binary in parallel processes.
 [[nodiscard]] inline testing::ScratchDir make_scratch(std::string_view prefix) {
-    testing::FakeRandom random(42);
+    OsRandom random;
     Result<testing::ScratchDir> dir = testing::ScratchDir::create(random, prefix);
     REQUIRE(dir);
     return std::move(*dir);
