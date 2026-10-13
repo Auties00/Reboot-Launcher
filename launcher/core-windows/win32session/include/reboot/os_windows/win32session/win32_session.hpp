@@ -63,6 +63,14 @@ public:
     virtual void terminate() noexcept = 0;
 };
 
+struct SessionOptions {
+    // Under Wine the game's Unix argv, which /proc/<pid>/cmdline shows every user, is built from the
+    // command line CreateProcessW gets. With this set, CreateProcessW gets the quoted exe padded with
+    // spaces to the full length, and the full command line is written into the suspended game's
+    // process parameters before anything in it runs. A failed write is SpawnStep::CreateGame.
+    bool command_line_after_create = false;
+};
+
 // Parks each SpawnGame::park_utf16 file as <name>.reboot-parked, replacing a leftover from a
 // crashed session; a missing file or a failed rename is skipped. Then creates the game and
 // companions suspended in one Job (the game with the given environment block, or the caller's
@@ -73,6 +81,6 @@ public:
 // returning the error. The command line and environment copies are wiped once the game has them.
 // Covers game-launch.process-creation, dll-injection.mechanism, dll-injection.+7, dll-injection.+40.
 [[nodiscard]] std::expected<std::unique_ptr<Win32Session>, SpawnError> launch_session(
-    const contracts::winhost::SpawnGame& spawn, EventSink on_event);
+    const contracts::winhost::SpawnGame& spawn, EventSink on_event, SessionOptions options = {});
 
 }  // namespace rb::os_windows::win32session

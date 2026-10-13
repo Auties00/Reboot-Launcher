@@ -21,14 +21,13 @@ namespace common = rb::contracts::common;
 
 namespace {
 
-// reboot-winhost.exe started with the given REBOOT_CTL and REBOOT_CTL_TOKEN; killed if a check
-// fails before it exits.
+// reboot-winhost.exe started with the given REBOOT_CTL and the token line on its stdin; killed if a
+// check fails before it exits.
 class WinhostProcess {
 public:
     WinhostProcess(const std::string& ctl, const std::string& token) {
         std::wstring env;
         if (!ctl.empty()) env += L"REBOOT_CTL=" + std::wstring(ctl.begin(), ctl.end()) + L'\0';
-        if (!token.empty()) env += L"REBOOT_CTL_TOKEN=" + std::wstring(token.begin(), token.end()) + L'\0';
         std::array<wchar_t, MAX_PATH> root{};
         const DWORD root_length = GetEnvironmentVariableW(L"SystemRoot", root.data(), static_cast<DWORD>(root.size()));
         env += L"SystemRoot=" + std::wstring(root.data(), root_length) + L'\0';
@@ -37,14 +36,27 @@ public:
         const std::string exe_narrow = REBOOT_WINHOST_EXE;
         const std::wstring exe(exe_narrow.begin(), exe_narrow.end());
         std::wstring command_line = L"\"" + exe + L"\"";
+        // Only the read end is inheritable; the line is in the pipe before winhost starts.
+        SECURITY_ATTRIBUTES inherit{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
+        HANDLE stdin_read = nullptr;
+        HANDLE stdin_write = nullptr;
+        if (CreatePipe(&stdin_read, &stdin_write, &inherit, 0) == 0) return;
+        SetHandleInformation(stdin_write, HANDLE_FLAG_INHERIT, 0);
+        const std::string line = token.empty() ? std::string() : token + "\n";
+        DWORD written = 0;
+        if (!line.empty()) WriteFile(stdin_write, line.data(), static_cast<DWORD>(line.size()), &written, nullptr);
+        CloseHandle(stdin_write);
         STARTUPINFOW startup{};
         startup.cb = sizeof(startup);
+        startup.dwFlags = STARTF_USESTDHANDLES;
+        startup.hStdInput = stdin_read;
         PROCESS_INFORMATION info{};
-        if (CreateProcessW(exe.c_str(), command_line.data(), nullptr, nullptr, FALSE,
+        if (CreateProcessW(exe.c_str(), command_line.data(), nullptr, nullptr, TRUE,
                            CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW, env.data(), nullptr, &startup, &info) != 0) {
             CloseHandle(info.hThread);
             process_ = info.hProcess;
         }
+        CloseHandle(stdin_read);
     }
 
     ~WinhostProcess() {
@@ -121,6 +133,14 @@ TEST_CASE("killing the engine's end of the channel ends reboot-winhost.exe and i
     const auto resumed = engine.expect<common::CommandResult>();
     REQUIRE(resumed);
     CHECK(resumed->ok);
+    // PING names its target only with the arguments winhost writes in after creating it.
+    std::string printed;
+    while (printed.find("127.0.0.1") == std::string::npos) {
+        const auto output = engine.expect<wh::Output>();
+        REQUIRE(output);
+        printed.append(output->bytes.begin(), output->bytes.end());
+    }
+    CHECK(WaitForSingleObject(game, 0) == WAIT_TIMEOUT);
 
     engine.close_peer();
     CHECK(winhost.exit_code_within(15000) == code_of(WinhostExit::EngineClosed));

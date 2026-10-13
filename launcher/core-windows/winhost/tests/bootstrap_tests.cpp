@@ -30,6 +30,40 @@ void set_variable(const wchar_t* name, const std::string& value) {
     SetEnvironmentVariableW(name, std::wstring(value.begin(), value.end()).c_str());
 }
 
+// This process's stdin, for its lifetime: a pipe holding `text`, closed for writing after it.
+class StdinFeed {
+public:
+    explicit StdinFeed(const std::string& text) : previous_(GetStdHandle(STD_INPUT_HANDLE)) {
+        HANDLE write = nullptr;
+        REQUIRE(CreatePipe(&read_, &write, nullptr, 0) != 0);
+        DWORD written = 0;
+        if (!text.empty())
+            REQUIRE(WriteFile(write, text.data(), static_cast<DWORD>(text.size()), &written, nullptr) != 0);
+        CloseHandle(write);
+        SetStdHandle(STD_INPUT_HANDLE, read_);
+    }
+    ~StdinFeed() {
+        SetStdHandle(STD_INPUT_HANDLE, previous_);
+        CloseHandle(read_);
+    }
+    StdinFeed(const StdinFeed&) = delete;
+    StdinFeed& operator=(const StdinFeed&) = delete;
+
+    // What is left in the pipe.
+    [[nodiscard]] std::string rest() const {
+        std::string out;
+        std::array<char, 64> buffer{};
+        DWORD read = 0;
+        while (ReadFile(read_, buffer.data(), static_cast<DWORD>(buffer.size()), &read, nullptr) != 0 && read != 0)
+            out.append(buffer.data(), read);
+        return out;
+    }
+
+private:
+    HANDLE previous_;
+    HANDLE read_ = nullptr;
+};
+
 }  // namespace
 
 TEST_CASE("only a loopback tcp endpoint with a port in range is accepted") {
@@ -81,30 +115,40 @@ TEST_CASE("a token whose spare trailing bits are set is not canonical and is rej
     CHECK_FALSE(decode_control_token(text));
 }
 
-TEST_CASE("read_bootstrap takes both variables out of the environment") {
+TEST_CASE("read_bootstrap takes REBOOT_CTL out of the environment and the token line from stdin") {
     set_variable(L"REBOOT_CTL", "tcp://127.0.0.1:4100");
-    set_variable(L"REBOOT_CTL_TOKEN", base64url(sample_token()));
+    const StdinFeed stdin_feed(base64url(sample_token()) + "\nnext");
 
     const auto bootstrap = read_bootstrap();
     REQUIRE(bootstrap);
     CHECK(bootstrap->port == 4100);
     CHECK(bootstrap->token.reveal() == sample_token());
     CHECK_FALSE(variable_set(L"REBOOT_CTL"));
-    CHECK_FALSE(variable_set(L"REBOOT_CTL_TOKEN"));
+    CHECK(stdin_feed.rest() == "next");
 }
 
 TEST_CASE("read_bootstrap fails at the bootstrap step and still removes what it found") {
-    set_variable(L"REBOOT_CTL", "tcp://127.0.0.1:4100");
-    SetEnvironmentVariableW(L"REBOOT_CTL_TOKEN", nullptr);
-    auto missing = read_bootstrap();
-    REQUIRE_FALSE(missing);
-    CHECK(missing.error().step == FailureStep::Bootstrap);
-    CHECK_FALSE(variable_set(L"REBOOT_CTL"));
-
-    set_variable(L"REBOOT_CTL", "tcp://192.168.1.2:4100");
-    set_variable(L"REBOOT_CTL_TOKEN", base64url(sample_token()));
-    auto off_host = read_bootstrap();
-    REQUIRE_FALSE(off_host);
-    CHECK(off_host.error().step == FailureStep::Bootstrap);
-    CHECK_FALSE(variable_set(L"REBOOT_CTL_TOKEN"));
+    {
+        set_variable(L"REBOOT_CTL", "tcp://127.0.0.1:4100");
+        const StdinFeed empty("");
+        auto missing = read_bootstrap();
+        REQUIRE_FALSE(missing);
+        CHECK(missing.error().step == FailureStep::Bootstrap);
+        CHECK_FALSE(variable_set(L"REBOOT_CTL"));
+    }
+    {
+        set_variable(L"REBOOT_CTL", "tcp://192.168.1.2:4100");
+        const StdinFeed token(base64url(sample_token()) + "\n");
+        auto off_host = read_bootstrap();
+        REQUIRE_FALSE(off_host);
+        CHECK(off_host.error().step == FailureStep::Bootstrap);
+        CHECK_FALSE(variable_set(L"REBOOT_CTL"));
+    }
+    for (const std::string& line : {base64url(sample_token()), base64url(sample_token()) + "A\n"}) {
+        set_variable(L"REBOOT_CTL", "tcp://127.0.0.1:4100");
+        const StdinFeed unterminated(line);
+        auto bad = read_bootstrap();
+        REQUIRE_FALSE(bad);
+        CHECK(bad.error().step == FailureStep::Bootstrap);
+    }
 }

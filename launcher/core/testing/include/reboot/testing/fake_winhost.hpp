@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 #include "reboot/contracts/winhost.hpp"
@@ -35,8 +36,10 @@ public:
 
     Result<void> connect(boost::asio::io_context& io, const GameControlBootstrap& bootstrap);
     void attach(std::unique_ptr<ports::IByteStream> stream, const GameControlBootstrap& bootstrap);
-    // The runner launch a ScriptedProcessLauncher rule received carries winhost's bootstrap.
-    [[nodiscard]] static Result<GameControlBootstrap> bootstrap_of(const ports::ProcessLaunch& runner_launch);
+    // winhost's bootstrap: REBOOT_CTL, REBOOT_SESSION and REBOOT_ROLE from the runner launch a
+    // ScriptedProcessLauncher rule received, and the token from the first line of its stdin.
+    [[nodiscard]] static Result<GameControlBootstrap> bootstrap_of(const ports::ProcessLaunch& runner_launch,
+                                                                   std::span<const u8> runner_stdin);
 
     template <ContractMessage T>
     void send(const T& message) {

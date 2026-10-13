@@ -60,8 +60,10 @@ struct WineSessionSetup {
 // linux-gui-sandbox-distribution, owner-2).
 // Strand-only. ISessionHost for play on macOS and Linux; hosting never uses it. launch() consumes
 // the staged setup:
-// - opens a winhost peer, whose REBOOT_CTL and REBOOT_CTL_TOKEN go in winhost's channel layer;
-// - runs IRunnerPlatform::runner_launch of reboot-winhost.exe in scope reboot-session-<id>;
+// - opens a winhost peer, whose REBOOT_CTL goes in winhost's channel layer;
+// - runs IRunnerPlatform::runner_launch of reboot-winhost.exe in scope reboot-session-<id>, with a
+//   stdin pipe that gets the peer's token as one "<token>\n" line. Wine forks the game from
+//   winhost's Unix environment, so the token never goes there;
 // - answers winhost's Hello with SpawnGame in UTF-16 through PathMapper, park paths included,
 //   so winhost parks them inside the prefix. Its environment block
 //   holds only the game's channel layer: winhost lays it over the environment Wine gave winhost,

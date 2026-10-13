@@ -7,6 +7,7 @@
 #include <iterator>
 #include <map>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -532,7 +533,6 @@ Result<std::unique_ptr<ports::IGameSession>> WineSessionHost::launch(const ports
 
     setup.env.runner(*runner_vars)
         .channel(gc::kEnvCtl, std::move(*ctl))
-        .channel_secret(gc::kEnvCtlToken, state->peer->token().env_value())
         .channel(gc::kEnvSession, format_uuid(launch.session.value))
         .channel(gc::kEnvRole, std::string(kWinhostRole));
     auto env = std::move(setup.env).build();
@@ -547,9 +547,19 @@ Result<std::unique_ptr<ports::IGameSession>> WineSessionHost::launch(const ports
     auto runner_launch = impl.runner.runner_launch(setup.layout, setup.prefix, setup.winhost_exe, env->copy());
     if (!runner_launch) return spawn_failed(std::move(runner_launch.error()));
     runner_launch->scope_name = std::string(kScopePrefix) + format_uuid(launch.session.value);
+    // Only a control channel has a stdin every launcher writes to; the output is still read as lines.
+    runner_launch->stdio = ports::StdioMode::ControlChannel;
     const process::WipingLaunch wiping(std::move(*runner_launch));
     auto child = impl.processes.spawn(wiping.get());
     if (!child) return spawn_failed(std::move(child.error()));
+    {
+        const SecretString token = state->peer->token().env_value();
+        std::string line;
+        line.reserve(token.reveal().size() + 1);
+        line.append(token.reveal()).push_back('\n');
+        (*child)->write_stdin(std::span(reinterpret_cast<const u8*>(line.data()), line.size()));
+        secure_wipe(line.data(), line.size());
+    }
     state->runner = std::move(*child);
     state->on_event = std::move(on_event);
     impl.watch_runner(state);

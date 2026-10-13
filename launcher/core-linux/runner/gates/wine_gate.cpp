@@ -206,6 +206,10 @@ public:
 
     [[nodiscard]] u32 pid() const { return process_->pid(); }
 
+    void write_stdin(std::string_view text) {
+        process_->write_stdin(std::span(reinterpret_cast<const u8*>(text.data()), text.size()));
+    }
+
     [[nodiscard]] std::optional<ports::ChildExit> exit_within(std::chrono::seconds limit) {
         std::unique_lock lock(mutex_);
         changed_.wait_for(lock, limit, [this] { return exit_.has_value(); });
@@ -396,7 +400,8 @@ const NativePath& prefix(const Inputs& in) {
     return path;
 }
 
-// reboot-winhost.exe started as WineSessionHost starts it: runner_launch with the channel bootstrap.
+// reboot-winhost.exe started as WineSessionHost starts it: runner_launch with REBOOT_CTL, and the
+// token line on its stdin.
 struct Winhost {
     std::array<u8, 32> token = fresh_token();
     PidfdProcessLauncher launcher{std::nullopt};
@@ -409,12 +414,13 @@ struct Winhost {
         if (!layout) return "layout: " + layout.error().id;
         ports::EnvBlock env = base_env();
         env.vars.emplace_back(gc::kEnvCtl, engine.url());
-        env.vars.emplace_back(gc::kEnvCtlToken, base64url(token));
-        const auto launch = runner.runner_launch(*layout, prefix_dir, in.winhost, std::move(env));
+        auto launch = runner.runner_launch(*layout, prefix_dir, in.winhost, std::move(env));
         if (!launch) return "runner_launch: " + launch.error().id;
+        launch->stdio = ports::StdioMode::ControlChannel;
         auto spawned = launcher.spawn(*launch);
         if (!spawned) return "spawn: " + spawned.error().id;
         child.emplace(std::move(*spawned));
+        child->write_stdin(base64url(token) + "\n");
         return {};
     }
 };

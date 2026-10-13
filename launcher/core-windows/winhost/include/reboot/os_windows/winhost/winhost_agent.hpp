@@ -34,9 +34,11 @@ inline constexpr i64 kInjectHashMismatch = 577;
 // - Every InjectSpec is opened deny-write, hashed through that handle and compared with its
 //   sha256 before the load, under Wine as on Windows; the handle is held until the session ends.
 //   A mismatch is Injected{ok = false, error = kInjectHashMismatch} and nothing is loaded.
-// - The argv and environment bytes are wiped once CreateProcessW has them. Wine may still copy
-//   the Windows command line and environment into the game's Unix argv and envp; core-linux/runner's
-//   Wine gate checks /proc/<game pid>/cmdline and environ for -AUTH_PASSWORD and REBOOT_CTL_TOKEN.
+// - The argv and environment bytes are wiped once CreateProcessW has them. Wine builds the game's
+//   Unix argv from the command line CreateProcessW gets, so the game is created with its exe alone
+//   and its full command line written in before it runs (SessionOptions::command_line_after_create);
+//   its Unix envp is winhost's own, which never holds a token. core-linux/runner's Wine gate checks
+//   /proc/<game pid>/cmdline and environ for -AUTH_PASSWORD and REBOOT_CTL_TOKEN.
 // - The run() thread reads frames and answers Ping with Pong itself. Resume, Inject and Stop run
 //   in arrival order on one request thread, so a waited remote load or a Stop grace never delays
 //   a Pong. Each gets a CommandResult (failed_reply on failure); any other type gets Unsupported.

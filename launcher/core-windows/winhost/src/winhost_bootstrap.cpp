@@ -52,6 +52,24 @@ std::optional<std::string> take_variable(std::string_view name) {
     return out;
 }
 
+// The stdin line without its '\n', read a byte at a time so nothing after it is taken; nullopt on
+// EOF, an error or a line longer than a token.
+std::optional<std::string> read_token_line() {
+    const HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
+    if (input == nullptr || input == INVALID_HANDLE_VALUE) return std::nullopt;
+    std::string line;
+    line.reserve(kTokenChars + 1);
+    while (line.size() <= kTokenChars) {
+        char c = 0;
+        DWORD read = 0;
+        if (ReadFile(input, &c, 1, &read, nullptr) == 0 || read == 0) break;
+        if (c == '\n') return line;
+        line.push_back(c);
+    }
+    secure_wipe(line.data(), line.size());
+    return std::nullopt;
+}
+
 }  // namespace
 
 std::optional<u16> parse_ctl_endpoint(std::string_view value) noexcept {
@@ -99,7 +117,7 @@ std::optional<ControlTokenBytes> decode_control_token(std::string_view value) {
 Expected<WinhostBootstrap> read_bootstrap() {
     namespace gc = contracts::game_client;
     auto ctl = take_variable(gc::kEnvCtl);
-    auto token_text = take_variable(gc::kEnvCtlToken);
+    auto token_text = read_token_line();
 
     const auto port = ctl ? parse_ctl_endpoint(*ctl) : std::nullopt;
     auto token = token_text ? decode_control_token(*token_text) : std::nullopt;

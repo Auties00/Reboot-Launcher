@@ -292,7 +292,11 @@ TEST_CASE("FakeWinhost spawns, injects, resumes into our DLL and dies with its c
     ports::ProcessLaunch runner_launch;
     runner_launch.env = bootstrap_env();
     runner_launch.env.vars.back().second = "winhost";
-    const auto bootstrap = FakeWinhost::bootstrap_of(runner_launch);
+    // The token in the environment does not count; only the stdin line does.
+    CHECK_FALSE(FakeWinhost::bootstrap_of(runner_launch, {}));
+    const std::string stdin_line = std::string(kToken) + "\n";
+    const auto bootstrap = FakeWinhost::bootstrap_of(
+        runner_launch, std::span(reinterpret_cast<const u8*>(stdin_line.data()), stdin_line.size()));
     REQUIRE(bootstrap);
     CHECK(bootstrap->role == "winhost");
     winhost.attach(std::move(host_end), *bootstrap);

@@ -69,13 +69,6 @@ struct Rig {
         REQUIRE(listener.start());
         processes.on_exe("wine", [this](testing::ScriptedChild& child) -> Result<void> {
             runner_child = &child;
-            if (!winhost_connects) return {};
-            auto bootstrap = testing::FakeWinhost::bootstrap_of(child.launch());
-            REQUIRE(bootstrap);
-            winhost = std::make_unique<testing::FakeWinhost>(strand, clock, script);
-            testing::MemoryStreamPair pair = testing::make_memory_stream_pair(strand, {}, {});
-            listener.adopt(std::move(pair.a));
-            winhost->attach(std::move(pair.b), *bootstrap);
             return {};
         });
     }
@@ -125,6 +118,15 @@ struct Rig {
         auto launched = host.launch(launch(), [this](ports::SessionHostEvent event) { events.push_back(std::move(event)); });
         if (!launched) return std::unexpected(std::move(launched.error()));
         session = std::move(*launched);
+        // launch() has written the token to the runner's stdin by now.
+        if (winhost_connects) {
+            auto bootstrap = testing::FakeWinhost::bootstrap_of(runner_child->launch(), runner_child->stdin_bytes());
+            REQUIRE(bootstrap);
+            winhost = std::make_unique<testing::FakeWinhost>(strand, clock, script);
+            testing::MemoryStreamPair pair = testing::make_memory_stream_pair(strand, {}, {});
+            listener.adopt(std::move(pair.a));
+            winhost->attach(std::move(pair.b), *bootstrap);
+        }
         return {};
     }
 
@@ -189,7 +191,12 @@ TEST_CASE("winhost runs under the runner with only its own channel layer", "[com
     CHECK(value_of(launch.env, "REBOOT_ROLE") == "winhost");
     CHECK(value_of(launch.env, "REBOOT_SESSION") == format_uuid(rig.session_id.value));
     CHECK(value_of(launch.env, "REBOOT_CTL").starts_with("tcp://127.0.0.1:"));
-    CHECK(value_of(launch.env, "REBOOT_CTL_TOKEN") != kGameToken);
+    CHECK(value_of(launch.env, "REBOOT_CTL_TOKEN").empty());
+    CHECK(launch.stdio == ports::StdioMode::ControlChannel);
+    const std::vector<u8>& line = rig.runner_child->stdin_bytes();
+    REQUIRE(line.size() == 44);
+    CHECK(line.back() == '\n');
+    CHECK(std::string(line.begin(), line.end() - 1) != kGameToken);
     CHECK(value_of(launch.env, "WINEPREFIX") == utf8_of(kBase / "data" / "prefixes" / "wine"));
 }
 

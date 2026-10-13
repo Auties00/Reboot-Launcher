@@ -5,6 +5,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -18,6 +19,8 @@
 #include "remote_injector.hpp"
 #include "unique_handle.hpp"
 #include "wide.hpp"
+
+#include <winternl.h>
 
 namespace rb::os_windows::win32session {
 namespace {
@@ -75,6 +78,37 @@ std::vector<u32> job_pids(HANDLE job) {
     return {};
 }
 
+// Overwrites the suspended process's command line, which must already be exactly as long as `line`,
+// so its parameters block keeps its layout. Returns a Win32 error, or 0.
+DWORD write_command_line(HANDLE process, const std::wstring& line) {
+    using QueryProcess = NTSTATUS(NTAPI*)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+    const auto query = reinterpret_cast<QueryProcess>(
+        reinterpret_cast<void (*)()>(GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtQueryInformationProcess")));
+    if (query == nullptr) return GetLastError();
+    PROCESS_BASIC_INFORMATION basic{};
+    if (query(process, ProcessBasicInformation, &basic, sizeof(basic), nullptr) < 0 || basic.PebBaseAddress == nullptr)
+        return ERROR_INVALID_DATA;
+
+    const auto read = [process](const void* remote, void* local, std::size_t size) {
+        SIZE_T done = 0;
+        return ReadProcessMemory(process, remote, local, size, &done) != 0 && done == size;
+    };
+    PRTL_USER_PROCESS_PARAMETERS parameters = nullptr;
+    if (!read(reinterpret_cast<const u8*>(basic.PebBaseAddress) + offsetof(PEB, ProcessParameters), &parameters,
+              sizeof(parameters)) ||
+        parameters == nullptr)
+        return ERROR_INVALID_DATA;
+    UNICODE_STRING current{};
+    if (!read(reinterpret_cast<const u8*>(parameters) + offsetof(RTL_USER_PROCESS_PARAMETERS, CommandLine), &current,
+              sizeof(current)))
+        return ERROR_INVALID_DATA;
+    const std::size_t bytes = line.size() * sizeof(wchar_t);
+    if (current.Buffer == nullptr || current.Length != bytes) return ERROR_INVALID_DATA;
+    SIZE_T written = 0;
+    if (WriteProcessMemory(process, current.Buffer, line.data(), bytes, &written) == 0) return GetLastError();
+    return written == bytes ? 0 : ERROR_PARTIAL_COPY;
+}
+
 // What the session shares with its watcher threads. A thread left running after a failed kill
 // keeps this alive and finds the sink cleared, so it never reaches the session or the caller.
 struct Shared {
@@ -129,7 +163,7 @@ public:
         parked_.reset();
     }
 
-    std::expected<void, SpawnError> launch(const SpawnGame& spawn);
+    std::expected<void, SpawnError> launch(const SpawnGame& spawn, SessionOptions options);
 
     std::expected<void, InjectError> inject(const InjectSpec& spec) override { return load_held(spec); }
 
@@ -169,7 +203,8 @@ private:
     void emit(SessionEvent event) { shared_->emit(std::move(event)); }
 
     std::expected<Proc, SpawnError> create_suspended(const Bytes& exe, const std::vector<Bytes>& argv,
-                                                     const Bytes& env, ProcessRole role, bool game_process);
+                                                     const Bytes& env, ProcessRole role, bool game_process,
+                                                     bool command_line_after_create = false);
 
     // A waited remote load. The deny-write handle is held whenever the file passed its hash, since
     // a load that timed out may still happen.
@@ -232,7 +267,8 @@ private:
 };
 
 std::expected<Proc, SpawnError> SessionImpl::create_suspended(const Bytes& exe, const std::vector<Bytes>& argv,
-                                                              const Bytes& env, ProcessRole role, bool game_process) {
+                                                              const Bytes& env, ProcessRole role, bool game_process,
+                                                              bool command_line_after_create) {
     SECURITY_ATTRIBUTES inherit{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
 
     UniqueHandle out_read;
@@ -287,6 +323,12 @@ std::expected<Proc, SpawnError> SessionImpl::create_suspended(const Bytes& exe, 
     // Naming the application means the first command-line token is never searched for on a path.
     const std::wstring application = to_wide(exe);
     std::wstring command_line = build_command_line(exe, argv);
+    std::wstring created_with;
+    const bool rewrite = command_line_after_create && !argv.empty();
+    if (rewrite) {
+        created_with = build_command_line(exe, {});
+        created_with.resize(command_line.size(), L' ');
+    }
     Bytes env_copy;
     if (!env.empty()) {
         // Room for the terminator up front, so padding never reallocates and strands a copy.
@@ -296,18 +338,29 @@ std::expected<Proc, SpawnError> SessionImpl::create_suspended(const Bytes& exe, 
     }
     void* env_ptr = env_copy.empty() ? nullptr : env_copy.data();
     PROCESS_INFORMATION pi{};
-    const BOOL ok = CreateProcessW(application.c_str(), command_line.data(), nullptr, nullptr, TRUE,
+    const BOOL ok = CreateProcessW(application.c_str(), rewrite ? created_with.data() : command_line.data(), nullptr,
+                                   nullptr, TRUE,
                                    CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | EXTENDED_STARTUPINFO_PRESENT,
                                    env_ptr, cwd_.empty() ? nullptr : cwd_.c_str(), &si.StartupInfo, &pi);
     const DWORD create_error = ok == 0 ? GetLastError() : 0;
-    wipe(command_line);
     wipe(env_copy);
-    if (ok == 0)
+    if (ok == 0) {
+        wipe(command_line);
         return spawn_fail(game_process ? SpawnStep::CreateGame : SpawnStep::CreateCompanion, create_error);
+    }
+    UniqueHandle process(pi.hProcess);
+    UniqueHandle thread(pi.hThread);
+    const DWORD rewrite_error = rewrite ? write_command_line(process.get(), command_line) : 0;
+    wipe(command_line);
+    if (rewrite_error != 0) {
+        // Never resumed; the caller's rollback also ends the Job it is in.
+        TerminateProcess(process.get(), 1);
+        return spawn_fail(SpawnStep::CreateGame, rewrite_error);
+    }
 
     Proc proc;
-    proc.process = UniqueHandle(pi.hProcess);
-    proc.thread = UniqueHandle(pi.hThread);
+    proc.process = std::move(process);
+    proc.thread = std::move(thread);
     proc.pid = pi.dwProcessId;
     proc.role = role;
     proc.out_read = std::move(out_read);
@@ -420,7 +473,7 @@ std::expected<void, StuckProcesses> SessionImpl::terminate_and_drain(std::chrono
     return {};
 }
 
-std::expected<void, SpawnError> SessionImpl::launch(const SpawnGame& spawn) {
+std::expected<void, SpawnError> SessionImpl::launch(const SpawnGame& spawn, SessionOptions options) {
     cwd_ = to_wide(spawn.cwd_utf16);
     inject_timeout_ = from_ms(spawn.inject_timeout_ms, kDefaultBound);
     drain_timeout_ = from_ms(spawn.drain_timeout_ms, kDefaultBound);
@@ -442,7 +495,8 @@ std::expected<void, SpawnError> SessionImpl::launch(const SpawnGame& spawn) {
                                            nullptr));
     if (!stdin_null_) return spawn_fail(SpawnStep::ConfigureJob, GetLastError());
 
-    auto game = create_suspended(spawn.exe_utf16, spawn.argv_utf16, spawn.env_block_utf16, ProcessRole::Game, true);
+    auto game = create_suspended(spawn.exe_utf16, spawn.argv_utf16, spawn.env_block_utf16, ProcessRole::Game, true,
+                                 options.command_line_after_create);
     if (!game) {
         drop();
         return std::unexpected(game.error());
@@ -490,9 +544,10 @@ std::expected<void, SpawnError> SessionImpl::launch(const SpawnGame& spawn) {
 
 }  // namespace
 
-std::expected<std::unique_ptr<Win32Session>, SpawnError> launch_session(const SpawnGame& spawn, EventSink on_event) {
+std::expected<std::unique_ptr<Win32Session>, SpawnError> launch_session(const SpawnGame& spawn, EventSink on_event,
+                                                                        SessionOptions options) {
     auto session = std::make_unique<SessionImpl>(std::move(on_event));
-    if (auto launched = session->launch(spawn); !launched) return std::unexpected(launched.error());
+    if (auto launched = session->launch(spawn, options); !launched) return std::unexpected(launched.error());
     return session;
 }
 

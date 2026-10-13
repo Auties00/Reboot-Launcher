@@ -168,12 +168,14 @@ struct WinhostAgent::Impl {
     void handle(LaunchRequest& request) {
         wh::SpawnGame& spawn = request.spawn;
         // The engine's block holds only the game's channel layer; the prefix's own variables come
-        // from winhost's environment, from which read_bootstrap() already removed REBOOT_CTL*.
+        // from winhost's environment, from which read_bootstrap() already removed REBOOT_CTL.
         wh::Bytes layered = overlay_own_environment(spawn.env_block_utf16);
         wipe(spawn.env_block_utf16);
         spawn.env_block_utf16 = std::move(layered);
-        auto launched =
-            win32session::launch_session(spawn, [this](win32session::SessionEvent event) { relay(std::move(event)); });
+        // Keeps -AUTH_PASSWORD out of the game's Unix argv under Wine.
+        auto launched = win32session::launch_session(
+            spawn, [this](win32session::SessionEvent event) { relay(std::move(event)); },
+            win32session::SessionOptions{.command_line_after_create = true});
         wipe_secrets(spawn);
         if (!launched) {
             send(to_fatal(from_spawn(launched.error(), FailureStep::Spawn)));
@@ -305,7 +307,7 @@ WinhostExit run_winhost() noexcept {
     try {
         auto bootstrap = read_bootstrap();
         if (!bootstrap) {
-            std::fputs("reboot-winhost: REBOOT_CTL or REBOOT_CTL_TOKEN is missing or malformed\n", stderr);
+            std::fputs("reboot-winhost: REBOOT_CTL or the control token on stdin is missing or malformed\n", stderr);
             return WinhostExit::BadBootstrap;
         }
         auto connection = ControlConnection::connect(bootstrap->port);

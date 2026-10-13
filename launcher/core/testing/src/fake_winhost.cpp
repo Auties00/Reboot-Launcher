@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "current_process.hpp"
+#include "reboot/contracts/game_client.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/testing/fake_client_dll.hpp"
 #include "stdio_peer_core.hpp"
@@ -276,8 +277,16 @@ void FakeWinhost::attach(std::unique_ptr<ports::IByteStream> stream, const GameC
     impl_->begin(std::shared_ptr<ports::IByteStream>(std::move(stream)), bootstrap);
 }
 
-Result<GameControlBootstrap> FakeWinhost::bootstrap_of(const ports::ProcessLaunch& runner_launch) {
-    return read_game_control_bootstrap(runner_launch.env);
+Result<GameControlBootstrap> FakeWinhost::bootstrap_of(const ports::ProcessLaunch& runner_launch,
+                                                       std::span<const u8> runner_stdin) {
+    namespace gc = contracts::game_client;
+    ports::EnvBlock env = runner_launch.env;
+    // Only stdin may carry the token, as reboot-winhost.exe reads it.
+    std::erase_if(env.vars, [](const auto& var) { return var.first == gc::kEnvCtlToken; });
+    const auto end = std::ranges::find(runner_stdin, u8{'\n'});
+    if (end != runner_stdin.end())
+        env.vars.emplace_back(std::string(gc::kEnvCtlToken), std::string(runner_stdin.begin(), end));
+    return read_game_control_bootstrap(env);
 }
 
 void FakeWinhost::game_exits(i64 code) { impl_->send(contracts::winhost::Exited{contracts::winhost::ProcessRole::Game, code}); }
