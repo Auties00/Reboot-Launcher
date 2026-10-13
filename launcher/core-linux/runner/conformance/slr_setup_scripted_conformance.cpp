@@ -420,7 +420,7 @@ TEST_CASE("the platform sets up an umu runtime through the scripted launcher", "
         child.exit(ChildExit{0, std::nullopt});
         return {};
     });
-    LinuxRunnerPlatform platform{processes, base_env(), runtime.folders};
+    LinuxRunnerPlatform platform{processes, base_env(), runtime.folders, runtime.folders.parent_path() / "tokens"};
 
     CHECK(platform.runtime_setup(runtime.layout, {}));
     const ScriptedChild* umu = processes.last("umu-run");

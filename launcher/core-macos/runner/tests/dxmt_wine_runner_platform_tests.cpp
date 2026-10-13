@@ -15,13 +15,15 @@ using rb::ports::RunnerKind;
 
 using EnvVars = std::vector<std::pair<std::string, std::string>>;
 
+const NativePath kTokens{"/data/winhost-tokens"};
+
 TEST_CASE("only Apple Silicon supports the macOS runtime", "[dxmt_wine_runner_platform]") {
-    CHECK(DxmtWineRunnerPlatform{HostCpu::AppleSilicon}.supported() == std::vector{RunnerKind::MacRuntime});
-    CHECK(DxmtWineRunnerPlatform{HostCpu::Intel}.supported().empty());
+    CHECK(DxmtWineRunnerPlatform{HostCpu::AppleSilicon, kTokens}.supported() == std::vector{RunnerKind::MacRuntime});
+    CHECK(DxmtWineRunnerPlatform{HostCpu::Intel, kTokens}.supported().empty());
 }
 
 TEST_CASE("an Intel Mac cannot lay out the runtime", "[dxmt_wine_runner_platform]") {
-    DxmtWineRunnerPlatform platform{HostCpu::Intel};
+    DxmtWineRunnerPlatform platform{HostCpu::Intel, kTokens};
     const auto layout = platform.layout(RunnerKind::MacRuntime, {NativePath{"/rt"}});
     REQUIRE_FALSE(layout);
     CHECK(layout.error().is(rb::os_macos::runner::kNeedsAppleSilicon));
@@ -29,7 +31,7 @@ TEST_CASE("an Intel Mac cannot lay out the runtime", "[dxmt_wine_runner_platform
 }
 
 TEST_CASE("every other runner kind is unsupported", "[dxmt_wine_runner_platform]") {
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokens};
     for (const RunnerKind kind : {RunnerKind::Native, RunnerKind::Umu, RunnerKind::Wine}) {
         const auto layout = platform.layout(kind, {NativePath{"/rt"}});
         REQUIRE_FALSE(layout);
@@ -38,11 +40,11 @@ TEST_CASE("every other runner kind is unsupported", "[dxmt_wine_runner_platform]
 }
 
 TEST_CASE("an Intel Mac never asks for Rosetta", "[dxmt_wine_runner_platform]") {
-    CHECK_FALSE(DxmtWineRunnerPlatform{HostCpu::Intel}.pending_prerequisite());
+    CHECK_FALSE(DxmtWineRunnerPlatform{HostCpu::Intel, kTokens}.pending_prerequisite());
 }
 
 TEST_CASE("the launch keeps base and sets only the launcher prefix", "[dxmt_wine_runner_platform]") {
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokens};
     rb::ports::RuntimeLayout layout;
     layout.root = NativePath{"/rt"};
     layout.entry = NativePath{"/rt/bin/wine"};
@@ -61,7 +63,7 @@ TEST_CASE("the launch keeps base and sets only the launcher prefix", "[dxmt_wine
 }
 
 TEST_CASE("an empty base gains only the prefix", "[dxmt_wine_runner_platform]") {
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokens};
     rb::ports::RuntimeLayout layout;
     layout.root = NativePath{"/rt"};
     layout.entry = NativePath{"/rt/bin/wine"};
@@ -72,7 +74,7 @@ TEST_CASE("an empty base gains only the prefix", "[dxmt_wine_runner_platform]") 
 }
 
 TEST_CASE("the macOS runtime needs no setup", "[dxmt_wine_runner_platform]") {
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokens};
     rb::ports::RuntimeLayout layout;
     layout.root = NativePath{"/rt"};
     layout.entry = NativePath{"/rt/bin/wine"};
@@ -80,7 +82,7 @@ TEST_CASE("the macOS runtime needs no setup", "[dxmt_wine_runner_platform]") {
 }
 
 TEST_CASE("prefix commands run wineboot, the runtime's wineserver and Windows programs", "[dxmt_wine_runner_platform]") {
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokens};
     rb::ports::RuntimeLayout layout;
     layout.root = NativePath{"/rt"};
     layout.entry = NativePath{"/rt/bin/wine"};

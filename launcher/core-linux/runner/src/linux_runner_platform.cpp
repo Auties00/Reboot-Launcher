@@ -1,6 +1,10 @@
 #include "reboot/os_linux/runner/linux_runner_platform.hpp"
 
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <array>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -11,6 +15,7 @@
 #include "reboot/foundation/log.hpp"
 #include "reboot/os_linux/runner/kron_wine_runner.hpp"
 #include "reboot/os_linux/runner/umu_invocation.hpp"
+#include "reboot/posix/token_files.hpp"
 
 namespace rb::os_linux::runner {
 
@@ -36,8 +41,24 @@ Result<void> expose(ports::EnvBlock& env, const NativePath& dir) {
 }  // namespace
 
 LinuxRunnerPlatform::LinuxRunnerPlatform(ports::IProcessLauncher& processes, ports::EnvBlock setup_base,
-                                         NativePath umu_folders)
-    : umu_folders_(std::move(umu_folders)), slr_setup_(processes, std::move(setup_base), umu_folders_) {}
+                                         NativePath umu_folders, NativePath token_base)
+    : umu_folders_(std::move(umu_folders)),
+      slr_setup_(processes, std::move(setup_base), umu_folders_),
+      token_files_(std::make_unique<posix::TokenFiles>(std::move(token_base))) {}
+
+LinuxRunnerPlatform::~LinuxRunnerPlatform() = default;
+
+NativePath LinuxRunnerPlatform::token_base(std::optional<std::string_view> xdg_runtime_dir,
+                                           const NativePath& data_root) {
+    if (xdg_runtime_dir && xdg_runtime_dir->starts_with('/')) {
+        const NativePath runtime = NativePath{*xdg_runtime_dir}.lexically_normal();
+        struct stat info {};
+        if (::lstat(runtime.c_str(), &info) == 0 && S_ISDIR(info.st_mode) && info.st_uid == ::geteuid() &&
+            (info.st_mode & 07777U) == 0700U)
+            return runtime / "reboot";
+    }
+    return data_root / "winhost-tokens";
+}
 
 std::vector<ports::RunnerKind> LinuxRunnerPlatform::supported() const {
     return {ports::RunnerKind::Umu, ports::RunnerKind::Wine};
@@ -131,5 +152,11 @@ Result<std::optional<std::string>> LinuxRunnerPlatform::runtime_setup(const port
 }
 
 std::optional<UserRequestKind> LinuxRunnerPlatform::pending_prerequisite() { return std::nullopt; }
+
+Result<std::unique_ptr<ports::ITokenFile>> LinuxRunnerPlatform::write_token_file(std::string_view token) {
+    return token_files_->write(token);
+}
+
+void LinuxRunnerPlatform::sweep_token_files() { token_files_->sweep(); }
 
 }  // namespace rb::os_linux::runner

@@ -2,9 +2,11 @@
 
 #include <condition_variable>
 #include <deque>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "reboot/backend/backend_sessions.hpp"
@@ -37,6 +39,8 @@ public:
                                                 const ports::PrefixCommand& command, ports::EnvBlock base) override;
     Result<std::optional<std::string>> runtime_setup(const ports::RuntimeLayout& layout, CancelToken token) override;
     [[nodiscard]] std::optional<UserRequestKind> pending_prerequisite() override { return std::nullopt; }
+    Result<std::unique_ptr<ports::ITokenFile>> write_token_file(std::string_view token) override;
+    void sweep_token_files() override {}
 };
 
 // BackendService's way to stop the sessions a reconfigure would cut off.

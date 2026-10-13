@@ -53,8 +53,6 @@ public:
     [[nodiscard]] u32 terminate_calls() const noexcept { return terminate_calls_; }
 
     [[nodiscard]] const FrameLog& stdin_frames() const noexcept { return stdin_frames_; }
-    // Everything written to stdin, for a child whose stdin is not framed.
-    [[nodiscard]] const std::vector<u8>& stdin_bytes() const noexcept { return stdin_bytes_; }
     [[nodiscard]] bool stdin_closed() const noexcept { return stdin_closed_; }
     [[nodiscard]] bool terminated() const noexcept { return terminated_; }
     [[nodiscard]] bool exited() const noexcept { return exit_.has_value(); }
@@ -69,7 +67,6 @@ private:
     ports::ProcessLaunch launch_;
     ports::ChildExit terminated_exit_;
     FrameLog stdin_frames_{kChildFrameCap};
-    std::vector<u8> stdin_bytes_;
     std::unique_ptr<IStdioPeer> peer_;
     // Shared with the parent's handle and with posted deliveries.
     std::shared_ptr<Callbacks> callbacks_;

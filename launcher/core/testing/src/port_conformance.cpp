@@ -152,12 +152,21 @@ ConformanceReport run_runner_platform_conformance(ports::IRunnerPlatform& runner
     const auto launch = runner.runner_launch(*layout, subject.prefix, subject.winhost_exe, {});
     if (report.expect_ok("runner_launch", launch)) {
         report.expect("it runs the layout's entry", launch->exe == layout->entry);
-        report.expect("winhost is its program", std::ranges::contains(launch->args, utf8_of(subject.winhost_exe)));
+        report.expect("winhost is its last argument",
+                      !launch->args.empty() && launch->args.back() == utf8_of(subject.winhost_exe));
         const auto prefix = std::ranges::find(launch->env.vars, std::string("WINEPREFIX"),
                                               &std::pair<std::string, std::string>::first);
         report.expect("WINEPREFIX names the prefix",
                       prefix != launch->env.vars.end() && prefix->second == utf8_of(subject.prefix));
     }
+    auto first = runner.write_token_file("token-one");
+    auto second = runner.write_token_file("token-two");
+    if (report.expect_ok("write a token file", first) && report.expect_ok("write a second token file", second)) {
+        report.expect("a token file's path is absolute", (*first)->path().is_absolute());
+        report.expect("each token file has its own directory",
+                      (*first)->path().parent_path() != (*second)->path().parent_path());
+    }
+    runner.sweep_token_files();
     std::vector<NativePath> extracted{dirs.runtime};
     if (dirs.launcher) extracted.push_back(*dirs.launcher);
     for (const NativePath& dir : extracted) {

@@ -16,6 +16,7 @@
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/testing/fake_client_dll.hpp"
+#include "reboot/testing/fake_runner_platform.hpp"
 #include "stdio_peer_core.hpp"
 #include "tcp_stream.hpp"
 
@@ -278,14 +279,20 @@ void FakeWinhost::attach(std::unique_ptr<ports::IByteStream> stream, const GameC
 }
 
 Result<GameControlBootstrap> FakeWinhost::bootstrap_of(const ports::ProcessLaunch& runner_launch,
-                                                       std::span<const u8> runner_stdin) {
+                                                       const FakeRunnerPlatform& runner) {
     namespace gc = contracts::game_client;
     ports::EnvBlock env = runner_launch.env;
-    // Only stdin may carry the token, as reboot-winhost.exe reads it.
+    // Only the token file may carry the token, as reboot-winhost.exe reads it.
     std::erase_if(env.vars, [](const auto& var) { return var.first == gc::kEnvCtlToken; });
-    const auto end = std::ranges::find(runner_stdin, u8{'\n'});
-    if (end != runner_stdin.end())
-        env.vars.emplace_back(std::string(gc::kEnvCtlToken), std::string(runner_stdin.begin(), end));
+    if (!runner_launch.args.empty()) {
+        const std::string& named = runner_launch.args.back();
+        for (const NativePath& path : runner.token_files()) {
+            const std::string suffix = "\\" + path.parent_path().filename().string() + "\\token";
+            if (!named.ends_with(suffix)) continue;
+            if (auto text = runner.token_file_text(path)) env.vars.emplace_back(std::string(gc::kEnvCtlToken), *text);
+            break;
+        }
+    }
     return read_game_control_bootstrap(env);
 }
 

@@ -25,7 +25,8 @@ struct Fixture {
     rb::ManualClock clock;
     rb::ManualExecutor io{clock};
     rb::testing::ScriptedProcessLauncher processes{io, clock, rb::testing::FakeOs::Linux};
-    LinuxRunnerPlatform platform{processes, rb::ports::EnvBlock{{{"HOME", "/home/u"}}}, NativePath{"/data/umu"}};
+    LinuxRunnerPlatform platform{processes, rb::ports::EnvBlock{{{"HOME", "/home/u"}}}, NativePath{"/data/umu"},
+                                 NativePath{"/data/winhost-tokens"}};
 };
 
 rb::ports::RuntimeLayout umu_layout() {

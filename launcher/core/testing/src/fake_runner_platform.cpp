@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <filesystem>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -9,6 +11,7 @@
 #include <vector>
 
 #include "messages.hpp"
+#include "reboot/foundation/function.hpp"
 
 namespace rb::testing {
 namespace {
@@ -20,6 +23,21 @@ namespace {
 }
 
 }  // namespace
+
+// The in-memory file, erased when the handle goes.
+class FakeTokenFile final : public ports::ITokenFile {
+public:
+    FakeTokenFile(NativePath path, UniqueFunction<void()> erase) : path_(std::move(path)), erase_(std::move(erase)) {}
+    ~FakeTokenFile() override { erase_(); }
+    FakeTokenFile(const FakeTokenFile&) = delete;
+    FakeTokenFile& operator=(const FakeTokenFile&) = delete;
+
+    [[nodiscard]] const NativePath& path() const override { return path_; }
+
+private:
+    NativePath path_;
+    UniqueFunction<void()> erase_;
+};
 
 std::vector<ports::RunnerKind> FakeRunnerPlatform::supported() const {
     const std::scoped_lock lock(mutex_);
@@ -93,6 +111,37 @@ std::optional<UserRequestKind> FakeRunnerPlatform::pending_prerequisite() {
     return pending_;
 }
 
+Result<std::unique_ptr<ports::ITokenFile>> FakeRunnerPlatform::write_token_file(std::string_view token) {
+    if (auto error = faults_.take(RunnerOperation::TokenFile)) return std::unexpected(std::move(*error));
+    NativePath path;
+    {
+        const std::scoped_lock lock(mutex_);
+        const NativePath base =
+            token_base_.empty() ? std::filesystem::current_path().root_path() / "tmp" / "reboot" : token_base_;
+        path = base / ("ctl-" + std::to_string(++token_count_)) / "token";
+    }
+    {
+        const std::scoped_lock lock(tokens_->mutex);
+        tokens_->files.emplace(path, std::string(token));
+    }
+    std::weak_ptr<TokenStore> weak = tokens_;
+    return std::unique_ptr<ports::ITokenFile>(std::make_unique<FakeTokenFile>(path, [weak, path] {
+        if (const auto store = weak.lock()) {
+            const std::scoped_lock lock(store->mutex);
+            store->files.erase(path);
+        }
+    }));
+}
+
+void FakeRunnerPlatform::sweep_token_files() {
+    {
+        const std::scoped_lock lock(mutex_);
+        ++token_sweeps_;
+    }
+    const std::scoped_lock lock(tokens_->mutex);
+    tokens_->files.clear();
+}
+
 void FakeRunnerPlatform::set_layout(ports::RunnerKind kind, ports::RuntimeLayout layout) {
     const std::scoped_lock lock(mutex_);
     const auto it = std::ranges::find(layouts_, kind, &std::pair<ports::RunnerKind, ports::RuntimeLayout>::first);
@@ -121,6 +170,30 @@ std::vector<NativePath> FakeRunnerPlatform::post_extracted() const {
 std::size_t FakeRunnerPlatform::runtime_setups() const {
     const std::scoped_lock lock(mutex_);
     return runtime_setups_;
+}
+
+void FakeRunnerPlatform::set_token_base(NativePath base) {
+    const std::scoped_lock lock(mutex_);
+    token_base_ = std::move(base);
+}
+
+std::vector<NativePath> FakeRunnerPlatform::token_files() const {
+    const std::scoped_lock lock(tokens_->mutex);
+    std::vector<NativePath> out;
+    for (const auto& [path, text] : tokens_->files) out.push_back(path);
+    return out;
+}
+
+std::optional<std::string> FakeRunnerPlatform::token_file_text(const NativePath& path) const {
+    const std::scoped_lock lock(tokens_->mutex);
+    const auto found = tokens_->files.find(path);
+    if (found == tokens_->files.end()) return std::nullopt;
+    return found->second;
+}
+
+std::size_t FakeRunnerPlatform::token_sweeps() const {
+    const std::scoped_lock lock(mutex_);
+    return token_sweeps_;
 }
 
 }  // namespace rb::testing

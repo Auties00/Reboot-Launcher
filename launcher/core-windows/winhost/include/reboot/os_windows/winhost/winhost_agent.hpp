@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
+#include <string_view>
 
 #include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/types.hpp"
@@ -75,9 +77,9 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-// The whole program: read_bootstrap(), ControlConnection::connect(), hello() and run(). Errors
-// before the channel exists go to stderr, which the runner's log captures, without the token.
+// The whole program: read_bootstrap(token_file), ControlConnection::connect(), hello() and run().
+// Errors before the channel exists go to stderr, which the runner's log captures, without the token.
 // Every exception is caught and becomes InternalError.
-[[nodiscard]] WinhostExit run_winhost() noexcept;
+[[nodiscard]] WinhostExit run_winhost(std::optional<std::wstring_view> token_file) noexcept;
 
 }  // namespace rb::os_windows::winhost

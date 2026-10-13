@@ -44,6 +44,7 @@
 #include "reboot/foundation/version.hpp"
 #include "reboot/os_linux/platform/pidfd_process_launcher.hpp"
 #include "reboot/os_linux/runner/linux_runner_platform.hpp"
+#include "reboot/os_linux/runner/umu_invocation.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 
 namespace fs = std::filesystem;
@@ -54,6 +55,7 @@ namespace gc = rb::contracts::game_client;
 namespace common = rb::contracts::common;
 using os_linux::platform::PidfdProcessLauncher;
 using os_linux::runner::LinuxRunnerPlatform;
+using os_linux::runner::UmuInvocation;
 
 namespace {
 
@@ -396,6 +398,12 @@ private:
     bool eof_ = false;
 };
 
+// As the engine picks it: under $XDG_RUNTIME_DIR when that is usable, else under `data_root`.
+[[nodiscard]] NativePath token_base(const NativePath& data_root) {
+    const std::optional<std::string> runtime = env_value("XDG_RUNTIME_DIR");
+    return LinuxRunnerPlatform::token_base(runtime ? std::optional<std::string_view>{*runtime} : std::nullopt, data_root);
+}
+
 // The prefix every case shares, booted once: REBOOT_WINE_PREFIX, or a scratch directory.
 const NativePath& prefix(const Inputs& in) {
     static const NativePath path = [&] {
@@ -410,7 +418,7 @@ const NativePath& prefix(const Inputs& in) {
         }
         if (fs::exists(dir / "system.reg")) return dir;
         PidfdProcessLauncher launcher{std::nullopt};
-        LinuxRunnerPlatform runner{launcher, base_env(), dir.parent_path() / "umu"};
+        LinuxRunnerPlatform runner{launcher, base_env(), dir.parent_path() / "umu", token_base(dir.parent_path())};
         const auto layout = runner.layout(ports::RunnerKind::Wine, {in.runtime, std::nullopt});
         REQUIRE(layout);
         const auto boot = runner.prefix_command(*layout, dir, {ports::PrefixVerb::Boot, {}, {}}, base_env());
@@ -427,16 +435,19 @@ const NativePath& prefix(const Inputs& in) {
     return path;
 }
 
-// reboot-winhost.exe started as WineSessionHost starts it: runner_launch with REBOOT_CTL, and the
-// token line on its stdin.
+// reboot-winhost.exe started as WineSessionHost starts it: runner_launch with REBOOT_CTL, and its
+// token file's Windows path as its last argument, the file's directory shared read-only under umu.
 struct Winhost {
     std::array<u8, 32> token = fresh_token();
     PidfdProcessLauncher launcher{std::nullopt};
+    std::unique_ptr<ports::ITokenFile> token_file;
+    NativePath token_path;
     std::optional<Child> child;
 
     // The failure, or empty once winhost runs.
     [[nodiscard]] std::string start(const Inputs& in, const NativePath& prefix_dir, const Loopback& engine) {
-        LinuxRunnerPlatform runner{launcher, base_env(), prefix_dir.parent_path() / "umu"};
+        LinuxRunnerPlatform runner{launcher, base_env(), prefix_dir.parent_path() / "umu",
+                                   token_base(prefix_dir.parent_path())};
         const auto layout = runner.layout(ports::RunnerKind::Wine, {in.runtime, std::nullopt});
         if (!layout) return "layout: " + layout.error().id;
         return start_under(runner, *layout, prefix_dir, in.winhost, engine, base_env());
@@ -446,16 +457,24 @@ struct Winhost {
     [[nodiscard]] std::string start_under(LinuxRunnerPlatform& runner, const ports::RuntimeLayout& layout,
                                           const NativePath& prefix_dir, const NativePath& winhost,
                                           const Loopback& engine, ports::EnvBlock env) {
+        auto file = runner.write_token_file(base64url(token));
+        if (!file) return "write_token_file: " + file.error().id;
+        token_file = std::move(*file);
+        token_path = token_file->path();
         env.vars.emplace_back(gc::kEnvCtl, engine.url());
+        if (UmuInvocation::is_umu_layout(layout))
+            env.vars.emplace_back("PRESSURE_VESSEL_FILESYSTEMS_RO", token_path.parent_path().string());
         auto launch = runner.runner_launch(layout, prefix_dir, winhost, std::move(env));
         if (!launch) return "runner_launch: " + launch.error().id;
-        launch->stdio = ports::StdioMode::ControlChannel;
+        launch->args.push_back(windows_path(token_path));
         auto spawned = launcher.spawn(*launch);
         if (!spawned) return "spawn: " + spawned.error().id;
         child.emplace(std::move(*spawned));
-        child->write_stdin(base64url(token) + "\n");
         return {};
     }
+
+    // What WineSessionHost does on winhost's Hello.
+    void connected() { token_file.reset(); }
 };
 
 // The runtime setup's umu output reaches only the log, so the job's console carries it.
@@ -509,12 +528,13 @@ public:
 }
 
 // Hello read, the spawn sent, Spawned{Game} and an ok Resume back; the failure, or empty.
-[[nodiscard]] std::string launch_game(Loopback& engine, const std::array<u8, 32>& token, wh::SpawnGame spawn) {
+[[nodiscard]] std::string launch_game(Loopback& engine, Winhost& winhost, wh::SpawnGame spawn) {
     if (!engine.accept_peer(kWineStart)) return "winhost never connected";
     if (!engine.preamble_ok()) return "no game-control preamble";
     const auto hello = engine.expect<wh::WhHello>();
     if (!hello) return "no WhHello";
-    if (hello->token != token) return "WhHello carries another token";
+    if (hello->token != winhost.token) return "WhHello carries another token";
+    winhost.connected();
     engine.send(wh::WhWelcome{std::move(spawn)});
     const auto spawned = engine.expect<wh::Spawned>(kWineStart);
     if (!spawned || spawned->role != wh::ProcessRole::Game) return "no Spawned{Game}";
@@ -547,7 +567,7 @@ TEST_CASE("winhost under Wine starts the game with the env overlay, relays it, a
     const std::array<u8, 32> game_token = fresh_token();
 
     REQUIRE(winhost.start(*in, dir, engine) == "");
-    const std::string launched = launch_game(engine, winhost.token, spawn_game(in->game, game_env_block(game_channel, game_token)));
+    const std::string launched = launch_game(engine, winhost, spawn_game(in->game, game_env_block(game_channel, game_token)));
     INFO(winhost.child->output());
     REQUIRE(launched == "");
     expect_game_hello(game_channel, game_token);
@@ -572,9 +592,9 @@ TEST_CASE("winhost under Wine starts the game with the env overlay, relays it, a
     CHECK(wait_until_gone(dir, kGameName, kExit));
 }
 
-// umu-run, pressure-vessel, Proton's umu.exe and Wine all sit between the runner's stdin and
-// winhost's, so this proves the token line still reaches winhost and the game still starts.
-TEST_CASE("under umu and GE-Proton winhost reads its token from stdin and runs the game until a Stop", "[umu]") {
+// umu-run, pressure-vessel and Proton sit between the runner and winhost, so this proves the token
+// file in its read-only share reaches winhost inside the container and the game still starts.
+TEST_CASE("under umu and GE-Proton winhost reads its token file and runs the game until a Stop", "[umu]") {
     const std::optional<UmuInputs> in = umu_inputs();
     if (!in) SKIP(kNoUmu);
     Logger::add_sink(std::make_unique<StderrSink>());
@@ -585,7 +605,7 @@ TEST_CASE("under umu and GE-Proton winhost reads its token from stdin and runs t
     REQUIRE(scratch);
     const NativePath prefix_dir = scratch->path() / "prefix";
     Winhost winhost;
-    LinuxRunnerPlatform runner{winhost.launcher, base_env(), scratch->path() / "umu"};
+    LinuxRunnerPlatform runner{winhost.launcher, base_env(), scratch->path() / "umu", token_base(scratch->path())};
     const auto layout = runner.layout(ports::RunnerKind::Umu, {in->proton, in->launcher});
     REQUIRE(layout);
 
@@ -612,9 +632,14 @@ TEST_CASE("under umu and GE-Proton winhost reads its token from stdin and runs t
     REQUIRE(game_channel.port() != 0);
     const std::array<u8, 32> game_token = fresh_token();
     REQUIRE(winhost.start_under(runner, *layout, prefix_dir, in->winhost, engine, umu_env(*layout, in->game)) == "");
-    const std::string launched = launch_game(engine, winhost.token, spawn_game(in->game, game_env_block(game_channel, game_token)));
+    // The umu job gives the container a private $XDG_RUNTIME_DIR, which pressure-vessel does not share.
+    if (const auto xdg = env_value("XDG_RUNTIME_DIR"))
+        CHECK(winhost.token_path.string().starts_with(*xdg + "/reboot/ctl-"));
+    const std::string launched = launch_game(engine, winhost, spawn_game(in->game, game_env_block(game_channel, game_token)));
     INFO(winhost.child->output());
     REQUIRE(launched == "");
+    // winhost read it inside the container before its Hello, and the game finds nothing.
+    CHECK_FALSE(fs::exists(winhost.token_path.parent_path()));
     expect_game_hello(game_channel, game_token);
 
     engine.send(wh::Stop{2, 500});
@@ -639,6 +664,7 @@ TEST_CASE("a failed launch under Wine ends winhost with LaunchFailed", "[wine]")
     const bool hello = engine.accept_peer(kWineStart) && engine.preamble_ok() && engine.expect<wh::WhHello>();
     INFO(winhost.child->output());
     REQUIRE(hello);
+    winhost.connected();
     engine.send(wh::WhWelcome{spawn_game(in->game.parent_path() / "missing-game.exe", utf16(std::string(2, '\0')))});
     const auto fatal = engine.expect<wh::WhFatal>(kWineStart);
     REQUIRE(fatal);
@@ -658,7 +684,7 @@ TEST_CASE("under Wine the game's host cmdline and environ hold no secret, and en
     Winhost winhost;
     const std::array<u8, 32> game_token = fresh_token();
     REQUIRE(winhost.start(*in, dir, engine) == "");
-    const std::string launched = launch_game(engine, winhost.token, spawn_game(in->game, game_env_block(game_channel, game_token)));
+    const std::string launched = launch_game(engine, winhost, spawn_game(in->game, game_env_block(game_channel, game_token)));
     INFO(winhost.child->output());
     REQUIRE(launched == "");
     expect_game_hello(game_channel, game_token);
@@ -675,7 +701,10 @@ TEST_CASE("under Wine the game's host cmdline and environ hold no secret, and en
         CHECK(text.find(gc::kEnvCtlToken) == std::string::npos);
         CHECK(text.find(base64url(game_token)) == std::string::npos);
         CHECK(text.find(base64url(winhost.token)) == std::string::npos);
+        // Nor the token file's path, which only winhost's own argv names.
+        CHECK(text.find(winhost.token_path.parent_path().filename().string()) == std::string::npos);
     }
+    CHECK_FALSE(fs::exists(winhost.token_path.parent_path()));
 
     // The game keeps its own channel open, so only the Job kill can end it.
     engine.close_peer();
@@ -705,7 +734,7 @@ TEST_CASE("an engine killed with SIGKILL under Wine takes winhost and the game w
             Loopback engine;
             Winhost winhost;
             line = winhost.start(*in, dir, engine);
-            if (line.empty()) line = launch_game(engine, winhost.token, spawn_game(in->game, game_env_block(game_channel, game_token)));
+            if (line.empty()) line = launch_game(engine, winhost, spawn_game(in->game, game_env_block(game_channel, game_token)));
             line = line.empty() ? "ready\n" : "error " + line + "\n";
             if (::write(report[1], line.data(), line.size()) < 0) ::_exit(1);
             // Held, with winhost and its channel, until the SIGKILL.

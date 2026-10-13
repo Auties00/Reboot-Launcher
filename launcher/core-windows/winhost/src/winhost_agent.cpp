@@ -303,11 +303,11 @@ WinhostExit WinhostAgent::run() {
     return impl.final_outcome().value_or(*ended);
 }
 
-WinhostExit run_winhost() noexcept {
+WinhostExit run_winhost(std::optional<std::wstring_view> token_file) noexcept {
     try {
-        auto bootstrap = read_bootstrap();
+        auto bootstrap = read_bootstrap(token_file);
         if (!bootstrap) {
-            std::fputs("reboot-winhost: REBOOT_CTL or the control token on stdin is missing or malformed\n", stderr);
+            std::fputs("reboot-winhost: REBOOT_CTL or the control token file is missing or malformed\n", stderr);
             return WinhostExit::BadBootstrap;
         }
         auto connection = ControlConnection::connect(bootstrap->port);

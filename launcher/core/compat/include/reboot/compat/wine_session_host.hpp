@@ -58,12 +58,16 @@ struct WineSessionSetup {
 
 // Covers no capability ids (decisions dll-injection-strategy, linux-compat-layer, macos-compat-layer,
 // linux-gui-sandbox-distribution, owner-2).
-// Strand-only. ISessionHost for play on macOS and Linux; hosting never uses it. launch() consumes
-// the staged setup:
+// Strand-only. ISessionHost for play on macOS and Linux; hosting never uses it. Constructing it
+// sweeps the token files an earlier engine left (IRunnerPlatform::sweep_token_files). launch()
+// consumes the staged setup:
 // - opens a winhost peer, whose REBOOT_CTL goes in winhost's channel layer;
-// - runs IRunnerPlatform::runner_launch of reboot-winhost.exe in scope reboot-session-<id>, with a
-//   stdin pipe that gets the peer's token as one "<token>\n" line. Wine forks the game from
-//   winhost's Unix environment, so the token never goes there;
+// - writes the peer's token through IRunnerPlatform::write_token_file and runs runner_launch of
+//   reboot-winhost.exe in scope reboot-session-<id> with that file's Windows path (PathMapper) as
+//   its only argument. pressure-vessel gives the container /dev/null as stdin and Wine forks the
+//   game from winhost's Unix environment, so neither carries the token; under Umu only the file's
+//   own directory is shared, read-only, through PRESSURE_VESSEL_FILESYSTEMS_RO. The file goes once
+//   winhost's Hello arrives, before the game exists, or when the session ends or launch() fails;
 // - answers winhost's Hello with SpawnGame in UTF-16 through PathMapper, park paths included,
 //   so winhost parks them inside the prefix. Its environment block
 //   holds only the game's channel layer: winhost lays it over the environment Wine gave winhost,
@@ -87,7 +91,8 @@ public:
     void discard(SessionId session) noexcept;
 
     // compat.session_not_staged, compat.path_not_mapped (or path_not_utf8), compat.path_not_exposable
-    // under Umu, compat.runner_spawn_failed, or the game_channel error of opening the peer.
+    // under Umu, compat.runner_spawn_failed (an unwritable token file included), or the game_channel
+    // error of opening the peer.
     Result<std::unique_ptr<ports::IGameSession>> launch(const ports::SessionLaunch& launch,
                                                         UniqueFunction<void(ports::SessionHostEvent)> on_event) override;
 

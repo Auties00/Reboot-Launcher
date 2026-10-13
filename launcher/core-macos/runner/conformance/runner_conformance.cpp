@@ -33,6 +33,8 @@ using rb::ports::RunnerKind;
 namespace {
 
 constexpr const char* kQuarantine = "com.apple.quarantine";
+// Only the conformance suite writes token files, under its scratch dir instead.
+const NativePath kTokenBase = fs::temp_directory_path() / "reboot-runner-conformance-tokens";
 constexpr std::string_view kQuarantineValue = "0081;00000000;Safari;";
 
 void touch(const NativePath& path) {
@@ -121,7 +123,7 @@ TEST_CASE("post_extract clears quarantine from the whole tree", "[runner_conform
     const NativePath lib_dir = dir.path() / MacRuntimeLayout::kUnixLibDir;
     for (const NativePath& path : {dir.path(), lib_dir, dll}) quarantine(path);
 
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokenBase};
     REQUIRE(platform.post_extract(dir.path()));
     CHECK_FALSE(quarantined(dir.path()));
     CHECK_FALSE(quarantined(lib_dir));
@@ -142,7 +144,7 @@ TEST_CASE("post_extract clears quarantine from read-only entries and keeps their
     fs::permissions(ro_dir, kDirMode);
     const RestoreWrite restore{ro_dir};
 
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokenBase};
     const auto stripped = platform.post_extract(dir.path());
     INFO((stripped ? std::string()
                    : stripped.error().id + " errno " +
@@ -167,7 +169,7 @@ TEST_CASE("post_extract leaves symlink targets outside the runtime alone", "[run
     fs::create_symlink(outside_file, runtime / "file-link");
     fs::create_directory_symlink(outside_nested.parent_path(), runtime / "dir-link");
 
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokenBase};
     REQUIRE(platform.post_extract(runtime));
     CHECK(quarantined(outside_file));
     CHECK(quarantined(outside_nested));
@@ -175,7 +177,7 @@ TEST_CASE("post_extract leaves symlink targets outside the runtime alone", "[run
 
 TEST_CASE("post_extract of a missing runtime fails", "[runner_conformance]") {
     const auto dir = scratch();
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokenBase};
     const auto stripped = platform.post_extract(dir.path() / "missing");
     REQUIRE_FALSE(stripped);
     CHECK(stripped.error().is(rb::os_macos::runner::kQuarantineStripFailed));
@@ -186,7 +188,7 @@ TEST_CASE("post_extract of a missing runtime fails", "[runner_conformance]") {
 
 TEST_CASE("an incomplete runtime fails the layout", "[runner_conformance]") {
     const auto dir = scratch();
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, kTokenBase};
     const auto layout = platform.layout(RunnerKind::MacRuntime, {dir.path()});
     REQUIRE_FALSE(layout);
     CHECK(layout.error().is(rb::os_macos::runner::kWineLoaderMissing));
@@ -198,7 +200,7 @@ TEST_CASE("the platform passes the runner port suite", "[runner_conformance]") {
     const NativePath runtime = dir.path() / "runtime";
     write_runtime(runtime);
     quarantine(runtime / MacRuntimeLayout::kWineLoader);
-    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon};
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, dir.path() / "tokens"};
 
     const auto report = rb::testing::run_runner_platform_conformance(
         platform,
@@ -209,7 +211,36 @@ TEST_CASE("the platform passes the runner port suite", "[runner_conformance]") {
 }
 
 TEST_CASE("the factory detects the host CPU", "[runner_conformance]") {
-    const auto platform = rb::os_macos::runner::make_runner_platform();
+    const auto platform = rb::os_macos::runner::make_runner_platform(kTokenBase);
     REQUIRE(platform);
     CHECK(platform->supported().empty() != runs_on_apple_silicon());
+}
+
+TEST_CASE("the token base is the per-user temp dir", "[runner_conformance]") {
+    const NativePath base = DxmtWineRunnerPlatform::token_base("/nonexistent-data-root");
+    CHECK(base.filename() == "reboot");
+    REQUIRE(fs::is_directory(base.parent_path()));
+    CHECK((fs::status(base.parent_path()).permissions() & fs::perms::all) == fs::perms::owner_all);
+}
+
+TEST_CASE("winhost's token file is 0600 in its own 0700 directory and goes with its handle", "[runner_conformance]") {
+    const auto dir = scratch();
+    DxmtWineRunnerPlatform platform{HostCpu::AppleSilicon, dir.path() / "tokens"};
+    auto file = platform.write_token_file("token-text");
+    REQUIRE(file);
+    const NativePath path = (*file)->path();
+    CHECK(path == fs::canonical(path));
+    CHECK((fs::status(path).permissions() & fs::perms::all) == (fs::perms::owner_read | fs::perms::owner_write));
+    CHECK((fs::status(path.parent_path()).permissions() & fs::perms::all) == fs::perms::owner_all);
+    std::ifstream in(path);
+    std::string text;
+    std::getline(in, text);
+    CHECK(text == "token-text");
+    file->reset();
+    CHECK_FALSE(fs::exists(path.parent_path()));
+
+    fs::create_directory(dir.path() / "tokens" / "ctl-stale");
+    touch(dir.path() / "tokens" / "ctl-stale" / "token");
+    platform.sweep_token_files();
+    CHECK(fs::is_empty(dir.path() / "tokens"));
 }

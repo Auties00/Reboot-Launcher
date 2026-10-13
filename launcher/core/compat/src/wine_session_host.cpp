@@ -42,6 +42,7 @@ constexpr std::chrono::milliseconds kDrainTimeout = 5s;
 constexpr std::string_view kWinhostRole = "winhost";
 constexpr std::string_view kScopePrefix = "reboot-session-";
 constexpr std::string_view kFilesystemsRw = "PRESSURE_VESSEL_FILESYSTEMS_RW";
+constexpr std::string_view kFilesystemsRo = "PRESSURE_VESSEL_FILESYSTEMS_RO";
 // The shipping exe sits at <build>/FortniteGame/Binaries/Win64.
 constexpr std::string_view kGameDir = "FortniteGame";
 
@@ -105,6 +106,31 @@ void wipe(wh::SpawnGame& spawn) noexcept {
     return block;
 }
 
+// Adds `path` to the colon-separated pressure-vessel list `name` unless it is there already.
+[[nodiscard]] Result<void> expose(ports::EnvBlock& layer, std::string_view name, const NativePath& path) {
+    const std::string entry = utf8_of(path);
+    if (entry.find(':') != std::string::npos)
+        return make_diag(ErrorDomain::Compat, msg::kPathNotExposable)
+            .arg("path", path)
+            .kind(ErrorKind::InvalidInput)
+            .fail();
+    auto existing = std::ranges::find(layer.vars, name, &std::pair<std::string, std::string>::first);
+    if (existing == layer.vars.end()) {
+        layer.vars.emplace_back(std::string(name), std::string());
+        existing = std::prev(layer.vars.end());
+    }
+    std::string& value = existing->second;
+    const std::string_view current = value;
+    for (std::size_t start = 0; start <= current.size();) {
+        const std::size_t stop = std::min(current.find(':', start), current.size());
+        if (current.substr(start, stop - start) == entry) return {};
+        start = stop + 1;
+    }
+    if (!value.empty()) value += ':';
+    value += entry;
+    return {};
+}
+
 [[nodiscard]] NativePath build_root(const NativePath& exe) {
     for (NativePath dir = exe.parent_path(); dir.has_relative_path(); dir = dir.parent_path())
         if (dir.filename() == kGameDir) return dir.parent_path();
@@ -143,6 +169,8 @@ struct SessionState {
     // Handed to winhost in its Welcome, then wiped.
     std::optional<wh::SpawnGame> spawn;
     std::unique_ptr<game_channel::WinhostPeer> peer;
+    // The peer's token for winhost to read; removed once winhost connects or the session ends.
+    std::unique_ptr<ports::ITokenFile> token_file;
     std::unique_ptr<ports::ChildProcess> runner;
     std::optional<process::LineReader> runner_out;
     std::optional<process::LineReader> runner_err;
@@ -189,6 +217,7 @@ void drop_peer(const StatePtr& state) {
 
 // Exited{Winhost} ends the session; HostFatal comes first unless the game exited or stop() asked.
 void end(const StatePtr& state, Diagnostic fatal) {
+    state->token_file.reset();
     if (state->ended) return;
     state->ended = true;
     if (!state->game_exited && !state->stopping) emit(state, ports::HostFatal{std::move(fatal)});
@@ -287,6 +316,7 @@ public:
     ~WineGameSession() override {
         state_->on_event = nullptr;
         state_->stop_timer.cancel();
+        state_->token_file.reset();
         state_->peer.reset();
         if (state_->runner && !state_->runner_exited) static_cast<void>(state_->runner->terminate_tree());
         state_->runner.reset();
@@ -345,35 +375,20 @@ struct WineSessionHost::Impl {
           wine_log(std::make_shared<WineLogLine>(std::move(deps.wine_log))) {}
 
     // The runner layer, plus under Umu what pressure-vessel must share: the build, the injected
-    // DLLs' directories and the Proton log directory; runner_launch adds winhost's.
-    [[nodiscard]] Result<ports::EnvBlock> runner_vars(const WineSessionSetup& setup, const ports::SessionLaunch& launch) {
+    // DLLs' directories and the Proton log directory read-write (runner_launch adds winhost's),
+    // and the token file's own directory read-only, never the rest of the runtime dir.
+    [[nodiscard]] Result<ports::EnvBlock> runner_vars(const WineSessionSetup& setup, const ports::SessionLaunch& launch,
+                                                      const NativePath& token_dir) {
         ports::EnvBlock layer = runner_layer(setup.kind, setup.layout);
         if (setup.kind != RunnerKind::Umu) return layer;
         std::vector<NativePath> exposed{build_root(launch.exe)};
         for (const ports::InjectEntry& entry : launch.inject) exposed.push_back(entry.path.parent_path());
         if (!setup.log_dir.empty()) exposed.push_back(setup.log_dir);
-
-        auto existing = std::ranges::find(layer.vars, kFilesystemsRw, &std::pair<std::string, std::string>::first);
-        if (existing == layer.vars.end()) {
-            layer.vars.emplace_back(std::string(kFilesystemsRw), std::string());
-            existing = std::prev(layer.vars.end());
-        }
-        std::string& value = existing->second;
-        for (const NativePath& path : exposed) {
-            const std::string entry = utf8_of(path);
-            if (entry.find(':') != std::string::npos)
-                return make_diag(ErrorDomain::Compat, msg::kPathNotExposable).arg("path", path).kind(ErrorKind::InvalidInput).fail();
-            const std::string_view current = value;
-            bool present = false;
-            for (std::size_t start = 0; start <= current.size() && !present;) {
-                const std::size_t stop = std::min(current.find(':', start), current.size());
-                present = current.substr(start, stop - start) == entry;
-                start = stop + 1;
-            }
-            if (present) continue;
-            if (!value.empty()) value += ':';
-            value += entry;
-        }
+        for (const NativePath& path : exposed)
+            if (auto added = expose(layer, kFilesystemsRw, path); !added)
+                return std::unexpected(std::move(added.error()));
+        if (auto added = expose(layer, kFilesystemsRo, token_dir); !added)
+            return std::unexpected(std::move(added.error()));
         return layer;
     }
 
@@ -429,6 +444,8 @@ struct WineSessionHost::Impl {
             REBOOT_LOG_AT(LogLevel::Info, Play, locked->session, "winhost {} (pid {}) connected", hello.build, hello.pid);
             wh::SpawnGame spawn = std::move(*locked->spawn);
             locked->spawn.reset();
+            // winhost read it before connecting; the game it is about to start finds nothing.
+            locked->token_file.reset();
             // The Welcome goes out once this returns; queued requests follow it.
             locked->strand.post([weak] {
                 if (const StatePtr again = weak.lock()) on_welcomed(again);
@@ -486,7 +503,9 @@ struct WineSessionHost::Impl {
     std::map<SessionId, WineSessionSetup> staged;
 };
 
-WineSessionHost::WineSessionHost(WineSessionHostDeps deps) : impl_(std::make_unique<Impl>(deps)) {}
+WineSessionHost::WineSessionHost(WineSessionHostDeps deps) : impl_(std::make_unique<Impl>(deps)) {
+    impl_->runner.sweep_token_files();
+}
 
 WineSessionHost::~WineSessionHost() = default;
 
@@ -523,14 +542,29 @@ Result<std::unique_ptr<ports::IGameSession>> WineSessionHost::launch(const ports
     if (!spawn) return std::unexpected(std::move(spawn.error()));
     state->spawn = std::move(*spawn);
 
-    auto runner_vars = impl.runner_vars(setup, launch);
-    if (!runner_vars) return std::unexpected(std::move(runner_vars.error()));
+    const auto spawn_failed = [&](Diagnostic cause) {
+        return make_diag(ErrorDomain::Compat, msg::kRunnerSpawnFailed)
+            .arg("runner", runner_name(setup.kind))
+            .cause(std::move(cause))
+            .fail();
+    };
     auto ctl = impl.channel.ctl_url();
     if (!ctl) return std::unexpected(std::move(ctl.error()));
     auto peer = impl.channel.open_winhost(launch.session, launch.multiplier, impl.handlers(state));
     if (!peer) return std::unexpected(std::move(peer.error()));
     state->peer = std::move(*peer);
+    // Every return from here drops `state`, and the file with it.
+    auto token_file = [&] {
+        const SecretString token = state->peer->token().env_value();
+        return impl.runner.write_token_file(token.reveal());
+    }();
+    if (!token_file) return spawn_failed(std::move(token_file.error()));
+    state->token_file = std::move(*token_file);
+    auto token_path = state->paths.to_windows(state->token_file->path());
+    if (!token_path) return std::unexpected(std::move(token_path.error()));
 
+    auto runner_vars = impl.runner_vars(setup, launch, state->token_file->path().parent_path());
+    if (!runner_vars) return std::unexpected(std::move(runner_vars.error()));
     setup.env.runner(*runner_vars)
         .channel(gc::kEnvCtl, std::move(*ctl))
         .channel(gc::kEnvSession, format_uuid(launch.session.value))
@@ -538,28 +572,14 @@ Result<std::unique_ptr<ports::IGameSession>> WineSessionHost::launch(const ports
     auto env = std::move(setup.env).build();
     if (!env) return std::unexpected(std::move(env.error()));
 
-    const auto spawn_failed = [&](Diagnostic cause) {
-        return make_diag(ErrorDomain::Compat, msg::kRunnerSpawnFailed)
-            .arg("runner", runner_name(setup.kind))
-            .cause(std::move(cause))
-            .fail();
-    };
     auto runner_launch = impl.runner.runner_launch(setup.layout, setup.prefix, setup.winhost_exe, env->copy());
     if (!runner_launch) return spawn_failed(std::move(runner_launch.error()));
     runner_launch->scope_name = std::string(kScopePrefix) + format_uuid(launch.session.value);
-    // Only a control channel has a stdin every launcher writes to; the output is still read as lines.
-    runner_launch->stdio = ports::StdioMode::ControlChannel;
+    // winhost's only argument: the args end with its exe, and the game never sees winhost's argv.
+    runner_launch->args.push_back(utf16_to_utf8(*token_path));
     const process::WipingLaunch wiping(std::move(*runner_launch));
     auto child = impl.processes.spawn(wiping.get());
     if (!child) return spawn_failed(std::move(child.error()));
-    {
-        const SecretString token = state->peer->token().env_value();
-        std::string line;
-        line.reserve(token.reveal().size() + 1);
-        line.append(token.reveal()).push_back('\n');
-        (*child)->write_stdin(std::span(reinterpret_cast<const u8*>(line.data()), line.size()));
-        secure_wipe(line.data(), line.size());
-    }
     state->runner = std::move(*child);
     state->on_event = std::move(on_event);
     impl.watch_runner(state);

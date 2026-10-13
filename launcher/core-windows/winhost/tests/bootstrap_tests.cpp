@@ -3,14 +3,17 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
+#include <optional>
 #include <string>
 
 #include "loopback_engine.hpp"
 #include "reboot/os_windows/winhost/winhost_bootstrap.hpp"
+#include "temp_token_file.hpp"
 
 using namespace rb;
 using namespace rb::os_windows::winhost;
 using rb::os_windows::winhost::test::base64url;
+using rb::os_windows::winhost::test::TempTokenFile;
 
 namespace {
 
@@ -29,40 +32,6 @@ bool variable_set(const wchar_t* name) {
 void set_variable(const wchar_t* name, const std::string& value) {
     SetEnvironmentVariableW(name, std::wstring(value.begin(), value.end()).c_str());
 }
-
-// This process's stdin, for its lifetime: a pipe holding `text`, closed for writing after it.
-class StdinFeed {
-public:
-    explicit StdinFeed(const std::string& text) : previous_(GetStdHandle(STD_INPUT_HANDLE)) {
-        HANDLE write = nullptr;
-        REQUIRE(CreatePipe(&read_, &write, nullptr, 0) != 0);
-        DWORD written = 0;
-        if (!text.empty())
-            REQUIRE(WriteFile(write, text.data(), static_cast<DWORD>(text.size()), &written, nullptr) != 0);
-        CloseHandle(write);
-        SetStdHandle(STD_INPUT_HANDLE, read_);
-    }
-    ~StdinFeed() {
-        SetStdHandle(STD_INPUT_HANDLE, previous_);
-        CloseHandle(read_);
-    }
-    StdinFeed(const StdinFeed&) = delete;
-    StdinFeed& operator=(const StdinFeed&) = delete;
-
-    // What is left in the pipe.
-    [[nodiscard]] std::string rest() const {
-        std::string out;
-        std::array<char, 64> buffer{};
-        DWORD read = 0;
-        while (ReadFile(read_, buffer.data(), static_cast<DWORD>(buffer.size()), &read, nullptr) != 0 && read != 0)
-            out.append(buffer.data(), read);
-        return out;
-    }
-
-private:
-    HANDLE previous_;
-    HANDLE read_ = nullptr;
-};
 
 }  // namespace
 
@@ -115,39 +84,45 @@ TEST_CASE("a token whose spare trailing bits are set is not canonical and is rej
     CHECK_FALSE(decode_control_token(text));
 }
 
-TEST_CASE("read_bootstrap takes REBOOT_CTL out of the environment and the token line from stdin") {
+TEST_CASE("read_bootstrap takes REBOOT_CTL out of the environment and the token from its file") {
     set_variable(L"REBOOT_CTL", "tcp://127.0.0.1:4100");
-    const StdinFeed stdin_feed(base64url(sample_token()) + "\nnext");
+    const TempTokenFile file(base64url(sample_token()));
 
-    const auto bootstrap = read_bootstrap();
+    const auto bootstrap = read_bootstrap(file.path());
     REQUIRE(bootstrap);
     CHECK(bootstrap->port == 4100);
     CHECK(bootstrap->token.reveal() == sample_token());
     CHECK_FALSE(variable_set(L"REBOOT_CTL"));
-    CHECK(stdin_feed.rest() == "next");
 }
 
 TEST_CASE("read_bootstrap fails at the bootstrap step and still removes what it found") {
     {
         set_variable(L"REBOOT_CTL", "tcp://127.0.0.1:4100");
-        const StdinFeed empty("");
-        auto missing = read_bootstrap();
+        auto missing = read_bootstrap(std::nullopt);
         REQUIRE_FALSE(missing);
         CHECK(missing.error().step == FailureStep::Bootstrap);
         CHECK_FALSE(variable_set(L"REBOOT_CTL"));
     }
     {
+        set_variable(L"REBOOT_CTL", "tcp://127.0.0.1:4100");
+        const std::wstring gone = TempTokenFile(base64url(sample_token())).path();
+        auto removed = read_bootstrap(gone);
+        REQUIRE_FALSE(removed);
+        CHECK(removed.error().step == FailureStep::Bootstrap);
+    }
+    {
         set_variable(L"REBOOT_CTL", "tcp://192.168.1.2:4100");
-        const StdinFeed token(base64url(sample_token()) + "\n");
-        auto off_host = read_bootstrap();
+        const TempTokenFile file(base64url(sample_token()));
+        auto off_host = read_bootstrap(file.path());
         REQUIRE_FALSE(off_host);
         CHECK(off_host.error().step == FailureStep::Bootstrap);
         CHECK_FALSE(variable_set(L"REBOOT_CTL"));
     }
-    for (const std::string& line : {base64url(sample_token()), base64url(sample_token()) + "A\n"}) {
+    const std::string token = base64url(sample_token());
+    for (const std::string& contents : {std::string(), token.substr(0, 42), token + "\n", token + "A"}) {
         set_variable(L"REBOOT_CTL", "tcp://127.0.0.1:4100");
-        const StdinFeed unterminated(line);
-        auto bad = read_bootstrap();
+        const TempTokenFile file(contents);
+        auto bad = read_bootstrap(file.path());
         REQUIRE_FALSE(bad);
         CHECK(bad.error().step == FailureStep::Bootstrap);
     }

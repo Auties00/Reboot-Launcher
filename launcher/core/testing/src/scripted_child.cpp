@@ -162,7 +162,6 @@ ScriptedChild::ScriptedChild(Executor& io, u32 pid, std::chrono::system_clock::t
     channel.child = this;
     channel.write_stdin = [this](std::span<const u8> bytes) {
         if (exit_ || stdin_closed_) return;
-        stdin_bytes_.insert(stdin_bytes_.end(), bytes.begin(), bytes.end());
         (void)stdin_frames_.feed(bytes);
         if (!peer_) return;
         io_.post([channel = Channel(callbacks_), data = std::vector<u8>(bytes.begin(), bytes.end())]() mutable {

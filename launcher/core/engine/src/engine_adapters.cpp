@@ -40,6 +40,10 @@ Result<std::optional<std::string>> NativeOnlyRunnerPlatform::runtime_setup(const
     return no_runner();
 }
 
+Result<std::unique_ptr<ports::ITokenFile>> NativeOnlyRunnerPlatform::write_token_file(std::string_view) {
+    return no_runner();
+}
+
 void EngineBackendSessions::stop_sessions(std::vector<SessionId> sessions, UniqueFunction<void(Result<void>)> done) {
     struct Join {
         std::size_t left = 0;

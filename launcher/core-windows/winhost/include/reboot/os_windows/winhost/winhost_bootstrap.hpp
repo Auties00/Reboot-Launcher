@@ -17,8 +17,9 @@ using ControlTokenBytes = Secret<std::array<u8, kControlTokenSize>>;
 
 // Covers no capability ids (decisions process-model, game-control-channel).
 // What winhost needs to reach the engine's game channel: REBOOT_CTL from its environment, and its
-// control token as one "<token>\n" line on stdin. Wine forks the game from winhost's Unix
-// environment, so a token there would show in the game's /proc/<pid>/environ.
+// control token from the file its only argument names. Wine forks the game from winhost's Unix
+// environment, so a token there would show in the game's /proc/<pid>/environ, and pressure-vessel
+// gives its container /dev/null as stdin. The engine removes the file once winhost connects.
 struct WinhostBootstrap {
     u16 port = 0;
     ControlTokenBytes token;
@@ -30,8 +31,9 @@ struct WinhostBootstrap {
 // The token text: unpadded base64url of exactly kControlTokenSize bytes (43 chars).
 [[nodiscard]] std::optional<ControlTokenBytes> decode_control_token(std::string_view value);
 
-// Takes REBOOT_CTL out of the environment and reads the token line from stdin, reading nothing past
-// it, and wipes the copies it read. FailureStep::Bootstrap when either is missing or malformed.
-[[nodiscard]] Expected<WinhostBootstrap> read_bootstrap();
+// Takes REBOOT_CTL out of the environment and reads `token_file`, which must hold the token text
+// and nothing else, wiping the copies it read. FailureStep::Bootstrap when either is missing or
+// malformed.
+[[nodiscard]] Expected<WinhostBootstrap> read_bootstrap(std::optional<std::wstring_view> token_file);
 
 }  // namespace rb::os_windows::winhost

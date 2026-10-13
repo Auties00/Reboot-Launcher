@@ -27,6 +27,7 @@
 #include "reboot/testing/deterministic_runtime.hpp"
 #include "reboot/testing/fake_client_dll.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
+#include "reboot/testing/fake_runner_platform.hpp"
 #include "reboot/testing/fake_session_host.hpp"
 #include "reboot/testing/fake_winhost.hpp"
 #include "reboot/testing/frame_log.hpp"
@@ -292,11 +293,15 @@ TEST_CASE("FakeWinhost spawns, injects, resumes into our DLL and dies with its c
     ports::ProcessLaunch runner_launch;
     runner_launch.env = bootstrap_env();
     runner_launch.env.vars.back().second = "winhost";
-    // The token in the environment does not count; only the stdin line does.
-    CHECK_FALSE(FakeWinhost::bootstrap_of(runner_launch, {}));
-    const std::string stdin_line = std::string(kToken) + "\n";
-    const auto bootstrap = FakeWinhost::bootstrap_of(
-        runner_launch, std::span(reinterpret_cast<const u8*>(stdin_line.data()), stdin_line.size()));
+    FakeRunnerPlatform runner{{ports::RunnerKind::Wine}};
+    runner.set_token_base("/tmp/reboot");
+    auto token_file = runner.write_token_file(kToken);
+    REQUIRE(token_file);
+    // The token in the environment does not count; only the file the last argument names does.
+    runner_launch.args = {"C:\\winhost\\reboot-winhost.exe"};
+    CHECK_FALSE(FakeWinhost::bootstrap_of(runner_launch, runner));
+    runner_launch.args.emplace_back("Z:\\tmp\\reboot\\ctl-1\\token");
+    const auto bootstrap = FakeWinhost::bootstrap_of(runner_launch, runner);
     REQUIRE(bootstrap);
     CHECK(bootstrap->role == "winhost");
     winhost.attach(std::move(host_end), *bootstrap);

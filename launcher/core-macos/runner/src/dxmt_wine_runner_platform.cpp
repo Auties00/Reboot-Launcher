@@ -1,17 +1,23 @@
 #include "reboot/os_macos/runner/dxmt_wine_runner_platform.hpp"
 
+#include "unistd.hpp"
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
 
 #include <cerrno>
+#include <cstddef>
 #include <filesystem>
+#include <memory>
+#include <string>
 #include <system_error>
 #include <utility>
 
 #include "messages.hpp"
 #include "reboot/os_macos/runner/mac_runtime_layout.hpp"
 #include "reboot/posix/posix_error.hpp"
+#include "reboot/posix/token_files.hpp"
 
 namespace rb::os_macos::runner {
 
@@ -149,5 +155,30 @@ std::optional<UserRequestKind> DxmtWineRunnerPlatform::pending_prerequisite() {
     if (cpu_ == HostCpu::AppleSilicon && !rosetta_installed()) return UserRequestKind::RosettaInstall;
     return std::nullopt;
 }
+
+DxmtWineRunnerPlatform::DxmtWineRunnerPlatform(HostCpu cpu, NativePath token_base)
+    : cpu_(cpu), token_files_(std::make_unique<posix::TokenFiles>(std::move(token_base))) {}
+
+DxmtWineRunnerPlatform::~DxmtWineRunnerPlatform() = default;
+
+NativePath DxmtWineRunnerPlatform::token_base(const NativePath& data_root) {
+    const std::size_t size = ::confstr(_CS_DARWIN_USER_TEMP_DIR, nullptr, 0);
+    if (size > 1) {
+        std::string buffer(size, '\0');
+        const std::size_t written = ::confstr(_CS_DARWIN_USER_TEMP_DIR, buffer.data(), buffer.size());
+        if (written == size) {
+            buffer.resize(written - 1);
+            const NativePath temp{std::move(buffer)};
+            if (temp.is_absolute()) return temp / "reboot";
+        }
+    }
+    return data_root / "winhost-tokens";
+}
+
+Result<std::unique_ptr<ports::ITokenFile>> DxmtWineRunnerPlatform::write_token_file(std::string_view token) {
+    return token_files_->write(token);
+}
+
+void DxmtWineRunnerPlatform::sweep_token_files() { token_files_->sweep(); }
 
 }  // namespace rb::os_macos::runner

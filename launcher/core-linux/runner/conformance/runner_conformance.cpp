@@ -141,7 +141,7 @@ TEST_CASE("the platform lays out umu from GE-Proton and the umu launcher", "[run
     const auto dir = scratch();
     const rb::ports::RuntimeDirs dirs = write_umu_runtimes(dir.path());
     rb::os_linux::platform::PidfdProcessLauncher processes{std::nullopt};
-    LinuxRunnerPlatform platform{processes, base_env(), dir.path() / "folders"};
+    LinuxRunnerPlatform platform{processes, base_env(), dir.path() / "folders", dir.path() / "tokens"};
 
     const auto layout = platform.layout(RunnerKind::Umu, dirs);
     REQUIRE(layout);
@@ -160,7 +160,7 @@ TEST_CASE("the platform lays out Wine from its runtime", "[runner_conformance]")
     const auto dir = scratch();
     write_wine(dir.path() / "wine");
     rb::os_linux::platform::PidfdProcessLauncher processes{std::nullopt};
-    LinuxRunnerPlatform platform{processes, base_env(), dir.path() / "folders"};
+    LinuxRunnerPlatform platform{processes, base_env(), dir.path() / "folders", dir.path() / "tokens"};
 
     const auto report = rb::testing::run_runner_platform_conformance(
         platform, {RunnerKind::Wine, {dir.path() / "wine"}, dir.path() / "prefix", dir.path() / "reboot-winhost.exe"});
@@ -229,4 +229,46 @@ TEST_CASE("a dangling symlink in a runtime is no read failure", "[runner_conform
     const auto runner = KronWineRunner::resolve(dir.path() / "wine");
     REQUIRE_FALSE(runner);
     CHECK(runner.error().is(rb::os_linux::runner::kWineMissing));
+}
+
+TEST_CASE("the token base is $XDG_RUNTIME_DIR/reboot only when that is this user's private directory",
+          "[runner_conformance]") {
+    const auto dir = scratch();
+    const NativePath runtime = dir.path() / "runtime";
+    fs::create_directory(runtime);
+    fs::permissions(runtime, fs::perms::owner_all, fs::perm_options::replace);
+    const NativePath data = dir.path() / "data";
+    const NativePath fallback = data / "winhost-tokens";
+
+    CHECK(LinuxRunnerPlatform::token_base(runtime.string(), data) == runtime / "reboot");
+    CHECK(LinuxRunnerPlatform::token_base(std::nullopt, data) == fallback);
+    CHECK(LinuxRunnerPlatform::token_base("relative/runtime", data) == fallback);
+    CHECK(LinuxRunnerPlatform::token_base((dir.path() / "missing").string(), data) == fallback);
+    fs::create_directory_symlink(runtime, dir.path() / "link");
+    CHECK(LinuxRunnerPlatform::token_base((dir.path() / "link").string(), data) == fallback);
+    fs::permissions(runtime, fs::perms::group_read | fs::perms::group_exec, fs::perm_options::add);
+    CHECK(LinuxRunnerPlatform::token_base(runtime.string(), data) == fallback);
+}
+
+TEST_CASE("winhost's token file is 0600 in its own 0700 directory and goes with its handle", "[runner_conformance]") {
+    const auto dir = scratch();
+    rb::os_linux::platform::PidfdProcessLauncher processes{std::nullopt};
+    LinuxRunnerPlatform platform{processes, base_env(), dir.path() / "folders", dir.path() / "tokens"};
+    auto file = platform.write_token_file("token-text");
+    REQUIRE(file);
+    const NativePath path = (*file)->path();
+    CHECK(path == fs::canonical(path));
+    CHECK(path.parent_path().parent_path() == fs::canonical(dir.path() / "tokens"));
+    CHECK((fs::status(path).permissions() & fs::perms::all) == (fs::perms::owner_read | fs::perms::owner_write));
+    CHECK((fs::status(path.parent_path()).permissions() & fs::perms::all) == fs::perms::owner_all);
+    std::ifstream in(path);
+    std::string text;
+    std::getline(in, text);
+    CHECK(text == "token-text");
+    file->reset();
+    CHECK_FALSE(fs::exists(path.parent_path()));
+
+    write_file(dir.path() / "tokens" / "ctl-stale" / "token", "stale");
+    platform.sweep_token_files();
+    CHECK(fs::is_empty(dir.path() / "tokens"));
 }

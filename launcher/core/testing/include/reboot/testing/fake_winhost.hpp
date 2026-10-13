@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <optional>
-#include <span>
 #include <vector>
 
 #include "reboot/contracts/winhost.hpp"
@@ -23,6 +22,7 @@ class io_context;
 namespace rb::testing {
 
 class FakeClientDll;
+class FakeRunnerPlatform;
 
 // Covers no capability ids (decisions testing-strategy, game-control-channel, process-model).
 // Plays reboot-winhost.exe inside a Wine prefix against the engine's game channel; SpawnGame is
@@ -37,9 +37,10 @@ public:
     Result<void> connect(boost::asio::io_context& io, const GameControlBootstrap& bootstrap);
     void attach(std::unique_ptr<ports::IByteStream> stream, const GameControlBootstrap& bootstrap);
     // winhost's bootstrap: REBOOT_CTL, REBOOT_SESSION and REBOOT_ROLE from the runner launch a
-    // ScriptedProcessLauncher rule received, and the token from the first line of its stdin.
+    // ScriptedProcessLauncher rule received, and the token from the `runner` token file that the
+    // launch's last argument names (as <...>\ctl-<n>\token), as reboot-winhost.exe reads it.
     [[nodiscard]] static Result<GameControlBootstrap> bootstrap_of(const ports::ProcessLaunch& runner_launch,
-                                                                   std::span<const u8> runner_stdin);
+                                                                   const FakeRunnerPlatform& runner);
 
     template <ContractMessage T>
     void send(const T& message) {

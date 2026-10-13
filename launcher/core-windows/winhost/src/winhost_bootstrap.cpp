@@ -52,22 +52,29 @@ std::optional<std::string> take_variable(std::string_view name) {
     return out;
 }
 
-// The stdin line without its '\n', read a byte at a time so nothing after it is taken; nullopt on
-// EOF, an error or a line longer than a token.
-std::optional<std::string> read_token_line() {
-    const HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
-    if (input == nullptr || input == INVALID_HANDLE_VALUE) return std::nullopt;
-    std::string line;
-    line.reserve(kTokenChars + 1);
-    while (line.size() <= kTokenChars) {
-        char c = 0;
+// The file's text when it is exactly one token long; nullopt when it cannot be read or is not.
+std::optional<std::string> read_token_file(std::wstring_view path) {
+    const std::wstring name(path);
+    const HANDLE file = CreateFileW(name.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr,
+                                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE) return std::nullopt;
+    // One byte past a token, to tell a longer file apart.
+    std::string text(kTokenChars + 1, '\0');
+    std::size_t total = 0;
+    while (total < text.size()) {
         DWORD read = 0;
-        if (ReadFile(input, &c, 1, &read, nullptr) == 0 || read == 0) break;
-        if (c == '\n') return line;
-        line.push_back(c);
+        if (ReadFile(file, text.data() + total, static_cast<DWORD>(text.size() - total), &read, nullptr) == 0 ||
+            read == 0)
+            break;
+        total += read;
     }
-    secure_wipe(line.data(), line.size());
-    return std::nullopt;
+    CloseHandle(file);
+    if (total != kTokenChars) {
+        secure_wipe(text.data(), text.size());
+        return std::nullopt;
+    }
+    text.resize(kTokenChars);
+    return text;
 }
 
 }  // namespace
@@ -114,10 +121,10 @@ std::optional<ControlTokenBytes> decode_control_token(std::string_view value) {
     return token;
 }
 
-Expected<WinhostBootstrap> read_bootstrap() {
+Expected<WinhostBootstrap> read_bootstrap(std::optional<std::wstring_view> token_file) {
     namespace gc = contracts::game_client;
     auto ctl = take_variable(gc::kEnvCtl);
-    auto token_text = read_token_line();
+    auto token_text = token_file ? read_token_file(*token_file) : std::nullopt;
 
     const auto port = ctl ? parse_ctl_endpoint(*ctl) : std::nullopt;
     auto token = token_text ? decode_control_token(*token_text) : std::nullopt;

@@ -68,6 +68,7 @@ struct Rig {
     Rig() {
         REQUIRE(listener.start());
         processes.on_exe("wine", [this](testing::ScriptedChild& child) -> Result<void> {
+            if (!runner_spawns) return std::unexpected(internal_bug("test"));
             runner_child = &child;
             return {};
         });
@@ -118,16 +119,18 @@ struct Rig {
         auto launched = host.launch(launch(), [this](ports::SessionHostEvent event) { events.push_back(std::move(event)); });
         if (!launched) return std::unexpected(std::move(launched.error()));
         session = std::move(*launched);
-        // launch() has written the token to the runner's stdin by now.
-        if (winhost_connects) {
-            auto bootstrap = testing::FakeWinhost::bootstrap_of(runner_child->launch(), runner_child->stdin_bytes());
-            REQUIRE(bootstrap);
-            winhost = std::make_unique<testing::FakeWinhost>(strand, clock, script);
-            testing::MemoryStreamPair pair = testing::make_memory_stream_pair(strand, {}, {});
-            listener.adopt(std::move(pair.a));
-            winhost->attach(std::move(pair.b), *bootstrap);
-        }
+        if (winhost_connects) connect_winhost();
         return {};
+    }
+
+    // winhost reads the token file launch() named and connects.
+    void connect_winhost() {
+        auto bootstrap = testing::FakeWinhost::bootstrap_of(runner_child->launch(), runner);
+        REQUIRE(bootstrap);
+        winhost = std::make_unique<testing::FakeWinhost>(strand, clock, script);
+        testing::MemoryStreamPair pair = testing::make_memory_stream_pair(strand, {}, {});
+        listener.adopt(std::move(pair.a));
+        winhost->attach(std::move(pair.b), *bootstrap);
     }
 
     template <class E>
@@ -155,6 +158,7 @@ struct Rig {
     SessionId session_id{Uuid{{0x42}}};
     testing::FakeWinhostScript script;
     bool winhost_connects = true;
+    bool runner_spawns = true;
     testing::ScriptedChild* runner_child = nullptr;
     std::unique_ptr<testing::FakeWinhost> winhost;
     std::vector<ports::SessionHostEvent> events;
@@ -183,7 +187,8 @@ TEST_CASE("winhost runs under the runner with only its own channel layer", "[com
     CHECK(rig.events.empty());
     REQUIRE(rig.runner_child != nullptr);
     const ports::ProcessLaunch& launch = rig.runner_child->launch();
-    CHECK(launch.args == std::vector<std::string>{utf8_of(kBase / "data" / "payload" / "reboot-winhost.exe")});
+    CHECK(launch.args == std::vector<std::string>{utf8_of(kBase / "data" / "payload" / "reboot-winhost.exe"),
+                                                  "Z:\\tmp\\reboot\\ctl-1\\token"});
     CHECK(launch.scope_name == "reboot-session-" + format_uuid(rig.session_id.value));
     CHECK(value_of(launch.env, "HOME") == "/home/player");
     CHECK(value_of(launch.env, "LD_PRELOAD").empty());
@@ -192,12 +197,78 @@ TEST_CASE("winhost runs under the runner with only its own channel layer", "[com
     CHECK(value_of(launch.env, "REBOOT_SESSION") == format_uuid(rig.session_id.value));
     CHECK(value_of(launch.env, "REBOOT_CTL").starts_with("tcp://127.0.0.1:"));
     CHECK(value_of(launch.env, "REBOOT_CTL_TOKEN").empty());
-    CHECK(launch.stdio == ports::StdioMode::ControlChannel);
-    const std::vector<u8>& line = rig.runner_child->stdin_bytes();
-    REQUIRE(line.size() == 44);
-    CHECK(line.back() == '\n');
-    CHECK(std::string(line.begin(), line.end() - 1) != kGameToken);
+    CHECK(value_of(launch.env, "PRESSURE_VESSEL_FILESYSTEMS_RO").empty());
     CHECK(value_of(launch.env, "WINEPREFIX") == utf8_of(kBase / "data" / "prefixes" / "wine"));
+}
+
+TEST_CASE("winhost's token waits in a file only until winhost connects", "[compat][wine_session_host]") {
+    Rig rig;
+    CHECK(rig.runner.token_sweeps() == 1);
+    rig.winhost_connects = false;
+    REQUIRE(rig.start());
+    const std::vector<NativePath> files = rig.runner.token_files();
+    REQUIRE(files.size() == 1);
+    CHECK(files[0] == std::filesystem::current_path().root_path() / "tmp" / "reboot" / "ctl-1" / "token");
+    const std::optional<std::string> token = rig.runner.token_file_text(files[0]);
+    REQUIRE(token);
+    CHECK(token->size() == 43);
+    CHECK(*token != kGameToken);
+    CHECK(rig.runner_child->launch().stdio == ports::StdioMode::Capture);
+
+    rig.connect_winhost();
+    rig.strand.run_all();
+    REQUIRE(rig.winhost->spawn_request());
+    CHECK(rig.runner.token_files().empty());
+}
+
+TEST_CASE("the token file goes with a session that never connected", "[compat][wine_session_host]") {
+    Rig rig;
+    rig.winhost_connects = false;
+
+    SECTION("the runner exits") {
+        REQUIRE(rig.start());
+        rig.runner_child->exit({2, std::nullopt});
+        rig.strand.run_all();
+    }
+    SECTION("a stop") {
+        REQUIRE(rig.start());
+        rig.session->stop(5s);
+        rig.strand.run_all();
+    }
+    SECTION("the session is dropped") {
+        REQUIRE(rig.start());
+        rig.session.reset();
+    }
+    SECTION("the runner cannot be launched") {
+        rig.runner.faults().fail_next(testing::RunnerOperation::RunnerLaunch, internal_bug("test"));
+        REQUIRE_FALSE(rig.start());
+    }
+    SECTION("the runner cannot be spawned") {
+        rig.runner_spawns = false;
+        REQUIRE_FALSE(rig.start());
+    }
+    CHECK(rig.runner.token_files().empty());
+}
+
+TEST_CASE("a token file that cannot be written or named starts nothing", "[compat][wine_session_host]") {
+    Rig rig;
+    SECTION("unwritable") {
+        rig.runner.faults().fail_next(testing::RunnerOperation::TokenFile, internal_bug("test"));
+        const auto started = rig.start();
+        REQUIRE_FALSE(started);
+        CHECK(started.error().id == "compat.runner_spawn_failed");
+        REQUIRE(started.error().causes.size() == 1);
+        CHECK(started.error().causes[0].id == "internal.bug");
+    }
+    SECTION("outside every drive") {
+        REQUIRE(rig.host.stage(rig.session_id,
+                               rig.setup(RunnerKind::Wine, {{'d', kBase / "games"}, {'e', kBase / "data"}})));
+        const auto launched = rig.host.launch(rig.launch(), [](ports::SessionHostEvent) {});
+        REQUIRE_FALSE(launched);
+        CHECK(launched.error().id == "compat.path_not_mapped");
+    }
+    CHECK(rig.processes.children().empty());
+    CHECK(rig.runner.token_files().empty());
 }
 
 TEST_CASE("winhost gets the game in Windows paths and relays its events", "[compat][wine_session_host]") {
@@ -357,7 +428,8 @@ TEST_CASE("a runner that cannot start fails the launch", "[compat][wine_session_
     CHECK(started.error().causes[0].id == "internal.bug");
 }
 
-TEST_CASE("under umu pressure-vessel shares the build, the DLLs and the log folder", "[compat][wine_session_host]") {
+TEST_CASE("under umu pressure-vessel shares the build, the DLLs, the log folder and the token directory",
+          "[compat][wine_session_host]") {
     Rig rig;
     const auto started = rig.start(RunnerKind::Umu);
     // A Windows host's drive letters carry the colon pressure-vessel splits on.
@@ -369,4 +441,7 @@ TEST_CASE("under umu pressure-vessel shares the build, the DLLs and the log fold
     REQUIRE(started);
     CHECK(value_of(rig.runner_child->launch().env, "PRESSURE_VESSEL_FILESYSTEMS_RW") ==
           utf8_of(kBuild) + ":" + utf8_of(kClientDll.parent_path()) + ":" + utf8_of(kBase / "logs" / "wine"));
+    // Only this session's token directory, and read-only.
+    CHECK(value_of(rig.runner_child->launch().env, "PRESSURE_VESSEL_FILESYSTEMS_RO") ==
+          utf8_of(kBase / "tmp" / "reboot" / "ctl-1"));
 }

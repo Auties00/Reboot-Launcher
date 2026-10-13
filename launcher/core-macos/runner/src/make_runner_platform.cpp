@@ -9,12 +9,13 @@
 
 namespace rb::os_macos::runner {
 
-std::unique_ptr<ports::IRunnerPlatform> make_runner_platform() {
+std::unique_ptr<ports::IRunnerPlatform> make_runner_platform(const NativePath& data_root) {
     int arm64 = 0;
     std::size_t size = sizeof arm64;
     // A failed sysctl counts as Intel.
     const bool apple_silicon = ::sysctlbyname("hw.optional.arm64", &arm64, &size, nullptr, 0) == 0 && arm64 == 1;
-    return std::make_unique<DxmtWineRunnerPlatform>(apple_silicon ? HostCpu::AppleSilicon : HostCpu::Intel);
+    return std::make_unique<DxmtWineRunnerPlatform>(apple_silicon ? HostCpu::AppleSilicon : HostCpu::Intel,
+                                                    DxmtWineRunnerPlatform::token_base(data_root));
 }
 
 }  // namespace rb::os_macos::runner

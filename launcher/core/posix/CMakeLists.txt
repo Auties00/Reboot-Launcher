@@ -12,6 +12,7 @@ reboot_add_package(posix
     $<$<PLATFORM_ID:Darwin>:src/posix_spawner.cpp>
     src/socket_fds.cpp
     src/socket_stream.cpp
+    src/token_files.cpp
     src/unique_fd.cpp
     src/unix_endpoint_checks.cpp
     src/unix_socket_connector_base.cpp

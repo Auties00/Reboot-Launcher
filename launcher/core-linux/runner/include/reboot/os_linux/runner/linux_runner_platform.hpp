@@ -1,7 +1,9 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "reboot/foundation/cancel.hpp"
@@ -12,6 +14,10 @@
 #include "reboot/ports/process.hpp"
 #include "reboot/ports/runner.hpp"
 
+namespace rb::posix {
+class TokenFiles;
+}
+
 namespace rb::os_linux::runner {
 
 // Covers no capability ids (decisions linux-compat-layer, owner-2, process-model).
@@ -19,8 +25,20 @@ namespace rb::os_linux::runner {
 // reaches this platform.
 class LinuxRunnerPlatform final : public ports::IRunnerPlatform {
 public:
-    // `setup_base` is EnvBuilder's daemon-base layer; `umu_folders` is UMU_FOLDERS_PATH.
-    LinuxRunnerPlatform(ports::IProcessLauncher& processes, ports::EnvBlock setup_base, NativePath umu_folders);
+    // `setup_base` is EnvBuilder's daemon-base layer; `umu_folders` is UMU_FOLDERS_PATH; winhost's
+    // token files go under `token_base` (see token_base()).
+    LinuxRunnerPlatform(ports::IProcessLauncher& processes, ports::EnvBlock setup_base, NativePath umu_folders,
+                        NativePath token_base);
+    ~LinuxRunnerPlatform() override;
+    LinuxRunnerPlatform(const LinuxRunnerPlatform&) = delete;
+    LinuxRunnerPlatform& operator=(const LinuxRunnerPlatform&) = delete;
+
+    // Blocking lstat. <xdg_runtime_dir>/reboot when $XDG_RUNTIME_DIR is absolute and a real 0700
+    // directory of the effective uid's (a tmpfs that never reaches the disk), else
+    // <data_root>/winhost-tokens. Under umu, WineSessionHost shares each token's own directory
+    // read-only through PRESSURE_VESSEL_FILESYSTEMS_RO, since pressure-vessel shares neither.
+    [[nodiscard]] static NativePath token_base(std::optional<std::string_view> xdg_runtime_dir,
+                                               const NativePath& data_root);
 
     // {Umu, Wine}. A missing python3 for umu-run is IPrerequisiteProbe's linux.python3, not a fallback.
     [[nodiscard]] std::vector<ports::RunnerKind> supported() const override;
@@ -52,9 +70,14 @@ public:
     // Always nullopt: no Linux prerequisite is answered through a user request.
     [[nodiscard]] std::optional<UserRequestKind> pending_prerequisite() override;
 
+    // posix::TokenFiles under the token base.
+    Result<std::unique_ptr<ports::ITokenFile>> write_token_file(std::string_view token) override;
+    void sweep_token_files() override;
+
 private:
     NativePath umu_folders_;
     SlrSetup slr_setup_;
+    std::unique_ptr<posix::TokenFiles> token_files_;
 };
 
 }  // namespace rb::os_linux::runner

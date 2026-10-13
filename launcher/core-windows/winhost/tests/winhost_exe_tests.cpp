@@ -3,29 +3,34 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
+#include <memory>
+#include <utility>
 #include <string>
 
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/winhost.hpp"
 #include "reboot/foundation/version.hpp"
 #include "reboot/os_windows/winhost/winhost_exit.hpp"
+#include "temp_token_file.hpp"
 
 using namespace rb;
 using namespace rb::os_windows::winhost;
 using rb::os_windows::winhost::test::base64url;
 using rb::os_windows::winhost::test::LoopbackEngine;
 using rb::os_windows::winhost::test::system_path;
+using rb::os_windows::winhost::test::TempTokenFile;
 using rb::os_windows::winhost::test::utf16;
 namespace wh = rb::contracts::winhost;
 namespace common = rb::contracts::common;
 
 namespace {
 
-// reboot-winhost.exe started with the given REBOOT_CTL and the token line on its stdin; killed if a
-// check fails before it exits.
+// reboot-winhost.exe started with the given REBOOT_CTL and, unless `token` is empty, the path of a
+// file holding it as its only argument; killed if a check fails before it exits.
 class WinhostProcess {
 public:
     WinhostProcess(const std::string& ctl, const std::string& token) {
+        if (!token.empty()) token_file_ = std::make_unique<TempTokenFile>(token);
         std::wstring env;
         if (!ctl.empty()) env += L"REBOOT_CTL=" + std::wstring(ctl.begin(), ctl.end()) + L'\0';
         std::array<wchar_t, MAX_PATH> root{};
@@ -36,27 +41,15 @@ public:
         const std::string exe_narrow = REBOOT_WINHOST_EXE;
         const std::wstring exe(exe_narrow.begin(), exe_narrow.end());
         std::wstring command_line = L"\"" + exe + L"\"";
-        // Only the read end is inheritable; the line is in the pipe before winhost starts.
-        SECURITY_ATTRIBUTES inherit{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
-        HANDLE stdin_read = nullptr;
-        HANDLE stdin_write = nullptr;
-        if (CreatePipe(&stdin_read, &stdin_write, &inherit, 0) == 0) return;
-        SetHandleInformation(stdin_write, HANDLE_FLAG_INHERIT, 0);
-        const std::string line = token.empty() ? std::string() : token + "\n";
-        DWORD written = 0;
-        if (!line.empty()) WriteFile(stdin_write, line.data(), static_cast<DWORD>(line.size()), &written, nullptr);
-        CloseHandle(stdin_write);
+        if (token_file_) command_line += L" \"" + token_file_->path() + L"\"";
         STARTUPINFOW startup{};
         startup.cb = sizeof(startup);
-        startup.dwFlags = STARTF_USESTDHANDLES;
-        startup.hStdInput = stdin_read;
         PROCESS_INFORMATION info{};
-        if (CreateProcessW(exe.c_str(), command_line.data(), nullptr, nullptr, TRUE,
+        if (CreateProcessW(exe.c_str(), command_line.data(), nullptr, nullptr, FALSE,
                            CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW, env.data(), nullptr, &startup, &info) != 0) {
             CloseHandle(info.hThread);
             process_ = info.hProcess;
         }
-        CloseHandle(stdin_read);
     }
 
     ~WinhostProcess() {
@@ -78,6 +71,7 @@ public:
     }
 
 private:
+    std::unique_ptr<TempTokenFile> token_file_;
     HANDLE process_ = nullptr;
 };
 
@@ -85,10 +79,15 @@ constexpr DWORD code_of(WinhostExit exit) { return static_cast<DWORD>(exit); }
 
 }  // namespace
 
-TEST_CASE("reboot-winhost.exe without its bootstrap variables exits with BadBootstrap") {
-    const WinhostProcess winhost("", "");
-    REQUIRE(winhost.started());
-    CHECK(winhost.exit_code_within(15000) == code_of(WinhostExit::BadBootstrap));
+TEST_CASE("reboot-winhost.exe without REBOOT_CTL or its token file exits with BadBootstrap") {
+    std::array<u8, 32> token{};
+    for (const auto& [ctl, text] : {std::pair<std::string, std::string>{"", ""},
+                                    {"tcp://127.0.0.1:4100", ""},
+                                    {"", base64url(token)}}) {
+        const WinhostProcess winhost(ctl, text);
+        REQUIRE(winhost.started());
+        CHECK(winhost.exit_code_within(15000) == code_of(WinhostExit::BadBootstrap));
+    }
 }
 
 TEST_CASE("reboot-winhost.exe with no engine listening exits with ConnectFailed") {

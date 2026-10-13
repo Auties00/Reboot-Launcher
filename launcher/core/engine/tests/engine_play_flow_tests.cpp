@@ -238,12 +238,13 @@ struct PlayRig {
         ports::RuntimeLayout layout;
         layout.entry = "bin/wine";
         runner->set_layout(ports::RunnerKind::Wine, std::move(layout));
+        runner_platform = runner.get();
         rig.platform.runner = std::move(runner);
         rig.processes->on_exe("wine", [this](testing::ScriptedChild& child) { return play_runner(child); });
     }
 
     // <runtime>/bin/wine: wineboot seeds the prefix, wineserver -k finds no server, and anything
-    // else is reboot-winhost.exe, which connects once launch() has written its token to stdin.
+    // else is reboot-winhost.exe, which reads the token file its last argument names and connects.
     Result<void> play_runner(testing::ScriptedChild& child) {
         const std::vector<std::string>& args = child.launch().args;
         if (args == std::vector<std::string>{"wineboot", "-u"}) {
@@ -268,7 +269,7 @@ struct PlayRig {
     }
 
     void start_winhost(testing::ScriptedChild& runner) {
-        Result<testing::GameControlBootstrap> bootstrap = testing::FakeWinhost::bootstrap_of(runner.launch(), runner.stdin_bytes());
+        Result<testing::GameControlBootstrap> bootstrap = testing::FakeWinhost::bootstrap_of(runner.launch(), *runner_platform);
         REQUIRE(bootstrap);
         testing::FakeClientDllScript game_dll;
         game_dll.game = contracts::game_client::GameBuild{"12.41", kChangelist};
@@ -301,6 +302,7 @@ struct PlayRig {
     std::unique_ptr<testing::FakeClientDll> dll;
     // Wine only: reboot-winhost.exe, and how often wineboot ran.
     std::unique_ptr<testing::FakeWinhost> winhost;
+    testing::FakeRunnerPlatform* runner_platform = nullptr;
     int wineboots = 0;
     std::unique_ptr<testing::ApiTestClient> client;
 };
@@ -416,6 +418,9 @@ TEST_CASE("play flow: under Wine the runtime is fetched, the prefix booted and w
     CHECK(p.wineboots == 1);
     REQUIRE(p.winhost);
     CHECK(p.winhost->resumed());
+    // The engine swept on start, and the token file went once winhost connected.
+    CHECK(p.runner_platform->token_sweeps() == 1);
+    CHECK(p.runner_platform->token_files().empty());
     testing::FakeClientDll* const game_dll = p.winhost->game_client_dll();
     REQUIRE(game_dll != nullptr);
     REQUIRE(game_dll->welcome());

@@ -55,8 +55,8 @@ public:
     // game_channel.duplicate_peer when the key already has a live token.
     Result<std::unique_ptr<ClientDllPeer>> open_client_dll(SessionId session, std::string module,
                                                            RunnerMultiplier multiplier, ClientDllHandlers handlers);
-    // Winhost shares this listener instead of a stdio channel, so its own token sits in the Wine
-    // process's Unix environment; the game's bootstrap still travels only inside SpawnGame.
+    // Winhost shares this listener instead of a stdio channel and reads its own token from a file
+    // its launcher names; the game's bootstrap still travels only inside SpawnGame.
     Result<std::unique_ptr<WinhostPeer>> open_winhost(SessionId session, RunnerMultiplier multiplier,
                                                       WinhostHandlers handlers);
 
