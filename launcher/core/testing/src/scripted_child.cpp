@@ -33,7 +33,7 @@ struct ChildChannel {
     // Set by the child, for what the parent's handle does to it.
     UniqueFunction<void(std::span<const u8>)> write_stdin;
     UniqueFunction<void()> close_stdin;
-    UniqueFunction<void()> terminate;
+    UniqueFunction<Result<void>()> terminate;
     UniqueFunction<void()> release;
     UniqueFunction<void(std::vector<u8>)> peer_stdin;
     UniqueFunction<void()> peer_eof;
@@ -125,7 +125,7 @@ public:
     void on_exit(UniqueFunction<void(ports::ChildExit)> callback) override { set(channel_->on_exit, std::move(callback)); }
 
     Result<void> terminate_tree() override {
-        if (channel_->terminate) channel_->terminate();
+        if (channel_->terminate) return channel_->terminate();
         return {};
     }
 
@@ -176,10 +176,16 @@ ScriptedChild::ScriptedChild(Executor& io, u32 pid, std::chrono::system_clock::t
             if (channel->peer_eof) channel->peer_eof();
         });
     };
-    channel.terminate = [this] {
-        if (exit_) return;
+    channel.terminate = [this]() -> Result<void> {
+        ++terminate_calls_;
+        if (exit_) return {};
+        if (failing_terminations_ > 0) {
+            --failing_terminations_;
+            return make_diag(ErrorDomain::Process, MessageId{"testing.terminate_failed"}).fail();
+        }
         terminated_ = true;
         exit(terminated_exit_);
+        return {};
     };
     channel.release = [this] { released_ = true; };
     channel.peer_stdin = [this](std::vector<u8> bytes) {
@@ -196,7 +202,7 @@ ScriptedChild::~ScriptedChild() {
     ChildChannel& channel = *callbacks_;
     UniqueFunction<void(std::span<const u8>)> write_stdin;
     UniqueFunction<void()> close_stdin;
-    UniqueFunction<void()> terminate;
+    UniqueFunction<Result<void>()> terminate;
     UniqueFunction<void()> release;
     UniqueFunction<void(std::vector<u8>)> peer_stdin;
     UniqueFunction<void()> peer_eof;

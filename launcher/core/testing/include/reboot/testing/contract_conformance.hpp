@@ -61,4 +61,10 @@ private:
     ContractTiming timing_;
 };
 
+// Both suites against reboot-fake-backend (unscripted) and reboot-fake-game-server (with a conforming
+// script) through a real `launcher`, with work dirs and a free UDP block made under `dir`; one report
+// per fake this build has.
+[[nodiscard]] std::vector<ConformanceReport> run_fake_contract_conformance(ports::IProcessLauncher& launcher,
+                                                                           IConformanceWaiter& waiter, const NativePath& dir);
+
 }  // namespace rb::testing

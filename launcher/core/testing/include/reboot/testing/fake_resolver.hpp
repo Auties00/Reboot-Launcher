@@ -28,7 +28,8 @@ public:
 
     void set(std::string host, std::vector<IpAddress> addresses);
     void fail(std::string host, Diagnostic error);
-    // Answers only once its token is cancelled, with testing.cancelled, for the Dns deadline path.
+    // Answers only once its token is cancelled or the resolver is destroyed, with testing.cancelled,
+    // for the Dns deadline path.
     void hang(std::string host);
 
     // Every host asked for, in order.

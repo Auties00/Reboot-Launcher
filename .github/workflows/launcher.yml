@@ -38,6 +38,29 @@ jobs:
           cache-from: type=gha,scope=launcher-linux
           cache-to: type=gha,mode=max,scope=launcher-linux
 
+  # The UPnP and NAT-PMP adapters against a real miniupnpd, reusing the linux job's cached build.
+  gateway:
+    name: Linux, port mapping against miniupnpd
+    needs: linux
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: launcher/ci/linux.Dockerfile
+          target: build
+          load: true
+          tags: reboot-launcher-build:ci
+          build-args: VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
+          cache-from: type=gha,scope=launcher-linux
+      - name: miniupnpd image
+        run: docker build -t reboot-miniupnpd:ci launcher/ci/miniupnpd
+      - name: Gateway integration tests
+        run: sh launcher/ci/miniupnpd/run.sh reboot-launcher-build:ci reboot-miniupnpd:ci
+
   windows:
     name: Windows, MSVC (build, floor, DAG, tests)
     runs-on: windows-2025
@@ -88,16 +111,85 @@ jobs:
       - name: Build
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
         run: cmake --build --preset %PRESET% -- -k 0
+      # For the wine job: both are static-CRT x64 PEs that need only Wine's own DLLs.
+      - name: Upload winhost and the fake game
+        if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: launcher-wine-payload
+          path: |
+            launcher/build/${{ env.PRESET }}/core-windows/winhost/reboot-winhost.exe
+            launcher/build/${{ env.PRESET }}/core/testing/fake_game/reboot-fake-game.exe
+          if-no-files-found: error
+          retention-days: 3
       - name: DAG check
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
         run: cmake --build --preset %PRESET% --target dag_check
+      # A second local account for the IPC conformance's peer rejection and pipe squatting checks.
+      # Windows PowerShell, whose LocalAccounts module is native; Users grants the interactive logon.
+      - name: Other-user account
+        if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bytes = New-Object byte[] 24
+          [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+          $password = [Convert]::ToBase64String($bytes) + 'aA1!'
+          Write-Output "::add-mask::$password"
+          $name = 'rbconf' + (Get-Random -Maximum 1000000)
+          $secure = ConvertTo-SecureString $password -AsPlainText -Force
+          New-LocalUser -Name $name -Password $secure -PasswordNeverExpires -AccountNeverExpires | Out-Null
+          try { Add-LocalGroupMember -SID 'S-1-5-32-545' -Member $name } catch [Microsoft.PowerShell.Commands.MemberExistsException] {}
+          "REBOOT_CONFORMANCE_OTHER_USER=$name" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "REBOOT_CONFORMANCE_OTHER_PASSWORD=$password" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Test
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
+        # A throwaway VM, so the registrar round trip may register and remove the user's entries.
+        env:
+          REBOOT_CONFORMANCE_MUTATES_USER: "1"
         run: ctest --preset %PRESET% --no-tests=error -LE gate
       # Message catalog completeness, the secret grep and the data root outside the Velopack package.
       - name: CI gates
         if: ${{ !cancelled() && steps.configure.outcome == 'success' }}
         run: ctest --preset %PRESET% --no-tests=error -L gate
+
+  # The real winhost under the pinned Kron4ek Wine (spec 14.6): the windows job's exes, the linux
+  # job's cached build image and core-linux/runner's Wine gate; it runs even when their tests fail.
+  wine:
+    name: Linux, winhost under Kron4ek Wine
+    needs: [linux, windows]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    env:
+      KRON4EK_RELEASE: "11.0"
+      KRON4EK_ARCHIVE: wine-11.0-amd64-wow64.tar.xz
+      KRON4EK_SHA256: 39574efa1132c3ca0d5c77dd2eddbe4a49cca0d6cc2c290ff4924493a1c40314
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: launcher/ci/linux.Dockerfile
+          target: build
+          load: true
+          tags: reboot-launcher-build:ci
+          build-args: VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
+          cache-from: type=gha,scope=launcher-linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: launcher-wine-payload
+          path: ${{ runner.temp }}/payload
+      - name: Fetch the pinned Kron4ek Wine
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/$KRON4EK_ARCHIVE" \
+            "https://github.com/Kron4ek/Wine-Builds/releases/download/$KRON4EK_RELEASE/$KRON4EK_ARCHIVE"
+          echo "$KRON4EK_SHA256  $RUNNER_TEMP/$KRON4EK_ARCHIVE" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/wine"
+          tar -xJf "$RUNNER_TEMP/$KRON4EK_ARCHIVE" -C "$RUNNER_TEMP/wine"
+      - name: Wine gate
+        run: sh launcher/ci/wine/run.sh reboot-launcher-build:ci "$RUNNER_TEMP/wine" "$RUNNER_TEMP/payload"
 
   macos:
     name: macOS, Apple Clang (build, floor, DAG, tests)

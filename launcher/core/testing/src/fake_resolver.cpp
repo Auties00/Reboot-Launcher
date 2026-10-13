@@ -84,8 +84,14 @@ FakeResolver::FakeResolver(Executor& deliver_on) : state_(std::make_shared<State
 
 FakeResolver::~FakeResolver() {
     std::vector<std::shared_ptr<Lookup>> hung;
-    const std::scoped_lock lock(state_->mutex);
-    hung = std::move(state_->hung);
+    {
+        const std::scoped_lock lock(state_->mutex);
+        hung = std::move(state_->hung);
+    }
+    for (auto& lookup : hung)
+        state_->deliver_on.post([lookup = std::move(lookup)] {
+            finish(lookup, make_diag(kTestingDomain, msg::kCancelled).kind(ErrorKind::Cancelled).fail());
+        });
 }
 
 void FakeResolver::set(std::string host, std::vector<IpAddress> addresses) {

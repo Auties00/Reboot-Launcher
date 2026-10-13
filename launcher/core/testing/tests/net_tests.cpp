@@ -199,6 +199,28 @@ TEST_CASE("FakeResolver passes the resolver suite and answers exactly once", "[t
     CHECK(resolver.queries().back() == "slow.test");
 }
 
+TEST_CASE("a FakeResolver destroyed with a hung lookup still answers it, cancelled", "[testing][net]") {
+    DeterministicRuntime runtime;
+    std::vector<Result<std::vector<IpAddress>>> answers;
+    CancelSource source;
+    {
+        FakeResolver resolver(runtime.strand());
+        resolver.hang("slow.test");
+        resolver.resolve("slow.test", source.token(), [&answers](Result<std::vector<IpAddress>> result) {
+            answers.push_back(std::move(result));
+        });
+        runtime.run_until_idle();
+        REQUIRE(answers.empty());
+    }
+    runtime.run_until_idle();
+    REQUIRE(answers.size() == 1);
+    CHECK(answers[0].error().kind == ErrorKind::Cancelled);
+
+    source.cancel(CancelReason::Deadline);
+    runtime.run_until_idle();
+    CHECK(answers.size() == 1);
+}
+
 TEST_CASE("FakeQuicTransport passes the QUIC suite with an echoing peer", "[testing][conformance][net]") {
     DeterministicRuntime runtime;
     ManualWaiter waiter(runtime);

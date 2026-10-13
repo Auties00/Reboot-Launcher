@@ -39,7 +39,8 @@ REBOOT_MESSAGE_DECL(kUnknownStream);
 REBOOT_MESSAGE_DECL(kRenameConflict);
 REBOOT_MESSAGE_DECL(kSocketFailed);
 
-// Owned and registered by the OS packages; the fakes fail with the same ids the real adapters use.
+// Registered by their owners (ipc.endpoint_untrusted by the foundation); the fakes fail with the
+// same ids the real adapters use.
 inline constexpr MessageId kEndpointUntrusted{"ipc.endpoint_untrusted"};
 inline constexpr MessageId kNotSupported{"platform.not_supported"};
 inline constexpr MessageId kConnectTimeout{"net.connect_timeout"};

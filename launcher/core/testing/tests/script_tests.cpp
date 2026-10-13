@@ -38,7 +38,7 @@ TEST_CASE("backend scripts round-trip through JSON", "[testing][scripts]") {
     script.child.stderr_lines = {"line one", "line \"two\""};
     script.child.garbage_frame = 0x202;
     script.ready_delay = 250ms;
-    script.serve_http = true;
+    script.serve_http = false;
     script.content = {2, 1234567890123};
     script.match_target_requests = {be::ResolveMatchTarget{9, "acct", "playlist_defaultsolo"}};
     script.logins = {be::LoginObserved{"acct", "key"}};

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <filesystem>
 #include <optional>
 #include <set>
 #include <span>
@@ -10,6 +11,7 @@
 #include <vector>
 
 #include "messages.hpp"
+#include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/testing/port_binder.hpp"
 
@@ -171,8 +173,12 @@ ConformanceReport run_disk_info_conformance(ports::IDiskInfo& disk, const Confor
     if (report.expect_ok("volumes", volumes)) report.expect("volumes is not empty", !volumes->empty());
     const auto scratch = disk.volume_of(env.scratch);
     if (!report.expect_ok("volume_of the scratch dir", scratch) || !volumes) return report;
-    report.expect("volume_of names a listed volume",
-                  std::ranges::contains(*volumes, scratch->mount, &ports::VolumeInfo::mount));
+    // An unlisted mount, such as a tmpfs /tmp on Linux, must still be the one holding the path.
+    std::error_code error;
+    const NativePath canonical = std::filesystem::weakly_canonical(env.scratch, error);
+    report.expect("volume_of names a listed volume or the mount holding the path",
+                  std::ranges::contains(*volumes, scratch->mount, &ports::VolumeInfo::mount) ||
+                      (!error && is_inside(canonical, scratch->mount)));
     report.expect("free bytes never exceed total bytes", scratch->free_bytes <= scratch->total_bytes);
     return report;
 }

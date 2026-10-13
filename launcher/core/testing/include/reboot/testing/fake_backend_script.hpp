@@ -20,8 +20,9 @@ struct FakeBackendScript {
     // Exits with kBindFailureExitCode after Welcome instead of sending Ready.
     bool bind_failure = false;
     // Binds the Welcome address on an OS-assigned port, reports it in Ready and answers
-    // GET /reboot/v1/backend-info. Off, Ready names a port nothing listens on.
-    bool serve_http = false;
+    // GET /reboot/v1/backend-info. Off, or in-process without an io_context, Ready names a port
+    // nothing listens on.
+    bool serve_http = true;
     contracts::backend::ContentVersion content{1, 1};
     // Sent to the engine after Ready, to drive the pulled match target.
     std::vector<contracts::backend::ResolveMatchTarget> match_target_requests;

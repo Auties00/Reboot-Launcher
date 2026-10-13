@@ -24,7 +24,7 @@ namespace rb::testing {
 // in-process behind ScriptedProcessLauncher and as reboot-fake-backend.
 class FakeBackend final : public IStdioPeer {
 public:
-    // The script must not serve HTTP.
+    // Never serves HTTP, whatever the script says: Ready names a port nothing listens on.
     FakeBackend(Executor& executor, const IClock& clock, FakeBackendScript script);
     // Serves the script's HTTP on `http_io`.
     FakeBackend(Executor& executor, const IClock& clock, FakeBackendScript script, boost::asio::io_context& http_io);

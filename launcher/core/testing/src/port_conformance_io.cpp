@@ -105,6 +105,16 @@ ConformanceReport run_file_system_conformance(ports::IFileSystem& fs, const Conf
         const auto kept = fs.read_all(backup);
         report.expect("the new bytes are in place", read && *read == third);
         report.expect("keep_backup leaves the previous file as <target>.bak", kept && *kept == second);
+        if (hooks.make_failing_backup) {
+            const std::unique_ptr<ports::IFileSystem> failing = hooks.make_failing_backup();
+            report.expect("a failed backup step fails atomic_replace", !failing->atomic_replace(file, first, true));
+            const auto after = fs.read_all(file);
+            const auto old_backup = fs.read_all(backup);
+            report.expect("a failed backup step leaves the target", after && *after == third);
+            report.expect("a failed backup step keeps the previous <target>.bak", old_backup && *old_backup == second);
+        } else {
+            report.skip("a failed backup step keeps the previous <target>.bak", "no make_failing_backup hook");
+        }
     }
     report.expect("a missing parent fails atomic_replace", !fs.atomic_replace(dir / "missing" / "x.json", first, false));
     report.expect_error("read_all of a missing file fails NotFound", fs.read_all(dir / "absent.json"), ErrorKind::NotFound);

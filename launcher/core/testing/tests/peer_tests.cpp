@@ -107,13 +107,13 @@ private:
 
 }  // namespace
 
+// Unscripted, as the defaults promise a conforming backend.
 TEST_CASE("FakeBackend passes the backend contract in-process", "[testing][conformance][peers]") {
     DeterministicRuntime runtime;
     ManualWaiter waiter(runtime);
     IoThread http;
     ScriptedProcessLauncher launcher(runtime.strand(), runtime.clock(), FakeOs::Windows);
-    FakeBackendScript script;
-    script.serve_http = true;
+    const FakeBackendScript script;
     launcher.serve_exe("reboot-backend.exe", [&](const ports::ProcessLaunch&) {
         return std::make_unique<FakeBackend>(runtime.strand(), runtime.clock(), script, http.io);
     });

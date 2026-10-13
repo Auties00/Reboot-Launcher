@@ -186,11 +186,7 @@ private:
 
     void become_ready(const std::string& address) {
         u16 port = kNothingListens;
-        if (script_.serve_http) {
-            if (http_io_ == nullptr) {
-                finish(kBadInvocationExitCode);
-                return;
-            }
+        if (script_.serve_http && http_io_ != nullptr) {
             server_ = std::make_shared<InfoServer>(*http_io_);
             auto bound = server_->bind(address);
             if (!bound) {
@@ -234,6 +230,7 @@ private:
             if (auto request = decoded<be::RegisterAccount>(frame)) {
                 {
                     const std::scoped_lock lock(mutex);
+                    adopt_record(*request);
                     std::erase_if(accounts, [&](const be::RegisterAccount& a) { return a.account_id == request->account_id; });
                     accounts.push_back(*request);
                 }
@@ -342,6 +339,20 @@ private:
     [[nodiscard]] u64 last_login_of(const std::string& account_id) const {
         const auto it = last_logins.find(account_id);
         return it == last_logins.end() ? 0 : it->second;
+    }
+
+    // Called with `mutex` held. A record registered under a new id takes its data along, unless
+    // the new id already has some; a nil record names none.
+    void adopt_record(const be::RegisterAccount& request) {
+        if (request.record_id.is_nil()) return;
+        if (std::ranges::find(accounts, request.account_id, &be::RegisterAccount::account_id) != accounts.end()) return;
+        const auto held = std::ranges::find(accounts, request.record_id, &be::RegisterAccount::record_id);
+        if (held == accounts.end()) return;
+        if (auto login = last_logins.extract(held->account_id)) {
+            login.key() = request.account_id;
+            last_logins.insert(std::move(login));
+        }
+        held->account_id = request.account_id;
     }
 
     void rename(const be::RenameAccount& request) {

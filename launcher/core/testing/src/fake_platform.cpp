@@ -78,6 +78,7 @@ FakePlatform::FakePlatform(DeterministicRuntime& runtime, FakePlatformOptions op
     prerequisites_ = install<FakePrereqs>(services_.prerequisites);
     system_ = install<FakeSystemInfo>(services_.system);
     system_->set(system_facts(os));
+    languages_ = install<FakeUiLanguageSource>(services_.languages);
     updater_ = install<FakeUpdateApplier>(services_.updater, true, fs_);
     random_ = install<FakeRandom>(services_.random, options_.random_seed);
 }

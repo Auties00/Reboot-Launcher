@@ -41,6 +41,7 @@ reboot_add_package(testing
     src/fake_session_host.cpp
     src/fake_shell.cpp
     src/fake_system_info.cpp
+    src/fake_ui_language_source.cpp
     src/fake_update_applier.cpp
     src/fake_winhost.cpp
     src/frame_log.cpp

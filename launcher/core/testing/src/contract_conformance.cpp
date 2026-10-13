@@ -4,6 +4,7 @@
 #include <array>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <set>
@@ -26,6 +27,8 @@
 #include "reboot/contracts/backend.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/foundation/paths.hpp"
+#include "reboot/testing/fake_executables.hpp"
+#include "reboot/testing/fake_game_server_script.hpp"
 #include "reboot/testing/frame_log.hpp"
 
 namespace rb::testing {
@@ -76,6 +79,7 @@ struct Run {
     }
 
     [[nodiscard]] bool exited() const { return log->with([](const ChildLog& l) { return l.exit.has_value(); }); }
+    [[nodiscard]] std::optional<ports::ChildExit> exit() const { return log->with([](const ChildLog& l) { return l.exit; }); }
 
     ~Run() {
         if (child && !exited()) (void)child->terminate_tree();
@@ -217,6 +221,38 @@ struct Run {
     return out;
 }
 
+[[nodiscard]] bool write_text(const NativePath& file, std::string_view text) {
+    std::ofstream out(file, std::ios::binary | std::ios::trunc);
+    out.write(text.data(), static_cast<std::streamsize>(text.size()));
+    return static_cast<bool>(out.flush());
+}
+
+[[nodiscard]] std::string argument_path(const NativePath& path) {
+    const std::u8string text = path.u8string();
+    return {text.begin(), text.end()};
+}
+
+// The first of `count` consecutive loopback UDP ports that are free right now.
+[[nodiscard]] std::optional<Port> free_udp_block(std::size_t count) {
+    asio::io_context io;
+    for (int attempt = 0; attempt < 20; ++attempt) {
+        std::vector<asio::ip::udp::socket> held;
+        boost::system::error_code error;
+        held.emplace_back(io).open(asio::ip::udp::v4(), error);
+        if (!error) held.back().bind(asio::ip::udp::endpoint(asio::ip::address_v4::loopback(), 0), error);
+        if (error) return std::nullopt;
+        const unsigned first = held.back().local_endpoint(error).port();
+        if (error || first + count > 65536) continue;
+        for (std::size_t i = 1; !error && i < count; ++i) {
+            held.emplace_back(io).open(asio::ip::udp::v4(), error);
+            if (!error)
+                held.back().bind(asio::ip::udp::endpoint(asio::ip::address_v4::loopback(), static_cast<u16>(first + i)), error);
+        }
+        if (!error) return Port{static_cast<u16>(first)};
+    }
+    return std::nullopt;
+}
+
 }  // namespace
 
 ContractConformance::ContractConformance(ports::IProcessLauncher& launcher, IConformanceWaiter& waiter, ContractTiming timing)
@@ -299,7 +335,7 @@ ConformanceReport ContractConformance::run_backend(const ContractSubject& subjec
 
     if (auto run = start(kUnbindableAddress)) {
         const bool ended = exits(*run, timing_.ready);
-        const auto exit = run->log->copy().exit;
+        const auto exit = run->exit();
         report.expect("a bind failure exits non-zero", ended && exit && exit->code.value_or(0) != 0);
         report.expect("a bind failure sends no Ready", run->all<be::Ready>().empty());
     }
@@ -329,11 +365,11 @@ ConformanceReport ContractConformance::run_game_server(const ContractSubject& su
     std::optional<gs::GameServerDescription> description;
     if (auto run = spawn(launcher_, subject, "--describe"); report.expect_ok("spawn --describe", run)) {
         const bool ended = exits(*run, timing_.hello);
-        const ChildLog log = run->log->copy();
-        report.expect("--describe exits 0", ended && log.exit && log.exit->code == 0);
-        const auto described = log.frames.all<gs::GameServerDescription>();
-        report.expect("--describe writes exactly one description frame",
-                      described && described->size() == 1 && log.frames.frames().size() == 1);
+        const auto exit = run->exit();
+        report.expect("--describe exits 0", ended && exit && exit->code == 0);
+        const auto described = run->log->with([](const ChildLog& l) { return l.frames.all<gs::GameServerDescription>(); });
+        const std::size_t frames = run->log->with([](const ChildLog& l) { return l.frames.frames().size(); });
+        report.expect("--describe writes exactly one description frame", described && described->size() == 1 && frames == 1);
         if (described && !described->empty()) description = described->front();
     }
     if (!description) return report;
@@ -446,11 +482,50 @@ ConformanceReport ContractConformance::run_game_server(const ContractSubject& su
             report.expect("an occupied port gives ListenFailed for it",
                           !failed.empty() && failed.front().port == occupied_port && run->all<gs::Listening>().empty());
             const bool ended = exits(*run, timing_.stop_grace);
-            const auto exit = run->log->copy().exit;
+            const auto exit = run->exit();
             report.expect("a bind failure exits non-zero", ended && exit && exit->code.value_or(0) != 0);
         }
     }
     return report;
+}
+
+std::vector<ConformanceReport> run_fake_contract_conformance(ports::IProcessLauncher& launcher, IConformanceWaiter& waiter,
+                                                             const NativePath& dir) {
+    std::vector<ConformanceReport> reports;
+    ContractConformance conformance(launcher, waiter);
+    // Each fake gets its own directory, so the backend's "writes stay inside" check sees only its own.
+    const auto prepare = [&](ConformanceReport& report, std::string_view name, const NativePath& exe,
+                             std::optional<std::string> script) -> std::optional<ContractSubject> {
+        const NativePath root = dir / name;
+        const NativePath work = root / "work";
+        const NativePath script_file = root / "script.json";
+        std::error_code error;
+        std::filesystem::create_directories(work, error);
+        if (!report.expect("make the work dir", !error, error.message())) return std::nullopt;
+        if (!script) return ContractSubject{exe, {}, {}, work};
+        if (!report.expect("write the script", write_text(script_file, *script))) return std::nullopt;
+        return ContractSubject{exe, {"--script=" + argument_path(script_file)}, {}, work};
+    };
+
+    // Unscripted: its defaults are a conforming backend.
+    if (const std::optional<NativePath> exe = fake_backend_exe()) {
+        ConformanceReport setup("backend_contract");
+        auto subject = prepare(setup, "backend", *exe, std::nullopt);
+        reports.push_back(subject ? conformance.run_backend(*subject) : std::move(setup));
+    }
+    if (const std::optional<NativePath> exe = fake_game_server_exe()) {
+        FakeGameServerScript script;
+        ConformanceReport setup("game_server_contract");
+        auto subject = prepare(setup, "game-server", *exe, to_json(script));
+        // One port per declared socket, plus the one the suite occupies.
+        const std::optional<Port> block = subject ? free_udp_block(script.description.sockets.size() + 1) : std::nullopt;
+        if (subject && setup.expect("find a free UDP block", block.has_value())) {
+            reports.push_back(conformance.run_game_server(*subject, {gs::GameSpec{"12.41", 1, std::nullopt}, *block}));
+        } else {
+            reports.push_back(std::move(setup));
+        }
+    }
+    return reports;
 }
 
 }  // namespace rb::testing

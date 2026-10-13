@@ -48,6 +48,10 @@ public:
     // Runs `peer` as this child: stdin goes to it, its output comes back as stdout, stderr and exit.
     void attach_peer(std::unique_ptr<IStdioPeer> peer);
 
+    // The next `count` terminate_tree calls fail with testing.terminate_failed and leave the child running.
+    void fail_terminations(u32 count) noexcept { failing_terminations_ = count; }
+    [[nodiscard]] u32 terminate_calls() const noexcept { return terminate_calls_; }
+
     [[nodiscard]] const FrameLog& stdin_frames() const noexcept { return stdin_frames_; }
     [[nodiscard]] bool stdin_closed() const noexcept { return stdin_closed_; }
     [[nodiscard]] bool terminated() const noexcept { return terminated_; }
@@ -68,6 +72,8 @@ private:
     std::shared_ptr<Callbacks> callbacks_;
     std::optional<ports::ChildExit> exit_;
     bool stdin_closed_ = false;
+    u32 failing_terminations_ = 0;
+    u32 terminate_calls_ = 0;
     bool terminated_ = false;
     bool released_ = false;
 };

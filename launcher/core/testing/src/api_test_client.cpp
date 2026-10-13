@@ -164,8 +164,11 @@ std::size_t ApiTestClient::resyncs(u64 sub_id) const {
     return it == impl_->resyncs.end() ? 0 : it->second;
 }
 
-void ApiTestClient::secret_put(std::span<const u8> target, std::span<const u8> secret) {
-    impl_->send(ipc::SecretPut{{target.begin(), target.end()}, {secret.begin(), secret.end()}});
+u64 ApiTestClient::secret_put(std::span<const u8> target, std::span<const u8> secret) {
+    const u64 req_id = impl_->next_req++;
+    impl_->methods[req_id] = 0;
+    impl_->send(ipc::SecretPut{req_id, {target.begin(), target.end()}, {secret.begin(), secret.end()}});
+    return req_id;
 }
 
 u64 ApiTestClient::secret_reveal(std::span<const u8> target) {

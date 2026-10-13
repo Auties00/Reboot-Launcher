@@ -47,12 +47,16 @@ struct ConformanceEnv {
 struct FileSystemConformanceHooks {
     // Makes a symlink for the remove_tree check, which is skipped without it.
     UniqueFunction<Result<void>(const NativePath& link, const NativePath& target)> make_symlink;
+    // A file system over the same disk whose keep_backup step fails, for the check that the failed
+    // replace keeps both the target and the old <target>.bak; skipped without it.
+    UniqueFunction<std::unique_ptr<ports::IFileSystem>()> make_failing_backup;
 };
 
-// atomic_replace round trip, replace over an existing file, keep_backup leaving <target>.bak, a
-// missing parent failing, read_all of a missing file failing NotFound, a second non-waiting lock
-// failing Conflict and succeeding after release, a HeldFile reading the bytes it opened, revision
-// changing on write, owner-only directories and files, remove_tree not following a symlink.
+// atomic_replace round trip, replace over an existing file, keep_backup leaving <target>.bak and
+// a failed backup step keeping the old one, a missing parent failing, read_all of a missing file
+// failing NotFound, a second non-waiting lock failing Conflict and succeeding after release, a
+// HeldFile reading the bytes it opened, revision changing on write, owner-only directories and
+// files, remove_tree not following a symlink.
 [[nodiscard]] ConformanceReport run_file_system_conformance(ports::IFileSystem& fs, const ConformanceEnv& env,
                                                             FileSystemConformanceHooks hooks = {});
 
@@ -60,7 +64,8 @@ struct FileSystemConformanceHooks {
 [[nodiscard]] ConformanceReport run_file_watcher_conformance(ports::IFileWatcher& watcher, ports::IFileSystem& fs,
                                                              const ConformanceEnv& env);
 
-// volumes() is not empty, volume_of(scratch) is one of them, free_bytes <= total_bytes.
+// volumes() is not empty, volume_of(scratch) is one of them or a mount holding scratch (Linux
+// leaves tmpfs and squashfs out of volumes()), free_bytes <= total_bytes.
 [[nodiscard]] ConformanceReport run_disk_info_conformance(ports::IDiskInfo& disk, const ConformanceEnv& env);
 
 // put, get, overwrite, erase and get-after-erase on keys unique to this run, binary values with

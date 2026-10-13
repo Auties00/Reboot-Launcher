@@ -24,6 +24,7 @@
 #include "reboot/testing/fake_session_host.hpp"
 #include "reboot/testing/fake_shell.hpp"
 #include "reboot/testing/fake_system_info.hpp"
+#include "reboot/testing/fake_ui_language_source.hpp"
 #include "reboot/testing/fake_update_applier.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/in_memory_ipc.hpp"
@@ -80,6 +81,7 @@ public:
     [[nodiscard]] FakeSecurityProbe& security() noexcept { return *security_; }
     [[nodiscard]] FakePrereqs& prerequisites() noexcept { return *prerequisites_; }
     [[nodiscard]] FakeSystemInfo& system() noexcept { return *system_; }
+    [[nodiscard]] FakeUiLanguageSource& languages() noexcept { return *languages_; }
     [[nodiscard]] FakeUpdateApplier& updater() noexcept { return *updater_; }
     [[nodiscard]] FakeRandom& random() noexcept { return *random_; }
     [[nodiscard]] FakeHttpTransport& http() noexcept { return http_; }
@@ -109,6 +111,7 @@ private:
     FakeSecurityProbe* security_ = nullptr;
     FakePrereqs* prerequisites_ = nullptr;
     FakeSystemInfo* system_ = nullptr;
+    FakeUiLanguageSource* languages_ = nullptr;
     FakeUpdateApplier* updater_ = nullptr;
     FakeRandom* random_ = nullptr;
 };

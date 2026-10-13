@@ -80,7 +80,8 @@ public:
     [[nodiscard]] std::vector<api::Event> events(u64 sub_id) const;
     [[nodiscard]] std::size_t resyncs(u64 sub_id) const;
 
-    void secret_put(std::span<const u8> target, std::span<const u8> secret);
+    // Returns the req_id the engine answers once the secret is stored.
+    u64 secret_put(std::span<const u8> target, std::span<const u8> secret);
     u64 secret_reveal(std::span<const u8> target);
     void log_write(LogLevel level, std::string text);
     void ping();
