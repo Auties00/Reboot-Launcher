@@ -42,7 +42,7 @@ constexpr std::string_view kToolManifest = "\"manifest\"\n{\n  \"require_tool_ap
 // Stands in for umu-run: checks the setup contract, then writes what umu leaves behind.
 constexpr std::string_view kFakeUmuRun = R"(#!/bin/sh
 echo "runtime update $UMU_RUNTIME_UPDATE"
-[ "$#" -eq 1 ] && [ -z "$1" ] || exit 9
+[ "$#" -eq 2 ] && [ "$1" = wineboot ] && [ "$2" = -u ] || exit 9
 [ "$UMU_RUNTIME_UPDATE" = 1 ] && [ -d "$WINEPREFIX" ] || exit 8
 : > "$UMU_FOLDERS_PATH/started"
 [ -n "$FAKE_SLEEP" ] && exec sleep 30
