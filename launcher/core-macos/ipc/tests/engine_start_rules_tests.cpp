@@ -18,9 +18,11 @@ using rb::Result;
 using rb::os_macos::ipc::agent_register_failed;
 using rb::os_macos::ipc::agent_register_timed_out;
 using rb::os_macos::ipc::agent_step;
+using rb::os_macos::ipc::app_translocated;
 using rb::os_macos::ipc::AgentStatus;
 using rb::os_macos::ipc::AgentStep;
 using rb::os_macos::ipc::kickstart_outcome;
+using rb::os_macos::ipc::kickstart_retry_after_register;
 using rb::os_macos::ipc::kLaunchctlServiceDisabled;
 using rb::os_macos::ipc::kLaunchctlServiceNotFound;
 using rb::os_macos::ipc::LaunchctlRun;
@@ -89,10 +91,34 @@ TEST_CASE("an interactive caller on the default root goes on", "[engine_start_ru
 }
 
 TEST_CASE("each agent status maps to one step", "[engine_start_rules]") {
-    CHECK(agent_step(AgentStatus::Enabled) == AgentStep::Kickstart);
-    CHECK(agent_step(AgentStatus::RequiresApproval) == AgentStep::AwaitingUser);
-    CHECK(agent_step(AgentStatus::NotRegistered) == AgentStep::Register);
-    CHECK(agent_step(AgentStatus::NotFound) == AgentStep::Register);
+    CHECK(agent_step(AgentStatus::Enabled, false) == AgentStep::Kickstart);
+    CHECK(agent_step(AgentStatus::RequiresApproval, false) == AgentStep::AwaitingUser);
+    CHECK(agent_step(AgentStatus::NotRegistered, false) == AgentStep::Register);
+    CHECK(agent_step(AgentStatus::NotFound, false) == AgentStep::Register);
+}
+
+TEST_CASE("a translocated app registers nothing but starts an agent already there", "[engine_start_rules]") {
+    CHECK(agent_step(AgentStatus::NotRegistered, true) == AgentStep::Translocated);
+    CHECK(agent_step(AgentStatus::NotFound, true) == AgentStep::Translocated);
+    CHECK(agent_step(AgentStatus::Enabled, true) == AgentStep::Kickstart);
+    CHECK(agent_step(AgentStatus::RequiresApproval, true) == AgentStep::AwaitingUser);
+
+    const Diagnostic diag = app_translocated();
+    CHECK(diag.is(rb::os_macos::ipc::kAppTranslocated));
+    CHECK(diag.kind == rb::ErrorKind::Conflict);
+    check_placeholders(diag);
+}
+
+TEST_CASE("only an unknown label right after registering is kickstarted again", "[engine_start_rules]") {
+    const LaunchctlRun unknown{.end = LaunchctlRun::End::Exited, .code = kLaunchctlServiceNotFound};
+    CHECK(kickstart_retry_after_register(unknown, true));
+    CHECK_FALSE(kickstart_retry_after_register(unknown, false));
+    CHECK_FALSE(kickstart_retry_after_register(LaunchctlRun{.end = LaunchctlRun::End::Exited, .code = 0}, true));
+    CHECK_FALSE(kickstart_retry_after_register(
+        LaunchctlRun{.end = LaunchctlRun::End::Exited, .code = kLaunchctlServiceDisabled}, true));
+    CHECK_FALSE(kickstart_retry_after_register(LaunchctlRun{.end = LaunchctlRun::End::TimedOut, .code = 0}, true));
+    CHECK_FALSE(kickstart_retry_after_register(
+        LaunchctlRun{.end = LaunchctlRun::End::Signalled, .code = kLaunchctlServiceNotFound}, true));
 }
 
 TEST_CASE("a clean kickstart exit is Started", "[engine_start_rules]") {

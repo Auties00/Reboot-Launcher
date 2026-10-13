@@ -35,6 +35,9 @@ public:
     // translocated, since a swap of the read-only translocation mount cannot succeed.
     [[nodiscard]] std::optional<NativePath> velopack_package_dir() const override;
 
+    // A translocated bundle runs from a random read-only mount, so nothing may register its path.
+    [[nodiscard]] bool translocated() const noexcept { return translocated_; }
+
 private:
     MacClientPaths(NativePath home, NativePath user_temp_dir, NativePath exe_dir, std::optional<NativePath> app_bundle,
                    bool translocated);

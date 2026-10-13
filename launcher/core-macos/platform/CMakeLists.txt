@@ -8,6 +8,7 @@ reboot_add_package(os_macos/platform
   SOURCES
     src/apple_shims.mm
     src/bundle_layout.cpp
+    src/cf_locale_language_source.cpp
     src/dns_answers.cpp
     src/firewall_output.cpp
     src/fs_event_change.cpp
@@ -75,6 +76,12 @@ if(REBOOT_BUILD_TESTS)
     if(NOT COMMAND catch_discover_tests)
       include(Catch)
     endif()
+    # The contract case runs them.
+    foreach(fake reboot-fake-backend reboot-fake-game-server)
+      if(TARGET ${fake})
+        add_dependencies(reboot_os_macos_conformance ${fake})
+      endif()
+    endforeach()
     catch_discover_tests(reboot_os_macos_conformance)
   endif()
 endif()

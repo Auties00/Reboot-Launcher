@@ -10,13 +10,17 @@
 
 #include <array>
 #include <cerrno>
+#include <chrono>
 #include <filesystem>
 #include <memory>
+#include <span>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "darwin_peer_credentials.hpp"
 #include "darwin_user_temp_dir.hpp"
+#include "engine_agent.hpp"
 #include "launchctl_run.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/random.hpp"
@@ -29,6 +33,7 @@
 #include "reboot/testing/port_conformance.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 #include "reboot/testing/wall_clock_waiter.hpp"
+#include "root_helper.hpp"
 #include "spawn_lock.hpp"
 
 namespace {
@@ -74,6 +79,40 @@ private:
     struct sigaction previous_ {};
 };
 
+// A client connected as root; writes are relayed to the socket, and nothing is read back.
+class RootStream final : public ports::IByteStream {
+public:
+    explicit RootStream(std::unique_ptr<RootSocket> socket) : socket_(std::move(socket)) {}
+
+    void write(std::span<const u8> bytes) override {
+        if (socket_) socket_->send(bytes);
+    }
+    void on_read(UniqueFunction<void(std::span<const u8>)> /*callback*/) override {}
+    void on_close(UniqueFunction<void()> /*callback*/) override {}
+    void close() override { socket_.reset(); }
+    [[nodiscard]] ports::PeerIdentity peer() const override {
+        return {"0", socket_ ? static_cast<u32>(socket_->pid()) : 0};
+    }
+
+private:
+    std::unique_ptr<RootSocket> socket_;
+};
+
+void act_as_root(testing::IpcConformanceSubject& subject) {
+    subject.connect_as_other_user = [](const std::string& endpoint) -> Result<std::unique_ptr<ports::IByteStream>> {
+        Result<std::unique_ptr<RootSocket>> socket = RootSocket::open(RootSocket::Mode::Connect, NativePath{endpoint});
+        if (!socket) return std::unexpected(std::move(socket.error()));
+        return std::unique_ptr<ports::IByteStream>(std::make_unique<RootStream>(std::move(*socket)));
+    };
+    auto squatters = std::make_shared<std::vector<std::unique_ptr<RootSocket>>>();
+    subject.squat_as_other_user = [squatters](const std::string& endpoint) -> Result<void> {
+        Result<std::unique_ptr<RootSocket>> socket = RootSocket::open(RootSocket::Mode::Squat, NativePath{endpoint});
+        if (!socket) return std::unexpected(std::move(socket.error()));
+        squatters->push_back(std::move(*socket));
+        return {};
+    };
+}
+
 }  // namespace
 
 TEST_CASE("the AF_UNIX adapters pass the IPC port suite", "[ipc]") {
@@ -87,6 +126,8 @@ TEST_CASE("the AF_UNIX adapters pass the IPC port suite", "[ipc]") {
     subject.connector = std::make_unique<UnixSocketConnector>(temp);
     subject.make_endpoint = [&random] { return fresh_endpoint(random); };
     subject.self_user_id = std::to_string(::geteuid());
+    // Without passwordless sudo the other-user checks are skipped.
+    if (passwordless_sudo()) act_as_root(subject);
     const auto report = testing::run_ipc_conformance(std::move(subject), {waiter, scratch.path()});
     INFO(report.describe());
     CHECK(report.passed());
@@ -191,11 +232,19 @@ TEST_CASE("the spawn lock excludes every other holder until it is released", "[l
 }
 
 TEST_CASE("an agent this machine never registered awaits the user", "[launchctl]") {
+    // On a Mac with the app installed the kickstart would start the user's real engine.
+    const std::array<std::string, 2> print{
+        "print", "gui/" + std::to_string(::geteuid()) + "/" + std::string(kEngineAgentLabel)};
+    const Result<LaunchctlRun> registered = run_launchctl(print, std::chrono::seconds{3});
+    REQUIRE(registered);
+    if (registered->end == LaunchctlRun::End::Exited && registered->code == 0) {
+        SKIP("the engine agent is registered on this machine");
+    }
     const ports::CallerContext caller = own_caller_context();
     OsRandom random;
     testing::ScratchDir scratch = scratch_dir(random);
     const DataRoot root{.root = scratch.path() / "root", .overridden = false};
-    SmAppServiceEngineStarter starter{static_cast<u32>(::geteuid()), caller};
+    SmAppServiceEngineStarter starter{static_cast<u32>(::geteuid()), caller, false};
 
     const Result<ports::StartResult> started = starter.ensure_started(NativePath{"/nonexistent/reboot-engine"}, root);
     REQUIRE(started);
@@ -214,7 +263,7 @@ TEST_CASE("an overridden root is never started through the agent", "[launchctl]"
     ports::CallerContext caller = own_caller_context();
     caller.elevated = false;
     caller.interactive = true;
-    SmAppServiceEngineStarter starter{static_cast<u32>(::geteuid()), caller};
+    SmAppServiceEngineStarter starter{static_cast<u32>(::geteuid()), caller, false};
     const Result<ports::StartResult> started =
         starter.ensure_started(NativePath{"/nonexistent/reboot-engine"}, DataRoot{.root = "/nonexistent/root", .overridden = true});
     REQUIRE(started);

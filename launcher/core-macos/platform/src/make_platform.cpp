@@ -13,6 +13,7 @@
 #include "mac_log_file_system.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/random.hpp"
+#include "reboot/os_macos/platform/cf_locale_language_source.hpp"
 #include "reboot/os_macos/platform/fs_events_watcher.hpp"
 #include "reboot/os_macos/platform/keychain_secret_store.hpp"
 #include "reboot/os_macos/platform/libproc_port_inspector.hpp"
@@ -87,10 +88,14 @@ Result<PlatformServices> make_platform(const PlatformOptions& options) {
     services.updater = std::make_unique<MacVelopackApplier>(paths->velopack_package_dir(), cache_dir / "velopack",
                                                             launchd_label(options.foreground));
     services.random = std::make_unique<OsRandom>();
+    services.languages = std::make_unique<CfLocaleLanguageSource>();
     services.system = std::move(system);
     services.fs = std::move(fs);
     services.paths = std::move(paths);
     return services;
 }
+
+// Velopack calls install and uninstall hooks only on Windows; the app bundle is removed whole.
+void run_package_hooks(UniqueFunction<void(PackageHook)>) {}
 
 }  // namespace rb::ports

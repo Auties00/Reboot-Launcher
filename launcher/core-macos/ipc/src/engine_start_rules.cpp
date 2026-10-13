@@ -14,14 +14,18 @@ std::optional<ports::StartResult> refusal_before_start(const ports::CallerContex
     return std::nullopt;
 }
 
-AgentStep agent_step(AgentStatus status) {
+AgentStep agent_step(AgentStatus status, bool translocated) {
     switch (status) {
         case AgentStatus::Enabled: return AgentStep::Kickstart;
         case AgentStatus::RequiresApproval: return AgentStep::AwaitingUser;
         case AgentStatus::NotRegistered:
-        case AgentStatus::NotFound: return AgentStep::Register;
+        case AgentStatus::NotFound: break;
     }
-    return AgentStep::Register;
+    return translocated ? AgentStep::Translocated : AgentStep::Register;
+}
+
+bool kickstart_retry_after_register(const LaunchctlRun& run, bool registered_now) {
+    return registered_now && run.end == LaunchctlRun::End::Exited && run.code == kLaunchctlServiceNotFound;
 }
 
 Result<ports::StartResult> kickstart_outcome(const LaunchctlRun& run, std::string_view label,
@@ -47,6 +51,10 @@ Result<ports::StartResult> kickstart_outcome(const LaunchctlRun& run, std::strin
         .arg("deadline", deadline)
         .retryable()
         .fail();
+}
+
+Diagnostic app_translocated() {
+    return make_diag(ErrorDomain::Platform, kAppTranslocated).kind(ErrorKind::Conflict);
 }
 
 Diagnostic agent_register_failed(std::string_view label, std::optional<i64> error_code) {

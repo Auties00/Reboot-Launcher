@@ -19,5 +19,8 @@ REBOOT_MESSAGE(kAgentKickstartTimedOut, "platform.agent_kickstart_timed_out",
 REBOOT_MESSAGE(kHomeUnavailable, "platform.ipc_home_unavailable", "The home directory of uid {uid} could not be read.");
 REBOOT_MESSAGE(kImageUnresolved, "platform.ipc_image_unresolved",
                "The location of the Reboot Launcher client library could not be read.");
+// core-macos/platform registers the same id; this package may not reach it.
+REBOOT_MESSAGE(kAppTranslocated, "platform.app_translocated",
+               "Reboot Launcher runs from a temporary copy. Move it to the Applications folder and open it again.");
 
 }  // namespace rb::os_macos::ipc

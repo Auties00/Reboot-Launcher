@@ -48,7 +48,7 @@ if(REBOOT_BUILD_TESTS)
       SOURCES ${conformance_sources})
     target_include_directories(reboot_os_macos_ipc_conformance PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(reboot_os_macos_ipc_conformance PRIVATE
-      reboot_os_macos_ipc Catch2::Catch2WithMain reboot_warnings
+      reboot_os_macos_ipc Catch2::Catch2 reboot_warnings
       $<TARGET_NAME_IF_EXISTS:reboot_testing>)
     if(NOT COMMAND catch_discover_tests)
       include(Catch)

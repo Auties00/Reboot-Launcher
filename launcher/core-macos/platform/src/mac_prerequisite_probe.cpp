@@ -34,7 +34,6 @@ namespace {
 constexpr std::string_view kSocketFilter = "/usr/libexec/ApplicationFirewall/socketfilterfw";
 constexpr std::string_view kSoftwareUpdate = "/usr/sbin/softwareupdate";
 constexpr std::string_view kRosettaRuntime = "/Library/Apple/usr/libexec/oah/libRosettaRuntime";
-constexpr std::string_view kFirewallPane = "x-apple.systempreferences:com.apple.preference.security?Firewall";
 constexpr std::string_view kLocalNetworkPane = "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork";
 constexpr std::chrono::seconds kFirewallQueryDeadline{5};
 // Rosetta is a download of a few hundred megabytes.
@@ -149,7 +148,12 @@ Result<void> MacPrerequisiteProbe::remediate(std::string_view id) {
             .retryable()
             .fail();
     }
-    if (id == kAppFirewallId) return shims::workspace_open(kFirewallPane);
+    if (id == kAppFirewallId) {
+        Result<void> opened = shims::workspace_open(kFirewallPanes.front());
+        for (std::size_t next = 1; !opened && next < kFirewallPanes.size(); ++next)
+            opened = shims::workspace_open(kFirewallPanes[next]);
+        return opened;
+    }
     if (id == kLocalNetworkId) {
         const std::optional<sockaddr_in> gateway = default_gateway();
         if (!gateway) return make_diag(ErrorDomain::Platform, kNoGateway).retryable().fail();

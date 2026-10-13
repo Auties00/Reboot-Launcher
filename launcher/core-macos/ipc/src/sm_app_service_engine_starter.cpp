@@ -1,9 +1,11 @@
 #include "reboot/os_macos/ipc/sm_app_service_engine_starter.hpp"
 
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <optional>
 #include <string>
+#include <thread>
 #include <utility>
 
 #include "agent_service.hpp"
@@ -38,8 +40,8 @@ enum class AgentReady : u8 { Yes, AwaitingUser };
 
 }  // namespace
 
-SmAppServiceEngineStarter::SmAppServiceEngineStarter(u32 uid, ports::CallerContext caller)
-    : uid_(uid), caller_(std::move(caller)) {}
+SmAppServiceEngineStarter::SmAppServiceEngineStarter(u32 uid, ports::CallerContext caller, bool translocated)
+    : uid_(uid), caller_(std::move(caller)), translocated_(translocated) {}
 
 SmAppServiceEngineStarter::~SmAppServiceEngineStarter() = default;
 
@@ -47,11 +49,13 @@ Result<ports::StartResult> SmAppServiceEngineStarter::ensure_started(const Nativ
                                                                      const DataRoot& root) {
     if (const std::optional<ports::StartResult> refused = refusal_before_start(caller_, root)) return *refused;
 
+    bool registered_now = false;
     if (pending_register_ || main_bundle_has_agent(kEngineAgentPlist)) {
         if (!pending_register_) {
-            switch (agent_step(agent_status(kEngineAgentPlist))) {
+            switch (agent_step(agent_status(kEngineAgentPlist), translocated_)) {
                 case AgentStep::Kickstart: break;
                 case AgentStep::AwaitingUser: return ports::StartResult::AwaitingUser;
+                case AgentStep::Translocated: return std::unexpected(app_translocated());
                 case AgentStep::Register: {
                     auto pending = std::make_unique<PendingRegister>();
                     if (auto started =
@@ -71,6 +75,7 @@ Result<ports::StartResult> SmAppServiceEngineStarter::ensure_started(const Nativ
             const Result<AgentReady> ready = after_register(*registered);
             if (!ready) return std::unexpected(ready.error());
             if (*ready == AgentReady::AwaitingUser) return ports::StartResult::AwaitingUser;
+            registered_now = true;
         }
     }
 
@@ -81,14 +86,21 @@ Result<ports::StartResult> SmAppServiceEngineStarter::ensure_started(const Nativ
 
     const std::array<std::string, 2> arguments{
         "kickstart", "gui/" + std::to_string(uid_) + "/" + std::string(kEngineAgentLabel)};
-    const Result<LaunchctlRun> run = run_launchctl(arguments, kLaunchctlDeadline);
-    if (!run) {
-        return make_diag(ErrorDomain::Platform, kAgentKickstartFailed)
-            .arg("label", kEngineAgentLabel)
-            .cause(run.error())
-            .fail();
+    const auto until = std::chrono::steady_clock::now() + kLaunchctlDeadline;
+    for (;;) {
+        const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(until - std::chrono::steady_clock::now());
+        const Result<LaunchctlRun> run = run_launchctl(arguments, std::max(left, std::chrono::milliseconds::zero()));
+        if (!run) {
+            return make_diag(ErrorDomain::Platform, kAgentKickstartFailed)
+                .arg("label", kEngineAgentLabel)
+                .cause(run.error())
+                .fail();
+        }
+        if (!kickstart_retry_after_register(*run, registered_now) ||
+            std::chrono::steady_clock::now() + kKickstartRetryInterval >= until)
+            return kickstart_outcome(*run, kEngineAgentLabel, kLaunchctlDeadline);
+        std::this_thread::sleep_for(kKickstartRetryInterval);
     }
-    return kickstart_outcome(*run, kEngineAgentLabel, kLaunchctlDeadline);
 }
 
 }  // namespace rb::os_macos::ipc

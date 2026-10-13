@@ -23,7 +23,8 @@ Result<ClientPlatform> make_client_platform() {
 
     ClientPlatform platform;
     platform.connector = std::make_unique<UnixSocketConnector>(paths->ipc_runtime_base());
-    platform.starter = std::make_unique<SmAppServiceEngineStarter>(static_cast<u32>(::geteuid()), caller->capture());
+    platform.starter = std::make_unique<SmAppServiceEngineStarter>(static_cast<u32>(::geteuid()), caller->capture(),
+                                                                   paths->translocated());
     platform.caller = std::make_unique<MacCallerContext>(std::move(*caller));
     platform.paths = std::make_unique<MacClientPaths>(std::move(*paths));
     platform.revisions = std::make_unique<posix::PosixFileRevisionReader>();

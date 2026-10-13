@@ -7,6 +7,8 @@ REBOOT_MESSAGE(kCallFailed, "platform.call_failed", "{call} failed.");
 REBOOT_MESSAGE(kCallFailedOnPath, "platform.call_failed_on_path", "{call} failed on {path}.");
 REBOOT_MESSAGE(kNotSupported, "platform.not_supported", "This is not available on this system.");
 REBOOT_MESSAGE(kKeychainLocked, "platform.keychain_locked", "The login keychain is locked.");
+REBOOT_MESSAGE(kKeychainUnavailable, "platform.keychain_unavailable",
+               "Passwords can only be saved from a logged-in desktop session, where the login keychain is available.");
 REBOOT_MESSAGE(kNoGuiSession, "platform.no_gui_session",
                "Opening links, folders and Finder windows needs a logged-in desktop session.");
 REBOOT_MESSAGE(kUrlNotHttps, "platform.url_not_https", "Only https links can be opened.");

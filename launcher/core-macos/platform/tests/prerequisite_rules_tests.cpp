@@ -14,6 +14,11 @@ TEST_CASE("the macOS major version is read from kern.osproductversion", "[macos_
     CHECK_FALSE(macos_major_version("x14.1"));
 }
 
+TEST_CASE("the firewall remediation opens Network settings before the legacy Security pane", "[firewall_output]") {
+    CHECK(kFirewallPanes.front() == "x-apple.systempreferences:com.apple.Network-Settings.extension?Firewall");
+    CHECK(kFirewallPanes.back() == "x-apple.systempreferences:com.apple.preference.security?Firewall");
+}
+
 TEST_CASE("socketfilterfw's global state is parsed", "[firewall_output]") {
     CHECK(firewall_enabled("Firewall is enabled. (State = 1)\n") == true);
     CHECK(firewall_enabled("Firewall is disabled. (State = 0)\n") == false);

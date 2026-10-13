@@ -3,7 +3,10 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <signal.h>
+#include <spawn.h>
+#include <sys/wait.h>
 
+#include <array>
 #include <cerrno>
 #include <charconv>
 #include <chrono>
@@ -19,6 +22,8 @@
 #include <vector>
 
 #include "mac_log_file_system.hpp"
+#include "messages.hpp"
+#include "proc_info.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/os_macos/platform/fs_events_watcher.hpp"
 #include "reboot/os_macos/platform/keychain_secret_store.hpp"
@@ -34,6 +39,7 @@
 #include "reboot/os_macos/platform/make_platform.hpp"
 #include "reboot/os_macos/platform/posix_spawn_launcher.hpp"
 #include "reboot/os_macos/platform/unsupported_peer_inspector.hpp"
+#include "reboot/testing/contract_conformance.hpp"
 #include "reboot/testing/port_binder.hpp"
 #include "reboot/testing/port_conformance.hpp"
 #include "reboot/testing/scratch_dir.hpp"
@@ -68,6 +74,23 @@ private:
 };
 
 [[nodiscard]] bool process_exists(u32 pid) { return ::kill(static_cast<pid_t>(pid), 0) == 0 || errno == EPERM; }
+
+// A child of this process that nothing here waits for.
+[[nodiscard]] pid_t spawn_unwaited(std::vector<std::string> arguments) {
+    std::vector<char*> argv;
+    for (std::string& argument : arguments) argv.push_back(argument.data());
+    argv.push_back(nullptr);
+    std::array<char*, 1> envp{nullptr};
+    pid_t pid = 0;
+    REQUIRE(::posix_spawn(&pid, argv.front(), nullptr, nullptr, argv.data(), envp.data()) == 0);
+    return pid;
+}
+
+// Gone for good: no longer a child, not even a zombie.
+[[nodiscard]] bool reaped(pid_t pid) {
+    siginfo_t info{};
+    return ::waitid(P_PID, static_cast<id_t>(pid), &info, WEXITED | WNOHANG | WNOWAIT) != 0 && errno == ECHILD;
+}
 
 [[nodiscard]] ports::ProcessLaunch shell(std::string script) {
     ports::ProcessLaunch launch;
@@ -142,9 +165,36 @@ TEST_CASE("MacDiskInfo meets the disk info contract", "[conformance]") {
 TEST_CASE("KeychainSecretStore meets the secret store contract", "[conformance]") {
     Scratch scratch;
     MacFileSystem fs;
-    // Outside Aqua a locked keychain falls back to files, so the suite runs on any runner.
-    KeychainSecretStore store("0123456789abcdef", scratch.dir.path() / "secrets", fs, false);
+    KeychainSecretStore store(random_token_hex(scratch.random, 8), scratch.dir.path() / "secrets", fs, true);
+    // A locked login keychain fails every call, and nothing on a runner can unlock it.
+    const std::array<u8, 1> probe{1};
+    const Result<void> stored = store.put("conformance-probe", probe);
+    if (!stored && stored.error().is(kKeychainLocked)) {
+        SKIP("the login keychain is locked");
+    }
+    REQUIRE(stored);
+    REQUIRE(store.erase("conformance-probe"));
     require_passed(testing::run_secret_store_conformance(store, scratch.random));
+}
+
+TEST_CASE("KeychainSecretStore outside Aqua stores nothing, not even files", "[conformance]") {
+    Scratch scratch;
+    MacFileSystem fs;
+    const NativePath fallback = scratch.dir.path() / "secrets";
+    KeychainSecretStore store(random_token_hex(scratch.random, 8), fallback, fs, false);
+    CHECK(store.kind() == ports::SecretStoreKind::Unavailable);
+    const std::array<u8, 1> value{1};
+    const Result<void> stored = store.put("key", value);
+    REQUIRE_FALSE(stored);
+    CHECK(stored.error().is(kKeychainUnavailable));
+    CHECK(stored.error().kind == ErrorKind::Unsupported);
+    const Result<std::optional<SecretBytes>> read = store.get("key");
+    REQUIRE_FALSE(read);
+    CHECK(read.error().is(kKeychainUnavailable));
+    const Result<void> erased = store.erase("key");
+    REQUIRE_FALSE(erased);
+    CHECK(erased.error().is(kKeychainUnavailable));
+    CHECK_FALSE(std::filesystem::exists(fallback));
 }
 
 TEST_CASE("PosixSpawnLauncher meets the process launcher contract", "[conformance]") {
@@ -158,6 +208,16 @@ TEST_CASE("PosixSpawnLauncher meets the process launcher contract", "[conformanc
     subject.spawns_grandchild = shell("sleep 600 & echo $!; wait");
     subject.process_exists = process_exists;
     require_passed(testing::run_process_launcher_conformance(launcher, std::move(subject), scratch.env()));
+}
+
+TEST_CASE("the fake backend and game server pass the contract suites through PosixSpawnLauncher", "[conformance]") {
+    Scratch scratch;
+    PosixSpawnLauncher launcher;
+    const auto reports = testing::run_fake_contract_conformance(launcher, scratch.waiter, scratch.dir.path());
+    if (reports.empty()) {
+        SKIP("this build has no fake backend or game server");
+    }
+    for (const testing::ConformanceReport& report : reports) require_passed(report);
 }
 
 TEST_CASE("destroying a child kills its process group through the watchdog", "[conformance]") {
@@ -235,6 +295,19 @@ TEST_CASE("a child that exits on its own reports once, after its output", "[conf
     CHECK(seen->exits == 1);
     CHECK(seen->code == 3);
     CHECK(seen->out_at_exit == "first\nsecond\n");
+}
+
+TEST_CASE("children the process had before the launcher are reaped once they exit", "[conformance]") {
+    // Stand-ins for the old image's children after an in-place update's execve.
+    testing::WallClockWaiter waiter;
+    const pid_t exited = spawn_unwaited({"/usr/bin/true"});
+    const pid_t running = spawn_unwaited({"/bin/sleep", "1"});
+    REQUIRE(waiter.wait_until([&] { return has_exited(static_cast<u32>(exited)); }, 5000ms));
+    CHECK_FALSE(reaped(exited));
+
+    PosixSpawnLauncher launcher;
+    CHECK(waiter.wait_until([&] { return reaped(exited); }, 5000ms));
+    CHECK(waiter.wait_until([&] { return reaped(running); }, 5000ms));
 }
 
 TEST_CASE("LibprocPortInspector meets the port inspector contract", "[conformance]") {
@@ -338,6 +411,7 @@ TEST_CASE("make_platform composes every engine port macOS provides", "[conforman
     CHECK(services->security);
     CHECK(services->prerequisites);
     CHECK(services->system);
+    CHECK(services->languages);
     CHECK(services->updater);
     CHECK(services->random);
     // The test binary runs from no bundle.

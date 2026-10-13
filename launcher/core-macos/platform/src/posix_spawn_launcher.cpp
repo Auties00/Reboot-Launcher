@@ -16,6 +16,7 @@
 #include <optional>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -40,8 +41,8 @@ using OutputCallback = UniqueFunction<void(std::span<const u8>)>;
 constexpr std::chrono::milliseconds kOutputDrainBound = 2s;
 constexpr std::size_t kReadChunk = 64 * 1024;
 
-// kevent udata carries the child id and what the event is about.
-enum class Tag : std::uintptr_t { Stdout = 0, Stderr = 1, Stdin = 2, Child = 3, Watchdog = 4, Drain = 5 };
+// kevent udata carries the child id (a pid for Inherited) and what the event is about.
+enum class Tag : std::uintptr_t { Stdout = 0, Stderr = 1, Stdin = 2, Child = 3, Watchdog = 4, Drain = 5, Inherited = 6 };
 constexpr std::uintptr_t kTagBits = 3;
 constexpr std::uintptr_t kWakeIdent = 0;
 
@@ -175,6 +176,7 @@ public:
         const struct kevent wake = make_kevent(kWakeIdent, EVFILT_USER, EV_ADD | EV_CLEAR);
         if (::kevent(queue_.get(), &wake, 1, nullptr, 0, nullptr) != 0)
             return std::unexpected(posix::call_failed("kevent", errno));
+        adopt_inherited();
         thread_ = std::thread([this] { run(); });
         return {};
     }
@@ -202,6 +204,31 @@ public:
     }
 
 private:
+    // Children this process has before the launcher's first spawn come from the image an in-place
+    // update's execve replaced, which no longer knows them; they are reaped as they exit, or now.
+    void adopt_inherited() {
+        if (const Result<std::vector<u32>> inherited = child_pids(static_cast<u32>(::getpid()))) {
+            for (const u32 pid : *inherited) {
+                const struct kevent watch = make_kevent(pid, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT, 0,
+                                                        encode(pid, Tag::Inherited));
+                if (::kevent(queue_.get(), &watch, 1, nullptr, 0, nullptr) == 0) inherited_.insert(static_cast<pid_t>(pid));
+            }
+        }
+        // Every child that already exited, listed or not: zombies may be missing from the list, and
+        // a child exiting before its watch was armed reports nothing.
+        for (;;) {
+            const pid_t exited = ::waitpid(-1, nullptr, WNOHANG);
+            if (exited < 0 && errno == EINTR) continue;
+            if (exited <= 0) break;
+            inherited_.erase(exited);
+        }
+    }
+
+    // Only once: the pid is free for reuse as soon as it is reaped.
+    void reap_inherited(pid_t pid) {
+        if (inherited_.erase(pid) != 0) (void)reap(pid);
+    }
+
     enum class CommandKind : u8 { Add, Release };
     struct Command {
         CommandKind kind;
@@ -302,6 +329,10 @@ private:
 
     void handle(const struct kevent& event) {
         if (event.filter == EVFILT_USER) return;
+        if (tag_of(event.udata) == Tag::Inherited) {
+            reap_inherited(static_cast<pid_t>(event.ident));
+            return;
+        }
         const auto found = children_.find(id_of(event.udata));
         if (found == children_.end()) return;
         // Held, since forget_if_done may drop the map's reference while this runs.
@@ -327,6 +358,8 @@ private:
                 child.drain_armed = false;
                 for (posix::UniqueFd& output : child.outputs) output.reset();
                 maybe_deliver_exit(child);
+                break;
+            case Tag::Inherited:
                 break;
         }
     }
@@ -416,6 +449,8 @@ private:
     std::deque<Command> commands_;
     bool stopping_ = false;
     std::unordered_map<u64, std::shared_ptr<ChildState>> children_;
+    // Filled before the thread starts, then kqueue thread only.
+    std::unordered_set<pid_t> inherited_;
     // Allocated once: zeroing a chunk per read would cost more than the read.
     std::vector<u8> read_buffer_ = std::vector<u8>(kReadChunk);
 };

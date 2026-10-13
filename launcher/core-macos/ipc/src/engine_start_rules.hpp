@@ -15,7 +15,7 @@ namespace rb::os_macos::ipc {
 // SMAppServiceStatus.
 enum class AgentStatus : u8 { NotRegistered, Enabled, RequiresApproval, NotFound };
 
-enum class AgentStep : u8 { Kickstart, Register, AwaitingUser };
+enum class AgentStep : u8 { Kickstart, Register, AwaitingUser, Translocated };
 
 // launchctl's exit status for a service its domain does not know.
 inline constexpr int kLaunchctlServiceNotFound = 113;
@@ -36,12 +36,21 @@ struct LaunchctlRun {
                                                                      const DataRoot& root);
 
 // NotFound is registered too: SMAppService reports it for an agent that was never registered.
-[[nodiscard]] AgentStep agent_step(AgentStatus status);
+// A translocated app registers nothing, since launchd would keep a path on a random read-only
+// mount that breaks once the app is moved; an agent already enabled is still kickstarted.
+[[nodiscard]] AgentStep agent_step(AgentStatus status, bool translocated);
 
 // Started for exit 0, AwaitingUser for a label the domain does not know or has disabled, otherwise
 // platform.agent_kickstart_timed_out (retryable) or platform.agent_kickstart_failed.
 [[nodiscard]] Result<ports::StartResult> kickstart_outcome(const LaunchctlRun& run, std::string_view label,
                                                            std::chrono::milliseconds deadline);
+
+// True for a label the domain does not know yet right after this call registered it: launchd may
+// load the job after register() returns.
+[[nodiscard]] bool kickstart_retry_after_register(const LaunchctlRun& run, bool registered_now);
+
+// platform.app_translocated (Conflict): move the app to Applications and open it again.
+[[nodiscard]] Diagnostic app_translocated();
 
 // platform.agent_register_failed, with the NSError code when there is one.
 [[nodiscard]] Diagnostic agent_register_failed(std::string_view label, std::optional<i64> error_code);

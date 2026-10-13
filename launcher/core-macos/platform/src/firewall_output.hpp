@@ -1,9 +1,17 @@
 #pragma once
 
+#include <array>
 #include <optional>
 #include <string_view>
 
 namespace rb::os_macos::platform {
+
+// The firewall's settings, tried in order: System Settings > Network > Firewall since macOS 13,
+// then the pre-13 Security pane anchor, which macOS 14 opens on Privacy & Security instead.
+inline constexpr std::array<std::string_view, 2> kFirewallPanes{
+    "x-apple.systempreferences:com.apple.Network-Settings.extension?Firewall",
+    "x-apple.systempreferences:com.apple.preference.security?Firewall",
+};
 
 // socketfilterfw --getglobalstate: "Firewall is enabled. (State = 1)"; nullopt when unrecognised.
 [[nodiscard]] std::optional<bool> firewall_enabled(std::string_view output);

@@ -42,6 +42,10 @@ struct Keychain {
     return make_diag(ErrorDomain::Platform, kKeychainLocked).retryable().build();
 }
 
+[[nodiscard]] Diagnostic unavailable() {
+    return make_diag(ErrorDomain::Platform, kKeychainUnavailable).kind(ErrorKind::Unsupported).build();
+}
+
 [[nodiscard]] Diagnostic keychain_failed(std::string_view call, OSStatus status) {
     // Without user interaction a keychain that locked meanwhile reports this; an ACL refusal does too.
     if (status == errSecInteractionNotAllowed && open_login_keychain().state == KeychainState::Locked) return locked();
@@ -161,7 +165,9 @@ ports::SecretStoreKind KeychainSecretStore::kind() const {
 Result<void> KeychainSecretStore::put(std::string_view key, std::span<const u8> value) {
     SecretFiles files(fallback_dir_, fs_);
     const Keychain keychain = open_login_keychain();
-    switch (write_backend(keychain.state, aqua_session_)) {
+    switch (secret_backend(keychain.state, aqua_session_)) {
+        case SecretBackend::Unavailable:
+            return std::unexpected(unavailable());
         case SecretBackend::File:
             return files.put(key, value);
         case SecretBackend::Locked:
@@ -170,16 +176,19 @@ Result<void> KeychainSecretStore::put(std::string_view key, std::span<const u8> 
             break;
     }
     if (Result<void> stored = keychain_put(service_, key, value, keychain.ref.get()); !stored) return stored;
-    // A file left from a locked period would shadow the keychain item, since get reads files first.
+    // A file left from a period without a login keychain would shadow the item, since get reads files first.
     return files.erase(key);
 }
 
 Result<std::optional<SecretBytes>> KeychainSecretStore::get(std::string_view key) {
+    const Keychain keychain = open_login_keychain();
+    const SecretBackend backend = secret_backend(keychain.state, aqua_session_);
+    if (backend == SecretBackend::Unavailable) return std::unexpected(unavailable());
     SecretFiles files(fallback_dir_, fs_);
     Result<std::optional<SecretBytes>> from_file = files.get(key);
     if (!from_file || from_file->has_value()) return from_file;
-    const Keychain keychain = open_login_keychain();
-    switch (read_backend_after_file_miss(keychain.state)) {
+    switch (backend) {
+        case SecretBackend::Unavailable:
         case SecretBackend::File:
             return std::optional<SecretBytes>{};
         case SecretBackend::Locked:
@@ -191,11 +200,14 @@ Result<std::optional<SecretBytes>> KeychainSecretStore::get(std::string_view key
 }
 
 Result<void> KeychainSecretStore::erase(std::string_view key) {
+    const Keychain keychain = open_login_keychain();
+    const SecretBackend backend = secret_backend(keychain.state, aqua_session_);
+    if (backend == SecretBackend::Unavailable) return std::unexpected(unavailable());
     SecretFiles files(fallback_dir_, fs_);
     if (Result<void> erased = files.erase(key); !erased) return erased;
     // A locked keychain may still hold the key, so erasing cannot report success.
-    const Keychain keychain = open_login_keychain();
-    switch (read_backend_after_file_miss(keychain.state)) {
+    switch (backend) {
+        case SecretBackend::Unavailable:
         case SecretBackend::File:
             return {};
         case SecretBackend::Locked:

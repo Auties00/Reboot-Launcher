@@ -1,11 +1,12 @@
 #pragma once
 
 #include "reboot/foundation/diag.hpp"
+#include "reboot/ports/ipc.hpp"
 
 namespace rb::posix {
 
-// Registered once by core/posix, whose public headers do not declare it; this binds to that object.
-REBOOT_MESSAGE_DECL(kEndpointUntrusted);
+// Declared by the IPC port and registered by the foundation.
+using ports::kEndpointUntrusted;
 
 }  // namespace rb::posix
 
@@ -20,5 +21,6 @@ REBOOT_MESSAGE_DECL(kAgentKickstartFailed);
 REBOOT_MESSAGE_DECL(kAgentKickstartTimedOut);
 REBOOT_MESSAGE_DECL(kHomeUnavailable);
 REBOOT_MESSAGE_DECL(kImageUnresolved);
+REBOOT_MESSAGE_DECL(kAppTranslocated);
 
 }  // namespace rb::os_macos::ipc

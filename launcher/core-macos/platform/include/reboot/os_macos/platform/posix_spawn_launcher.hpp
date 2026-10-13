@@ -12,6 +12,8 @@ namespace rb::os_macos::platform {
 // Covers no capability ids; IProcessLauncher over posix::PosixSpawner, with a watchdog per child.
 class PosixSpawnLauncher final : public ports::IProcessLauncher {
 public:
+    // Reaps every child the process already has, as each exits: after an in-place update's
+    // execve those are the old image's children and watchdogs, which nobody else would wait for.
     PosixSpawnLauncher();
     ~PosixSpawnLauncher() override;
     PosixSpawnLauncher(const PosixSpawnLauncher&) = delete;
