@@ -26,6 +26,7 @@
 #include "reboot/engine/engine_lock.hpp"
 #include "reboot/engine/engine_services.hpp"
 #include "reboot/foundation/clock.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/paths.hpp"

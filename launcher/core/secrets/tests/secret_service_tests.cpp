@@ -16,6 +16,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "reboot/foundation/cancel.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/user_request.hpp"

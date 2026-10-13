@@ -4,7 +4,7 @@
 #include <string_view>
 #include <utility>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 
 namespace rb::engine {
 

@@ -2,9 +2,9 @@
 
 #include <variant>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/builds/installed_build.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 
 namespace rb::builds {
 

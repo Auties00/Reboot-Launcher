@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 
 namespace rb::integration {
 

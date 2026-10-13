@@ -11,7 +11,7 @@
 #include "reboot/api/v1/secrets.hpp"
 #include "reboot/api/v1/settings.hpp"
 #include "reboot/api/v1/support.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/testing/fuzz.hpp"
 
 using rb::testing::fuzz_require;

@@ -3,7 +3,7 @@
 #include <optional>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/support/support_cell.hpp"
 #include "reboot/support/support_provider.hpp"
 #include "reboot/support/support_query.hpp"

@@ -2,9 +2,9 @@
 
 #include <span>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/builds/byte_source.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::builds {
 

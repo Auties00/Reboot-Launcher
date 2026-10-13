@@ -9,9 +9,9 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ports/secret_store.hpp"
 #include "reboot/testing/fault_plan.hpp"
 

@@ -3,9 +3,9 @@
 #include <expected>
 #include <span>
 
+#include "reboot/base/types.hpp"
 #include "reboot/catalog/catalog.hpp"
 #include "reboot/catalog/catalog_error.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::catalog {
 

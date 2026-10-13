@@ -4,8 +4,8 @@
 #include <optional>
 #include <string>
 
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/storage/settings.hpp"
 
 namespace rb::sessions {

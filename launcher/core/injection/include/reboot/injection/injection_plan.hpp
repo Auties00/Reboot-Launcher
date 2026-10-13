@@ -3,7 +3,7 @@
 #include <optional>
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/injection/client_features.hpp"
 #include "reboot/injection/dll_slot.hpp"
 #include "reboot/injection/injection_inputs.hpp"

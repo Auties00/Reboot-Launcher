@@ -3,9 +3,9 @@
 #include <chrono>
 #include <memory>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/sessions/shutdown_cause.hpp"
 #include "reboot/sessions/shutdown_report.hpp"
 #include "reboot/sessions/shutdown_step.hpp"

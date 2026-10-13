@@ -2,7 +2,7 @@
 
 #include <array>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 // Generated from the Unicode 16.0.0 character database (canonical mappings only);
 // Hangul syllables are composed and decomposed algorithmically and are not listed.

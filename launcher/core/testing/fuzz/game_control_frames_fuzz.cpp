@@ -3,10 +3,10 @@
 #include <span>
 
 #include "frame_fuzz.hpp"
+#include "reboot/base/framing.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/contracts/winhost.hpp"
-#include "reboot/foundation/framing.hpp"
 
 namespace common = rb::contracts::common;
 namespace gc = rb::contracts::game_client;

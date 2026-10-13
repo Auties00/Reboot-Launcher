@@ -2,9 +2,9 @@
 
 #include <string_view>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/os_linux/runner/slr_build.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/ports/runner.hpp"

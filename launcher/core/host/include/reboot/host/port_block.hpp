@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/gameserver/socket_role.hpp"
 
 namespace rb::host {

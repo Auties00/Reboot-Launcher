@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/posix/posix_error.hpp"
 #include "socket_fds.hpp"

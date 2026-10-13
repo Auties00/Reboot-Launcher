@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/ports/os_services.hpp"
 
 namespace rb::os_linux::platform {

@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/updates/activity_probe.hpp"
 
 namespace rb::updates {

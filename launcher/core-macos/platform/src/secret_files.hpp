@@ -4,10 +4,10 @@
 #include <span>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::ports {
 class IFileSystem;

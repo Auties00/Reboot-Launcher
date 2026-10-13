@@ -118,7 +118,7 @@ jobs:
         with:
           name: launcher-wine-payload
           path: |
-            launcher/build/${{ env.PRESET }}/core-windows/winhost/reboot-winhost.exe
+            launcher/build/${{ env.PRESET }}/payload/winhost/reboot-winhost.exe
             launcher/build/${{ env.PRESET }}/core/testing/fake_game/reboot-fake-game.exe
           if-no-files-found: error
           retention-days: 3

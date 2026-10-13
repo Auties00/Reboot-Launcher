@@ -11,6 +11,7 @@
 #include "reboot/builds/memory_byte_source.hpp"
 #include "reboot/builds/pe_version_reader.hpp"
 #include "reboot/foundation/cancel.hpp"
+#include "reboot/foundation/diag.hpp"
 
 using namespace rb;
 using namespace rb::builds;

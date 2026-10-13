@@ -3,6 +3,7 @@
 #include <cstddef>
 
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/identity/third_party_login.hpp"
 #include "reboot/storage/enum_names.hpp"
 

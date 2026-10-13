@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/secrets/secret_state.hpp"
 #include "reboot/secrets/secret_target.hpp"
 

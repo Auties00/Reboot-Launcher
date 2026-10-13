@@ -10,6 +10,7 @@
 
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/clock.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/process/orphan_reaper.hpp"

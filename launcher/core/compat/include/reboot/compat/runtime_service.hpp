@@ -3,16 +3,16 @@
 #include <memory>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/compat/compat_document.hpp"
 #include "reboot/compat/prepared_runtime.hpp"
 #include "reboot/compat/runner_profile.hpp"
 #include "reboot/compat/vc_redist_source.hpp"
 #include "reboot/components/progress_sink.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/storage/document_store.hpp"
 
 namespace rb {

@@ -4,7 +4,8 @@ if(NOT REBOOT_BUILD_TESTS AND NOT REBOOT_BUILD_FAKES)
   return()
 endif()
 
-# reboot::api is public because ApiTestClient's header speaks reboot.api.v1.
+# reboot::api and api_dispatch are public because ApiTestClient's header speaks reboot.api.v1 and
+# reports an undecodable reply as the engine's api.* Diagnostic.
 reboot_add_package(testing
   SOURCES
     src/api_test_client.cpp
@@ -66,8 +67,8 @@ reboot_add_package(testing
     src/tcp_stream.cpp
     src/wall_clock_waiter.cpp
     src/win_modules.cpp
-  DEPS Boost::json
-  PUBLIC_DEPS reboot::api)
+  DEPS Boost::asio Boost::json
+  PUBLIC_DEPS reboot::api reboot::api_dispatch)
 
 if(REBOOT_BUILD_FAKES)
   add_subdirectory(fake_backend)

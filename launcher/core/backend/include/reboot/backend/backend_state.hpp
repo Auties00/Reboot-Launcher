@@ -6,8 +6,8 @@
 #include "reboot/backend/backend_config.hpp"
 #include "reboot/backend/backend_phase.hpp"
 #include "reboot/backend/backend_upstream.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::backend {
 

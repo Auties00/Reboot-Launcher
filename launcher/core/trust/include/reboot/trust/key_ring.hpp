@@ -7,7 +7,7 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/trust/signed_document_kind.hpp"
 
 namespace rb::trust {

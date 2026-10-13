@@ -4,15 +4,15 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/catalog/alias_table.hpp"
 #include "reboot/catalog/catalog.hpp"
 #include "reboot/catalog/catalog_entry.hpp"
 #include "reboot/catalog/catalog_source.hpp"
 #include "reboot/catalog/catalog_updated.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb {
 class EventBus;

@@ -1,4 +1,5 @@
-// Writes and checks l10n/en.json; check with a root also requires every id named in core sources to be registered.
+// Writes and checks l10n/en.json; check with a root also requires every id named in core and payload
+// sources to be registered.
 #include <algorithm>
 #include <cctype>
 #include <exception>
@@ -93,7 +94,8 @@ void print(const rb::Diagnostic& diag) {
 [[nodiscard]] int undeclared_literals(const fs::path& root) {
     int count = 0;
     for (const fs::directory_entry& top : fs::directory_iterator(root)) {
-        if (!top.is_directory() || !top.path().filename().string().starts_with("core")) continue;
+        const std::string name = top.path().filename().string();
+        if (!top.is_directory() || (!name.starts_with("core") && name != "payload")) continue;
         for (const fs::directory_entry& entry : fs::recursive_directory_iterator(top.path())) {
             if (!entry.is_regular_file() || !scanned(fs::relative(entry.path(), root))) continue;
             const std::optional<std::string> text = read_file(entry.path());

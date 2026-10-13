@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/integration/purge_hooks.hpp"
 #include "reboot/integration/purge_report.hpp"

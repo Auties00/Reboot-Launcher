@@ -4,9 +4,9 @@
 #include <optional>
 
 #include "reboot/backend/login_observed_event.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/play/play_plan.hpp"
 #include "reboot/play/play_request.hpp"
 #include "reboot/play/play_service.hpp"

@@ -10,10 +10,10 @@
 #include <variant>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/log.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/framing.hpp"
+#include "reboot/base/log_level.hpp"
+#include "reboot/base/types.hpp"
 
 // Private wire messages. Field number = declaration index + 1, so fields are only appended.
 // A run of std::optional fields documented as a choice has at most one member set.

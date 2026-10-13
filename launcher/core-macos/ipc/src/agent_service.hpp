@@ -3,7 +3,7 @@
 #include <string_view>
 
 #include "engine_start_rules.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 
 // C++ entry points into SMAppService (agent_service.mm), so the starter stays .cpp.
 namespace rb::os_macos::ipc {

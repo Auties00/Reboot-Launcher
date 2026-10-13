@@ -3,12 +3,12 @@
 #include <memory>
 #include <string_view>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/compat/path_mapper.hpp"
 #include "reboot/compat/runner_profile.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ports/runner.hpp"
 #include "reboot/ports/session_host.hpp"
 #include "reboot/process/env_builder.hpp"

@@ -4,9 +4,9 @@
 #include <optional>
 #include <utility>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/posix/unique_fd.hpp"
 

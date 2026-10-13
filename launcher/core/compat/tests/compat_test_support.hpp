@@ -17,8 +17,8 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/clock.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/ports/file_system.hpp"

@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/foundation/text.hpp"
 
 namespace rb {

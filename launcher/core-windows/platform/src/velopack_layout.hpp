@@ -2,8 +2,8 @@
 
 #include <optional>
 
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
 
 namespace rb::os_windows::platform {
 

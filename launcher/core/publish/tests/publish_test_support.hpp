@@ -13,10 +13,10 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/publish/host_identity_store.hpp"
 #include "reboot/publish/publish_notice_sink.hpp"

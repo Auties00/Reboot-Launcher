@@ -2,8 +2,8 @@
 
 #include <utility>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
 namespace rb::os_windows::ipc {

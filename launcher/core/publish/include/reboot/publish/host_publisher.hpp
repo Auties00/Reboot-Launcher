@@ -4,11 +4,11 @@
 #include <memory>
 #include <optional>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/browser/rbsb_endpoint.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/publish/metadata_patch.hpp"
 #include "reboot/publish/publish_request.hpp"
 #include "reboot/publish/publish_state.hpp"

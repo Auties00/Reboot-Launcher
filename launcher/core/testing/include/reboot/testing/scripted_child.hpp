@@ -7,9 +7,9 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/framing.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/testing/frame_log.hpp"
 #include "reboot/testing/stdio_peer.hpp"

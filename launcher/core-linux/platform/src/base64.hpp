@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::os_linux::platform {
 

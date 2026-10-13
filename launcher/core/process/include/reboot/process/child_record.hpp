@@ -1,7 +1,7 @@
 #pragma once
 
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/storage/runtime_document.hpp"
 
 namespace rb::process {

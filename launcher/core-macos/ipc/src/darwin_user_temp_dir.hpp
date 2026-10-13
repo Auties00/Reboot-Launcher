@@ -1,7 +1,7 @@
 #pragma once
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 
 namespace rb::os_macos::ipc {
 

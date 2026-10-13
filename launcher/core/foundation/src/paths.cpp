@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "messages.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/ports/platform_paths.hpp"

@@ -13,11 +13,11 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 #include "reboot/testing/golden.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"

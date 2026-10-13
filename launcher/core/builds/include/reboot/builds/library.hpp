@@ -7,16 +7,16 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/builds/build_layout.hpp"
 #include "reboot/builds/detected_version.hpp"
 #include "reboot/builds/installed_build.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/library_document.hpp"
 #include "reboot/support/support_role.hpp"

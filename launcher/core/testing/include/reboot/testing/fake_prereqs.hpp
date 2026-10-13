@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/ports/os_services.hpp"
 #include "reboot/testing/fault_plan.hpp"
 

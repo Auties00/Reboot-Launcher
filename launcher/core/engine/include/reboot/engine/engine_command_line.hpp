@@ -3,8 +3,8 @@
 #include <span>
 #include <string_view>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/engine/engine_origin.hpp"
-#include "reboot/foundation/diag.hpp"
 
 namespace rb::engine {
 

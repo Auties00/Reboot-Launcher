@@ -8,6 +8,7 @@
 
 #include "builds_test_support.hpp"
 #include "reboot/builds/library_changed_event.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/testing/event_recorder.hpp"
 #include "service_fixture.hpp"
 

@@ -2,9 +2,9 @@
 
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/integration/prerequisite.hpp"
 #include "reboot/integration/prerequisite_id.hpp"

@@ -9,6 +9,7 @@
 #include "messages.hpp"
 #include "pipe_io_thread.hpp"
 #include "pipe_stream.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/log.hpp"
 #include "unique_handle.hpp"
 #include "wide.hpp"

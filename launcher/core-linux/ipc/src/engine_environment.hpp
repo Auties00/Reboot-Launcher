@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/paths.hpp"
 
 namespace rb::os_linux::ipc {

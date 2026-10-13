@@ -3,11 +3,11 @@
 #include <chrono>
 #include <cstddef>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/foundation/user_request.hpp"
 
 namespace rb::testing {

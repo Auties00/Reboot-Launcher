@@ -6,6 +6,7 @@
 
 #include "messages.hpp"
 #include "reboot/foundation/clock.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/logging/log_files_in_use.hpp"
 #include "reboot/logging/log_format.hpp"
 #include "reboot/logging/wine_log_files.hpp"

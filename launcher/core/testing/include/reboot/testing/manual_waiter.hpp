@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/testing/conformance_waiter.hpp"
 
 namespace rb::testing {

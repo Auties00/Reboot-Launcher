@@ -14,4 +14,4 @@ reboot_add_package(game_channel
     src/token_registry.cpp
     src/ue_log_tail.cpp
     src/winhost_peer.cpp
-  DEPS reboot::process)
+  DEPS reboot::process Boost::asio)

@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ports/file_system.hpp"
 
 namespace rb::os_linux::platform {

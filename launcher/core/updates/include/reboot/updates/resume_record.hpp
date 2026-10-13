@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/contracts/ipc.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/updates/activity_probe.hpp"
 
 namespace rb::storage {

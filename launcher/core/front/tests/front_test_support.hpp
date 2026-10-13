@@ -20,8 +20,8 @@
 #include <boost/asio/ssl/context.hpp>
 #include <boost/beast/http.hpp>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/front/session_front.hpp"
 #include "reboot/net/host_tls_memory.hpp"
 #include "reboot/testing/deterministic_runtime.hpp"

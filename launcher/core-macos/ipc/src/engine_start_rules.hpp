@@ -4,10 +4,10 @@
 #include <optional>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/paths.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
 // The decisions of SmAppServiceEngineStarter, apart from the calls that feed them.

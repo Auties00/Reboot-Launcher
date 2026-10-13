@@ -2,10 +2,10 @@
 #include <cstdint>
 #include <span>
 
+#include "reboot/base/types.hpp"
 #include "reboot/builds/memory_byte_source.hpp"
 #include "reboot/builds/pe_version_reader.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/testing/fuzz.hpp"
 
 using rb::testing::fuzz_require;

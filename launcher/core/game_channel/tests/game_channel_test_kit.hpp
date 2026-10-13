@@ -15,10 +15,10 @@
 #include <boost/asio/io_context.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/framing.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/game_channel/control_token.hpp"

@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/play/display_context.hpp"
 #include "reboot/play/launch_plan.hpp"
 #include "reboot/play/match_targets.hpp"

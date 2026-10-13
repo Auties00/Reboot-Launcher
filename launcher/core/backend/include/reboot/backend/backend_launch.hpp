@@ -2,8 +2,8 @@
 
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/process/env_layer.hpp"
 #include "reboot/process/process_spec.hpp"

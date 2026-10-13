@@ -5,9 +5,9 @@
 #include <string>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/storage/backend_target.hpp"
 #include "reboot/storage/console_key.hpp"

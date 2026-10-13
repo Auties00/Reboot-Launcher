@@ -3,7 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"

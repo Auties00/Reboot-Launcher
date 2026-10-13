@@ -7,9 +7,9 @@
 
 #include "client_context.hpp"
 #include "connect_settings.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/client.h"
 #include "reboot/foundation/clock.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/ports/platform_services.hpp"
 

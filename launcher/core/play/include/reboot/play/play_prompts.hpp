@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/support/support_query.hpp"
 #include "reboot/support/support_verdict.hpp"
 

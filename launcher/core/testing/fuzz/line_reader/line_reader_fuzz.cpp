@@ -3,8 +3,8 @@
 #include <span>
 #include <string_view>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/text.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/process/line_reader.hpp"
 #include "reboot/testing/fuzz.hpp"
 

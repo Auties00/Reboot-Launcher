@@ -2,9 +2,9 @@
 
 #include <span>
 
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/browser/view_spec.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 namespace rb::browser {
 

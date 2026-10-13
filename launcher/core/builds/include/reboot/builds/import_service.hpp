@@ -4,13 +4,13 @@
 #include <optional>
 #include <string>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/builds/layout_resolver.hpp"
 #include "reboot/builds/pe_version_reader.hpp"
 #include "reboot/builds/user_version.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb {
 class Executor;

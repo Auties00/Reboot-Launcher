@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 
 // Writes update packages for the update conformance cases.
 namespace rb::os_linux::platform::test {

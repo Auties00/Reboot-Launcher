@@ -4,10 +4,10 @@
 #include <memory>
 #include <string_view>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/builds/destination_suggestion.hpp"
 #include "reboot/builds/install_request.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
 
 namespace rb {

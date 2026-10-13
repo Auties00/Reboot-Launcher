@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/paths.hpp"
 
 namespace rb::backend {

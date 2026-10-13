@@ -6,9 +6,9 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/os_linux/runner/slr_setup.hpp"
 #include "reboot/ports/process.hpp"

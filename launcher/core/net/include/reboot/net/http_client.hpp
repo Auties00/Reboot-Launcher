@@ -2,9 +2,9 @@
 
 #include <memory>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/net/http_request.hpp"
 #include "reboot/net/http_response.hpp"
 #include "reboot/net/http_secrets.hpp"

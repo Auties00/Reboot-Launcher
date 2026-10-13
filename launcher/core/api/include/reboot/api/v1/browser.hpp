@@ -5,12 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -205,23 +202,6 @@ struct ViewDelta {
     std::vector<ServerEntry> rows;
 
     bool operator==(const ViewDelta&) const = default;
-};
-
-// Live server-browser views over rbsb/1.
-class IBrowserHandler {
-public:
-    virtual ~IBrowserHandler() = default;
-
-    virtual ::rb::Result<BrowserOpenViewResponse> open_view(const CallContext& context, const BrowserOpenViewRequest& request) = 0;
-    virtual ::rb::Result<BrowserUpdateViewResponse> update_view(const CallContext& context, const BrowserUpdateViewRequest& request) = 0;
-    virtual ::rb::Result<BrowserCloseViewResponse> close_view(const CallContext& context, const BrowserCloseViewRequest& request) = 0;
-    virtual ::rb::Result<BrowserStateResponse> state(const CallContext& context, const BrowserStateRequest& request) = 0;
-    // Completes with BrowserResolveResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_resolve(const CallContext& context, const BrowserResolveRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Waits out a short debounce; a newer search from the same connection cancels this one
-    // (CANCEL_REASON_SUPERSEDED).
-    // Completes with BrowserSearchResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_search(const CallContext& context, const BrowserSearchRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

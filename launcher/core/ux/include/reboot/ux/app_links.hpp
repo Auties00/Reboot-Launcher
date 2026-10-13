@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ux/language_tag.hpp"
 
 namespace rb::ux {

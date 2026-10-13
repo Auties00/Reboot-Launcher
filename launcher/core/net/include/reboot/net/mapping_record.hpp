@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/net/port_mapping.hpp"
 
 namespace rb::net {

@@ -3,8 +3,8 @@
 #include <string>
 #include <variant>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/game_client.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::game_channel {
 

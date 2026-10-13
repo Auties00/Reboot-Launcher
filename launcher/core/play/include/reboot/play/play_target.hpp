@@ -2,8 +2,8 @@
 
 #include <variant>
 
+#include "reboot/base/types.hpp"
 #include "reboot/browser/join_target.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::play {
 

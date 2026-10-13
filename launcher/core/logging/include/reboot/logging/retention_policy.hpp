@@ -6,8 +6,8 @@
 #include <span>
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/logging/log_file_names.hpp"
 
 namespace rb::logging {

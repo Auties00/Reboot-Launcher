@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/secret.hpp"
 
 namespace rb::net {
 

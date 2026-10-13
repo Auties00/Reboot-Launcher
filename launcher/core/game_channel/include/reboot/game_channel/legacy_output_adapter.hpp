@@ -3,8 +3,8 @@
 #include <memory>
 #include <span>
 
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/game_channel/game_lifecycle_event.hpp"
 #include "reboot/game_channel/lifecycle_markers.hpp"
 

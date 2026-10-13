@@ -4,10 +4,10 @@
 #include <memory>
 #include <string>
 
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/catalog/catalog_source.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
 
 namespace rb {
 class AppLayout;

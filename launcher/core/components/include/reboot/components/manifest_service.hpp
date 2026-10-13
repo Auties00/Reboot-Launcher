@@ -6,6 +6,10 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/components/app_entry.hpp"
 #include "reboot/components/endpoint_override.hpp"
 #include "reboot/components/manifest_platform.hpp"
@@ -13,11 +17,7 @@
 #include "reboot/components/release_manifest.hpp"
 #include "reboot/components/runtime_entry.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/paths.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 namespace rb {
 class IClock;

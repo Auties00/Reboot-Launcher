@@ -3,9 +3,9 @@
 #include <optional>
 #include <string>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/os_linux/ipc/ipc_runtime_base.hpp"
 #include "reboot/ports/platform_paths.hpp"
 

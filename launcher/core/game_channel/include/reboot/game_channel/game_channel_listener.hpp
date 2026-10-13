@@ -4,10 +4,10 @@
 #include <string>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/game_channel/client_dll_peer.hpp"
 #include "reboot/game_channel/winhost_peer.hpp"
 

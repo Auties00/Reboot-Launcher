@@ -2,6 +2,7 @@
 #include <string>
 
 #include "reboot/host/host_error.hpp"
+#include "reboot/foundation/diag.hpp"
 
 using namespace rb;
 using namespace rb::host;

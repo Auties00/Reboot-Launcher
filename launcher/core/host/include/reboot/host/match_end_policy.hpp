@@ -2,8 +2,8 @@
 
 #include <chrono>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/gameserver/game_server_description.hpp"
 
 namespace rb::host {

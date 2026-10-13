@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/ports/platform_services.hpp"
 #include "reboot/testing/fake_caller_context.hpp"
 #include "reboot/testing/fake_engine_starter.hpp"

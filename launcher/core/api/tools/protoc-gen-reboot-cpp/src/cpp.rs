@@ -7,10 +7,14 @@ use crate::model::{Enum, Field, File, Message, Method, Service, OPTIONS_FILE, PA
 const EVENT_KIND_ENUM: &str = "EventKind";
 const EVENT_PAYLOAD: &str = "EventPayload";
 const INCLUDE_PREFIX: &str = "reboot/api/v1";
-// Output paths are relative to launcher/core; the C++ goes to the api package.
+// Output paths are relative to launcher/core: the types go to the header-only api package, the
+// handler interfaces and dispatch to the engine's api_dispatch package.
 pub const API_DIR: &str = "api";
-// Owned by the generator: a header in it that a run does not produce is stale.
+pub const DISPATCH_DIR: &str = "api_dispatch";
+// Owned by the generator: a header in either that a run does not produce is stale.
 pub const HEADER_DIR: &str = "include/reboot/api/v1";
+pub const DISPATCH_HEADER_DIR: &str = "include/reboot/api_dispatch/v1";
+const DISPATCH_INCLUDE_PREFIX: &str = "reboot/api_dispatch/v1";
 // The method ids of the public C ABI, in the client package, which never includes api headers.
 const C_METHODS_HEADER: &str = "client/include/reboot/client_methods.h";
 const NAMESPACE: &str = "rb::api";
@@ -410,14 +414,7 @@ impl<'a> Generator<'a> {
             }
         }
         if uses_types {
-            local.insert("reboot/foundation/types.hpp".to_owned());
-        }
-        if !f.services.is_empty() {
-            local.insert("reboot/api/call_context.hpp".to_owned());
-            local.insert("reboot/foundation/result_fwd.hpp".to_owned());
-            if f.services.iter().flat_map(|s| &s.methods).any(|m| !is_call(m)) {
-                local.insert("reboot/foundation/operation.hpp".to_owned());
-            }
+            local.insert("reboot/base/types.hpp".to_owned());
         }
         for dep in &f.dependencies {
             if dep.starts_with(&format!("{INCLUDE_PREFIX}/")) && dep != OPTIONS_FILE {
@@ -466,8 +463,32 @@ impl<'a> Generator<'a> {
         if f.messages.iter().any(|m| m.name == EVENT_PAYLOAD) {
             out.extend(self.event_kind_text());
         }
-        for s in &f.services {
-            out.extend(Self::handler_text(f, s));
+        out.extend([format!("}}  // namespace {NAMESPACE}"), String::new()]);
+        join(out)
+    }
+
+    fn service_files(&self) -> Vec<&'a File> {
+        self.files.iter().copied().filter(|f| !f.services.is_empty()).collect()
+    }
+
+    // Every service's handler interface, which the engine's ApiRouter implements.
+    fn handlers_header(&self) -> String {
+        let files = self.service_files();
+        let mut local: Vec<String> = vec![
+            "reboot/api_dispatch/call_context.hpp".to_owned(),
+            "reboot/base/result_fwd.hpp".to_owned(),
+            "reboot/foundation/operation.hpp".to_owned(),
+        ];
+        local.extend(files.iter().map(|f| format!("{INCLUDE_PREFIX}/{}.hpp", f.stem())));
+        local.sort();
+        let local: Vec<&str> = local.iter().map(String::as_str).collect();
+        let mut out = vec![banner(None), "#pragma once".to_owned(), String::new()];
+        out.extend(include_block(&[], &local));
+        out.extend([String::new(), format!("namespace {NAMESPACE} {{"), String::new()]);
+        for f in files {
+            for s in &f.services {
+                out.extend(Self::handler_text(f, s));
+            }
         }
         out.extend([format!("}}  // namespace {NAMESPACE}"), String::new()]);
         join(out)
@@ -639,7 +660,7 @@ impl<'a> Generator<'a> {
         let rows = self.all_methods();
         let mut out = vec![banner(None), "#pragma once".to_owned(), String::new()];
         out.extend(include_block(&["array", "cstddef", "span", "string_view"],
-                                 &["reboot/api/method_spec.hpp", "reboot/foundation/operation.hpp", "reboot/foundation/types.hpp"]));
+                                 &["reboot/api/method_spec.hpp", "reboot/base/types.hpp"]));
         out.extend([String::new(), format!("namespace {NAMESPACE} {{"), String::new()]);
         out.extend([
             "// Changes with every change to the schema's payloads or methods; Engine.info reports the engine's.".to_owned(),
@@ -659,7 +680,7 @@ impl<'a> Generator<'a> {
                 format!("        .service = \"{PACKAGE}.{}\",", s.name),
                 format!("        .name = \"{}.{}\",", snake(&s.name), snake(&m.name)),
                 format!("        .kind = MethodKind::{},", self.options.kind[&info.0]),
-                format!("        .default_disconnect = ::rb::DisconnectPolicy::{},", self.options.disconnect[&info.2]),
+                format!("        .default_disconnect = Disconnect::{},", self.options.disconnect[&info.2]),
                 format!("        .progress = ProgressUnit::{},", self.options.progress[&info.1]),
                 format!("        .request_type = \"{}\",", &m.input_type[1..]),
                 format!("        .response_type = \"{}\",", &m.output_type[1..]),
@@ -695,8 +716,8 @@ impl<'a> Generator<'a> {
     fn dispatch_header(&self) -> String {
         let mut out = vec![banner(None), "#pragma once".to_owned(), String::new()];
         out.extend(include_block(&["any", "optional", "span"],
-                                 &["reboot/api/call_context.hpp", "reboot/api/codec.hpp", "reboot/foundation/operation.hpp",
-                                   "reboot/foundation/result_fwd.hpp", "reboot/foundation/types.hpp"]));
+                                 &["reboot/api/codec.hpp", "reboot/api_dispatch/call_context.hpp", "reboot/base/result_fwd.hpp",
+                                   "reboot/base/types.hpp", "reboot/foundation/operation.hpp"]));
         out.extend([String::new(), format!("namespace {NAMESPACE} {{"), String::new()]);
         for s in self.services() {
             out.push(format!("class I{}Handler;", s.name));
@@ -730,14 +751,14 @@ impl<'a> Generator<'a> {
         let mut local: Vec<String> = vec![
             "messages.hpp".to_owned(),
             "reboot/api/codec.hpp".to_owned(),
-            "reboot/api/decode_error.hpp".to_owned(),
+            "reboot/api_dispatch/decode_diagnostic.hpp".to_owned(),
             "reboot/foundation/diag.hpp".to_owned(),
             format!("{INCLUDE_PREFIX}/method_table.hpp"),
+            format!("{DISPATCH_INCLUDE_PREFIX}/handlers.hpp"),
         ];
-        local.extend(self.files.iter().filter(|f| !f.services.is_empty()).map(|f| format!("{INCLUDE_PREFIX}/{}.hpp", f.stem())));
         local.sort();
         let local: Vec<&str> = local.iter().map(String::as_str).collect();
-        let mut out = vec![banner(None), format!("#include \"{INCLUDE_PREFIX}/dispatch.hpp\""), String::new()];
+        let mut out = vec![banner(None), format!("#include \"{DISPATCH_INCLUDE_PREFIX}/dispatch.hpp\""), String::new()];
         out.extend(include_block(&["any", "optional", "span", "type_traits", "utility"], &local));
         out.extend([String::new(), format!("namespace {NAMESPACE} {{"), "namespace {".to_owned(), String::new()]);
         out.extend([
@@ -745,6 +766,10 @@ impl<'a> Generator<'a> {
             "    return ::rb::make_diag(::rb::ErrorDomain::Api, message)",
             "        .arg(\"method\", method_id)",
             "        .kind(::rb::ErrorKind::InvalidInput);",
+            "}", "",
+            "::rb::DisconnectPolicy to_policy(Disconnect disconnect) noexcept {",
+            "    return disconnect == Disconnect::Detached ? ::rb::DisconnectPolicy::Detached",
+            "                                              : ::rb::DisconnectPolicy::BoundToConnection;",
             "}", "",
             "template <class Handler, class Request, class Response>",
             "::rb::Result<Bytes> call(Handler& handler,",
@@ -797,7 +822,7 @@ impl<'a> Generator<'a> {
             "    const MethodSpec* spec = MethodTable::find(method_id);",
             "    if (!spec) return std::unexpected(method_error(msg::kUnknownMethod, method_id));",
             "    if (spec->kind != MethodKind::Operation) return std::unexpected(method_error(msg::kWrongMethodKind, method_id));",
-            "    const ::rb::DisconnectPolicy policy = disconnect.value_or(spec->default_disconnect);",
+            "    const ::rb::DisconnectPolicy policy = disconnect.value_or(to_policy(spec->default_disconnect));",
             "    switch (method_id) {",
         ].map(str::to_owned));
         for (_, s, m) in rows.iter().filter(|(_, _, m)| !is_call(m)) {
@@ -864,8 +889,9 @@ impl<'a> Generator<'a> {
             out.insert(format!("{API_DIR}/{HEADER_DIR}/{}.hpp", f.stem()), self.file_header(f));
         }
         out.insert(format!("{API_DIR}/{HEADER_DIR}/method_table.hpp"), self.method_table());
-        out.insert(format!("{API_DIR}/{HEADER_DIR}/dispatch.hpp"), self.dispatch_header());
-        out.insert(format!("{API_DIR}/src/dispatch.cpp"), self.dispatch_source());
+        out.insert(format!("{DISPATCH_DIR}/{DISPATCH_HEADER_DIR}/handlers.hpp"), self.handlers_header());
+        out.insert(format!("{DISPATCH_DIR}/{DISPATCH_HEADER_DIR}/dispatch.hpp"), self.dispatch_header());
+        out.insert(format!("{DISPATCH_DIR}/src/dispatch.cpp"), self.dispatch_source());
         out.insert(C_METHODS_HEADER.to_owned(), self.c_methods_header());
         Ok(out)
     }

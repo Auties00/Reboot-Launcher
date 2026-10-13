@@ -22,3 +22,8 @@ reboot_add_package(compat
 if(TARGET reboot_compat_tests)
   target_compile_definitions(reboot_compat_tests PRIVATE REBOOT_COMPAT_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
 endif()
+
+# The tests run an io_context of their own.
+if(TARGET reboot_compat_tests)
+  target_link_libraries(reboot_compat_tests PRIVATE Boost::asio)
+endif()

@@ -21,7 +21,7 @@ reboot_add_package(net
     src/resumable_downloader.cpp
     src/udp_beacon_prober.cpp
     src/url.cpp
-  DEPS CURL::libcurl MsQuic::MsQuic miniupnpc::miniupnpc libnatpmp::natpmp OpenSSL::Crypto
+  DEPS Boost::asio CURL::libcurl MsQuic::MsQuic miniupnpc::miniupnpc libnatpmp::natpmp OpenSSL::Crypto
   PUBLIC_DEPS reboot::storage
   # Real MsQuic and curl TLS handshakes against a local server, and real UDP ports.
   SERIAL_TAGS quic tls ports)

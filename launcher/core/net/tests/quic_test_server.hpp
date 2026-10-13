@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "test_pki.hpp"
 
 namespace rb::net::test {

@@ -4,9 +4,9 @@
 #include <string>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
 #include "unique_handle.hpp"
 #include "win32.hpp"
 

@@ -8,7 +8,16 @@ import subprocess
 import sys
 from pathlib import Path
 
-FOUNDATION = {"reboot_foundation", "reboot_ports", "reboot_contracts"}
+FOUNDATION = {"reboot_base", "reboot_foundation", "reboot_ports", "reboot_contracts"}
+# What each foundation target may reach: base nothing else, contracts only base.
+FOUNDATION_ALLOWED = {"reboot_base": {"reboot_base"}, "reboot_contracts": {"reboot_base", "reboot_contracts"}}
+# Lean code reaches only base and contracts: what runs in the game's process or prefix (payload/),
+# the game server, and the header-only api types and SDK every client compiles with its own toolchain.
+LEAN_DIRS = ("payload", "game-server")
+LEAN_ALLOWED = {"reboot_base", "reboot_contracts"}
+# Lean libraries the engine shares with the payload.
+LEAN_LIBRARIES = {"reboot_os_windows_win32session"}
+LEAN_EXTRA = {"reboot_sdk": {"reboot_api", "reboot_client"}}
 CLIENT_ALLOWED = FOUNDATION | {"reboot_client", "reboot_ipc", "reboot_client_platform",
                                "reboot_os_windows_ipc", "reboot_os_macos_ipc", "reboot_os_linux_ipc"}
 FORBIDDEN_CLIENT_LIBS = ("openssl", "libcrypto", "libssl", "curl", "msquic", "archive")
@@ -73,6 +82,16 @@ def allowed_os_deps(name):
     return allowed
 
 
+def is_lean(name, info, root):
+    return (info["kind"] == "lean" or name in LEAN_LIBRARIES
+            or any(info["dir"].is_relative_to(root / d) for d in LEAN_DIRS))
+
+
+def lean_allowed(name):
+    allowed = LEAN_ALLOWED | {name} | LEAN_EXTRA.get(name, set())
+    return allowed if name in LEAN_LIBRARIES else allowed | LEAN_LIBRARIES
+
+
 def closure(targets, start):
     seen, stack = set(), [start]
     while stack:
@@ -109,8 +128,14 @@ def main():
     for name, info in targets.items():
         declared = {d for d in info["deps"] if d.startswith("reboot_")}
         is_foundation = name in FOUNDATION
+        lean = info["kind"] != "test" and is_lean(name, info, root)
         if is_foundation:
-            allowed = set(FOUNDATION)
+            allowed = FOUNDATION_ALLOWED.get(name, set(FOUNDATION))
+        elif lean:
+            allowed = lean_allowed(name)
+            for dep in closure(targets, name) - {name}:
+                if dep.startswith("reboot_") and dep not in allowed:
+                    errors.append(f"{name}: lean code reaches {dep}; it may use only reboot::base and reboot::contracts")
         elif info["kind"] == "test":
             allowed = set(FOUNDATION) | {name, "reboot_testing"} | declared
         elif is_os_target(name):
@@ -120,7 +145,7 @@ def main():
             for dep in declared:
                 if dep.startswith("reboot_os_") or dep == "reboot_posix":
                     errors.append(f"{name}: domain package declares OS dependency {dep}")
-        if is_os_target(name) and info["kind"] != "test":
+        if is_os_target(name) and info["kind"] != "test" and not lean:
             for dep in declared - allowed:
                 errors.append(f"{name}: OS package declares {dep}")
 
@@ -133,7 +158,7 @@ def main():
             in_tests = "tests" in path.relative_to(info["dir"]).parts
             for include in REBOOT_INCLUDE.findall(text):
                 owner = owner_of(include)
-                if owner is None or owner in allowed or (in_tests and owner == "reboot_testing"):
+                if owner is None or owner in allowed or (in_tests and owner in FOUNDATION | {"reboot_testing"}):
                     continue
                 errors.append(f"{rel}: includes {include} ({owner} is not a dependency of {name})")
             core_file = "core" in rel.parts and "posix" not in rel.parts

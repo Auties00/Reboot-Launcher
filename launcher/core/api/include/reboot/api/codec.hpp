@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "reboot/api/decode_error.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "wire/codec.hpp"
 
 // reboot.api.v1 messages are generated sb-codec aggregates; these wrap the codec for them.

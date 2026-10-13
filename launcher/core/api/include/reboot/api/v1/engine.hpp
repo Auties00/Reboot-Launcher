@@ -5,11 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -171,19 +169,6 @@ struct EngineState {
     u32 operations = 0;
 
     bool operator==(const EngineState&) const = default;
-};
-
-// Engine lifetime and the frozen bootstrap calls.
-class IEngineHandler {
-public:
-    virtual ~IEngineHandler() = default;
-
-    virtual ::rb::Result<EngineStatusResponse> status(const CallContext& context, const EngineStatusRequest& request) = 0;
-    virtual ::rb::Result<EngineInfoResponse> info(const CallContext& context, const EngineInfoRequest& request) = 0;
-    virtual ::rb::Result<EngineDrainResponse> drain(const CallContext& context, const EngineDrainRequest& request) = 0;
-    virtual ::rb::Result<EngineShutdownResponse> shutdown(const CallContext& context, const EngineShutdownRequest& request) = 0;
-    virtual ::rb::Result<EngineRestartWhenIdleResponse> restart_when_idle(const CallContext& context, const EngineRestartWhenIdleRequest& request) = 0;
-    virtual ::rb::Result<EngineOperationsResponse> operations(const CallContext& context, const EngineOperationsRequest& request) = 0;
 };
 
 }  // namespace rb::api

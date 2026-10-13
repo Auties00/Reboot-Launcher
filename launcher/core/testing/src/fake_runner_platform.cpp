@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "messages.hpp"
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
 
 namespace rb::testing {
 namespace {

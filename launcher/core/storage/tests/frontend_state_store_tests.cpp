@@ -6,8 +6,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/storage/frontend_state_store.hpp"
 #include "reboot/storage/shell_name.hpp"

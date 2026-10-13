@@ -10,8 +10,8 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/write.hpp>
 
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/secret.hpp"
 
 namespace rb::game_channel {
 

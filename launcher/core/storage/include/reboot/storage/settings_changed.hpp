@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/storage/settings_values.hpp"
 
 namespace rb::storage {

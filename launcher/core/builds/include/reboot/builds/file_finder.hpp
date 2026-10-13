@@ -5,10 +5,10 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::builds {
 

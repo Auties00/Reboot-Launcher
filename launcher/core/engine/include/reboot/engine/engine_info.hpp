@@ -3,11 +3,11 @@
 #include <chrono>
 #include <string>
 
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/engine/engine_origin.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/ipc/ipc_server.hpp"
 #include "reboot/ports/os_services.hpp"
 

@@ -6,8 +6,8 @@
 #include <variant>
 #include <vector>
 
+#include "reboot/base/function.hpp"
 #include "reboot/contracts/winhost.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/os_windows/win32session/inject_error.hpp"
 #include "reboot/os_windows/win32session/spawn_error.hpp"
 

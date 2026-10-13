@@ -3,13 +3,13 @@
 #include <memory>
 #include <optional>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/browser/join_outcome.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 namespace rb {
 class IClock;

@@ -12,6 +12,7 @@
 #include "reboot/compat/prefix_manager.hpp"
 #include "reboot/compat/rosetta_install_answer.hpp"
 #include "reboot/compat/rosetta_install_request.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/paths.hpp"

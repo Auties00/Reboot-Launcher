@@ -5,11 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -253,19 +251,6 @@ struct OnboardingChanged {
     OnboardingState state;
 
     bool operator==(const OnboardingChanged&) const = default;
-};
-
-// Notices, onboarding and help links.
-class IGuidanceHandler {
-public:
-    virtual ~IGuidanceHandler() = default;
-
-    virtual ::rb::Result<GuidanceNoticesListResponse> notices_list(const CallContext& context, const GuidanceNoticesListRequest& request) = 0;
-    virtual ::rb::Result<GuidanceNoticesDismissResponse> notices_dismiss(const CallContext& context, const GuidanceNoticesDismissRequest& request) = 0;
-    virtual ::rb::Result<GuidanceOnboardingStateResponse> onboarding_state(const CallContext& context, const GuidanceOnboardingStateRequest& request) = 0;
-    virtual ::rb::Result<GuidanceOnboardingAdvanceResponse> onboarding_advance(const CallContext& context, const GuidanceOnboardingAdvanceRequest& request) = 0;
-    virtual ::rb::Result<GuidanceOnboardingSkipResponse> onboarding_skip(const CallContext& context, const GuidanceOnboardingSkipRequest& request) = 0;
-    virtual ::rb::Result<GuidanceLinksResponse> links(const CallContext& context, const GuidanceLinksRequest& request) = 0;
 };
 
 }  // namespace rb::api

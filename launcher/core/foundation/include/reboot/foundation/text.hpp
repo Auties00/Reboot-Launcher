@@ -3,6 +3,8 @@
 #include <string>
 #include <string_view>
 
+#include "reboot/base/utf.hpp"
+
 namespace rb {
 
 [[nodiscard]] bool is_valid_utf8(std::string_view text);
@@ -13,10 +15,6 @@ namespace rb {
 
 // sanitize_display_text, capped at 2048 bytes on a code point boundary.
 [[nodiscard]] std::string normalize_detail(std::string_view text);
-
-// Both replace invalid sequences with U+FFFD.
-[[nodiscard]] std::u16string utf8_to_utf16(std::string_view text);
-[[nodiscard]] std::string utf16_to_utf8(std::u16string_view text);
 
 [[nodiscard]] bool iequals_ascii(std::string_view a, std::string_view b);
 

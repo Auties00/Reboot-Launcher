@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/log.hpp"
 #include "win32_errors.hpp"
 

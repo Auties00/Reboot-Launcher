@@ -3,7 +3,7 @@
 #include <optional>
 #include <vector>
 
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/updates/activity_probe.hpp"
 
 namespace rb::updates {

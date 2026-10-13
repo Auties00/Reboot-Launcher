@@ -17,3 +17,8 @@ reboot_add_package(play
     reboot::storage reboot::builds reboot::catalog reboot::support reboot::components reboot::compat
     reboot::injection reboot::game_channel reboot::identity reboot::secrets reboot::backend reboot::process
     reboot::sessions reboot::browser)
+
+# The tests run an io_context of their own.
+if(TARGET reboot_play_tests)
+  target_link_libraries(reboot_play_tests PRIVATE Boost::asio)
+endif()

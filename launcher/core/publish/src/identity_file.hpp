@@ -4,8 +4,8 @@
 #include <span>
 #include <string>
 
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/publish/host_identity.hpp"
 
 namespace rb::publish {

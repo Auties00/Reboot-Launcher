@@ -6,9 +6,10 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/version.hpp"
+#include "reboot/base/version_bucket.hpp"
 #include "reboot/browser/version_match.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/version.hpp"
 #include "registry/validation.hpp"
 
 using namespace rb;
@@ -51,7 +52,7 @@ TEST_CASE("every catalog version maps to its golden bucket", "[browser]") {
         INFO(row.version);
         const GameVersion parsed = version(row.version);
         CHECK(sb::registry::version_bucket(row.version) == row.bucket);
-        CHECK(parsed.bucket() == row.bucket);
+        CHECK(version_bucket(parsed) == row.bucket);
         CHECK(buckets_for(parsed) == std::vector<u32>{row.bucket});
     }
 }

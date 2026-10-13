@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 #include "reboot/posix/unique_fd.hpp"
 

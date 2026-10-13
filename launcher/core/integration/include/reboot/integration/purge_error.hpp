@@ -3,9 +3,9 @@
 #include <optional>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/integration/purge_scope.hpp"
 
 namespace rb::integration {

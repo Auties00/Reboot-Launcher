@@ -15,6 +15,7 @@
 #include "reboot/builds/import_outcome.hpp"
 #include "reboot/builds/library.hpp"
 #include "reboot/catalog/catalog_service.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/user_request.hpp"

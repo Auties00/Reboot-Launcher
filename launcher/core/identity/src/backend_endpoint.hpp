@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/net_types.hpp"
 
 namespace rb::identity {

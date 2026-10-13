@@ -7,8 +7,8 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 
 namespace rb::net::test {

@@ -5,11 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -201,29 +198,6 @@ struct XmppUnavailable {
     XmppUnavailableReason reason{};
 
     bool operator==(const XmppUnavailable&) const = default;
-};
-
-// The backend target, its process and its accounts.
-class IBackendHandler {
-public:
-    virtual ~IBackendHandler() = default;
-
-    virtual ::rb::Result<BackendStatusResponse> status(const CallContext& context, const BackendStatusRequest& request) = 0;
-    virtual ::rb::Result<BackendDataDirResponse> data_dir(const CallContext& context, const BackendDataDirRequest& request) = 0;
-    virtual ::rb::Result<BackendSetTargetResponse> set_target(const CallContext& context, const BackendSetTargetRequest& request) = 0;
-    virtual ::rb::Result<BackendAccountsListResponse> accounts_list(const CallContext& context, const BackendAccountsListRequest& request) = 0;
-    // Completes with BackendStartResponse.
-    virtual ::rb::Result<::rb::OpHandle> start(const CallContext& context, const BackendStartRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with BackendStopResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_stop(const CallContext& context, const BackendStopRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with BackendAccountsResetResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_accounts_reset(const CallContext& context, const BackendAccountsResetRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with BackendAccountsDeleteResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_accounts_delete(const CallContext& context, const BackendAccountsDeleteRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with BackendAccountsPruneResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_accounts_prune(const CallContext& context, const BackendAccountsPruneRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with BackendAccountsRenameResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_accounts_rename(const CallContext& context, const BackendAccountsRenameRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

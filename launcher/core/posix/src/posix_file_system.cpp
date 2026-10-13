@@ -13,6 +13,7 @@
 
 #include "messages.hpp"
 #include "owner_only_directory.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/unique_fd.hpp"
 #include "unistd.hpp"

@@ -16,8 +16,8 @@
 
 #include "messages.hpp"
 #include "quic_peer_verifier.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/ports/os_services.hpp"
 

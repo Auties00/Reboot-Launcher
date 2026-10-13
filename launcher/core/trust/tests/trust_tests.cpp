@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "hex.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/testing/expected_checks.hpp"
 #include "reboot/trust/check_expiry.hpp"

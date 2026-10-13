@@ -4,10 +4,10 @@
 #include <optional>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/log.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/logging/log_file_names.hpp"
 
 namespace rb::ports {

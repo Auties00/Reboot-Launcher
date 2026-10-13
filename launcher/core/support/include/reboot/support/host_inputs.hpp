@@ -2,9 +2,9 @@
 
 #include <vector>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/components/component_ref.hpp"
 #include "reboot/contracts/game_server.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/support/cell_inputs.hpp"
 #include "reboot/support/version_range.hpp"
 

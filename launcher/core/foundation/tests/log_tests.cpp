@@ -13,8 +13,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/secret.hpp"
 #include "reboot/foundation/log.hpp"
-#include "reboot/foundation/secret.hpp"
 
 using namespace rb;
 

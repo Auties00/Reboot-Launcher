@@ -5,11 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -120,20 +117,6 @@ struct ComponentChanged {
     Component component;
 
     bool operator==(const ComponentChanged&) const = default;
-};
-
-// Downloadable payloads and play runtimes.
-class IComponentsHandler {
-public:
-    virtual ~IComponentsHandler() = default;
-
-    virtual ::rb::Result<ComponentsListResponse> list(const CallContext& context, const ComponentsListRequest& request) = 0;
-    // Completes with ComponentsEnsureResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_ensure(const CallContext& context, const ComponentsEnsureRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with ComponentsRemoveResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_remove(const CallContext& context, const ComponentsRemoveRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with ComponentsRuntimeSetupResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_runtime_setup(const CallContext& context, const ComponentsRuntimeSetupRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

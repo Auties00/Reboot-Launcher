@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "messages.hpp"
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/secret.hpp"
 #include "wire/codec.hpp"
 
 namespace rb::client {

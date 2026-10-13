@@ -1,5 +1,6 @@
-//! Generates the C++ side of reboot.api.v1: aggregates, the method table, handler interfaces and
-//! dispatch, plus the method-id header of the public C ABI. Each generated header holds every type of one .proto file, the one exception to the
+//! Generates the C++ side of reboot.api.v1: the header-only aggregates and method table (core/api),
+//! the engine's handler interfaces and dispatch (core/api_dispatch), and the method-id header of the
+//! public C ABI. Each generated header holds every type of one .proto file, the one exception to the
 //! one-main-type-per-header rule.
 //!
 //! As a protoc plugin it reads a CodeGeneratorRequest on stdin. Standalone it runs protoc itself:
@@ -141,16 +142,21 @@ fn run_standalone(args: &[String]) -> Result<(), String> {
             std::fs::write(&path, content).map_err(|e| format!("{}: {e}", path.display()))?;
         }
     }
-    let header_dir = options.out.join(cpp::API_DIR).join(cpp::HEADER_DIR);
-    for name in sorted_file_names(&header_dir, ".hpp")? {
-        let relative = format!("{}/{}/{name}", cpp::API_DIR, cpp::HEADER_DIR);
-        if outputs.contains_key(&relative) {
+    for (package, dir) in [(cpp::API_DIR, cpp::HEADER_DIR), (cpp::DISPATCH_DIR, cpp::DISPATCH_HEADER_DIR)] {
+        let header_dir = options.out.join(package).join(dir);
+        if !header_dir.is_dir() {
             continue;
         }
-        stale.push(relative);
-        if !options.check {
-            let path = header_dir.join(&name);
-            std::fs::remove_file(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+        for name in sorted_file_names(&header_dir, ".hpp")? {
+            let relative = format!("{package}/{dir}/{name}");
+            if outputs.contains_key(&relative) {
+                continue;
+            }
+            stale.push(relative);
+            if !options.check {
+                let path = header_dir.join(&name);
+                std::fs::remove_file(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+            }
         }
     }
     if options.check && !stale.is_empty() {

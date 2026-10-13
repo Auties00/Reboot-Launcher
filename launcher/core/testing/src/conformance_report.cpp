@@ -9,9 +9,9 @@
 #include <utility>
 #include <variant>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/version.hpp"
 
 namespace rb::testing {
 namespace {

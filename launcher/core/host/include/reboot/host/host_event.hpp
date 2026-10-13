@@ -5,9 +5,9 @@
 #include <variant>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/events.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/gameserver/game_server_event.hpp"
 #include "reboot/host/host_phase.hpp"
 #include "reboot/host/match_end_policy.hpp"

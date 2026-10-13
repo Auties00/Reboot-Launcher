@@ -4,9 +4,9 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/catalog/alias_table.hpp"
 #include "reboot/catalog/catalog.hpp"
-#include "reboot/foundation/diag.hpp"
 
 using namespace rb;
 using namespace rb::catalog;

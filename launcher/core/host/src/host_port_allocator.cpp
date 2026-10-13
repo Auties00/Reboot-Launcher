@@ -5,6 +5,7 @@
 #include <expected>
 #include <utility>
 
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/host/host_error.hpp"
 #include "reboot/net/port_conflict.hpp"

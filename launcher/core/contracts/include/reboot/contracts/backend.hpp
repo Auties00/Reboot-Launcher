@@ -4,11 +4,11 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/framing.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/contracts/common.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 // reboot-backend --control=stdio. Requests carry req_id and get a typed reply or a
 // common::CommandResult / common::Unsupported.

@@ -5,10 +5,10 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/contracts/ipc.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/secret.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/process/built_env.hpp"
 #include "reboot/process/env_layer.hpp"

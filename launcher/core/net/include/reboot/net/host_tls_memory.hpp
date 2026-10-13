@@ -4,9 +4,9 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/flat_map.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/net/url_scheme.hpp"
 #include "reboot/storage/state_document.hpp"
 

@@ -10,7 +10,7 @@
 #include <system_error>
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 
 namespace rb::testing {
 namespace {

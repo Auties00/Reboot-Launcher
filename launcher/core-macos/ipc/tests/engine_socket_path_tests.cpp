@@ -6,6 +6,7 @@
 
 #include "engine_socket_path.hpp"
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 
 using rb::ArgSpec;
 using rb::Diagnostic;

@@ -5,11 +5,11 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/framing.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/contracts/common.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 // reboot-game-server --control=stdio, and --describe, which writes one GameServerDescription
 // frame to stdout and exits. Requests carry req_id and get a common::CommandResult or

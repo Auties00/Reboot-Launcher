@@ -5,10 +5,10 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/framing.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/contracts/common.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 // reboot-winhost.exe inside the Wine prefix, over loopback TCP to the engine's game channel,
 // after the game-control preamble. Windows strings are UTF-16LE bytes. Requests carry req_id

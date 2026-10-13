@@ -5,8 +5,8 @@
 #include <optional>
 #include <string_view>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/game_client.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::process {
 

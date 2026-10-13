@@ -4,7 +4,7 @@
 #include <span>
 #include <vector>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::os_macos::platform {
 

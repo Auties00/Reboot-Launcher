@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 
 namespace rb::os_windows::win32session {
 

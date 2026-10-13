@@ -3,7 +3,7 @@
 #include <optional>
 #include <string_view>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/sessions/session_phase.hpp"
 
 namespace rb::host {

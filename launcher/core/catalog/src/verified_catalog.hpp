@@ -5,13 +5,13 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/catalog/catalog.hpp"
 #include "reboot/catalog/catalog_error.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::trust {
 class KeyRing;

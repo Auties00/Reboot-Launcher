@@ -10,6 +10,7 @@
 
 #include "identity_file.hpp"
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/flat_map.hpp"
 #include "reboot/foundation/log.hpp"

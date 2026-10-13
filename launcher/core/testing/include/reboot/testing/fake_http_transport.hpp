@@ -7,12 +7,12 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/clock.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
 namespace rb::testing {

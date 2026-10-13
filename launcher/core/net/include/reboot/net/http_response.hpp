@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ports/net.hpp"
 
 namespace rb::net {

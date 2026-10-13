@@ -2,8 +2,8 @@
 
 #include <optional>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/injection/dll_slot.hpp"
 
 namespace rb::injection {

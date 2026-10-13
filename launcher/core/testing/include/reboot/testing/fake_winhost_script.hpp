@@ -7,10 +7,10 @@
 #include <variant>
 #include <vector>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/contracts/winhost.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/testing/fake_client_dll_script.hpp"
 #include "reboot/testing/script_steps.hpp"
 

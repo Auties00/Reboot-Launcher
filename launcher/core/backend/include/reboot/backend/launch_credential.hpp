@@ -3,9 +3,9 @@
 #include <chrono>
 #include <string>
 
+#include "reboot/base/secret.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/contracts/backend.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/version.hpp"
 
 namespace rb::backend {
 

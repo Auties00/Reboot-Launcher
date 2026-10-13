@@ -3,9 +3,9 @@
 #include <optional>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/compat/compat_document.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/gameserver/describe_cache_document.hpp"
 #include "reboot/host/host_profiles_document.hpp"

@@ -4,7 +4,7 @@
 #include <variant>
 
 #include "reboot/backend/backend_url.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/storage/backend_target.hpp"
 

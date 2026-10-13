@@ -6,8 +6,8 @@
 #include <optional>
 #include <thread>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 
 namespace rb::os_macos::ipc {
 

@@ -16,8 +16,9 @@
 #include <curl/curl.h>
 
 #include "messages.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/log.hpp"
-#include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/net/http_error.hpp"
 #include "reboot/ports/os_services.hpp"

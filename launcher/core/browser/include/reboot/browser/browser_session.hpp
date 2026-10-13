@@ -6,15 +6,15 @@
 #include <optional>
 #include <string>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/browser/connection_state.hpp"
 #include "reboot/browser/rbsb_endpoint.hpp"
 #include "reboot/browser/rbsb_request_error.hpp"
 #include "reboot/browser/token_bucket.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
 #include "wire/messages.hpp"
 
 namespace rb {

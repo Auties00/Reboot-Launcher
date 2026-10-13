@@ -6,10 +6,10 @@
 #include <string_view>
 
 #include "messages.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/flat_map.hpp"
-#include "reboot/foundation/secret.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/process/child_channel.hpp"
 #include "reboot/process/child_observer.hpp"

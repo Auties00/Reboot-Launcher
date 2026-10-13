@@ -4,10 +4,10 @@
 #include <memory>
 #include <string>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/game_client.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/game_channel/control_token.hpp"
 #include "reboot/game_channel/game_lifecycle_event.hpp"
 #include "reboot/game_channel/peer_liveness.hpp"

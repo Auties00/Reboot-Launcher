@@ -5,7 +5,7 @@
 #include <string_view>
 #include <utility>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/os_windows/ipc/pipe_trust.hpp"
 #include "reboot/ports/ipc.hpp"
 

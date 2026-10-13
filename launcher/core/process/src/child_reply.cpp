@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "reboot/contracts/common.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/process/child_supervisor.hpp"
 
 namespace rb::process {

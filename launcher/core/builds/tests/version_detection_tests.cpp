@@ -6,12 +6,12 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/builds/cl_table.hpp"
 #include "reboot/builds/detect_version.hpp"
 #include "reboot/builds/release_marker.hpp"
 #include "reboot/catalog/alias_table.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/testing/golden.hpp"
 
 using namespace rb;

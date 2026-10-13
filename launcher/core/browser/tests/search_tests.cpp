@@ -3,6 +3,7 @@
 
 #include "browser_test_support.hpp"
 #include "reboot/browser/search.hpp"
+#include "reboot/base/version_bucket.hpp"
 
 using namespace rb;
 using namespace rb::browser;
@@ -71,7 +72,7 @@ TEST_CASE("search filters map onto the Query and the limit is clamped", "[browse
     BrowserLease lease = rig.session.acquire();
     Edge& edge = rig.connect();
     SearchRequest request = SearchRig::text("name");
-    request.bucket = GameVersion::parse("8.51")->bucket();
+    request.bucket = version_bucket(*GameVersion::parse("8.51"));
     request.password = PasswordFilter::Without;
     request.region = Region::Europe;
     request.sort = ServerSort::Name;

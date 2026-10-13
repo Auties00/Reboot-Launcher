@@ -5,10 +5,10 @@
 #include <string>
 #include <variant>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/winhost.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/game_channel/control_token.hpp"
 #include "reboot/game_channel/peer_liveness.hpp"
 #include "reboot/game_channel/reply_handler.hpp"

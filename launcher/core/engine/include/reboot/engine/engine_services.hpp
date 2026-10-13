@@ -4,9 +4,9 @@
 #include <optional>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/engine/engine_lifecycle.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/net/datagram_connector.hpp"
 #include "reboot/net/port_mapping_gateway.hpp"

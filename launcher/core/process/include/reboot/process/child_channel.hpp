@@ -3,10 +3,10 @@
 #include <span>
 #include <string>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/framing.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/process/child_handshake.hpp"
 
 namespace rb::process {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/ux/guidance_state.hpp"
 
 namespace rb::ux {

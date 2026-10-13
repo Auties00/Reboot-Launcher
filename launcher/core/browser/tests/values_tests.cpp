@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "browser_test_support.hpp"
+#include "reboot/base/version_bucket.hpp"
 #include "reboot/browser/browse_choices.hpp"
 #include "reboot/browser/connection_state.hpp"
 #include "reboot/browser/deep_link.hpp"
@@ -133,9 +134,9 @@ TEST_CASE("view specs validate their window and exact version", "[browser][value
     spec.window = 50;
     spec.versions.exact_version = *GameVersion::parse("8.51");
     CHECK(spec.validate());
-    spec.versions.buckets = {GameVersion::parse("9.10")->bucket()};
+    spec.versions.buckets = {version_bucket(*GameVersion::parse("9.10"))};
     CHECK(std::get<std::string>(*spec.validate().error().find_arg("field")) == "exact_version");
-    spec.versions.buckets.push_back(GameVersion::parse("8.51")->bucket());
+    spec.versions.buckets.push_back(version_bucket(*GameVersion::parse("8.51")));
     CHECK(spec.validate());
     spec.versions.buckets.push_back(0);
     CHECK_FALSE(spec.validate());
@@ -158,7 +159,7 @@ TEST_CASE("browse choices become a view spec", "[browser][values]") {
     choices.versions = VersionScope::Installed;
     const ViewSpec mine = make_view_spec(choices, installed, kSmallWindow);
     CHECK(mine.versions.buckets ==
-          std::vector<u32>{GameVersion::parse("8.51")->bucket(), GameVersion::parse("9.10")->bucket()});
+          std::vector<u32>{version_bucket(*GameVersion::parse("8.51")), version_bucket(*GameVersion::parse("9.10"))});
     CHECK(mine.validate());
     CHECK(make_view_spec(choices, {}, kSmallWindow).versions.buckets.empty());
 }

@@ -18,6 +18,7 @@
 #include "prefix_files.hpp"
 #include "reboot/compat/prefix_busy.hpp"
 #include "reboot/compat/runner_env.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/ports/file_system.hpp"

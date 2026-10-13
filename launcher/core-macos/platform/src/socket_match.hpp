@@ -3,9 +3,9 @@
 #include <optional>
 #include <span>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ports/net.hpp"
 
 namespace rb::os_macos::platform {

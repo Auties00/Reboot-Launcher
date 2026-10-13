@@ -5,10 +5,10 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/ports/net.hpp"
 

@@ -18,6 +18,7 @@
 
 #include "dpapi_file.hpp"
 #include "process_token.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/os_windows/platform/credential_manager_store.hpp"

@@ -4,11 +4,9 @@
 #include <optional>
 #include <string>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -105,17 +103,6 @@ struct SecretsClearRequest {
 
 struct SecretsClearResponse {
     bool operator==(const SecretsClearResponse&) const = default;
-};
-
-// Presence of stored secrets; values only travel through rb_secret_put.
-class ISecretsHandler {
-public:
-    virtual ~ISecretsHandler() = default;
-
-    virtual ::rb::Result<SecretsStateResponse> state(const CallContext& context, const SecretsStateRequest& request) = 0;
-    // Drops the held value at once; the stored copy is erased after the answer, and a failure to
-    // erase it becomes a notice.
-    virtual ::rb::Result<SecretsClearResponse> clear(const CallContext& context, const SecretsClearRequest& request) = 0;
 };
 
 }  // namespace rb::api

@@ -3,7 +3,7 @@
 #include <optional>
 #include <string>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/storage/load_report.hpp"
 
 namespace rb::storage {

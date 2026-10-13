@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/sessions/stop_reason.hpp"
 
 namespace rb::sessions {

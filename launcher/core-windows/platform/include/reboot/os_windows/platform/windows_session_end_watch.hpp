@@ -4,8 +4,8 @@
 #include <memory>
 #include <thread>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/ports/os_services.hpp"
 
 namespace rb::os_windows::platform {

@@ -3,11 +3,11 @@
 #include <memory>
 #include <optional>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/clock.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/testing/stdio_peer.hpp"
 
 namespace boost::asio {

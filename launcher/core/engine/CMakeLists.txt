@@ -30,9 +30,9 @@ reboot_add_package(engine
     reboot::logging reboot::ux reboot::components reboot::catalog
     reboot::support reboot::builds reboot::secrets reboot::injection
     reboot::game_channel reboot::backend reboot::front reboot::browser reboot::publish
-    reboot::integration
+    reboot::integration Boost::asio
   PUBLIC_DEPS
-    reboot::api reboot::ipc reboot::play reboot::sessions reboot::updates reboot::process
+    reboot::api reboot::api_dispatch reboot::ipc reboot::play reboot::sessions reboot::updates reboot::process
     reboot::storage reboot::compat reboot::gameserver reboot::host reboot::identity reboot::net
     reboot::trust)
 

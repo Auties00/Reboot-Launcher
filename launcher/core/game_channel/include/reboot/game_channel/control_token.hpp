@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <span>
 
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::game_channel {
 

@@ -5,7 +5,7 @@
 #include <string>
 
 #include "engine_start_rules.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 
 namespace rb::os_macos::ipc {
 

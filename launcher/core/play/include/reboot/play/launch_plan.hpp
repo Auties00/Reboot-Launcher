@@ -3,10 +3,10 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/builds/build_layout.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/play/launch_args.hpp"
 #include "reboot/ports/session_host.hpp"
 #include "reboot/process/built_env.hpp"

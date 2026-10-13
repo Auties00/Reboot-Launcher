@@ -3,6 +3,7 @@
 namespace rb::msg {
 
 REBOOT_MESSAGE(kInternalBug, "internal.bug", "Something went wrong inside the launcher ({where}).");
+// reboot/base/diag.hpp names these four ids for its parsers; they are registered here.
 REBOOT_MESSAGE(kInvalidUuid, "foundation.invalid_uuid", "{text} is not a valid identifier.");
 REBOOT_MESSAGE(kInvalidSemVer, "foundation.invalid_semver", "{text} is not a valid version number.");
 REBOOT_MESSAGE(kInvalidGameVersion, "foundation.invalid_game_version", "{text} is not a valid game version.");

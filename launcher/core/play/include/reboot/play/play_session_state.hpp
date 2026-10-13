@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/game_channel/game_lifecycle_event.hpp"
 #include "reboot/injection/net_mode.hpp"
 #include "reboot/sessions/session_exit.hpp"

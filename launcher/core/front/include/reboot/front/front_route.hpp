@@ -4,7 +4,7 @@
 #include <optional>
 #include <variant>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/front/session_key.hpp"
 #include "reboot/front/ticket_exchange.hpp"
 #include "reboot/front/upstream_origin.hpp"

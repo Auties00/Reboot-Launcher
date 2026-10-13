@@ -4,11 +4,9 @@
 #include <optional>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -60,14 +58,6 @@ struct SupportQueryResponse {
     bool opt_in_available = false;
 
     bool operator==(const SupportQueryResponse&) const = default;
-};
-
-// Support tiers per version, role and runner.
-class ISupportHandler {
-public:
-    virtual ~ISupportHandler() = default;
-
-    virtual ::rb::Result<SupportQueryResponse> query(const CallContext& context, const SupportQueryRequest& request) = 0;
 };
 
 }  // namespace rb::api

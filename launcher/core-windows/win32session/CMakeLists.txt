@@ -1,7 +1,7 @@
 # The suspended-spawn + Job + remote-thread injection primitives shared by Win32SessionHost (engine,
-# native Windows) and reboot-winhost.exe (under Wine). Not reboot_add_package: that links
-# reboot::foundation (Boost.Asio, the message registry), but this library must build /MT for the
-# winhost executable, so it links only reboot::contracts plus the Win32 libraries it calls.
+# native Windows) and reboot-winhost.exe (payload/winhost, under Wine). Not reboot_add_package: that
+# links reboot::foundation, but the payload may reach only reboot::base and reboot::contracts, so this
+# links only reboot::contracts plus the Win32 libraries it calls.
 if(NOT WIN32)
   return()
 endif()

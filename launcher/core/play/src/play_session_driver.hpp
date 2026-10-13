@@ -3,8 +3,8 @@
 #include <memory>
 #include <optional>
 
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/game_channel/client_dll_peer.hpp"
 #include "reboot/play/play_session_state.hpp"
 #include "reboot/play/preflight.hpp"

@@ -19,6 +19,7 @@
 #include "reboot/components/component_problem.hpp"
 #include "reboot/components/deletion_guard.hpp"
 #include "reboot/components/manifest_service.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"

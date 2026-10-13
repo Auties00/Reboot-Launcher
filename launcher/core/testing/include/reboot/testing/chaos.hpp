@@ -7,9 +7,9 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/testing/conformance_report.hpp"
 
 namespace rb::testing {

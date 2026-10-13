@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/ports/platform_paths.hpp"
 
 namespace rb::client {

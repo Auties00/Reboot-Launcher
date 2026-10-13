@@ -8,10 +8,10 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/framing.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/common.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
 
 // Engine IPC. API payloads (Call, Reply, Start, OpResult, events) are reboot.api.v1 bytes that
 // the client library never decodes. Ping and Pong are the common messages.

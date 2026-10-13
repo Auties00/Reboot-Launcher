@@ -4,10 +4,10 @@
 #include <optional>
 #include <string>
 
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/builds/version_source.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 namespace rb::builds {
 

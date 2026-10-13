@@ -4,8 +4,8 @@
 #include <optional>
 #include <vector>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::engine {
 

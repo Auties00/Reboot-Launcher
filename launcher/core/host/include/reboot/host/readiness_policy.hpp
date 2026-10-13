@@ -2,8 +2,8 @@
 
 #include <chrono>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/net/udp_beacon_prober.hpp"
 
 namespace rb::host {

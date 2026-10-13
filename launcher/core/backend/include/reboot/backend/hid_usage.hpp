@@ -3,7 +3,7 @@
 #include <compare>
 #include <optional>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::backend {
 

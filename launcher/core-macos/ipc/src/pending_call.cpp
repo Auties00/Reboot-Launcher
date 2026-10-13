@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "reboot/posix/posix_error.hpp"
+#include "reboot/foundation/diag.hpp"
 
 namespace rb::os_macos::ipc {
 

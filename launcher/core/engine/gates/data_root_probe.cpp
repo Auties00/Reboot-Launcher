@@ -4,8 +4,8 @@
 #include <optional>
 #include <string>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/ports/platform_services.hpp"
 

@@ -5,8 +5,8 @@
 #include <span>
 #include <vector>
 
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/framing.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/testing/frame_log.hpp"
 #include "reboot/testing/fuzz.hpp"
 

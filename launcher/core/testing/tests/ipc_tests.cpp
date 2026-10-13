@@ -9,7 +9,7 @@
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/ports/ipc.hpp"
 #include "reboot/testing/deterministic_runtime.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"

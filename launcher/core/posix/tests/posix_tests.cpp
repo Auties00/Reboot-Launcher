@@ -5,8 +5,8 @@
 #include <utility>
 
 #include "messages.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/posix/peer_credential_check.hpp"
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/process_start_time.hpp"

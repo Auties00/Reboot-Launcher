@@ -15,14 +15,14 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/clock.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/log.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/ports/secret_store.hpp"
 #include "reboot/secrets/secret_service.hpp"

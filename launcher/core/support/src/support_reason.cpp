@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/support/version_cap.hpp"
 
 namespace rb::support {

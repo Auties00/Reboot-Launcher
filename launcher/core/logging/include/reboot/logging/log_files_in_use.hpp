@@ -3,7 +3,7 @@
 #include <mutex>
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 
 namespace rb::logging {
 

@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 
 namespace rb::os_macos::ipc {
 

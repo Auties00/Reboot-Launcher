@@ -1,7 +1,7 @@
 #pragma once
 
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/framing.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/process/child_exit_info.hpp"
 
 namespace rb::process {

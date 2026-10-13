@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "reboot/engine/engine_command_line.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/ports/ipc.hpp"
 #include "reboot/ports/platform_services.hpp"
 

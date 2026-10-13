@@ -3,7 +3,7 @@
 #include <chrono>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/host/host_ban.hpp"
 #include "reboot/host/ip_cidr.hpp"
 

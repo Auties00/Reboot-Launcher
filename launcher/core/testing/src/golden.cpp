@@ -10,8 +10,8 @@
 #include <vector>
 
 #include "messages.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 
 namespace rb::testing {
 namespace {

@@ -4,10 +4,10 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/catalog/build_flags.hpp"
 #include "reboot/catalog/catalog_entry.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 namespace rb::catalog {
 

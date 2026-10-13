@@ -8,8 +8,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
 
 namespace rb::identity::test {
 

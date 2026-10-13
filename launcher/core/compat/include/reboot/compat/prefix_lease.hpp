@@ -1,7 +1,7 @@
 #pragma once
 
+#include "reboot/base/types.hpp"
 #include "reboot/compat/runner_profile.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::compat {
 

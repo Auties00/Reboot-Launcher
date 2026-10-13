@@ -1,6 +1,6 @@
 #include "reboot/testing/fake_platform_paths.hpp"
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 
 namespace rb::testing {
 

@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 
 namespace rb::storage {
 

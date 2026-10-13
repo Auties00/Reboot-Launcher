@@ -4,10 +4,10 @@
 #include <string>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::publish {
 

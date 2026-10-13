@@ -9,6 +9,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "reboot/foundation/clock.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/operation.hpp"

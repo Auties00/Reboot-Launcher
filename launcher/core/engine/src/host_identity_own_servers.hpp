@@ -1,7 +1,7 @@
 #pragma once
 
+#include "reboot/base/types.hpp"
 #include "reboot/browser/own_servers.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::publish {
 class HostIdentityStore;

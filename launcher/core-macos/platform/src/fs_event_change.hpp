@@ -3,7 +3,7 @@
 #include <optional>
 #include <string_view>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
 namespace rb::os_macos::platform {

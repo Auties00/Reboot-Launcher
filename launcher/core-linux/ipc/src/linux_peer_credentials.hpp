@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/posix/peer_credential_check.hpp"
 
 namespace rb::os_linux::ipc {

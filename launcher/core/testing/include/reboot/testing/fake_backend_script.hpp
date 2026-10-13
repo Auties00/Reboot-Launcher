@@ -5,9 +5,9 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/contracts/backend.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/testing/child_misbehaviour.hpp"
 
 namespace rb::testing {

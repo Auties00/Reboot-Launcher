@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/net/http_client.hpp"

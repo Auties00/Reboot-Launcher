@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/process/child_record.hpp"
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/runtime_document.hpp"

@@ -12,9 +12,9 @@
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/steady_timer.hpp>
 
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/front/session_front.hpp"
 #include "route_table.hpp"
 

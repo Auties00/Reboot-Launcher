@@ -2,9 +2,9 @@
 
 #include <array>
 
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/game_server.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::gameserver {
 

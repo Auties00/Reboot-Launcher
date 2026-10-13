@@ -3,10 +3,10 @@
 #include <span>
 
 #include "frame_fuzz.hpp"
+#include "reboot/base/framing.hpp"
 #include "reboot/contracts/backend.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/game_server.hpp"
-#include "reboot/foundation/framing.hpp"
 
 namespace backend = rb::contracts::backend;
 namespace common = rb::contracts::common;

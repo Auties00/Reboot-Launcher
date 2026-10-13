@@ -4,9 +4,9 @@
 #include <optional>
 #include <string>
 
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/components/manifest_platform.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/support/cell_inputs.hpp"
 #include "reboot/support/support_cell_key.hpp"
 

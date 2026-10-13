@@ -2,8 +2,8 @@
 
 #include <optional>
 
+#include "reboot/base/native_path.hpp"
 #include "reboot/components/component_ref.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/session_host.hpp"
 
 namespace rb::components {

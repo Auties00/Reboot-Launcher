@@ -12,6 +12,7 @@
 #include "messages.hpp"
 #include "reboot/api/v1/events.hpp"
 #include "reboot/api/v1/method_table.hpp"
+#include "reboot/api_dispatch/decode_diagnostic.hpp"
 #include "reboot/backend/backend_accounts_changed.hpp"
 #include "reboot/backend/backend_upstream.hpp"
 #include "reboot/browser/deep_link_service.hpp"
@@ -24,6 +25,7 @@
 #include "reboot/components/component_changed_event.hpp"
 #include "reboot/components/component_store.hpp"
 #include "reboot/engine/engine_activity_probe.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/front/xmpp_unavailable.hpp"
@@ -192,8 +194,9 @@ Result<OpHandle> ApiRouter::start(const ipc::ConnectionInfo& from, u32 method_id
     if (!stops)
         if (Result<void> admitted = deps_.lifecycle.admit_new_work(); !admitted) return std::unexpected(admitted.error());
     const api::MethodSpec* spec = api::MethodTable::find(method_id);
+    const bool detached = spec != nullptr && spec->default_disconnect == api::Disconnect::Detached;
     const DisconnectPolicy policy =
-        disconnect.value_or(spec != nullptr ? spec->default_disconnect : DisconnectPolicy::BoundToConnection);
+        disconnect.value_or(detached ? DisconnectPolicy::Detached : DisconnectPolicy::BoundToConnection);
     const api::CallContext context{from.id, from.client_kind, from.caller};
     return started(api::dispatch_start(handlers(), context, method_id, request, policy), method_id, request, policy);
 }

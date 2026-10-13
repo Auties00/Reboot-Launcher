@@ -5,6 +5,7 @@
 
 #include "abi_boundary.hpp"
 #include "completion_latch.hpp"
+#include "reboot/foundation/diag.hpp"
 
 namespace rb::client {
 

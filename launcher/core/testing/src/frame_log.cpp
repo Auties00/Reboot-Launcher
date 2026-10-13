@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <span>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/framing.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/framing.hpp"
 
 namespace rb::testing {
 

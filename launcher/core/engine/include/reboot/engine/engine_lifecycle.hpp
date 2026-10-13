@@ -3,13 +3,13 @@
 #include <memory>
 #include <optional>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/engine/engine_origin.hpp"
 #include "reboot/engine/idle_policy.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/sessions/shutdown_cause.hpp"
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/resume_document.hpp"

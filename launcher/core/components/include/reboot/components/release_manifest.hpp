@@ -5,13 +5,13 @@
 #include <span>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/components/app_entry.hpp"
 #include "reboot/components/endpoint_override.hpp"
 #include "reboot/components/payload_entry.hpp"
 #include "reboot/components/runtime_entry.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 namespace rb::components {
 

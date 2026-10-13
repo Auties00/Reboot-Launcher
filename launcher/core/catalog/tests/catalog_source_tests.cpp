@@ -6,11 +6,11 @@
 #include <vector>
 
 #include "catalog_test_support.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/catalog/bundled_catalog_source.hpp"
 #include "reboot/catalog/catalog_source.hpp"
 #include "reboot/catalog/signed_remote_catalog_source.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/net/host_tls_memory.hpp"

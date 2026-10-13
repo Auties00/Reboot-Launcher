@@ -4,12 +4,12 @@
 #include <memory>
 #include <optional>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/contracts/ipc.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/paths.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/resume_document.hpp"
 #include "reboot/storage/settings_values.hpp"

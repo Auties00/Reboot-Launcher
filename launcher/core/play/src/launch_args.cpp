@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/storage/settings_values.hpp"
 #include "wipe.hpp"

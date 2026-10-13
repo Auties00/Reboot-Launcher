@@ -11,11 +11,11 @@
 #include <sys/stat.h>
 #include <utility>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/random.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/posix/peer_credential_check.hpp"
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/testing/scratch_dir.hpp"

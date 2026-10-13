@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/types.hpp"
 #include "reboot/components/component_ref.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::components {
 

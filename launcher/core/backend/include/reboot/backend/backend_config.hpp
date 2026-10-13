@@ -3,7 +3,7 @@
 #include <string_view>
 
 #include "reboot/backend/backend_target.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/storage/settings_values.hpp"
 
 namespace rb::backend {

@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/log.hpp"
 
 namespace rb::logging {

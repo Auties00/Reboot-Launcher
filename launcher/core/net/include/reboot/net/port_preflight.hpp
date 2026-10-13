@@ -4,9 +4,9 @@
 #include <memory>
 #include <span>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/net/our_process.hpp"
 #include "reboot/net/port_conflict.hpp"
 #include "reboot/net/port_protocol.hpp"

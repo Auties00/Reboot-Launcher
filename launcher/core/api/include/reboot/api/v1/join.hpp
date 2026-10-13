@@ -4,13 +4,10 @@
 #include <optional>
 #include <string>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/browser.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -130,22 +127,5 @@ struct JoinTargetChanged {
     if (auto error = m.target ? check_cases(*m.target) : std::nullopt) return error;
     return std::nullopt;
 }
-
-// What Play joins, and reboot:// links.
-class IJoinHandler {
-public:
-    virtual ~IJoinHandler() = default;
-
-    virtual ::rb::Result<JoinParseAddressResponse> parse_address(const CallContext& context, const JoinParseAddressRequest& request) = 0;
-    virtual ::rb::Result<JoinTargetResponse> target(const CallContext& context, const JoinTargetRequest& request) = 0;
-    virtual ::rb::Result<JoinSetCustomTargetResponse> set_custom_target(const CallContext& context, const JoinSetCustomTargetRequest& request) = 0;
-    virtual ::rb::Result<JoinClearTargetResponse> clear_target(const CallContext& context, const JoinClearTargetRequest& request) = 0;
-    // Completes with JoinResolveLinkResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_resolve_link(const CallContext& context, const JoinResolveLinkRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Joins as Play.start does, ConfirmJoin and password included, but only returns the address,
-    // for Copy IP while the backend is Local or Remote.
-    // Completes with JoinGrantResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_grant(const CallContext& context, const JoinGrantRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-};
 
 }  // namespace rb::api

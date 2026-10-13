@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/sessions/session_driver.hpp"
 #include "reboot/sessions/session_event.hpp"

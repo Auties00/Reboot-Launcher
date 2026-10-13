@@ -5,9 +5,9 @@
 
 #include <boost/json/value.hpp>
 
+#include "reboot/base/types.hpp"
 #include "reboot/browser/browse_choices.hpp"
 #include "reboot/browser/join_target.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/net/mapping_record.hpp"
 
 // The JSON forms of what the engine keeps in state.json for services that only hand it a value.

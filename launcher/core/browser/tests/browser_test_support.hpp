@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/version_bucket.hpp"
 #include "reboot/browser/browser_session.hpp"
 #include "reboot/browser/full_jitter_backoff.hpp"
 #include "reboot/browser/own_servers.hpp"
@@ -53,7 +54,7 @@ inline constexpr u64 kSnapshotStream = 3;
     out.name = std::move(name);
     out.author = "author";
     out.version = version;
-    if (const auto parsed = GameVersion::parse(version)) out.bucket = parsed->bucket();
+    if (const auto parsed = GameVersion::parse(version)) out.bucket = version_bucket(*parsed);
     else out.bucket = wire::kBucketOther;
     out.players = players;
     out.max_players = 100;

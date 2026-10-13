@@ -10,10 +10,10 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/framing.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/testing/fake_random.hpp"

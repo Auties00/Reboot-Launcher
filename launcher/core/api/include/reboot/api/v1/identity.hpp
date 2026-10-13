@@ -4,9 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/result_fwd.hpp"
 
 namespace rb::api {
 
@@ -59,16 +57,6 @@ struct IdentityChanged {
     IdentityProfile profile;
 
     bool operator==(const IdentityChanged&) const = default;
-};
-
-// Display names and account ids per role.
-class IIdentityHandler {
-public:
-    virtual ~IIdentityHandler() = default;
-
-    virtual ::rb::Result<IdentityGetResponse> get(const CallContext& context, const IdentityGetRequest& request) = 0;
-    virtual ::rb::Result<IdentitySetDisplayNameResponse> set_display_name(const CallContext& context, const IdentitySetDisplayNameRequest& request) = 0;
-    virtual ::rb::Result<IdentityResetResponse> reset(const CallContext& context, const IdentityResetRequest& request) = 0;
 };
 
 }  // namespace rb::api

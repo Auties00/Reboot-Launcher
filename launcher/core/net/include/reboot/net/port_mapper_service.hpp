@@ -8,10 +8,10 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/net/mapping_record.hpp"
 #include "reboot/net/port_mapping.hpp"
 

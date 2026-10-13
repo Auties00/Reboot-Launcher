@@ -5,8 +5,8 @@
 #include <string>
 #include <string_view>
 
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ports/os_services.hpp"
 
 namespace rb::os_windows::platform {

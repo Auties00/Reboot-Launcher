@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/ports/net.hpp"
 
 namespace rb::ports {

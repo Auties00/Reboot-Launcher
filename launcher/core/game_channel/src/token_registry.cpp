@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "game_channel_error.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/random.hpp"
-#include "reboot/foundation/secret.hpp"
 
 namespace rb::game_channel {
 

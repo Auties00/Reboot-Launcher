@@ -5,8 +5,8 @@
 #include <variant>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/builds/detected_version.hpp"
-#include "reboot/foundation/diag.hpp"
 
 namespace rb::builds {
 

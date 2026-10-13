@@ -21,6 +21,9 @@
 #include <variant>
 #include <vector>
 
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/builds/build_layout.hpp"
 #include "reboot/builds/build_usage.hpp"
 #include "reboot/catalog/catalog_service.hpp"
@@ -28,11 +31,8 @@
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/random.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 

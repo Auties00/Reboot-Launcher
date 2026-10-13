@@ -3,12 +3,12 @@
 #include <memory>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/browser/browse_choices.hpp"
 #include "reboot/browser/list_state.hpp"
 #include "reboot/browser/view_spec.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb {
 class EventBus;

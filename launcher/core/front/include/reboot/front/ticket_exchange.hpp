@@ -5,8 +5,8 @@
 #include <string>
 #include <string_view>
 
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/front/peer_user.hpp"
 
 namespace rb::front {

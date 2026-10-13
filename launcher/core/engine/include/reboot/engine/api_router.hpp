@@ -4,12 +4,10 @@
 #include <optional>
 #include <span>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/backend.hpp"
 #include "reboot/api/v1/browser.hpp"
 #include "reboot/api/v1/catalog.hpp"
 #include "reboot/api/v1/components.hpp"
-#include "reboot/api/v1/dispatch.hpp"
 #include "reboot/api/v1/engine.hpp"
 #include "reboot/api/v1/guidance.hpp"
 #include "reboot/api/v1/host.hpp"
@@ -26,14 +24,17 @@
 #include "reboot/api/v1/settings.hpp"
 #include "reboot/api/v1/support.hpp"
 #include "reboot/api/v1/updates.hpp"
+#include "reboot/api_dispatch/call_context.hpp"
+#include "reboot/api_dispatch/v1/dispatch.hpp"
+#include "reboot/api_dispatch/v1/handlers.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/engine/started_op.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/flat_map.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ipc/api_dispatcher.hpp"
 #include "reboot/ipc/connection_info.hpp"
 

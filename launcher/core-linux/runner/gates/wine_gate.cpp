@@ -33,15 +33,15 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/framing.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/contracts/winhost.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/foundation/text.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/os_linux/platform/pidfd_process_launcher.hpp"
 #include "reboot/os_linux/runner/linux_runner_platform.hpp"
 #include "reboot/os_linux/runner/umu_invocation.hpp"

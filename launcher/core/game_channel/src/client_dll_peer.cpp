@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "peer_impls.hpp"
+#include "reboot/foundation/diag.hpp"
 
 namespace rb::game_channel {
 

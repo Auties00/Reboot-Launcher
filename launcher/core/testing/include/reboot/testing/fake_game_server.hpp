@@ -6,11 +6,11 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/game_server.hpp"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/testing/fake_game_server_script.hpp"
 #include "reboot/testing/stdio_peer.hpp"
 

@@ -6,9 +6,9 @@
 #include <span>
 #include <string>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/gameserver/command_result.hpp"
 #include "reboot/gameserver/game_server_config.hpp"
 #include "reboot/gameserver/game_server_description.hpp"

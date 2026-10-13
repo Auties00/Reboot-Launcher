@@ -5,7 +5,7 @@
 #include <string_view>
 #include <utility>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/ports/ipc.hpp"
 #include "reboot/posix/peer_credential_check.hpp"
 

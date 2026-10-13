@@ -10,6 +10,7 @@
 #include "reboot/compat/prefix_manager.hpp"
 #include "reboot/compat/runtime_service.hpp"
 #include "reboot/components/component_store.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/front/legacy_fixed_listeners.hpp"
 #include "reboot/front/session_front.hpp"

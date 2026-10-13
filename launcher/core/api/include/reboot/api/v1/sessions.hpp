@@ -5,12 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
 #include "reboot/api/v1/support.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -162,18 +159,6 @@ struct SessionEnded {
     std::optional<Diagnostic> error;
 
     bool operator==(const SessionEnded&) const = default;
-};
-
-// Play and host sessions, whatever started them.
-class ISessionsHandler {
-public:
-    virtual ~ISessionsHandler() = default;
-
-    virtual ::rb::Result<SessionsListResponse> list(const CallContext& context, const SessionsListRequest& request) = 0;
-    virtual ::rb::Result<SessionsGetResponse> get(const CallContext& context, const SessionsGetRequest& request) = 0;
-    virtual ::rb::Result<SessionsSetLeaseResponse> set_lease(const CallContext& context, const SessionsSetLeaseRequest& request) = 0;
-    // Completes with SessionsStopResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_stop(const CallContext& context, const SessionsStopRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

@@ -3,8 +3,8 @@
 #include <string>
 
 #include "reboot/backend/console_key.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/version.hpp"
 
 namespace rb::backend {
 

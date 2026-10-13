@@ -4,9 +4,9 @@
 #include <optional>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/storage/settings_values.hpp"
 #include "reboot/updates/activity_probe.hpp"
 #include "reboot/updates/update_offer.hpp"

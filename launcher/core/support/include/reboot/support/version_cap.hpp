@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/version.hpp"
 
 namespace rb::support {
 

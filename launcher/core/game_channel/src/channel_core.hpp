@@ -12,16 +12,16 @@
 #include <variant>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/framing.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/contracts/winhost.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/game_channel/control_token.hpp"
 #include "reboot/game_channel/peer_key.hpp"
 #include "reboot/game_channel/peer_liveness.hpp"

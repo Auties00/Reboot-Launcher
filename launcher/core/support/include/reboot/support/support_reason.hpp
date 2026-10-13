@@ -1,7 +1,7 @@
 #pragma once
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/support/support_query.hpp"
 #include "reboot/support/support_tier.hpp"
 

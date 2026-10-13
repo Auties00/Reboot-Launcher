@@ -2,9 +2,9 @@
 
 #include <string_view>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/contracts/winhost.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/os_windows/win32session/win32_session.hpp"
 #include "reboot/ports/session_host.hpp"
 

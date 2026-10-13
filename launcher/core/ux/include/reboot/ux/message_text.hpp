@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 
 namespace rb::ux {
 

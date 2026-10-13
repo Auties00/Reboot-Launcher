@@ -3,7 +3,7 @@
 #include <span>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/net/our_process.hpp"
 #include "reboot/net/port_owner_info.hpp"

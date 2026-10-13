@@ -4,7 +4,7 @@
 #include <variant>
 
 #include "integration_test_support.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/integration/entry_error.hpp"
 #include "reboot/integration/prerequisite_error.hpp"
 #include "reboot/integration/purge_error.hpp"

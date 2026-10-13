@@ -21,6 +21,7 @@
 #include "reboot/backend/backend_target.hpp"
 #include "reboot/backend/backend_url.hpp"
 #include "reboot/contracts/ipc.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"

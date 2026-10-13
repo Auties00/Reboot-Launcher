@@ -11,7 +11,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/storage/load_report.hpp"
 
 namespace rb::storage {

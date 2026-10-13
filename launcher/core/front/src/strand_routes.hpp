@@ -8,9 +8,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/front/front_route.hpp"
 #include "reboot/front/peer_user.hpp"
 #include "reboot/front/ticket_exchange.hpp"

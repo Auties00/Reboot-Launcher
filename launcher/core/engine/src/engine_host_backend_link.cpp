@@ -8,10 +8,10 @@
 #include "reboot/backend/backend_session_config.hpp"
 #include "reboot/backend/backend_upstream.hpp"
 #include "reboot/backend/launch_credential.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/contracts/backend.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/random.hpp"
-#include "reboot/foundation/secret.hpp"
 
 namespace rb::engine {
 

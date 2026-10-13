@@ -3,12 +3,12 @@
 #include <chrono>
 #include <optional>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/client.h"
 #include "reboot/contracts/ipc.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ipc/ipc_client.hpp"
 
 namespace rb::client {

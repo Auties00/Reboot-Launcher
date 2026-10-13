@@ -3,7 +3,7 @@
 #include <chrono>
 #include <optional>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/sessions/stop_reason.hpp"
 

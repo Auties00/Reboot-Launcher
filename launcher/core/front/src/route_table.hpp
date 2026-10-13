@@ -7,9 +7,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/front/session_key.hpp"
 #include "reboot/front/upstream_origin.hpp"
 #include "reboot/front/upstream_policy.hpp"

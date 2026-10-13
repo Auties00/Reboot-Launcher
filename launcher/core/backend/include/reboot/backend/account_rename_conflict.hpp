@@ -4,7 +4,7 @@
 #include <string>
 
 #include "reboot/backend/account_rename_request.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::backend {
 

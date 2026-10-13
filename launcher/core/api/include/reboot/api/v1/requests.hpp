@@ -5,15 +5,13 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/backend.hpp"
 #include "reboot/api/v1/browser.hpp"
 #include "reboot/api/v1/common.hpp"
 #include "reboot/api/v1/secrets.hpp"
 #include "reboot/api/v1/sessions.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -232,15 +230,6 @@ struct RequestsRespondRequest {
 
 struct RequestsRespondResponse {
     bool operator==(const RequestsRespondResponse&) const = default;
-};
-
-// Questions the engine asks a human.
-class IRequestsHandler {
-public:
-    virtual ~IRequestsHandler() = default;
-
-    virtual ::rb::Result<RequestsPendingResponse> pending(const CallContext& context, const RequestsPendingRequest& request) = 0;
-    virtual ::rb::Result<RequestsRespondResponse> respond(const CallContext& context, const RequestsRespondRequest& request) = 0;
 };
 
 }  // namespace rb::api

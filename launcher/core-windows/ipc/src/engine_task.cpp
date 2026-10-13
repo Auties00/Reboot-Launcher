@@ -17,6 +17,7 @@
 
 #include "engine_launch.hpp"
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/log.hpp"
 #include "wide.hpp"
 

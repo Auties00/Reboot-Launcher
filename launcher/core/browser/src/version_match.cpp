@@ -1,6 +1,7 @@
 #include "reboot/browser/version_match.hpp"
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/version_bucket.hpp"
 
 namespace rb::browser {
 
@@ -9,6 +10,6 @@ bool same_game_version(std::string_view server_version, const GameVersion& wante
     return parsed && *parsed == wanted;
 }
 
-std::vector<u32> buckets_for(const GameVersion& version) { return {version.bucket()}; }
+std::vector<u32> buckets_for(const GameVersion& version) { return {version_bucket(version)}; }
 
 }  // namespace rb::browser

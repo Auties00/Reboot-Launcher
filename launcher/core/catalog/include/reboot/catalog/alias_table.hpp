@@ -6,9 +6,9 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/catalog/catalog.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 namespace rb::catalog {
 

@@ -6,10 +6,10 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/catalog/catalog.hpp"
 #include "reboot/catalog/catalog_error.hpp"
 #include "reboot/catalog/parse_catalog.hpp"
-#include "reboot/foundation/diag.hpp"
 
 using namespace rb;
 using namespace rb::catalog;

@@ -9,6 +9,7 @@
 
 #include "engine_start_rules.hpp"
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 
 using rb::ArgSpec;
 using rb::DataRoot;

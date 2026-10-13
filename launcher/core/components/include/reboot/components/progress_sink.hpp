@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/operation.hpp"
 
 namespace rb::components {

@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/storage/data_root.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"

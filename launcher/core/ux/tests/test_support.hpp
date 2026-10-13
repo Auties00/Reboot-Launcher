@@ -2,8 +2,8 @@
 
 #include <utility>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ux/guidance_state_store.hpp"
 
 namespace rb::ux::test {

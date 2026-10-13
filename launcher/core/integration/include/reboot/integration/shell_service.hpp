@@ -3,10 +3,10 @@
 #include <optional>
 #include <string>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/integration/desktop_check.hpp"
 #include "reboot/integration/shell_error.hpp"
 

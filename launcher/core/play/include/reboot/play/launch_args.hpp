@@ -6,10 +6,10 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/compat/path_mapper.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/identity/login_plan.hpp"
 #include "reboot/play/game_arg.hpp"
 

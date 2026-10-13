@@ -10,6 +10,7 @@
 
 #include "engine_rig.hpp"
 #include "reboot/api/v1/browser.hpp"
+#include "reboot/base/version_bucket.hpp"
 #include "reboot/browser/rbsb_endpoint.hpp"
 #include "reboot/testing/fake_quic_peer.hpp"
 #include "wire/frame.hpp"
@@ -40,7 +41,7 @@ constexpr u64 kEdgeTimeMs = 1'790'000'000'000;
     out.name = std::move(name);
     out.author = "author";
     out.version = "8.51";
-    out.bucket = GameVersion::parse("8.51")->bucket();
+    out.bucket = version_bucket(*GameVersion::parse("8.51"));
     out.max_players = 100;
     out.flags = wire::entry_flag::online | wire::entry_flag::reachable;
     out.created_ms = kEdgeTimeMs;

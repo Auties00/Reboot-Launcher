@@ -21,9 +21,9 @@
 
 #include <boost/json.hpp>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/sha256.hpp"
-#include "reboot/foundation/types.hpp"
 #include "wire/codec.hpp"
 
 namespace rb::testing::script_json {

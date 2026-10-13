@@ -18,10 +18,10 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/framing.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/contracts/winhost.hpp"
-#include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/testing/deterministic_runtime.hpp"

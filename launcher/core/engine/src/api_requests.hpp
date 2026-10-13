@@ -4,9 +4,9 @@
 #include <optional>
 
 #include "reboot/api/v1/requests.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/browser/server_row.hpp"
 #include "reboot/engine/api_router.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/user_request.hpp"
 
 // UserRequest payloads as reboot.api.v1 prompts, and API answers as the payload's answer type.

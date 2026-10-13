@@ -6,10 +6,10 @@
 #include <span>
 #include <vector>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/backend.hpp"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/testing/fake_backend_script.hpp"
 #include "reboot/testing/stdio_peer.hpp"
 

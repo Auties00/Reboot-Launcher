@@ -9,13 +9,13 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/components/app_entry.hpp"
 #include "reboot/components/component_ref.hpp"
 #include "reboot/components/manifest_platform.hpp"
 #include "reboot/components/remote_file.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 
 // The JSON names shared by the release manifest and the store index.
 namespace rb::components::json_fields {

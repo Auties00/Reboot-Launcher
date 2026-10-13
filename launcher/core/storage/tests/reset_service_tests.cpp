@@ -8,9 +8,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/clock.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/storage/document_store.hpp"

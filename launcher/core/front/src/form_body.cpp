@@ -1,6 +1,6 @@
 #include "form_body.hpp"
 
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/secret.hpp"
 
 namespace rb::front {
 

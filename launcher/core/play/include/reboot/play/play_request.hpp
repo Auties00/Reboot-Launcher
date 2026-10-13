@@ -4,7 +4,7 @@
 #include <string>
 
 #include "reboot/backend/backend_target.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/play/display_context.hpp"
 #include "reboot/play/play_target.hpp"
 #include "reboot/sessions/lease.hpp"

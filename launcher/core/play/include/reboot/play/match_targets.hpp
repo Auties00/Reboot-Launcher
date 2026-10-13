@@ -4,8 +4,8 @@
 #include <string>
 
 #include "reboot/backend/match_target_resolver.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::play {
 

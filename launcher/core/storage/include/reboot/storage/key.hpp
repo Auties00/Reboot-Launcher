@@ -9,10 +9,10 @@
 
 #include <boost/json/value.hpp>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/storage/backend_target.hpp"
 #include "reboot/storage/console_key.hpp"
 #include "reboot/storage/enum_names.hpp"

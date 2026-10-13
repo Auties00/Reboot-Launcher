@@ -3,9 +3,9 @@
 #include <memory>
 #include <string>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb {
 class Executor;

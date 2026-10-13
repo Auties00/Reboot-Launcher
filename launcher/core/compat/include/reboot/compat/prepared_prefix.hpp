@@ -1,7 +1,7 @@
 #pragma once
 
+#include "reboot/base/native_path.hpp"
 #include "reboot/compat/path_mapper.hpp"
-#include "reboot/foundation/native_path.hpp"
 
 namespace rb::compat {
 

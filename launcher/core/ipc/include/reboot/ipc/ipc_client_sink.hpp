@@ -2,9 +2,9 @@
 
 #include <optional>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/ipc.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ipc/ipc_codec.hpp"
 
 namespace rb::ipc {

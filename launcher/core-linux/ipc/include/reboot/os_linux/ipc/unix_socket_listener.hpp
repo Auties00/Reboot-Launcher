@@ -4,9 +4,9 @@
 #include <optional>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/ports/ipc.hpp"
 #include "reboot/posix/unique_fd.hpp"
 #include "reboot/posix/unix_socket_listener_base.hpp"

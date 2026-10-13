@@ -5,14 +5,11 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/backend.hpp"
 #include "reboot/api/v1/common.hpp"
 #include "reboot/api/v1/requests.hpp"
 #include "reboot/api/v1/support.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
 
 namespace rb::api {
 
@@ -95,16 +92,6 @@ struct PlayStartResponse {
     SessionId session;
 
     bool operator==(const PlayStartResponse&) const = default;
-};
-
-// Launching the game as a client.
-class IPlayHandler {
-public:
-    virtual ~IPlayHandler() = default;
-
-    virtual ::rb::Result<PlayPlanResponse> plan(const CallContext& context, const PlayPlanRequest& request) = 0;
-    // Completes with PlayStartResponse.
-    virtual ::rb::Result<::rb::OpHandle> start(const CallContext& context, const PlayStartRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

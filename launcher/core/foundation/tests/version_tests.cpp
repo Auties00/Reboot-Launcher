@@ -4,9 +4,10 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
+#include "reboot/base/version_bucket.hpp"
 #include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 #include "registry/validation.hpp"
 
 using namespace rb;
@@ -78,9 +79,9 @@ TEST_CASE("GameVersion::bucket matches the sb bucket of its canonical form", "[f
     for (const char* text : {"0.0", "1.8", "12.41", "4095.1023", "7.40.2", "007.040"}) {
         const Result<GameVersion> v = GameVersion::parse(text);
         REQUIRE(v);
-        CHECK(v->bucket() == sb::registry::version_bucket(v->canonical()));
+        CHECK(version_bucket(*v) == sb::registry::version_bucket(v->canonical()));
     }
-    CHECK(GameVersion::parse("12.41")->bucket() == u32{2 + 12 * 1024 + 41});
+    CHECK(version_bucket(*GameVersion::parse("12.41")) == u32{2 + 12 * 1024 + 41});
 }
 
 TEST_CASE("parse_uuid takes the canonical form in any case only", "[foundation][types]") {

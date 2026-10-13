@@ -3,10 +3,10 @@
 #include <memory>
 #include <string_view>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/browser/server_row.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb {
 class UserRequestRegistry;

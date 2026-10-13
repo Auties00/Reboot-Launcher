@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/integration/purge_scope.hpp"
 
 namespace rb {

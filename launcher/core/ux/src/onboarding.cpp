@@ -4,6 +4,7 @@
 #include <array>
 #include <utility>
 
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/ux/guidance_state_store.hpp"
 #include "messages.hpp"

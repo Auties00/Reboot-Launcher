@@ -5,9 +5,9 @@
 #include <string>
 #include <variant>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/events.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/sessions/lease.hpp"
 #include "reboot/sessions/session_kind.hpp"
 #include "reboot/sessions/session_phase.hpp"

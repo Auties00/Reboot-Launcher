@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ports/ipc.hpp"
 
 namespace rb::os_linux::ipc {

@@ -10,7 +10,7 @@
 #include <boost/json/string.hpp>
 #include <boost/json/value.hpp>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 
 namespace rb::publish {
 

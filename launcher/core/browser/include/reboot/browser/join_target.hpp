@@ -5,8 +5,8 @@
 #include <string>
 #include <variant>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::browser {
 

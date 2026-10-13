@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/integration/purge_blockers.hpp"
 #include "reboot/integration/purge_scope.hpp"
 

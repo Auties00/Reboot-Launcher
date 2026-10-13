@@ -3,10 +3,10 @@
 #include <cstddef>
 #include <memory>
 
+#include "reboot/base/function.hpp"
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/flat_map.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/updates/activity_probe.hpp"
 

@@ -13,7 +13,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 
 namespace rb::catalog {
 

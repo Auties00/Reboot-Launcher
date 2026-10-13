@@ -6,7 +6,7 @@
 #include <boost/asio/ip/address.hpp>
 #include <boost/system/error_code.hpp>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/net_types.hpp"
 
 namespace rb::net {

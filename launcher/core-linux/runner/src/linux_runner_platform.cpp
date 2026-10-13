@@ -12,6 +12,7 @@
 
 #include "env_vars.hpp"
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/os_linux/runner/kron_wine_runner.hpp"
 #include "reboot/os_linux/runner/umu_invocation.hpp"

@@ -4,8 +4,8 @@
 #include <string>
 #include <string_view>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/contracts/backend.hpp"
-#include "reboot/foundation/diag.hpp"
 
 namespace rb {
 class IRandom;

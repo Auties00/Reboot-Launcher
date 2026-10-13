@@ -4,8 +4,8 @@
 #include <string>
 #include <string_view>
 
+#include "reboot/base/native_path.hpp"
 #include "reboot/components/manifest_platform.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/integration/integration_targets.hpp"
 
 namespace rb::engine {

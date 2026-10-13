@@ -7,9 +7,9 @@
 #include <string_view>
 #include <utility>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/posix/unique_fd.hpp"
 
 // Another user for the IPC suite: this executable re-run as root through `sudo -n`, which the

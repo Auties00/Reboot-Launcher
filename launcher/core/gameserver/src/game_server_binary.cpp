@@ -7,10 +7,11 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/framing.hpp"
 #include "reboot/contracts/game_server.hpp"
 #include "reboot/foundation/cancel.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/framing.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/gameserver/game_server_error.hpp"

@@ -3,9 +3,9 @@
 #include <optional>
 #include <string_view>
 
+#include "reboot/base/version.hpp"
 #include "reboot/components/app_entry.hpp"
 #include "reboot/components/manifest_platform.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/storage/settings_values.hpp"
 
 namespace rb::components {

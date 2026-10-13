@@ -5,8 +5,8 @@
 #include <memory>
 #include <vector>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/events.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::testing {
 

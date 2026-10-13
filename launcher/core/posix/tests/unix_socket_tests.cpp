@@ -14,7 +14,7 @@
 
 #include "messages.hpp"
 #include "posix_test_support.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/posix/peer_credential_check.hpp"
 #include "reboot/posix/unique_fd.hpp"
 #include "reboot/posix/unix_socket_connector_base.hpp"

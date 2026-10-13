@@ -24,6 +24,7 @@
 #include "mac_log_file_system.hpp"
 #include "messages.hpp"
 #include "proc_info.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/os_macos/platform/fs_events_watcher.hpp"
 #include "reboot/os_macos/platform/keychain_secret_store.hpp"

@@ -29,3 +29,8 @@ if(TARGET reboot_host_tests)
          reboot::gameserver reboot::sessions reboot::publish reboot::process reboot::testing
     SOURCES ${host_test_files})
 endif()
+
+# The tests bind real UDP sockets through Boost.Asio.
+if(TARGET reboot_host_tests)
+  target_link_libraries(reboot_host_tests PRIVATE Boost::asio)
+endif()

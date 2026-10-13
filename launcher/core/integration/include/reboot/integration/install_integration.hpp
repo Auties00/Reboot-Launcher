@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/integration/entry_status.hpp"
 #include "reboot/integration/integration_targets.hpp"
 

@@ -14,6 +14,7 @@
 #include "compat_test_support.hpp"
 #include "reboot/compat/wine_session_host.hpp"
 #include "reboot/contracts/winhost.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/text.hpp"

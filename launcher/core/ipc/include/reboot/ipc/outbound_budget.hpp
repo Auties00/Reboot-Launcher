@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <optional>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb {
 class IClock;

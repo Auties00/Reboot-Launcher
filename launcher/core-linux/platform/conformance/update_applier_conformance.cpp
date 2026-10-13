@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "conformance_support.hpp"
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/os_linux/platform/linux_update_applier.hpp"
 #include "reboot/os_linux/platform/tarball_layout.hpp"
 #include "reboot/os_linux/platform/xdg_paths.hpp"

@@ -10,13 +10,10 @@
 #include <string_view>
 #include <utility>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/log_level.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb {
-
-enum class LogLevel : u8 { Trace, Debug, Info, Warn, Error };
-
-enum class LogCategory : u8 { Engine, Ipc, Net, Storage, Builds, Play, Host, Backend, GameOutput, Wine, Browser, Update, Client, Ui };
 
 // "engine", "game_output" and so on, as log lines print it.
 [[nodiscard]] std::string_view log_category_name(LogCategory category) noexcept;

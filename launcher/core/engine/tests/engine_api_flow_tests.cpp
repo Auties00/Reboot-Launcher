@@ -10,16 +10,16 @@
 
 #include "engine_rig.hpp"
 #include "reboot/api/v1/browser.hpp"
+#include "reboot/api/v1/catalog.hpp"
 #include "reboot/api/v1/engine.hpp"
 #include "reboot/api/v1/guidance.hpp"
 #include "reboot/api/v1/host.hpp"
-#include "reboot/api/v1/catalog.hpp"
 #include "reboot/api/v1/identity.hpp"
 #include "reboot/api/v1/integration.hpp"
 #include "reboot/api/v1/sessions.hpp"
 #include "reboot/api/v1/settings.hpp"
 #include "reboot/api/v1/updates.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/updates/update_event.hpp"
 
 using namespace rb;

@@ -4,8 +4,8 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/net/http_response.hpp"
 #include "reboot/ports/net.hpp"
 

@@ -5,12 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -560,30 +557,5 @@ struct PlayerEvent {
     if (auto error = one_case({m.joined.has_value(), m.left.has_value()})) return error;
     return std::nullopt;
 }
-
-// Host profiles and running our game server.
-class IHostHandler {
-public:
-    virtual ~IHostHandler() = default;
-
-    virtual ::rb::Result<HostProfilesListResponse> profiles_list(const CallContext& context, const HostProfilesListRequest& request) = 0;
-    virtual ::rb::Result<HostProfilesCreateResponse> profiles_create(const CallContext& context, const HostProfilesCreateRequest& request) = 0;
-    virtual ::rb::Result<HostProfilesUpdateResponse> profiles_update(const CallContext& context, const HostProfilesUpdateRequest& request) = 0;
-    virtual ::rb::Result<HostProfilesDeleteResponse> profiles_delete(const CallContext& context, const HostProfilesDeleteRequest& request) = 0;
-    virtual ::rb::Result<HostShareLinkResponse> share_link(const CallContext& context, const HostShareLinkRequest& request) = 0;
-    // Completes once the game server answers: failed with its error, with
-    // gameserver.command_timeout or gameserver.not_running, or with engine.command_unsupported.
-    // Completes with HostCommandResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_command(const CallContext& context, const HostCommandRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with HostStartResponse.
-    virtual ::rb::Result<::rb::OpHandle> start(const CallContext& context, const HostStartRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    virtual ::rb::Result<HostStatusResponse> status(const CallContext& context, const HostStatusRequest& request) = 0;
-    // Stops the pending match-end action and leaves the server running.
-    virtual ::rb::Result<HostCancelMatchEndResponse> cancel_match_end(const CallContext& context, const HostCancelMatchEndRequest& request) = 0;
-    // Completes with HostIdentityExportResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_identity_export(const CallContext& context, const HostIdentityExportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with HostIdentityImportResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_identity_import(const CallContext& context, const HostIdentityImportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-};
 
 }  // namespace rb::api

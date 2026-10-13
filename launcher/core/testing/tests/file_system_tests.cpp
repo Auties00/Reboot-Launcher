@@ -6,7 +6,7 @@
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 #include "reboot/testing/deterministic_runtime.hpp"
 #include "reboot/testing/fake_file_watcher.hpp"

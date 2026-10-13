@@ -4,6 +4,9 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/components/component_info.hpp"
 #include "reboot/components/component_pin.hpp"
 #include "reboot/components/component_ref.hpp"
@@ -13,11 +16,8 @@
 #include "reboot/components/pinned_runtime.hpp"
 #include "reboot/components/progress_sink.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/paths.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb {
 class EventBus;

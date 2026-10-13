@@ -9,8 +9,9 @@
 
 #include "compat_test_support.hpp"
 #include "reboot/compat/compat_document.hpp"
-#include "reboot/compat/prefix_manager.hpp"
 #include "reboot/compat/preferred_rhi_seed.hpp"
+#include "reboot/compat/prefix_manager.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/storage/document_store.hpp"

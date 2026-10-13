@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <array>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 
 namespace rb::builds {
 

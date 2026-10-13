@@ -6,6 +6,7 @@
 
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/clock.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/flat_map.hpp"

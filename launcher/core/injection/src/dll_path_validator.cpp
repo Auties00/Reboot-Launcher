@@ -6,7 +6,7 @@
 #include <utility>
 
 #include "messages.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/ports/file_system.hpp"
 
 namespace rb::injection {

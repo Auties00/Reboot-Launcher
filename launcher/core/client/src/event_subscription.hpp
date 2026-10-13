@@ -10,8 +10,8 @@
 #include <vector>
 
 #include "api_event_filter.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/ipc.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::client {
 

@@ -3,7 +3,7 @@
 #include <optional>
 #include <string>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/identity/backend_login.hpp"
 #include "reboot/storage/backend_target.hpp"
 

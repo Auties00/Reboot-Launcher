@@ -13,10 +13,10 @@
 #include <unistd.h>
 #include <utility>
 
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/random.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/testing/scratch_dir.hpp"
 #include "reboot/testing/wall_clock_waiter.hpp"
 

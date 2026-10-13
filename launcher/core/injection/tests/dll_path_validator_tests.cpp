@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "messages.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/injection/dll_path_validator.hpp"
 #include "reboot/injection/inject_failed.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"

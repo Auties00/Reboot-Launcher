@@ -20,7 +20,7 @@ reboot_add_package(front
     src/tls_client.cpp
     src/upstream_origin.cpp
     src/upstream_policy.cpp
-  DEPS Boost::beast Boost::json OpenSSL::SSL
+  DEPS Boost::asio Boost::beast Boost::json OpenSSL::SSL
   PUBLIC_DEPS reboot::net)
 
 if(TARGET reboot_front_tests)

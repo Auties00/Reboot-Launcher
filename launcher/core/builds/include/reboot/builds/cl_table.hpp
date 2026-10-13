@@ -4,8 +4,8 @@
 #include <span>
 #include <string_view>
 
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 
 namespace rb::builds {
 

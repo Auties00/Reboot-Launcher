@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/secret.hpp"
 
 namespace rb::process {
 

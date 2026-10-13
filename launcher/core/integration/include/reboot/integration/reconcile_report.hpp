@@ -3,7 +3,7 @@
 #include <optional>
 #include <vector>
 
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/integration/entry_status.hpp"
 #include "reboot/integration/integration_kind.hpp"
 

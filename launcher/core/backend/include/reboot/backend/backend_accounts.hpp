@@ -7,7 +7,7 @@
 #include "reboot/backend/account_prune_filter.hpp"
 #include "reboot/backend/account_rename_request.hpp"
 #include "reboot/backend/backend_account.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/identity/identity_changed_event.hpp"
 #include "reboot/identity/identity_service.hpp"

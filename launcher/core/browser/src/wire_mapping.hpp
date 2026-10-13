@@ -2,8 +2,8 @@
 
 #include <chrono>
 
+#include "reboot/base/types.hpp"
 #include "reboot/browser/view_spec.hpp"
-#include "reboot/foundation/types.hpp"
 #include "wire/messages.hpp"
 
 namespace rb::browser {

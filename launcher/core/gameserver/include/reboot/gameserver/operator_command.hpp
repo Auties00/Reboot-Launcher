@@ -7,7 +7,7 @@
 #include <variant>
 #include <vector>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/gameserver/game_server_config.hpp"
 #include "reboot/gameserver/game_server_description.hpp"
 

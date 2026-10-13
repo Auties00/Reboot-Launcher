@@ -6,8 +6,8 @@
 
 #include <boost/json/value.hpp>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/key.hpp"
 #include "reboot/storage/settings_document.hpp"

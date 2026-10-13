@@ -3,11 +3,8 @@
 
 #include <optional>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -95,18 +92,6 @@ struct UpdateFailed {
     Diagnostic error;
 
     bool operator==(const UpdateFailed&) const = default;
-};
-
-// Launcher self-update.
-class IUpdatesHandler {
-public:
-    virtual ~IUpdatesHandler() = default;
-
-    virtual ::rb::Result<UpdatesStatusResponse> status(const CallContext& context, const UpdatesStatusRequest& request) = 0;
-    // Completes with UpdatesCheckResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_check(const CallContext& context, const UpdatesCheckRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with UpdatesApplyResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_apply(const CallContext& context, const UpdatesApplyRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

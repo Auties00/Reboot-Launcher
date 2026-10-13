@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/integration/prerequisite_id.hpp"
 #include "reboot/integration/prerequisite_impact.hpp"
 #include "reboot/integration/remedy.hpp"

@@ -15,10 +15,10 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/clock.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/trust/key_ring.hpp"
 #include "reboot/trust/signed_document.hpp"
 #include "reboot/trust/signed_document_kind.hpp"

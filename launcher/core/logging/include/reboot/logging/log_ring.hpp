@@ -6,9 +6,9 @@
 #include <span>
 #include <vector>
 
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/log.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/logging/log_filter.hpp"
 
 namespace rb::logging {

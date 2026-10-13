@@ -5,7 +5,7 @@
 #include <string_view>
 
 #include "apple_shims.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/ports/os_services.hpp"
 
 namespace rb::os_macos::platform {

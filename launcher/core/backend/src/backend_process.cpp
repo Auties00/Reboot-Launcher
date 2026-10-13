@@ -10,8 +10,9 @@
 
 #include "reboot/backend/backend_process_observer.hpp"
 #include "reboot/backend/match_target_resolver.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/secret.hpp"
 #include "reboot/process/child_observer.hpp"
 #include "reboot/process/child_request_handler.hpp"
 #include "wire_values.hpp"

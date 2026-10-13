@@ -5,12 +5,12 @@
 #include <variant>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/framing.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/ipc.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::ipc {
 

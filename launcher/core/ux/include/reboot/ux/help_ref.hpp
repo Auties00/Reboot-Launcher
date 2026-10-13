@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ux/doc_page.hpp"
 #include "reboot/ux/message_text.hpp"
 

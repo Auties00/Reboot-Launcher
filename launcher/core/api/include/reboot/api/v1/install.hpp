@@ -5,12 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
 #include "reboot/api/v1/library.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -74,23 +71,6 @@ struct InstallInstallResponse {
     Build build;
 
     bool operator==(const InstallInstallResponse&) const = default;
-};
-
-// Downloading a catalog build into the library.
-class IInstallHandler {
-public:
-    virtual ~IInstallHandler() = default;
-
-    // An operation: a volume query can hang on a network or empty optical drive.
-    // Completes with InstallSuggestDestinationResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_suggest_destination(const CallContext& context, const InstallSuggestDestinationRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with InstallInstallResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_install(const CallContext& context, const InstallInstallRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Drops the archive a cancelled or failed install kept for resuming.
-    // Completes with InstallDiscardStagingResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_discard_staging(const CallContext& context, const InstallDiscardStagingRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with InstallDeleteUnregisteredResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_delete_unregistered(const CallContext& context, const InstallDeleteUnregisteredRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

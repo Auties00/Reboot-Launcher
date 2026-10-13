@@ -2,9 +2,9 @@
 
 #include <expected>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/client.h"
 #include "reboot/contracts/common.hpp"
-#include "reboot/foundation/diag.hpp"
 
 namespace rb::client {
 

@@ -5,11 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -78,16 +75,6 @@ struct CatalogChanged {
     CatalogSource source{};
 
     bool operator==(const CatalogChanged&) const = default;
-};
-
-// The signed catalog of downloadable builds.
-class ICatalogHandler {
-public:
-    virtual ~ICatalogHandler() = default;
-
-    virtual ::rb::Result<CatalogListResponse> list(const CallContext& context, const CatalogListRequest& request) = 0;
-    // Completes with CatalogRefreshResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_refresh(const CallContext& context, const CatalogRefreshRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

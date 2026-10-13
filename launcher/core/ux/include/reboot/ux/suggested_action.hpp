@@ -3,9 +3,9 @@
 #include <string>
 #include <variant>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/backend.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ux/app_links.hpp"
 
 namespace rb::ux {

@@ -3,7 +3,7 @@
 #include <optional>
 #include <string_view>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::os_linux::ipc {
 

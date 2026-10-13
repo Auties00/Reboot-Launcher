@@ -2,10 +2,10 @@
 
 #include <optional>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/publish/host_metadata.hpp"
 #include "reboot/publish/listing.hpp"
 

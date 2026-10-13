@@ -6,9 +6,9 @@
 
 #include <boost/json/object.hpp>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/backend.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/storage/load_report.hpp"
 
 namespace rb::storage {

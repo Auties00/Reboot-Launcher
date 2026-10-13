@@ -3,7 +3,7 @@
 #include <mutex>
 #include <optional>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/ports/os_services.hpp"
 
 namespace rb::testing {

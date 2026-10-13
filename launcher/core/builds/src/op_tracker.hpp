@@ -3,9 +3,9 @@
 #include <map>
 #include <utility>
 
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
 #include "reboot/foundation/operation.hpp"
 
 namespace rb::builds {

@@ -2,9 +2,9 @@
 
 #include <string>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ipc/compatibility.hpp"
 #include "reboot/ports/ipc.hpp"
 

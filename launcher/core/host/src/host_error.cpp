@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/host/host_profile.hpp"
 #include "reboot/host/match_end_policy.hpp"
 #include "reboot/publish/field_limits.hpp"

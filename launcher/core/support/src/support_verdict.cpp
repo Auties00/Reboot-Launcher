@@ -4,6 +4,8 @@
 #include <expected>
 #include <utility>
 
+#include "reboot/foundation/diag.hpp"
+
 namespace rb::support {
 
 Result<void> check_not_blocked(const SupportQuery& query, const SupportVerdict& verdict) {

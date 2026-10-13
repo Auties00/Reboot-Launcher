@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/ports/session_host.hpp"
 
 namespace rb::ports {

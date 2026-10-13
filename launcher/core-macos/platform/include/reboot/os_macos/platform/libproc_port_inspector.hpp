@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/ports/net.hpp"
 

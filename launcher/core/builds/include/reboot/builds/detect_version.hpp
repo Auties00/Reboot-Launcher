@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/builds/build_layout.hpp"
 #include "reboot/builds/detected_version.hpp"
 #include "reboot/builds/release_marker.hpp"
@@ -9,7 +10,6 @@
 #include "reboot/builds/version_source.hpp"
 #include "reboot/catalog/alias_table.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
 
 namespace rb::builds {
 

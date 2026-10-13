@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/ports/session_host.hpp"
 
 namespace rb::play {

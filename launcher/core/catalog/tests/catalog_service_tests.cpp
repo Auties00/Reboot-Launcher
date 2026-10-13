@@ -8,11 +8,11 @@
 #include <variant>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/catalog/catalog_service.hpp"
 #include "reboot/catalog/catalog_source.hpp"
 #include "reboot/catalog/catalog_updated.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/testing/deterministic_runtime.hpp"

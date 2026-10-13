@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/integration/entry_flavor.hpp"
 #include "reboot/integration/integration_kind.hpp"
 

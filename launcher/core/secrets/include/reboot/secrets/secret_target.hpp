@@ -3,7 +3,7 @@
 #include <compare>
 #include <string_view>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/secrets/secret_kind.hpp"
 #include "reboot/secrets/secret_scope.hpp"
 

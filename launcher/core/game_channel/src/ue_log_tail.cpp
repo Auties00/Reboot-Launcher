@@ -6,10 +6,10 @@
 #include <vector>
 
 #include "game_channel_error.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/file_system.hpp"
 
 namespace rb::game_channel {

@@ -8,11 +8,11 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/framing.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/foundation/clock.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/framing.hpp"
 #include "reboot/ports/ipc.hpp"
 #include "reboot/testing/fake_client_dll_script.hpp"
 #include "reboot/testing/frame_log.hpp"

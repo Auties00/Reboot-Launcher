@@ -3,7 +3,7 @@
 #include <optional>
 #include <string>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/integration/entry_state.hpp"
 #include "reboot/integration/integration_kind.hpp"
 

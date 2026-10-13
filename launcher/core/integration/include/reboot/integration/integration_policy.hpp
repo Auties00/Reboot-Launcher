@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/integration/entry_flavor.hpp"
 #include "reboot/integration/entry_state.hpp"
 #include "reboot/integration/integration_kind.hpp"

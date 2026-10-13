@@ -5,8 +5,8 @@
 
 #include <boost/json/object.hpp>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/storage/load_report.hpp"
 #include "reboot/storage/settings_values.hpp"
 

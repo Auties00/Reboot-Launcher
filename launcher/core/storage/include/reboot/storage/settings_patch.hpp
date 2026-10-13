@@ -3,8 +3,8 @@
 #include <optional>
 #include <string>
 
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/storage/backend_target.hpp"
 #include "reboot/storage/console_key.hpp"
 #include "reboot/storage/settings_values.hpp"

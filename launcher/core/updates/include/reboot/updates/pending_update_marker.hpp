@@ -4,9 +4,9 @@
 #include <span>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 
 namespace rb::updates {
 

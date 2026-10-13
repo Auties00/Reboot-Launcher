@@ -2,9 +2,9 @@
 
 #include <string_view>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/components/pinned_runtime.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 
 namespace rb::compat {
 

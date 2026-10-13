@@ -1,6 +1,6 @@
 #include "reboot/gameserver/game_server_description.hpp"
 
-#include "reboot/foundation/framing.hpp"
+#include "reboot/base/framing.hpp"
 
 namespace rb::gameserver {
 

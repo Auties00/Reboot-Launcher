@@ -4,8 +4,8 @@
 #include <optional>
 #include <string>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/backend.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::backend {
 

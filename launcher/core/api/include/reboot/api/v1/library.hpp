@@ -5,11 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -155,23 +152,6 @@ struct LibraryChanged {
     std::optional<BuildId> build;
 
     bool operator==(const LibraryChanged&) const = default;
-};
-
-// Installed builds and the per-role selection.
-class ILibraryHandler {
-public:
-    virtual ~ILibraryHandler() = default;
-
-    virtual ::rb::Result<LibraryListResponse> list(const CallContext& context, const LibraryListRequest& request) = 0;
-    virtual ::rb::Result<LibraryGetResponse> get(const CallContext& context, const LibraryGetRequest& request) = 0;
-    virtual ::rb::Result<LibrarySelectResponse> select(const CallContext& context, const LibrarySelectRequest& request) = 0;
-    virtual ::rb::Result<LibraryUpdateResponse> update(const CallContext& context, const LibraryUpdateRequest& request) = 0;
-    // Completes with LibraryRelocateResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_relocate(const CallContext& context, const LibraryRelocateRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with LibraryImportResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_import(const CallContext& context, const LibraryImportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with LibraryRemoveResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_remove(const CallContext& context, const LibraryRemoveRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

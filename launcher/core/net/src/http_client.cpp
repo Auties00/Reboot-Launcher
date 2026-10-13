@@ -10,9 +10,9 @@
 #include <vector>
 
 #include "messages.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/random.hpp"
-#include "reboot/foundation/secret.hpp"
 #include "reboot/net/host_tls_memory.hpp"
 #include "reboot/net/http_error.hpp"
 #include "url.hpp"

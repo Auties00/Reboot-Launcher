@@ -5,11 +5,11 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/builds/build_layout.hpp"
 #include "reboot/builds/installed_build.hpp"
 #include "reboot/builds/version_source.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/storage/library_document.hpp"
 
 namespace rb::builds {

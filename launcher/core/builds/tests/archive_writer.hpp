@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 // Last: on Windows it brings in windows.h and its min and max macros.
 #include <archive.h>

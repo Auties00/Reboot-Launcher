@@ -7,9 +7,9 @@
 #include <variant>
 #include <vector>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/common.hpp"
 #include "reboot/contracts/game_client.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/testing/script_steps.hpp"
 
 namespace rb::testing {

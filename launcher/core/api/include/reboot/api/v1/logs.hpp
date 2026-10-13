@@ -5,11 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -98,16 +95,6 @@ struct LogLine {
     u64 dropped = 0;
 
     bool operator==(const LogLine&) const = default;
-};
-
-// Reading and exporting redacted logs.
-class ILogsHandler {
-public:
-    virtual ~ILogsHandler() = default;
-
-    virtual ::rb::Result<LogsReadResponse> read(const CallContext& context, const LogsReadRequest& request) = 0;
-    // Completes with LogsExportResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_export(const CallContext& context, const LogsExportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

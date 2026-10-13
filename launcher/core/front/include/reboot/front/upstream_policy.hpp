@@ -5,8 +5,8 @@
 #include <string_view>
 #include <vector>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/front/upstream_origin.hpp"
 
 namespace rb::front {

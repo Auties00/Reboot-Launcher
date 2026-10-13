@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/native_path.hpp"
 #include "reboot/compat/runtime_id.hpp"
 #include "reboot/compat/vc_redist_source.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/ports/runner.hpp"
 

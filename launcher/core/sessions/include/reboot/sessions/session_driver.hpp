@@ -1,7 +1,7 @@
 #pragma once
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/sessions/stop_request.hpp"
 
 namespace rb::sessions {

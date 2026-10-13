@@ -17,6 +17,7 @@
 #include "reboot/backend/backend_sessions.hpp"
 #include "reboot/backend/remote_backend_probe.hpp"
 #include "reboot/backend/unencrypted_upstream_prompt.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"

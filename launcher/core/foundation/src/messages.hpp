@@ -5,10 +5,6 @@
 namespace rb::msg {
 
 REBOOT_MESSAGE_DECL(kInternalBug);
-REBOOT_MESSAGE_DECL(kInvalidUuid);
-REBOOT_MESSAGE_DECL(kInvalidSemVer);
-REBOOT_MESSAGE_DECL(kInvalidGameVersion);
-REBOOT_MESSAGE_DECL(kMalformedWirePath);
 REBOOT_MESSAGE_DECL(kDataRootNotAbsolute);
 REBOOT_MESSAGE_DECL(kNoDataRoot);
 REBOOT_MESSAGE_DECL(kOpNotFound);

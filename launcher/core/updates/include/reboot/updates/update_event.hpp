@@ -5,11 +5,11 @@
 #include <variant>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/components/app_entry.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/updates/activity_probe.hpp"
 #include "reboot/updates/pending_update_marker.hpp"
 #include "reboot/updates/update_offer.hpp"

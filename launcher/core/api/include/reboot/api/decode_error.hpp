@@ -1,10 +1,10 @@
 #pragma once
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
+// Plain data, so clients need no message registry; the engine's api_dispatch turns it into a Diagnostic.
 enum class DecodeError : u8 {
     // Not protobuf wire data for the message.
     Malformed,
@@ -13,8 +13,5 @@ enum class DecodeError : u8 {
     // A oneof with no member set: a case added by a newer schema. Events holding one are skipped.
     UnknownCase,
 };
-
-// `method_id` travels as the "method" arg.
-[[nodiscard]] ::rb::Diagnostic to_diagnostic(DecodeError error, u32 method_id);
 
 }  // namespace rb::api

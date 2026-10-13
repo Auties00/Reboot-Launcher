@@ -3,10 +3,10 @@
 #include <memory>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ports/session_host.hpp"
 #include "reboot/testing/fake_session_control.hpp"
 #include "reboot/testing/fault_plan.hpp"

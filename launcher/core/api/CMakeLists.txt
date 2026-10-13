@@ -1,17 +1,24 @@
-# reboot.api.v1 and its generated C++. Only the engine and core/testing link this package;
-# reboot_client never does, because it passes payloads through undecoded.
-# include/reboot/api/v1, src/dispatch.cpp and the client's reboot/client_methods.h are generated
-# from launcher/schema. Each generated
-# header holds every type of one .proto file, the one exception to one main type per header.
-reboot_add_package(api
-  SOURCES
-    src/bootstrap_ids.cpp
-    src/decode_error.cpp
-    src/dispatch.cpp
-    src/enum_mirrors.cpp
-    src/messages.cpp)
-if(TARGET reboot_api_tests)
+# reboot.api.v1 types: the generated aggregates, enums and method table, and the codec. Header-only
+# on reboot::base, so the SDK and every client compile it with their own toolchain; the engine-side
+# handler interfaces and dispatch live in api_dispatch. reboot_client never includes it, because it
+# passes payloads through undecoded.
+# include/reboot/api/v1, ../api_dispatch's generated files, the client's reboot/client_methods.h are
+# generated from launcher/schema. Each generated header holds every type of one .proto file, the one
+# exception to one main type per header.
+add_library(reboot_api INTERFACE)
+add_library(reboot::api ALIAS reboot_api)
+target_include_directories(reboot_api INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(reboot_api INTERFACE reboot::base)
+_reboot_record_target(reboot_api lean)
+
+if(REBOOT_BUILD_TESTS)
+  add_executable(reboot_api_tests tests/golden_test.cpp tests/method_table_test.cpp tests/wire_mirror_test.cpp)
+  target_link_libraries(reboot_api_tests PRIVATE reboot_api reboot::contracts Catch2::Catch2WithMain reboot_warnings)
   target_compile_definitions(reboot_api_tests PRIVATE REBOOT_API_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
+  if(NOT COMMAND catch_discover_tests)
+    include(Catch)
+  endif()
+  catch_discover_tests(reboot_api_tests)
 endif()
 
 # Build-time tools only; the generated C++ and golden vectors are committed. protoc is vcpkg's

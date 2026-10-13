@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "win32.hpp"
 
 namespace rb::os_windows::ipc {

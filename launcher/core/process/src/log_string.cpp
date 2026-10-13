@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/process/built_env.hpp"
 #include "reboot/process/process_spec.hpp"

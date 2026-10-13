@@ -7,6 +7,7 @@
 #include <system_error>
 #include <utility>
 
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/posix/posix_error.hpp"
 

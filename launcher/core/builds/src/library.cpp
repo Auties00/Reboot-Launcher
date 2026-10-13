@@ -10,6 +10,7 @@
 #include "builds_error.hpp"
 #include "messages.hpp"
 #include "op_tracker.hpp"
+#include "reboot/base/version_bucket.hpp"
 #include "reboot/builds/build_usage.hpp"
 #include "reboot/builds/detect_version.hpp"
 #include "reboot/builds/layout_resolver.hpp"
@@ -398,7 +399,7 @@ std::vector<InstalledBuild> Library::find_compatible(const GameVersion& version)
     for (InstalledBuild& build : list()) {
         if (!build.version_confirmed()) continue;
         if (*build.version == version) exact.push_back(std::move(build));
-        else if (build.version->bucket() == version.bucket()) bucket.push_back(std::move(build));
+        else if (version_bucket(*build.version) == version_bucket(version)) bucket.push_back(std::move(build));
     }
     const auto newer_added = [](const InstalledBuild& a, const InstalledBuild& b) { return a.added_at > b.added_at; };
     std::ranges::stable_sort(exact, newer_added);

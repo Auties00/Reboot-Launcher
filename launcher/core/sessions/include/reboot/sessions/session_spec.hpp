@@ -3,8 +3,8 @@
 #include <optional>
 #include <string>
 
-#include "reboot/foundation/types.hpp"
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/types.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/ports/runner.hpp"
 #include "reboot/sessions/lease.hpp"
 #include "reboot/sessions/pinned_inputs.hpp"

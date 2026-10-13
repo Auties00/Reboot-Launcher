@@ -3,7 +3,7 @@
 #include <optional>
 #include <span>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ux/language_info.hpp"
 #include "reboot/ux/language_preference.hpp"
 #include "reboot/ux/language_tag.hpp"

@@ -15,12 +15,13 @@
 #include <vector>
 
 #include "messages.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/compat/runner_env.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/contracts/winhost.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"
-#include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/game_channel/game_channel_listener.hpp"
 #include "reboot/game_channel/winhost_peer.hpp"

@@ -23,6 +23,7 @@
 #include "conformance_support.hpp"
 #include "linux_log_file_system.hpp"
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/paths.hpp"
 #include "reboot/os_linux/platform/inotify_watcher.hpp"
 #include "reboot/os_linux/platform/libsecret_secret_store.hpp"

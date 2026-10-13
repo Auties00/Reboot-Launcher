@@ -5,7 +5,7 @@
 
 #include "reboot/backend/backend_state.hpp"
 #include "reboot/backend/backend_stop_cause.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::backend {
 

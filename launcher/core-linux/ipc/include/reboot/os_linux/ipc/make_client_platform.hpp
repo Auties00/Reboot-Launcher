@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/ports/platform_services.hpp"
 
 namespace rb::ports {

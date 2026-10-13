@@ -2,6 +2,10 @@
 
 #include <memory>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/compat/compat_document.hpp"
 #include "reboot/compat/prefix_lease.hpp"
 #include "reboot/compat/prefix_request.hpp"
@@ -9,11 +13,7 @@
 #include "reboot/compat/runner_profile.hpp"
 #include "reboot/components/progress_sink.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/paths.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/storage/document_store.hpp"
 
 namespace rb {

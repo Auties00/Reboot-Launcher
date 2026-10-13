@@ -3,7 +3,7 @@
 #include <chrono>
 #include <optional>
 
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/trust/signed_document_kind.hpp"
 
 namespace rb::trust {

@@ -3,9 +3,9 @@
 #include <string>
 #include <string_view>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/browser/deep_link.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/testing/fuzz.hpp"
 
 using rb::testing::fuzz_require;

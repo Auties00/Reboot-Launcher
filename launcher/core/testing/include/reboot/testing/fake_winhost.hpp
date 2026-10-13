@@ -4,11 +4,11 @@
 #include <optional>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/framing.hpp"
 #include "reboot/contracts/winhost.hpp"
 #include "reboot/foundation/clock.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
-#include "reboot/foundation/framing.hpp"
 #include "reboot/ports/ipc.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/testing/fake_winhost_script.hpp"

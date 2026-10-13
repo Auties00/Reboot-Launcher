@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/ports/runner.hpp"
 #include "reboot/support/host_inputs.hpp"
 #include "reboot/support/support_role.hpp"

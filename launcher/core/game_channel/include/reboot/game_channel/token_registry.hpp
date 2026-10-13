@@ -5,8 +5,8 @@
 #include <optional>
 #include <span>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/contracts/game_client.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/game_channel/control_token.hpp"
 #include "reboot/game_channel/peer_key.hpp"

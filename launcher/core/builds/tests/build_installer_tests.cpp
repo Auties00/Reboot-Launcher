@@ -17,6 +17,7 @@
 #include "reboot/builds/build_installer.hpp"
 #include "reboot/builds/install_outcome.hpp"
 #include "reboot/builds/libarchive_extractor.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/sha256.hpp"
 #include "reboot/net/host_tls_memory.hpp"
 #include "reboot/net/http_client.hpp"

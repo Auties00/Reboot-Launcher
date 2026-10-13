@@ -1,7 +1,7 @@
 #pragma once
 
+#include "reboot/base/version.hpp"
 #include "reboot/contracts/game_client.hpp"
-#include "reboot/foundation/version.hpp"
 #include "reboot/injection/net_mode.hpp"
 
 namespace rb::injection {

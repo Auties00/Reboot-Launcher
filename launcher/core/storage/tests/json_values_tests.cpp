@@ -15,7 +15,7 @@ static_assert(rb::storage::PersistedEnum<rb::ports::IntegrationKind>);
 #include <boost/json/value.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/storage/console_key.hpp"
 #include "reboot/storage/load_report.hpp"

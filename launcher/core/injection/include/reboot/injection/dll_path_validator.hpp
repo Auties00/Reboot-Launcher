@@ -2,9 +2,9 @@
 
 #include <span>
 
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/result_fwd.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::ports {
 class IFileSystem;

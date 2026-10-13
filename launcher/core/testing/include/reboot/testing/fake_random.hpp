@@ -3,8 +3,8 @@
 #include <mutex>
 #include <span>
 
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/random.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::testing {
 

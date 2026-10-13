@@ -3,8 +3,9 @@
 #include <string_view>
 #include <utility>
 
+#include "reboot/base/types.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/net_types.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/secrets/secret_error.hpp"
 #include "reboot/secrets/secret_target.hpp"
 

@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/catalog/catalog_source.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::catalog {
 

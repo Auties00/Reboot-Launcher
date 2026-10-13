@@ -5,11 +5,11 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/browser/browser_session.hpp"
 #include "reboot/components/component_problem.hpp"
 #include "reboot/engine/api_router.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/flat_map.hpp"
 #include "reboot/integration/entry_status.hpp"

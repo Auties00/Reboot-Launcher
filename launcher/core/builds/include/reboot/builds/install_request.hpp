@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/support/support_role.hpp"
 
 namespace rb::builds {

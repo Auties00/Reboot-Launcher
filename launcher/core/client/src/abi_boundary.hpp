@@ -5,10 +5,10 @@
 #include <vector>
 
 #include "call_failure.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/client.h"
 #include "reboot/contracts/common.hpp"
 #include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::client {
 

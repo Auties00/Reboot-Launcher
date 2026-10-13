@@ -5,11 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -268,25 +266,6 @@ struct SettingsChanged {
     std::vector<std::string> keys;
 
     bool operator==(const SettingsChanged&) const = default;
-};
-
-// The settings registry and the opaque per-shell UI state.
-class ISettingsHandler {
-public:
-    virtual ~ISettingsHandler() = default;
-
-    virtual ::rb::Result<SettingsSnapshotResponse> snapshot(const CallContext& context, const SettingsSnapshotRequest& request) = 0;
-    virtual ::rb::Result<SettingsPatchResponse> patch(const CallContext& context, const SettingsPatchRequest& request) = 0;
-    virtual ::rb::Result<SettingsResetResponse> reset(const CallContext& context, const SettingsResetRequest& request) = 0;
-    virtual ::rb::Result<SettingsSearchResponse> search(const CallContext& context, const SettingsSearchRequest& request) = 0;
-    virtual ::rb::Result<SettingsFrontendStateGetResponse> frontend_state_get(const CallContext& context, const SettingsFrontendStateGetRequest& request) = 0;
-    // Write-behind: FrontendStateGet answers the new state at once, and a failed write becomes a
-    // notice.
-    virtual ::rb::Result<SettingsFrontendStatePutResponse> frontend_state_put(const CallContext& context, const SettingsFrontendStatePutRequest& request) = 0;
-    virtual ::rb::Result<SettingsLanguagesResponse> languages(const CallContext& context, const SettingsLanguagesRequest& request) = 0;
-    virtual ::rb::Result<SettingsDescriptorsResponse> descriptors(const CallContext& context, const SettingsDescriptorsRequest& request) = 0;
-    virtual ::rb::Result<SettingsConsoleKeysResponse> console_keys(const CallContext& context, const SettingsConsoleKeysRequest& request) = 0;
-    virtual ::rb::Result<SettingsConsoleKeyFromNativeResponse> console_key_from_native(const CallContext& context, const SettingsConsoleKeyFromNativeRequest& request) = 0;
 };
 
 }  // namespace rb::api

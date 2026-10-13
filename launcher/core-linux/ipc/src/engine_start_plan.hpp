@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/native_path.hpp"
 #include "systemd_unit_state.hpp"
 
 namespace rb::os_linux::ipc {

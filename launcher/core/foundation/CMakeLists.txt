@@ -5,7 +5,6 @@ add_library(reboot_foundation STATIC
   src/executor.cpp
   src/log.cpp
   src/messages.cpp
-  src/native_path.cpp
   src/net_types.cpp
   src/operation.cpp
   src/paths.cpp
@@ -13,16 +12,14 @@ add_library(reboot_foundation STATIC
   src/random_os.cpp
   src/sha256.cpp
   src/text.cpp
-  src/types.cpp
-  src/user_request.cpp
-  src/version.cpp)
+  src/user_request.cpp)
 add_library(reboot::foundation ALIAS reboot_foundation)
 target_include_directories(reboot_foundation
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
   # paths.cpp calls IPlatformPaths; ports is part of the foundation but links foundation itself.
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/../ports/include")
 target_link_libraries(reboot_foundation
-  PUBLIC sb_contract Boost::headers Boost::asio Boost::container Boost::unordered Threads::Threads
+  PUBLIC reboot::base Boost::container Threads::Threads
   PRIVATE reboot_warnings $<$<PLATFORM_ID:Windows>:bcrypt>)
 _reboot_record_target(reboot_foundation foundation)
 

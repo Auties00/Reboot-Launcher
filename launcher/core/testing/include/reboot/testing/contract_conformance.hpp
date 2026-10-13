@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "reboot/base/native_path.hpp"
 #include "reboot/contracts/game_server.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/net_types.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/ports/process.hpp"

@@ -2,9 +2,9 @@
 
 #include <string_view>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/game_client.hpp"
 #include "reboot/contracts/winhost.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::game_channel {
 

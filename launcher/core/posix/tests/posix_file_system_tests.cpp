@@ -12,7 +12,7 @@
 #include "messages.hpp"
 #include "owner_only_directory.hpp"
 #include "posix_test_support.hpp"
-#include "reboot/foundation/diag.hpp"
+#include "reboot/base/diag.hpp"
 #include "reboot/posix/posix_error.hpp"
 #include "reboot/posix/posix_file_system.hpp"
 #include "reboot/posix/unique_fd.hpp"

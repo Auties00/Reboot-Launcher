@@ -6,8 +6,8 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/testing/fake_client_dll_script.hpp"
 
 namespace rb::testing {

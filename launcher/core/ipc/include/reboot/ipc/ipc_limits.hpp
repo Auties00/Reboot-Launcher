@@ -3,7 +3,7 @@
 #include <chrono>
 #include <cstddef>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 // The per-connection caps (subscriptions, calls, outbound budget) live in contracts/ipc.hpp.
 namespace rb::ipc {

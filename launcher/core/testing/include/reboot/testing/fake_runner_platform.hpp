@@ -10,10 +10,10 @@
 #include <utility>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/foundation/user_request.hpp"
 #include "reboot/ports/process.hpp"
 #include "reboot/ports/runner.hpp"

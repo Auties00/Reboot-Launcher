@@ -5,8 +5,8 @@
 #include <span>
 #include <string_view>
 
+#include "reboot/base/types.hpp"
 #include "reboot/builds/release_marker.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::builds {
 

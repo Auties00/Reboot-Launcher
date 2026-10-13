@@ -2,8 +2,8 @@
 
 #include <memory>
 
+#include "reboot/base/diag.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
 #include "reboot/ports/net.hpp"
 
 namespace rb::ports {

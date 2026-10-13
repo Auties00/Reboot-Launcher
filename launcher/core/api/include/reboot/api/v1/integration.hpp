@@ -5,11 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "reboot/api/call_context.hpp"
 #include "reboot/api/v1/common.hpp"
-#include "reboot/foundation/operation.hpp"
-#include "reboot/foundation/result_fwd.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 
 namespace rb::api {
 
@@ -194,26 +191,6 @@ struct PrerequisitesChanged {
     std::vector<Prerequisite> prerequisites;
 
     bool operator==(const PrerequisitesChanged&) const = default;
-};
-
-// OS integration, prerequisites and shell actions.
-class IIntegrationHandler {
-public:
-    virtual ~IIntegrationHandler() = default;
-
-    virtual ::rb::Result<IntegrationStatusResponse> status(const CallContext& context, const IntegrationStatusRequest& request) = 0;
-    virtual ::rb::Result<IntegrationPrerequisitesResponse> prerequisites(const CallContext& context, const IntegrationPrerequisitesRequest& request) = 0;
-    virtual ::rb::Result<IntegrationShellOpenUrlResponse> shell_open_url(const CallContext& context, const IntegrationShellOpenUrlRequest& request) = 0;
-    virtual ::rb::Result<IntegrationShellOpenPathResponse> shell_open_path(const CallContext& context, const IntegrationShellOpenPathRequest& request) = 0;
-    virtual ::rb::Result<IntegrationShellRevealResponse> shell_reveal(const CallContext& context, const IntegrationShellRevealRequest& request) = 0;
-    // Completes with IntegrationApplyResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_apply(const CallContext& context, const IntegrationApplyRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with IntegrationRemoveResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_remove(const CallContext& context, const IntegrationRemoveRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with IntegrationRemediateResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_remediate(const CallContext& context, const IntegrationRemediateRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
-    // Completes with IntegrationPurgeResponse.
-    virtual ::rb::Result<::rb::OpHandle> start_purge(const CallContext& context, const IntegrationPurgeRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 }  // namespace rb::api

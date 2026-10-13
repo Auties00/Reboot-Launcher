@@ -3,12 +3,12 @@
 #include <optional>
 #include <variant>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/native_path.hpp"
 #include "reboot/builds/build_layout.hpp"
 #include "reboot/builds/file_finder.hpp"
 #include "reboot/builds/needs_shipping_choice.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/native_path.hpp"
 
 namespace rb::builds {
 

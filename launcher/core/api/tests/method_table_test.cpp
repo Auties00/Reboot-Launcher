@@ -20,14 +20,14 @@ TEST_CASE("installs, play starts and host starts outlive their connection", "[me
         const api::MethodSpec* spec = api::MethodTable::find(id);
         REQUIRE(spec);
         CHECK(spec->kind == api::MethodKind::Operation);
-        CHECK(spec->default_disconnect == rb::DisconnectPolicy::Detached);
+        CHECK(spec->default_disconnect == api::Disconnect::Detached);
     }
 }
 
 TEST_CASE("calls are bound to their connection and report no progress", "[methods]") {
     for (const api::MethodSpec& spec : api::MethodTable::all()) {
         if (spec.kind != api::MethodKind::Call) continue;
-        CHECK(spec.default_disconnect == rb::DisconnectPolicy::BoundToConnection);
+        CHECK(spec.default_disconnect == api::Disconnect::BoundToConnection);
         CHECK(spec.progress == api::ProgressUnit::NoProgress);
     }
 }

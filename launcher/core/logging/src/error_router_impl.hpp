@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-#include "reboot/foundation/function.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/logging/error_router.hpp"
 
 namespace rb::logging {

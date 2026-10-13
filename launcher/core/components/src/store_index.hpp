@@ -3,11 +3,11 @@
 #include <span>
 #include <vector>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/components/component_ref.hpp"
 #include "reboot/components/payload_entry.hpp"
 #include "reboot/components/remote_file.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/types.hpp"
 
 namespace rb::components {
 

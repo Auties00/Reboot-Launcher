@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "messages.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "unique_handle.hpp"
 #include "wide.hpp"

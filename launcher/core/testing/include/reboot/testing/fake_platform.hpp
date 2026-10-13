@@ -2,8 +2,8 @@
 
 #include <utility>
 
-#include "reboot/foundation/native_path.hpp"
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/ports/ipc.hpp"
 #include "reboot/ports/platform_services.hpp"
 #include "reboot/testing/fake_disk_info.hpp"

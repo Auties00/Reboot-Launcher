@@ -6,15 +6,15 @@
 #include <span>
 #include <string>
 
+#include "reboot/base/diag.hpp"
+#include "reboot/base/framing.hpp"
+#include "reboot/base/function.hpp"
+#include "reboot/base/native_path.hpp"
+#include "reboot/base/secret.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/ipc.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/framing.hpp"
-#include "reboot/foundation/function.hpp"
-#include "reboot/foundation/native_path.hpp"
 #include "reboot/foundation/operation.hpp"
 #include "reboot/foundation/paths.hpp"
-#include "reboot/foundation/secret.hpp"
-#include "reboot/foundation/types.hpp"
 #include "reboot/ipc/ipc_client_sink.hpp"
 #include "reboot/ipc/ipc_codec.hpp"
 

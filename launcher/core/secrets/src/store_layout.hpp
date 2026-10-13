@@ -7,7 +7,7 @@
 #include <string_view>
 #include <vector>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/secrets/secret_kind.hpp"
 #include "reboot/secrets/secret_target.hpp"
 

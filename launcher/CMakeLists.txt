@@ -60,19 +60,20 @@ if(REBOOT_BUILD_TESTS)
   enable_testing()
 endif()
 
+add_subdirectory(core/base)
 add_subdirectory(core/foundation)
 add_subdirectory(core/ports)
 add_subdirectory(core/contracts)
 
 set(REBOOT_CORE_PACKAGES
-  api posix logging trust storage ux net components catalog support builds
+  api api_dispatch posix logging trust storage ux net components catalog support builds
   process secrets identity injection game_channel compat backend front gameserver
   sessions browser publish host play updates integration
   ipc engine client testing)
 
 if(WIN32)
   set(REBOOT_OS windows)
-  set(REBOOT_OS_PACKAGES platform ipc win32session winhost)
+  set(REBOOT_OS_PACKAGES platform ipc win32session)
 elseif(APPLE)
   set(REBOOT_OS macos)
   set(REBOOT_OS_PACKAGES platform ipc runner)
@@ -89,6 +90,10 @@ endforeach()
 foreach(package IN LISTS REBOOT_OS_PACKAGES)
   add_subdirectory(core-${REBOOT_OS}/${package})
 endforeach()
+# What runs inside the game's prefix or process: x64 MSVC /MT, on reboot::base and contracts alone.
+if(WIN32)
+  add_subdirectory(payload/winhost)
+endif()
 
 add_library(reboot_platform INTERFACE)
 add_library(reboot::platform ALIAS reboot_platform)

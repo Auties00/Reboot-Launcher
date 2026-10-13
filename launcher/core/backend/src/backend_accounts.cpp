@@ -12,6 +12,7 @@
 #include "reboot/backend/backend_accounts_changed.hpp"
 #include "reboot/backend/backend_process.hpp"
 #include "reboot/backend/backend_service.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/events.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/user_request.hpp"

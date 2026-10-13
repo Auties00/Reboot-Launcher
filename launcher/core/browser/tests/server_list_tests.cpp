@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "browser_test_support.hpp"
+#include "reboot/base/version_bucket.hpp"
 #include "reboot/browser/server_list.hpp"
 #include "reboot/foundation/events.hpp"
 
@@ -94,7 +95,7 @@ TEST_CASE("a view loads from its snapshot, sorted and without own servers", "[br
 TEST_CASE("installed buckets are merged, deduplicated and filtered to the exact build", "[browser][list]") {
     ListRig rig;
     const GameVersion wanted = *GameVersion::parse("8.51");
-    ViewSpec spec = spec_for({wanted.bucket(), GameVersion::parse("9.10")->bucket()});
+    ViewSpec spec = spec_for({version_bucket(wanted), version_bucket(*GameVersion::parse("9.10"))});
     spec.versions.exact_version = wanted;
     ViewId id;
     const auto subscribes = rig.open(spec, id);
@@ -115,7 +116,7 @@ TEST_CASE("a server seen in two buckets' views is listed once", "[browser][list]
     ListRig rig;
     ViewId id;
     const auto subscribes =
-        rig.open(spec_for({GameVersion::parse("8.51")->bucket(), GameVersion::parse("9.10")->bucket()}), id);
+        rig.open(spec_for({version_bucket(*GameVersion::parse("8.51")), version_bucket(*GameVersion::parse("9.10"))}), id);
     REQUIRE(subscribes.size() == 2);
     Edge& edge = *rig.edges.back();
     // The server moved to 9.10; the 8.51 view has not dropped it yet.
@@ -160,8 +161,8 @@ TEST_CASE("more buckets than the edge allows fall back to every version filtered
     ListRig rig;
     BrowserLease lease = rig.session.acquire();
     Edge& edge = rig.connect(2);
-    const std::vector<u32> buckets{GameVersion::parse("7.40")->bucket(), GameVersion::parse("8.51")->bucket(),
-                                   GameVersion::parse("9.10")->bucket()};
+    const std::vector<u32> buckets{version_bucket(*GameVersion::parse("7.40")), version_bucket(*GameVersion::parse("8.51")),
+                                   version_bucket(*GameVersion::parse("9.10"))};
     auto opened = rig.list.open(spec_for(buckets));
     REQUIRE(opened);
     const wire::Subscribe first = edge.expect<wire::Subscribe>();
@@ -210,7 +211,7 @@ TEST_CASE("a refused fallback is Failed until a closed view frees a slot", "[bro
     const wire::Subscribe other_sub = edge.expect<wire::Subscribe>();
     edge.send(wire::SubOpen{other_sub.req_id, other_sub.sub_id, 1, 50});
 
-    auto opened = rig.list.open(spec_for({GameVersion::parse("8.51")->bucket(), GameVersion::parse("9.10")->bucket()}));
+    auto opened = rig.list.open(spec_for({version_bucket(*GameVersion::parse("8.51")), version_bucket(*GameVersion::parse("9.10"))}));
     REQUIRE(opened);
     const wire::Subscribe first = edge.expect<wire::Subscribe>();
     const wire::Subscribe second = edge.expect<wire::Subscribe>();

@@ -20,6 +20,7 @@
 #include "messages.hpp"
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/clock.hpp"
+#include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/executor.hpp"
 #include "reboot/foundation/log.hpp"
 #include "reboot/foundation/random.hpp"

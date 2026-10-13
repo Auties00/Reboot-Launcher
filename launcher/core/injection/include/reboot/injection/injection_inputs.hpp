@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "reboot/foundation/version.hpp"
+#include "reboot/base/version.hpp"
 #include "reboot/injection/pinned_dll.hpp"
 #include "reboot/injection/runtime_boot_default.hpp"
 #include "reboot/ports/session_host.hpp"

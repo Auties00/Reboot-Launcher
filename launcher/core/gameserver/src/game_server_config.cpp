@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "address_text.hpp"
-#include "reboot/foundation/secret.hpp"
+#include "reboot/base/secret.hpp"
 #include "reboot/foundation/text.hpp"
 #include "reboot/gameserver/game_server_error.hpp"
 

@@ -4,9 +4,9 @@
 
 #include "reboot/backend/backend_info.hpp"
 #include "reboot/backend/backend_url.hpp"
+#include "reboot/base/diag.hpp"
+#include "reboot/base/function.hpp"
 #include "reboot/foundation/cancel.hpp"
-#include "reboot/foundation/diag.hpp"
-#include "reboot/foundation/function.hpp"
 
 namespace rb::net {
 class HttpClient;

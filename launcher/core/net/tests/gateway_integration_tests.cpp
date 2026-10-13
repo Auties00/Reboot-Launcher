@@ -8,7 +8,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "reboot/foundation/types.hpp"
+#include "reboot/base/types.hpp"
 #include "reboot/net/port_mapper_service.hpp"
 #include "reboot/net/port_mapping_gateway.hpp"
 
