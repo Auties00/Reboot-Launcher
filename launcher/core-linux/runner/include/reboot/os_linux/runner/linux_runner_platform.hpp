@@ -33,7 +33,8 @@ public:
     Result<void> post_extract(const NativePath& runtime_dir) override;
 
     // `base` already holds the runner layer from EnvBuilder; this adds WINEPREFIX and, for an umu
-    // layout, winhost's directory to PRESSURE_VESSEL_FILESYSTEMS_RW.
+    // layout, winhost's directory to PRESSURE_VESSEL_FILESYSTEMS_RW and PROTON_VERB=runinprefix, so
+    // Proton runs winhost with Wine directly and its stdin stays the engine's pipe.
     Result<ports::ProcessLaunch> runner_launch(const ports::RuntimeLayout& layout, const NativePath& prefix,
                                                const NativePath& winhost_exe, ports::EnvBlock base) override;
 

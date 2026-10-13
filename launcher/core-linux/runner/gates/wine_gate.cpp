@@ -546,10 +546,10 @@ TEST_CASE("winhost under Wine starts the game with the env overlay, relays it, a
     REQUIRE(game_channel.port() != 0);
     const std::array<u8, 32> game_token = fresh_token();
 
-    REQUIRE(winhost.start(*in, dir, engine).empty());
+    REQUIRE(winhost.start(*in, dir, engine) == "");
     const std::string launched = launch_game(engine, winhost.token, spawn_game(in->game, game_env_block(game_channel, game_token)));
     INFO(winhost.child->output());
-    REQUIRE(launched.empty());
+    REQUIRE(launched == "");
     expect_game_hello(game_channel, game_token);
 
     // Stop is answered from the request thread; winhost's exit shows its shutdown woke the blocked recv.
@@ -611,10 +611,10 @@ TEST_CASE("under umu and GE-Proton winhost reads its token from stdin and runs t
     REQUIRE(engine.port() != 0);
     REQUIRE(game_channel.port() != 0);
     const std::array<u8, 32> game_token = fresh_token();
-    REQUIRE(winhost.start_under(runner, *layout, prefix_dir, in->winhost, engine, umu_env(*layout, in->game)).empty());
+    REQUIRE(winhost.start_under(runner, *layout, prefix_dir, in->winhost, engine, umu_env(*layout, in->game)) == "");
     const std::string launched = launch_game(engine, winhost.token, spawn_game(in->game, game_env_block(game_channel, game_token)));
     INFO(winhost.child->output());
-    REQUIRE(launched.empty());
+    REQUIRE(launched == "");
     expect_game_hello(game_channel, game_token);
 
     engine.send(wh::Stop{2, 500});
@@ -634,7 +634,7 @@ TEST_CASE("a failed launch under Wine ends winhost with LaunchFailed", "[wine]")
     const NativePath& dir = prefix(*in);
     Loopback engine;
     Winhost winhost;
-    REQUIRE(winhost.start(*in, dir, engine).empty());
+    REQUIRE(winhost.start(*in, dir, engine) == "");
 
     const bool hello = engine.accept_peer(kWineStart) && engine.preamble_ok() && engine.expect<wh::WhHello>();
     INFO(winhost.child->output());
@@ -657,10 +657,10 @@ TEST_CASE("under Wine the game's host cmdline and environ hold no secret, and en
     Loopback game_channel;
     Winhost winhost;
     const std::array<u8, 32> game_token = fresh_token();
-    REQUIRE(winhost.start(*in, dir, engine).empty());
+    REQUIRE(winhost.start(*in, dir, engine) == "");
     const std::string launched = launch_game(engine, winhost.token, spawn_game(in->game, game_env_block(game_channel, game_token)));
     INFO(winhost.child->output());
-    REQUIRE(launched.empty());
+    REQUIRE(launched == "");
     expect_game_hello(game_channel, game_token);
 
     const std::optional<u32> game = wait_for_process(dir, kGameName, kExit);

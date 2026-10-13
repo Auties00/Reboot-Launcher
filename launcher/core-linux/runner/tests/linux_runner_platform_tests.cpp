@@ -78,7 +78,7 @@ TEST_CASE("a Wine launch keeps base and sets only the launcher prefix", "[linux_
     CHECK(launch->own_group);
 }
 
-TEST_CASE("an umu launch also exposes winhost's directory", "[linux_runner_platform]") {
+TEST_CASE("an umu launch also exposes winhost's directory and runs it in the prefix", "[linux_runner_platform]") {
     Fixture fixture;
     rb::ports::EnvBlock base{{{"PROTONPATH", "/rt/ge-proton"}, {"PRESSURE_VESSEL_FILESYSTEMS_RW", "/games/build"}}};
     const auto launch = fixture.platform.runner_launch(umu_layout(), NativePath{"/data/prefix"},
@@ -87,7 +87,8 @@ TEST_CASE("an umu launch also exposes winhost's directory", "[linux_runner_platf
     CHECK(launch->exe == NativePath{"/rt/umu/umu-run"});
     CHECK(launch->env.vars == EnvVars{{"PROTONPATH", "/rt/ge-proton"},
                                       {"WINEPREFIX", "/data/prefix"},
-                                      {"PRESSURE_VESSEL_FILESYSTEMS_RW", "/games/build:/data/winhost"}});
+                                      {"PRESSURE_VESSEL_FILESYSTEMS_RW", "/games/build:/data/winhost"},
+                                      {"PROTON_VERB", "runinprefix"}});
 }
 
 TEST_CASE("an umu launch refuses a winhost directory with a colon", "[linux_runner_platform]") {

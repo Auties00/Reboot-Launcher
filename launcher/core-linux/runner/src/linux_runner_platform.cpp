@@ -19,6 +19,10 @@ namespace {
 constexpr std::string_view kFilesystemsRw = "PRESSURE_VESSEL_FILESYSTEMS_RW";
 // Relative to the GE-Proton root.
 constexpr std::string_view kProtonWineServer = "files/bin/wineserver";
+// Proton's default verb starts a unix path through umu.exe, which gives a console program its own
+// console, so winhost would never read the token on its stdin; runinprefix runs `wine <winhost>`.
+constexpr std::string_view kProtonVerb = "PROTON_VERB";
+constexpr std::string_view kWinhostVerb = "runinprefix";
 
 // Adds `dir` to what pressure-vessel shares read-write with the container.
 Result<void> expose(ports::EnvBlock& env, const NativePath& dir) {
@@ -68,8 +72,10 @@ Result<ports::ProcessLaunch> LinuxRunnerPlatform::runner_launch(const ports::Run
                                                                 const NativePath& winhost_exe, ports::EnvBlock base) {
     // string() is the native bytes on POSIX.
     set_var(base, "WINEPREFIX", prefix.string());
-    if (UmuInvocation::is_umu_layout(layout))
+    if (UmuInvocation::is_umu_layout(layout)) {
         if (auto exposed = expose(base, winhost_exe.parent_path()); !exposed) return std::unexpected(exposed.error());
+        set_var(base, kProtonVerb, std::string(kWinhostVerb));
+    }
 
     ports::ProcessLaunch launch;
     launch.exe = layout.entry;
