@@ -118,6 +118,10 @@ Result<std::unique_ptr<ports::ITokenFile>> TokenFiles::write(std::string_view to
     if (::mkdtemp(pattern.data()) == nullptr) return std::unexpected(call_failed("mkdtemp", errno, canonical_base));
     // From here on the handle removes what exists of the directory and the file.
     auto file = std::make_unique<PosixTokenFile>(NativePath(pattern), token.size());
+    // mkdtemp's 0700 is narrowed by the umask, which could leave the directory unwritable.
+    const UniqueFd dir{::open(pattern.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)};
+    if (!dir.valid()) return std::unexpected(call_failed("open", errno, NativePath(pattern)));
+    if (::fchmod(dir.get(), 0700) != 0) return std::unexpected(call_failed("fchmod", errno, NativePath(pattern)));
     if (auto written = write_exclusive_file(file->path(), token); !written)
         return std::unexpected(std::move(written.error()));
     return std::unique_ptr<ports::ITokenFile>(std::move(file));
