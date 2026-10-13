@@ -41,6 +41,8 @@ public:
     Result<u64> set(std::string_view key_id, const boost::json::value& value, std::optional<u64> expected_revision);
     // One revision and one SettingsChanged for all of `keys`.
     Result<u64> reset_to_defaults(std::span<const AnyKey* const> keys);
+    // Fails as every change would: storage.read_only, storage.schema_backup_failed or storage.upgrade_failed.
+    [[nodiscard]] Result<void> check_writable() const;
 
 private:
     Result<u64> commit(const SettingsValues& next);

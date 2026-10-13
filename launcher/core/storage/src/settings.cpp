@@ -121,6 +121,8 @@ Result<u64> Settings::reset_to_defaults(std::span<const AnyKey* const> keys) {
     return commit(next);
 }
 
+Result<void> Settings::check_writable() const { return store_.check_writable(); }
+
 Result<u64> Settings::commit(const SettingsValues& next) {
     std::vector<std::string> changed;
     for (const AnyKey* key : registry_.all())

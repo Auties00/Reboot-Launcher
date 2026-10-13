@@ -12,6 +12,7 @@
 
 #include "backend_endpoint.hpp"
 #include "reboot/foundation/events.hpp"
+#include "reboot/foundation/log.hpp"
 #include "reboot/foundation/random.hpp"
 #include "reboot/identity/display_name.hpp"
 #include "reboot/identity/identity_changed_event.hpp"
@@ -35,19 +36,47 @@ struct PickedRecords {
     bool rewrite = false;
 };
 
-// The first record of each role; a missing one, or a host sharing the client's record_id, is minted.
-[[nodiscard]] PickedRecords pick_records(const storage::AccountsDocument& document, IRandom& random) {
+// Fills a name or tag storage left empty from `known`, the record in memory, when it has the same record_id.
+[[nodiscard]] bool repair(AccountRecord& record, const AccountRecord* known, IRandom& random) {
+    const bool same = known != nullptr && known->record_id == record.record_id;
+    bool repaired = false;
+    if (!validate_display_name(record.display_name)) {
+        const bool keep = same && validate_display_name(known->display_name);
+        record.display_name = keep ? known->display_name : default_display_name(record.role, random);
+        repaired = true;
+    }
+    if (record.tag.size() != kTagLength) {
+        record.tag = same && known->tag.size() == kTagLength ? known->tag : generate_tag(random);
+        repaired = true;
+    }
+    return repaired;
+}
+
+// The first record of each role, repaired. A missing one, or a host sharing the client's record_id, is the one in
+// memory (`known`, absent at startup) when that one is still distinct, and minted otherwise.
+[[nodiscard]] PickedRecords pick_records(const storage::AccountsDocument& document, const IdentitySnapshot* known,
+                                         IRandom& random) {
     const auto find = [&document](AccountRole role, const AccountRecordId* other) -> const AccountRecord* {
         const auto it = std::ranges::find_if(document.records, [role, other](const AccountRecord& record) {
             return record.role == role && (other == nullptr || record.record_id != *other);
         });
         return it == document.records.end() ? nullptr : &*it;
     };
-    const AccountRecord* client = find(AccountRole::Client, nullptr);
-    const AccountRecord* host = find(AccountRole::Host, client != nullptr ? &client->record_id : nullptr);
-    PickedRecords picked{.snapshot = {.client = client != nullptr ? *client : mint(AccountRole::Client, random),
-                                      .host = host != nullptr ? *host : mint(AccountRole::Host, random)},
-                         .rewrite = client == nullptr || host == nullptr || document.records.size() != 2};
+    PickedRecords picked{.snapshot = {}, .rewrite = document.records.size() != 2};
+    const auto pick = [&](AccountRole role, const AccountRecordId* other) {
+        const AccountRecord* in_memory = nullptr;
+        if (known != nullptr) in_memory = role == AccountRole::Host ? &known->host : &known->client;
+        if (const AccountRecord* stored = find(role, other)) {
+            AccountRecord out = *stored;
+            if (repair(out, in_memory, random)) picked.rewrite = true;
+            return out;
+        }
+        picked.rewrite = true;
+        if (in_memory != nullptr && (other == nullptr || in_memory->record_id != *other)) return *in_memory;
+        return mint(role, random);
+    };
+    picked.snapshot.client = pick(AccountRole::Client, nullptr);
+    picked.snapshot.host = pick(AccountRole::Host, &picked.snapshot.client.record_id);
     return picked;
 }
 
@@ -67,9 +96,12 @@ IdentityService::IdentityService(storage::DocumentStore<storage::AccountsDocumen
                                  storage::DocumentStore<BackendLoginsDocument>& logins, IRandom& random,
                                  EventBus& events)
     : accounts_(accounts), logins_(logins), random_(random), events_(events) {
-    accounts_.set_on_reload([this](const storage::AccountsDocument& document, std::span<const storage::ValueIssue>) {
-        adopt(document);
-    });
+    accounts_.set_on_reload(
+        [this](const storage::AccountsDocument& document, std::span<const storage::ValueIssue> issues) {
+            for (const storage::ValueIssue& issue : issues)
+                REBOOT_LOG_WARN(Storage, "accounts.json: {} was not usable: {}", issue.path, issue.reason.id);
+            adopt(document);
+        });
     // The edit may change the client's effective_login.
     logins_.set_on_reload([this](const BackendLoginsDocument&, std::span<const storage::ValueIssue>) {
         publish_change(events_, current_.client);
@@ -82,7 +114,7 @@ IdentityService::~IdentityService() {
 }
 
 void IdentityService::ensure_records() {
-    PickedRecords picked = pick_records(accounts_.get(), random_);
+    PickedRecords picked = pick_records(accounts_.get(), nullptr, random_);
     current_ = std::move(picked.snapshot);
     if (!picked.rewrite) return;
     // A ReadOnly store refuses this; its LoadReport already said so and the records stay in memory.
@@ -92,7 +124,7 @@ void IdentityService::ensure_records() {
 }
 
 void IdentityService::adopt(const storage::AccountsDocument& document) {
-    PickedRecords picked = pick_records(document, random_);
+    PickedRecords picked = pick_records(document, &current_, random_);
     if (picked.rewrite)
         static_cast<void>(accounts_.update([records = picked.snapshot](storage::AccountsDocument& next) {
             next.records = {records.client, records.host};

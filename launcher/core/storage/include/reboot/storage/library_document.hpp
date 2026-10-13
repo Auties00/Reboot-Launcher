@@ -43,6 +43,8 @@ struct LibraryEntry {
     std::chrono::system_clock::time_point added_at;
     // Imported from another OS or a missing drive; kept and shown, never dropped.
     bool needs_relocation = false;
+    // The user's opt-in to use this build above the newest supported version.
+    bool allow_above_cap = false;
     // Members this build does not know, kept for the newer engine that wrote them.
     boost::json::object unknown;
 

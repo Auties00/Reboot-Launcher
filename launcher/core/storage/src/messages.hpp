@@ -18,6 +18,7 @@ REBOOT_MESSAGE_DECL(kMemoryOnly);
 REBOOT_MESSAGE_DECL(kCorrupt);
 REBOOT_MESSAGE_DECL(kQuarantineFailed);
 REBOOT_MESSAGE_DECL(kRestoredFromBackup);
+REBOOT_MESSAGE_DECL(kRestoredFromBackupQuarantined);
 REBOOT_MESSAGE_DECL(kSchemaBackupFailed);
 REBOOT_MESSAGE_DECL(kUpgradeFailed);
 REBOOT_MESSAGE_DECL(kWriteFailed);

@@ -1,6 +1,12 @@
 #include <any>
+#include <atomic>
+#include <format>
+#include <future>
 #include <optional>
+#include <set>
+#include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -35,6 +41,100 @@ std::optional<NeedsSecret> needs_secret(const UserRequestRegistry& requests, Req
         if (request.id == id && request.kind == UserRequestKind::NeedsSecret)
             if (const auto* payload = std::any_cast<NeedsSecret>(&request.payload)) return *payload;
     return std::nullopt;
+}
+
+// SecretService::require, with the raised request's id returned.
+std::optional<RequestId> require(SecretService& service, const SecretTarget& target, SecretWait wait, CancelToken token,
+                                 std::optional<Result<SecretBytes>>& done) {
+    std::optional<RequestId> raised;
+    service.require(target, wait, std::move(token), [&raised](RequestId id) { raised = id; },
+                    [&done](Result<SecretBytes> result) { done = std::move(result); });
+    return raised;
+}
+
+SecretTarget numbered_host_target(int i) {
+    return SecretTarget::parse(SecretKind::HostJoinPassword, std::format("0a1b2c3d-4e5f-6071-8293-{:012}", i)).value();
+}
+
+// Blocks a pool's only worker until released, like an install hashing on the shared pool.
+class WorkerGate {
+public:
+    WorkerGate(WorkerPool& pool, Executor& strand) {
+        pool.submit<void>(
+            [opened = opened_.get_future()](CancelToken) -> Result<void> {
+                opened.wait();
+                return {};
+            },
+            CancelToken{}, strand, [](Result<void>) {});
+    }
+    WorkerGate(const WorkerGate&) = delete;
+    WorkerGate& operator=(const WorkerGate&) = delete;
+    // The pool's destructor must not wait on a gate a failed REQUIRE left closed.
+    ~WorkerGate() { release(); }
+
+    void release() {
+        if (std::exchange(released_, true)) return;
+        opened_.set_value();
+    }
+
+private:
+    std::promise<void> opened_;
+    bool released_ = false;
+};
+
+// Notes whether a stored value was ever missing from the index chunks a load would read.
+class ListingCheckStore final : public ports::ISecretStore {
+public:
+    explicit ListingCheckStore(rb::testing::FakeSecretStore& inner) : inner_(inner) {}
+
+    [[nodiscard]] ports::SecretStoreKind kind() const override { return inner_.kind(); }
+    Result<void> put(std::string_view key, std::span<const u8> value) override {
+        Result<void> put = inner_.put(key, value);
+        check();
+        return put;
+    }
+    Result<std::optional<SecretBytes>> get(std::string_view key) override { return inner_.get(key); }
+    Result<void> erase(std::string_view key) override {
+        Result<void> erased = inner_.erase(key);
+        check();
+        return erased;
+    }
+
+    std::atomic<bool> unlisted{false};
+
+private:
+    void check() {
+        std::set<std::string> listed;
+        for (int chunk = 0;; ++chunk) {
+            const std::string key = index_key() + (chunk == 0 ? "" : "." + std::to_string(chunk));
+            Result<std::optional<SecretBytes>> index = inner_.get(key);
+            if (!index || !*index) break;
+            const std::string text = text_of(**index);
+            for (std::size_t start = 0, end = 0; (end = text.find('\n', start)) != std::string::npos; start = end + 1)
+                listed.insert(std::string(kRootHash) + "/" + text.substr(start, end - start));
+        }
+        for (const std::string& key : inner_.keys())
+            if (!key.starts_with(index_key()) && !listed.contains(key)) unlisted = true;
+    }
+
+    rb::testing::FakeSecretStore& inner_;
+};
+
+// What a release saw when it flushed the logs; the hook is a plain function, so this is global.
+struct FlushProbe {
+    const Redactor* redactor = nullptr;
+    std::string value;
+    std::atomic<int> flushes{0};
+    std::atomic<bool> masked_at_flush{true};
+};
+
+FlushProbe g_flush_probe;
+
+void probe_flush() {
+    const FlushProbe& probe = g_flush_probe;
+    const std::string line = "logged " + probe.value;
+    if (probe.redactor->apply(line) == line) g_flush_probe.masked_at_flush = false;
+    ++g_flush_probe.flushes;
 }
 
 }  // namespace
@@ -428,14 +528,66 @@ TEST_CASE("require hands over a held secret without asking", "[secrets][service]
     f.start();
     REQUIRE(f.put_saved(remote_target(), "remote-password").has_value());
     std::optional<Result<SecretBytes>> done;
-    const std::optional<RequestId> raised = service.require(
-        remote_target(), SecretWait{}, CancelToken{}, [&](Result<SecretBytes> result) { done = std::move(result); });
+    const std::optional<RequestId> raised = require(service, remote_target(), SecretWait{}, CancelToken{}, done);
     CHECK_FALSE(raised.has_value());
     CHECK_FALSE(done.has_value());
     f.strand.run_ready();
     REQUIRE(done.has_value());
     CHECK(text_of(done->value()) == "remote-password");
     CHECK(f.requests.pending().empty());
+}
+
+TEST_CASE("require waits for the load instead of asking for a stored secret", "[secrets][service]") {
+    Fixture f;
+    f.make();
+    f.start();
+    REQUIRE(f.put_saved(remote_target(), "stored-password", Retention::Remember).has_value());
+
+    SecretService& service = f.make();
+    f.store.close(SecretStoreOperation::Get);
+    std::optional<SecretsAvailability> availability;
+    service.start([&](SecretsAvailability result) { availability = result; });
+    std::optional<Result<SecretBytes>> done;
+    CHECK_FALSE(require(service, remote_target(), SecretWait{}, CancelToken{}, done).has_value());
+    CHECK(f.requests.pending().empty());
+    // A rejected value is asked for again at once; the stored copy cannot answer it.
+    std::optional<Result<SecretBytes>> rejected;
+    CHECK(require(service, host_target(), SecretWait{std::nullopt, std::nullopt, NeedsSecretReason::Rejected},
+                  CancelToken{}, rejected)
+              .has_value());
+
+    f.store.open();
+    f.strand.run_until([&] { return done.has_value(); });
+    REQUIRE(availability.has_value());
+    REQUIRE(done->has_value());
+    CHECK(text_of(**done) == "stored-password");
+    CHECK(f.requests.pending().size() == 1);
+    CHECK_FALSE(rejected.has_value());
+}
+
+TEST_CASE("require starts the load and asks once it found nothing stored", "[secrets][service]") {
+    Fixture f;
+    SecretService& service = f.make();
+    std::optional<Result<SecretBytes>> done;
+    std::optional<RequestId> raised;
+    service.require(remote_target(), SecretWait{}, CancelToken{}, [&](RequestId id) { raised = id; },
+                    [&](Result<SecretBytes> result) { done = std::move(result); });
+    CHECK_FALSE(raised.has_value());
+    f.strand.run_until([&] { return raised.has_value(); });
+    CHECK(needs_secret(f.requests, *raised).has_value());
+    CHECK(f.service->availability().available());
+
+    CancelSource cancel;
+    f.make();
+    f.store.close(SecretStoreOperation::Get);
+    const std::size_t pending = f.requests.pending().size();
+    std::optional<Result<SecretBytes>> withdrawn;
+    CHECK_FALSE(require(*f.service, remote_target(), SecretWait{}, cancel.token(), withdrawn).has_value());
+    cancel.cancel(CancelReason::User);
+    f.store.open();
+    f.strand.run_until([&] { return withdrawn.has_value(); });
+    CHECK(has_error(withdrawn->error(), SecretError::RequestWithdrawn));
+    CHECK(f.requests.pending().size() == pending);
 }
 
 TEST_CASE("NeedsSecret is answered only after a fresh secret was put", "[secrets][service]") {
@@ -445,8 +597,7 @@ TEST_CASE("NeedsSecret is answered only after a fresh secret was put", "[secrets
     const SessionId session{Uuid{}};
     std::optional<Result<SecretBytes>> done;
     const std::optional<RequestId> raised =
-        service.require(remote_target(), SecretWait{session, OpId{7}, NeedsSecretReason::Missing}, CancelToken{},
-                        [&](Result<SecretBytes> result) { done = std::move(result); });
+        require(service, remote_target(), SecretWait{session, OpId{7}, NeedsSecretReason::Missing}, CancelToken{}, done);
     REQUIRE(raised.has_value());
     const std::optional<NeedsSecret> payload = needs_secret(f.requests, *raised);
     REQUIRE(payload.has_value());
@@ -477,9 +628,8 @@ TEST_CASE("a rejected secret is asked for again even while held", "[secrets][ser
     f.start();
     REQUIRE(f.put_saved(host_target(), "wrong-password").has_value());
     std::optional<Result<SecretBytes>> done;
-    const std::optional<RequestId> raised =
-        service.require(host_target(), SecretWait{std::nullopt, std::nullopt, NeedsSecretReason::Rejected},
-                        CancelToken{}, [&](Result<SecretBytes> result) { done = std::move(result); });
+    const std::optional<RequestId> raised = require(
+        service, host_target(), SecretWait{std::nullopt, std::nullopt, NeedsSecretReason::Rejected}, CancelToken{}, done);
     REQUIRE(raised.has_value());
     const std::optional<NeedsSecret> payload = needs_secret(f.requests, *raised);
     REQUIRE(payload.has_value());
@@ -499,8 +649,7 @@ TEST_CASE("cancelling a wait withdraws its request", "[secrets][service]") {
     f.start();
     CancelSource cancel;
     std::optional<Result<SecretBytes>> done;
-    const std::optional<RequestId> raised = service.require(
-        remote_target(), SecretWait{}, cancel.token(), [&](Result<SecretBytes> result) { done = std::move(result); });
+    const std::optional<RequestId> raised = require(service, remote_target(), SecretWait{}, cancel.token(), done);
     REQUIRE(raised.has_value());
     cancel.cancel(CancelReason::User);
     CHECK(f.requests.pending().empty());
@@ -513,8 +662,7 @@ TEST_CASE("cancelling a wait withdraws its request", "[secrets][service]") {
     CancelSource already;
     already.cancel(CancelReason::Shutdown);
     std::optional<Result<SecretBytes>> late;
-    REQUIRE(service.require(remote_target(), SecretWait{}, already.token(),
-                            [&](Result<SecretBytes> result) { late = std::move(result); }));
+    REQUIRE(require(service, remote_target(), SecretWait{}, already.token(), late));
     f.strand.run_ready();
     REQUIRE(late.has_value());
     CHECK(has_error(late->error(), SecretError::RequestWithdrawn));
@@ -526,8 +674,7 @@ TEST_CASE("resolutions lost to a Resync are recovered from the pending requests"
     f.start();
     CancelSource cancel;
     std::optional<Result<SecretBytes>> done;
-    REQUIRE(service.require(remote_target(), SecretWait{}, cancel.token(),
-                            [&](Result<SecretBytes> result) { done = std::move(result); }));
+    REQUIRE(require(service, remote_target(), SecretWait{}, cancel.token(), done));
     const RequestId join = ask_join_password(f.requests);
     REQUIRE(f.put_saved(join_target(join), "join-password").has_value());
 
@@ -581,4 +728,99 @@ TEST_CASE("a service destroyed during a store call ignores the late reply", "[se
     CHECK(f.stored(value_key(host_target())) == "hunter22");
     f.strand.advance(kStoreCallDeadline);
     CHECK_FALSE(saved);
+}
+
+TEST_CASE("a store call never waits behind the shared workers", "[secrets][service]") {
+    Fixture f;
+    f.make();
+    f.start();
+    WorkerGate busy(f.workers, f.strand);
+    // On the shared pool this call would wait behind `busy` until its deadline.
+    const Result<SecretState> saved = f.put_saved(host_target(), "hunter22");
+    REQUIRE(saved.has_value());
+    CHECK(*saved == kRemembered);
+    CHECK(f.stored(value_key(host_target())) == "hunter22");
+    busy.release();
+}
+
+TEST_CASE("an index past what one store value holds is kept in chunks", "[secrets][service]") {
+    Fixture f;
+    f.make();
+    f.start();
+    constexpr int kTargets = 60;
+    for (int i = 0; i < kTargets; ++i) REQUIRE(f.put_saved(numbered_host_target(i), "hunter22").has_value());
+    const std::optional<std::string> first = f.stored(index_key());
+    const std::optional<std::string> second = f.stored(index_key() + ".1");
+    REQUIRE(first);
+    REQUIRE(second);
+    CHECK(first->size() <= 2048);
+    CHECK(second->size() <= 2048);
+    CHECK(first->size() + second->size() > 2560);
+    CHECK_FALSE(f.stored(index_key() + ".2").has_value());
+
+    f.make();
+    f.start();
+    for (int i = 0; i < kTargets; ++i) CHECK(f.state(numbered_host_target(i)) == kRemembered);
+
+    // A shorter index drops the chunks it no longer needs, and an empty one drops them all.
+    for (int i = 0; i < kTargets - 1; ++i) REQUIRE(f.clear(numbered_host_target(i)).has_value());
+    CHECK(f.stored(index_key()).has_value());
+    CHECK_FALSE(f.stored(index_key() + ".1").has_value());
+    f.make();
+    f.start();
+    CHECK(f.state(numbered_host_target(kTargets - 1)) == kRemembered);
+    REQUIRE(f.clear(numbered_host_target(kTargets - 1)).has_value());
+    CHECK(f.inner.keys().empty());
+}
+
+TEST_CASE("a dropped value stays masked until the logs were flushed", "[secrets][service]") {
+    Fixture f;
+    g_flush_probe.redactor = &f.redactor;
+    g_flush_probe.value = "first-secret";
+    g_flush_probe.flushes = 0;
+    g_flush_probe.masked_at_flush = true;
+    f.make(kRootHash, &probe_flush);
+    f.start();
+    const auto masked = [&](std::string_view value) {
+        return f.redactor.apply("before " + std::string(value) + " after").find(value) == std::string::npos;
+    };
+    REQUIRE(f.put_saved(remote_target(), "first-secret").has_value());
+    REQUIRE(f.put_saved(remote_target(), "second-secret").has_value());
+    f.strand.run_until([&] { return !masked("first-secret"); });
+    CHECK(g_flush_probe.flushes.load() == 1);
+    CHECK(g_flush_probe.masked_at_flush.load());
+    CHECK(masked("second-secret"));
+}
+
+TEST_CASE("a write after a load that found stale index lines never leaves a value unlisted", "[secrets][service]") {
+    Fixture f;
+    f.make();
+    f.start();
+    // 36 lines fill a chunk, so dropping the first moves the 37th down into chunk 0.
+    for (int i = 1; i <= 40; ++i) REQUIRE(f.put_saved(numbered_host_target(i), "hunter22").has_value());
+    REQUIRE(f.stored(index_key() + ".1").has_value());
+    f.service.reset();
+    REQUIRE(f.inner.erase(value_key(numbered_host_target(1))).has_value());
+
+    ListingCheckStore checked(f.inner);
+    std::optional<SecretService> service;
+    service.emplace(checked, f.store_worker, f.workers, f.strand, f.timers, f.requests, f.events, f.redactor, kRootHash);
+    bool started = false;
+    service->start([&](SecretsAvailability) { started = true; });
+    f.strand.run_until([&] { return started; });
+    std::optional<Result<SecretState>> saved;
+    REQUIRE(service->put(numbered_host_target(41), bytes("hunter22"), std::nullopt,
+                         [&](Result<SecretState> result) { saved = std::move(result); }));
+    f.strand.run_until([&] { return saved.has_value(); });
+    REQUIRE(saved->has_value());
+    CHECK_FALSE(checked.unlisted.load());
+    service.reset();
+
+    // Every value is still listed, and the stale line is gone.
+    f.make();
+    f.start();
+    for (int i = 2; i <= 41; ++i) CHECK(f.state(numbered_host_target(i)) == kRemembered);
+    const std::optional<std::string> first = f.stored(index_key());
+    REQUIRE(first);
+    CHECK(first->find(numbered_host_target(1).scope.text()) == std::string::npos);
 }

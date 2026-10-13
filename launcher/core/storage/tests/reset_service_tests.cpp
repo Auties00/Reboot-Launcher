@@ -28,7 +28,13 @@ using namespace rb::storage;
 namespace {
 
 struct Fixture {
-    Fixture() {
+    // A read-only settings.json was written at a newer schema, with the listing Listed.
+    explicit Fixture(bool read_only = false) {
+        if (read_only) {
+            fs.write_text(settings_path, R"({"schema": 2, "revision": 4, "values": {"host.listing": "listed"}})");
+            REQUIRE(store.load().mode == StorageMode::ReadOnly);
+            return;
+        }
         static_cast<void>(store.load_memory_only(make_diag(ErrorDomain::Storage, MessageId{"storage.memory_only"})));
         SettingsPatch listed;
         listed.host.listing = HostListing::Listed;
@@ -57,8 +63,8 @@ struct Fixture {
     WorkerPool workers{1};
     testing::DeterministicRuntime runtime;
     testing::InMemoryFileSystem fs;
-    DocumentStore<SettingsDocument> store{fs, workers, strand, runtime.clock(),
-                                          testing::default_fake_root() / "settings.json"};
+    NativePath settings_path = testing::default_fake_root() / "settings.json";
+    DocumentStore<SettingsDocument> store{fs, workers, strand, runtime.clock(), settings_path};
     SettingsRegistry registry;
     Settings settings{store, registry, runtime.events()};
 
@@ -173,4 +179,25 @@ TEST_CASE("a reset whose op timed out while stopping resets nothing", "[storage]
     const std::optional<ErasedOutcome> outcome = f.runtime.ops().outcome(handle->id());
     REQUIRE(outcome);
     CHECK(std::holds_alternative<TimedOut>(*outcome));
+}
+
+TEST_CASE("a read-only settings.json refuses a reset before any record is reset", "[storage][reset]") {
+    Fixture f(true);
+    REQUIRE(f.settings.snapshot().values.host.listing == HostListing::Listed);
+    const Result<ResetReport> refused = f.service.reset(ResetGroup::Host);
+    REQUIRE_FALSE(refused);
+    CHECK(refused.error().id == "storage.read_only");
+    CHECK(refused.error().kind == ErrorKind::Conflict);
+    CHECK(f.records_reset.empty());
+    CHECK(f.settings.snapshot().values.host.listing == HostListing::Listed);
+}
+
+TEST_CASE("a read-only settings.json refuses a reset after stop before stopping anything", "[storage][reset]") {
+    Fixture f(true);
+    f.blockers.sessions.push_back(SessionId{});
+    const Result<OpHandle> refused = f.service.start_reset_after_stop(ResetGroup::Host, DisconnectPolicy::Detached);
+    REQUIRE_FALSE(refused);
+    CHECK(refused.error().id == "storage.read_only");
+    CHECK_FALSE(f.stopped);
+    CHECK(f.records_reset.empty());
 }

@@ -70,11 +70,12 @@ struct Fixture {
     }
 
     // A hand edit of data/accounts.json, then the reload a file watcher would trigger.
-    void hand_edit_accounts(std::vector<AccountRecord> records) {
-        fs.write_text(accounts_path, envelope(1, accounts.revision() + 1, records_json(std::move(records))));
+    void hand_edit_accounts(json::object values) {
+        fs.write_text(accounts_path, envelope(1, accounts.revision() + 1, std::move(values)));
         accounts.refresh();
         flush(accounts);
     }
+    void hand_edit_accounts(std::vector<AccountRecord> records) { hand_edit_accounts(records_json(std::move(records))); }
 
     [[nodiscard]] AccountsDocument accounts_on_disk() const {
         const std::optional<std::string> text = fs.text(accounts_path);
@@ -142,10 +143,42 @@ TEST_CASE("stored records are kept and not written again", "[identity][service]"
     CHECK(f.fs.text(f.accounts_path) == stored);
 }
 
-TEST_CASE("a record storage dropped as invalid is minted again", "[identity][service]") {
+TEST_CASE("a stored record with a bad tag keeps its record_id and gets a fresh tag", "[identity][service]") {
     Fixture f;
     json::object values = records_json({kAlice, kServer});
     values.at("records").as_array()[1].as_object()["tag"] = "NOT-OK";
+    f.fs.write_text(f.accounts_path, envelope(1, 3, std::move(values)));
+    f.start();
+
+    const IdentitySnapshot& identity = f.service->get();
+    CHECK(identity.client == kAlice);
+    CHECK(identity.host.record_id == kServer.record_id);
+    CHECK(identity.host.display_name == kServer.display_name);
+    CHECK(identity.host.tag.size() == kTagLength);
+    CHECK(identity.host.tag != "NOT-OK");
+    f.flush(f.accounts);
+    CHECK(f.accounts_on_disk().records == std::vector{kAlice, identity.host});
+}
+
+TEST_CASE("a stored record with a bad name keeps its record_id and tag", "[identity][service]") {
+    Fixture f;
+    json::object values = records_json({kAlice, kServer});
+    values.at("records").as_array()[0].as_object()["display_name"] = "Not Valid";
+    f.fs.write_text(f.accounts_path, envelope(1, 3, std::move(values)));
+    f.start();
+
+    const AccountRecord& client = f.service->record(AccountRole::Client);
+    CHECK(client.record_id == kAlice.record_id);
+    CHECK(client.tag == kAlice.tag);
+    CHECK(is_default_display_name(client.display_name, AccountRole::Client));
+    f.flush(f.accounts);
+    CHECK(f.accounts_on_disk().records == std::vector{client, kServer});
+}
+
+TEST_CASE("a stored record with a bad record_id is minted again", "[identity][service]") {
+    Fixture f;
+    json::object values = records_json({kAlice, kServer});
+    values.at("records").as_array()[1].as_object()["record_id"] = "not-a-uuid";
     f.fs.write_text(f.accounts_path, envelope(1, 3, std::move(values)));
     f.start();
 
@@ -300,21 +333,42 @@ TEST_CASE("a hand-edited name is adopted as a rename", "[identity][service]") {
     CHECK(changes[0].record == edited);
 }
 
-TEST_CASE("a hand edit that drops a record gets it minted again and written back", "[identity][service]") {
+TEST_CASE("a hand edit that drops a record gets the one in memory written back", "[identity][service]") {
     Fixture f;
     f.fs.write_text(f.accounts_path, envelope(1, 3, records_json({kAlice, kServer})));
     f.start();
 
     f.hand_edit_accounts({kAlice});
     f.flush(f.accounts);
-    const AccountRecord host = f.service->record(AccountRole::Host);
-    CHECK(host.record_id != kServer.record_id);
-    CHECK(is_default_display_name(host.display_name, AccountRole::Host));
-    CHECK(f.service->record(AccountRole::Client) == kAlice);
-    CHECK(f.accounts_on_disk().records == std::vector{kAlice, host});
-    const std::vector<IdentityChangedEvent> changes = f.changes();
-    REQUIRE(changes.size() == 1);
-    CHECK(changes[0].record == host);
+    CHECK(f.service->get() == IdentitySnapshot{kAlice, kServer});
+    CHECK(f.accounts_on_disk().records == std::vector{kAlice, kServer});
+    CHECK(f.changes().empty());
+}
+
+TEST_CASE("a hand edit with an invalid name or tag keeps the record in memory", "[identity][service]") {
+    Fixture f;
+    f.fs.write_text(f.accounts_path, envelope(1, 3, records_json({kAlice, kServer})));
+    f.start();
+
+    json::object values = records_json({kAlice, kServer});
+    values.at("records").as_array()[0].as_object()["display_name"] = "Alice Smith";
+    values.at("records").as_array()[1].as_object()["tag"] = "TOOLONG1";
+    f.hand_edit_accounts(std::move(values));
+    f.flush(f.accounts);
+    CHECK(f.service->get() == IdentitySnapshot{kAlice, kServer});
+    CHECK(f.accounts_on_disk().records == std::vector{kAlice, kServer});
+    CHECK(f.changes().empty());
+
+    // A valid name in the same edit is still a rename, and the bad tag still keeps the one in memory.
+    values = records_json({kAlice, kServer});
+    values.at("records").as_array()[1].as_object()["display_name"] = "Edited";
+    values.at("records").as_array()[1].as_object()["tag"] = "";
+    f.hand_edit_accounts(std::move(values));
+    f.flush(f.accounts);
+    AccountRecord edited = kServer;
+    edited.display_name = "Edited";
+    CHECK(f.service->get() == IdentitySnapshot{kAlice, edited});
+    CHECK(f.accounts_on_disk().records == std::vector{kAlice, edited});
 }
 
 TEST_CASE("a rename not yet written is laid over a hand edit made meanwhile", "[identity][service]") {

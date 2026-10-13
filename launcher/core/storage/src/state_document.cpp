@@ -27,14 +27,15 @@ namespace {
                                                            std::vector<ValueIssue>& issues) {
     Result<const json::object*> object = object_from_json(raw);
     if (!object) return std::unexpected(std::move(object.error()));
-    Result<ShellName> shell = required(**object, "shell", [](const json::value& value) {
+    MemberReader reader(**object, issues, path + ".");
+    Result<ShellName> shell = required(reader, "shell", [](const json::value& value) {
         return string_from_json(value).and_then([](const std::string& text) { return ShellName::parse(text); });
     });
     if (!shell) return std::unexpected(std::move(shell.error()));
     ShellOnboarding onboarding{.shell = std::move(*shell)};
-    MemberReader reader(**object, issues, path + ".");
     reader.read("completed", onboarding.completed, bool_from_json);
     reader.read_list("completed_steps", onboarding.completed_steps, list_string);
+    onboarding.unknown = reader.unknown();
     return onboarding;
 }
 
@@ -42,12 +43,13 @@ namespace {
                                                            std::vector<ValueIssue>& issues) {
     Result<const json::object*> object = object_from_json(raw);
     if (!object) return std::unexpected(std::move(object.error()));
-    Result<std::string> host = required(**object, "host", string_from_json);
+    MemberReader reader(**object, issues, path + ".");
+    Result<std::string> host = required(reader, "host", string_from_json);
     if (!host) return std::unexpected(std::move(host.error()));
     UpstreamTlsMemory memory{.host = std::move(*host)};
-    MemberReader reader(**object, issues, path + ".");
     reader.read("https_seen", memory.https_seen, bool_from_json);
     reader.read("http_acknowledged", memory.http_acknowledged, bool_from_json);
+    memory.unknown = reader.unknown();
     return memory;
 }
 
@@ -81,6 +83,7 @@ json::object StateDocument::write() const {
         entry.emplace("shell", shell.shell.value);
         entry.emplace("completed", shell.completed);
         entry.emplace("completed_steps", strings_to_json(shell.completed_steps));
+        append_unknown(entry, shell.unknown);
         onboarding_json.emplace_back(std::move(entry));
     }
     json::array upstream_json;
@@ -89,6 +92,7 @@ json::object StateDocument::write() const {
         entry.emplace("host", memory.host);
         entry.emplace("https_seen", memory.https_seen);
         entry.emplace("http_acknowledged", memory.http_acknowledged);
+        append_unknown(entry, memory.unknown);
         upstream_json.emplace_back(std::move(entry));
     }
     json::array declined_json;

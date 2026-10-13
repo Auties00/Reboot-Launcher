@@ -21,6 +21,8 @@ REBOOT_MESSAGE(kQuarantineFailed, "storage.quarantine_failed",
                "{document} cannot be read or copied aside to {path}; changes are kept only until the engine exits");
 REBOOT_MESSAGE(kRestoredFromBackup, "storage.restored_from_backup",
                "{document} cannot be read, so its backup copy was used");
+REBOOT_MESSAGE(kRestoredFromBackupQuarantined, "storage.restored_from_backup_quarantined",
+               "{document} cannot be read, so its backup copy was used; the file was copied to {quarantine}");
 REBOOT_MESSAGE(kSchemaBackupFailed, "storage.schema_backup_failed",
                "{document} cannot be backed up to {path} before its upgrade, so it is open read-only");
 REBOOT_MESSAGE(kUpgradeFailed, "storage.upgrade_failed",

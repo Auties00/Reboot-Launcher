@@ -121,18 +121,53 @@ TEST_CASE("a changed document is written as a {schema, revision, values} envelop
     CHECK(f.fs.text(f.settings_path) == test::golden_text("settings_envelope.json"));
 }
 
-TEST_CASE("an unreadable primary falls back to its .bak", "[storage][document]") {
+TEST_CASE("an unreadable primary is quarantined and falls back to its .bak", "[storage][document]") {
     Fixture f;
-    f.fs.write_text(f.settings_path, "{ \"schema\": 1, \"revision\"");
+    const std::string broken = "{ \"schema\": 1, \"revision\"";
+    const NativePath backup = with_suffix(f.settings_path, ".bak");
+    f.fs.write_text(f.settings_path, broken);
+    f.fs.write_text(backup, test::golden_text("settings_envelope.json"));
+    DocumentStore<SettingsDocument> store(f.fs, f.workers, f.strand, f.clock, f.settings_path);
+
+    const LoadReport report = store.load();
+    const NativePath quarantine = with_suffix(f.settings_path, ".corrupt-20261007T235829Z");
+    CHECK(report.source == LoadSource::Backup);
+    CHECK(report.mode == StorageMode::ReadWrite);
+    REQUIRE(report.reason);
+    CHECK(report.reason->id == "storage.restored_from_backup_quarantined");
+    REQUIRE(report.quarantined_to);
+    CHECK(*report.quarantined_to == quarantine);
+    CHECK(f.fs.text(quarantine) == broken);
+    CHECK(store.get().values.ui.theme == Theme::Dark);
+    CHECK(store.revision() == 1u);
+
+    // The first write replaces the broken primary and keeps the good .bak.
+    REQUIRE(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Light; }));
+    REQUIRE(f.flush(store));
+    CHECK(f.fs.text(quarantine) == broken);
+    CHECK(f.fs.text(backup) == test::golden_text("settings_envelope.json"));
+    CHECK(envelope_on_disk(f.fs, f.settings_path).at("values").at("ui.theme") == "light");
+}
+
+TEST_CASE("an unreadable primary that cannot be quarantined is kept when its .bak is used", "[storage][document]") {
+    Fixture f;
+    f.fs.write_text(f.settings_path, "not json");
     f.fs.write_text(with_suffix(f.settings_path, ".bak"), test::golden_text("settings_envelope.json"));
+    f.fs.faults().fail_next(testing::FsOperation::AtomicReplace, disk_error());
     DocumentStore<SettingsDocument> store(f.fs, f.workers, f.strand, f.clock, f.settings_path);
 
     const LoadReport report = store.load();
     CHECK(report.source == LoadSource::Backup);
+    CHECK(report.mode == StorageMode::InMemory);
+    CHECK_FALSE(report.quarantined_to);
     REQUIRE(report.reason);
-    CHECK(report.reason->id == "storage.restored_from_backup");
+    CHECK(report.reason->id == "storage.quarantine_failed");
     CHECK(store.get().values.ui.theme == Theme::Dark);
-    CHECK(store.revision() == 1u);
+
+    REQUIRE(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Light; }));
+    REQUIRE(f.flush(store));
+    CHECK(store.get().values.ui.theme == Theme::Light);
+    CHECK(f.fs.text(f.settings_path) == "not json");
 }
 
 TEST_CASE("a primary and .bak that both fail are quarantined under a UTC name", "[storage][document]") {

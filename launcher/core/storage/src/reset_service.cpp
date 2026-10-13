@@ -34,6 +34,8 @@ Result<ResetReport> ResetService::reset(ResetGroup group) {
 }
 
 Result<OpHandle> ResetService::start_reset_after_stop(ResetGroup group, DisconnectPolicy policy) {
+    // Nothing is stopped for a reset that could not be written.
+    if (Result<void> writable = settings_.check_writable(); !writable) return std::unexpected(std::move(writable.error()));
     auto [handle, op] = ops_.create<ResetReport>(OpKind::Generic, policy, std::nullopt);
     ResetBlockers blockers = hooks_.find_blockers(group);
     if (blockers.empty()) {
@@ -66,6 +68,8 @@ Result<OpHandle> ResetService::start_reset_after_stop(ResetGroup group, Disconne
 }
 
 Result<ResetReport> ResetService::reset_unblocked(ResetGroup group) {
+    // The records are reset first, so a settings.json that refuses the keys must refuse before them.
+    if (Result<void> writable = settings_.check_writable(); !writable) return std::unexpected(std::move(writable.error()));
     if (Result<void> records = hooks_.reset_records(group); !records) return std::unexpected(records.error());
     const std::vector<const AnyKey*> keys = registry_.in_group(group);
     Result<u64> revision = settings_.reset_to_defaults(keys);

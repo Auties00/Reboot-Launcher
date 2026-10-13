@@ -8,6 +8,7 @@
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/function.hpp"
+#include "reboot/foundation/log.hpp"
 #include "reboot/foundation/secret.hpp"
 #include "reboot/foundation/types.hpp"
 #include "reboot/secrets/needs_secret.hpp"
@@ -19,7 +20,6 @@
 namespace rb {
 class EventBus;
 class Executor;
-class Redactor;
 class TimerService;
 class UserRequestRegistry;
 class WorkerPool;
@@ -47,23 +47,26 @@ struct SecretWait {
 // - Every held value is registered with the Redactor. A dropped value (cleared, replaced, taken,
 //   or its request resolved) is removed once a Logger::flush on the WorkerPool has written the
 //   records queued before the drop. Values under 4 bytes are never masked (logging-redaction).
-// - Store calls run on the WorkerPool under kStoreCallDeadline; writes for one target apply in
-//   call order.
+// - Store calls run one at a time on a worker of their own under kStoreCallDeadline, so time
+//   queued behind other work never counts against it; writes for one target apply in call order.
 // - Every change of a target's SecretState publishes a SecretStateChangedEvent.
 // - Remember writes wherever the store's kind() says: the OS store, or its owner-only file
 //   fallback. With no store (macOS outside Aqua) or a failed load, secrets are session-only.
 class SecretService {
 public:
-    // `root_hash16` namespaces the store keys, so engines on different data roots never share them.
-    SecretService(ports::ISecretStore& store, WorkerPool& workers, Executor& strand, TimerService& timers,
-                  UserRequestRegistry& requests, EventBus& events, Redactor& redactor, std::string_view root_hash16);
+    // `store_worker` is a one-thread pool used for nothing else, so a call stuck in a prompt holds
+    // no shared worker. `root_hash16` namespaces the store keys, so engines on different data roots
+    // never share them. `flush_logs` runs before a mask is lifted; tests replace it to see the order.
+    SecretService(ports::ISecretStore& store, WorkerPool& store_worker, WorkerPool& workers, Executor& strand,
+                  TimerService& timers, UserRequestRegistry& requests, EventBus& events, Redactor& redactor,
+                  std::string_view root_hash16, void (*flush_logs)() = &Logger::flush);
     ~SecretService();
     SecretService(const SecretService&) = delete;
     SecretService& operator=(const SecretService&) = delete;
 
     // Loads every stored secret, so the queries below never block. A store that is unavailable,
     // fails or times out leaves the service usable with session-only secrets; `done` runs on the
-    // strand with the resulting availability.
+    // strand with the resulting availability. A later call waits for the same load.
     void start(UniqueFunction<void(SecretsAvailability)> done);
 
     [[nodiscard]] SecretsAvailability availability() const;
@@ -97,12 +100,13 @@ public:
     // For a client; secrets.reveal_forbidden for every kind but HostJoinPassword.
     [[nodiscard]] Result<SecretBytes> reveal(const SecretTarget& target) const;
 
-    // With reason Missing and a held value, `done` gets it (posted) and nullopt is returned.
-    // Otherwise raises NeedsSecret and returns its id, for the op's awaiting_user(); the answer
-    // is accepted only after a value newer than the request was put. Cancelling `token`
-    // withdraws the request and `done` gets secrets.request_withdrawn.
-    std::optional<RequestId> require(const SecretTarget& target, SecretWait wait, CancelToken token,
-                                     UniqueFunction<void(Result<SecretBytes>)> done);
+    // With reason Missing, a held value goes to `done` (posted), waiting for start()'s load first
+    // (starting it if needed) so a stored value is handed over without asking. Otherwise, or with
+    // nothing held, raises NeedsSecret and gives its id to `raised` (may be empty), for the op's
+    // awaiting_user(); the answer is accepted only after a value newer than the request was put.
+    // Cancelling `token` withdraws the request and `done` gets secrets.request_withdrawn.
+    void require(const SecretTarget& target, SecretWait wait, CancelToken token, UniqueFunction<void(RequestId)> raised,
+                 UniqueFunction<void(Result<SecretBytes>)> done);
 
 private:
     struct Impl;

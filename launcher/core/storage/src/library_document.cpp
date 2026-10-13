@@ -88,6 +88,7 @@ namespace {
     reader.read_optional("layout", entry.layout, layout_from_json);
     reader.read("added_at", entry.added_at, time_from_json);
     reader.read("needs_relocation", entry.needs_relocation, bool_from_json);
+    reader.read("allow_above_cap", entry.allow_above_cap, bool_from_json);
     entry.unknown = reader.unknown();
     return entry;
 }
@@ -104,6 +105,7 @@ namespace {
     if (entry.layout) out.emplace("layout", layout_to_json(*entry.layout));
     out.emplace("added_at", time_to_json(entry.added_at));
     out.emplace("needs_relocation", entry.needs_relocation);
+    out.emplace("allow_above_cap", entry.allow_above_cap);
     append_unknown(out, entry.unknown);
     return out;
 }

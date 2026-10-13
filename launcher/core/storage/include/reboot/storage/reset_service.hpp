@@ -45,9 +45,11 @@ public:
     ResetService(const ResetService&) = delete;
     ResetService& operator=(const ResetService&) = delete;
 
-    // Fails with storage.reset_blocked while anything find_blockers reports still runs.
+    // Fails with storage.reset_blocked while anything find_blockers reports still runs, and like
+    // Settings::check_writable, before touching anything, when settings.json is ReadOnly.
     Result<ResetReport> reset(ResetGroup group);
-    // Completes with the ResetReport, or fails with storage.reset_stop_failed if stopping fails.
+    // Refuses a ReadOnly settings.json at once. Completes with the ResetReport, or fails with
+    // storage.reset_stop_failed if stopping fails.
     Result<OpHandle> start_reset_after_stop(ResetGroup group, DisconnectPolicy policy);
 
 private:

@@ -23,6 +23,8 @@ struct ShellOnboarding {
     // Finished or dismissed; clearing it offers the tour again.
     bool completed = false;
     std::vector<std::string> completed_steps;
+    // Members this build does not know, kept for the newer engine that wrote them.
+    boost::json::object unknown;
 
     bool operator==(const ShellOnboarding&) const = default;
 };
@@ -32,6 +34,8 @@ struct UpstreamTlsMemory {
     std::string host;
     bool https_seen = false;
     bool http_acknowledged = false;
+    // Members this build does not know, kept for the newer engine that wrote them.
+    boost::json::object unknown;
 
     bool operator==(const UpstreamTlsMemory&) const = default;
 };

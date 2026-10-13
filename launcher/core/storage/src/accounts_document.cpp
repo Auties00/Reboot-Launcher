@@ -34,6 +34,16 @@ namespace {
     return text;
 }
 
+// A bad or missing name or tag stays empty with a ValueIssue, so identity repairs the record instead of minting one.
+void read_checked(MemberReader& reader, std::string_view member, std::string& out,
+                  bool (*valid)(std::string_view) noexcept) {
+    if (reader.find(member) == nullptr) {
+        reader.issue(member, missing_member(member));
+        return;
+    }
+    reader.read(member, out, [member, valid](const json::value& value) { return checked_text(value, member, valid); });
+}
+
 [[nodiscard]] Result<AccountRecord> record_from_json(const json::value& raw, const std::string& path,
                                                      std::vector<ValueIssue>& issues) {
     Result<const json::object*> object = object_from_json(raw);
@@ -44,14 +54,11 @@ namespace {
     Result<contracts::backend::AccountRole> role =
         required(reader, "role", enum_from_json<contracts::backend::AccountRole>);
     if (!role) return std::unexpected(std::move(role.error()));
-    Result<std::string> name = required(reader, "display_name", [](const json::value& value) {
-        return checked_text(value, "display_name", is_display_name);
-    });
-    if (!name) return std::unexpected(std::move(name.error()));
-    Result<std::string> tag =
-        required(reader, "tag", [](const json::value& value) { return checked_text(value, "tag", is_tag); });
-    if (!tag) return std::unexpected(std::move(tag.error()));
-    return AccountRecord{*id, *role, std::move(*name), std::move(*tag), reader.unknown()};
+    AccountRecord record{.record_id = *id, .role = *role, .display_name = {}, .tag = {}, .unknown = {}};
+    read_checked(reader, "display_name", record.display_name, is_display_name);
+    read_checked(reader, "tag", record.tag, is_tag);
+    record.unknown = reader.unknown();
+    return record;
 }
 
 }  // namespace

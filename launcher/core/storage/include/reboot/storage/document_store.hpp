@@ -55,6 +55,8 @@ public:
     [[nodiscard]] const D& get() const noexcept { return document_; }
     [[nodiscard]] u64 revision() const noexcept { return file_.revision(); }
     [[nodiscard]] StorageMode mode() const noexcept { return file_.mode(); }
+    // Whether update() can be accepted; a ReadOnly store fails with its load's reason.
+    [[nodiscard]] Result<void> check_writable() const { return file_.check_writable(); }
 
     // Applies `mutate` to a copy, kept only if the file accepts it; returns the new revision.
     Result<u64> update(UniqueFunction<void(D&)> mutate) {

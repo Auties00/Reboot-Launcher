@@ -61,13 +61,15 @@ TEST_CASE("a library keeps a build's version and drops dangling selections", "[s
     library.builds.push_back(LibraryEntry{.id = BuildId{uuid("6f1c2a4e-1b7d-4a53-9a5e-2f0d8c3b7a10")},
                                           .name = "8.51",
                                           .root = testing::default_fake_root() / "builds" / "8.51",
-                                          .version = GameVersion{8, 51}});
+                                          .version = GameVersion{8, 51},
+                                          .allow_above_cap = true});
     library.client_selection = library.builds[0].id;
     library.host_selection = BuildId{uuid("00000000-0000-4000-8000-000000000001")};
 
     const LibraryDocument read = round_trip(library);
     REQUIRE(read.builds.size() == 1);
     CHECK(read.builds[0].version == library.builds[0].version);
+    CHECK(read.builds[0].allow_above_cap);
     CHECK(read.client_selection == library.client_selection);
     CHECK_FALSE(read.host_selection);
 }
@@ -93,7 +95,7 @@ TEST_CASE("resume.json stores the payload version as a SemVer", "[storage][docum
     CHECK(read.reopen_clients == resume.reopen_clients);
 }
 
-TEST_CASE("an account record with a bad tag is dropped", "[storage][documents]") {
+TEST_CASE("an account record with a bad name or tag keeps its id with that field empty", "[storage][documents]") {
     AccountsDocument accounts;
     accounts.records.push_back(AccountRecord{.record_id = AccountRecordId{uuid("9a3e7c51-2d44-4c1b-8f0a-61b2d5e9c3f7")},
                                              .role = contracts::backend::AccountRole::Host,
@@ -103,10 +105,32 @@ TEST_CASE("an account record with a bad tag is dropped", "[storage][documents]")
 
     accounts.records[0].tag = "ABC123";
     std::vector<ValueIssue> issues;
-    const AccountsDocument read = AccountsDocument::read(accounts.write(), issues);
-    CHECK(read.records.empty());
+    AccountsDocument read = AccountsDocument::read(accounts.write(), issues);
+    REQUIRE(read.records.size() == 1);
+    CHECK(read.records[0].record_id == accounts.records[0].record_id);
+    CHECK(read.records[0].display_name == "Host");
+    CHECK(read.records[0].tag.empty());
     REQUIRE(issues.size() == 1);
+    CHECK(issues[0].path == "records[0].tag");
     CHECK(issues[0].reason.id == "storage.invalid_value");
+
+    json::object values = accounts.write();
+    json::object& record = values["records"].as_array()[0].as_object();
+    record["display_name"] = "Host Two";
+    record.erase("tag");
+    issues.clear();
+    read = AccountsDocument::read(values, issues);
+    REQUIRE(read.records.size() == 1);
+    CHECK(read.records[0].display_name.empty());
+    CHECK(read.records[0].tag.empty());
+    REQUIRE(issues.size() == 2);
+    CHECK(issues[0].path == "records[0].display_name");
+    CHECK(issues[1].path == "records[0].tag");
+    CHECK(issues[1].reason.id == "storage.missing_member");
+
+    record.erase("record_id");
+    issues.clear();
+    CHECK(AccountsDocument::read(values, issues).records.empty());
 }
 
 TEST_CASE("members a newer engine added to a record are kept", "[storage][documents]") {
@@ -133,6 +157,20 @@ TEST_CASE("members a newer engine added to a record are kept", "[storage][docume
     const AccountsDocument read_accounts = AccountsDocument::read(accounts_json, issues);
     CHECK(issues.empty());
     CHECK(read_accounts.write() == accounts_json);
+
+    StateDocument state;
+    state.onboarding.push_back({.shell = *ShellName::parse("cli"), .completed = true, .completed_steps = {"welcome"}});
+    state.upstream_tls.push_back({.host = "play.example", .https_seen = true, .http_acknowledged = false});
+    json::object state_json = state.write();
+    state_json["onboarding"].as_array()[0].as_object()["future"] = json::array{1, 2};
+    state_json["upstream_tls"].as_array()[0].as_object()["future"] = true;
+    const StateDocument read_state = StateDocument::read(state_json, issues);
+    CHECK(issues.empty());
+    REQUIRE(read_state.onboarding.size() == 1);
+    CHECK(read_state.onboarding[0].unknown == json::object{{"future", json::array{1, 2}}});
+    REQUIRE(read_state.upstream_tls.size() == 1);
+    CHECK(read_state.upstream_tls[0].unknown == json::object{{"future", true}});
+    CHECK(read_state.write() == state_json);
 }
 
 TEST_CASE("a recorded child with a pid no process can have is dropped", "[storage][documents]") {

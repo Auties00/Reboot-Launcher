@@ -181,8 +181,8 @@ struct Fixture {
         service.reset();
     }
 
-    SecretService& make(std::string_view root = kRootHash) {
-        service.emplace(store, workers, strand, timers, requests, events, redactor, root);
+    SecretService& make(std::string_view root = kRootHash, void (*flush_logs)() = &Logger::flush) {
+        service.emplace(store, store_worker, workers, strand, timers, requests, events, redactor, root, flush_logs);
         return *service;
     }
 
@@ -218,11 +218,11 @@ struct Fixture {
         return text_of(**value);
     }
 
-    // One worker runs jobs in order, so once this sentinel replies every earlier store call has
+    // One worker runs the store calls in order, so once this sentinel replies every earlier one has
     // replied too, also one abandoned at its deadline.
     void settle() {
         bool settled = false;
-        workers.submit<void>([](CancelToken) -> Result<void> { return {}; }, CancelToken{}, strand,
+        store_worker.submit<void>([](CancelToken) -> Result<void> { return {}; }, CancelToken{}, strand,
                              [&](Result<void>) { settled = true; });
         strand.run_until([&] { return settled; });
     }
@@ -242,6 +242,7 @@ struct Fixture {
     UserRequestRegistry requests{events};
     TimerService timers{clock, strand};
     WorkerPool workers{1};
+    WorkerPool store_worker{1};
     std::optional<SecretService> service;
 };
 

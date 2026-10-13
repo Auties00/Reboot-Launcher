@@ -1,6 +1,7 @@
 #include "store_layout.hpp"
 
 #include <optional>
+#include <string>
 
 namespace rb::secrets::detail {
 
@@ -14,8 +15,13 @@ std::optional<SecretKind> kind_from_name(std::string_view name) {
 
 }  // namespace
 
-StoreLayout::StoreLayout(std::string_view root_hash16)
-    : prefix_(std::string(root_hash16) + "/"), index_key_(prefix_ + "index") {}
+StoreLayout::StoreLayout(std::string_view root_hash16) : prefix_(std::string(root_hash16) + "/") {}
+
+std::string StoreLayout::index_key(std::size_t chunk) const {
+    std::string key = prefix_ + "index";
+    if (chunk != 0) key += "." + std::to_string(chunk);
+    return key;
+}
 
 std::string StoreLayout::value_key(const SecretTarget& target) const {
     std::string key = prefix_;
@@ -25,16 +31,20 @@ std::string StoreLayout::value_key(const SecretTarget& target) const {
     return key;
 }
 
-std::vector<u8> encode_index(const std::set<SecretTarget>& targets) {
-    std::vector<u8> out;
+std::vector<std::vector<u8>> encode_index(const std::set<SecretTarget>& targets) {
+    std::vector<std::vector<u8>> chunks;
     for (const SecretTarget& target : targets) {
         const std::string_view kind = kind_name(target.kind);
+        const std::string& scope = target.scope.text();
+        const std::size_t line = kind.size() + 1 + scope.size() + 1;
+        if (chunks.empty() || chunks.back().size() + line > kIndexChunkBytes) chunks.emplace_back();
+        std::vector<u8>& out = chunks.back();
         out.insert(out.end(), kind.begin(), kind.end());
         out.push_back('/');
-        out.insert(out.end(), target.scope.text().begin(), target.scope.text().end());
+        out.insert(out.end(), scope.begin(), scope.end());
         out.push_back('\n');
     }
-    return out;
+    return chunks;
 }
 
 std::set<SecretTarget> decode_index(std::span<const u8> bytes) {

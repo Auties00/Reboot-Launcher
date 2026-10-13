@@ -248,38 +248,53 @@ LoadReport DocumentFile::load() {
         if (envelope) used = *primary;
         report.source = LoadSource::Primary;
     }
+    // A copy of the unreadable primary, made before the first write replaces it.
+    std::optional<Result<NativePath>> quarantined;
+    if (!envelope && primary) {
+        NativePath quarantine = with_suffix(impl.path, ".corrupt-" + utc_stamp(impl.clock.system_now()));
+        if (Result<void> copied = impl.fs.atomic_replace(quarantine, *primary, false); !copied)
+            quarantined = make_diag(ErrorDomain::Storage, msg::kQuarantineFailed)
+                              .arg("document", impl.format.name)
+                              .arg("path", quarantine)
+                              .cause(std::move(copied.error()))
+                              .fail();
+        else quarantined = std::move(quarantine);
+    }
     if (!envelope) {
         // Also covers a missing primary: a replace that failed after moving it aside leaves only the .bak.
         if (Result<std::vector<u8>> backup = impl.fs.read_all(with_suffix(impl.path, ".bak"))) {
             envelope = parse_envelope(*backup);
             if (envelope) used = std::move(*backup);
         }
-        if (envelope) {
+        if (quarantined && !*quarantined) {
+            // Writing now would destroy the only copy of the unreadable file, so nothing is written.
+            impl.disk = false;
+            impl.mode = StorageMode::InMemory;
+            report.mode = StorageMode::InMemory;
+            report.source = envelope ? LoadSource::Backup : LoadSource::Defaults;
+            report.reason = std::move(quarantined->error());
+            if (!envelope) return report;
+        } else if (envelope) {
             report.source = LoadSource::Backup;
-            report.reason = make_diag(ErrorDomain::Storage, msg::kRestoredFromBackup)
-                                .severity(Severity::Warning)
-                                .arg("document", impl.format.name)
-                                .build();
+            if (quarantined) report.quarantined_to = **quarantined;
+            report.reason = quarantined ? make_diag(ErrorDomain::Storage, msg::kRestoredFromBackupQuarantined)
+                                              .severity(Severity::Warning)
+                                              .arg("document", impl.format.name)
+                                              .arg("quarantine", **quarantined)
+                                              .build()
+                                        : make_diag(ErrorDomain::Storage, msg::kRestoredFromBackup)
+                                              .severity(Severity::Warning)
+                                              .arg("document", impl.format.name)
+                                              .build();
         } else if (!primary) {
             return report;
         } else {
-            const NativePath quarantine = with_suffix(impl.path, ".corrupt-" + utc_stamp(impl.clock.system_now()));
-            if (Result<void> copied = impl.fs.atomic_replace(quarantine, *primary, false); !copied) {
-                // Writing defaults now would destroy the only copy of the unreadable file.
-                LoadReport memory_only = load_memory_only(make_diag(ErrorDomain::Storage, msg::kQuarantineFailed)
-                                                              .arg("document", impl.format.name)
-                                                              .arg("path", quarantine)
-                                                              .cause(std::move(copied.error()))
-                                                              .build());
-                memory_only.source = LoadSource::Defaults;
-                return memory_only;
-            }
             report.source = LoadSource::Defaults;
-            report.quarantined_to = quarantine;
+            report.quarantined_to = **quarantined;
             report.reason = make_diag(ErrorDomain::Storage, msg::kCorrupt)
                                 .severity(Severity::Warning)
                                 .arg("document", impl.format.name)
-                                .arg("quarantine", quarantine)
+                                .arg("quarantine", **quarantined)
                                 .build();
         }
     }
@@ -349,14 +364,18 @@ u64 DocumentFile::revision() const noexcept { return impl_->revision; }
 
 StorageMode DocumentFile::mode() const noexcept { return impl_->mode; }
 
+Result<void> DocumentFile::check_writable() const {
+    const Impl& impl = *impl_;
+    if (impl.mode != StorageMode::ReadOnly) return {};
+    Diagnostic error = *impl.read_only_reason;
+    error.severity = Severity::Error;
+    error.kind = ErrorKind::Conflict;
+    return std::unexpected(std::move(error));
+}
+
 Result<u64> DocumentFile::replace(json::object values) {
     Impl& impl = *impl_;
-    if (impl.mode == StorageMode::ReadOnly) {
-        Diagnostic error = *impl.read_only_reason;
-        error.severity = Severity::Error;
-        error.kind = ErrorKind::Conflict;
-        return std::unexpected(std::move(error));
-    }
+    if (Result<void> writable = check_writable(); !writable) return std::unexpected(std::move(writable.error()));
     for (const json::key_value_pair& member : values) {
         const json::value* old = impl.values.if_contains(member.key());
         if (old == nullptr || *old != member.value())

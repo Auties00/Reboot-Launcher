@@ -51,8 +51,10 @@ public:
     [[nodiscard]] u64 revision() const noexcept;
     [[nodiscard]] StorageMode mode() const noexcept;
 
-    // Returns the new revision. In ReadOnly mode fails with the load's reason: storage.read_only,
-    // storage.schema_backup_failed or storage.upgrade_failed.
+    // In ReadOnly mode fails with the load's reason: storage.read_only, storage.schema_backup_failed
+    // or storage.upgrade_failed. Every other mode accepts a replace.
+    [[nodiscard]] Result<void> check_writable() const;
+    // Returns the new revision, or fails as check_writable() does.
     Result<u64> replace(boost::json::object values);
 
     // Reloads a hand edit made since the last write.

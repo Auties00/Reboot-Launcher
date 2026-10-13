@@ -1,10 +1,12 @@
 #include "reboot/secrets/secret_service.hpp"
 
+#include <algorithm>
 #include <any>
 #include <charconv>
 #include <deque>
 #include <expected>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <system_error>
@@ -79,6 +81,10 @@ struct StoreReply {
     SecretStoreKind kind = SecretStoreKind::Unavailable;
     std::vector<std::pair<SecretTarget, SecretBytes>> loaded;
     bool index_written = false;
+    // How many index chunks the store may hold now, once the call read or wrote the index.
+    std::optional<std::size_t> index_chunks;
+    // The loaded index holds lines that the loaded values would not give it.
+    bool index_stale = false;
     // A store call failed after the ones before it succeeded.
     std::optional<Diagnostic> failure;
 };
@@ -99,6 +105,30 @@ using StoreJob = UniqueFunction<std::optional<StoreCall>()>;
 }
 
 [[nodiscard]] bool succeeded(const Result<StoreReply>& reply) { return reply && !reply->failure; }
+
+// Erases chunks [from, to) highest first, so the chunks left always start at 0; returns how many may be left.
+[[nodiscard]] std::size_t erase_index_chunks(ports::ISecretStore& store, const detail::StoreLayout& layout,
+                                             std::size_t from, std::size_t to) {
+    for (std::size_t chunk = to; chunk > from; --chunk)
+        if (!store.erase(layout.index_key(chunk - 1))) return chunk;
+    return from;
+}
+
+// Puts every chunk, highest first when the index grew and lowest first when it shrank, so a line
+// only moves to a chunk already written and every stored value stays listed; then drops the rest.
+void write_index(ports::ISecretStore& store, const detail::StoreLayout& layout,
+                 const std::vector<std::vector<u8>>& chunks, bool grew, std::size_t stored_chunks, StoreReply& reply) {
+    reply.index_chunks = std::max(stored_chunks, chunks.size());
+    for (std::size_t i = 0; i < chunks.size(); ++i) {
+        const std::size_t chunk = grew ? chunks.size() - 1 - i : i;
+        if (Result<void> put = store.put(layout.index_key(chunk), chunks[chunk]); !put) {
+            reply.failure = std::move(put.error());
+            return;
+        }
+    }
+    reply.index_written = true;
+    reply.index_chunks = erase_index_chunks(store, layout, chunks.size(), stored_chunks);
+}
 
 }  // namespace
 
@@ -121,16 +151,18 @@ struct SecretService::Impl {
         UniqueFunction<void(Result<SecretBytes>)> done;
     };
 
-    Impl(ports::ISecretStore& secret_store, WorkerPool& worker_pool, Executor& strand_executor,
+    Impl(ports::ISecretStore& secret_store, WorkerPool& store_pool, WorkerPool& worker_pool, Executor& strand_executor,
          TimerService& timer_service, UserRequestRegistry& request_registry, EventBus& bus, Redactor& masks,
-         std::string_view root_hash16)
+         std::string_view root_hash16, void (*flush)())
         : store(secret_store),
+          store_worker(store_pool),
           workers(worker_pool),
           strand(strand_executor),
           timers(timer_service),
           requests(request_registry),
           events(bus),
           redactor(masks),
+          flush_logs(flush),
           layout(root_hash16),
           resolutions(bus.subscribe(EventFilter{.kinds = {EventKind::UserActionResolved}}, kResolutionBudget)) {
         resolutions->set_notify([this] { post([this] { drain_resolutions(); }); });
@@ -169,8 +201,8 @@ struct SecretService::Impl {
     // The mask is lifted only after the logger has written what was queued while it applied.
     void release(SecretBytes value) {
         workers.submit<void>(
-            [&masks = redactor, value = std::move(value)](CancelToken) -> Result<void> {
-                Logger::flush();
+            [&masks = redactor, flush = flush_logs, value = std::move(value)](CancelToken) -> Result<void> {
+                flush();
                 masks.remove_secret(value.reveal());
                 return {};
             },
@@ -244,7 +276,7 @@ struct SecretService::Impl {
         }
         worker_busy = true;
         call_deadline = timers.after(kStoreCallDeadline, [this, id] { complete_call(id, std::unexpected(timed_out())); });
-        workers.submit<StoreReply>(
+        store_worker.submit<StoreReply>(
             [&target_store = store, work = std::move(call.work)](CancelToken) mutable -> Result<StoreReply> {
                 return work(target_store);
             },
@@ -275,21 +307,34 @@ struct SecretService::Impl {
             StoreReply reply;
             reply.kind = target_store.kind();
             if (reply.kind == SecretStoreKind::Unavailable) return reply;
-            Result<std::optional<SecretBytes>> index = target_store.get(layout_.index_key());
-            if (!index) {
-                reply.failure = std::move(index.error());
-                return reply;
+            std::vector<std::vector<u8>> stored_index;
+            std::set<SecretTarget> targets;
+            for (std::size_t chunk = 0;; ++chunk) {
+                Result<std::optional<SecretBytes>> index = target_store.get(layout_.index_key(chunk));
+                if (!index) {
+                    reply.failure = std::move(index.error());
+                    return reply;
+                }
+                if (!*index) {
+                    reply.index_chunks = chunk;
+                    break;
+                }
+                targets.merge(detail::decode_index((*index)->reveal()));
+                stored_index.emplace_back((*index)->reveal().begin(), (*index)->reveal().end());
             }
-            if (!*index) return reply;
-            for (const SecretTarget& target : detail::decode_index((*index)->reveal())) {
+            std::set<SecretTarget> with_value;
+            for (const SecretTarget& target : targets) {
                 Result<std::optional<SecretBytes>> value = target_store.get(layout_.value_key(target));
                 if (!value) {
                     reply.failure = std::move(value.error());
                     return reply;
                 }
                 // A listed target without a value is dropped from the index on its next write.
-                if (*value) reply.loaded.emplace_back(target, std::move(**value));
+                if (!*value) continue;
+                with_value.insert(target);
+                reply.loaded.emplace_back(target, std::move(**value));
             }
+            reply.index_stale = detail::encode_index(with_value) != stored_index;
             return reply;
         };
         call.done = [this](Result<StoreReply> reply) { finish_load(std::move(reply)); };
@@ -308,6 +353,8 @@ struct SecretService::Impl {
             availability = SecretsAvailability{SecretStoreKind::Unavailable, SecretsUnavailableReason::NoOsStore};
         } else {
             availability = SecretsAvailability{reply->kind, std::nullopt};
+            index_chunks = reply->index_chunks.value_or(0);
+            index_stale = reply->index_stale;
             for (auto& [target, value] : reply->loaded) {
                 indexed.insert(target);
                 // A put or clear made while loading is newer than the stored copy.
@@ -341,21 +388,30 @@ struct SecretService::Impl {
                 return std::nullopt;
             }
             std::set<SecretTarget> listed = indexed;
-            const bool write_index = listed.insert(target).second || index_dirty;
-            std::optional<std::vector<u8>> index;
-            if (write_index) index = detail::encode_index(listed);
+            const bool rewrite_index = listed.insert(target).second || index_dirty;
+            std::optional<std::vector<std::vector<u8>>> index;
+            std::optional<std::vector<std::vector<u8>>> pruned;
+            if (rewrite_index) index = detail::encode_index(listed);
+            if (rewrite_index && index_stale) pruned = detail::encode_index(indexed);
+            const std::size_t chunks = index ? index->size() : 0;
 
             StoreCall call;
-            call.work = [index_key = layout.index_key(), value_key = layout.value_key(target), index = std::move(index),
+            call.work = [layout_ = layout, value_key = layout.value_key(target), index = std::move(index),
+                         pruned = std::move(pruned), stored_chunks = index_chunks,
                          value = copy_of(it->second.value)](ports::ISecretStore& target_store) mutable {
                 StoreReply reply;
+                // Stale lines go first, so adding the new line only moves lines up.
+                std::size_t stored = stored_chunks;
+                if (pruned) {
+                    write_index(target_store, layout_, *pruned, false, stored, reply);
+                    if (reply.failure) return reply;
+                    stored = *reply.index_chunks;
+                    reply.index_written = false;
+                }
                 // The index is written first, so it always lists every stored value.
                 if (index) {
-                    if (Result<void> put = target_store.put(index_key, *index); !put) {
-                        reply.failure = std::move(put.error());
-                        return reply;
-                    }
-                    reply.index_written = true;
+                    write_index(target_store, layout_, *index, true, stored, reply);
+                    if (reply.failure) return reply;
                 }
                 if (Result<void> put = target_store.put(value_key, value.reveal()); !put) {
                     reply.failure = std::move(put.error());
@@ -364,15 +420,17 @@ struct SecretService::Impl {
                 reply.kind = target_store.kind();
                 return reply;
             };
-            call.done = [this, target, generation, write_index, listed = std::move(listed),
+            call.done = [this, target, generation, rewrite_index, chunks, listed = std::move(listed),
                          saved = std::move(saved)](Result<StoreReply> reply) mutable {
+                note_index_chunks(reply, chunks);
                 if (!reply) {
                     // The abandoned call may still store the value, under an index that may not list it.
                     indexed = std::move(listed);
-                    if (write_index) index_dirty = true;
+                    if (rewrite_index) index_dirty = true;
                 } else if (reply->index_written) {
                     indexed = std::move(listed);
                     index_dirty = false;
+                    index_stale = false;
                 }
                 const bool ok = succeeded(reply);
                 if (const auto held = entries.find(target);
@@ -404,16 +462,17 @@ struct SecretService::Impl {
                 return std::nullopt;
             }
             std::optional<std::set<SecretTarget>> remaining;
-            std::optional<std::vector<u8>> index;
+            std::optional<std::vector<std::vector<u8>>> index;
             if (listed) {
                 remaining = indexed;
                 remaining->erase(target);
                 index = detail::encode_index(*remaining);
             }
+            const std::size_t chunks = index ? index->size() : 0;
 
             StoreCall call;
-            call.work = [index_key = layout.index_key(), value_key = layout.value_key(target),
-                         index = std::move(index)](ports::ISecretStore& target_store) {
+            call.work = [layout_ = layout, value_key = layout.value_key(target), index = std::move(index),
+                         stored_chunks = index_chunks](ports::ISecretStore& target_store) {
                 StoreReply reply;
                 if (Result<void> erased = target_store.erase(value_key); !erased) {
                     reply.failure = std::move(erased.error());
@@ -421,20 +480,20 @@ struct SecretService::Impl {
                 }
                 // A stale index line only costs a lookup at the next load, so its failure is not reported.
                 if (index) {
-                    const Result<void> written =
-                        index->empty() ? target_store.erase(index_key) : target_store.put(index_key, *index);
-                    reply.index_written = written.has_value();
+                    write_index(target_store, layout_, *index, false, stored_chunks, reply);
+                    reply.failure.reset();
                 }
                 return reply;
             };
-            call.done = [this, kind = target.kind, remaining = std::move(remaining),
+            call.done = [this, kind = target.kind, chunks, remaining = std::move(remaining),
                          done = std::move(done)](Result<StoreReply> reply) mutable {
+                note_index_chunks(reply, chunks);
                 if (!reply) {
                     // The abandoned call may still rewrite the index without this target, which stays listed here.
                     if (remaining) index_dirty = true;
                 } else if (!reply->failure && remaining) {
                     indexed = std::move(*remaining);
-                    if (reply->index_written) index_dirty = false;
+                    if (reply->index_written) index_dirty = index_stale = false;
                 }
                 if (!done) return;
                 if (succeeded(reply)) done(Result<void>{});
@@ -442,6 +501,47 @@ struct SecretService::Impl {
             };
             return call;
         };
+    }
+
+    // An abandoned call may have written all of its chunks.
+    void note_index_chunks(const Result<StoreReply>& reply, std::size_t chunks) {
+        if (!reply) index_chunks = std::max(index_chunks, chunks);
+        else if (reply->index_chunks) index_chunks = *reply->index_chunks;
+    }
+
+    void require(const SecretTarget& target, SecretWait wait, CancelToken token, UniqueFunction<void(RequestId)> raised,
+                 UniqueFunction<void(Result<SecretBytes>)> done) {
+        if (wait.reason == NeedsSecretReason::Missing) {
+            if (const auto it = entries.find(target); it != entries.end()) {
+                post_result(std::move(done), Result<SecretBytes>(copy_of(it->second.value)));
+                return;
+            }
+            // A request raised before the load would ask for a value the store may hold.
+            if (phase != Phase::Loaded) {
+                start_waiters.push_back([this, target, wait, token = std::move(token), raised = std::move(raised),
+                                         done = std::move(done)](SecretsAvailability) mutable {
+                    if (token.cancelled())
+                        return post_result(std::move(done),
+                                           Result<SecretBytes>(std::unexpected(kind_diag(
+                                               msg::kRequestWithdrawn, target.kind, ErrorKind::Cancelled))));
+                    require(target, wait, std::move(token), std::move(raised), std::move(done));
+                });
+                if (phase == Phase::Idle) load();
+                return;
+            }
+        }
+        const u64 key = ++last_wait;
+        NeedsSecret payload{wait.session, target, wait.reason, remember_location(target.kind)};
+        const RequestId id = requests.ask(
+            UserRequestKind::NeedsSecret, std::move(payload), wait.op, wait.session,
+            [this, key, alive_token = alive.token()](const std::any& answer) -> Result<void> {
+                if (alive_token.cancelled()) return make_diag(ErrorDomain::Secrets, msg::kNotReady).fail();
+                return accept_answer(key, answer);
+            },
+            std::move(token));
+        // A withdrawal during ask() is seen by the posted drain, which runs after this insert.
+        waits.emplace(key, Wait{id, target, last_put_seq, std::nullopt, std::move(done)});
+        if (raised) raised(id);
     }
 
     Result<void> accept_answer(u64 key, const std::any& answer) {
@@ -496,12 +596,14 @@ struct SecretService::Impl {
     }
 
     ports::ISecretStore& store;
+    WorkerPool& store_worker;
     WorkerPool& workers;
     Executor& strand;
     TimerService& timers;
     UserRequestRegistry& requests;
     EventBus& events;
     Redactor& redactor;
+    void (*flush_logs)();
     detail::StoreLayout layout;
     CancelSource alive;
 
@@ -513,6 +615,10 @@ struct SecretService::Impl {
     std::set<SecretTarget> indexed;
     // A call that rewrites the index was abandoned, so the stored index may miss a target.
     bool index_dirty = false;
+    // The stored index lists lines `indexed` does not, so the next write that adds one drops them first.
+    bool index_stale = false;
+    // How many index chunks the store may hold, so a shorter index erases the rest.
+    std::size_t index_chunks = 0;
     std::set<SecretTarget> touched_while_loading;
     u64 last_put_seq = 0;
     u64 last_generation = 0;
@@ -531,10 +637,11 @@ struct SecretService::Impl {
     std::shared_ptr<Subscription> resolutions;
 };
 
-SecretService::SecretService(ports::ISecretStore& store, WorkerPool& workers, Executor& strand, TimerService& timers,
-                             UserRequestRegistry& requests, EventBus& events, Redactor& redactor,
-                             std::string_view root_hash16)
-    : impl_(std::make_unique<Impl>(store, workers, strand, timers, requests, events, redactor, root_hash16)) {}
+SecretService::SecretService(ports::ISecretStore& store, WorkerPool& store_worker, WorkerPool& workers, Executor& strand,
+                             TimerService& timers, UserRequestRegistry& requests, EventBus& events, Redactor& redactor,
+                             std::string_view root_hash16, void (*flush_logs)())
+    : impl_(std::make_unique<Impl>(store, store_worker, workers, strand, timers, requests, events, redactor,
+                                   root_hash16, flush_logs)) {}
 
 SecretService::~SecretService() = default;
 
@@ -634,27 +741,9 @@ Result<SecretBytes> SecretService::reveal(const SecretTarget& target) const {
     return provide(target);
 }
 
-std::optional<RequestId> SecretService::require(const SecretTarget& target, SecretWait wait, CancelToken token,
-                                                UniqueFunction<void(Result<SecretBytes>)> done) {
-    Impl& s = *impl_;
-    if (wait.reason == NeedsSecretReason::Missing) {
-        if (const auto it = s.entries.find(target); it != s.entries.end()) {
-            s.post_result(std::move(done), Result<SecretBytes>(copy_of(it->second.value)));
-            return std::nullopt;
-        }
-    }
-    const u64 key = ++s.last_wait;
-    NeedsSecret payload{wait.session, target, wait.reason, s.remember_location(target.kind)};
-    const RequestId id = s.requests.ask(
-        UserRequestKind::NeedsSecret, std::move(payload), wait.op, wait.session,
-        [&s, key, alive_token = s.alive.token()](const std::any& answer) -> Result<void> {
-            if (alive_token.cancelled()) return make_diag(ErrorDomain::Secrets, msg::kNotReady).fail();
-            return s.accept_answer(key, answer);
-        },
-        std::move(token));
-    // A withdrawal during ask() is seen by the posted drain, which runs after this insert.
-    s.waits.emplace(key, Impl::Wait{id, target, s.last_put_seq, std::nullopt, std::move(done)});
-    return id;
+void SecretService::require(const SecretTarget& target, SecretWait wait, CancelToken token,
+                            UniqueFunction<void(RequestId)> raised, UniqueFunction<void(Result<SecretBytes>)> done) {
+    impl_->require(target, wait, std::move(token), std::move(raised), std::move(done));
 }
 
 }  // namespace rb::secrets

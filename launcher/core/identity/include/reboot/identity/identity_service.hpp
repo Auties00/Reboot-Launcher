@@ -30,13 +30,15 @@ struct IdentitySnapshot {
 // Capabilities: profile-identity.credentials, profile-identity.+47, auth-backend.lawinserver-xmpp.
 // Strand-only. Owns data/accounts.json, with one client and one host record in v1, and
 // data/backend-logins.json.
-// - ensure_records() mints a missing record, or one storage dropped as invalid, with a default
-//   name and a fresh tag. A ReadOnly store, which its LoadReport already reported, refuses the
-//   write, so the records then live in memory only.
+// - ensure_records() mints a missing record, or one storage dropped for a bad record_id or role,
+//   with a default name and a fresh tag; a record whose name or tag storage refused keeps its
+//   record_id and gets a default name or a fresh tag. A ReadOnly store, which its LoadReport
+//   already reported, refuses the write, so the records then live in memory only.
 // - A rename is one atomic commit. It changes account_id, never record_id or tag. Running
 //   sessions keep the record they pinned, so it takes effect at the next launch.
-// - A hand edit is adopted like an API change: a record it drops is minted again and written
-//   back, and a changed display_name is a rename.
+// - A hand edit is adopted like an API change and the result written back: a changed
+//   display_name is a rename; an invalid name or tag keeps the one in memory, as the API would
+//   refuse it; a dropped record is the one in memory again. Its issues are logged.
 // - Every record change publishes IdentityChangedEvent.
 // - Passwords are not here: secrets stores them and plan_login says which one a launch needs.
 class IdentityService {
