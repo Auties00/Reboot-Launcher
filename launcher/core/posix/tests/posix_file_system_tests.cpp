@@ -224,7 +224,7 @@ TEST_CASE("a failed backup step keeps the old backup and the target") {
         PosixFileSystem fs{fsync_fd, fsync_fd, [](const NativePath&, const NativePath&) { return EIO; }};
         const auto result = fs.atomic_replace(target, as_bytes("second"), true);
         REQUIRE_FALSE(result.has_value());
-        CHECK(result.error().is(kCallFailed));
+        CHECK(result.error().is(kCallFailedOnPath));
         CHECK(result.error().os_error == errno_error(EIO));
     }
     SECTION("the copy fallback fails to sync") {
