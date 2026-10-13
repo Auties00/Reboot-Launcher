@@ -63,7 +63,8 @@ public:
     GameServerProcess(ports::IProcessLauncher& launcher, ports::IFileSystem& fs, WorkerPool& workers,
                       Executor& strand, TimerService& timers, const IClock& clock, const AppLayout& layout,
                       GameServerLaunch launch, GameServerEventSink on_event, process::ChildRecordCallback record);
-    // Kills a live child at once, with no further events. Allowed from the sink or a request
+    // Kills a live child at once, with no further events; pending requests are still answered later
+    // on the strand, Failed with gameserver.not_running. Allowed from the sink or a request
     // callback; the kill then runs on the strand once that delivery returns.
     ~GameServerProcess();
     GameServerProcess(const GameServerProcess&) = delete;
@@ -90,7 +91,7 @@ public:
     // with gameserver.command_not_declared and is never sent. On an error return `done` is
     // dropped uncalled; otherwise it runs later on the strand exactly once: with the reply, with
     // Failed and gameserver.command_timeout after kOperatorCommandDeadline, or with Failed and
-    // gameserver.not_running when the process exits first.
+    // gameserver.not_running when the process exits or is destroyed first.
     Result<void> request(OperatorCommand command, UniqueFunction<void(CommandResult)> done);
 
     [[nodiscard]] const SessionId& session() const noexcept;

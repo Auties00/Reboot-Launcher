@@ -37,10 +37,13 @@ function(_reboot_os_matches os out)
   endif()
 endfunction()
 
-# reboot_add_package(<area> SOURCES ... [DEPS ...] [PUBLIC_DEPS ...] [OS WINDOWS|APPLE|LINUX|POSIX] [NO_TESTS])
-# <area> is the include area: "backend", or "os_linux/ipc" for an OS package.
+# reboot_add_package(<area> SOURCES ... [DEPS ...] [PUBLIC_DEPS ...] [OS WINDOWS|APPLE|LINUX|POSIX] [NO_TESTS]
+#                    [SERIAL_TAGS <tag>...])
+# <area> is the include area: "backend", or "os_linux/ipc" for an OS package. Test cases with any
+# of SERIAL_TAGS run alone under ctest: real handshakes a loaded machine slows past their waits,
+# and real ports a parallel test may hold.
 function(reboot_add_package area)
-  cmake_parse_arguments(PARSE_ARGV 1 arg "NO_TESTS" "OS" "SOURCES;DEPS;PUBLIC_DEPS")
+  cmake_parse_arguments(PARSE_ARGV 1 arg "NO_TESTS" "OS" "SOURCES;DEPS;PUBLIC_DEPS;SERIAL_TAGS")
   if(arg_UNPARSED_ARGUMENTS)
     message(FATAL_ERROR "reboot_add_package(${area}): unexpected arguments ${arg_UNPARSED_ARGUMENTS}")
   endif()
@@ -80,7 +83,22 @@ function(reboot_add_package area)
   if(NOT COMMAND catch_discover_tests)
     include(Catch)
   endif()
-  catch_discover_tests(${target}_tests)
+  if(NOT arg_SERIAL_TAGS)
+    catch_discover_tests(${target}_tests)
+    return()
+  endif()
+  # Catch2 specs: "[a],[b]" is either tag, "~[a]~[b]" neither.
+  set(serial_spec "")
+  set(parallel_spec "")
+  foreach(tag IN LISTS arg_SERIAL_TAGS)
+    if(serial_spec)
+      string(APPEND serial_spec ",")
+    endif()
+    string(APPEND serial_spec "[${tag}]")
+    string(APPEND parallel_spec "~[${tag}]")
+  endforeach()
+  catch_discover_tests(${target}_tests TEST_SPEC "${serial_spec}" PROPERTIES RUN_SERIAL TRUE)
+  catch_discover_tests(${target}_tests TEST_SPEC "${parallel_spec}")
 endfunction()
 
 # reboot_add_executable(<name> SOURCES ... [DEPS ...] [OS WINDOWS|APPLE|LINUX|POSIX])

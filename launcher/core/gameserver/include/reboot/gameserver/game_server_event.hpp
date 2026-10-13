@@ -81,6 +81,7 @@ struct ServerUnresponsive {
 struct ServerExited {
     process::ChildExitCause cause{};
     ports::ChildExit status;
+    // Absent for Requested, unless the kill failed (process.child_kill_failed): the child may still run.
     std::optional<Diagnostic> error;
 };
 

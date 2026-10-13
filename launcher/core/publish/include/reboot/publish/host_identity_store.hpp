@@ -86,7 +86,8 @@ public:
     // ServerId. Fails at once with publish.identity_in_use while held; the op fails with
     // publish.identity_file_invalid when `source` is not an export directory with a token, and with
     // publish.identity_already_imported when another profile has its server id. The identity is
-    // held until its file is written; a failed or cancelled import restores the old one.
+    // held until its file is written; a failed or cancelled import restores the old one, and a
+    // profile deleted meanwhile ends the op Cancelled with Superseded.
     Result<OpHandle> start_import(const HostProfileId& profile, NativePath source, DisconnectPolicy policy);
 
     // ShutdownCoordinator's store step; `done` runs on the strand.

@@ -4,8 +4,11 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "reboot/foundation/net_types.hpp"
+#include "reboot/testing/expected_checks.hpp"
 
 using namespace rb;
+using rb::testing::held_error;
+using rb::testing::held_value;
 
 namespace {
 
@@ -17,16 +20,16 @@ std::string round_trip(std::string_view text) {
 }  // namespace
 
 TEST_CASE("parse_port accepts 1-65535 and reports why it refused", "[foundation][net_types]") {
-    CHECK(parse_port("80") == Port{80});
-    CHECK(parse_port("65535") == Port{65535});
-    CHECK(parse_port("00080") == Port{80});
-    CHECK(parse_port("") == std::unexpected(PortError::Empty));
-    CHECK(parse_port("8a") == std::unexpected(PortError::NotNumeric));
-    CHECK(parse_port("-1") == std::unexpected(PortError::NotNumeric));
-    CHECK(parse_port(" 80") == std::unexpected(PortError::NotNumeric));
-    CHECK(parse_port("0") == std::unexpected(PortError::OutOfRange));
-    CHECK(parse_port("65536") == std::unexpected(PortError::OutOfRange));
-    CHECK(parse_port("99999999999999999999") == std::unexpected(PortError::OutOfRange));
+    CHECK(held_value(parse_port("80")) == Port{80});
+    CHECK(held_value(parse_port("65535")) == Port{65535});
+    CHECK(held_value(parse_port("00080")) == Port{80});
+    CHECK(held_error(parse_port("")) == PortError::Empty);
+    CHECK(held_error(parse_port("8a")) == PortError::NotNumeric);
+    CHECK(held_error(parse_port("-1")) == PortError::NotNumeric);
+    CHECK(held_error(parse_port(" 80")) == PortError::NotNumeric);
+    CHECK(held_error(parse_port("0")) == PortError::OutOfRange);
+    CHECK(held_error(parse_port("65536")) == PortError::OutOfRange);
+    CHECK(held_error(parse_port("99999999999999999999")) == PortError::OutOfRange);
 }
 
 TEST_CASE("IPv4 parses strictly and stays IPv4-mapped", "[foundation][net_types]") {
@@ -59,24 +62,24 @@ TEST_CASE("IPv6 parses every form and prints RFC 5952", "[foundation][net_types]
 }
 
 TEST_CASE("parse_host_port splits hosts, ports and bracketed IPv6", "[foundation][net_types]") {
-    CHECK(parse_host_port("example.com") == HostPort{"example.com", std::nullopt});
-    CHECK(parse_host_port("example.com:7777") == HostPort{"example.com", Port{7777}});
-    CHECK(parse_host_port("10.0.0.1:80") == HostPort{"10.0.0.1", Port{80}});
-    CHECK(parse_host_port("[::1]:9000") == HostPort{"::1", Port{9000}});
-    CHECK(parse_host_port("[::1]") == HostPort{"::1", std::nullopt});
-    CHECK(parse_host_port("2001:db8::1") == HostPort{"2001:db8::1", std::nullopt});
+    CHECK(held_value(parse_host_port("example.com")) == HostPort{"example.com", std::nullopt});
+    CHECK(held_value(parse_host_port("example.com:7777")) == HostPort{"example.com", Port{7777}});
+    CHECK(held_value(parse_host_port("10.0.0.1:80")) == HostPort{"10.0.0.1", Port{80}});
+    CHECK(held_value(parse_host_port("[::1]:9000")) == HostPort{"::1", Port{9000}});
+    CHECK(held_value(parse_host_port("[::1]")) == HostPort{"::1", std::nullopt});
+    CHECK(held_value(parse_host_port("2001:db8::1")) == HostPort{"2001:db8::1", std::nullopt});
 
-    CHECK(parse_host_port("") == std::unexpected(AddressError::Empty));
-    CHECK(parse_host_port(":80") == std::unexpected(AddressError::BadHost));
-    CHECK(parse_host_port("bad host:80") == std::unexpected(AddressError::BadHost));
-    CHECK(parse_host_port("host:") == std::unexpected(AddressError::BadPort));
-    CHECK(parse_host_port("host:0") == std::unexpected(AddressError::BadPort));
-    CHECK(parse_host_port("[::1") == std::unexpected(AddressError::BracketMismatch));
-    CHECK(parse_host_port("::1]") == std::unexpected(AddressError::BracketMismatch));
-    CHECK(parse_host_port("[::1]x") == std::unexpected(AddressError::BracketMismatch));
-    CHECK(parse_host_port("[1.2.3.4]:80") == std::unexpected(AddressError::BadHost));
-    CHECK(parse_host_port("[::1]:99999") == std::unexpected(AddressError::BadPort));
-    CHECK(parse_host_port("1:2:3") == std::unexpected(AddressError::BadHost));
+    CHECK(held_error(parse_host_port("")) == AddressError::Empty);
+    CHECK(held_error(parse_host_port(":80")) == AddressError::BadHost);
+    CHECK(held_error(parse_host_port("bad host:80")) == AddressError::BadHost);
+    CHECK(held_error(parse_host_port("host:")) == AddressError::BadPort);
+    CHECK(held_error(parse_host_port("host:0")) == AddressError::BadPort);
+    CHECK(held_error(parse_host_port("[::1")) == AddressError::BracketMismatch);
+    CHECK(held_error(parse_host_port("::1]")) == AddressError::BracketMismatch);
+    CHECK(held_error(parse_host_port("[::1]x")) == AddressError::BracketMismatch);
+    CHECK(held_error(parse_host_port("[1.2.3.4]:80")) == AddressError::BadHost);
+    CHECK(held_error(parse_host_port("[::1]:99999")) == AddressError::BadPort);
+    CHECK(held_error(parse_host_port("1:2:3")) == AddressError::BadHost);
 }
 
 TEST_CASE("Endpoint prints IPv6 in brackets", "[foundation][net_types]") {

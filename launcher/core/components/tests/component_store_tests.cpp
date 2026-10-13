@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "components_test_support.hpp"
+#include "reboot/testing/expected_checks.hpp"
 #include "store_rename.hpp"
 #include "test_archives.hpp"
 #include "reboot/components/component_changed_event.hpp"
@@ -46,6 +47,7 @@ using rb::components::test::TestStrand;
 using rb::components::test::write_text;
 using rb::testing::FakeHttpResponse;
 using rb::testing::FsOperation;
+using rb::testing::held_value;
 
 namespace {
 
@@ -140,7 +142,7 @@ struct Fixture {
         std::optional<Result<ManifestRefresh>> refreshed;
         manifest->refresh({}, [&](Result<ManifestRefresh> r) { refreshed = std::move(r); });
         strand.run_until([&] { return refreshed.has_value(); });
-        REQUIRE(*refreshed == ManifestRefresh::Adopted);
+        REQUIRE(held_value(*refreshed) == ManifestRefresh::Adopted);
     }
 
     void start() {
@@ -816,12 +818,21 @@ TEST_CASE("an index that cannot be read deletes no stored version", "[components
     CHECK(second.info("payload", "1.0.0")->state == ComponentState::Ready);
 }
 
-TEST_CASE("an unreadable index starts the store empty", "[components][store]") {
+TEST_CASE("an unreadable index starts the store empty with an incomplete listing", "[components][store]") {
     Fixture f;
     f.publish(payload_manifest());
-    write_text(f.layout.components_dir() / "index.json", "{not json");
+    const NativePath components = f.layout.components_dir();
+    write_text(components / "index.json", "{not json");
+    const NativePath unlisted = components / "runtime" / std::string(64, 'c') / "bin" / "wine";
+    write_text(unlisted, "named by the lost index");
     f.start();
     CHECK(f.info("payload", "1.0.0")->state == ComponentState::Missing);
+    CHECK(read_text(unlisted) == "named by the lost index");
+    // A runtime still on disk may be missing from list(), so nothing may treat it as removed.
+    CHECK_FALSE(f.store->listing_complete());
+    auto pinned = f.acquire_payload();
+    REQUIRE(pinned);
+    CHECK_FALSE(f.store->listing_complete());
 }
 
 TEST_CASE("two versions that share a file download it into their own part files", "[components][store]") {

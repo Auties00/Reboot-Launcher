@@ -14,11 +14,13 @@
 #include "reboot/foundation/executor.hpp"
 #include "reboot/storage/document_store.hpp"
 #include "reboot/storage/settings_document.hpp"
+#include "reboot/testing/expected_checks.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "test_support.hpp"
 
 using namespace rb;
 using namespace rb::storage;
+using rb::testing::held_value;
 
 namespace {
 
@@ -116,7 +118,7 @@ TEST_CASE("a changed document is written as a {schema, revision, values} envelop
     CHECK(report.source == LoadSource::Fresh);
     CHECK(report.mode == StorageMode::ReadWrite);
 
-    REQUIRE(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Dark; }) == 1u);
+    REQUIRE(held_value(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Dark; })) == 1u);
     REQUIRE(f.flush(store));
     CHECK(f.fs.text(f.settings_path) == test::golden_text("settings_envelope.json"));
 }
@@ -363,7 +365,7 @@ TEST_CASE("a cancelled flush ends only the wait and the write still lands", "[st
     DocumentStore<SettingsDocument> store(f.fs, f.workers, f.strand, f.clock, f.settings_path);
     REQUIRE(store.load().source == LoadSource::Fresh);
     test::WorkerGate gate(f.workers, f.strand);
-    REQUIRE(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Dark; }) == 1u);
+    REQUIRE(held_value(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Dark; })) == 1u);
 
     CancelSource cancel;
     std::optional<Result<void>> waited;
@@ -384,8 +386,8 @@ TEST_CASE("changes made while a write is in flight go out in the next write", "[
     DocumentStore<SettingsDocument> store(f.fs, f.workers, f.strand, f.clock, f.settings_path);
     REQUIRE(store.load().source == LoadSource::Fresh);
     test::WorkerGate gate(f.workers, f.strand);
-    REQUIRE(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Dark; }) == 1u);
-    REQUIRE(store.update([](SettingsDocument& document) { document.values.ui.language = "de"; }) == 2u);
+    REQUIRE(held_value(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Dark; })) == 1u);
+    REQUIRE(held_value(store.update([](SettingsDocument& document) { document.values.ui.language = "de"; })) == 2u);
 
     gate.release();
     REQUIRE(f.flush(store));
@@ -463,7 +465,7 @@ TEST_CASE("a missing primary is restored from its .bak", "[storage][document]") 
     CHECK(store.get().values.ui.theme == Theme::Dark);
     CHECK(store.revision() == 1u);
 
-    REQUIRE(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Light; }) == 2u);
+    REQUIRE(held_value(store.update([](SettingsDocument& document) { document.values.ui.theme = Theme::Light; })) == 2u);
     REQUIRE(f.flush(store));
     CHECK(f.fs.text(backup) == test::golden_text("settings_envelope.json"));
     CHECK(envelope_on_disk(f.fs, f.settings_path).at("values").at("ui.theme") == "light");

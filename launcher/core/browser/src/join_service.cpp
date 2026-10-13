@@ -1,6 +1,8 @@
 #include "reboot/browser/join_service.hpp"
 
+#include <algorithm>
 #include <any>
+#include <chrono>
 #include <cstring>
 #include <map>
 #include <utility>
@@ -232,10 +234,16 @@ struct JoinService::Impl {
                     run->server->row.has_password = true;
                     ask_password(run, true);
                     return;
-                case wire::ErrorCode::rate_limited:
+                case wire::ErrorCode::rate_limited: {
+                    // The edge refuses on an empty query or join limiter without saying which, with the
+                    // join limiter's wait; its query limiter has a token again within one interval.
+                    const auto query_interval =
+                        std::chrono::duration_cast<std::chrono::milliseconds>(kQueryRate.per) / kQueryRate.tokens;
+                    session.query_rate().hold_off(std::min(error.retry_after, query_interval));
                     pacing.at(run->request.server).hold_off(error.retry_after);
                     fail(run, JoinFailure{.code = JoinFailureCode::TooManyAttempts, .retry_after = error.retry_after});
                     return;
+                }
                 case wire::ErrorCode::not_found: fail(run, JoinFailure{.code = JoinFailureCode::NotFound}); return;
                 case wire::ErrorCode::unavailable: fail(run, JoinFailure{.code = JoinFailureCode::Offline}); return;
                 case wire::ErrorCode::unreachable: fail(run, JoinFailure{.code = JoinFailureCode::Unreachable}); return;

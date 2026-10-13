@@ -198,12 +198,13 @@ constexpr u32 kMaxLogPage = 5000;
     return patch;
 }
 
-// ui.language, then the user's OS languages, then English.
-[[nodiscard]] ux::LanguageTag ui_language(const storage::Settings& settings, ports::IUiLanguageSource& languages) {
+// ui.language, then the calling user's OS languages, then English.
+[[nodiscard]] ux::LanguageTag ui_language(const storage::Settings& settings, ports::IUiLanguageSource& languages,
+                                          const contracts::ipc::CallerContext& caller) {
     const std::string selected = settings.snapshot().values.ui.language;
     ux::LanguagePreference preference;
     if (Result<ux::LanguagePreference> parsed = ux::LanguagePreference::parse(selected)) preference = *parsed;
-    const std::vector<ux::LanguageTag> os_preferred = convert::language_tags(languages.preferred_ui_languages());
+    const std::vector<ux::LanguageTag> os_preferred = convert::language_tags(languages.caller_ui_languages(caller.display_env));
     return ux::resolve_language(preference, os_preferred, ux::shipped_languages()).tag;
 }
 
@@ -704,8 +705,8 @@ Result<api::GuidanceOnboardingSkipResponse> ApiRouter::onboarding_skip(const api
     return api::GuidanceOnboardingSkipResponse{convert::onboarding(*exited)};
 }
 
-Result<api::GuidanceLinksResponse> ApiRouter::links(const api::CallContext&, const api::GuidanceLinksRequest&) {
-    const ux::LanguageTag language = ui_language(deps_.settings, deps_.languages);
+Result<api::GuidanceLinksResponse> ApiRouter::links(const api::CallContext& context, const api::GuidanceLinksRequest&) {
+    const ux::LanguageTag language = ui_language(deps_.settings, deps_.languages, context.caller);
     api::GuidanceLinksResponse out;
     for (const ux::AppLinkEntry& entry : deps_.app_links.list(language)) {
         std::string id;
@@ -783,11 +784,12 @@ Result<OpHandle> ApiRouter::start_command(const api::CallContext&, const api::Ho
     const SessionId session = convert::id(request.session);
     // The server's answer always comes later, by which time the op exists.
     auto answering = std::make_shared<Operation<void>*>(nullptr);
-    if (Result<void> sent = deps_.hosts.command(session, std::move(*command),
-                                                [answering](gameserver::CommandResult result) {
-                                                    (*answering)->complete(command_outcome(std::move(result)));
-                                                });
-        !sent)
+    // A server destroyed at teardown still answers, later; by then the registry may be gone.
+    UniqueFunction<void(gameserver::CommandResult)> done = [answering, alive = state_->alive.token()](
+                                                               gameserver::CommandResult result) {
+        if (!alive.cancelled()) (*answering)->complete(command_outcome(std::move(result)));
+    };
+    if (Result<void> sent = deps_.hosts.command(session, std::move(*command), std::move(done)); !sent)
         return std::unexpected(std::move(sent.error()));
     // A margin past the server's own deadline, so its command_timeout is what the client sees.
     auto [handle, op] = deps_.ops.create<void>(OpKind::Generic, disconnect, session, RunnerMultiplier::Native,
@@ -1354,8 +1356,8 @@ Result<api::SessionsGetResponse> ApiRouter::get(const api::CallContext&, const a
                 play_state->net_mode == injection::NetMode::LegacyFixed ? api::NetMode::LegacyFixed : api::NetMode::PerSession;
             detail.tier = convert::tier(play_state->tier);
         }
-    } else if (Result<host::HostSnapshot> host_state = deps_.hosts.status(info->id)) {
-        detail.tier = convert::tier(host_state->tier);
+    } else if (const std::optional<support::SupportTier> host_tier = deps_.hosts.tier(info->id)) {
+        detail.tier = convert::tier(*host_tier);
     }
     if (info->profile) detail.profile = convert::id(*info->profile);
     for (const sessions::SpawnedProcess& process : info->processes)
@@ -1486,7 +1488,8 @@ Result<api::SettingsFrontendStatePutResponse> ApiRouter::frontend_state_put(cons
     return api::SettingsFrontendStatePutResponse{};
 }
 
-Result<api::SettingsLanguagesResponse> ApiRouter::languages(const api::CallContext&, const api::SettingsLanguagesRequest&) {
+Result<api::SettingsLanguagesResponse> ApiRouter::languages(const api::CallContext& context,
+                                                             const api::SettingsLanguagesRequest&) {
     api::SettingsLanguagesResponse out;
     for (const ux::LanguageInfo& language : ux::shipped_languages())
         out.languages.push_back(api::Language{language.tag.str(), language.shipped});
@@ -1495,7 +1498,7 @@ Result<api::SettingsLanguagesResponse> ApiRouter::languages(const api::CallConte
         preference && preference->tag() &&
         std::ranges::none_of(out.languages, [&](const api::Language& known) { return known.tag == preference->tag()->str(); }))
         out.languages.push_back(api::Language{preference->tag()->str(), false});
-    out.resolved = ui_language(deps_.settings, deps_.languages).str();
+    out.resolved = ui_language(deps_.settings, deps_.languages, context.caller).str();
     return out;
 }
 

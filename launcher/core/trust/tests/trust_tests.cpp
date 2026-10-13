@@ -13,6 +13,7 @@
 #include "hex.hpp"
 #include "reboot/foundation/diag.hpp"
 #include "reboot/foundation/sha256.hpp"
+#include "reboot/testing/expected_checks.hpp"
 #include "reboot/trust/check_expiry.hpp"
 #include "reboot/trust/key_ring.hpp"
 #include "reboot/trust/serial_guard.hpp"
@@ -22,6 +23,7 @@
 
 using namespace rb;
 using namespace rb::trust;
+using rb::testing::held_value;
 
 namespace {
 
@@ -178,10 +180,10 @@ TEST_CASE("SerialGuard refuses rollback and persists before advancing") {
         return {};
     });
 
-    CHECK(guard.admit(10) == SerialCheck::Same);
+    CHECK(held_value(guard.admit(10)) == SerialCheck::Same);
     CHECK(persisted.empty());
 
-    CHECK(guard.admit(12) == SerialCheck::Advanced);
+    CHECK(held_value(guard.admit(12)) == SerialCheck::Advanced);
     CHECK(persisted == std::vector<u64>{12});
     CHECK(guard.highest_seen() == 12);
 
@@ -305,7 +307,7 @@ TEST_CASE("SerialGuard never persists a rollback or a repeat") {
 
     CHECK_FALSE(guard.admit(0));
     CHECK_FALSE(guard.admit(4));
-    CHECK(guard.admit(5) == SerialCheck::Same);
+    CHECK(held_value(guard.admit(5)) == SerialCheck::Same);
     CHECK(calls == 0);
     CHECK(guard.highest_seen() == 5);
 }
@@ -327,8 +329,8 @@ TEST_CASE("SerialGuard admits a serial again once persisting recovers") {
 
     // The failed serial was never admitted, so the old one is not a rollback yet.
     fail = false;
-    CHECK(guard.admit(1) == SerialCheck::Same);
-    CHECK(guard.admit(2) == SerialCheck::Advanced);
+    CHECK(held_value(guard.admit(1)) == SerialCheck::Same);
+    CHECK(held_value(guard.admit(2)) == SerialCheck::Advanced);
     CHECK(persisted == std::vector<u64>{2, 2});
     CHECK(guard.highest_seen() == 2);
 }

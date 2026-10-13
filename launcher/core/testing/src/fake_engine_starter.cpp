@@ -13,14 +13,14 @@ Result<ports::StartResult> FakeEngineStarter::ensure_started(const NativePath& e
     {
         const std::scoped_lock lock(mutex_);
         ++calls_;
-        if (!answers_.empty()) answer = answers_[std::min(calls_, answers_.size()) - 1];
+        if (!answers_.empty()) answer = answers_[std::min(calls_, answers_.size()) - 1].result;
     }
     // Outside the lock: the hook may bring up an engine that calls back in.
     if (answer && *answer == ports::StartResult::Started && on_started_) on_started_(engine_exe, root);
     return answer;
 }
 
-void FakeEngineStarter::script(std::vector<Result<ports::StartResult>> answers) {
+void FakeEngineStarter::script(std::vector<StartAnswer> answers) {
     const std::scoped_lock lock(mutex_);
     answers_ = std::move(answers);
     calls_ = 0;

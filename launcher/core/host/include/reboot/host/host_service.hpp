@@ -210,6 +210,10 @@ public:
     // Host.status; host.not_host_session for a session that is not a live host session.
     [[nodiscard]] Result<HostSnapshot> status(SessionId session) const;
 
+    // The support tier the start was planned with, also while the session stops; nullopt for an
+    // unknown session.
+    [[nodiscard]] std::optional<support::SupportTier> tier(SessionId session) const;
+
     // Engine.drain and the shutdown DrainHosts step. DrainUpdate follows each session's pinned
     // update policy, the profile's or else host.update_policy: AfterMatch sends Drain, hides the
     // entry (Draining) and stops the session with Update at its next MatchEnded, or at once with

@@ -12,6 +12,7 @@
 #include "reboot/foundation/cancel.hpp"
 #include "reboot/ports/net.hpp"
 #include "reboot/testing/deterministic_runtime.hpp"
+#include "reboot/testing/expected_checks.hpp"
 #include "reboot/testing/fake_http_transport.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 #include "reboot/testing/fake_quic_transport.hpp"
@@ -179,46 +180,52 @@ TEST_CASE("FakeResolver passes the resolver suite and answers exactly once", "[t
 
     resolver.set("edge.reboot.test", {IpAddress::v4(0x0A000001)});
     resolver.hang("slow.test");
-    std::vector<Result<std::vector<IpAddress>>> answers;
-    const auto record = [&answers](Result<std::vector<IpAddress>> result) { answers.push_back(std::move(result)); };
+    // A plain struct: libc++ cannot compare iterators over std::expected (its operator== recurses).
+    struct Answer {
+        Result<std::vector<IpAddress>> result;
+    };
+    std::vector<Answer> answers;
+    const auto record = [&answers](Result<std::vector<IpAddress>> result) { answers.push_back({std::move(result)}); };
     resolver.resolve("EDGE.reboot.test", {}, record);
     resolver.resolve("10.1.2.3", {}, record);
     CancelSource source;
     resolver.resolve("slow.test", source.token(), record);
     runtime.run_until_idle();
     REQUIRE(answers.size() == 2);
-    CHECK(answers[0]->front() == IpAddress::v4(0x0A000001));
-    CHECK(answers[1]->front() == IpAddress::v4(0x0A010203));
+    CHECK(answers[0].result->front() == IpAddress::v4(0x0A000001));
+    CHECK(answers[1].result->front() == IpAddress::v4(0x0A010203));
     CHECK(resolver.pending() == 1);
 
     source.cancel(CancelReason::Deadline);
     runtime.run_until_idle();
     REQUIRE(answers.size() == 3);
-    CHECK(answers[2].error().kind == ErrorKind::Cancelled);
+    CHECK(answers[2].result.error().kind == ErrorKind::Cancelled);
     CHECK(resolver.pending() == 0);
     CHECK(resolver.queries().back() == "slow.test");
 }
 
 TEST_CASE("a FakeResolver destroyed with a hung lookup still answers it, cancelled", "[testing][net]") {
     DeterministicRuntime runtime;
-    std::vector<Result<std::vector<IpAddress>>> answers;
+    std::optional<Result<std::vector<IpAddress>>> answer;
+    int answers = 0;
     CancelSource source;
     {
         FakeResolver resolver(runtime.strand());
         resolver.hang("slow.test");
-        resolver.resolve("slow.test", source.token(), [&answers](Result<std::vector<IpAddress>> result) {
-            answers.push_back(std::move(result));
+        resolver.resolve("slow.test", source.token(), [&](Result<std::vector<IpAddress>> result) {
+            answer = std::move(result);
+            ++answers;
         });
         runtime.run_until_idle();
-        REQUIRE(answers.empty());
+        REQUIRE(answers == 0);
     }
     runtime.run_until_idle();
-    REQUIRE(answers.size() == 1);
-    CHECK(answers[0].error().kind == ErrorKind::Cancelled);
+    REQUIRE(answers == 1);
+    CHECK(answer->error().kind == ErrorKind::Cancelled);
 
     source.cancel(CancelReason::Deadline);
     runtime.run_until_idle();
-    CHECK(answers.size() == 1);
+    CHECK(answers == 1);
 }
 
 TEST_CASE("FakeQuicTransport passes the QUIC suite with an echoing peer", "[testing][conformance][net]") {
@@ -259,8 +266,8 @@ TEST_CASE("a QUIC peer stops reaching a client that dropped its connection", "[t
     REQUIRE(connection);
     FakeQuicPeer* peer = quic.last();
     REQUIRE(peer != nullptr);
-    CHECK((*connection)->open_stream() == 0u);
-    CHECK((*connection)->open_stream() == 4u);
+    CHECK(held_value((*connection)->open_stream()) == 0u);
+    CHECK(held_value((*connection)->open_stream()) == 4u);
     CHECK_FALSE((*connection)->send(8, {1}, false));
     peer->accept();
     connection->reset();

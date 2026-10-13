@@ -77,7 +77,7 @@ struct ComponentStoreDeps {
 // - An index.json of a newer schema leaves the store read-only for the run: it fetches what it
 //   needs, but collects, removes and rewrites nothing (start_remove fails with
 //   components.store_failed). An unreadable index.json starts the store empty but deletes no
-//   version directory.
+//   version directory, so listing_complete() stays false for the run.
 // - A removal waits only for fetches of the same component or into a directory it deletes, and
 //   reports progress while it waits; an op that ended first (cancelled, timed out) removes nothing.
 class ComponentStore {
@@ -92,8 +92,8 @@ public:
     void load(UniqueFunction<void(Result<void>)> done);
 
     [[nodiscard]] std::vector<ComponentInfo> list() const;
-    // False before load() finished and for a run with a newer index.json, when list() can miss
-    // stored versions.
+    // False before load() finished and for a run whose index.json was of a newer schema or
+    // unreadable, when list() can miss stored versions.
     [[nodiscard]] bool listing_complete() const noexcept;
 
     // Components.ensure: fetches the version the manifest selects; completes with its ComponentRef.

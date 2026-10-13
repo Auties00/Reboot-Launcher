@@ -482,6 +482,20 @@ TEST_CASE("a server that ignores Shutdown gets stdin closed after the grace, the
     CHECK(f.exited()->cause == process::ChildExitCause::Requested);
 }
 
+TEST_CASE("a stop whose kill fails reports Requested with the kill failure", "[gameserver][process]") {
+    Fixture f;
+    f.handshaken();
+    f.child().fail_terminations(3);
+    REQUIRE(f.process->stop(2s));
+    f.strand.advance(2s + 5s + 5s + 5s);
+    f.run_until_exited();
+    CHECK_FALSE(f.child().terminated());
+    CHECK(f.exited()->cause == process::ChildExitCause::Requested);
+    REQUIRE(f.exited()->error.has_value());
+    CHECK(f.exited()->error->id == "process.child_kill_failed");
+    CHECK(f.process->phase() == GameServerPhase::Exited);
+}
+
 TEST_CASE("stop while handshaking closes stdin at once and kills after the graceful stop", "[gameserver][process]") {
     Fixture f;
     f.fake = false;
@@ -609,15 +623,25 @@ TEST_CASE("missed Pongs are reported without stopping the server", "[gameserver]
 TEST_CASE("destroying the process kills the child with no further events", "[gameserver][process]") {
     Fixture f;
     f.listening();
-    bool answered = false;
-    REQUIRE(f.process->request(Drain{}, [&answered](CommandResult) { answered = true; }).has_value());
+    std::vector<CommandResult> answers;
+    for (int i = 0; i < 2; ++i)
+        REQUIRE(f.process->request(Drain{}, [&answers](CommandResult answer) { answers.push_back(std::move(answer)); })
+                    .has_value());
     const std::size_t before = f.events.size();
     testing::ScriptedChild& child = f.child();
     f.process.reset();
+    CHECK(answers.empty());
+    f.strand.run_ready();
+    REQUIRE(answers.size() == 2);
+    for (const CommandResult& answer : answers) {
+        CHECK(answer.status == CommandStatus::Failed);
+        REQUIRE(answer.error.has_value());
+        CHECK(answer.error->id == "gameserver.not_running");
+    }
     f.strand.advance(30s);
+    CHECK(answers.size() == 2);
     CHECK(child.terminated());
     CHECK(f.events.size() == before);
-    CHECK_FALSE(answered);
     REQUIRE(f.records.size() == 2);
     CHECK(f.records[1].second == process::RecordChange::Exited);
 }
@@ -676,6 +700,7 @@ TEST_CASE("a sink or a command callback may destroy the process in the middle of
     }
     SECTION("from a command that the exit fails") {
         std::optional<CommandResult> result;
+        std::optional<CommandResult> second;
         REQUIRE(f.process
                     ->request(EndMatch{},
                               [&](CommandResult answer) {
@@ -683,11 +708,14 @@ TEST_CASE("a sink or a command callback may destroy the process in the middle of
                                   f.process.reset();
                               })
                     .has_value());
+        REQUIRE(f.process->request(StartMatch{}, [&](CommandResult answer) { second = std::move(answer); }).has_value());
         f.strand.run_ready();
         child.exit(ports::ChildExit{1, std::nullopt});
         f.strand.run_ready();
         REQUIRE(result.has_value());
         CHECK(result->error->id == "gameserver.not_running");
+        REQUIRE(second.has_value());
+        CHECK(second->error->id == "gameserver.not_running");
         CHECK(f.process == nullptr);
         CHECK(f.exited() == nullptr);
     }

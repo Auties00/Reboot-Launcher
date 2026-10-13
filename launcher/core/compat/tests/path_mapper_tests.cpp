@@ -4,12 +4,14 @@
 
 #include "messages.hpp"
 #include "reboot/compat/path_mapper.hpp"
+#include "reboot/testing/expected_checks.hpp"
 
 // PathMapper serves Wine prefixes, which exist only on macOS and Linux.
 #if !defined(_WIN32)
 
 using namespace rb;
 using namespace rb::compat;
+using rb::testing::held_value;
 
 namespace {
 
@@ -21,14 +23,14 @@ PathMapper sample_mapper() {
 
 TEST_CASE("the longest drive target wins", "[compat][paths]") {
     const PathMapper mapper = sample_mapper();
-    CHECK(mapper.to_windows("/mnt/games/Fortnite/FortniteGame") == std::u16string(u"D:\\Fortnite\\FortniteGame"));
-    CHECK(mapper.to_windows("/home/user/.local/share/reboot/prefixes/umu/drive_c/windows") ==
+    CHECK(held_value(mapper.to_windows("/mnt/games/Fortnite/FortniteGame")) == std::u16string(u"D:\\Fortnite\\FortniteGame"));
+    CHECK(held_value(mapper.to_windows("/home/user/.local/share/reboot/prefixes/umu/drive_c/windows")) ==
           std::u16string(u"C:\\windows"));
-    CHECK(mapper.to_windows("/opt/build") == std::u16string(u"Z:\\opt\\build"));
+    CHECK(held_value(mapper.to_windows("/opt/build")) == std::u16string(u"Z:\\opt\\build"));
 }
 
 TEST_CASE("a drive root maps to its letter", "[compat][paths]") {
-    CHECK(sample_mapper().to_windows("/mnt/games") == std::u16string(u"D:\\"));
+    CHECK(held_value(sample_mapper().to_windows("/mnt/games")) == std::u16string(u"D:\\"));
 }
 
 TEST_CASE("no Z: is assumed", "[compat][paths]") {

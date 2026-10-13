@@ -333,7 +333,11 @@ TEST_CASE("a profile deleted while its import writes the file loses the identity
     gate.release();
     rig.strand.run_until([&] { return removed.has_value(); });
     CHECK(*removed);
-    CHECK(completed(rig.wait_op(started->id())) != nullptr);
+    const std::optional<ErasedOutcome> outcome = rig.wait_op(started->id());
+    REQUIRE(outcome.has_value());
+    const auto* cancelled = std::get_if<Cancelled>(&*outcome);
+    REQUIRE(cancelled != nullptr);
+    CHECK(cancelled->reason == CancelReason::Superseded);
     CHECK_FALSE(rig.store.server_id(profile));
     CHECK_FALSE(rig.fs.exists(identity_file(profile)));
 }

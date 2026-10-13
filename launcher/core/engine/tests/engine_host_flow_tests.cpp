@@ -92,6 +92,26 @@ TEST_CASE("host flow: a profile starts our game server behind the backend, then 
     CHECK(h.rig.call<api::EngineStatusResponse>(*h.client, api::kEngineStatus, api::EngineStatusRequest{})->sessions == 0);
 }
 
+TEST_CASE("host flow: Sessions.get keeps a stopping host session's tier") {
+    HostRig h;
+    // A server that ignores Shutdown and stdin EOF stays up through the grace.
+    h.rig.game_server_misbehaviour.unsupported = {contract_frame_type_v<contracts::game_server::Shutdown>};
+    h.rig.game_server_misbehaviour.ignore_stdin_eof = true;
+    const api::SessionId session = h.start();
+    Result<u64> stop = h.rig.start(*h.client, api::kSessionsStop, api::SessionsStopRequest{session, 30000});
+    REQUIRE(stop);
+    REQUIRE(h.rig.strand.pump_until([&] {
+        const std::optional<api::SessionSummary> now = h.summary(session);
+        return now && now->phase == api::SessionPhase::Stopping;
+    }, 1min));
+    CHECK_FALSE(h.rig.call<api::HostStatusResponse>(*h.client, api::kHostStatus, api::HostStatusRequest{session}));
+    const Result<api::SessionsGetResponse> detail =
+        h.rig.call<api::SessionsGetResponse>(*h.client, api::kSessionsGet, api::SessionsGetRequest{session});
+    REQUIRE(detail);
+    CHECK(detail->summary.phase == api::SessionPhase::Stopping);
+    CHECK(detail->detail.tier != api::SupportTier::Unknown);
+}
+
 TEST_CASE("host flow: an operator command completes once the running server answered it") {
     HostRig h;
     const api::SessionId session = h.start();

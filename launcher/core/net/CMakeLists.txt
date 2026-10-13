@@ -22,7 +22,9 @@ reboot_add_package(net
     src/udp_beacon_prober.cpp
     src/url.cpp
   DEPS CURL::libcurl MsQuic::MsQuic miniupnpc::miniupnpc libnatpmp::natpmp OpenSSL::Crypto
-  PUBLIC_DEPS reboot::storage)
+  PUBLIC_DEPS reboot::storage
+  # Real MsQuic and curl TLS handshakes against a local server, and real UDP ports.
+  SERIAL_TAGS quic tls ports)
 
 if(TARGET reboot_net_tests)
   # The TLS tests make their own CA and serve https and QUIC with it.

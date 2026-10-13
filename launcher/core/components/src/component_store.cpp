@@ -972,6 +972,8 @@ struct ComponentStore::Impl {
     bool loaded = false;
     // index.json has a newer schema: nothing is collected, removed or written back.
     bool index_read_only = false;
+    // index.json could not be read: version directories it named are still on disk, unlisted.
+    bool index_unreadable = false;
     DeletionGuard guard;
     std::map<u64, PinRecord> pins;
     u64 next_pin = 1;
@@ -1059,6 +1061,7 @@ void ComponentStore::load(UniqueFunction<void(Result<void>)> done) {
                                 loaded->index_problem->id);
             impl->entries = std::move(loaded->entries);
             impl->index_read_only = loaded->read_only;
+            impl->index_unreadable = loaded->index_problem && !loaded->read_only;
             impl->loaded = true;
             for (const StoreEntry& entry : impl->entries)
                 if (!entry.broken) impl->track(entry);
@@ -1078,7 +1081,9 @@ std::vector<ComponentInfo> ComponentStore::list() const {
     return out;
 }
 
-bool ComponentStore::listing_complete() const noexcept { return impl_->loaded && !impl_->index_read_only; }
+bool ComponentStore::listing_complete() const noexcept {
+    return impl_->loaded && !impl_->index_read_only && !impl_->index_unreadable;
+}
 
 Result<OpHandle> ComponentStore::start_ensure(std::string_view component_id, DisconnectPolicy policy) {
     StoreEntry target;

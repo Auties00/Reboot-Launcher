@@ -762,6 +762,39 @@ TEST_CASE("without an in-process reset the server respawns on the same block", "
     CHECK(f.registry.get(session)->phase == sessions::SessionPhase::Running);
 }
 
+TEST_CASE("a respawn whose old server cannot be killed ends the session with the kill failure", "[host][service]") {
+    Fixture f;
+    f.script.description.capabilities.in_process_reset = false;
+    f.script.events = {{1s, match_ended()}};
+    f.script.child.unsupported = {contract_frame_type_v<gs::Shutdown>};
+    f.script.child.ignore_stdin_eof = true;
+    const SessionId session = f.live(f.profile("Stuck"));
+    f.servers()[0]->fail_terminations(3);
+    f.strand.advance(2min);
+    f.run_until_ended(session);
+    CHECK(f.servers().size() == 1);
+    CHECK_FALSE(f.servers()[0]->terminated());
+    const std::optional<sessions::SessionEnded> ended = f.ended(session);
+    REQUIRE(ended);
+    REQUIRE(ended->error);
+    CHECK(ended->error->id == "process.child_kill_failed");
+}
+
+TEST_CASE("a stopping session keeps its tier but has no status", "[host][service]") {
+    Fixture f;
+    f.script.child.unsupported = {contract_frame_type_v<gs::Shutdown>};
+    f.script.child.ignore_stdin_eof = true;
+    const SessionId session = f.live(f.profile("Tier"));
+    CHECK(f.service->tier(session) == support::SupportTier::Untested);
+    REQUIRE(f.registry.stop(session, sessions::StopRequest{.reason = sessions::StopReason::User, .grace = 5s}, nullptr));
+    REQUIRE(f.registry.get(session)->phase == sessions::SessionPhase::Stopping);
+    CHECK(f.service->status(session).error().id == "host.not_host_session");
+    CHECK(f.service->tier(session) == support::SupportTier::Untested);
+    f.strand.advance(30s);
+    f.run_until_ended(session);
+    CHECK_FALSE(f.service->tier(session).has_value());
+}
+
 TEST_CASE("a match end reported by the server being replaced starts no second restart", "[host][service]") {
     Fixture f;
     f.script.description.capabilities.in_process_reset = false;

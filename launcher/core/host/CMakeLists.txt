@@ -17,7 +17,9 @@ reboot_add_package(host
     src/port_policy.cpp
   DEPS reboot::builds reboot::identity
   PUBLIC_DEPS reboot::storage reboot::support reboot::net reboot::gameserver reboot::sessions reboot::publish
-              reboot::process)
+              reboot::process
+  # These bind real UDP ports next to an ephemeral one, which a parallel test may be given.
+  SERIAL_TAGS service ports)
 
 # The service tests run a real builds::Library, which takes a catalog::CatalogService.
 if(TARGET reboot_host_tests)

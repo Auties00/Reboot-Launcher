@@ -222,6 +222,21 @@ TEST_CASE("joins are paced per server, and RATE_LIMITED holds that server off", 
     const Diagnostic& error = limited.result->error();
     CHECK(error.id == "browser.too_many_join_attempts");
     CHECK(std::get<std::chrono::milliseconds>(*error.find_arg("retry_after")) == 30s);
+
+    // The refusal may have come from the connection's query limiter, so that is held off for one
+    // of its intervals, and the server's join limiter for the whole wait.
+    const Result<void> held = rig.join.join(request(3, JoinConfirmation::AlreadyConfirmed), op, std::nullopt,
+                                            [](Result<JoinOutcome>) {});
+    REQUIRE_FALSE(held);
+    CHECK(std::get<std::chrono::milliseconds>(*held.error().find_arg("retry_after")) == 100ms);
+    rig.rt.advance(100ms);
+    Capture<Result<JoinOutcome>> again;
+    REQUIRE(rig.join.join(request(2, JoinConfirmation::AlreadyConfirmed), op, std::nullopt, again.callback()));
+    rig.rt.run_until_idle();
+    rig.answer_resolve(edge, entry(2, 2, "Other"));
+    REQUIRE(again.calls == 1);
+    CHECK(again.result->error().id == "browser.too_many_join_attempts");
+    CHECK(edge.idle());
 }
 
 TEST_CASE("a RATE_LIMITED Resolve is TooManyAttempts and holds every query off", "[browser][join]") {

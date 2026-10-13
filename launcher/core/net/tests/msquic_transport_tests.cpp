@@ -79,10 +79,11 @@ struct Observed {
         changed.notify_all();
     }
 
+    // Well past the 10 s handshake idle timeout that ends any connection, for a loaded machine.
     template <class Done>
     bool wait(Done&& done) {
         std::unique_lock lock(mutex);
-        return changed.wait_for(lock, 15s, [&] { return done(); });
+        return changed.wait_for(lock, 60s, [&] { return done(); });
     }
 };
 

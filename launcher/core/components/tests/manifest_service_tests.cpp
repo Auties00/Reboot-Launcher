@@ -10,6 +10,7 @@
 #include "reboot/foundation/paths.hpp"
 #include "reboot/net/host_tls_memory.hpp"
 #include "reboot/net/http_client.hpp"
+#include "reboot/testing/expected_checks.hpp"
 #include "reboot/testing/fake_http_transport.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 #include "reboot/testing/fake_random.hpp"
@@ -24,6 +25,7 @@ using rb::components::test::ManifestJson;
 using rb::components::test::TestSigner;
 using rb::components::test::TestStrand;
 using rb::testing::FakeHttpResponse;
+using rb::testing::held_value;
 
 namespace {
 
@@ -159,13 +161,13 @@ TEST_CASE("a cache that fails its signature or rolls the serial back is not used
         Fixture f;
         f.put_bundled(manifest(7));
         f.put_cache(manifest(9), false);
-        CHECK(f.load() == ManifestOrigin::Bundled);
+        CHECK(held_value(f.load()) == ManifestOrigin::Bundled);
     }
     SECTION("serial below the floor") {
         Fixture f(kLinux, 20);
         f.put_bundled(manifest(7));
         f.put_cache(manifest(9));
-        CHECK(f.load() == ManifestOrigin::Bundled);
+        CHECK(held_value(f.load()) == ManifestOrigin::Bundled);
         CHECK(f.persisted.empty());
     }
 }
@@ -173,7 +175,7 @@ TEST_CASE("a cache that fails its signature or rolls the serial back is not used
 TEST_CASE("an expired cache stays in use with a warning and never raises the floor", "[components][manifest-service]") {
     Fixture f(kLinux, 3);
     f.put_cache(manifest(9, static_cast<u64>(kNowUnixMs) - 1000));
-    CHECK(f.load() == ManifestOrigin::Cached);
+    CHECK(held_value(f.load()) == ManifestOrigin::Cached);
     CHECK(f.serials.highest_seen() == 3);
     const auto warning = f.service->expiry_warning();
     REQUIRE(warning);
@@ -210,7 +212,7 @@ TEST_CASE("refresh adopts a newer manifest, caches it, then runs the listeners",
     SECTION("the cached copy is what the next start loads") {
         Fixture next;
         next.put_cache(body);
-        CHECK(next.load() == ManifestOrigin::Cached);
+        CHECK(held_value(next.load()) == ManifestOrigin::Cached);
         CHECK(next.service->current()->serial == 8);
     }
 }
@@ -220,7 +222,7 @@ TEST_CASE("refresh of the serial in use is Unchanged", "[components][manifest-se
     f.put_cache(manifest(8));
     REQUIRE(f.load());
     f.serve(manifest(8));
-    CHECK(f.refresh() == ManifestRefresh::Unchanged);
+    CHECK(held_value(f.refresh()) == ManifestRefresh::Unchanged);
     CHECK(f.adopted.empty());
     CHECK(f.service->origin() == ManifestOrigin::Cached);
 }
@@ -292,12 +294,16 @@ TEST_CASE("a refresh while one is in flight joins it", "[components][manifest-se
     f.put_bundled(manifest(7));
     REQUIRE(f.load());
     f.serve(manifest(8));
-    std::vector<Result<ManifestRefresh>> results;
-    f.service->refresh({}, [&](Result<ManifestRefresh> r) { results.push_back(std::move(r)); });
-    f.service->refresh({}, [&](Result<ManifestRefresh> r) { results.push_back(std::move(r)); });
+    // A plain struct: libc++ cannot compare iterators over std::expected (its operator== recurses).
+    struct Refreshed {
+        Result<ManifestRefresh> result;
+    };
+    std::vector<Refreshed> results;
+    f.service->refresh({}, [&](Result<ManifestRefresh> r) { results.push_back({std::move(r)}); });
+    f.service->refresh({}, [&](Result<ManifestRefresh> r) { results.push_back({std::move(r)}); });
     f.strand.run_until([&] { return results.size() == 2; });
-    CHECK(results[0] == ManifestRefresh::Adopted);
-    CHECK(results[1] == ManifestRefresh::Adopted);
+    CHECK(held_value(results[0].result) == ManifestRefresh::Adopted);
+    CHECK(held_value(results[1].result) == ManifestRefresh::Adopted);
     CHECK(f.transport.requests().size() == 2);
     CHECK(f.adopted == std::vector<u64>{8});
 }
@@ -325,7 +331,7 @@ TEST_CASE("cancelling a joined refresh ends only that caller's wait", "[componen
         CHECK(first->error().kind == ErrorKind::Cancelled);
         f.strand.advance(std::chrono::seconds{5});
         f.strand.run_until([&] { return second.has_value(); });
-        CHECK(*second == ManifestRefresh::Adopted);
+        CHECK(held_value(*second) == ManifestRefresh::Adopted);
         CHECK(f.adopted == std::vector<u64>{8});
     }
     SECTION("the last caller's cancel stops the refresh; a later one starts afresh") {
@@ -336,7 +342,7 @@ TEST_CASE("cancelling a joined refresh ends only that caller's wait", "[componen
         f.strand.advance(std::chrono::seconds{5});
         f.strand.advance(std::chrono::seconds{5});
         f.strand.run_until([&] { return second.has_value(); });
-        CHECK(*second == ManifestRefresh::Adopted);
+        CHECK(held_value(*second) == ManifestRefresh::Adopted);
         CHECK(f.adopted == std::vector<u64>{8});
     }
 }
@@ -345,7 +351,7 @@ TEST_CASE("load takes a bundled snapshot newer than the cache", "[components][ma
     Fixture f;
     f.put_cache(manifest(5));
     f.put_bundled(manifest(9));
-    CHECK(f.load() == ManifestOrigin::Bundled);
+    CHECK(held_value(f.load()) == ManifestOrigin::Bundled);
     CHECK(f.service->current()->serial == 9);
     CHECK(f.persisted == std::vector<u64>{5});
 }
@@ -354,8 +360,8 @@ TEST_CASE("load keeps a manifest a refresh adopted first", "[components][manifes
     Fixture f;
     f.put_bundled(manifest(7));
     f.serve(manifest(8));
-    REQUIRE(f.refresh() == ManifestRefresh::Adopted);
-    CHECK(f.load() == ManifestOrigin::Fetched);
+    REQUIRE(held_value(f.refresh()) == ManifestRefresh::Adopted);
+    CHECK(held_value(f.load()) == ManifestOrigin::Fetched);
     CHECK(f.service->current()->serial == 8);
 }
 

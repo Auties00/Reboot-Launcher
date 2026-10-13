@@ -701,6 +701,8 @@ struct HostService::Impl {
         if (s.respawning) {
             s.respawning = false;
             const std::optional<PortBlock> above = std::exchange(s.respawn_above, std::nullopt);
+            // A server that could not be killed may still hold the block.
+            if (exited.error) return report_exit(s, sessions::ExitReason::Crashed, exited.status.code, exited.error);
             if (above) return reserve_block(s, above);
             return recheck_block(s);
         }
@@ -1354,6 +1356,12 @@ Result<HostPhase> HostService::phase(SessionId session) const {
 }
 
 Result<HostSnapshot> HostService::status(SessionId session) const { return impl_->status(session); }
+
+std::optional<support::SupportTier> HostService::tier(SessionId session) const {
+    const Impl::Session* found = impl_->find(session);
+    if (found == nullptr) return std::nullopt;
+    return found->tier;
+}
 
 void HostService::drain(sessions::ShutdownCause cause, UniqueFunction<void()> done) {
     impl_->drain(cause, std::move(done));

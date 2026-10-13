@@ -147,18 +147,22 @@ TEST_CASE("WorkerPool replies on the given executor and turns a throw into inter
           "[foundation][executor][worker]") {
     ManualClock clock;
     ManualExecutor reply_to(clock);
-    std::vector<Result<int>> results;
+    // A plain struct: libc++ cannot compare iterators over std::expected (its operator== recurses).
+    struct Reply {
+        Result<int> result;
+    };
+    std::vector<Reply> results;
     {
         WorkerPool pool(2);
         pool.submit<int>([](CancelToken) -> Result<int> { return 42; }, {}, reply_to,
-                         [&](Result<int> result) { results.push_back(std::move(result)); });
+                         [&](Result<int> result) { results.push_back({std::move(result)}); });
         pool.submit<int>([](CancelToken) -> Result<int> { throw std::runtime_error("boom"); }, {}, reply_to,
-                         [&](Result<int> result) { results.push_back(std::move(result)); });
+                         [&](Result<int> result) { results.push_back({std::move(result)}); });
         CancelSource source;
         source.cancel(CancelReason::User);
         pool.submit<int>(
             [](CancelToken token) -> Result<int> { return token.cancelled() ? 1 : 0; }, source.token(), reply_to,
-            [&](Result<int> result) { results.push_back(std::move(result)); });
+            [&](Result<int> result) { results.push_back({std::move(result)}); });
         // Shutdown still runs every queued job, so each submit gets its reply.
         pool.shutdown();
     }
@@ -167,7 +171,7 @@ TEST_CASE("WorkerPool replies on the given executor and turns a throw into inter
     REQUIRE(results.size() == 3);
     int ok = 0;
     int bugs = 0;
-    for (const Result<int>& result : results) {
+    for (const auto& [result] : results) {
         if (result) {
             ++ok;
             CHECK((*result == 42 || *result == 1));

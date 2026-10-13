@@ -151,12 +151,16 @@ TEST_CASE("a new GameServerBinary reuses the cache across restarts", "[gameserve
 
 TEST_CASE("describe is single flight", "[gameserver][binary]") {
     Fixture f;
-    std::vector<Result<DescribedBinary>> results;
+    // A plain struct: libc++ cannot compare iterators over std::expected (its operator== recurses).
+    struct Described {
+        Result<DescribedBinary> result;
+    };
+    std::vector<Described> results;
     for (int i = 0; i < 3; ++i)
-        f.binary->describe([&results](Result<DescribedBinary> described) { results.push_back(std::move(described)); });
+        f.binary->describe([&results](Result<DescribedBinary> described) { results.push_back({std::move(described)}); });
     f.strand.run_until([&] { return results.size() == 3; });
     CHECK(f.spawns() == 1);
-    for (const Result<DescribedBinary>& result : results) {
+    for (const auto& [result] : results) {
         REQUIRE(result.has_value());
         CHECK(result->sha256 == f.digest_of("binary v1"));
     }

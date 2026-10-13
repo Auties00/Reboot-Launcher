@@ -222,13 +222,16 @@ struct HostIdentityStore::Impl {
             }
             const auto held = self->entries.find(profile);
             if (held != self->entries.end()) held->second.held = false;
-            if (held != self->entries.end() && held->second.removing) {
+            // The profile was deleted meanwhile, so the imported identity goes with it.
+            const bool deleted = held != self->entries.end() && held->second.removing;
+            if (deleted) {
                 self->finish_removal(profile);
             } else if (!saved || op.done()) {
                 // A failed or cancelled import leaves the identity as it was.
                 self->restore(profile, std::move(previous));
             }
-            if (saved && !op.done()) op.complete(Completed<ServerId>{server});
+            if (deleted) op.complete(Cancelled{CancelReason::Superseded});
+            else if (saved && !op.done()) op.complete(Completed<ServerId>{server});
             else if (!saved) op.complete(Failed{std::move(saved.error())});
             else op.complete(Cancelled{op.token().reason().value_or(CancelReason::User)});
         });

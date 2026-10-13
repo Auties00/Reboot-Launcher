@@ -31,6 +31,7 @@ namespace gs = contracts::game_server;
 constexpr MessageId kChildGone{"process.child_gone"};
 constexpr MessageId kChildNotRunning{"process.child_not_running"};
 constexpr MessageId kChildRequestUnsupported{"process.child_request_unsupported"};
+constexpr MessageId kChildKillFailed{"process.child_kill_failed"};
 
 [[nodiscard]] Diagnostic error_of(GameServerError error) { return to_diagnostic(error); }
 
@@ -144,6 +145,11 @@ struct GameServerProcess::Impl final {
 
     ~Impl() {
         alive.cancel(CancelReason::Shutdown);
+        for (auto& [id, pending] : commands)
+            strand.post([done = std::move(pending.done)]() mutable {
+                done(CommandResult{CommandStatus::Failed, error_of({.code = GameServerErrorCode::NotRunning})});
+            });
+        commands.clear();
         supervised->owner = nullptr;
         // Inside a supervisor call, its destruction (and the kill) waits until that call returns.
         if (supervised->depth > 0) strand.post([held = std::move(supervised)] {});
@@ -403,13 +409,15 @@ struct GameServerProcess::Impl final {
         const CancelToken token = alive.token();
         std::map<u64, PendingCommand> unanswered = std::move(commands);
         commands.clear();
-        for (auto& [id, pending] : unanswered) {
+        // Every one is answered, even when an earlier answer destroyed the process.
+        for (auto& [id, pending] : unanswered)
             pending.done(CommandResult{CommandStatus::Failed, error_of({.code = GameServerErrorCode::NotRunning})});
-            if (token.cancelled()) return;
-        }
+        if (token.cancelled()) return;
+        // A requested stop hides how the child ended, but not a child that could not be killed.
+        const bool kill_failed = exit.error && exit.error->is(kChildKillFailed);
         ServerExited exited{.cause = stop_requested ? process::ChildExitCause::Requested : exit.cause,
                             .status = exit.status,
-                            .error = stop_requested ? std::nullopt : exit.error};
+                            .error = stop_requested && !kill_failed ? std::nullopt : exit.error};
         if (!emit(exited)) return;
         players.clear();
     }

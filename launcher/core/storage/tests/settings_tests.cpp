@@ -19,11 +19,13 @@
 #include "reboot/storage/settings_keys.hpp"
 #include "reboot/storage/settings_registry.hpp"
 #include "reboot/testing/event_recorder.hpp"
+#include "reboot/testing/expected_checks.hpp"
 #include "reboot/testing/in_memory_file_system.hpp"
 #include "test_support.hpp"
 
 using namespace rb;
 using namespace rb::storage;
+using rb::testing::held_value;
 
 namespace {
 
@@ -75,7 +77,7 @@ TEST_CASE("a patch publishes one SettingsChanged naming the changed keys", "[sto
     patch.ui.theme = Theme::Dark;
     patch.host.listing = HostListing::Listed;
     const Result<u64> revision = f.settings.patch(patch);
-    REQUIRE(revision == 1u);
+    REQUIRE(held_value(revision) == 1u);
 
     const auto changes = f.changes();
     REQUIRE(changes.size() == 1);
@@ -84,7 +86,7 @@ TEST_CASE("a patch publishes one SettingsChanged naming the changed keys", "[sto
     CHECK(f.settings.snapshot().values.host.listing == HostListing::Listed);
 
     // Nothing changed: same revision, no event.
-    REQUIRE(f.settings.patch(patch) == 1u);
+    REQUIRE(held_value(f.settings.patch(patch)) == 1u);
     CHECK(f.changes().size() == 1);
 }
 
@@ -196,11 +198,11 @@ TEST_CASE("reset_to_defaults is one revision and one event", "[storage][settings
     SettingsPatch patch;
     patch.host.listing = HostListing::Listed;
     patch.host.update_policy = HostUpdatePolicy::Manual;
-    REQUIRE(f.settings.patch(patch) == 1u);
+    REQUIRE(held_value(f.settings.patch(patch)) == 1u);
     // Delivered now, or the bus would coalesce it with the reset's event.
     REQUIRE(f.changes().size() == 1);
 
-    REQUIRE(f.settings.reset_to_defaults(f.registry.in_group(ResetGroup::Host)) == 2u);
+    REQUIRE(held_value(f.settings.reset_to_defaults(f.registry.in_group(ResetGroup::Host))) == 2u);
     const auto changes = f.changes();
     REQUIRE(changes.size() == 2);
     CHECK(changes[1]->keys == std::vector<std::string>{"host.update_policy", "host.listing"});
@@ -228,7 +230,7 @@ TEST_CASE("the Wine settings patch and reset with the Play group", "[storage][se
     SettingsPatch patch;
     patch.play.env = "DXVK_HUD=fps";
     patch.play.verbose_wine_log = true;
-    REQUIRE(f.settings.patch(patch) == 1u);
+    REQUIRE(held_value(f.settings.patch(patch)) == 1u);
     CHECK(f.changes().at(0)->keys == std::vector<std::string>{"play.env", "play.verbose_wine_log"});
     CHECK(f.settings.snapshot().values.play.verbose_wine_log);
 
@@ -236,7 +238,7 @@ TEST_CASE("the Wine settings patch and reset with the Play group", "[storage][se
     REQUIRE_FALSE(refused);
     CHECK(refused.error().causes.at(0).id == "storage.invalid_env_line");
 
-    REQUIRE(f.settings.reset_to_defaults(f.registry.in_group(ResetGroup::Play)) == 2u);
+    REQUIRE(held_value(f.settings.reset_to_defaults(f.registry.in_group(ResetGroup::Play))) == 2u);
     CHECK(f.settings.snapshot().values.play == PlaySettings{});
 }
 
