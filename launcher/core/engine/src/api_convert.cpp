@@ -423,6 +423,7 @@ api::CatalogEntry catalog_entry(const catalog::CatalogEntry& entry, bool install
     out.archive_size = entry.archive_size;
     out.installed_size = entry.installed_size;
     out.installed = installed;
+    out.featured = entry.featured;
     return out;
 }
 

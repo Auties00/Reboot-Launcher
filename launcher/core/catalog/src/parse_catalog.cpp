@@ -277,6 +277,10 @@ private:
     auto availability = in.enum_at("availability", kAvailability, Availability::Unavailable);
     if (!availability) return Unexpected(std::move(availability.error()));
     entry.availability = *availability;
+
+    auto featured = in.optional_bool("featured");
+    if (!featured) return Unexpected(std::move(featured.error()));
+    entry.featured = *featured;
     return entry;
 }
 

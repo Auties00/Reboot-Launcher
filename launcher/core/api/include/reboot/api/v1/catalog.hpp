@@ -33,6 +33,8 @@ struct CatalogEntry {
     std::optional<u64> installed_size;
     // A library build was installed from this entry.
     bool installed = false;
+    // Suggested to new users first, such as the setup card's quick picks.
+    bool featured = false;
 
     bool operator==(const CatalogEntry&) const = default;
 };

@@ -72,12 +72,14 @@ TEST_CASE("parse_catalog reads the golden document") {
     CHECK((*latest->sha256)[0] == 0x00);
     CHECK((*latest->sha256)[1] == 0x11);
     CHECK((*latest->sha256)[31] == 0xff);
+    CHECK(latest->featured);
 
     const CatalogEntry* cert = catalog->find("cert");
     REQUIRE(cert != nullptr);
     CHECK(cert->aliases == std::vector<std::string>{"3.50.1", "Cert"});
     CHECK(cert->availability == Availability::Unavailable);
     CHECK_FALSE(cert->installable());
+    CHECK_FALSE(cert->featured);
     CHECK(catalog->find("CERT") == nullptr);
 }
 

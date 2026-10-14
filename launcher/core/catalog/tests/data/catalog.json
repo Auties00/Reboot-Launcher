@@ -15,7 +15,8 @@
       "archive_size": 24000000000,
       "installed_size": 61000000000,
       "sha256": "00112233445566778899aabbccddeeff00112233445566778899AABBCCDDEEFF",
-      "availability": "available"
+      "availability": "available",
+      "featured": true
     },
     {
       "id": "6.10.1",

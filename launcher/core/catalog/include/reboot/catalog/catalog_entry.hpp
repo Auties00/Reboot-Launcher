@@ -36,6 +36,8 @@ struct CatalogEntry {
     // Optional: the archive CRCs already verify content during extraction.
     std::optional<std::array<u8, 32>> sha256;
     Availability availability = Availability::Unavailable;
+    // Suggested to new users first, such as on the setup card.
+    bool featured = false;
 
     // Available and of a known format and container. The version cap is not applied here: the
     // generator lists only supported builds, and builds applies support::above_version_cap.

@@ -28,6 +28,8 @@ message CatalogEntry {
   optional uint64 installed_size = 7;
   // A library build was installed from this entry.
   bool installed = 8;
+  // Suggested to new users first, such as the setup card's quick picks.
+  bool featured = 9;
 }
 
 message CatalogListRequest {
