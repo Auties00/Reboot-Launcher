@@ -162,6 +162,7 @@ api::UserActionRequired user_action(const ApiRouterDeps& deps, const UserRequest
         case UserRequestKind::ConfirmStopSessions: {
             api::ConfirmStopSessionsPrompt confirm;
             if (const auto* payload = payload_as<updates::ConfirmStopSessionsPrompt>(request)) {
+                confirm.version = convert::semver(payload->version);
                 for (const updates::LiveActivity& live : payload->live) {
                     if (!live.session) continue;
                     if (Result<sessions::SessionInfo> info = deps.sessions.get(*live.session))

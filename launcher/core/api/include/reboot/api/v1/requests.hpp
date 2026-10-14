@@ -110,6 +110,8 @@ struct ConfirmUntestedPrompt {
 
 struct ConfirmStopSessionsPrompt {
     std::vector<SessionSummary> sessions;
+    // The launcher version the update installs once they stopped.
+    SemVer version;
 
     bool operator==(const ConfirmStopSessionsPrompt&) const = default;
 };

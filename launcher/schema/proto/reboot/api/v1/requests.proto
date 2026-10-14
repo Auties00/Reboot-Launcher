@@ -79,6 +79,8 @@ message ConfirmUntestedPrompt {
 
 message ConfirmStopSessionsPrompt {
   repeated SessionSummary sessions = 1;
+  // The launcher version the update installs once they stopped.
+  SemVer version = 2;
 }
 
 message RequestPrompt {
