@@ -208,6 +208,10 @@ struct GuidanceOnboardingAdvanceResponse {
 }
 
 struct GuidanceOnboardingSkipRequest {
+    // The current step to pass over, such as host_listing for a user who does not host; the tour
+    // goes on and nothing that step offers is applied. Empty leaves the whole tour, kept for later.
+    std::string step;
+
     bool operator==(const GuidanceOnboardingSkipRequest&) const = default;
 };
 

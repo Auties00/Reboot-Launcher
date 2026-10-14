@@ -727,10 +727,22 @@ Result<api::GuidanceOnboardingAdvanceResponse> ApiRouter::onboarding_advance(con
 }
 
 Result<api::GuidanceOnboardingSkipResponse> ApiRouter::onboarding_skip(const api::CallContext&,
-                                                                       const api::GuidanceOnboardingSkipRequest&) {
-    Result<ux::OnboardingView> exited = deps_.onboarding.exit(onboarding_context(deps_, state_->prerequisites));
-    if (!exited) return std::unexpected(std::move(exited.error()));
-    return api::GuidanceOnboardingSkipResponse{convert::onboarding(*exited)};
+                                                                       const api::GuidanceOnboardingSkipRequest& request) {
+    const ux::OnboardingContext context = onboarding_context(deps_, state_->prerequisites);
+    if (request.step.empty()) {
+        Result<ux::OnboardingView> exited = deps_.onboarding.exit(context);
+        if (!exited) return std::unexpected(std::move(exited.error()));
+        return api::GuidanceOnboardingSkipResponse{convert::onboarding(*exited)};
+    }
+    const std::optional<ux::StepId> step = ux::parse_step_id(request.step);
+    if (!step) return std::unexpected(convert::invalid_request("step"));
+    // As with advance, passing the first step also starts or restarts the tour.
+    if (deps_.onboarding.view(context).status != ux::OnboardingStatus::InProgress)
+        if (Result<ux::OnboardingView> started = deps_.onboarding.start(context); !started)
+            return std::unexpected(std::move(started.error()));
+    Result<ux::OnboardingView> skipped = deps_.onboarding.skip(*step, context);
+    if (!skipped) return std::unexpected(std::move(skipped.error()));
+    return api::GuidanceOnboardingSkipResponse{convert::onboarding(*skipped)};
 }
 
 Result<api::GuidanceLinksResponse> ApiRouter::links(const api::CallContext& context, const api::GuidanceLinksRequest&) {

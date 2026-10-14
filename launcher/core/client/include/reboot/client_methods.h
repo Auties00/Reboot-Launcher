@@ -6,7 +6,7 @@
 
 /* The schema these ids and their messages come from; a facade compares it with
  * EngineInfoResponse.schema_fingerprint. */
-#define RB_SCHEMA_FINGERPRINT "6b55c8949db1f4a8"
+#define RB_SCHEMA_FINGERPRINT "dbc4fef3b740c6ae"
 
 /* engine.status: call; EngineStatusRequest -> EngineStatusResponse */
 #define RB_METHOD_ENGINE_STATUS 0x00010001u

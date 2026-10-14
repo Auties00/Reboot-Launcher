@@ -130,7 +130,11 @@ message GuidanceOnboardingAdvanceResponse {
   optional SuggestedAction action = 2;
 }
 
-message GuidanceOnboardingSkipRequest {}
+message GuidanceOnboardingSkipRequest {
+  // The current step to pass over, such as host_listing for a user who does not host; the tour
+  // goes on and nothing that step offers is applied. Empty leaves the whole tour, kept for later.
+  string step = 1;
+}
 
 message GuidanceOnboardingSkipResponse {
   OnboardingState state = 1;

@@ -276,6 +276,25 @@ TEST_CASE("engine flow: identity, guidance and requests answer on a fresh data r
     REQUIRE(skipped);
     CHECK(skipped->state != onboarding->state);
 
+    // A user who does not host passes over the listing question and finishes the tour.
+    REQUIRE_FALSE(onboarding->state.steps.empty());
+    std::string current = onboarding->state.steps.front();
+    while (current != "host_listing") {
+        const Result<api::GuidanceOnboardingAdvanceResponse> advanced = rig.call<api::GuidanceOnboardingAdvanceResponse>(
+            *client, api::kGuidanceOnboardingAdvance, api::GuidanceOnboardingAdvanceRequest{current, ""});
+        REQUIRE(advanced);
+        current = advanced->state.current;
+    }
+    CHECK_FALSE(rig.call<api::GuidanceOnboardingAdvanceResponse>(
+        *client, api::kGuidanceOnboardingAdvance, api::GuidanceOnboardingAdvanceRequest{"host_listing", ""}));
+    const Result<api::GuidanceOnboardingSkipResponse> passed = rig.call<api::GuidanceOnboardingSkipResponse>(
+        *client, api::kGuidanceOnboardingSkip, api::GuidanceOnboardingSkipRequest{"host_listing"});
+    REQUIRE(passed);
+    CHECK(passed->state.current == "backend");
+    CHECK_FALSE(passed->state.skipped);
+    CHECK_FALSE(rig.call<api::GuidanceOnboardingSkipResponse>(*client, api::kGuidanceOnboardingSkip,
+                                                              api::GuidanceOnboardingSkipRequest{"host_listing"}));
+
     const Result<api::RequestsPendingResponse> pending =
         rig.call<api::RequestsPendingResponse>(*client, api::kRequestsPending, api::RequestsPendingRequest{});
     REQUIRE(pending);
