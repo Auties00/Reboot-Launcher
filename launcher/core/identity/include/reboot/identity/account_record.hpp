@@ -4,9 +4,9 @@
 #include <string>
 #include <string_view>
 
+#include "reboot/base/types.hpp"
 #include "reboot/contracts/backend.hpp"
 #include "reboot/identity/display_name.hpp"
-#include "reboot/storage/accounts_document.hpp"
 
 namespace rb {
 class IRandom;
@@ -15,8 +15,17 @@ class IRandom;
 namespace rb::identity {
 
 using AccountRole = contracts::backend::AccountRole;
-// storage owns the shape of data/accounts.json; this package owns its rules.
-using AccountRecord = storage::AccountRecord;
+
+// One role's account: the one player name with the role's own tag. storage owns the shape of
+// data/accounts.json; this package owns its rules.
+struct AccountRecord {
+    AccountRecordId record_id;
+    AccountRole role{};
+    std::string display_name;
+    std::string tag;
+
+    bool operator==(const AccountRecord&) const = default;
+};
 
 inline constexpr std::size_t kTagLength = 6;
 inline constexpr std::size_t kMaxAccountIdLength = kMaxDisplayNameLength + 1 + kTagLength;

@@ -476,7 +476,7 @@ struct Harness {
         build.version_source = builds::VersionSource::User;
         env.builds.push_back(build);
         env.selected = build.id;
-        env.account = identity::AccountRecord{AccountRecordId{uuid_of(2)}, identity::AccountRole::Client, "Player", "abc123", {}};
+        env.account = identity::AccountRecord{AccountRecordId{uuid_of(2)}, identity::AccountRole::Client, "Player", "abc123"};
         env.policy.set_inputs(tested_inputs(ports::RunnerKind::Native, ""));
         make(std::move(options));
     }

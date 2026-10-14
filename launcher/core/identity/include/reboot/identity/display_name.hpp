@@ -5,7 +5,6 @@
 #include <string_view>
 
 #include "reboot/base/diag.hpp"
-#include "reboot/contracts/backend.hpp"
 
 namespace rb {
 class IRandom;
@@ -21,11 +20,10 @@ inline constexpr std::size_t kMaxDisplayNameLength = 16;
 // identity.display_name_invalid_character.
 [[nodiscard]] Result<void> validate_display_name(std::string_view name);
 
-// "Player" plus 6 digits for the client, "Host" plus 6 digits for the host. Cosmetic: the tag
-// already makes the account id unique.
-[[nodiscard]] std::string default_display_name(contracts::backend::AccountRole role, IRandom& random);
+// "Player" plus 6 digits. Cosmetic: the tags already make the account ids unique.
+[[nodiscard]] std::string default_display_name(IRandom& random);
 
-// True for a name of the default_display_name shape for `role`.
-[[nodiscard]] bool is_default_display_name(std::string_view name, contracts::backend::AccountRole role) noexcept;
+// True for a name of the default_display_name shape.
+[[nodiscard]] bool is_default_display_name(std::string_view name) noexcept;
 
 }  // namespace rb::identity

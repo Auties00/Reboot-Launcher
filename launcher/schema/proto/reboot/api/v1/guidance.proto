@@ -36,10 +36,8 @@ message InstallBuildAction {}
 // Library.import.
 message ImportBuildAction {}
 
-// Identity.set_display_name(role).
-message EditDisplayNameAction {
-  GameRole role = 1;
-}
+// Identity.set_display_name.
+message EditDisplayNameAction {}
 
 // Settings.patch of host.listing, then Host.profiles_update of the built-in default profile's listing.
 message SetDefaultHostListingAction {

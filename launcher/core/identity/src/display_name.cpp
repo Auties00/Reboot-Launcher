@@ -9,13 +9,8 @@ namespace rb::identity {
 
 namespace {
 
-using contracts::backend::AccountRole;
-
 constexpr std::size_t kDefaultDigits = 6;
-
-[[nodiscard]] constexpr std::string_view default_prefix(AccountRole role) noexcept {
-    return role == AccountRole::Host ? "Host" : "Player";
-}
+constexpr std::string_view kDefaultPrefix = "Player";
 
 }  // namespace
 
@@ -35,14 +30,13 @@ Result<void> validate_display_name(std::string_view name) {
     return {};
 }
 
-std::string default_display_name(AccountRole role, IRandom& random) {
-    return std::string(default_prefix(role)) + random_chars(random, "0123456789", kDefaultDigits);
+std::string default_display_name(IRandom& random) {
+    return std::string(kDefaultPrefix) + random_chars(random, "0123456789", kDefaultDigits);
 }
 
-bool is_default_display_name(std::string_view name, AccountRole role) noexcept {
-    const std::string_view prefix = default_prefix(role);
-    if (name.size() != prefix.size() + kDefaultDigits || !name.starts_with(prefix)) return false;
-    return std::ranges::all_of(name.substr(prefix.size()), [](char c) { return c >= '0' && c <= '9'; });
+bool is_default_display_name(std::string_view name) noexcept {
+    if (name.size() != kDefaultPrefix.size() + kDefaultDigits || !name.starts_with(kDefaultPrefix)) return false;
+    return std::ranges::all_of(name.substr(kDefaultPrefix.size()), [](char c) { return c >= '0' && c <= '9'; });
 }
 
 }  // namespace rb::identity

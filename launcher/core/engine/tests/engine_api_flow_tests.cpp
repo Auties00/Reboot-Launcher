@@ -265,7 +265,8 @@ TEST_CASE("engine flow: identity, guidance and requests answer on a fresh data r
     const Result<api::IdentityGetResponse> identity =
         rig.call<api::IdentityGetResponse>(*client, api::kIdentityGet, api::IdentityGetRequest{});
     REQUIRE(identity);
-    CHECK_FALSE(identity->profiles.empty());
+    CHECK_FALSE(identity->profile.display_name.empty());
+    CHECK(identity->profile.accounts.size() == 2);
 
     const Result<api::GuidanceOnboardingStateResponse> onboarding =
         rig.call<api::GuidanceOnboardingStateResponse>(*client, api::kGuidanceOnboardingState, api::GuidanceOnboardingStateRequest{});

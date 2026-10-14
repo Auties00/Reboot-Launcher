@@ -8,6 +8,7 @@
 #include "reboot/identity/account_record.hpp"
 #include "reboot/identity/backend_login.hpp"
 #include "reboot/identity/backend_logins_document.hpp"
+#include "reboot/identity/identity_snapshot.hpp"
 #include "reboot/identity/login_target.hpp"
 #include "reboot/storage/accounts_document.hpp"
 #include "reboot/storage/backend_target.hpp"
@@ -20,26 +21,19 @@ class IRandom;
 
 namespace rb::identity {
 
-struct IdentitySnapshot {
-    AccountRecord client;
-    AccountRecord host;
-
-    bool operator==(const IdentitySnapshot&) const = default;
-};
-
 // Capabilities: profile-identity.credentials, profile-identity.+47, auth-backend.lawinserver-xmpp.
-// Strand-only. Owns data/accounts.json, with one client and one host record in v1, and
-// data/backend-logins.json.
+// Strand-only. Owns data/accounts.json, with the one player name and one client and one host record
+// in v1, and data/backend-logins.json.
 // - ensure_records() mints a missing record, or one storage dropped for a bad record_id or role,
-//   with a default name and a fresh tag; a record whose name or tag storage refused keeps its
-//   record_id and gets a default name or a fresh tag. A ReadOnly store, which its LoadReport
-//   already reported, refuses the write, so the records then live in memory only.
-// - A rename is one atomic commit. It changes account_id, never record_id or tag. Running
+//   with a fresh tag, and a default name when none is stored; a record whose tag storage refused
+//   keeps its record_id and gets a fresh tag. A ReadOnly store, which its LoadReport already
+//   reported, refuses the write, so the records then live in memory only.
+// - A rename is one atomic commit. It changes both account_ids, never a record_id or tag. Running
 //   sessions keep the record they pinned, so it takes effect at the next launch.
 // - A hand edit is adopted like an API change and the result written back: a changed
 //   display_name is a rename; an invalid name or tag keeps the one in memory, as the API would
 //   refuse it; a dropped record is the one in memory again. Its issues are logged.
-// - Every record change publishes IdentityChangedEvent.
+// - Every change publishes IdentityChangedEvent.
 // - Passwords are not here: secrets stores them and plan_login says which one a launch needs.
 class IdentityService {
 public:
@@ -58,24 +52,24 @@ public:
         return role == AccountRole::Host ? current_.host : current_.client;
     }
 
-    // Validates with validate_display_name; the same name is a no-op. A ReadOnly store fails it
-    // with storage.read_only.
-    Result<AccountRecord> set_display_name(AccountRole role, std::string_view name);
-    // A new default name; the tag is kept.
-    Result<AccountRecord> reset(AccountRole role);
+    // Renames both roles. Validates with validate_display_name; the same name is a no-op. A ReadOnly
+    // store fails it with storage.read_only.
+    Result<IdentitySnapshot> set_display_name(std::string_view name);
+    // A new default name; the tags are kept.
+    Result<IdentitySnapshot> reset();
 
     // The defaults when nothing is stored for `endpoint`.
     [[nodiscard]] BackendLogin backend_login(const HostPort& endpoint) const;
     // One commit; storing the defaults removes the entry, otherwise the stored entry's unknown
     // members are kept. Fails with identity.empty_remote_login, storage.invalid_host or
-    // storage.read_only. Publishes the client record, whose effective_login may have changed.
+    // storage.read_only. Publishes the identity, as the client's effective_login may have changed.
     Result<BackendLogin> set_backend_login(BackendLogin login);
     // Play's input to plan_login, and with effective_login what every UI shows per role.
     [[nodiscard]] LoginTarget login_target(const storage::BackendTarget& backend, UpstreamFlavor flavor,
                                            bool custom_auth_dll) const;
 
 private:
-    Result<AccountRecord> rename(AccountRole role, std::string name);
+    Result<IdentitySnapshot> rename(std::string name);
     void adopt(const storage::AccountsDocument& document);
 
     storage::DocumentStore<storage::AccountsDocument>& accounts_;

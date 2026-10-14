@@ -1,7 +1,6 @@
 #include "reboot/identity/identity_service.hpp"
 
 #include <algorithm>
-#include <cstddef>
 #include <optional>
 #include <span>
 #include <string>
@@ -16,78 +15,85 @@
 #include "reboot/foundation/random.hpp"
 #include "reboot/identity/display_name.hpp"
 #include "reboot/identity/identity_changed_event.hpp"
-#include "reboot/storage/enum_names.hpp"
 
 namespace rb::identity {
 
 namespace {
 
 [[nodiscard]] AccountRecord mint(AccountRole role, IRandom& random) {
-    return AccountRecord{.record_id = AccountRecordId{uuid_v4(random)},
-                         .role = role,
-                         .display_name = default_display_name(role, random),
-                         .tag = generate_tag(random),
-                         .unknown = {}};
+    return AccountRecord{
+        .record_id = AccountRecordId{uuid_v4(random)}, .role = role, .display_name = {}, .tag = generate_tag(random)};
 }
 
 struct PickedRecords {
     IdentitySnapshot snapshot;
-    // The document does not hold exactly these two records.
+    // The document does not hold exactly this name and these two records.
     bool rewrite = false;
 };
 
-// Fills a name or tag storage left empty from `known`, the record in memory, when it has the same record_id.
-[[nodiscard]] bool repair(AccountRecord& record, const AccountRecord* known, IRandom& random) {
-    const bool same = known != nullptr && known->record_id == record.record_id;
-    bool repaired = false;
-    if (!validate_display_name(record.display_name)) {
-        const bool keep = same && validate_display_name(known->display_name);
-        record.display_name = keep ? known->display_name : default_display_name(record.role, random);
-        repaired = true;
-    }
-    if (record.tag.size() != kTagLength) {
-        record.tag = same && known->tag.size() == kTagLength ? known->tag : generate_tag(random);
-        repaired = true;
-    }
-    return repaired;
+// A stored name storage left empty is the one in memory (`known`, absent at startup), or a new default.
+[[nodiscard]] std::string pick_name(const storage::AccountsDocument& document, const IdentitySnapshot* known,
+                                    IRandom& random, bool& repaired) {
+    if (validate_display_name(document.display_name)) return document.display_name;
+    repaired = true;
+    if (known != nullptr && validate_display_name(known->display_name())) return known->display_name();
+    return default_display_name(random);
 }
 
-// The first record of each role, repaired. A missing one, or a host sharing the client's record_id, is the one in
-// memory (`known`, absent at startup) when that one is still distinct, and minted otherwise.
+// The first record of each role, its tag repaired. A missing one, or a host sharing the client's record_id, is the
+// one in memory (`known`) when that one is still distinct, and minted otherwise.
 [[nodiscard]] PickedRecords pick_records(const storage::AccountsDocument& document, const IdentitySnapshot* known,
                                          IRandom& random) {
-    const auto find = [&document](AccountRole role, const AccountRecordId* other) -> const AccountRecord* {
-        const auto it = std::ranges::find_if(document.records, [role, other](const AccountRecord& record) {
+    const auto find = [&document](AccountRole role, const AccountRecordId* other) -> const storage::StoredAccount* {
+        const auto it = std::ranges::find_if(document.records, [role, other](const storage::StoredAccount& record) {
             return record.role == role && (other == nullptr || record.record_id != *other);
         });
         return it == document.records.end() ? nullptr : &*it;
     };
     PickedRecords picked{.snapshot = {}, .rewrite = document.records.size() != 2};
+    const std::string name = pick_name(document, known, random, picked.rewrite);
     const auto pick = [&](AccountRole role, const AccountRecordId* other) {
         const AccountRecord* in_memory = nullptr;
         if (known != nullptr) in_memory = role == AccountRole::Host ? &known->host : &known->client;
-        if (const AccountRecord* stored = find(role, other)) {
-            AccountRecord out = *stored;
-            if (repair(out, in_memory, random)) picked.rewrite = true;
-            return out;
+        AccountRecord out;
+        if (const storage::StoredAccount* stored = find(role, other)) {
+            out = AccountRecord{.record_id = stored->record_id, .role = role, .display_name = {}, .tag = stored->tag};
+            if (out.tag.size() != kTagLength) {
+                const bool same = in_memory != nullptr && in_memory->record_id == out.record_id;
+                out.tag = same && in_memory->tag.size() == kTagLength ? in_memory->tag : generate_tag(random);
+                picked.rewrite = true;
+            }
+        } else {
+            picked.rewrite = true;
+            const bool distinct = in_memory != nullptr && (other == nullptr || in_memory->record_id != *other);
+            out = distinct ? *in_memory : mint(role, random);
         }
-        picked.rewrite = true;
-        if (in_memory != nullptr && (other == nullptr || in_memory->record_id != *other)) return *in_memory;
-        return mint(role, random);
+        out.display_name = name;
+        return out;
     };
     picked.snapshot.client = pick(AccountRole::Client, nullptr);
     picked.snapshot.host = pick(AccountRole::Host, &picked.snapshot.client.record_id);
     return picked;
 }
 
-[[nodiscard]] AccountRecord& slot(IdentitySnapshot& snapshot, AccountRole role) noexcept {
-    return role == AccountRole::Host ? snapshot.host : snapshot.client;
+// Lays `identity` over `document`; a record already stored keeps its unknown members.
+void store(storage::AccountsDocument& document, const IdentitySnapshot& identity) {
+    std::vector<storage::StoredAccount> records;
+    for (const AccountRecord* record : {&identity.client, &identity.host}) {
+        const auto it = std::ranges::find(document.records, record->record_id, &storage::StoredAccount::record_id);
+        records.push_back(storage::StoredAccount{.record_id = record->record_id,
+                                                 .role = record->role,
+                                                 .tag = record->tag,
+                                                 .unknown = it != document.records.end() ? it->unknown
+                                                                                        : boost::json::object{}});
+    }
+    document.display_name = identity.display_name();
+    document.records = std::move(records);
 }
 
-void publish_change(EventBus& events, const AccountRecord& record) {
-    const std::string_view role = storage::EnumNames<AccountRole>::kNames[static_cast<std::size_t>(record.role)];
-    events.publish(EventKind::IdentityChanged, IdentityChangedEvent{record},
-                   EventScope{.session = std::nullopt, .op = std::nullopt, .coalesce_key = std::string(role)});
+void publish_change(EventBus& events, const IdentitySnapshot& identity) {
+    events.publish(EventKind::IdentityChanged, IdentityChangedEvent{identity},
+                   EventScope{.session = std::nullopt, .op = std::nullopt, .coalesce_key = "identity"});
 }
 
 }  // namespace
@@ -104,7 +110,7 @@ IdentityService::IdentityService(storage::DocumentStore<storage::AccountsDocumen
         });
     // The edit may change the client's effective_login.
     logins_.set_on_reload([this](const BackendLoginsDocument&, std::span<const storage::ValueIssue>) {
-        publish_change(events_, current_.client);
+        publish_change(events_, current_);
     });
 }
 
@@ -118,45 +124,40 @@ void IdentityService::ensure_records() {
     current_ = std::move(picked.snapshot);
     if (!picked.rewrite) return;
     // A ReadOnly store refuses this; its LoadReport already said so and the records stay in memory.
-    static_cast<void>(accounts_.update([records = current_](storage::AccountsDocument& document) {
-        document.records = {records.client, records.host};
-    }));
+    static_cast<void>(
+        accounts_.update([identity = current_](storage::AccountsDocument& document) { store(document, identity); }));
 }
 
 void IdentityService::adopt(const storage::AccountsDocument& document) {
     PickedRecords picked = pick_records(document, &current_, random_);
     if (picked.rewrite)
-        static_cast<void>(accounts_.update([records = picked.snapshot](storage::AccountsDocument& next) {
-            next.records = {records.client, records.host};
-        }));
+        static_cast<void>(accounts_.update(
+            [identity = picked.snapshot](storage::AccountsDocument& next) { store(next, identity); }));
     const IdentitySnapshot previous = std::exchange(current_, std::move(picked.snapshot));
-    if (previous.client != current_.client) publish_change(events_, current_.client);
-    if (previous.host != current_.host) publish_change(events_, current_.host);
+    if (previous != current_) publish_change(events_, current_);
 }
 
-Result<AccountRecord> IdentityService::set_display_name(AccountRole role, std::string_view name) {
+Result<IdentitySnapshot> IdentityService::set_display_name(std::string_view name) {
     if (Result<void> valid = validate_display_name(name); !valid) return std::unexpected(std::move(valid.error()));
-    if (record(role).display_name == name) return record(role);
-    return rename(role, std::string(name));
+    if (current_.display_name() == name) return current_;
+    return rename(std::string(name));
 }
 
-Result<AccountRecord> IdentityService::reset(AccountRole role) {
-    std::string name = default_display_name(role, random_);
-    while (name == record(role).display_name) name = default_display_name(role, random_);
-    return rename(role, std::move(name));
+Result<IdentitySnapshot> IdentityService::reset() {
+    std::string name = default_display_name(random_);
+    while (name == current_.display_name()) name = default_display_name(random_);
+    return rename(std::move(name));
 }
 
-Result<AccountRecord> IdentityService::rename(AccountRole role, std::string name) {
-    AccountRecord next = record(role);
-    next.display_name = std::move(name);
-    Result<u64> committed = accounts_.update([&next](storage::AccountsDocument& document) {
-        const auto it = std::ranges::find(document.records, next.record_id, &AccountRecord::record_id);
-        if (it != document.records.end()) *it = next;
-        else document.records.push_back(next);
-    });
+Result<IdentitySnapshot> IdentityService::rename(std::string name) {
+    IdentitySnapshot next = current_;
+    next.client.display_name = name;
+    next.host.display_name = std::move(name);
+    Result<u64> committed =
+        accounts_.update([&next](storage::AccountsDocument& document) { store(document, next); });
     if (!committed) return std::unexpected(std::move(committed.error()));
-    slot(current_, role) = next;
-    publish_change(events_, next);
+    current_ = next;
+    publish_change(events_, current_);
     return next;
 }
 
@@ -179,7 +180,7 @@ Result<BackendLogin> IdentityService::set_backend_login(BackendLogin login) {
         if (!is_default) document.logins.push_back(login);
     });
     if (!committed) return std::unexpected(std::move(committed.error()));
-    publish_change(events_, current_.client);
+    publish_change(events_, current_);
     return login;
 }
 

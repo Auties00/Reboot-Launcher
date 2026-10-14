@@ -13,27 +13,28 @@
 
 namespace rb::storage {
 
-// account_id = display_name + "-" + tag. A rename changes display_name only.
-struct AccountRecord {
+// One role's account; its account_id is the document's display_name + "-" + tag.
+struct StoredAccount {
     AccountRecordId record_id;
     contracts::backend::AccountRole role{};
-    // [A-Za-z0-9]{3,16}, or empty when the stored one was not.
-    std::string display_name;
     // [a-z0-9]{6}, or empty when the stored one was not.
     std::string tag;
     // Members this build does not know, kept for the newer engine that wrote them.
     boost::json::object unknown;
 
-    bool operator==(const AccountRecord&) const = default;
+    bool operator==(const StoredAccount&) const = default;
 };
 
 // Capabilities: settings-storage.game-store.
-// data/accounts.json. The identity package owns the rules; v1 keeps one record per role.
+// data/accounts.json. The identity package owns the rules: one player name shared by one record per role.
+// Schema 2 moved the name out of the records; the upgrade keeps the client's.
 struct AccountsDocument {
     static constexpr std::string_view kName = "accounts";
-    static constexpr u32 kSchema = 1;
+    static constexpr u32 kSchema = 2;
 
-    std::vector<AccountRecord> records;
+    // [A-Za-z0-9]{3,16}, or empty when the stored one was not.
+    std::string display_name;
+    std::vector<StoredAccount> records;
     boost::json::object unknown;
 
     // A record with a bad id or role is dropped with a ValueIssue; a bad name or tag is left empty with

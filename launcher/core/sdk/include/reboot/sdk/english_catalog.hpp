@@ -755,7 +755,7 @@ inline constexpr std::array<EnglishTemplate, 747> kEnglish{{
     {"ux.step_play_title", "Play"},
     {"ux.step_prerequisites_body", "Some things the launcher needs are missing. Fix them now, or later from Settings."},
     {"ux.step_prerequisites_title", "Finish setting up this computer"},
-    {"ux.step_profile_body", "Other players see this name in the lobby and in the killfeed. A new name applies from the next launch."},
+    {"ux.step_profile_body", "Other players see this name in the lobby, in the killfeed and on the servers you host. A new name applies from the next launch."},
     {"ux.step_profile_title", "Choose your player name"},
     {"ux.step_welcome_body", "Play and host old Fortnite builds with the community. This tour shows where everything is. You can skip any step or leave the tour at any time."},
     {"ux.step_welcome_title", "Welcome to Reboot Launcher"},

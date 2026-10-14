@@ -464,7 +464,7 @@ std::optional<contracts::ipc::WireEvent> ApiRouter::encode_event(const EventEnve
             break;
         case EventKind::IdentityChanged:
             if (const auto* p = std::any_cast<identity::IdentityChangedEvent>(&any))
-                payload.identity_changed = api::IdentityChanged{convert::identity_profile(p->record)};
+                payload.identity_changed = api::IdentityChanged{convert::identity_profile(p->identity)};
             else known = false;
             break;
         case EventKind::SessionStateChanged:

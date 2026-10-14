@@ -887,7 +887,7 @@ struct HostService::Impl {
     [[nodiscard]] std::string server_name(const HostProfile& profile) const {
         if (!profile.server_name.empty()) return profile.server_name;
         if (!deps.options.default_server_name.empty()) return deps.options.default_server_name;
-        return publish::author_for(deps.identity.record(identity::AccountRole::Host));
+        return deps.identity.get().display_name();
     }
 
     void publish_or_resume(Session& s, std::optional<Port> granted) {
@@ -906,7 +906,7 @@ struct HostService::Impl {
         request.profile = s.profile.id;
         request.metadata = publish::HostMetadata{.name = server_name(s.profile),
                                                  .description = s.profile.description,
-                                                 .author = publish::author_for(deps.identity.record(identity::AccountRole::Host)),
+                                                 .author = deps.identity.get().display_name(),
                                                  .version = s.target.version,
                                                  .max_players = s.profile.match.max_players};
         request.password = copy_secret(s.password);

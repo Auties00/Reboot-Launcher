@@ -5,32 +5,36 @@ package reboot.api.v1;
 import "reboot/api/v1/common.proto";
 import "reboot/api/v1/options.proto";
 
-message IdentityProfile {
+// One role's account. Internal to the engine: what the game or the game server logs in as.
+message IdentityAccount {
   GameRole role = 1;
-  string display_name = 2;
-  // What the game logs in as; derived from display_name and unique per role.
-  string account_id = 3;
-  bool is_default = 4;
+  // display_name plus a tag of the role's own, so the roles never share an account.
+  string account_id = 2;
+}
+
+message IdentityProfile {
+  // The one player name, used for playing and hosting.
+  string display_name = 1;
+  bool is_default = 2;
+  // One per role, both named after display_name.
+  repeated IdentityAccount accounts = 3;
 }
 
 message IdentityGetRequest {}
 
 message IdentityGetResponse {
-  repeated IdentityProfile profiles = 1;
+  IdentityProfile profile = 1;
 }
 
 message IdentitySetDisplayNameRequest {
-  GameRole role = 1;
-  string display_name = 2;
+  string display_name = 1;
 }
 
 message IdentitySetDisplayNameResponse {
   IdentityProfile profile = 1;
 }
 
-message IdentityResetRequest {
-  GameRole role = 1;
-}
+message IdentityResetRequest {}
 
 message IdentityResetResponse {
   IdentityProfile profile = 1;
@@ -40,7 +44,7 @@ message IdentityChanged {
   IdentityProfile profile = 1;
 }
 
-// Display names and account ids per role.
+// The player name and the account ids derived from it.
 service Identity {
   option (service_info) = {id: 8};
 

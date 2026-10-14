@@ -12,7 +12,7 @@
 namespace rb::api {
 
 // Changes with every change to the schema's payloads or methods; Engine.info reports the engine's.
-inline constexpr std::string_view kSchemaFingerprint = "914a52336fd1731e";
+inline constexpr std::string_view kSchemaFingerprint = "870c30759019ef02";
 
 inline constexpr u32 kEngineStatus = 0x00010001;
 inline constexpr u32 kEngineInfo = 0x00010002;

@@ -99,7 +99,7 @@ TEST_CASE("steps and actions follow the live context") {
 
     const OnboardingStep& profile = step_of(view, StepId::Profile);
     REQUIRE(profile.actions.size() == 1);
-    CHECK(std::get<EditDisplayName>(profile.actions[0]).role == contracts::backend::AccountRole::Client);
+    CHECK(std::holds_alternative<EditDisplayName>(profile.actions[0]));
 
     const OnboardingStep& listing = step_of(view, StepId::HostListing);
     REQUIRE(listing.choices.size() == 2);

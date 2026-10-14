@@ -856,30 +856,21 @@ Result<OpHandle> ApiRouter::start_identity_import(const api::CallContext&, const
 
 // Identity
 
-namespace {
-
-[[nodiscard]] contracts::backend::AccountRole account_role(api::GameRole role) {
-    return role == api::GameRole::Host ? contracts::backend::AccountRole::Host : contracts::backend::AccountRole::Client;
-}
-
-}  // namespace
-
 Result<api::IdentityGetResponse> ApiRouter::get(const api::CallContext&, const api::IdentityGetRequest&) {
-    const identity::IdentitySnapshot& snapshot = deps_.identity.get();
-    return api::IdentityGetResponse{{convert::identity_profile(snapshot.client), convert::identity_profile(snapshot.host)}};
+    return api::IdentityGetResponse{convert::identity_profile(deps_.identity.get())};
 }
 
 Result<api::IdentitySetDisplayNameResponse> ApiRouter::set_display_name(const api::CallContext&,
                                                                         const api::IdentitySetDisplayNameRequest& request) {
-    Result<identity::AccountRecord> record = deps_.identity.set_display_name(account_role(request.role), request.display_name);
-    if (!record) return std::unexpected(std::move(record.error()));
-    return api::IdentitySetDisplayNameResponse{convert::identity_profile(*record)};
+    Result<identity::IdentitySnapshot> renamed = deps_.identity.set_display_name(request.display_name);
+    if (!renamed) return std::unexpected(std::move(renamed.error()));
+    return api::IdentitySetDisplayNameResponse{convert::identity_profile(*renamed)};
 }
 
-Result<api::IdentityResetResponse> ApiRouter::reset(const api::CallContext&, const api::IdentityResetRequest& request) {
-    Result<identity::AccountRecord> record = deps_.identity.reset(account_role(request.role));
-    if (!record) return std::unexpected(std::move(record.error()));
-    return api::IdentityResetResponse{convert::identity_profile(*record)};
+Result<api::IdentityResetResponse> ApiRouter::reset(const api::CallContext&, const api::IdentityResetRequest&) {
+    Result<identity::IdentitySnapshot> renamed = deps_.identity.reset();
+    if (!renamed) return std::unexpected(std::move(renamed.error()));
+    return api::IdentityResetResponse{convert::identity_profile(*renamed)};
 }
 
 // Install

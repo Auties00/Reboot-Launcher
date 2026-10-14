@@ -142,7 +142,7 @@ public:
     virtual ::rb::Result<::rb::OpHandle> start_identity_import(const CallContext& context, const HostIdentityImportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-// Display names and account ids per role.
+// The player name and the account ids derived from it.
 class IIdentityHandler {
 public:
     virtual ~IIdentityHandler() = default;

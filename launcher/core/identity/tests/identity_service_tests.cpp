@@ -33,7 +33,7 @@ namespace {
 const AccountRecord kAlice{AccountRecordId{*parse_uuid("9a3e7c51-2d44-4c1b-8f0a-61b2d5e9c3f7")}, AccountRole::Client,
                            "Alice", "a1b2c3"};
 const AccountRecord kServer{AccountRecordId{*parse_uuid("1c0b8a6e-5f3d-4e2a-9b7c-0d1e2f3a4b5c")}, AccountRole::Host,
-                            "Server1", "z9y8x7"};
+                            "Alice", "z9y8x7"};
 
 [[nodiscard]] std::string envelope(u32 schema, u64 revision, json::object values) {
     json::object out;
@@ -43,10 +43,26 @@ const AccountRecord kServer{AccountRecordId{*parse_uuid("1c0b8a6e-5f3d-4e2a-9b7c
     return json::serialize(out);
 }
 
+[[nodiscard]] std::string envelope(u64 revision, json::object values) {
+    return envelope(AccountsDocument::kSchema, revision, std::move(values));
+}
+
+// The document holding `records`, named after the first one.
 [[nodiscard]] json::object records_json(std::vector<AccountRecord> records) {
     AccountsDocument document;
-    document.records = std::move(records);
+    if (!records.empty()) document.display_name = records.front().display_name;
+    for (const AccountRecord& record : records)
+        document.records.push_back(storage::StoredAccount{record.record_id, record.role, record.tag, {}});
     return document.write();
+}
+
+[[nodiscard]] AccountRecord named(AccountRecord record, std::string name) {
+    record.display_name = std::move(name);
+    return record;
+}
+
+[[nodiscard]] IdentitySnapshot named(const IdentitySnapshot& identity, const std::string& name) {
+    return IdentitySnapshot{named(identity.client, name), named(identity.host, name)};
 }
 
 [[nodiscard]] HostPort endpoint(std::string host, u16 port = 3551) { return HostPort{std::move(host), Port{port}}; }
@@ -71,7 +87,7 @@ struct Fixture {
 
     // A hand edit of data/accounts.json, then the reload a file watcher would trigger.
     void hand_edit_accounts(json::object values) {
-        fs.write_text(accounts_path, envelope(1, accounts.revision() + 1, std::move(values)));
+        fs.write_text(accounts_path, envelope(accounts.revision() + 1, std::move(values)));
         accounts.refresh();
         flush(accounts);
     }
@@ -84,6 +100,15 @@ struct Fixture {
         AccountsDocument document = AccountsDocument::read(json::parse(*text).at("values").as_object(), issues);
         CHECK(issues.empty());
         return document;
+    }
+
+    // The stored records, each with the stored name.
+    [[nodiscard]] std::vector<AccountRecord> records_on_disk() const {
+        const AccountsDocument document = accounts_on_disk();
+        std::vector<AccountRecord> out;
+        for (const storage::StoredAccount& stored : document.records)
+            out.push_back(AccountRecord{stored.record_id, stored.role, document.display_name, stored.tag});
+        return out;
     }
 
     [[nodiscard]] std::vector<IdentityChangedEvent> changes() {
@@ -113,28 +138,30 @@ struct Fixture {
 
 }  // namespace
 
-TEST_CASE("ensure_records mints a client and a host record and writes them", "[identity][service]") {
+TEST_CASE("ensure_records mints a client and a host record under one default name and writes them",
+          "[identity][service]") {
     Fixture f;
     f.start();
     const IdentitySnapshot& identity = f.service->get();
     CHECK(identity.client.role == AccountRole::Client);
     CHECK(identity.host.role == AccountRole::Host);
-    CHECK(is_default_display_name(identity.client.display_name, AccountRole::Client));
-    CHECK(is_default_display_name(identity.host.display_name, AccountRole::Host));
+    CHECK(is_default_display_name(identity.display_name()));
+    CHECK(identity.host.display_name == identity.display_name());
     CHECK(identity.client.tag.size() == kTagLength);
     CHECK(identity.host.tag.size() == kTagLength);
     CHECK(identity.client.record_id != identity.host.record_id);
+    CHECK(account_id(identity.client) != account_id(identity.host));
     CHECK(f.service->record(AccountRole::Host) == identity.host);
 
     f.flush(f.accounts);
-    CHECK(f.accounts_on_disk().records == std::vector{identity.client, identity.host});
+    CHECK(f.records_on_disk() == std::vector{identity.client, identity.host});
     // Startup sets the identity; there is no earlier one to change.
     CHECK(f.changes().empty());
 }
 
 TEST_CASE("stored records are kept and not written again", "[identity][service]") {
     Fixture f;
-    const std::string stored = envelope(1, 3, records_json({kServer, kAlice}));
+    const std::string stored = envelope(3, records_json({kServer, kAlice}));
     f.fs.write_text(f.accounts_path, stored);
     f.start();
     CHECK(f.service->get() == IdentitySnapshot{kAlice, kServer});
@@ -143,11 +170,26 @@ TEST_CASE("stored records are kept and not written again", "[identity][service]"
     CHECK(f.fs.text(f.accounts_path) == stored);
 }
 
+TEST_CASE("a schema 1 file, which named each role, keeps the client's name", "[identity][service]") {
+    Fixture f;
+    json::array records;
+    for (const AccountRecord& record : {kAlice, named(kServer, "Server1")}) {
+        json::object entry = records_json({record}).at("records").as_array()[0].as_object();
+        entry["display_name"] = record.display_name;
+        records.emplace_back(std::move(entry));
+    }
+    f.fs.write_text(f.accounts_path, envelope(1, 3, json::object{{"records", std::move(records)}}));
+    f.start();
+    CHECK(f.service->get() == IdentitySnapshot{kAlice, kServer});
+    f.flush(f.accounts);
+    CHECK(f.records_on_disk() == std::vector{kAlice, kServer});
+}
+
 TEST_CASE("a stored record with a bad tag keeps its record_id and gets a fresh tag", "[identity][service]") {
     Fixture f;
     json::object values = records_json({kAlice, kServer});
     values.at("records").as_array()[1].as_object()["tag"] = "NOT-OK";
-    f.fs.write_text(f.accounts_path, envelope(1, 3, std::move(values)));
+    f.fs.write_text(f.accounts_path, envelope(3, std::move(values)));
     f.start();
 
     const IdentitySnapshot& identity = f.service->get();
@@ -157,44 +199,43 @@ TEST_CASE("a stored record with a bad tag keeps its record_id and gets a fresh t
     CHECK(identity.host.tag.size() == kTagLength);
     CHECK(identity.host.tag != "NOT-OK");
     f.flush(f.accounts);
-    CHECK(f.accounts_on_disk().records == std::vector{kAlice, identity.host});
+    CHECK(f.records_on_disk() == std::vector{kAlice, identity.host});
 }
 
-TEST_CASE("a stored record with a bad name keeps its record_id and tag", "[identity][service]") {
+TEST_CASE("a bad stored name gets a default one; the records keep their ids and tags", "[identity][service]") {
     Fixture f;
     json::object values = records_json({kAlice, kServer});
-    values.at("records").as_array()[0].as_object()["display_name"] = "Not Valid";
-    f.fs.write_text(f.accounts_path, envelope(1, 3, std::move(values)));
+    values["display_name"] = "Not Valid";
+    f.fs.write_text(f.accounts_path, envelope(3, std::move(values)));
     f.start();
 
-    const AccountRecord& client = f.service->record(AccountRole::Client);
-    CHECK(client.record_id == kAlice.record_id);
-    CHECK(client.tag == kAlice.tag);
-    CHECK(is_default_display_name(client.display_name, AccountRole::Client));
+    const IdentitySnapshot& identity = f.service->get();
+    CHECK(is_default_display_name(identity.display_name()));
+    CHECK(identity == named(IdentitySnapshot{kAlice, kServer}, identity.display_name()));
     f.flush(f.accounts);
-    CHECK(f.accounts_on_disk().records == std::vector{client, kServer});
+    CHECK(f.records_on_disk() == std::vector{identity.client, identity.host});
 }
 
 TEST_CASE("a stored record with a bad record_id is minted again", "[identity][service]") {
     Fixture f;
     json::object values = records_json({kAlice, kServer});
     values.at("records").as_array()[1].as_object()["record_id"] = "not-a-uuid";
-    f.fs.write_text(f.accounts_path, envelope(1, 3, std::move(values)));
+    f.fs.write_text(f.accounts_path, envelope(3, std::move(values)));
     f.start();
 
     const IdentitySnapshot& identity = f.service->get();
     CHECK(identity.client == kAlice);
     CHECK(identity.host.record_id != kServer.record_id);
-    CHECK(is_default_display_name(identity.host.display_name, AccountRole::Host));
+    CHECK(identity.host.display_name == "Alice");
     f.flush(f.accounts);
-    CHECK(f.accounts_on_disk().records == std::vector{kAlice, identity.host});
+    CHECK(f.records_on_disk() == std::vector{kAlice, identity.host});
 }
 
 TEST_CASE("a host sharing the client's record_id is minted again", "[identity][service]") {
     Fixture f;
     AccountRecord copy = kServer;
     copy.record_id = kAlice.record_id;
-    f.fs.write_text(f.accounts_path, envelope(1, 3, records_json({kAlice, copy})));
+    f.fs.write_text(f.accounts_path, envelope(3, records_json({kAlice, copy})));
     f.start();
     CHECK(f.service->get().client == kAlice);
     CHECK(f.service->get().host.record_id != kAlice.record_id);
@@ -204,29 +245,29 @@ TEST_CASE("extra records of a role are dropped on the write back", "[identity][s
     Fixture f;
     AccountRecord second_client = kAlice;
     second_client.record_id = AccountRecordId{*parse_uuid("5d6e7f80-1a2b-4c3d-8e9f-a0b1c2d3e4f5")};
-    second_client.display_name = "Bob";
-    f.fs.write_text(f.accounts_path, envelope(1, 3, records_json({kAlice, kServer, second_client})));
+    second_client.tag = "q1w2e3";
+    f.fs.write_text(f.accounts_path, envelope(3, records_json({kAlice, kServer, second_client})));
     f.start();
     CHECK(f.service->get() == IdentitySnapshot{kAlice, kServer});
     f.flush(f.accounts);
-    CHECK(f.accounts_on_disk().records == std::vector{kAlice, kServer});
+    CHECK(f.records_on_disk() == std::vector{kAlice, kServer});
 }
 
 TEST_CASE("a ReadOnly store keeps minted records in memory and refuses changes", "[identity][service]") {
     Fixture f;
-    const std::string stored = envelope(2, 3, json::object{});
+    const std::string stored = envelope(AccountsDocument::kSchema + 1, 3, json::object{});
     f.fs.write_text(f.accounts_path, stored);
-    f.fs.write_text(f.logins_path, stored);
+    f.fs.write_text(f.logins_path, envelope(BackendLoginsDocument::kSchema + 1, 3, json::object{}));
     f.start();
     REQUIRE(f.accounts.mode() == storage::StorageMode::ReadOnly);
     const IdentitySnapshot minted = f.service->get();
-    CHECK(is_default_display_name(minted.client.display_name, AccountRole::Client));
+    CHECK(is_default_display_name(minted.display_name()));
     CHECK(f.fs.text(f.accounts_path) == stored);
 
-    const Result<AccountRecord> renamed = f.service->set_display_name(AccountRole::Client, "Alice");
+    const Result<IdentitySnapshot> renamed = f.service->set_display_name("Alice");
     REQUIRE_FALSE(renamed);
     CHECK(renamed.error().id == "storage.read_only");
-    const Result<AccountRecord> reset = f.service->reset(AccountRole::Host);
+    const Result<IdentitySnapshot> reset = f.service->reset();
     REQUIRE_FALSE(reset);
     CHECK(reset.error().id == "storage.read_only");
     const Result<BackendLogin> login =
@@ -239,28 +280,25 @@ TEST_CASE("a ReadOnly store keeps minted records in memory and refuses changes",
     CHECK(f.changes().empty());
 }
 
-TEST_CASE("a rename changes account_id but never record_id or tag", "[identity][service]") {
+TEST_CASE("a rename changes both account_ids but never a record_id or tag", "[identity][service]") {
     Fixture f;
     f.start();
-    const AccountRecord before = f.service->record(AccountRole::Client);
-    const AccountRecord host = f.service->record(AccountRole::Host);
+    const IdentitySnapshot before = f.service->get();
 
-    const Result<AccountRecord> renamed = f.service->set_display_name(AccountRole::Client, "Alice");
+    const Result<IdentitySnapshot> renamed = f.service->set_display_name("Alice");
     REQUIRE(renamed);
-    CHECK(renamed->display_name == "Alice");
-    CHECK(renamed->record_id == before.record_id);
-    CHECK(renamed->tag == before.tag);
-    CHECK(account_id(*renamed) == "Alice-" + before.tag);
-    CHECK(f.service->record(AccountRole::Client) == *renamed);
-    CHECK(f.service->record(AccountRole::Host) == host);
+    CHECK(*renamed == named(before, "Alice"));
+    CHECK(account_id(renamed->client) == "Alice-" + before.client.tag);
+    CHECK(account_id(renamed->host) == "Alice-" + before.host.tag);
+    CHECK(f.service->get() == *renamed);
     // A session that pinned the record keeps its copy.
-    CHECK(before.display_name != "Alice");
+    CHECK(before.display_name() != "Alice");
 
     f.flush(f.accounts);
-    CHECK(f.accounts_on_disk().records == std::vector{*renamed, host});
+    CHECK(f.records_on_disk() == std::vector{renamed->client, renamed->host});
     const std::vector<IdentityChangedEvent> changes = f.changes();
     REQUIRE(changes.size() == 1);
-    CHECK(changes[0].record == *renamed);
+    CHECK(changes[0].identity == *renamed);
 }
 
 TEST_CASE("an invalid name or the same name changes nothing", "[identity][service]") {
@@ -268,127 +306,126 @@ TEST_CASE("an invalid name or the same name changes nothing", "[identity][servic
     f.start();
     f.flush(f.accounts);
     const u64 revision = f.accounts.revision();
-    const AccountRecord before = f.service->record(AccountRole::Host);
+    const IdentitySnapshot before = f.service->get();
 
-    const Result<AccountRecord> too_short = f.service->set_display_name(AccountRole::Host, "ab");
+    const Result<IdentitySnapshot> too_short = f.service->set_display_name("ab");
     REQUIRE_FALSE(too_short);
     CHECK(too_short.error().is(msg::kDisplayNameTooShort));
-    const Result<AccountRecord> invalid = f.service->set_display_name(AccountRole::Host, "Host Two");
+    const Result<IdentitySnapshot> invalid = f.service->set_display_name("Host Two");
     REQUIRE_FALSE(invalid);
     CHECK(invalid.error().is(msg::kDisplayNameInvalidCharacter));
 
-    const Result<AccountRecord> same = f.service->set_display_name(AccountRole::Host, before.display_name);
+    const Result<IdentitySnapshot> same = f.service->set_display_name(before.display_name());
     REQUIRE(same);
     CHECK(*same == before);
 
-    CHECK(f.service->record(AccountRole::Host) == before);
+    CHECK(f.service->get() == before);
     CHECK(f.accounts.revision() == revision);
     CHECK(f.changes().empty());
 }
 
-TEST_CASE("reset gives a new default name and keeps the tag", "[identity][service]") {
+TEST_CASE("reset gives a new default name and keeps the tags", "[identity][service]") {
     Fixture f;
     f.start();
-    REQUIRE(f.service->set_display_name(AccountRole::Host, "Server1"));
-    const AccountRecord named = f.service->record(AccountRole::Host);
+    REQUIRE(f.service->set_display_name("Server1"));
+    const IdentitySnapshot before = f.service->get();
 
-    const Result<AccountRecord> reset = f.service->reset(AccountRole::Host);
+    const Result<IdentitySnapshot> reset = f.service->reset();
     REQUIRE(reset);
-    CHECK(is_default_display_name(reset->display_name, AccountRole::Host));
-    CHECK(reset->tag == named.tag);
-    CHECK(reset->record_id == named.record_id);
+    CHECK(is_default_display_name(reset->display_name()));
+    CHECK(*reset == named(before, reset->display_name()));
 
-    const Result<AccountRecord> again = f.service->reset(AccountRole::Host);
+    const Result<IdentitySnapshot> again = f.service->reset();
     REQUIRE(again);
-    CHECK(again->display_name != reset->display_name);
+    CHECK(again->display_name() != reset->display_name());
     f.flush(f.accounts);
-    CHECK(f.accounts_on_disk().records.back() == *again);
+    CHECK(f.records_on_disk() == std::vector{again->client, again->host});
 }
 
-TEST_CASE("record changes coalesce per role", "[identity][service]") {
+TEST_CASE("identity changes coalesce", "[identity][service]") {
     Fixture f;
     f.start();
-    REQUIRE(f.service->set_display_name(AccountRole::Client, "Alice"));
-    REQUIRE(f.service->set_display_name(AccountRole::Host, "Server1"));
-    REQUIRE(f.service->set_display_name(AccountRole::Client, "Alicia"));
+    REQUIRE(f.service->set_display_name("Alice"));
+    REQUIRE(f.service->set_display_name("Alicia"));
 
     const std::vector<IdentityChangedEvent> changes = f.changes();
-    REQUIRE(changes.size() == 2);
-    CHECK(changes[0].record.display_name == "Server1");
-    CHECK(changes[1].record.display_name == "Alicia");
+    REQUIRE(changes.size() == 1);
+    CHECK(changes[0].identity.display_name() == "Alicia");
     CHECK(f.recorder.sequence_ok());
 }
 
-TEST_CASE("a hand-edited name is adopted as a rename", "[identity][service]") {
+TEST_CASE("a hand-edited name is adopted as a rename of both roles", "[identity][service]") {
     Fixture f;
-    f.fs.write_text(f.accounts_path, envelope(1, 3, records_json({kAlice, kServer})));
+    f.fs.write_text(f.accounts_path, envelope(3, records_json({kAlice, kServer})));
     f.start();
 
-    AccountRecord edited = kAlice;
-    edited.display_name = "Edited";
-    f.hand_edit_accounts({edited, kServer});
-    CHECK(f.service->get() == IdentitySnapshot{edited, kServer});
+    json::object values = records_json({kAlice, kServer});
+    values["display_name"] = "Edited";
+    f.hand_edit_accounts(std::move(values));
+    const IdentitySnapshot edited = named(IdentitySnapshot{kAlice, kServer}, "Edited");
+    CHECK(f.service->get() == edited);
     const std::vector<IdentityChangedEvent> changes = f.changes();
     REQUIRE(changes.size() == 1);
-    CHECK(changes[0].record == edited);
+    CHECK(changes[0].identity == edited);
 }
 
 TEST_CASE("a hand edit that drops a record gets the one in memory written back", "[identity][service]") {
     Fixture f;
-    f.fs.write_text(f.accounts_path, envelope(1, 3, records_json({kAlice, kServer})));
+    f.fs.write_text(f.accounts_path, envelope(3, records_json({kAlice, kServer})));
     f.start();
 
     f.hand_edit_accounts({kAlice});
     f.flush(f.accounts);
     CHECK(f.service->get() == IdentitySnapshot{kAlice, kServer});
-    CHECK(f.accounts_on_disk().records == std::vector{kAlice, kServer});
+    CHECK(f.records_on_disk() == std::vector{kAlice, kServer});
     CHECK(f.changes().empty());
 }
 
-TEST_CASE("a hand edit with an invalid name or tag keeps the record in memory", "[identity][service]") {
+TEST_CASE("a hand edit with an invalid name or tag keeps the one in memory", "[identity][service]") {
     Fixture f;
-    f.fs.write_text(f.accounts_path, envelope(1, 3, records_json({kAlice, kServer})));
+    f.fs.write_text(f.accounts_path, envelope(3, records_json({kAlice, kServer})));
     f.start();
 
     json::object values = records_json({kAlice, kServer});
-    values.at("records").as_array()[0].as_object()["display_name"] = "Alice Smith";
+    values["display_name"] = "Alice Smith";
     values.at("records").as_array()[1].as_object()["tag"] = "TOOLONG1";
     f.hand_edit_accounts(std::move(values));
     f.flush(f.accounts);
     CHECK(f.service->get() == IdentitySnapshot{kAlice, kServer});
-    CHECK(f.accounts_on_disk().records == std::vector{kAlice, kServer});
+    CHECK(f.records_on_disk() == std::vector{kAlice, kServer});
     CHECK(f.changes().empty());
 
     // A valid name in the same edit is still a rename, and the bad tag still keeps the one in memory.
     values = records_json({kAlice, kServer});
-    values.at("records").as_array()[1].as_object()["display_name"] = "Edited";
+    values["display_name"] = "Edited";
     values.at("records").as_array()[1].as_object()["tag"] = "";
     f.hand_edit_accounts(std::move(values));
     f.flush(f.accounts);
-    AccountRecord edited = kServer;
-    edited.display_name = "Edited";
-    CHECK(f.service->get() == IdentitySnapshot{kAlice, edited});
-    CHECK(f.accounts_on_disk().records == std::vector{kAlice, edited});
+    const IdentitySnapshot edited = named(IdentitySnapshot{kAlice, kServer}, "Edited");
+    CHECK(f.service->get() == edited);
+    CHECK(f.records_on_disk() == std::vector{edited.client, edited.host});
 }
 
 TEST_CASE("a rename not yet written is laid over a hand edit made meanwhile", "[identity][service]") {
     Fixture f;
-    f.fs.write_text(f.accounts_path, envelope(1, 3, records_json({kAlice, kServer})));
+    f.fs.write_text(f.accounts_path, envelope(3, records_json({kAlice, kServer})));
     f.start();
 
     AccountRecord edited = kServer;
-    edited.display_name = "Edited";
-    f.fs.write_text(f.accounts_path, envelope(1, 4, records_json({kAlice, edited})));
-    const Result<AccountRecord> renamed = f.service->set_display_name(AccountRole::Client, "Mine");
+    edited.tag = "e1e2e3";
+    f.fs.write_text(f.accounts_path, envelope(4, records_json({kAlice, edited})));
+    const Result<IdentitySnapshot> renamed = f.service->set_display_name("Mine");
     REQUIRE(renamed);
     f.flush(f.accounts);
 
-    // The engine's unwritten records win, so the edit's host name is gone and nothing else changed.
-    CHECK(f.service->get() == IdentitySnapshot{*renamed, kServer});
-    CHECK(f.accounts_on_disk().records == std::vector{*renamed, kServer});
+    // Only the name is unwritten, so it wins over the edit, whose host tag is adopted.
+    CHECK(*renamed == named(IdentitySnapshot{kAlice, kServer}, "Mine"));
+    const IdentitySnapshot mine = named(IdentitySnapshot{kAlice, edited}, "Mine");
+    CHECK(f.service->get() == mine);
+    CHECK(f.records_on_disk() == std::vector{mine.client, mine.host});
     const std::vector<IdentityChangedEvent> changes = f.changes();
     REQUIRE(changes.size() == 1);
-    CHECK(changes[0].record == *renamed);
+    CHECK(changes[0].identity == mine);
 }
 
 TEST_CASE("backend logins default per endpoint and are kept only when they differ", "[identity][service]") {
@@ -405,7 +442,7 @@ TEST_CASE("backend logins default per endpoint and are kept only when they diffe
     // The client's effective_login may have changed.
     const std::vector<IdentityChangedEvent> changes = f.changes();
     REQUIRE(changes.size() == 1);
-    CHECK(changes[0].record == f.service->get().client);
+    CHECK(changes[0].identity == f.service->get());
 
     REQUIRE(f.service->set_backend_login(BackendLogin{endpoint("example.com")}));
     CHECK(f.logins.get().logins.empty());
@@ -471,7 +508,7 @@ TEST_CASE("a hand edit of the backend logins publishes the client record", "[ide
     CHECK(f.service->backend_login(endpoint("example.com")).login == "bob");
     const std::vector<IdentityChangedEvent> changes = f.changes();
     REQUIRE(changes.size() == 1);
-    CHECK(changes[0].record == f.service->get().client);
+    CHECK(changes[0].identity == f.service->get());
 }
 
 TEST_CASE("set_backend_login keeps the stored entry's unknown members", "[identity][service]") {
@@ -494,13 +531,13 @@ TEST_CASE("set_backend_login keeps the stored entry's unknown members", "[identi
 
 TEST_CASE("a destroyed service no longer handles hand edits", "[identity][service]") {
     Fixture f;
-    f.fs.write_text(f.accounts_path, envelope(1, 3, records_json({kAlice, kServer})));
+    f.fs.write_text(f.accounts_path, envelope(3, records_json({kAlice, kServer})));
     f.start();
     f.service.reset();
 
     f.hand_edit_accounts({kAlice});
     f.flush(f.accounts);
-    CHECK(f.accounts.get().records == std::vector{kAlice});
-    CHECK(f.accounts_on_disk().records == std::vector{kAlice});
+    CHECK(f.accounts.get().records.size() == 1);
+    CHECK(f.records_on_disk() == std::vector{kAlice});
     CHECK(f.changes().empty());
 }

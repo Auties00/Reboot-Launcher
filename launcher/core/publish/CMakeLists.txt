@@ -1,4 +1,4 @@
-# Public headers use storage's HostListing and AccountRecord, and browser's RbsbEndpoint.
+# Public headers use storage's HostListing and browser's RbsbEndpoint.
 reboot_add_package(publish
   SOURCES
     src/field_checks.cpp

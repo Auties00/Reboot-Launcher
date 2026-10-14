@@ -1,6 +1,7 @@
 #include "reboot/storage/accounts_document.hpp"
 
 #include <algorithm>
+#include <optional>
 #include <utility>
 
 #include <boost/json/array.hpp>
@@ -44,7 +45,7 @@ void read_checked(MemberReader& reader, std::string_view member, std::string& ou
     reader.read(member, out, [member, valid](const json::value& value) { return checked_text(value, member, valid); });
 }
 
-[[nodiscard]] Result<AccountRecord> record_from_json(const json::value& raw, const std::string& path,
+[[nodiscard]] Result<StoredAccount> record_from_json(const json::value& raw, const std::string& path,
                                                      std::vector<ValueIssue>& issues) {
     Result<const json::object*> object = object_from_json(raw);
     if (!object) return std::unexpected(std::move(object.error()));
@@ -54,8 +55,7 @@ void read_checked(MemberReader& reader, std::string_view member, std::string& ou
     Result<contracts::backend::AccountRole> role =
         required(reader, "role", enum_from_json<contracts::backend::AccountRole>);
     if (!role) return std::unexpected(std::move(role.error()));
-    AccountRecord record{.record_id = *id, .role = *role, .display_name = {}, .tag = {}, .unknown = {}};
-    read_checked(reader, "display_name", record.display_name, is_display_name);
+    StoredAccount record{.record_id = *id, .role = *role, .tag = {}, .unknown = {}};
     read_checked(reader, "tag", record.tag, is_tag);
     record.unknown = reader.unknown();
     return record;
@@ -66,6 +66,7 @@ void read_checked(MemberReader& reader, std::string_view member, std::string& ou
 AccountsDocument AccountsDocument::read(const json::object& values, std::vector<ValueIssue>& issues) {
     AccountsDocument document;
     MemberReader reader(values, issues);
+    read_checked(reader, "display_name", document.display_name, is_display_name);
     reader.read_list("records", document.records, [&issues](const json::value& raw, const std::string& path) {
         return record_from_json(raw, path, issues);
     });
@@ -75,21 +76,39 @@ AccountsDocument AccountsDocument::read(const json::object& values, std::vector<
 
 json::object AccountsDocument::write() const {
     json::array records_json;
-    for (const AccountRecord& record : records) {
+    for (const StoredAccount& record : records) {
         json::object entry;
         entry.emplace("record_id", id_to_json(record.record_id));
         entry.emplace("role", enum_to_json(record.role));
-        entry.emplace("display_name", record.display_name);
         entry.emplace("tag", record.tag);
         append_unknown(entry, record.unknown);
         records_json.emplace_back(std::move(entry));
     }
     json::object out;
+    out.emplace("display_name", display_name);
     out.emplace("records", std::move(records_json));
     append_unknown(out, unknown);
     return out;
 }
 
-Result<json::object> AccountsDocument::upgrade(json::object values, u32) { return values; }
+Result<json::object> AccountsDocument::upgrade(json::object values, u32 from_schema) {
+    if (from_schema >= 2) return values;
+    json::value* raw_records = values.if_contains("records");
+    json::array* records = raw_records != nullptr ? raw_records->if_array() : nullptr;
+    if (records == nullptr) return values;
+    // Schema 1 named each role; the client's name becomes the one name.
+    std::optional<json::value> name;
+    const json::value client = enum_to_json(contracts::backend::AccountRole::Client);
+    for (json::value& raw : *records) {
+        json::object* record = raw.if_object();
+        if (record == nullptr) continue;
+        const json::value* role = record->if_contains("role");
+        if (const json::value* stored = record->if_contains("display_name"); !name && role && *role == client && stored)
+            name = *stored;
+        record->erase("display_name");
+    }
+    if (name) values["display_name"] = std::move(*name);
+    return values;
+}
 
 }  // namespace rb::storage

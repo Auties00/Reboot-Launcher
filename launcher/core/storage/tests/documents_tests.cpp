@@ -4,6 +4,7 @@
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include "reboot/storage/accounts_document.hpp"
@@ -95,42 +96,59 @@ TEST_CASE("resume.json stores the payload version as a SemVer", "[storage][docum
     CHECK(read.reopen_clients == resume.reopen_clients);
 }
 
-TEST_CASE("an account record with a bad name or tag keeps its id with that field empty", "[storage][documents]") {
+TEST_CASE("a bad name or tag is left empty and an account keeps its id", "[storage][documents]") {
     AccountsDocument accounts;
-    accounts.records.push_back(AccountRecord{.record_id = AccountRecordId{uuid("9a3e7c51-2d44-4c1b-8f0a-61b2d5e9c3f7")},
+    accounts.display_name = "Alice";
+    accounts.records.push_back(StoredAccount{.record_id = AccountRecordId{uuid("9a3e7c51-2d44-4c1b-8f0a-61b2d5e9c3f7")},
                                              .role = contracts::backend::AccountRole::Host,
-                                             .display_name = "Host",
                                              .tag = "abc123"});
-    CHECK(round_trip(accounts).records == accounts.records);
+    const AccountsDocument same = round_trip(accounts);
+    CHECK(same.display_name == "Alice");
+    CHECK(same.records == accounts.records);
 
     accounts.records[0].tag = "ABC123";
     std::vector<ValueIssue> issues;
     AccountsDocument read = AccountsDocument::read(accounts.write(), issues);
     REQUIRE(read.records.size() == 1);
     CHECK(read.records[0].record_id == accounts.records[0].record_id);
-    CHECK(read.records[0].display_name == "Host");
+    CHECK(read.display_name == "Alice");
     CHECK(read.records[0].tag.empty());
     REQUIRE(issues.size() == 1);
     CHECK(issues[0].path == "records[0].tag");
     CHECK(issues[0].reason.id == "storage.invalid_value");
 
     json::object values = accounts.write();
-    json::object& record = values["records"].as_array()[0].as_object();
-    record["display_name"] = "Host Two";
-    record.erase("tag");
+    values["display_name"] = "Alice Smith";
+    values["records"].as_array()[0].as_object().erase("tag");
     issues.clear();
     read = AccountsDocument::read(values, issues);
     REQUIRE(read.records.size() == 1);
-    CHECK(read.records[0].display_name.empty());
+    CHECK(read.display_name.empty());
     CHECK(read.records[0].tag.empty());
     REQUIRE(issues.size() == 2);
-    CHECK(issues[0].path == "records[0].display_name");
+    CHECK(issues[0].path == "display_name");
     CHECK(issues[1].path == "records[0].tag");
     CHECK(issues[1].reason.id == "storage.missing_member");
 
-    record.erase("record_id");
+    values["records"].as_array()[0].as_object().erase("record_id");
     issues.clear();
     CHECK(AccountsDocument::read(values, issues).records.empty());
+}
+
+TEST_CASE("schema 1 accounts keep the client's name as the one name", "[storage][documents]") {
+    json::object values = json::parse(R"({"records": [
+        {"record_id": "1c0b8a6e-5f3d-4e2a-9b7c-0d1e2f3a4b5c", "role": "host", "display_name": "Server1", "tag": "z9y8x7"},
+        {"record_id": "9a3e7c51-2d44-4c1b-8f0a-61b2d5e9c3f7", "role": "client", "display_name": "Alice", "tag": "a1b2c3",
+         "future": 1}]})").as_object();
+    const Result<json::object> upgraded = AccountsDocument::upgrade(std::move(values), 1);
+    REQUIRE(upgraded);
+    std::vector<ValueIssue> issues;
+    const AccountsDocument read = AccountsDocument::read(*upgraded, issues);
+    CHECK(issues.empty());
+    CHECK(read.display_name == "Alice");
+    REQUIRE(read.records.size() == 2);
+    CHECK(read.records[0].unknown.empty());
+    CHECK(read.records[1].unknown == json::object{{"future", 1}});
 }
 
 TEST_CASE("members a newer engine added to a record are kept", "[storage][documents]") {
@@ -148,9 +166,9 @@ TEST_CASE("members a newer engine added to a record are kept", "[storage][docume
     CHECK(read_library.write() == library_json);
 
     AccountsDocument accounts;
-    accounts.records.push_back(AccountRecord{.record_id = AccountRecordId{uuid("9a3e7c51-2d44-4c1b-8f0a-61b2d5e9c3f7")},
+    accounts.display_name = "Player";
+    accounts.records.push_back(StoredAccount{.record_id = AccountRecordId{uuid("9a3e7c51-2d44-4c1b-8f0a-61b2d5e9c3f7")},
                                              .role = contracts::backend::AccountRole::Client,
-                                             .display_name = "Player",
                                              .tag = "abc123"});
     json::object accounts_json = accounts.write();
     accounts_json["records"].as_array()[0].as_object()["future"] = "kept";

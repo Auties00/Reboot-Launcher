@@ -5,7 +5,6 @@
 #include "reboot/base/diag.hpp"
 #include "reboot/base/types.hpp"
 #include "reboot/base/version.hpp"
-#include "reboot/storage/accounts_document.hpp"
 
 namespace rb::publish {
 
@@ -13,7 +12,7 @@ namespace rb::publish {
 struct HostMetadata {
     std::string name;
     std::string description;
-    // The host display name, never the login or an email.
+    // The player name, never the login or an email.
     std::string author;
     GameVersion version;
     u32 max_players = 0;
@@ -27,8 +26,5 @@ struct HostMetadata {
 // publish.server_name_empty when nothing of the name is left, and publish.max_players_too_high
 // above kMaxPlayerLimit.
 [[nodiscard]] Result<HostMetadata> fit_metadata(HostMetadata metadata);
-
-// The author shown for a host record: its display name, which is at most 16 [A-Za-z0-9] chars.
-[[nodiscard]] std::string author_for(const storage::AccountRecord& host);
 
 }  // namespace rb::publish

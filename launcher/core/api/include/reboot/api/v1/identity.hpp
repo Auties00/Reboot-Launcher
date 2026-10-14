@@ -8,12 +8,21 @@
 
 namespace rb::api {
 
-struct IdentityProfile {
+// One role's account. Internal to the engine: what the game or the game server logs in as.
+struct IdentityAccount {
     GameRole role{};
-    std::string display_name;
-    // What the game logs in as; derived from display_name and unique per role.
+    // display_name plus a tag of the role's own, so the roles never share an account.
     std::string account_id;
+
+    bool operator==(const IdentityAccount&) const = default;
+};
+
+struct IdentityProfile {
+    // The one player name, used for playing and hosting.
+    std::string display_name;
     bool is_default = false;
+    // One per role, both named after display_name.
+    std::vector<IdentityAccount> accounts;
 
     bool operator==(const IdentityProfile&) const = default;
 };
@@ -23,13 +32,12 @@ struct IdentityGetRequest {
 };
 
 struct IdentityGetResponse {
-    std::vector<IdentityProfile> profiles;
+    IdentityProfile profile;
 
     bool operator==(const IdentityGetResponse&) const = default;
 };
 
 struct IdentitySetDisplayNameRequest {
-    GameRole role{};
     std::string display_name;
 
     bool operator==(const IdentitySetDisplayNameRequest&) const = default;
@@ -42,8 +50,6 @@ struct IdentitySetDisplayNameResponse {
 };
 
 struct IdentityResetRequest {
-    GameRole role{};
-
     bool operator==(const IdentityResetRequest&) const = default;
 };
 

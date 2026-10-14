@@ -361,8 +361,7 @@ api::SuggestedAction suggested_action(const ux::SuggestedAction& action) {
             else if constexpr (std::is_same_v<A, ux::ImportBuild>)
                 out.import_build = api::ImportBuildAction{};
             else if constexpr (std::is_same_v<A, ux::EditDisplayName>)
-                out.edit_display_name = api::EditDisplayNameAction{
-                    alternative.role == contracts::backend::AccountRole::Host ? api::GameRole::Host : api::GameRole::Client};
+                out.edit_display_name = api::EditDisplayNameAction{};
             else if constexpr (std::is_same_v<A, ux::SetDefaultHostListing>)
                 out.set_default_host_listing = api::SetDefaultHostListingAction{alternative.listed};
             else if constexpr (std::is_same_v<A, ux::ListHostProfile>)
@@ -508,12 +507,12 @@ std::vector<api::Component> components(const std::vector<components::ComponentIn
     return out;
 }
 
-api::IdentityProfile identity_profile(const identity::AccountRecord& record) {
+api::IdentityProfile identity_profile(const identity::IdentitySnapshot& identity) {
     api::IdentityProfile out;
-    out.role = record.role == contracts::backend::AccountRole::Host ? api::GameRole::Host : api::GameRole::Client;
-    out.display_name = record.display_name;
-    out.account_id = identity::account_id(record);
-    out.is_default = identity::is_default_display_name(record.display_name, record.role);
+    out.display_name = identity.display_name();
+    out.is_default = identity::is_default_display_name(identity.display_name());
+    out.accounts = {api::IdentityAccount{api::GameRole::Client, identity::account_id(identity.client)},
+                    api::IdentityAccount{api::GameRole::Host, identity::account_id(identity.host)}};
     return out;
 }
 

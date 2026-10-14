@@ -5,7 +5,6 @@
 
 #include "reboot/base/diag.hpp"
 #include "reboot/base/types.hpp"
-#include "reboot/contracts/backend.hpp"
 #include "reboot/ux/app_links.hpp"
 
 namespace rb::ux {
@@ -23,10 +22,8 @@ struct InstallBuild {};
 // Library.import.
 struct ImportBuild {};
 
-// Identity.set_display_name(role).
-struct EditDisplayName {
-    contracts::backend::AccountRole role{};
-};
+// Identity.set_display_name.
+struct EditDisplayName {};
 
 // Settings.patch of host.listing, then Host.profiles_update of the built-in default profile's listing.
 struct SetDefaultHostListing {

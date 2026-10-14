@@ -17,6 +17,4 @@ Result<HostMetadata> fit_metadata(HostMetadata metadata) {
     return metadata;
 }
 
-std::string author_for(const storage::AccountRecord& host) { return host.display_name; }
-
 }  // namespace rb::publish

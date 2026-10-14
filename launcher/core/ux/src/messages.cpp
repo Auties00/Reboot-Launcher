@@ -22,8 +22,8 @@ REBOOT_MESSAGE(kStepPrerequisitesBody, "ux.step_prerequisites_body",
                "Some things the launcher needs are missing. Fix them now, or later from Settings.");
 REBOOT_MESSAGE(kStepProfileTitle, "ux.step_profile_title", "Choose your player name");
 REBOOT_MESSAGE(kStepProfileBody, "ux.step_profile_body",
-               "Other players see this name in the lobby and in the killfeed. A new name applies from the next "
-               "launch.");
+               "Other players see this name in the lobby, in the killfeed and on the servers you host. A new name "
+               "applies from the next launch.");
 REBOOT_MESSAGE(kStepLibraryTitle, "ux.step_library_title", "Add a Fortnite build");
 REBOOT_MESSAGE(kStepLibraryBody, "ux.step_library_body",
                "Download a build from the catalog, or import one you already have.");

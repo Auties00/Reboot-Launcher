@@ -393,7 +393,7 @@ Command line: `reboot-engine run [--foreground] [--origin=on-demand|service-mana
 | `config/settings.json` | Settings registry document |
 | `config/frontend/<shell>.json` | Opaque UI blob |
 | `data/library.json` | Builds and per-role selection |
-| `data/accounts.json` | AccountRecords |
+| `data/accounts.json` | The one player name and one account record (record id, role, tag) per role; each account id is the name plus its tag |
 | `data/host-profiles.json` | Host profiles |
 | `state/state.json` | Onboarding, notices, TLS memory, integration declined flags, last_run_version |
 | `state/host-identity/<profile>.json` | Owner-only |

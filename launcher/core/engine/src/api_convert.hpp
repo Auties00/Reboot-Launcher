@@ -54,7 +54,7 @@
 #include "reboot/host/host_event.hpp"
 #include "reboot/host/host_profile.hpp"
 #include "reboot/host/host_snapshot.hpp"
-#include "reboot/identity/account_record.hpp"
+#include "reboot/identity/identity_snapshot.hpp"
 #include "reboot/integration/entry_status.hpp"
 #include "reboot/integration/prerequisite.hpp"
 #include "reboot/logging/error_router.hpp"
@@ -146,7 +146,7 @@ namespace rb::engine::convert {
 [[nodiscard]] api::ComponentProblem component_problem(const components::ComponentProblem& problem);
 
 // Identity, secrets, backend.
-[[nodiscard]] api::IdentityProfile identity_profile(const identity::AccountRecord& record);
+[[nodiscard]] api::IdentityProfile identity_profile(const identity::IdentitySnapshot& identity);
 [[nodiscard]] Result<secrets::SecretTarget> secret_target(const api::SecretTarget& target);
 [[nodiscard]] api::SecretTarget secret_target(const secrets::SecretTarget& target);
 [[nodiscard]] api::SecretStore secret_store(secrets::SecretLocation location);

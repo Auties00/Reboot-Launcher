@@ -275,12 +275,14 @@ void BackendAccounts::register_identity(const identity::IdentitySnapshot& identi
 
 void BackendAccounts::on_identity_changed(const identity::IdentityChangedEvent& event) {
     Impl& impl = *impl_;
-    AccountRegistration registration = registration_of(event.record);
-    const auto known = impl.registered.find(registration.record);
-    if (known != impl.registered.end() && known->second.account_id != registration.account_id)
-        impl.rename_identity(known->second.account_id, registration.account_id);
-    impl.registered.insert_or_assign(registration.record, registration);
-    impl.process.register_account(std::move(registration));
+    for (const identity::AccountRecord* record : {&event.identity.client, &event.identity.host}) {
+        AccountRegistration registration = registration_of(*record);
+        const auto known = impl.registered.find(registration.record);
+        if (known != impl.registered.end() && known->second.account_id != registration.account_id)
+            impl.rename_identity(known->second.account_id, registration.account_id);
+        impl.registered.insert_or_assign(registration.record, registration);
+        impl.process.register_account(std::move(registration));
+    }
 }
 
 Result<std::vector<BackendAccount>> BackendAccounts::list() const {

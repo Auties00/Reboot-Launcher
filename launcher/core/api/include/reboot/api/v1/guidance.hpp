@@ -52,10 +52,8 @@ struct ImportBuildAction {
     bool operator==(const ImportBuildAction&) const = default;
 };
 
-// Identity.set_display_name(role).
+// Identity.set_display_name.
 struct EditDisplayNameAction {
-    GameRole role{};
-
     bool operator==(const EditDisplayNameAction&) const = default;
 };
 

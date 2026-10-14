@@ -161,13 +161,15 @@ TEST_CASE("an identity rename moves the backend data once no session uses the ol
     h.service->configure_session(*lease, session_config("Alpha-aaaaa1", "key-1"), nullptr);
     h.rt.run_until_idle();
 
-    h.accounts->on_identity_changed(identity::IdentityChangedEvent{record(1, AccountRole::Client, "Gamma")});
+    // One name for both roles: the host's data, which no session uses, moves at once.
+    h.accounts->on_identity_changed(identity::IdentityChangedEvent{
+        {record(1, AccountRole::Client, "Gamma"), record(2, AccountRole::Host, "Gamma")}});
     h.rt.run_until_idle();
-    CHECK(h.ids() == std::vector<std::string>{"Alpha-aaaaa1", "Beta-aaaaa2"});
+    CHECK(h.ids() == std::vector<std::string>{"Alpha-aaaaa1", "Gamma-aaaaa2"});
 
     lease.reset();
     h.rt.run_until_idle();
-    CHECK(h.ids() == std::vector<std::string>{"Beta-aaaaa2", "Gamma-aaaaa1"});
+    CHECK(h.ids() == std::vector<std::string>{"Gamma-aaaaa1", "Gamma-aaaaa2"});
     const Result<std::vector<BackendAccount>> listed = h.accounts->list();
     REQUIRE(listed);
     CHECK(std::ranges::any_of(*listed, [](const BackendAccount& a) { return a.account_id == "Gamma-aaaaa1"; }));
@@ -182,7 +184,7 @@ TEST_CASE("an identity rename onto an existing account asks which data to keep",
     h.process->register_account(AccountRegistration{"Delta-aaaaa1", record_id(9), AccountRole::Client});
     h.rt.run_until_idle();
 
-    h.accounts->on_identity_changed(identity::IdentityChangedEvent{record(1, AccountRole::Client, "Delta")});
+    h.accounts->on_identity_changed(identity::IdentityChangedEvent{{record(1, AccountRole::Client, "Delta"), kIdentity.host}});
     h.rt.run_until_idle();
     const std::optional<UserRequest> asked = h.pending(UserRequestKind::AccountRenameConflict);
     REQUIRE(asked);

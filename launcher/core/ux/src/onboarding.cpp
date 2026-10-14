@@ -61,7 +61,7 @@ struct StepText {
                 if (!prerequisite.met) actions.emplace_back(RemediatePrerequisite{prerequisite.id});
             break;
         case StepId::Profile:
-            actions.emplace_back(EditDisplayName{contracts::backend::AccountRole::Client});
+            actions.emplace_back(EditDisplayName{});
             break;
         case StepId::Library:
             if (context.library_empty) {

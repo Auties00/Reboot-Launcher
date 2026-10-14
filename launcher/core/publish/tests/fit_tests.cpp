@@ -158,10 +158,3 @@ TEST_CASE("fit_patch fits only the fields set, like fit_metadata", "[publish]") 
     cleared_password.password = SecretString(std::string());
     CHECK(fit_patch(std::move(cleared_password)));
 }
-
-TEST_CASE("author_for is the display name, never the login", "[publish]") {
-    storage::AccountRecord host;
-    host.display_name = "Host123456";
-    host.tag = "a1b2c3";
-    CHECK(author_for(host) == "Host123456");
-}
