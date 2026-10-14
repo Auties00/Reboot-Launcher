@@ -349,6 +349,23 @@ TEST_CASE("play flow: an imported build is planned, launched with our DLL, and r
     CHECK(p.rig.session_host->last()->stop_grace().has_value());
 }
 
+TEST_CASE("play flow: a server the UI already confirmed plans no ConfirmJoin") {
+    PlayRig p;
+    p.select(p.import_build());
+    api::PlayRequest request;
+    request.target = api::PlayTarget{.server = api::ServerId{*parse_uuid("5d6e7f80-1a2b-4c3d-8e9f-a0b1c2d3e4f5")},
+                                     .address = std::nullopt};
+    const auto questions = [&p, &request] {
+        const Result<api::PlayPlanResponse> plan =
+            p.rig.call<api::PlayPlanResponse>(*p.client, api::kPlayPlan, api::PlayPlanRequest{request});
+        REQUIRE(plan);
+        return plan->questions;
+    };
+    CHECK(std::ranges::count(questions(), api::UserRequestKind::ConfirmJoin) == 1);
+    request.join_confirmed = true;
+    CHECK(std::ranges::count(questions(), api::UserRequestKind::ConfirmJoin) == 0);
+}
+
 TEST_CASE("browser buckets: the library's builds and the asked versions, newest first") {
     PlayRig p;
     const api::Build build = p.import_build();

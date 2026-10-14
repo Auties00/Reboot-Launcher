@@ -286,7 +286,7 @@ struct PlayCore::Impl {
         if (request.target)
             return std::visit(
                 []<class T>(const T& target) -> StartTarget {
-                    if constexpr (std::same_as<T, BrowserServerTarget>) return BrowserJoin{target.server};
+                    if constexpr (std::same_as<T, BrowserServerTarget>) return BrowserJoin{target.server, target.confirmation};
                     else if constexpr (std::same_as<T, browser::AddressTarget>) return AddressJoin{target.address};
                     else return AutoServer{};
                 },

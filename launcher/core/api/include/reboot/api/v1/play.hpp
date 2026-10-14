@@ -42,6 +42,9 @@ struct PlayRequest {
     // stale DISPLAY. Replaces the one captured at connect; empty keeps that. Names outside the
     // engine's client allow-list (display, audio, D-Bus, locale) are dropped.
     std::vector<EnvVar> environment;
+    // The user already confirmed joining target.server in this UI, so ConfirmJoin is not raised; a
+    // join password is still asked for. Ignored for other targets.
+    bool join_confirmed = false;
 
     bool operator==(const PlayRequest&) const = default;
 };

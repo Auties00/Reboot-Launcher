@@ -62,6 +62,8 @@ message JoinResolveLinkResponse {
 
 message JoinGrantRequest {
   ServerId server = 1;
+  // The user already confirmed joining it in this UI, so ConfirmJoin is not raised.
+  bool confirmed = 2;
 }
 
 message JoinGrantResponse {

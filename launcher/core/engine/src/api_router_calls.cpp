@@ -1135,6 +1135,7 @@ Result<OpHandle> ApiRouter::start_resolve_link(const api::CallContext&, const ap
 Result<OpHandle> ApiRouter::start_grant(const api::CallContext&, const api::JoinGrantRequest& request, DisconnectPolicy disconnect) {
     browser::JoinRequest join;
     join.server = convert::id(request.server);
+    if (request.confirmed) join.confirmation = browser::JoinConfirmation::AlreadyConfirmed;
     return deps_.join.start_join(std::move(join), disconnect);
 }
 
@@ -1255,7 +1256,9 @@ namespace {
         out.target = play::AutoServerTarget{};
     } else if (request.target) {
         if (request.target->server) {
-            out.target = play::BrowserServerTarget{convert::id(*request.target->server)};
+            out.target = play::BrowserServerTarget{convert::id(*request.target->server),
+                                                   request.join_confirmed ? browser::JoinConfirmation::AlreadyConfirmed
+                                                                          : browser::JoinConfirmation::Ask};
         } else if (request.target->address) {
             Result<HostPort> address = browser::parse_game_server_address(*request.target->address);
             if (!address) return std::unexpected(std::move(address.error()));

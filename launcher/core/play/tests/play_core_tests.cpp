@@ -308,6 +308,8 @@ TEST_CASE("the plan names its blockers, warnings and the questions start will as
               std::vector<RequiredDecision>{{UserRequestKind::AutoServerConsent, std::nullopt}});
         request.target = BrowserServerTarget{ServerId{uuid_of(5)}};
         CHECK(h.core->plan(request)->decisions == std::vector<RequiredDecision>{{UserRequestKind::ConfirmJoin, std::nullopt}});
+        request.target = BrowserServerTarget{ServerId{uuid_of(5)}, browser::JoinConfirmation::AlreadyConfirmed};
+        CHECK(h.core->plan(request)->decisions.empty());
         // A server picked earlier was confirmed then.
         h.env.join_target_value = browser::JoinTarget{browser::ServerTarget{ServerId{uuid_of(5)}, "Name", "Author"}};
         CHECK(h.core->plan(Harness::request())->decisions.empty());
@@ -541,6 +543,15 @@ TEST_CASE("game targets resolve before the launch and are published for matchmak
         CHECK(h.env.join_requests[0].confirmation == browser::JoinConfirmation::Ask);
         CHECK(h.env.join_requests[0].local_version == kVersion);
         CHECK(h.targets.find(*h.session())->endpoint == HostPort{"10.0.0.1", Port{7777}});
+    }
+    SECTION("a server the UI already confirmed is joined without ConfirmJoin") {
+        Harness h;
+        PlayRequest request = Harness::request();
+        request.target = BrowserServerTarget{ServerId{uuid_of(5)}, browser::JoinConfirmation::AlreadyConfirmed};
+        h.start(request);
+        h.launched();
+        REQUIRE(h.env.join_requests.size() == 1);
+        CHECK(h.env.join_requests[0].confirmation == browser::JoinConfirmation::AlreadyConfirmed);
     }
     SECTION("the remembered server was confirmed when it was picked") {
         Harness h;

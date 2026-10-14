@@ -3,13 +3,15 @@
 #include <variant>
 
 #include "reboot/base/types.hpp"
+#include "reboot/browser/join_service.hpp"
 #include "reboot/browser/join_target.hpp"
 
 namespace rb::play {
 
-// A server from the browser, joined through JoinService with a ConfirmJoin.
+// A server from the browser, joined through JoinService with a ConfirmJoin unless the UI already asked.
 struct BrowserServerTarget {
     ServerId server;
+    browser::JoinConfirmation confirmation = browser::JoinConfirmation::Ask;
 
     bool operator==(const BrowserServerTarget&) const = default;
 };

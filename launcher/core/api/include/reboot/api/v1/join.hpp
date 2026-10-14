@@ -105,6 +105,8 @@ struct JoinResolveLinkResponse {
 
 struct JoinGrantRequest {
     ServerId server;
+    // The user already confirmed joining it in this UI, so ConfirmJoin is not raised.
+    bool confirmed = false;
 
     bool operator==(const JoinGrantRequest&) const = default;
 };
