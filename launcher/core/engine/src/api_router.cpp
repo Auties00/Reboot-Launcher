@@ -730,7 +730,9 @@ void ApiRouter::put_secret(const ipc::ConnectionInfo&, std::span<const u8> targe
     const secrets::SecretTarget held = *parsed;
     // put() keeps `saved` only when it accepts the value, so `done` is shared with the refusal.
     auto shared = std::make_shared<UniqueFunction<void(Result<void>)>>(std::move(done));
-    Result<void> put = deps_.secrets.put(*parsed, std::move(secret), std::nullopt,
+    const std::optional<secrets::Retention> retention =
+        decoded->remember ? std::optional(secrets::Retention::Remember) : std::nullopt;
+    Result<void> put = deps_.secrets.put(*parsed, std::move(secret), retention,
                                          [shared, alive = state_->alive.token()](Result<secrets::SecretState> saved) {
                                              if (alive.cancelled()) return;
                                              if (saved) (*shared)(Result<void>{});

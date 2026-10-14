@@ -5,7 +5,9 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "engine_rig.hpp"
@@ -16,6 +18,7 @@
 #include "reboot/api/v1/host.hpp"
 #include "reboot/api/v1/identity.hpp"
 #include "reboot/api/v1/integration.hpp"
+#include "reboot/api/v1/secrets.hpp"
 #include "reboot/api/v1/sessions.hpp"
 #include "reboot/api/v1/settings.hpp"
 #include "reboot/api/v1/updates.hpp"
@@ -306,6 +309,38 @@ TEST_CASE("engine flow: identity, guidance and requests answer on a fresh data r
         rig.call<api::EngineOperationsResponse>(*client, api::kEngineOperations, api::EngineOperationsRequest{});
     REQUIRE(ops);
     CHECK(ops->operations.empty());
+}
+
+TEST_CASE("engine flow: a backend password is remembered only when the put asks for it") {
+    EngineRig rig;
+    rig.boot();
+    auto client = rig.connect();
+    api::SecretTarget target;
+    target.kind = api::SecretKind::BackendPassword;
+    target.backend = api::BackendHost{"play.example", std::nullopt};
+    const auto put = [&](bool remember) {
+        target.remember = remember;
+        const std::string_view secret = "hunter2";
+        const u64 id = client->secret_put(api::encode(target),
+                                          std::span(reinterpret_cast<const u8*>(secret.data()), secret.size()));
+        REQUIRE(rig.strand.pump_until([&] { return client->reply(id).has_value(); }));
+        REQUIRE(*client->reply_payload(id));
+    };
+    const auto store = [&] {
+        target.remember = false;
+        const Result<api::SecretsStateResponse> state =
+            rig.call<api::SecretsStateResponse>(*client, api::kSecretsState, api::SecretsStateRequest{target});
+        REQUIRE(state);
+        CHECK(state->present);
+        return state->store;
+    };
+
+    put(false);
+    CHECK(store() == api::SecretStore::Unavailable);
+    put(true);
+    CHECK(rig.strand.pump_until([&] { return store() != api::SecretStore::Unavailable; }));
+    put(false);
+    CHECK(rig.strand.pump_until([&] { return store() == api::SecretStore::Unavailable; }));
 }
 
 TEST_CASE("engine flow: a client of another build only gets the bootstrap subset") {

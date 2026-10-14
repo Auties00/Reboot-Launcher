@@ -46,6 +46,11 @@ struct SecretTarget {
     std::optional<BackendHost> backend;
     // JoinPassword: the id of its NeedsJoinPassword request.
     std::optional<u64> join_request;
+    // rb_secret_put only. BackendPassword: true keeps it in the OS secret store across engine runs
+    // (Secrets.State then names the store); false holds it for this engine run and erases a stored
+    // copy. A HostJoinPassword is always kept, and true is refused for a JoinPassword
+    // (secrets.retention_not_allowed).
+    bool remember = false;
 
     bool operator==(const SecretTarget&) const = default;
 };
