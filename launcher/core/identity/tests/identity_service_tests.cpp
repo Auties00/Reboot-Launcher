@@ -231,6 +231,20 @@ TEST_CASE("a stored record with a bad record_id is minted again", "[identity][se
     CHECK(f.records_on_disk() == std::vector{kAlice, identity.host});
 }
 
+TEST_CASE("a host sharing the client's tag gets a fresh one, so the account ids differ", "[identity][service]") {
+    Fixture f;
+    AccountRecord copy = kServer;
+    copy.tag = kAlice.tag;
+    f.fs.write_text(f.accounts_path, envelope(3, records_json({kAlice, copy})));
+    f.start();
+    CHECK(f.service->get().client == kAlice);
+    CHECK(f.service->get().host.record_id == kServer.record_id);
+    CHECK(f.service->get().host.tag.size() == kTagLength);
+    CHECK(account_id(f.service->get().host) != account_id(kAlice));
+    f.flush(f.accounts);
+    CHECK(f.records_on_disk() == std::vector{kAlice, f.service->get().host});
+}
+
 TEST_CASE("a host sharing the client's record_id is minted again", "[identity][service]") {
     Fixture f;
     AccountRecord copy = kServer;

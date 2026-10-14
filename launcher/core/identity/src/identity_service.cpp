@@ -73,6 +73,11 @@ struct PickedRecords {
     };
     picked.snapshot.client = pick(AccountRole::Client, nullptr);
     picked.snapshot.host = pick(AccountRole::Host, &picked.snapshot.client.record_id);
+    // Both roles share the name, so only the tags keep their account ids apart.
+    while (picked.snapshot.host.tag == picked.snapshot.client.tag) {
+        picked.snapshot.host.tag = generate_tag(random);
+        picked.rewrite = true;
+    }
     return picked;
 }
 

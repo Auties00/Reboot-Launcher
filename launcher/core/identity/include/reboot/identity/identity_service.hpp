@@ -25,8 +25,8 @@ namespace rb::identity {
 // Strand-only. Owns data/accounts.json, with the one player name and one client and one host record
 // in v1, and data/backend-logins.json.
 // - ensure_records() mints a missing record, or one storage dropped for a bad record_id or role,
-//   with a fresh tag, and a default name when none is stored; a record whose tag storage refused
-//   keeps its record_id and gets a fresh tag. A ReadOnly store, which its LoadReport already
+//   with a fresh tag, and a default name when none is stored; a record whose tag storage refused,
+//   or a host whose tag is the client's, keeps its record_id and gets a fresh tag. A ReadOnly store, which its LoadReport already
 //   reported, refuses the write, so the records then live in memory only.
 // - A rename is one atomic commit. It changes both account_ids, never a record_id or tag. Running
 //   sessions keep the record they pinned, so it takes effect at the next launch.
