@@ -221,6 +221,7 @@ void choose_cases(api::HostProfile& profile) {
 void choose_cases(api::HostProfilesCreateRequest& request) { choose_cases(request.profile); }
 void choose_cases(api::HostProfilesUpdateRequest& request) { choose_cases(request.profile); }
 void choose_cases(api::HostCommandRequest& request) { request.command.reset = api::ResetMatch{}; }
+void choose_cases(api::HostShareLinkRequest& request) { request.session = api::SessionId{}; }
 void choose_cases(api::RequestsRespondRequest& request) { request.answer.secret_provided = true; }
 void choose_cases(api::SecretsStateRequest& request) { request.target.join_request = 1; }
 void choose_cases(api::SecretsClearRequest& request) { request.target.join_request = 1; }
