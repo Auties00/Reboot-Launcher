@@ -30,6 +30,12 @@ HostProfile auto_profile() {
 }
 
 HostProfile reset_profile(HostProfile profile) {
+    if (profile.is_auto()) {
+        HostProfile reset = auto_profile();
+        reset.name = std::move(profile.name);
+        reset.revision = profile.revision;
+        return reset;
+    }
     profile.listing = HostListing::Unlisted;
     if (profile.is_builtin()) {
         profile.server_name.clear();

@@ -261,6 +261,51 @@ TEST_CASE("engine flow: host profiles are created, listed and deleted") {
                                                            api::HostProfilesDeleteRequest{created->profile.id}));
 }
 
+TEST_CASE("engine flow: the private match is edited like a server and reset with the hosting settings") {
+    EngineRig rig;
+    rig.boot();
+    auto client = rig.connect();
+    const Result<api::HostProfilesListResponse> listed =
+        rig.call<api::HostProfilesListResponse>(*client, api::kHostProfilesList, api::HostProfilesListRequest{});
+    REQUIRE(listed);
+    const auto automatic = std::ranges::find_if(listed->profiles, [](const api::HostProfile& p) { return p.auto_server; });
+    REQUIRE(automatic != listed->profiles.end());
+
+    api::HostProfilesUpdateRequest update{*automatic};
+    update.profile.max_players = 8;
+    update.profile.playlist = "Playlist_Playground";
+    update.profile.tick_rate = 60;
+    const Result<api::HostProfilesUpdateResponse> updated =
+        rig.call<api::HostProfilesUpdateResponse>(*client, api::kHostProfilesUpdate, update);
+    REQUIRE(updated);
+    CHECK(updated->profile.max_players == 8);
+
+    api::SecretTarget password;
+    password.kind = api::SecretKind::HostJoinPassword;
+    password.host_profile = automatic->id;
+    const std::string_view secret = "letmein";
+    const u64 put = client->secret_put(api::encode(password), std::span(reinterpret_cast<const u8*>(secret.data()), secret.size()));
+    REQUIRE(rig.strand.pump_until([&] { return client->reply(put).has_value(); }));
+    REQUIRE(*client->reply_payload(put));
+
+    const Result<api::SettingsResetResponse> reset = rig.call<api::SettingsResetResponse>(
+        *client, api::kSettingsReset, api::SettingsResetRequest{api::SettingGroup::Host, api::RunningPolicy::Refuse});
+    REQUIRE(reset);
+    const Result<api::HostProfilesListResponse> after =
+        rig.call<api::HostProfilesListResponse>(*client, api::kHostProfilesList, api::HostProfilesListRequest{});
+    REQUIRE(after);
+    const auto reset_auto = std::ranges::find_if(after->profiles, [](const api::HostProfile& p) { return p.auto_server; });
+    REQUIRE(reset_auto != after->profiles.end());
+    CHECK(reset_auto->max_players == automatic->max_players);
+    CHECK(reset_auto->playlist == automatic->playlist);
+    CHECK(reset_auto->tick_rate == automatic->tick_rate);
+    CHECK_FALSE(reset_auto->has_password);
+    const Result<api::SecretsStateResponse> state =
+        rig.call<api::SecretsStateResponse>(*client, api::kSecretsState, api::SecretsStateRequest{password});
+    REQUIRE(state);
+    CHECK_FALSE(state->present);
+}
+
 TEST_CASE("engine flow: identity, guidance and requests answer on a fresh data root") {
     EngineRig rig;
     rig.boot();

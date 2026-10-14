@@ -139,6 +139,7 @@ TEST_CASE("reset unlists every profile and clears the built-in texts", "[host][s
     const HostProfile untouched = *f.store.get(kAutoProfileId);
 
     REQUIRE(f.store.reset());
+    CHECK(f.store.get(kAutoProfileId)->revision == untouched.revision);
     const HostProfile reset_builtin = *f.store.get(kDefaultProfileId);
     CHECK(reset_builtin.listing == HostListing::Unlisted);
     CHECK(reset_builtin.server_name.empty());
@@ -147,7 +148,16 @@ TEST_CASE("reset unlists every profile and clears the built-in texts", "[host][s
     const HostProfile reset_user = *f.store.get(user.id);
     CHECK(reset_user.listing == HostListing::Unlisted);
     CHECK(reset_user.server_name == "Kept name");
-    CHECK(f.store.get(kAutoProfileId)->revision == untouched.revision);
+
+    // The private match's settings are reset too.
+    HostProfile private_match = *f.store.get(kAutoProfileId);
+    private_match.match.max_players = 8;
+    private_match.match.playlist = "Playlist_Playground";
+    private_match = *f.store.update(private_match);
+    REQUIRE(f.store.reset());
+    const HostProfile reset_auto = *f.store.get(kAutoProfileId);
+    CHECK(reset_auto.match == auto_profile().match);
+    CHECK(reset_auto.revision == private_match.revision + 1);
 }
 
 TEST_CASE("a read-only store keeps the built-in profiles in memory", "[host][store]") {

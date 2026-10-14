@@ -41,8 +41,12 @@ struct BackendAccess {
 
 struct AutoAtPlayers {
     u32 players = 0;
+
+    bool operator==(const AutoAtPlayers&) const = default;
 };
-struct ManualStart {};
+struct ManualStart {
+    bool operator==(const ManualStart&) const = default;
+};
 using MatchStartPolicy = std::variant<AutoAtPlayers, ManualStart>;
 
 struct MatchSettings {
@@ -50,6 +54,8 @@ struct MatchSettings {
     MatchStartPolicy start = ManualStart{};
     u32 max_players = 0;
     u32 tick_rate = 0;
+
+    bool operator==(const MatchSettings&) const = default;
 };
 
 // What the host session asks of one game-server process; the session id and log folder are

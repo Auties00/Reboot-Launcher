@@ -98,7 +98,8 @@ inline constexpr Key<HostUpdatePolicy> kHostUpdatePolicy{
      .reset_group = ResetGroup::Host},
     settings_field<&SettingsValues::host, &HostSettings::update_policy>()};
 
-// A Host reset also returns every host profile's listing to Unlisted (ResetHooks::reset_records).
+// A Host reset also returns every host profile's listing to Unlisted, and the private match's settings
+// and password to their defaults (ResetHooks::reset_records).
 inline constexpr Key<HostListing> kHostListing{
     {.id = "host.listing", .label = MessageId{"storage.setting_host_listing"}, .reset_group = ResetGroup::Host},
     settings_field<&SettingsValues::host, &HostSettings::listing>()};

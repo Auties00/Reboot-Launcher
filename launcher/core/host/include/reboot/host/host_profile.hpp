@@ -73,7 +73,9 @@ struct HostProfile {
 
 // What a Host reset leaves of a profile: Unlisted, and for a built-in profile also an empty server
 // name and description and the default match-end policy. The id, name, ports, build, operators
-// and the join password and rbsb identity, which live elsewhere, are kept.
+// and the join password and rbsb identity, which live elsewhere, are kept. The auto profile, the
+// private match, gets every setting of auto_profile() back but its name; the engine also clears
+// its join password.
 [[nodiscard]] HostProfile reset_profile(HostProfile profile);
 
 // Every rule a stored profile must meet: name (host.profile_name_empty, host.profile_name_too_long),

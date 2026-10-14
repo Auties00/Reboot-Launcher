@@ -652,7 +652,12 @@ void EngineServices::build_services() {
         });
     };
     reset_hooks.reset_records = [this](storage::ResetGroup group) -> Result<void> {
-        if (group == storage::ResetGroup::Host) return hosts_->reset_profiles();
+        if (group != storage::ResetGroup::Host) return {};
+        if (Result<void> reset = hosts_->reset_profiles(); !reset) return reset;
+        // The private match's password is one of the settings it offers, so it goes with them.
+        if (Result<secrets::SecretTarget> target = secrets::SecretTarget::parse(
+                secrets::SecretKind::HostJoinPassword, secrets::SecretScope::host_profile(host::kAutoProfileId).text()))
+            secrets_->clear(*target, [](Result<void> cleared) { log_failure("clearing the private match's password", cleared); });
         return {};
     };
     reset_ = std::make_unique<storage::ResetService>(*settings_, *settings_registry_, *ops_, std::move(reset_hooks));

@@ -120,6 +120,25 @@ TEST_CASE("a Host reset brings a built-in profile back to its defaults", "[host]
     CHECK(reset.port == PortPolicy{PinnedPorts{Port{7800}}});
 }
 
+TEST_CASE("a Host reset brings the private match back to its defaults", "[host]") {
+    HostProfile profile = customised(auto_profile());
+    profile.listing = HostListing::Unlisted;
+    profile.match = gameserver::MatchSettings{
+        .playlist = "Playlist_Playground", .start = gameserver::AutoAtPlayers{4}, .max_players = 16, .tick_rate = 60};
+    profile.revision = 7;
+    const HostProfile reset = reset_profile(profile);
+    HostProfile expected = auto_profile();
+    expected.revision = 7;
+    CHECK(reset.match == expected.match);
+    CHECK(reset.match_end == expected.match_end);
+    CHECK(reset.port == expected.port);
+    CHECK_FALSE(reset.port_mapping);
+    CHECK(reset.server_name.empty());
+    CHECK(reset.description.empty());
+    CHECK(reset.name == "auto");
+    CHECK(reset.revision == 7);
+}
+
 TEST_CASE("a Host reset only unlists a user profile", "[host]") {
     const HostProfile reset = reset_profile(customised(new_profile(kUserProfileId, "cup", HostListing::Unlisted)));
     CHECK(reset.listing == HostListing::Unlisted);

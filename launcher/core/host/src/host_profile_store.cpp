@@ -46,7 +46,10 @@ constexpr std::string_view kDefaultProfileName = "default";
 
 [[nodiscard]] bool reset_changes(const HostProfile& before, const HostProfile& after) {
     return before.listing != after.listing || before.server_name != after.server_name ||
-           before.description != after.description || before.match_end != after.match_end;
+           before.description != after.description || before.match_end != after.match_end ||
+           before.match != after.match || before.build != after.build || before.version != after.version ||
+           before.port != after.port || before.port_mapping != after.port_mapping ||
+           before.operators != after.operators || before.update_policy != after.update_policy;
 }
 
 }  // namespace
