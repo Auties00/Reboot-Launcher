@@ -291,6 +291,7 @@ Result<api::BackendStatusResponse> ApiRouter::status(const api::CallContext&, co
     out.version = state.version;
     out.allow_lan = state.config.allow_lan;
     if (state.last_error) out.last_error = convert::diagnostic(*state.last_error);
+    for (const SessionId& session : deps_.backend.leased_sessions()) out.lease_sessions.push_back(convert::id(session));
     return out;
 }
 

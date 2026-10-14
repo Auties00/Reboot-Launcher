@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "reboot/backend/backend_config.hpp"
 #include "reboot/backend/backend_lease.hpp"
@@ -64,6 +65,8 @@ public:
     [[nodiscard]] const BackendState& state() const noexcept;
     // The live leases that belong to a session; BackendState::leases counts maintenance ones too.
     [[nodiscard]] u32 session_leases() const noexcept;
+    // The sessions holding those leases, once each, in lease order.
+    [[nodiscard]] std::vector<SessionId> leased_sessions() const;
 
     // Backend.SetTarget and settings changes. With no lease it applies now: a running backend is
     // stopped and started again on the new config if pinned. With a session lease, Refuse fails

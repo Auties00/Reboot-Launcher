@@ -64,6 +64,8 @@ message BackendStatusResponse {
   string version = 6;
   bool allow_lan = 7;
   optional Diagnostic last_error = 8;
+  // The sessions holding a lease, once each; `leases` also counts account maintenance.
+  repeated SessionId lease_sessions = 9;
 }
 
 message BackendDataDirRequest {}

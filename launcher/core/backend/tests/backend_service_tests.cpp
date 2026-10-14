@@ -112,6 +112,7 @@ TEST_CASE("the first lease starts the backend and the last one stops it", "[back
     CHECK(h.state().phase == BackendPhase::Starting);
     CHECK(h.state().leases == 1);
     CHECK(h.service->session_leases() == 1);
+    CHECK(h.service->leased_sessions() == std::vector{session_id(1)});
 
     Captured<Result<BackendUpstream>> ready;
     h.service->ensure_ready(lease, {}, ready.sink());
@@ -130,6 +131,7 @@ TEST_CASE("the first lease starts the backend and the last one stops it", "[back
 
     lease.release();
     CHECK_FALSE(lease.active());
+    CHECK(h.service->leased_sessions().empty());
     h.rt.run_until_idle();
     CHECK(h.state().phase == BackendPhase::Stopped);
     CHECK(h.state().leases == 0);

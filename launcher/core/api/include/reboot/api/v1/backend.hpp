@@ -75,6 +75,8 @@ struct BackendStatusResponse {
     std::string version;
     bool allow_lan = false;
     std::optional<Diagnostic> last_error;
+    // The sessions holding a lease, once each; `leases` also counts account maintenance.
+    std::vector<SessionId> lease_sessions;
 
     bool operator==(const BackendStatusResponse&) const = default;
 };

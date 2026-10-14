@@ -150,7 +150,7 @@ struct BackendService::Impl final : IBackendProcessObserver {
     [[nodiscard]] std::vector<SessionId> leased_sessions() const {
         std::vector<SessionId> out;
         for (const auto& [id, lease] : leases)
-            if (lease.session) out.push_back(*lease.session);
+            if (lease.session && std::ranges::find(out, *lease.session) == out.end()) out.push_back(*lease.session);
         return out;
     }
 
@@ -660,6 +660,8 @@ BackendService::~BackendService() {
 const BackendState& BackendService::state() const noexcept { return impl_->state; }
 
 u32 BackendService::session_leases() const noexcept { return impl_->session_leases(); }
+
+std::vector<SessionId> BackendService::leased_sessions() const { return impl_->leased_sessions(); }
 
 Result<ReconfigureTiming> BackendService::reconfigure(BackendConfig config, RunningPolicy running) {
     Impl& impl = *impl_;
