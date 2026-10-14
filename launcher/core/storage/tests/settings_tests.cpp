@@ -242,6 +242,18 @@ TEST_CASE("the Wine settings patch and reset with the Play group", "[storage][se
     CHECK(f.settings.snapshot().values.play == PlaySettings{});
 }
 
+TEST_CASE("the console key resets with the Play group, the backend target with the Backend group", "[storage][settings]") {
+    Fixture f;
+    SettingsPatch patch;
+    patch.backend.console_key = *ConsoleKey::parse("Tilde");
+    patch.backend.allow_lan = true;
+    REQUIRE(held_value(f.settings.patch(patch)) == 1u);
+
+    REQUIRE(held_value(f.settings.reset_to_defaults(f.registry.in_group(ResetGroup::Play))) == 2u);
+    CHECK(f.settings.snapshot().values.backend.console_key == ConsoleKey{});
+    CHECK(f.settings.snapshot().values.backend.allow_lan);
+}
+
 TEST_CASE("a hand edit publishes SettingsChanged for the keys it changed", "[storage][settings]") {
     test::WorkerStrand strand;
     WorkerPool workers{1};

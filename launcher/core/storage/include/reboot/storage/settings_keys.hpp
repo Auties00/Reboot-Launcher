@@ -84,10 +84,11 @@ inline constexpr Key<bool> kBackendAllowLan{
      .reset_group = ResetGroup::Backend},
     settings_field<&SettingsValues::backend, &BackendSettings::allow_lan>()};
 
+// A Play setting under every backend: our client DLL binds it; the embedded backend also gets it.
 inline constexpr Key<ConsoleKey> kBackendConsoleKey{
     {.id = "backend.console_key",
      .label = MessageId{"storage.setting_backend_console_key"},
-     .reset_group = ResetGroup::Backend},
+     .reset_group = ResetGroup::Play},
     settings_field<&SettingsValues::backend, &BackendSettings::console_key>(),
     &validate_console_key};
 
