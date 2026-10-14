@@ -799,7 +799,8 @@ Result<api::HostProfilesDeleteResponse> ApiRouter::profiles_delete(const api::Ca
 }
 
 Result<api::HostShareLinkResponse> ApiRouter::share_link(const api::CallContext&, const api::HostShareLinkRequest& request) {
-    Result<publish::ShareLink> link = deps_.hosts.share_link(convert::id(request.session));
+    Result<publish::ShareLink> link = request.profile ? deps_.hosts.share_link(convert::id(*request.profile))
+                                                      : deps_.hosts.share_link(convert::id(*request.session));
     if (!link) return std::unexpected(std::move(link.error()));
     return api::HostShareLinkResponse{link->url(), convert::id(link->server)};
 }

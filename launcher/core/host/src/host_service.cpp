@@ -1349,6 +1349,13 @@ Result<publish::ShareLink> HostService::share_link(SessionId session) const {
     return impl_->deps.publisher.share_link(session);
 }
 
+Result<publish::ShareLink> HostService::share_link(HostProfileId profile) {
+    if (Result<HostProfile> found = impl_->deps.profiles.get(profile); !found) return std::unexpected(std::move(found.error()));
+    Result<ServerId> server = impl_->deps.identities.ensure(profile);
+    if (!server) return std::unexpected(std::move(server.error()));
+    return publish::ShareLink{*server};
+}
+
 Result<HostPhase> HostService::phase(SessionId session) const {
     Result<Impl::Session*> found = impl_->host_session(session);
     if (!found) return std::unexpected(std::move(found.error()));

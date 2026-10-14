@@ -260,7 +260,13 @@ message HostProfilesDeleteRequest {
 message HostProfilesDeleteResponse {}
 
 message HostShareLinkRequest {
-  SessionId session = 1;
+  oneof subject {
+    // A published session.
+    SessionId session = 1;
+    // A profile, running or not: its server id stays across starts, so the link works once it
+    // runs again. Mints the profile's identity when it has none yet.
+    HostProfileId profile = 2;
+  }
 }
 
 message HostShareLinkResponse {

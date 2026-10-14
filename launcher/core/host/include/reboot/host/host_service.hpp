@@ -204,6 +204,9 @@ public:
 
     // reboot://<server id> of a published session; publish.not_published otherwise.
     [[nodiscard]] Result<publish::ShareLink> share_link(SessionId session) const;
+    // The link of the profile's rbsb identity, minted now when it has none, so it is known before
+    // the first start and while stopped; host.profile_not_found for an unknown profile.
+    Result<publish::ShareLink> share_link(HostProfileId profile);
 
     [[nodiscard]] Result<HostPhase> phase(SessionId session) const;
 

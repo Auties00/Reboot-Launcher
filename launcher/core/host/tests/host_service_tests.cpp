@@ -463,6 +463,9 @@ TEST_CASE("a start runs the server through Listening to a published Live session
     Fixture f;
     f.password = "letmein";
     const HostProfile profile = f.profile("Weekend");
+    // Known before the first start, and the one the session then publishes.
+    const Result<publish::ShareLink> link = f.service->share_link(profile.id);
+    REQUIRE(link);
     const OpHandle op = f.start(f.request(profile));
     const SessionId session = f.started(op);
 
@@ -502,6 +505,9 @@ TEST_CASE("a start runs the server through Listening to a published Live session
     CHECK(snapshot.listening.has_value());
     CHECK(snapshot.publish.has_value());
     CHECK(f.service->share_link(session)->server == published->server);
+    CHECK(*f.service->share_link(session) == *link);
+    CHECK(*f.service->share_link(profile.id) == *link);
+    CHECK(f.service->share_link(HostProfileId{*parse_uuid("5d6e7f80-1a2b-4c3d-8e9f-a0b1c2d3e4f5")}).error().id == "host.profile_not_found");
     CHECK(f.records.size() >= 1);
 }
 

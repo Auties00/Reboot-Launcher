@@ -374,10 +374,20 @@ struct HostProfilesDeleteResponse {
 };
 
 struct HostShareLinkRequest {
-    SessionId session;
+    // Exactly one of the following is set; none set is a case this build does not know.
+    // A published session.
+    std::optional<SessionId> session;
+    // A profile, running or not: its server id stays across starts, so the link works once it
+    // runs again. Mints the profile's identity when it has none yet.
+    std::optional<HostProfileId> profile;
 
     bool operator==(const HostShareLinkRequest&) const = default;
 };
+
+[[nodiscard]] inline std::optional<DecodeError> check_cases(const HostShareLinkRequest& m) noexcept {
+    if (auto error = one_case({m.session.has_value(), m.profile.has_value()})) return error;
+    return std::nullopt;
+}
 
 struct HostShareLinkResponse {
     std::string url;
