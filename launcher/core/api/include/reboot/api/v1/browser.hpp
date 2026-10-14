@@ -79,6 +79,10 @@ struct ViewSpec {
     ServerSort sort{};
     // Rows kept live; the engine clamps it to the edge's limit.
     u32 window = 0;
+    // Only servers a confirmed library build can join: the buckets of those builds
+    // (Browser.Buckets), merged by the engine and kept current as the library changes. Needs
+    // bucket 0; with no confirmed build every version is listed.
+    bool playable = false;
 
     bool operator==(const ViewSpec&) const = default;
 };

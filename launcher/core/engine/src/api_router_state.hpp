@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "reboot/api/v1/browser.hpp"
 #include "reboot/base/diag.hpp"
 #include "reboot/browser/browser_session.hpp"
 #include "reboot/components/component_problem.hpp"
@@ -29,6 +30,8 @@ struct ApiRouter::State {
 
     // Each open view's owner.
     FlatMap<u64, ConnectionId> views;
+    // The open views that list only playable servers, as last asked for.
+    FlatMap<u64, api::ViewSpec> playable_views;
     // Held while any view is open, so the browse connection lives exactly as long as the views.
     browser::BrowserLease browser_lease;
     // Each running search's hold on the browse connection; the router outlives none of them.

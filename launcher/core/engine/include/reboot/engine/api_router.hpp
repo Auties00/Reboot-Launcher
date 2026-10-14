@@ -30,6 +30,7 @@
 #include "reboot/base/diag.hpp"
 #include "reboot/base/secret.hpp"
 #include "reboot/base/types.hpp"
+#include "reboot/browser/view_spec.hpp"
 #include "reboot/contracts/ipc.hpp"
 #include "reboot/engine/started_op.hpp"
 #include "reboot/foundation/events.hpp"
@@ -399,6 +400,10 @@ private:
     [[nodiscard]] u32 method_of(OpId op) const noexcept;
     // Fills the shell's cache, or keeps the read's error for its next frontend_state_get.
     void read_frontend_state(const storage::ShellName& shell);
+    // A view spec with a playable one's buckets taken from the library now.
+    [[nodiscard]] Result<browser::ViewSpec> view_spec(const api::ViewSpec& spec) const;
+    // After LibraryChanged: playable views follow the library's buckets.
+    void refresh_playable_views();
 
     ApiRouterDeps deps_;
     // Each live connection's Hello, which outlives the calls made on it.

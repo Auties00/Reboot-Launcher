@@ -71,6 +71,10 @@ message ViewSpec {
   ServerSort sort = 4;
   // Rows kept live; the engine clamps it to the edge's limit.
   uint32 window = 5;
+  // Only servers a confirmed library build can join: the buckets of those builds
+  // (Browser.Buckets), merged by the engine and kept current as the library changes. Needs
+  // bucket 0; with no confirmed build every version is listed.
+  bool playable = 6;
 }
 
 message BrowserOpenViewRequest {

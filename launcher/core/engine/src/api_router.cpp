@@ -69,7 +69,7 @@ constexpr std::size_t kWatchBudget = std::size_t{1} << 20;
 ApiRouter::ApiRouter(ApiRouterDeps deps) : deps_(deps), state_(std::make_unique<State>()) {
     state_->catalog = ux::MessageCatalog::english_from_registry();
     state_->watch = deps_.events.subscribe(EventFilter{{EventKind::IntegrationChanged, EventKind::PrerequisitesChanged,
-                                                        EventKind::ComponentChanged},
+                                                        EventKind::ComponentChanged, EventKind::LibraryChanged},
                                                        std::nullopt,
                                                        std::nullopt},
                                            kWatchBudget);
@@ -77,7 +77,8 @@ ApiRouter::ApiRouter(ApiRouterDeps deps) : deps_(deps), state_(std::make_unique<
         std::vector<EventEnvelope> events;
         state_->watch->drain(events, std::numeric_limits<std::size_t>::max());
         // A lost update is read again; nothing here is replayed from the events.
-        if (state_->watch->take_resync()) {
+        bool library_changed = state_->watch->take_resync();
+        if (library_changed) {
             state_->integration.reset();
             state_->prerequisites.reset();
         }
@@ -91,8 +92,11 @@ ApiRouter::ApiRouter(ApiRouterDeps deps) : deps_(deps), state_(std::make_unique<
                     state_->component_problems.insert_or_assign(component->info.ref.id, *component->problem);
                 else
                     state_->component_problems.erase(component->info.ref.id);
+            } else if (event.kind == EventKind::LibraryChanged) {
+                library_changed = true;
             }
         }
+        if (library_changed) refresh_playable_views();
     });
 
     const CancelToken alive = state_->alive.token();
@@ -172,6 +176,7 @@ void ApiRouter::on_disconnected(ConnectionId connection) {
     for (auto it = state_->views.begin(); it != state_->views.end();) {
         if (it->second == connection) {
             deps_.views.close(browser::ViewId{it->first});
+            state_->playable_views.erase(it->first);
             it = state_->views.erase(it);
         } else {
             ++it;

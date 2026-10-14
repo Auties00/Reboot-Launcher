@@ -209,6 +209,21 @@ TEST_CASE("api conversion: a search keeps its filters and refuses values this bu
     CHECK(unknown.error().id == "engine.invalid_request");
 }
 
+TEST_CASE("api conversion: a playable view lists the library's buckets, once each") {
+    const std::vector<GameVersion> library{GameVersion{12, 41, std::nullopt}, GameVersion{12, 41, 2},
+                                           GameVersion{3, 5, std::nullopt}};
+    api::ViewSpec spec;
+    spec.playable = true;
+    const Result<browser::ViewSpec> playable = convert::view_spec(spec, library);
+    REQUIRE(playable);
+    CHECK(playable->versions.buckets == std::vector<u32>{2 + 12 * 1024 + 41, 2 + 3 * 1024 + 5});
+
+    spec.bucket = 2 + 12 * 1024 + 41;
+    CHECK(convert::view_spec(spec, library).error().id == "engine.invalid_request");
+    spec.playable = false;
+    CHECK(convert::view_spec(spec, library)->versions.buckets == std::vector<u32>{2 + 12 * 1024 + 41});
+}
+
 TEST_CASE("api conversion: each browser connection state keeps its own API state") {
     using browser::ConnectionState;
     CHECK(convert::connection_state(ConnectionState::Idle) == api::ConnectionState::Idle);

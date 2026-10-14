@@ -366,8 +366,24 @@ Result<OpHandle> ApiRouter::start_accounts_rename(const api::CallContext&, const
 
 // Browser
 
+Result<browser::ViewSpec> ApiRouter::view_spec(const api::ViewSpec& spec) const {
+    std::vector<GameVersion> library;
+    if (spec.playable)
+        for (const builds::InstalledBuild& build : deps_.library.list())
+            if (build.version_confirmed()) library.push_back(*build.version);
+    return convert::view_spec(spec, library);
+}
+
+void ApiRouter::refresh_playable_views() {
+    for (const auto& [id, requested] : state_->playable_views) {
+        Result<browser::ViewSpec> spec = view_spec(requested);
+        Result<void> applied = spec ? deps_.views.update(browser::ViewId{id}, *spec) : Result<void>(std::unexpected(spec.error()));
+        if (!applied) REBOOT_LOG_WARN(Browser, "a playable view keeps its versions: {}", applied.error().id);
+    }
+}
+
 Result<api::BrowserOpenViewResponse> ApiRouter::open_view(const api::CallContext& context, const api::BrowserOpenViewRequest& request) {
-    Result<browser::ViewSpec> spec = convert::view_spec(request.spec);
+    Result<browser::ViewSpec> spec = view_spec(request.spec);
     if (!spec) return std::unexpected(std::move(spec.error()));
     if (!state_->browser_lease.held()) state_->browser_lease = deps_.browser.acquire();
     Result<browser::ViewId> view = deps_.views.open(*spec);
@@ -376,6 +392,7 @@ Result<api::BrowserOpenViewResponse> ApiRouter::open_view(const api::CallContext
         return std::unexpected(std::move(view.error()));
     }
     state_->views.insert_or_assign(view->value, context.connection);
+    if (request.spec.playable) state_->playable_views.insert_or_assign(view->value, request.spec);
     return api::BrowserOpenViewResponse{view->value};
 }
 
@@ -385,10 +402,12 @@ Result<api::BrowserUpdateViewResponse> ApiRouter::update_view(const api::CallCon
     // Another client's view is as unknown to this one as a closed view.
     if (view == state_->views.end() || view->second != context.connection)
         return make_diag(ErrorDomain::Engine, msg::kUnknownView).arg("view", request.view_id).kind(ErrorKind::NotFound).fail();
-    Result<browser::ViewSpec> spec = convert::view_spec(request.spec);
+    Result<browser::ViewSpec> spec = view_spec(request.spec);
     if (!spec) return std::unexpected(std::move(spec.error()));
     if (Result<void> updated = deps_.views.update(browser::ViewId{request.view_id}, *spec); !updated)
         return std::unexpected(std::move(updated.error()));
+    if (request.spec.playable) state_->playable_views.insert_or_assign(request.view_id, request.spec);
+    else state_->playable_views.erase(request.view_id);
     return api::BrowserUpdateViewResponse{};
 }
 
@@ -398,6 +417,7 @@ Result<api::BrowserCloseViewResponse> ApiRouter::close_view(const api::CallConte
     if (view == state_->views.end() || view->second != context.connection)
         return make_diag(ErrorDomain::Engine, msg::kUnknownView).arg("view", request.view_id).kind(ErrorKind::NotFound).fail();
     state_->views.erase(view);
+    state_->playable_views.erase(request.view_id);
     deps_.views.close(browser::ViewId{request.view_id});
     if (state_->views.empty()) state_->browser_lease.release();
     return api::BrowserCloseViewResponse{};

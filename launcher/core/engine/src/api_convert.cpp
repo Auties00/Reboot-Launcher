@@ -7,6 +7,7 @@
 
 #include "host_platform.hpp"
 #include "messages.hpp"
+#include "reboot/browser/version_match.hpp"
 #include "reboot/components/component_ref.hpp"
 #include "reboot/components/manifest_platform.hpp"
 #include "reboot/contracts/common.hpp"
@@ -915,9 +916,15 @@ api::ConnectionState connection_state(browser::ConnectionState state) {
     return api::ConnectionState::Idle;
 }
 
-Result<browser::ViewSpec> view_spec(const api::ViewSpec& spec) {
+Result<browser::ViewSpec> view_spec(const api::ViewSpec& spec, std::span<const GameVersion> library) {
     browser::ViewSpec out;
+    if (spec.playable && spec.bucket != 0) return std::unexpected(invalid_request("bucket"));
     if (spec.bucket != 0) out.versions.buckets.push_back(spec.bucket);
+    if (spec.playable)
+        for (const GameVersion& version : library)
+            for (const u32 bucket : browser::buckets_for(version))
+                if (std::ranges::find(out.versions.buckets, bucket) == out.versions.buckets.end())
+                    out.versions.buckets.push_back(bucket);
     out.password = same_order<browser::PasswordFilter>(spec.password);
     out.region = same_order<browser::Region>(spec.region);
     out.sort = same_order<browser::ServerSort>(spec.sort);

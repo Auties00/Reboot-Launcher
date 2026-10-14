@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -179,7 +180,8 @@ namespace rb::engine::convert {
 // Browser and join.
 [[nodiscard]] api::ServerEntry server_entry(const browser::ServerRow& row, std::optional<BuildId> compatible, bool own);
 [[nodiscard]] api::ConnectionState connection_state(browser::ConnectionState state);
-[[nodiscard]] Result<browser::ViewSpec> view_spec(const api::ViewSpec& spec);
+// `library` is the confirmed library builds' versions, which a playable spec lists the buckets of.
+[[nodiscard]] Result<browser::ViewSpec> view_spec(const api::ViewSpec& spec, std::span<const GameVersion> library);
 // engine.invalid_request for a filter or sort this build does not know; Search checks the text.
 [[nodiscard]] Result<browser::SearchRequest> search_request(const api::BrowserSearchRequest& request);
 [[nodiscard]] api::JoinTarget join_target(const browser::JoinTarget& target);
