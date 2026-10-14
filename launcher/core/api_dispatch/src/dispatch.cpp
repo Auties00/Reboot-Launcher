@@ -158,6 +158,8 @@ template <class Response>
             return call(handlers.browser, &IBrowserHandler::close_view, context, method_id, request);
         case kBrowserState:
             return call(handlers.browser, &IBrowserHandler::state, context, method_id, request);
+        case kBrowserBuckets:
+            return call(handlers.browser, &IBrowserHandler::buckets, context, method_id, request);
         case kJoinParseAddress:
             return call(handlers.join, &IJoinHandler::parse_address, context, method_id, request);
         case kJoinTarget:

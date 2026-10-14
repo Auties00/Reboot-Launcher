@@ -16,6 +16,7 @@
 
 #include "api_convert.hpp"
 #include "engine_rig.hpp"
+#include "reboot/api/v1/browser.hpp"
 #include "reboot/api/v1/components.hpp"
 #include "reboot/api/v1/engine.hpp"
 #include "reboot/api/v1/library.hpp"
@@ -346,6 +347,26 @@ TEST_CASE("play flow: an imported build is planned, launched with our DLL, and r
     REQUIRE(stop);
     static_cast<void>(EngineRig::completed<api::SessionsStopResponse>(p.rig.settle_op(*p.client, *stop)));
     CHECK(p.rig.session_host->last()->stop_grace().has_value());
+}
+
+TEST_CASE("browser buckets: the library's builds and the asked versions, newest first") {
+    PlayRig p;
+    const api::Build build = p.import_build();
+
+    api::BrowserBucketsRequest request;
+    request.versions = {api::GameVersion{3, 5, std::nullopt}, api::GameVersion{12, 41, 2}};
+    const Result<api::BrowserBucketsResponse> buckets =
+        p.rig.call<api::BrowserBucketsResponse>(*p.client, api::kBrowserBuckets, request);
+    REQUIRE(buckets);
+    REQUIRE(buckets->buckets.size() == 2);
+    CHECK(buckets->buckets[0].bucket == 2 + 12 * 1024 + 41);
+    CHECK(buckets->buckets[0].version == api::GameVersion{12, 41, std::nullopt});
+    CHECK(buckets->buckets[0].builds == std::vector{build.id});
+    CHECK(buckets->buckets[1].bucket == 2 + 3 * 1024 + 5);
+    CHECK(buckets->buckets[1].builds.empty());
+
+    request.versions = {api::GameVersion{5000, 0, std::nullopt}};
+    CHECK_FALSE(p.rig.call<api::BrowserBucketsResponse>(*p.client, api::kBrowserBuckets, request));
 }
 
 TEST_CASE("play flow: a build above the version cap is offered the opt-in, which Library.Update grants") {

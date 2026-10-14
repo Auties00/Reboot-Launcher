@@ -65,6 +65,8 @@ public:
     // (CANCEL_REASON_SUPERSEDED).
     // Completes with BrowserSearchResponse.
     virtual ::rb::Result<::rb::OpHandle> start_search(const CallContext& context, const BrowserSearchRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
+    // The buckets of the library's builds and of the given versions, for a version filter.
+    virtual ::rb::Result<BrowserBucketsResponse> buckets(const CallContext& context, const BrowserBucketsRequest& request) = 0;
 };
 
 // The signed catalog of downloadable builds.

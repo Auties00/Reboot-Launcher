@@ -489,7 +489,7 @@ A schema change changes `RB_SCHEMA_FINGERPRINT`. `RB_ABI_MAJOR.MINOR` versions o
 | Host | profiles_list/create/update/delete, share_link, status, cancel_match_end | start (detached); command, identity_export, identity_import (bound) | HostPhaseChanged, HostListening, ReachabilityChanged, PortMappingChanged, PublishStateChanged, MatchEvent, PlayerEvent, HostProfilesChanged |
 | Sessions | list, get, set_lease | stop (bound) | SessionStateChanged, SessionSpawned, SessionDegraded, SessionEnded |
 | Backend | status, data_dir, set_target, accounts_list | start, stop, accounts_reset/delete/prune/rename (bound) | BackendStateChanged, BackendAccountsChanged, XmppUnavailable |
-| Browser | open_view, update_view, close_view, state | resolve, search (bound) | BrowserConnectionChanged, ViewSnapshot, ViewDelta |
+| Browser | open_view, update_view, close_view, state, buckets | resolve, search (bound) | BrowserConnectionChanged, ViewSnapshot, ViewDelta |
 | Join | parse_address, target, set_custom_target, clear_target | resolve_link, grant (bound) | JoinTargetChanged |
 | Updates | status | check (bound); apply (detached) | UpdateAvailable, UpdateStaged, EngineUpdating, UpdateFailed |
 | Integration | status, prerequisites, shell_open_url/open_path/reveal | apply, remove, remediate, purge (bound) | IntegrationChanged, PrerequisitesChanged |

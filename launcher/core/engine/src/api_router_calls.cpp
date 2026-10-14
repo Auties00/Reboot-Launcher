@@ -2,7 +2,9 @@
 #include <algorithm>
 #include <cctype>
 #include <format>
+#include <functional>
 #include <limits>
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -25,6 +27,7 @@
 #include "reboot/backend/backend_service.hpp"
 #include "reboot/backend/console_key.hpp"
 #include "reboot/backend/hid_usage.hpp"
+#include "reboot/base/version_bucket.hpp"
 #include "reboot/browser/browser_session.hpp"
 #include "reboot/browser/deep_link_service.hpp"
 #include "reboot/browser/game_server_target.hpp"
@@ -495,6 +498,29 @@ Result<OpHandle> ApiRouter::start_search(const api::CallContext& context, const 
         if (const std::shared_ptr<Pending> held = weak.lock()) held->cancel.cancel(reason);
     });
     return handle;
+}
+
+Result<api::BrowserBucketsResponse> ApiRouter::buckets(const api::CallContext&, const api::BrowserBucketsRequest& request) {
+    std::vector<GameVersion> versions;
+    for (const api::GameVersion& requested : request.versions) {
+        Result<GameVersion> version = convert::game_version(requested, "versions");
+        if (!version) return std::unexpected(std::move(version.error()));
+        versions.push_back(*version);
+    }
+    for (const builds::InstalledBuild& build : deps_.library.list())
+        if (build.version_confirmed()) versions.push_back(*build.version);
+    // Keyed by bucket, newest first; the bucket grows with the major and the minor.
+    std::map<u32, GameVersion, std::greater<>> buckets;
+    for (const GameVersion& version : versions)
+        buckets.try_emplace(version_bucket(version), GameVersion{.major = version.major, .minor = version.minor, .patch = {}});
+    api::BrowserBucketsResponse out;
+    for (const auto& [bucket, version] : buckets) {
+        api::VersionBucket entry{.bucket = bucket, .version = convert::game_version(version), .builds = {}};
+        for (const builds::InstalledBuild& build : deps_.library.find_compatible(version))
+            entry.builds.push_back(convert::id(build.id));
+        out.buckets.push_back(std::move(entry));
+    }
+    return out;
 }
 
 // Catalog

@@ -121,6 +121,7 @@ using rb::u64;
     X_CALL(kBrowserState, state, BrowserStateRequest, BrowserStateResponse) \
     X_OP(kBrowserResolve, start_resolve, BrowserResolveRequest) \
     X_OP(kBrowserSearch, start_search, BrowserSearchRequest) \
+    X_CALL(kBrowserBuckets, buckets, BrowserBucketsRequest, BrowserBucketsResponse) \
     X_CALL(kJoinParseAddress, parse_address, JoinParseAddressRequest, JoinParseAddressResponse) \
     X_CALL(kJoinTarget, target, JoinTargetRequest, JoinTargetResponse) \
     X_CALL(kJoinSetCustomTarget, set_custom_target, JoinSetCustomTargetRequest, JoinSetCustomTargetResponse) \

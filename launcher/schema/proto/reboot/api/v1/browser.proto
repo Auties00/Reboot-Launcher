@@ -139,6 +139,26 @@ message BrowserSearchResponse {
   bool resolved_by_id = 4;
 }
 
+// One rbsb/1 version bucket: every version with the same major and minor.
+message VersionBucket {
+  // What ViewSpec.bucket and BrowserSearchRequest.bucket take.
+  uint32 bucket = 1;
+  // The bucket's major and minor; patch is absent.
+  GameVersion version = 2;
+  // Library builds with a confirmed version in the bucket, the exact version first, then newest.
+  repeated BuildId builds = 3;
+}
+
+message BrowserBucketsRequest {
+  // More versions to map, such as the catalog's; every confirmed library build is mapped anyway.
+  repeated GameVersion versions = 1;
+}
+
+message BrowserBucketsResponse {
+  // One per distinct bucket, newest version first.
+  repeated VersionBucket buckets = 1;
+}
+
 message BrowserConnectionChanged {
   ConnectionState state = 1;
   optional uint32 retry_in_ms = 2;
@@ -193,5 +213,9 @@ service Browser {
       id: 6
       kind: METHOD_KIND_OPERATION
     };
+  }
+  // The buckets of the library's builds and of the given versions, for a version filter.
+  rpc Buckets(BrowserBucketsRequest) returns (BrowserBucketsResponse) {
+    option (method_info) = {id: 7};
   }
 }

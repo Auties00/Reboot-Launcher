@@ -6,7 +6,7 @@
 
 /* The schema these ids and their messages come from; a facade compares it with
  * EngineInfoResponse.schema_fingerprint. */
-#define RB_SCHEMA_FINGERPRINT "0b725077ebdbba8f"
+#define RB_SCHEMA_FINGERPRINT "929c8b9130da38ec"
 
 /* engine.status: call; EngineStatusRequest -> EngineStatusResponse */
 #define RB_METHOD_ENGINE_STATUS 0x00010001u
@@ -152,6 +152,8 @@
 #define RB_METHOD_BROWSER_RESOLVE 0x000e0005u
 /* browser.search: operation (bound); BrowserSearchRequest -> BrowserSearchResponse */
 #define RB_METHOD_BROWSER_SEARCH 0x000e0006u
+/* browser.buckets: call; BrowserBucketsRequest -> BrowserBucketsResponse */
+#define RB_METHOD_BROWSER_BUCKETS 0x000e0007u
 /* join.parse_address: call; JoinParseAddressRequest -> JoinParseAddressResponse */
 #define RB_METHOD_JOIN_PARSE_ADDRESS 0x000f0001u
 /* join.target: call; JoinTargetRequest -> JoinTargetResponse */

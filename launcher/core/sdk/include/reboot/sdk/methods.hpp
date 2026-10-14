@@ -561,6 +561,12 @@ public:
         return self().template attach<api::BrowserSearchResponse>(api::kBrowserSearch, op_id);
     }
 
+    // browser.buckets: call.
+    [[nodiscard]] Expected<api::BrowserBucketsResponse> browser_buckets(
+        const api::BrowserBucketsRequest& request = {}, std::chrono::milliseconds timeout = {}) const {
+        return self().template call<api::BrowserBucketsResponse>(api::kBrowserBuckets, request, timeout);
+    }
+
     // join.parse_address: call.
     [[nodiscard]] Expected<api::JoinParseAddressResponse> join_parse_address(
         const api::JoinParseAddressRequest& request = {}, std::chrono::milliseconds timeout = {}) const {

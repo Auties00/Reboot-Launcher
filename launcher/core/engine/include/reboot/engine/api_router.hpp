@@ -285,6 +285,7 @@ public:
     Result<api::BrowserStateResponse> state(const api::CallContext& context, const api::BrowserStateRequest& request) override;
     Result<OpHandle> start_resolve(const api::CallContext& context, const api::BrowserResolveRequest& request, DisconnectPolicy disconnect) override;
     Result<OpHandle> start_search(const api::CallContext& context, const api::BrowserSearchRequest& request, DisconnectPolicy disconnect) override;
+    Result<api::BrowserBucketsResponse> buckets(const api::CallContext& context, const api::BrowserBucketsRequest& request) override;
     // Catalog
     Result<api::CatalogListResponse> list(const api::CallContext& context, const api::CatalogListRequest& request) override;
     Result<OpHandle> start_refresh(const api::CallContext& context, const api::CatalogRefreshRequest& request, DisconnectPolicy disconnect) override;

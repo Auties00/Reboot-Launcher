@@ -173,6 +173,32 @@ struct BrowserSearchResponse {
     bool operator==(const BrowserSearchResponse&) const = default;
 };
 
+// One rbsb/1 version bucket: every version with the same major and minor.
+struct VersionBucket {
+    // What ViewSpec.bucket and BrowserSearchRequest.bucket take.
+    u32 bucket = 0;
+    // The bucket's major and minor; patch is absent.
+    GameVersion version;
+    // Library builds with a confirmed version in the bucket, the exact version first, then newest.
+    std::vector<BuildId> builds;
+
+    bool operator==(const VersionBucket&) const = default;
+};
+
+struct BrowserBucketsRequest {
+    // More versions to map, such as the catalog's; every confirmed library build is mapped anyway.
+    std::vector<GameVersion> versions;
+
+    bool operator==(const BrowserBucketsRequest&) const = default;
+};
+
+struct BrowserBucketsResponse {
+    // One per distinct bucket, newest version first.
+    std::vector<VersionBucket> buckets;
+
+    bool operator==(const BrowserBucketsResponse&) const = default;
+};
+
 struct BrowserConnectionChanged {
     ConnectionState state{};
     std::optional<u32> retry_in_ms;
