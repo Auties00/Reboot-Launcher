@@ -30,9 +30,10 @@ if(REBOOT_BUILD_TESTS)
   set(sdk_test_sources tests/context_tests.cpp tests/error_tests.cpp tests/sdk_rig.hpp)
   add_executable(reboot_sdk_tests ${sdk_test_sources})
   target_include_directories(reboot_sdk_tests PRIVATE "${PROJECT_SOURCE_DIR}/core/engine/tests")
+  # reboot_ipc ahead of the OS ipc package, which defines the endpoint_name it calls.
   target_link_libraries(reboot_sdk_tests PRIVATE
-    reboot_sdk reboot_engine reboot::logging reboot::testing reboot_os_${REBOOT_OS}_ipc Boost::asio Catch2::Catch2WithMain
-    reboot_warnings)
+    reboot_sdk reboot_engine reboot::logging reboot::testing reboot::ipc reboot_os_${REBOOT_OS}_ipc Boost::asio
+    Catch2::Catch2WithMain reboot_warnings)
   _reboot_record_target(reboot_sdk_tests test DEPS reboot::sdk reboot::api reboot::ipc reboot::engine reboot::logging reboot::testing
     SOURCES ${sdk_test_sources})
   if(MSVC)
