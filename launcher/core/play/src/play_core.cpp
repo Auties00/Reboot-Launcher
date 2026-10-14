@@ -74,7 +74,7 @@ struct BrowserJoin {
 
 // A typed address, resolved and probed at start.
 struct AddressJoin {
-    HostPort address;
+    browser::AddressTarget target;
 };
 
 struct AutoServer {};
@@ -292,7 +292,7 @@ struct PlayCore::Impl {
             return std::visit(
                 []<class T>(const T& target) -> StartTarget {
                     if constexpr (std::same_as<T, BrowserServerTarget>) return BrowserJoin{target.server, target.confirmation};
-                    else if constexpr (std::same_as<T, browser::AddressTarget>) return AddressJoin{target.address};
+                    else if constexpr (std::same_as<T, browser::AddressTarget>) return AddressJoin{target};
                     else if constexpr (std::same_as<T, HostSessionTarget>) return OwnServer{target.session};
                     else return AutoServer{};
                 },
@@ -303,7 +303,7 @@ struct PlayCore::Impl {
             []<class T>(const T& target) -> StartTarget {
                 if constexpr (std::same_as<T, browser::ServerTarget>)
                     return BrowserJoin{target.id, browser::JoinConfirmation::AlreadyConfirmed};
-                else return AddressJoin{target.address};
+                else return AddressJoin{target};
             },
             current->target);
     }
@@ -879,13 +879,17 @@ struct PlayCore::Impl {
                                                            found->match = MatchTargetEntry{
                                                                account_of(found->preflight.login),
                                                                host_port_of(joined->endpoint), std::nullopt};
+                                                           const browser::ServerRow& row = joined->server.row;
+                                                           deps.env.record_join(browser::JoinTarget{
+                                                               browser::ServerTarget{row.id, row.name, row.author}});
                                                            configure_session(*found);
                                                        }));
                     if (!sent) fail_launch(l, std::move(sent.error()));
                 } else if constexpr (std::same_as<T, AddressJoin>) {
                     progress(l, "resolving_target");
                     Result<void> sent = deps.env.resolve_address(
-                        target.address, *l.op, guard([this, key](Result<browser::CheckedAddress> checked) {
+                        target.target.address, *l.op,
+                        guard([this, key, joined = target.target](Result<browser::CheckedAddress> checked) mutable {
                             Launch* found = live(key);
                             if (found == nullptr) return;
                             if (!checked) return fail_launch(*found, std::move(checked.error()));
@@ -896,6 +900,7 @@ struct PlayCore::Impl {
                             }
                             found->match = MatchTargetEntry{account_of(found->preflight.login),
                                                             host_port_of(checked->endpoint), std::nullopt};
+                            deps.env.record_join(browser::JoinTarget{std::move(joined)});
                             configure_session(*found);
                         }));
                     if (!sent) fail_launch(l, std::move(sent.error()));

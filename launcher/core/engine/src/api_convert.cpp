@@ -215,7 +215,7 @@ struct KindPair {
     api::EventKind wire;
 };
 
-constexpr std::array<KindPair, 42> kKinds{{
+constexpr std::array<KindPair, 43> kKinds{{
     {EventKind::OpProgress, api::EventKind::OpProgress},
     {EventKind::OpCompleted, api::EventKind::OpCompleted},
     {EventKind::EngineState, api::EventKind::EngineState},
@@ -258,6 +258,7 @@ constexpr std::array<KindPair, 42> kKinds{{
     {EventKind::PrerequisitesChanged, api::EventKind::PrerequisitesChanged},
     {EventKind::SecretStateChanged, api::EventKind::SecretStateChanged},
     {EventKind::StorageModeChanged, api::EventKind::StorageModeChanged},
+    {EventKind::JoinHistoryChanged, api::EventKind::JoinHistoryChanged},
 }};
 
 }  // namespace
@@ -914,6 +915,14 @@ api::ConnectionState connection_state(browser::ConnectionState state) {
         case browser::ConnectionState::ServiceDown: return api::ConnectionState::ServiceDown;
     }
     return api::ConnectionState::Idle;
+}
+
+std::vector<api::JoinHistoryEntry> join_history(const std::vector<browser::JoinHistoryEntry>& entries) {
+    std::vector<api::JoinHistoryEntry> out;
+    out.reserve(entries.size());
+    for (const browser::JoinHistoryEntry& entry : entries)
+        out.push_back(api::JoinHistoryEntry{join_target(entry.target), unix_ms(entry.last_joined)});
+    return out;
 }
 
 Result<browser::ViewSpec> view_spec(const api::ViewSpec& spec, std::span<const GameVersion> library) {

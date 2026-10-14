@@ -85,6 +85,7 @@ class SessionRegistry;
 
 namespace rb::browser {
 class GameServerTarget;
+class JoinHistory;
 class JoinService;
 }  // namespace rb::browser
 
@@ -131,6 +132,7 @@ struct PlayServiceDeps {
     sessions::SessionRegistry& sessions;
     browser::JoinService& join;
     browser::GameServerTarget& addresses;
+    browser::JoinHistory& join_history;
     host::HostService& hosts;
     // What the linked auto-server would run, for its host cell in the plan's verdict.
     const gameserver::GameServerBinary& game_server;

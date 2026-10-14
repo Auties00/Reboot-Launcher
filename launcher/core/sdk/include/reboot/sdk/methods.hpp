@@ -609,6 +609,24 @@ public:
         return self().template attach<api::JoinGrantResponse>(api::kJoinGrant, op_id);
     }
 
+    // join.history: call.
+    [[nodiscard]] Expected<api::JoinHistoryResponse> join_history(
+        const api::JoinHistoryRequest& request = {}, std::chrono::milliseconds timeout = {}) const {
+        return self().template call<api::JoinHistoryResponse>(api::kJoinHistory, request, timeout);
+    }
+
+    // join.history_remove: call.
+    [[nodiscard]] Expected<api::JoinHistoryRemoveResponse> join_history_remove(
+        const api::JoinHistoryRemoveRequest& request = {}, std::chrono::milliseconds timeout = {}) const {
+        return self().template call<api::JoinHistoryRemoveResponse>(api::kJoinHistoryRemove, request, timeout);
+    }
+
+    // join.history_clear: call.
+    [[nodiscard]] Expected<api::JoinHistoryClearResponse> join_history_clear(
+        const api::JoinHistoryClearRequest& request = {}, std::chrono::milliseconds timeout = {}) const {
+        return self().template call<api::JoinHistoryClearResponse>(api::kJoinHistoryClear, request, timeout);
+    }
+
     // updates.status: call.
     [[nodiscard]] Expected<api::UpdatesStatusResponse> updates_status(
         const api::UpdatesStatusRequest& request = {}, std::chrono::milliseconds timeout = {}) const {

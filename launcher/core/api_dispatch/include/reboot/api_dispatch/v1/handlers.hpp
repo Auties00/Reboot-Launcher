@@ -191,7 +191,7 @@ public:
     virtual ::rb::Result<::rb::OpHandle> start_purge(const CallContext& context, const IntegrationPurgeRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
-// What Play joins, and reboot:// links.
+// What Play joins, what it joined, and reboot:// links.
 class IJoinHandler {
 public:
     virtual ~IJoinHandler() = default;
@@ -206,6 +206,10 @@ public:
     // for Copy IP while the backend is Local or Remote.
     // Completes with JoinGrantResponse.
     virtual ::rb::Result<::rb::OpHandle> start_grant(const CallContext& context, const JoinGrantRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
+    // What Play joined, kept by the engine for every UI.
+    virtual ::rb::Result<JoinHistoryResponse> history(const CallContext& context, const JoinHistoryRequest& request) = 0;
+    virtual ::rb::Result<JoinHistoryRemoveResponse> history_remove(const CallContext& context, const JoinHistoryRemoveRequest& request) = 0;
+    virtual ::rb::Result<JoinHistoryClearResponse> history_clear(const CallContext& context, const JoinHistoryClearRequest& request) = 0;
 };
 
 // Installed builds and the per-role selection.

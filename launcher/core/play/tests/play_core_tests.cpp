@@ -514,6 +514,7 @@ TEST_CASE("a server this engine hosts is joined over loopback", "[play][core]") 
         CHECK(h.env.join_requests.empty());
         CHECK(h.targets.find(*h.session()) ==
               MatchTargetEntry{"Player-abc123", HostPort{"127.0.0.1", Port{7790}}, Port{7791}});
+        CHECK(h.env.recorded_joins.empty());
     }
     SECTION("on another version") {
         spec.version = GameVersion{3, 5, std::nullopt};
@@ -565,6 +566,8 @@ TEST_CASE("game targets resolve before the launch and are published for matchmak
         h.launched();
         const SessionId id = *h.session();
         CHECK(h.env.resolved_addresses == std::vector<HostPort>{HostPort{"play.example", Port{7778}}});
+        CHECK(h.env.recorded_joins == std::vector{browser::JoinTarget{
+                                          browser::AddressTarget{"play.example:7778", HostPort{"play.example", Port{7778}}}}});
         CHECK(h.targets.find(id) == MatchTargetEntry{"Player-abc123", HostPort{"10.0.0.2", Port{7778}}, std::nullopt});
         const std::vector<Diagnostic> degraded = h.degraded(id);
         REQUIRE(degraded.size() == 1);
@@ -582,6 +585,8 @@ TEST_CASE("game targets resolve before the launch and are published for matchmak
         CHECK(h.env.join_requests[0].confirmation == browser::JoinConfirmation::Ask);
         CHECK(h.env.join_requests[0].local_version == kVersion);
         CHECK(h.targets.find(*h.session())->endpoint == HostPort{"10.0.0.1", Port{7777}});
+        REQUIRE(h.env.recorded_joins.size() == 1);
+        CHECK(std::holds_alternative<browser::ServerTarget>(h.env.recorded_joins[0].target));
     }
     SECTION("a server the UI already confirmed is joined without ConfirmJoin") {
         Harness h;

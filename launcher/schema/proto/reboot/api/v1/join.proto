@@ -76,7 +76,38 @@ message JoinTargetChanged {
   optional JoinTarget target = 1;
 }
 
-// What Play joins, and reboot:// links.
+// A browser server or an address Play joined.
+message JoinHistoryEntry {
+  JoinTarget target = 1;
+  uint64 last_joined_unix_ms = 2;
+}
+
+message JoinHistoryRequest {}
+
+message JoinHistoryResponse {
+  // Newest first, at most 50; one entry per server id, or per host and port of an address.
+  repeated JoinHistoryEntry entries = 1;
+}
+
+message JoinHistoryRemoveRequest {
+  // Matched by server id, or by the host and port of the address.
+  JoinTarget target = 1;
+}
+
+message JoinHistoryRemoveResponse {
+  // False when the history had no such entry.
+  bool removed = 1;
+}
+
+message JoinHistoryClearRequest {}
+
+message JoinHistoryClearResponse {}
+
+message JoinHistoryChanged {
+  repeated JoinHistoryEntry entries = 1;
+}
+
+// What Play joins, what it joined, and reboot:// links.
 service Join {
   option (service_info) = {id: 15};
 
@@ -105,5 +136,15 @@ service Join {
       id: 6
       kind: METHOD_KIND_OPERATION
     };
+  }
+  // What Play joined, kept by the engine for every UI.
+  rpc History(JoinHistoryRequest) returns (JoinHistoryResponse) {
+    option (method_info) = {id: 7};
+  }
+  rpc HistoryRemove(JoinHistoryRemoveRequest) returns (JoinHistoryRemoveResponse) {
+    option (method_info) = {id: 8};
+  }
+  rpc HistoryClear(JoinHistoryClearRequest) returns (JoinHistoryClearResponse) {
+    option (method_info) = {id: 9};
   }
 }

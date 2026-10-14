@@ -4,6 +4,7 @@
 
 #include "reboot/backend/backend_service.hpp"
 #include "reboot/browser/game_server_target.hpp"
+#include "reboot/browser/join_history.hpp"
 #include "reboot/browser/join_service.hpp"
 #include "reboot/builds/library.hpp"
 #include "reboot/catalog/catalog_service.hpp"
@@ -177,6 +178,8 @@ Result<void> DepsEnv::resolve_address(const HostPort& address, OperationBase& op
                                       UniqueFunction<void(Result<browser::CheckedAddress>)> done) {
     return deps_.addresses.resolve(address, op, std::move(done));
 }
+
+void DepsEnv::record_join(browser::JoinTarget target) { deps_.join_history.record(std::move(target)); }
 
 Result<OpHandle> DepsEnv::start_auto_server(host::HostStartRequest request) { return deps_.hosts.start(std::move(request)); }
 

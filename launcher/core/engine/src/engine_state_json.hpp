@@ -7,6 +7,7 @@
 
 #include "reboot/base/types.hpp"
 #include "reboot/browser/browse_choices.hpp"
+#include "reboot/browser/join_history.hpp"
 #include "reboot/browser/join_target.hpp"
 #include "reboot/net/mapping_record.hpp"
 
@@ -16,6 +17,9 @@ namespace rb::engine {
 
 [[nodiscard]] boost::json::value join_target_to_json(const std::optional<browser::JoinTarget>& target);
 [[nodiscard]] std::optional<browser::JoinTarget> join_target_from_json(const boost::json::value* value);
+
+[[nodiscard]] boost::json::value join_history_to_json(const std::vector<browser::JoinHistoryEntry>& entries);
+[[nodiscard]] std::vector<browser::JoinHistoryEntry> join_history_from_json(const boost::json::value* value);
 
 [[nodiscard]] boost::json::value browse_choices_to_json(const browser::BrowseChoices& choices);
 [[nodiscard]] browser::BrowseChoices browse_choices_from_json(const boost::json::value* value);

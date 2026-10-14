@@ -18,6 +18,7 @@
 #include "reboot/api/v1/host.hpp"
 #include "reboot/api/v1/identity.hpp"
 #include "reboot/api/v1/integration.hpp"
+#include "reboot/api/v1/join.hpp"
 #include "reboot/api/v1/secrets.hpp"
 #include "reboot/api/v1/sessions.hpp"
 #include "reboot/api/v1/settings.hpp"
@@ -386,6 +387,25 @@ TEST_CASE("engine flow: a backend password is remembered only when the put asks 
     CHECK(rig.strand.pump_until([&] { return store() != api::SecretStore::Unavailable; }));
     put(false);
     CHECK(rig.strand.pump_until([&] { return store() == api::SecretStore::Unavailable; }));
+}
+
+TEST_CASE("engine flow: the join history answers every client and forgets on request") {
+    EngineRig rig;
+    rig.boot();
+    auto client = rig.connect();
+    const Result<api::JoinHistoryResponse> history =
+        rig.call<api::JoinHistoryResponse>(*client, api::kJoinHistory, api::JoinHistoryRequest{});
+    REQUIRE(history);
+    CHECK(history->entries.empty());
+
+    api::JoinHistoryRemoveRequest remove;
+    remove.target.address = "play.example:7778";
+    const Result<api::JoinHistoryRemoveResponse> removed =
+        rig.call<api::JoinHistoryRemoveResponse>(*client, api::kJoinHistoryRemove, remove);
+    REQUIRE(removed);
+    CHECK_FALSE(removed->removed);
+    CHECK_FALSE(rig.call<api::JoinHistoryRemoveResponse>(*client, api::kJoinHistoryRemove, api::JoinHistoryRemoveRequest{}));
+    CHECK(rig.call<api::JoinHistoryClearResponse>(*client, api::kJoinHistoryClear, api::JoinHistoryClearRequest{}));
 }
 
 TEST_CASE("engine flow: a client of another build only gets the bootstrap subset") {

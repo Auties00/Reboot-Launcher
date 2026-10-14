@@ -146,6 +146,7 @@ namespace rb::browser {
 class BrowserSession;
 class DeepLinkService;
 class GameServerTarget;
+class JoinHistory;
 class JoinService;
 class Search;
 class ServerList;
@@ -359,6 +360,7 @@ private:
     std::unique_ptr<HostIdentityOwnServers> own_servers_;
     std::unique_ptr<browser::JoinService> join_;
     std::unique_ptr<browser::GameServerTarget> addresses_;
+    std::unique_ptr<browser::JoinHistory> join_history_;
     std::unique_ptr<browser::DeepLinkService> deep_links_;
     std::unique_ptr<browser::ServerList> server_list_;
     std::unique_ptr<browser::Search> search_;

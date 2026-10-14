@@ -270,6 +270,7 @@ public:
         resolved.call(strand_, std::move(done));
         return {};
     }
+    void record_join(browser::JoinTarget target) override { recorded_joins.push_back(std::move(target)); }
     Result<OpHandle> start_auto_server(host::HostStartRequest request) override {
         auto_starts.push_back(request);
         if (auto_start_error) return std::unexpected(*auto_start_error);
@@ -441,6 +442,7 @@ public:
     std::vector<secrets::SecretTarget> required_targets;
     std::vector<secrets::SecretWait> required_waits;
     std::vector<browser::JoinRequest> join_requests;
+    std::vector<browser::JoinTarget> recorded_joins;
     std::vector<HostPort> resolved_addresses;
     std::vector<host::HostStartRequest> auto_starts;
     std::vector<Operation<SessionId>*> auto_ops;

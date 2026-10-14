@@ -26,6 +26,7 @@
 #include "reboot/browser/browser_session.hpp"
 #include "reboot/browser/deep_link_service.hpp"
 #include "reboot/browser/game_server_target.hpp"
+#include "reboot/browser/join_history.hpp"
 #include "reboot/browser/join_service.hpp"
 #include "reboot/browser/rbsb_endpoint.hpp"
 #include "reboot/browser/search.hpp"
@@ -504,6 +505,11 @@ void EngineServices::build_services() {
         [this](const std::optional<browser::JoinTarget>& target) {
             log_failure("saving the join target", put_state_extra(stores_->state, kJoinTargetKey, join_target_to_json(target)));
         });
+    join_history_ = std::make_unique<browser::JoinHistory>(
+        clock, *events_, join_history_from_json(state_extra(stores_->state.get(), kJoinHistoryKey)),
+        [this](const std::vector<browser::JoinHistoryEntry>& entries) {
+            log_failure("saving the join history", put_state_extra(stores_->state, kJoinHistoryKey, join_history_to_json(entries)));
+        });
     deep_links_ = std::make_unique<browser::DeepLinkService>(*browser_, *addresses_, *own_servers_, *requests_, *ops_);
     server_list_ = std::make_unique<browser::ServerList>(
         *browser_, *own_servers_, clock, *events_, browse_choices_from_json(state_extra(stores_->state.get(), kBrowseChoicesKey)),
@@ -576,7 +582,7 @@ void EngineServices::build_services() {
         play::PlayServiceDeps{*settings_,       *library_,         *catalog_,        *support_,         *components_,
                               std::move(runner), *identity_,       *secrets_,        *backend_,         *remote_login_,
                               *front_,           *legacy_listeners_, *game_channel_,   *sessions_,        *join_,
-                              *addresses_,       *hosts_,           *game_server_binary_, *match_targets_, fs,
+                              *addresses_,       *join_history_,    *hosts_,          *game_server_binary_, *match_targets_, fs,
                               *platform.system,  random,            redactor,         *requests_,        *ops_,
                               *events_,          workers,           strand,           timers},
         std::move(play_options));
@@ -750,6 +756,7 @@ void EngineServices::build_services() {
         .join = *join_,
         .deep_links = *deep_links_,
         .addresses = *addresses_,
+        .join_history = *join_history_,
         .own_servers = *own_servers_,
         .updates = *updates_,
         .integration = *integration_,

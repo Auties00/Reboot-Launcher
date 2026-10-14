@@ -77,6 +77,19 @@ TEST_CASE("engine state: join targets round-trip through state.json") {
     CHECK_FALSE(join_target_from_json(nullptr));
 }
 
+TEST_CASE("engine state: the join history round-trips, skipping entries it cannot read") {
+    const auto at = std::chrono::system_clock::time_point{} + std::chrono::milliseconds{1'790'000'000'000};
+    const std::vector<browser::JoinHistoryEntry> history{
+        {browser::JoinTarget{browser::ServerTarget{ServerId{uuid_of(7)}, "Arena", "Host"}}, at},
+        {browser::JoinTarget{browser::AddressTarget{"play.example:7778", HostPort{"play.example", Port{7778}}}}, at - 1h}};
+    boost::json::value written = join_history_to_json(history);
+    CHECK(join_history_from_json(&written) == history);
+    written.as_array().push_back(boost::json::parse(R"({"server":{"id":"not a uuid"},"at_ms":1})"));
+    written.as_array().push_back(boost::json::parse(R"({"address":{"host":"play.example"}})"));
+    CHECK(join_history_from_json(&written) == history);
+    CHECK(join_history_from_json(nullptr).empty());
+}
+
 TEST_CASE("engine state: browse choices and serial floors round-trip, bad values read as defaults") {
     browser::BrowseChoices choices;
     choices.versions = browser::VersionScope::Installed;

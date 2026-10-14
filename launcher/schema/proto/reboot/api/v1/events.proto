@@ -66,5 +66,6 @@ message EventPayload {
     PrerequisitesChanged prerequisites_changed = 40;
     SecretStateChanged secret_state_changed = 41;
     StorageModeChanged storage_mode_changed = 42;
+    JoinHistoryChanged join_history_changed = 43;
   }
 }

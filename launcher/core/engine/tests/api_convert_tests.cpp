@@ -39,7 +39,7 @@ namespace {
 }  // namespace
 
 TEST_CASE("api conversion: every domain event kind but ForegroundHint has an API kind that maps back") {
-    for (u16 value = 0; value <= static_cast<u16>(EventKind::StorageModeChanged); ++value) {
+    for (u16 value = 0; value <= static_cast<u16>(EventKind::JoinHistoryChanged); ++value) {
         const auto kind = static_cast<EventKind>(value);
         const std::optional<api::EventKind> wire = convert::event_kind(kind);
         if (kind == EventKind::ForegroundHint) {

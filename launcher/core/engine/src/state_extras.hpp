@@ -14,6 +14,7 @@ namespace rb::engine {
 // members, which every storage write keeps.
 inline constexpr std::string_view kGuidanceKey = "guidance";
 inline constexpr std::string_view kJoinTargetKey = "join_target";
+inline constexpr std::string_view kJoinHistoryKey = "join_history";
 inline constexpr std::string_view kBrowseChoicesKey = "browse_choices";
 inline constexpr std::string_view kPortMappingsKey = "port_mappings";
 inline constexpr std::string_view kSerialsKey = "serials";

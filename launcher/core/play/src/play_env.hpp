@@ -124,6 +124,8 @@ public:
                               UniqueFunction<void(Result<browser::JoinOutcome>)> done) = 0;
     virtual Result<void> resolve_address(const HostPort& address, OperationBase& op,
                                          UniqueFunction<void(Result<browser::CheckedAddress>)> done) = 0;
+    // A browser server or address the launch is about to join; JoinHistory::record.
+    virtual void record_join(browser::JoinTarget target) = 0;
     virtual Result<OpHandle> start_auto_server(host::HostStartRequest request) = 0;
     [[nodiscard]] virtual Result<host::HostListening> listening(SessionId server) const = 0;
 

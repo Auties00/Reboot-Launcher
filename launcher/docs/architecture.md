@@ -395,7 +395,7 @@ Command line: `reboot-engine run [--foreground] [--origin=on-demand|service-mana
 | `data/library.json` | Builds and per-role selection |
 | `data/accounts.json` | The one player name and one account record (record id, role, tag) per role; each account id is the name plus its tag |
 | `data/host-profiles.json` | Host profiles |
-| `state/state.json` | Onboarding, notices, TLS memory, integration declined flags, last_run_version |
+| `state/state.json` | Onboarding, notices, TLS memory, integration declined flags, last_run_version, the join target and join history |
 | `state/host-identity/<profile>.json` | Owner-only |
 | `state/runtime.json`, `state/resume.json`, `state/update-in-progress`, `state/engine.lock`, `state/spawn.lock` | Engine runtime state |
 | `data/components/`, `data/prefixes/`, `data/backend/`, `data/game-server/<session>/` | Component, prefix, backend and per-host-session data |
@@ -490,7 +490,7 @@ A schema change changes `RB_SCHEMA_FINGERPRINT`. `RB_ABI_MAJOR.MINOR` versions o
 | Sessions | list, get, set_lease | stop (bound) | SessionStateChanged, SessionSpawned, SessionDegraded, SessionEnded |
 | Backend | status, data_dir, set_target, accounts_list | start, stop, accounts_reset/delete/prune/rename (bound) | BackendStateChanged, BackendAccountsChanged, XmppUnavailable |
 | Browser | open_view, update_view, close_view, state, buckets | resolve, search (bound) | BrowserConnectionChanged, ViewSnapshot, ViewDelta |
-| Join | parse_address, target, set_custom_target, clear_target | resolve_link, grant (bound) | JoinTargetChanged |
+| Join | parse_address, target, set_custom_target, clear_target, history, history_remove, history_clear | resolve_link, grant (bound) | JoinTargetChanged, JoinHistoryChanged |
 | Updates | status | check (bound); apply (detached) | UpdateAvailable, UpdateStaged, EngineUpdating, UpdateFailed |
 | Integration | status, prerequisites, shell_open_url/open_path/reveal | apply, remove, remediate, purge (bound) | IntegrationChanged, PrerequisitesChanged |
 | Guidance | notices_list/dismiss, onboarding_state/advance/skip, links | - | NoticeAdded, NoticeRemoved, OnboardingChanged |

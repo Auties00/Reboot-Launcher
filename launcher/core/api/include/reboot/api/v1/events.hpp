@@ -70,6 +70,7 @@ struct EventPayload {
     std::optional<PrerequisitesChanged> prerequisites_changed;
     std::optional<SecretStateChanged> secret_state_changed;
     std::optional<StorageModeChanged> storage_mode_changed;
+    std::optional<JoinHistoryChanged> join_history_changed;
 
     bool operator==(const EventPayload&) const = default;
 };
@@ -116,7 +117,8 @@ struct EventPayload {
                                m.integration_changed.has_value(),
                                m.prerequisites_changed.has_value(),
                                m.secret_state_changed.has_value(),
-                               m.storage_mode_changed.has_value()}))
+                               m.storage_mode_changed.has_value(),
+                               m.join_history_changed.has_value()}))
         return error;
     if (auto error = m.op_completed ? check_cases(*m.op_completed) : std::nullopt) return error;
     if (auto error = m.player_event ? check_cases(*m.player_event) : std::nullopt) return error;
@@ -124,6 +126,7 @@ struct EventPayload {
     if (auto error = m.notice_added ? check_cases(*m.notice_added) : std::nullopt) return error;
     if (auto error = m.user_action_required ? check_cases(*m.user_action_required) : std::nullopt) return error;
     if (auto error = m.secret_state_changed ? check_cases(*m.secret_state_changed) : std::nullopt) return error;
+    if (auto error = m.join_history_changed ? check_cases(*m.join_history_changed) : std::nullopt) return error;
     return std::nullopt;
 }
 
@@ -171,6 +174,7 @@ struct EventPayload {
     if (payload.prerequisites_changed) return EventKind::PrerequisitesChanged;
     if (payload.secret_state_changed) return EventKind::SecretStateChanged;
     if (payload.storage_mode_changed) return EventKind::StorageModeChanged;
+    if (payload.join_history_changed) return EventKind::JoinHistoryChanged;
     return EventKind::Unspecified;
 }
 
@@ -220,6 +224,7 @@ struct EventPayload {
         case EventKind::PrerequisitesChanged:
         case EventKind::SecretStateChanged:
         case EventKind::StorageModeChanged:
+        case EventKind::JoinHistoryChanged:
             return true;
         default:
             return false;

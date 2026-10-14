@@ -95,6 +95,30 @@ std::optional<browser::JoinTarget> join_target_from_json(const json::value* valu
     return std::nullopt;
 }
 
+json::value join_history_to_json(const std::vector<browser::JoinHistoryEntry>& entries) {
+    json::array out;
+    for (const browser::JoinHistoryEntry& entry : entries) {
+        json::value item = join_target_to_json(entry.target);
+        item.as_object()["at_ms"] = static_cast<std::int64_t>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(entry.last_joined.time_since_epoch()).count());
+        out.push_back(std::move(item));
+    }
+    return out;
+}
+
+std::vector<browser::JoinHistoryEntry> join_history_from_json(const json::value* value) {
+    std::vector<browser::JoinHistoryEntry> entries;
+    if (value == nullptr || !value->is_array()) return entries;
+    for (const json::value& item : value->get_array()) {
+        std::optional<browser::JoinTarget> target = join_target_from_json(&item);
+        const std::optional<u64> at = item.is_object() ? number(item.get_object(), "at_ms") : std::nullopt;
+        if (!target || !at) continue;
+        entries.push_back(browser::JoinHistoryEntry{
+            std::move(*target), std::chrono::system_clock::time_point{std::chrono::milliseconds(static_cast<std::int64_t>(*at))}});
+    }
+    return entries;
+}
+
 json::value browse_choices_to_json(const browser::BrowseChoices& choices) {
     json::object out;
     out["versions"] = kScopeNames[static_cast<std::size_t>(choices.versions)];

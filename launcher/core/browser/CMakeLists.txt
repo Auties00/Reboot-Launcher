@@ -7,6 +7,7 @@ reboot_add_package(browser
     src/deep_link_service.cpp
     src/full_jitter_backoff.cpp
     src/game_server_target.cpp
+    src/join_history.cpp
     src/join_outcome.cpp
     src/join_service.cpp
     src/list_state.cpp

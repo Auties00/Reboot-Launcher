@@ -59,6 +59,7 @@ public:
                       UniqueFunction<void(Result<browser::JoinOutcome>)> done) override;
     Result<void> resolve_address(const HostPort& address, OperationBase& op,
                                  UniqueFunction<void(Result<browser::CheckedAddress>)> done) override;
+    void record_join(browser::JoinTarget target) override;
     Result<OpHandle> start_auto_server(host::HostStartRequest request) override;
     [[nodiscard]] Result<host::HostListening> listening(SessionId server) const override;
 

@@ -707,6 +707,11 @@ std::optional<contracts::ipc::WireEvent> ApiRouter::encode_event(const EventEnve
                 known = false;
             }
             break;
+        case EventKind::JoinHistoryChanged:
+            if (const auto* p = std::any_cast<browser::JoinHistoryChanged>(&any))
+                payload.join_history_changed = api::JoinHistoryChanged{convert::join_history(p->entries)};
+            else known = false;
+            break;
         case EventKind::StorageModeChanged:
             if (const auto* p = std::any_cast<storage::StorageModeChanged>(&any))
                 payload.storage_mode_changed = convert::storage_mode_changed(*p);

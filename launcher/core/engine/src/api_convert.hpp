@@ -37,6 +37,7 @@
 #include "reboot/base/types.hpp"
 #include "reboot/base/version.hpp"
 #include "reboot/browser/connection_state.hpp"
+#include "reboot/browser/join_history.hpp"
 #include "reboot/browser/join_target.hpp"
 #include "reboot/browser/list_state.hpp"
 #include "reboot/browser/search.hpp"
@@ -181,6 +182,8 @@ namespace rb::engine::convert {
 [[nodiscard]] api::ServerEntry server_entry(const browser::ServerRow& row, std::optional<BuildId> compatible, bool own);
 [[nodiscard]] api::ConnectionState connection_state(browser::ConnectionState state);
 // `library` is the confirmed library builds' versions, which a playable spec lists the buckets of.
+[[nodiscard]] std::vector<api::JoinHistoryEntry> join_history(const std::vector<browser::JoinHistoryEntry>& entries);
+
 [[nodiscard]] Result<browser::ViewSpec> view_spec(const api::ViewSpec& spec, std::span<const GameVersion> library);
 // engine.invalid_request for a filter or sort this build does not know; Search checks the text.
 [[nodiscard]] Result<browser::SearchRequest> search_request(const api::BrowserSearchRequest& request);

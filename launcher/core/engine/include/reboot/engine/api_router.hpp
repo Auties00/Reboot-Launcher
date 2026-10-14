@@ -134,6 +134,7 @@ namespace rb::browser {
 class BrowserSession;
 class DeepLinkService;
 class GameServerTarget;
+class JoinHistory;
 class IOwnServers;
 class JoinService;
 class Search;
@@ -203,6 +204,7 @@ struct ApiRouterDeps {
     browser::JoinService& join;
     browser::DeepLinkService& deep_links;
     browser::GameServerTarget& addresses;
+    browser::JoinHistory& join_history;
     // ServerEntry.own.
     const browser::IOwnServers& own_servers;
     updates::UpdateService& updates;
@@ -287,6 +289,9 @@ public:
     Result<OpHandle> start_resolve(const api::CallContext& context, const api::BrowserResolveRequest& request, DisconnectPolicy disconnect) override;
     Result<OpHandle> start_search(const api::CallContext& context, const api::BrowserSearchRequest& request, DisconnectPolicy disconnect) override;
     Result<api::BrowserBucketsResponse> buckets(const api::CallContext& context, const api::BrowserBucketsRequest& request) override;
+    Result<api::JoinHistoryResponse> history(const api::CallContext& context, const api::JoinHistoryRequest& request) override;
+    Result<api::JoinHistoryRemoveResponse> history_remove(const api::CallContext& context, const api::JoinHistoryRemoveRequest& request) override;
+    Result<api::JoinHistoryClearResponse> history_clear(const api::CallContext& context, const api::JoinHistoryClearRequest& request) override;
     // Catalog
     Result<api::CatalogListResponse> list(const api::CallContext& context, const api::CatalogListRequest& request) override;
     Result<OpHandle> start_refresh(const api::CallContext& context, const api::CatalogRefreshRequest& request, DisconnectPolicy disconnect) override;

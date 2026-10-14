@@ -128,6 +128,9 @@ using rb::u64;
     X_CALL(kJoinClearTarget, clear_target, JoinClearTargetRequest, JoinClearTargetResponse) \
     X_OP(kJoinResolveLink, start_resolve_link, JoinResolveLinkRequest) \
     X_OP(kJoinGrant, start_grant, JoinGrantRequest) \
+    X_CALL(kJoinHistory, history, JoinHistoryRequest, JoinHistoryResponse) \
+    X_CALL(kJoinHistoryRemove, history_remove, JoinHistoryRemoveRequest, JoinHistoryRemoveResponse) \
+    X_CALL(kJoinHistoryClear, history_clear, JoinHistoryClearRequest, JoinHistoryClearResponse) \
     X_CALL(kUpdatesStatus, status, UpdatesStatusRequest, UpdatesStatusResponse) \
     X_OP(kUpdatesCheck, start_check, UpdatesCheckRequest) \
     X_OP(kUpdatesApply, start_apply, UpdatesApplyRequest) \
@@ -222,6 +225,7 @@ void choose_cases(api::HostProfilesCreateRequest& request) { choose_cases(reques
 void choose_cases(api::HostProfilesUpdateRequest& request) { choose_cases(request.profile); }
 void choose_cases(api::HostCommandRequest& request) { request.command.reset = api::ResetMatch{}; }
 void choose_cases(api::HostShareLinkRequest& request) { request.session = api::SessionId{}; }
+void choose_cases(api::JoinHistoryRemoveRequest& request) { request.target.address = "play.example"; }
 void choose_cases(api::RequestsRespondRequest& request) { request.answer.secret_provided = true; }
 void choose_cases(api::SecretsStateRequest& request) { request.target.join_request = 1; }
 void choose_cases(api::SecretsClearRequest& request) { request.target.join_request = 1; }

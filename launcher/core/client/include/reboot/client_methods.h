@@ -6,7 +6,7 @@
 
 /* The schema these ids and their messages come from; a facade compares it with
  * EngineInfoResponse.schema_fingerprint. */
-#define RB_SCHEMA_FINGERPRINT "210811dec61586b8"
+#define RB_SCHEMA_FINGERPRINT "d95cee8b23319f5c"
 
 /* engine.status: call; EngineStatusRequest -> EngineStatusResponse */
 #define RB_METHOD_ENGINE_STATUS 0x00010001u
@@ -166,6 +166,12 @@
 #define RB_METHOD_JOIN_RESOLVE_LINK 0x000f0005u
 /* join.grant: operation (bound); JoinGrantRequest -> JoinGrantResponse */
 #define RB_METHOD_JOIN_GRANT 0x000f0006u
+/* join.history: call; JoinHistoryRequest -> JoinHistoryResponse */
+#define RB_METHOD_JOIN_HISTORY 0x000f0007u
+/* join.history_remove: call; JoinHistoryRemoveRequest -> JoinHistoryRemoveResponse */
+#define RB_METHOD_JOIN_HISTORY_REMOVE 0x000f0008u
+/* join.history_clear: call; JoinHistoryClearRequest -> JoinHistoryClearResponse */
+#define RB_METHOD_JOIN_HISTORY_CLEAR 0x000f0009u
 /* updates.status: call; UpdatesStatusRequest -> UpdatesStatusResponse */
 #define RB_METHOD_UPDATES_STATUS 0x00100001u
 /* updates.check: operation (bound); UpdatesCheckRequest -> UpdatesCheckResponse */

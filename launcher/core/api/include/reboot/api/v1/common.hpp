@@ -124,6 +124,7 @@ enum class EventKind : u32 {
     PrerequisitesChanged = 43,
     SecretStateChanged = 44,
     StorageModeChanged = 45,
+    JoinHistoryChanged = 46,
 };
 
 struct SessionId {

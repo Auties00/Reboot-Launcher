@@ -31,6 +31,7 @@
 #include "reboot/browser/browser_session.hpp"
 #include "reboot/browser/deep_link_service.hpp"
 #include "reboot/browser/game_server_target.hpp"
+#include "reboot/browser/join_history.hpp"
 #include "reboot/browser/join_outcome.hpp"
 #include "reboot/browser/join_service.hpp"
 #include "reboot/browser/own_servers.hpp"
@@ -1164,6 +1165,29 @@ Result<api::JoinClearTargetResponse> ApiRouter::clear_target(const api::CallCont
 Result<OpHandle> ApiRouter::start_resolve_link(const api::CallContext&, const api::JoinResolveLinkRequest& request,
                                                DisconnectPolicy disconnect) {
     return deps_.deep_links.start_resolve(request.url, disconnect);
+}
+
+Result<api::JoinHistoryResponse> ApiRouter::history(const api::CallContext&, const api::JoinHistoryRequest&) {
+    return api::JoinHistoryResponse{convert::join_history(deps_.join_history.entries())};
+}
+
+Result<api::JoinHistoryRemoveResponse> ApiRouter::history_remove(const api::CallContext&, const api::JoinHistoryRemoveRequest& request) {
+    browser::JoinTarget target;
+    if (request.target.server) {
+        target.target = browser::ServerTarget{convert::id(request.target.server->id), {}, {}};
+    } else if (request.target.address) {
+        Result<HostPort> address = browser::parse_game_server_address(*request.target.address);
+        if (!address) return std::unexpected(std::move(address.error()));
+        target.target = browser::AddressTarget{*request.target.address, std::move(*address)};
+    } else {
+        return std::unexpected(convert::invalid_request("target"));
+    }
+    return api::JoinHistoryRemoveResponse{deps_.join_history.remove(target)};
+}
+
+Result<api::JoinHistoryClearResponse> ApiRouter::history_clear(const api::CallContext&, const api::JoinHistoryClearRequest&) {
+    deps_.join_history.clear();
+    return api::JoinHistoryClearResponse{};
 }
 
 Result<OpHandle> ApiRouter::start_grant(const api::CallContext&, const api::JoinGrantRequest& request, DisconnectPolicy disconnect) {

@@ -12,7 +12,7 @@
 namespace rb::api {
 
 // Changes with every change to the schema's payloads or methods; Engine.info reports the engine's.
-inline constexpr std::string_view kSchemaFingerprint = "210811dec61586b8";
+inline constexpr std::string_view kSchemaFingerprint = "d95cee8b23319f5c";
 
 inline constexpr u32 kEngineStatus = 0x00010001;
 inline constexpr u32 kEngineInfo = 0x00010002;
@@ -93,6 +93,9 @@ inline constexpr u32 kJoinSetCustomTarget = 0x000f0003;
 inline constexpr u32 kJoinClearTarget = 0x000f0004;
 inline constexpr u32 kJoinResolveLink = 0x000f0005;
 inline constexpr u32 kJoinGrant = 0x000f0006;
+inline constexpr u32 kJoinHistory = 0x000f0007;
+inline constexpr u32 kJoinHistoryRemove = 0x000f0008;
+inline constexpr u32 kJoinHistoryClear = 0x000f0009;
 inline constexpr u32 kUpdatesStatus = 0x00100001;
 inline constexpr u32 kUpdatesCheck = 0x00100002;
 inline constexpr u32 kUpdatesApply = 0x00100003;
@@ -117,7 +120,7 @@ inline constexpr u32 kRequestsPending = 0x00150001;
 inline constexpr u32 kRequestsRespond = 0x00150002;
 
 // Sorted by id.
-inline constexpr std::array<MethodSpec, 101> kMethods{{
+inline constexpr std::array<MethodSpec, 104> kMethods{{
     MethodSpec{
         .id = kEngineStatus,
         .service = "reboot.api.v1.Engine",
@@ -907,6 +910,36 @@ inline constexpr std::array<MethodSpec, 101> kMethods{{
         .progress = ProgressUnit::NoProgress,
         .request_type = "reboot.api.v1.JoinGrantRequest",
         .response_type = "reboot.api.v1.JoinGrantResponse",
+    },
+    MethodSpec{
+        .id = kJoinHistory,
+        .service = "reboot.api.v1.Join",
+        .name = "join.history",
+        .kind = MethodKind::Call,
+        .default_disconnect = Disconnect::BoundToConnection,
+        .progress = ProgressUnit::NoProgress,
+        .request_type = "reboot.api.v1.JoinHistoryRequest",
+        .response_type = "reboot.api.v1.JoinHistoryResponse",
+    },
+    MethodSpec{
+        .id = kJoinHistoryRemove,
+        .service = "reboot.api.v1.Join",
+        .name = "join.history_remove",
+        .kind = MethodKind::Call,
+        .default_disconnect = Disconnect::BoundToConnection,
+        .progress = ProgressUnit::NoProgress,
+        .request_type = "reboot.api.v1.JoinHistoryRemoveRequest",
+        .response_type = "reboot.api.v1.JoinHistoryRemoveResponse",
+    },
+    MethodSpec{
+        .id = kJoinHistoryClear,
+        .service = "reboot.api.v1.Join",
+        .name = "join.history_clear",
+        .kind = MethodKind::Call,
+        .default_disconnect = Disconnect::BoundToConnection,
+        .progress = ProgressUnit::NoProgress,
+        .request_type = "reboot.api.v1.JoinHistoryClearRequest",
+        .response_type = "reboot.api.v1.JoinHistoryClearResponse",
     },
     MethodSpec{
         .id = kUpdatesStatus,

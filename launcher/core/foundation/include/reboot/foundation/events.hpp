@@ -58,6 +58,7 @@ enum class EventKind : u16 {
     PrerequisitesChanged,
     SecretStateChanged,
     StorageModeChanged,
+    JoinHistoryChanged,
 };
 
 enum class DeliveryClass : u8 { NeverDrop, CoalesceLatest, DropWithCounter };
@@ -87,6 +88,7 @@ enum class DeliveryClass : u8 { NeverDrop, CoalesceLatest, DropWithCounter };
         case EventKind::PrerequisitesChanged:
         case EventKind::SecretStateChanged:
         case EventKind::StorageModeChanged:
+        case EventKind::JoinHistoryChanged:
             return DeliveryClass::CoalesceLatest;
         case EventKind::LogLine:
             return DeliveryClass::DropWithCounter;

@@ -168,6 +168,12 @@ template <class Response>
             return call(handlers.join, &IJoinHandler::set_custom_target, context, method_id, request);
         case kJoinClearTarget:
             return call(handlers.join, &IJoinHandler::clear_target, context, method_id, request);
+        case kJoinHistory:
+            return call(handlers.join, &IJoinHandler::history, context, method_id, request);
+        case kJoinHistoryRemove:
+            return call(handlers.join, &IJoinHandler::history_remove, context, method_id, request);
+        case kJoinHistoryClear:
+            return call(handlers.join, &IJoinHandler::history_clear, context, method_id, request);
         case kUpdatesStatus:
             return call(handlers.updates, &IUpdatesHandler::status, context, method_id, request);
         case kIntegrationStatus:

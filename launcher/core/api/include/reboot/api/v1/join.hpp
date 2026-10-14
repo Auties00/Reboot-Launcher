@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "reboot/api/codec.hpp"
 #include "reboot/api/v1/browser.hpp"
@@ -127,6 +128,73 @@ struct JoinTargetChanged {
 
 [[nodiscard]] inline std::optional<DecodeError> check_cases(const JoinTargetChanged& m) noexcept {
     if (auto error = m.target ? check_cases(*m.target) : std::nullopt) return error;
+    return std::nullopt;
+}
+
+// A browser server or an address Play joined.
+struct JoinHistoryEntry {
+    JoinTarget target;
+    u64 last_joined_unix_ms = 0;
+
+    bool operator==(const JoinHistoryEntry&) const = default;
+};
+
+[[nodiscard]] inline std::optional<DecodeError> check_cases(const JoinHistoryEntry& m) noexcept {
+    if (auto error = check_cases(m.target)) return error;
+    return std::nullopt;
+}
+
+struct JoinHistoryRequest {
+    bool operator==(const JoinHistoryRequest&) const = default;
+};
+
+struct JoinHistoryResponse {
+    // Newest first, at most 50; one entry per server id, or per host and port of an address.
+    std::vector<JoinHistoryEntry> entries;
+
+    bool operator==(const JoinHistoryResponse&) const = default;
+};
+
+[[nodiscard]] inline std::optional<DecodeError> check_cases(const JoinHistoryResponse& m) noexcept {
+    if (auto error = check_all_cases(m.entries)) return error;
+    return std::nullopt;
+}
+
+struct JoinHistoryRemoveRequest {
+    // Matched by server id, or by the host and port of the address.
+    JoinTarget target;
+
+    bool operator==(const JoinHistoryRemoveRequest&) const = default;
+};
+
+[[nodiscard]] inline std::optional<DecodeError> check_cases(const JoinHistoryRemoveRequest& m) noexcept {
+    if (auto error = check_cases(m.target)) return error;
+    return std::nullopt;
+}
+
+struct JoinHistoryRemoveResponse {
+    // False when the history had no such entry.
+    bool removed = false;
+
+    bool operator==(const JoinHistoryRemoveResponse&) const = default;
+};
+
+struct JoinHistoryClearRequest {
+    bool operator==(const JoinHistoryClearRequest&) const = default;
+};
+
+struct JoinHistoryClearResponse {
+    bool operator==(const JoinHistoryClearResponse&) const = default;
+};
+
+struct JoinHistoryChanged {
+    std::vector<JoinHistoryEntry> entries;
+
+    bool operator==(const JoinHistoryChanged&) const = default;
+};
+
+[[nodiscard]] inline std::optional<DecodeError> check_cases(const JoinHistoryChanged& m) noexcept {
+    if (auto error = check_all_cases(m.entries)) return error;
     return std::nullopt;
 }
 

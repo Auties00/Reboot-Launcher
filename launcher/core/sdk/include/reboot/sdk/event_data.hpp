@@ -65,7 +65,8 @@ using EventData = std::variant<
     api::IntegrationChanged,
     api::PrerequisitesChanged,
     api::SecretStateChanged,
-    api::StorageModeChanged>;
+    api::StorageModeChanged,
+    api::JoinHistoryChanged>;
 
 // The data of a kind without a payload; nullopt for any other kind.
 [[nodiscard]] inline std::optional<EventData> marker_data(api::EventKind kind) {
@@ -125,6 +126,7 @@ using EventData = std::variant<
     if (payload.prerequisites_changed) return EventData{std::in_place_type<api::PrerequisitesChanged>, std::move(*payload.prerequisites_changed)};
     if (payload.secret_state_changed) return EventData{std::in_place_type<api::SecretStateChanged>, std::move(*payload.secret_state_changed)};
     if (payload.storage_mode_changed) return EventData{std::in_place_type<api::StorageModeChanged>, std::move(*payload.storage_mode_changed)};
+    if (payload.join_history_changed) return EventData{std::in_place_type<api::JoinHistoryChanged>, std::move(*payload.join_history_changed)};
     return std::nullopt;
 }
 
