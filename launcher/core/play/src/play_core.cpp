@@ -79,7 +79,12 @@ struct AddressJoin {
 
 struct AutoServer {};
 
-using StartTarget = std::variant<BrowserJoin, AddressJoin, AutoServer>;
+// A server this engine hosts.
+struct OwnServer {
+    SessionId session;
+};
+
+using StartTarget = std::variant<BrowserJoin, AddressJoin, AutoServer, OwnServer>;
 
 // What plan() reports and start() pins, worked out once from the request and the strand's state.
 struct Inputs {
@@ -288,6 +293,7 @@ struct PlayCore::Impl {
                 []<class T>(const T& target) -> StartTarget {
                     if constexpr (std::same_as<T, BrowserServerTarget>) return BrowserJoin{target.server, target.confirmation};
                     else if constexpr (std::same_as<T, browser::AddressTarget>) return AddressJoin{target.address};
+                    else if constexpr (std::same_as<T, HostSessionTarget>) return OwnServer{target.session};
                     else return AutoServer{};
                 },
                 *request.target);
@@ -893,11 +899,41 @@ struct PlayCore::Impl {
                             configure_session(*found);
                         }));
                     if (!sent) fail_launch(l, std::move(sent.error()));
+                } else if constexpr (std::same_as<T, OwnServer>) {
+                    join_own_server(l, target.session);
                 } else {
                     start_auto_server(l);
                 }
             },
             *l.in.target);
+    }
+
+    void join_own_server(Launch& l, SessionId server) {
+        progress(l, "resolving_target");
+        Result<host::HostListening> listening = deps.env.listening(server);
+        if (!listening) return fail_launch(l, std::move(listening.error()));
+        Result<sessions::SessionInfo> info = deps.sessions.get(server);
+        if (!info) return fail_launch(l, std::move(info.error()));
+        if (info->version != *l.in.build->version)
+            return fail_launch(l, make_diag(ErrorDomain::Play, msg::kOwnServerVersion)
+                                      .kind(ErrorKind::InvalidInput)
+                                      .arg("version", l.in.build->version->canonical())
+                                      .arg("server_version", info->version.canonical())
+                                      .build());
+        l.match = loopback_target(l, *listening);
+        configure_session(l);
+    }
+
+    // The game and beacon ports a server of this engine bound, over loopback.
+    [[nodiscard]] MatchTargetEntry loopback_target(const Launch& l, const host::HostListening& listening) const {
+        std::optional<Port> game;
+        std::optional<Port> beacon;
+        for (const gameserver::BoundSocket& bound : listening.bound) {
+            if (bound.role == contracts::game_server::SocketRole::Game && !game) game = Port{bound.port};
+            if (bound.role == contracts::game_server::SocketRole::Beacon && !beacon) beacon = Port{bound.port};
+        }
+        return MatchTargetEntry{account_of(l.preflight.login), HostPort{"127.0.0.1", game.value_or(listening.block.first)},
+                                beacon};
     }
 
     void start_auto_server(Launch& l) {
@@ -928,14 +964,7 @@ struct PlayCore::Impl {
         Result<host::HostListening> listening = deps.env.listening(*server);
         if (!listening)
             return fail_launch(l, make_diag(ErrorDomain::Play, msg::kLinkedServerFailed).cause(std::move(listening.error())));
-        std::optional<Port> game;
-        std::optional<Port> beacon;
-        for (const gameserver::BoundSocket& bound : listening->bound) {
-            if (bound.role == contracts::game_server::SocketRole::Game && !game) game = Port{bound.port};
-            if (bound.role == contracts::game_server::SocketRole::Beacon && !beacon) beacon = Port{bound.port};
-        }
-        l.match = MatchTargetEntry{account_of(l.preflight.login),
-                                   HostPort{"127.0.0.1", game.value_or(listening->block.first)}, beacon};
+        l.match = loopback_target(l, *listening);
         configure_session(l);
     }
 

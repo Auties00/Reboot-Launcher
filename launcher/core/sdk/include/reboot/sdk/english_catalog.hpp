@@ -12,7 +12,7 @@ struct EnglishTemplate {
 };
 
 // Every message the engine and reboot_client report, sorted by id.
-inline constexpr std::array<EnglishTemplate, 747> kEnglish{{
+inline constexpr std::array<EnglishTemplate, 748> kEnglish{{
     {"api.conflicting_cases", "The request for method {method} sets more than one alternative of a choice."},
     {"api.malformed_request", "The request for method {method} could not be decoded."},
     {"api.unknown_case", "The request for method {method} uses an alternative this engine does not know."},
@@ -540,6 +540,7 @@ inline constexpr std::array<EnglishTemplate, 747> kEnglish{{
     {"play.linked_server_failed", "The local game server for this game did not start"},
     {"play.no_build_selected", "Choose a build to play"},
     {"play.no_display", "No display is available to show the game"},
+    {"play.own_server_version", "Your server runs version {server_version}, but this build is version {version}"},
     {"play.session_running", "Close the running game before starting another one"},
     {"play.session_stopping", "The game session is already stopping"},
     {"play.untested_declined", "The launch was cancelled because this build is untested"},

@@ -22,8 +22,16 @@ struct AutoServerTarget {
     bool operator==(const AutoServerTarget&) const = default;
 };
 
+// A host session of this engine, joined over loopback on its game and beacon ports. It must be
+// listening and run the build's game version.
+struct HostSessionTarget {
+    SessionId session;
+
+    bool operator==(const HostSessionTarget&) const = default;
+};
+
 // Covers game-launch.orchestration.
 // An address is parsed by browser::parse_game_server_address, then resolved and probed at start.
-using PlayTarget = std::variant<BrowserServerTarget, browser::AddressTarget, AutoServerTarget>;
+using PlayTarget = std::variant<BrowserServerTarget, browser::AddressTarget, AutoServerTarget, HostSessionTarget>;
 
 }  // namespace rb::play

@@ -527,6 +527,7 @@
   "play.linked_server_failed": "The local game server for this game did not start",
   "play.no_build_selected": "Choose a build to play",
   "play.no_display": "No display is available to show the game",
+  "play.own_server_version": "Your server runs version {server_version}, but this build is version {version}",
   "play.session_running": "Close the running game before starting another one",
   "play.session_stopping": "The game session is already stopping",
   "play.untested_declined": "The launch was cancelled because this build is untested",

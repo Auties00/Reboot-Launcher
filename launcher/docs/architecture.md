@@ -812,7 +812,8 @@ The DLL erases them after reading.
 3. Target:
    - a browser server goes through Resolve, `ConfirmJoin`, an optional `NeedsJoinPassword`, then JoinGrant;
    - a custom address is resolved now and probed (a probe failure is a warning only);
-   - the linked auto-server calls `Host.start(auto profile, linked_to)`, which is Unlisted.
+   - the linked auto-server calls `Host.start(auto profile, linked_to)`, which is Unlisted;
+   - a host session of this engine (`target.host_session`) is joined over loopback on its bound game and beacon ports, once it listens on the build's version.
 
    The target is recorded for `ResolveMatchTarget`.
 4. Credential plan, then `ConfigureSession`, then front route registration, then the game-channel token.

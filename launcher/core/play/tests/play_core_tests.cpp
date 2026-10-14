@@ -495,6 +495,45 @@ TEST_CASE("the linked auto-server needs consent, then runs as the session's chil
     }
 }
 
+TEST_CASE("a server this engine hosts is joined over loopback", "[play][core]") {
+    Harness h;
+    sessions::SessionSpec spec;
+    spec.kind = sessions::SessionKind::Host;
+    spec.version = kVersion;
+    SECTION("listening, on the build's version") {
+        const Result<SessionId> server = h.registry.open(std::move(spec), std::make_unique<IdleDriver>());
+        REQUIRE(server);
+        gameserver::BoundSocket game{contracts::game_server::SocketRole::Game, 7790};
+        gameserver::BoundSocket beacon{contracts::game_server::SocketRole::Beacon, 7791};
+        h.env.listenings[*server] = host::HostListening{*server, host::PortBlock{Port{7790}, 2}, {game, beacon}};
+        PlayRequest request = Harness::request();
+        request.target = HostSessionTarget{*server};
+        CHECK(h.core->plan(request)->decisions.empty());
+        h.start(request);
+        h.launched();
+        CHECK(h.env.join_requests.empty());
+        CHECK(h.targets.find(*h.session()) ==
+              MatchTargetEntry{"Player-abc123", HostPort{"127.0.0.1", Port{7790}}, Port{7791}});
+    }
+    SECTION("on another version") {
+        spec.version = GameVersion{3, 5, std::nullopt};
+        const Result<SessionId> server = h.registry.open(std::move(spec), std::make_unique<IdleDriver>());
+        REQUIRE(server);
+        gameserver::BoundSocket game{contracts::game_server::SocketRole::Game, 7790};
+        h.env.listenings[*server] = host::HostListening{*server, host::PortBlock{Port{7790}, 2}, {game}};
+        PlayRequest request = Harness::request();
+        request.target = HostSessionTarget{*server};
+        CHECK(h.failed(h.start(request)).id == "play.own_server_version");
+    }
+    SECTION("not listening yet") {
+        const Result<SessionId> server = h.registry.open(std::move(spec), std::make_unique<IdleDriver>());
+        REQUIRE(server);
+        PlayRequest request = Harness::request();
+        request.target = HostSessionTarget{*server};
+        CHECK(h.failed(h.start(request)).id == "host.not_listening");
+    }
+}
+
 TEST_CASE("a linked server that ends first leaves the game running, degraded", "[play][core][auto]") {
     Harness h;
     const SessionId id = h.running();

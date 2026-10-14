@@ -13,6 +13,8 @@ message PlayTarget {
     ServerId server = 1;
     // host:port, resolved and probed at start.
     string address = 2;
+    // A server this engine hosts, joined over loopback; joining it from the browser is refused.
+    SessionId host_session = 3;
   }
 }
 

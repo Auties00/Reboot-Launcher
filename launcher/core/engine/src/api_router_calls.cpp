@@ -1263,6 +1263,8 @@ namespace {
             Result<HostPort> address = browser::parse_game_server_address(*request.target->address);
             if (!address) return std::unexpected(std::move(address.error()));
             out.target = browser::AddressTarget{*request.target->address, std::move(*address)};
+        } else if (request.target->host_session) {
+            out.target = play::HostSessionTarget{convert::id(*request.target->host_session)};
         }
     }
     if (request.backend) {

@@ -18,12 +18,14 @@ struct PlayTarget {
     std::optional<ServerId> server;
     // host:port, resolved and probed at start.
     std::optional<std::string> address;
+    // A server this engine hosts, joined over loopback; joining it from the browser is refused.
+    std::optional<SessionId> host_session;
 
     bool operator==(const PlayTarget&) const = default;
 };
 
 [[nodiscard]] inline std::optional<DecodeError> check_cases(const PlayTarget& m) noexcept {
-    if (auto error = one_case({m.server.has_value(), m.address.has_value()})) return error;
+    if (auto error = one_case({m.server.has_value(), m.address.has_value(), m.host_session.has_value()})) return error;
     return std::nullopt;
 }
 
