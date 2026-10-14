@@ -39,6 +39,7 @@
 #include "reboot/testing/fake_game_server.hpp"
 #include "reboot/testing/fake_http_transport.hpp"
 #include "reboot/testing/fake_loopback_peer_inspector.hpp"
+#include "reboot/testing/fake_network_interfaces.hpp"
 #include "reboot/testing/fake_os.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 #include "reboot/testing/fake_port_inspector.hpp"
@@ -126,6 +127,9 @@ public:
         auto resolver_owner = std::make_unique<testing::FakeResolver>(strand);
         resolver = resolver_owner.get();
         platform.resolver = std::move(resolver_owner);
+        auto interfaces_owner = std::make_unique<testing::FakeNetworkInterfaces>();
+        interfaces = interfaces_owner.get();
+        platform.interfaces = std::move(interfaces_owner);
         platform.ipc_listener = ipc.make_listener();
         platform.shell = std::make_unique<testing::FakeShell>();
         platform.integration = std::make_unique<testing::FakeRegistrar>();
@@ -392,6 +396,7 @@ public:
     testing::FakePlatformPaths* paths = nullptr;
     DiskFileSystem* fs = nullptr;
     testing::FakeSecretStore* secrets = nullptr;
+    testing::FakeNetworkInterfaces* interfaces = nullptr;
     testing::ScriptedProcessLauncher* processes = nullptr;
     testing::FakeSessionHost* session_host = nullptr;
     testing::FakePortInspector* port_inspector = nullptr;

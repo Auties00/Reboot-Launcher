@@ -344,6 +344,21 @@ message HostIdentityImportResponse {
   ServerId server = 1;
 }
 
+// An IPv4 address of this PC that players on the same LAN, or on a virtual LAN such as ZeroTier or
+// Hamachi, can join a hosted server at, with its game port.
+message LanAddress {
+  string address = 1;
+  // As the OS names the adapter, such as "Ethernet", "ZeroTier One" or "en0".
+  string adapter = 2;
+}
+
+message HostLanAddressesRequest {}
+
+message HostLanAddressesResponse {
+  // Every adapter that is up, in the OS's order; loopback and link-local addresses are left out.
+  repeated LanAddress addresses = 1;
+}
+
 message HostProfilesChanged {
   HostProfileChange change = 1;
   // Absent for RESET.
@@ -446,6 +461,13 @@ service Host {
   rpc IdentityImport(HostIdentityImportRequest) returns (HostIdentityImportResponse) {
     option (method_info) = {
       id: 11
+      kind: METHOD_KIND_OPERATION
+    };
+  }
+  // Read fresh each time, so a VPN that came up since is listed.
+  rpc LanAddresses(HostLanAddressesRequest) returns (HostLanAddressesResponse) {
+    option (method_info) = {
+      id: 12
       kind: METHOD_KIND_OPERATION
     };
   }

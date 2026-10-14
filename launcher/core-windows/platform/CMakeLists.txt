@@ -31,6 +31,7 @@ reboot_add_package(os_windows/platform
     src/windows_file_watcher.cpp
     src/windows_integration_registrar.cpp
     src/windows_log_file_system.cpp
+    src/windows_network_interfaces.cpp
     src/windows_paths.cpp
     src/windows_port_inspector.cpp
     src/windows_prerequisites.cpp

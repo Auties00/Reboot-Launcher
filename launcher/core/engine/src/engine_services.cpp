@@ -764,6 +764,7 @@ void EngineServices::build_services() {
         .purge = *purge_,
         .shell = *shell_,
         .security = *platform.security,
+        .interfaces = *platform.interfaces,
         .languages = *platform.languages});
 }
 

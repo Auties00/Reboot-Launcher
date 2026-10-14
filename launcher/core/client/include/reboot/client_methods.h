@@ -6,7 +6,7 @@
 
 /* The schema these ids and their messages come from; a facade compares it with
  * EngineInfoResponse.schema_fingerprint. */
-#define RB_SCHEMA_FINGERPRINT "d95cee8b23319f5c"
+#define RB_SCHEMA_FINGERPRINT "6e62d17b6419bdef"
 
 /* engine.status: call; EngineStatusRequest -> EngineStatusResponse */
 #define RB_METHOD_ENGINE_STATUS 0x00010001u
@@ -112,6 +112,8 @@
 #define RB_METHOD_HOST_IDENTITY_EXPORT 0x000b000au
 /* host.identity_import: operation (bound); HostIdentityImportRequest -> HostIdentityImportResponse */
 #define RB_METHOD_HOST_IDENTITY_IMPORT 0x000b000bu
+/* host.lan_addresses: operation (bound); HostLanAddressesRequest -> HostLanAddressesResponse */
+#define RB_METHOD_HOST_LAN_ADDRESSES 0x000b000cu
 /* sessions.list: call; SessionsListRequest -> SessionsListResponse */
 #define RB_METHOD_SESSIONS_LIST 0x000c0001u
 /* sessions.get: call; SessionsGetRequest -> SessionsGetResponse */

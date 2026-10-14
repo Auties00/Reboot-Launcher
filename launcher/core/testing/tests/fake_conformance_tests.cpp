@@ -14,6 +14,7 @@
 #include "reboot/testing/fake_caller_context.hpp"
 #include "reboot/testing/fake_disk_info.hpp"
 #include "reboot/testing/fake_loopback_peer_inspector.hpp"
+#include "reboot/testing/fake_network_interfaces.hpp"
 #include "reboot/testing/fake_platform_paths.hpp"
 #include "reboot/testing/fake_port_inspector.hpp"
 #include "reboot/testing/fake_prereqs.hpp"
@@ -130,4 +131,7 @@ TEST_CASE("the OS service fakes pass their suites", "[testing][conformance]") {
 
     FakeSystemInfo system;
     require_passed(run_system_info_conformance(system));
+
+    FakeNetworkInterfaces interfaces;
+    require_passed(run_network_interfaces_conformance(interfaces));
 }

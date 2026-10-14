@@ -44,6 +44,7 @@ struct PlatformServices {
     std::unique_ptr<IPortInspector> ports;
     std::unique_ptr<ILoopbackPeerInspector> peer_inspector;
     std::unique_ptr<IResolver> resolver;
+    std::unique_ptr<INetworkInterfaces> interfaces;
     std::unique_ptr<IIpcListener> ipc_listener;
     std::unique_ptr<IShellLauncher> shell;
     std::unique_ptr<IIntegrationRegistrar> integration;

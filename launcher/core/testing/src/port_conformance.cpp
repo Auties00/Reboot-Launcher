@@ -230,6 +230,21 @@ ConformanceReport run_prerequisite_probe_conformance(ports::IPrerequisiteProbe& 
     return report;
 }
 
+ConformanceReport run_network_interfaces_conformance(ports::INetworkInterfaces& interfaces) {
+    ConformanceReport report("network_interfaces");
+    const Result<std::vector<ports::LocalAddress>> first = interfaces.local_addresses();
+    report.expect("the addresses are listed", first.has_value());
+    if (!first) return report;
+    report.expect("every address is a LAN candidate", std::ranges::all_of(*first, [](const ports::LocalAddress& local) {
+                      return ports::is_lan_candidate(local.address);
+                  }));
+    report.expect("every address names its adapter",
+                  std::ranges::none_of(*first, [](const ports::LocalAddress& local) { return local.adapter.empty(); }));
+    const Result<std::vector<ports::LocalAddress>> second = interfaces.local_addresses();
+    report.expect("a second listing matches", second && *second == *first);
+    return report;
+}
+
 ConformanceReport run_system_info_conformance(const ports::ISystemInfo& system) {
     ConformanceReport report("system_info");
     const ports::OsInfo os = system.os();

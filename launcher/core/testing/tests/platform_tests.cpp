@@ -44,6 +44,7 @@ TEST_CASE("FakePlatform takes each OS's shape", "[testing][platform]") {
         CHECK(services.ipc_listener != nullptr);
         if (os == FakeOs::MacOs) CHECK(platform.runner()->supported() == std::vector{ports::RunnerKind::MacRuntime});
         require_passed(run_system_info_conformance(platform.system()));
+        require_passed(run_network_interfaces_conformance(platform.interfaces()));
         require_passed(run_platform_paths_conformance(platform.paths()));
     }
 }

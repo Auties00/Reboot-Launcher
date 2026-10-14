@@ -24,6 +24,7 @@
 #include "reboot/os_linux/platform/sock_diag_port_inspector.hpp"
 #include "reboot/os_linux/platform/xdg_paths.hpp"
 #include "reboot/os_linux/platform/xdg_shell.hpp"
+#include "reboot/posix/ifaddrs_network_interfaces.hpp"
 #include "systemd_user.hpp"
 
 namespace rb::ports {
@@ -65,6 +66,7 @@ Result<PlatformServices> make_platform(const PlatformOptions& options) {
     services.ports = std::make_unique<SockDiagPortInspector>();
     services.peer_inspector = std::make_unique<SockDiagPeerInspector>();
     services.resolver = std::make_unique<LinuxResolver>();
+    services.interfaces = std::make_unique<posix::IfaddrsNetworkInterfaces>();
     services.shell = std::make_unique<XdgShell>();
     services.integration = std::make_unique<LinuxIntegrationRegistrar>(*paths, hash16, options.data_root_override);
     services.security = std::make_unique<NoSecurityProductProbe>();

@@ -29,6 +29,7 @@
 #include "reboot/os_macos/platform/no_security_product_probe.hpp"
 #include "reboot/os_macos/platform/posix_spawn_launcher.hpp"
 #include "reboot/os_macos/platform/unsupported_peer_inspector.hpp"
+#include "reboot/posix/ifaddrs_network_interfaces.hpp"
 
 namespace rb::ports {
 
@@ -81,6 +82,7 @@ Result<PlatformServices> make_platform(const PlatformOptions& options) {
     services.ports = std::make_unique<LibprocPortInspector>();
     services.peer_inspector = std::make_unique<UnsupportedPeerInspector>();
     services.resolver = std::make_unique<MacResolver>();
+    services.interfaces = std::make_unique<posix::IfaddrsNetworkInterfaces>();
     services.shell = std::make_unique<MacShell>(aqua);
     services.integration = std::make_unique<MacIntegrationRegistrar>(paths->app_bundle(), paths->translocated());
     services.security = std::make_unique<NoSecurityProductProbe>();

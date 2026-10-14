@@ -77,6 +77,7 @@
 #include "reboot/play/play_plan.hpp"
 #include "reboot/play/play_request.hpp"
 #include "reboot/play/play_service.hpp"
+#include "reboot/ports/net.hpp"
 #include "reboot/ports/ui_language_source.hpp"
 #include "reboot/publish/host_identity_store.hpp"
 #include "reboot/secrets/secret_service.hpp"
@@ -913,6 +914,29 @@ Result<OpHandle> ApiRouter::start_identity_import(const api::CallContext&, const
         return std::unexpected(host::to_diagnostic(busy));
     }
     return deps_.host_identities.start_import(profile, std::move(*source), disconnect);
+}
+
+Result<OpHandle> ApiRouter::start_lan_addresses(const api::CallContext&, const api::HostLanAddressesRequest&,
+                                                DisconnectPolicy disconnect) {
+    auto [handle, op] = deps_.ops.create<std::any>(OpKind::Generic, disconnect, std::nullopt, RunnerMultiplier::Native,
+                                                   std::chrono::seconds{10});
+    deps_.workers.submit<std::vector<ports::LocalAddress>>(
+        [&interfaces = deps_.interfaces](CancelToken) { return interfaces.local_addresses(); }, op.token(), deps_.strand,
+        [&op, alive = state_->alive.token()](Result<std::vector<ports::LocalAddress>> listed) {
+            if (alive.cancelled()) {
+                op.complete(Cancelled{CancelReason::Shutdown});
+                return;
+            }
+            if (!listed) {
+                op.complete(Failed{std::move(listed.error())});
+                return;
+            }
+            api::HostLanAddressesResponse out;
+            for (const ports::LocalAddress& local : *listed)
+                out.addresses.push_back(api::LanAddress{local.address.to_string(), local.adapter});
+            op.complete(Completed<std::any>{std::any(std::move(out))});
+        });
+    return handle;
 }
 
 // Identity

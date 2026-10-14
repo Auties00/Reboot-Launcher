@@ -190,6 +190,9 @@ struct EngineStarterSubject {
 // remediate.
 [[nodiscard]] ConformanceReport run_prerequisite_probe_conformance(ports::IPrerequisiteProbe& probe);
 
+// local_addresses() answers, twice alike, with only is_lan_candidate addresses, each named by its adapter.
+[[nodiscard]] ConformanceReport run_network_interfaces_conformance(ports::INetworkInterfaces& interfaces);
+
 // OS facts are non-empty and stable, and a CA bundle, when named, is an absolute path.
 [[nodiscard]] ConformanceReport run_system_info_conformance(const ports::ISystemInfo& system);
 

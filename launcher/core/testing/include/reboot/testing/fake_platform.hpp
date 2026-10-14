@@ -17,6 +17,7 @@
 #include "reboot/testing/fake_quic_transport.hpp"
 #include "reboot/testing/fake_random.hpp"
 #include "reboot/testing/fake_registrar.hpp"
+#include "reboot/testing/fake_network_interfaces.hpp"
 #include "reboot/testing/fake_resolver.hpp"
 #include "reboot/testing/fake_runner_platform.hpp"
 #include "reboot/testing/fake_secret_store.hpp"
@@ -75,6 +76,7 @@ public:
     [[nodiscard]] FakePortInspector& port_inspector() noexcept { return *port_inspector_; }
     [[nodiscard]] FakeLoopbackPeerInspector& peer_inspector() noexcept { return *peer_inspector_; }
     [[nodiscard]] FakeResolver& resolver() noexcept { return *resolver_; }
+    [[nodiscard]] FakeNetworkInterfaces& interfaces() noexcept { return *interfaces_; }
     [[nodiscard]] InMemoryIpc& ipc() noexcept { return ipc_; }
     [[nodiscard]] FakeShell& shell() noexcept { return *shell_; }
     [[nodiscard]] FakeRegistrar& integration() noexcept { return *integration_; }
@@ -106,6 +108,7 @@ private:
     FakePortInspector* port_inspector_ = nullptr;
     FakeLoopbackPeerInspector* peer_inspector_ = nullptr;
     FakeResolver* resolver_ = nullptr;
+    FakeNetworkInterfaces* interfaces_ = nullptr;
     FakeShell* shell_ = nullptr;
     FakeRegistrar* integration_ = nullptr;
     FakeSecurityProbe* security_ = nullptr;

@@ -546,6 +546,27 @@ struct HostIdentityImportResponse {
     bool operator==(const HostIdentityImportResponse&) const = default;
 };
 
+// An IPv4 address of this PC that players on the same LAN, or on a virtual LAN such as ZeroTier or
+// Hamachi, can join a hosted server at, with its game port.
+struct LanAddress {
+    std::string address;
+    // As the OS names the adapter, such as "Ethernet", "ZeroTier One" or "en0".
+    std::string adapter;
+
+    bool operator==(const LanAddress&) const = default;
+};
+
+struct HostLanAddressesRequest {
+    bool operator==(const HostLanAddressesRequest&) const = default;
+};
+
+struct HostLanAddressesResponse {
+    // Every adapter that is up, in the OS's order; loopback and link-local addresses are left out.
+    std::vector<LanAddress> addresses;
+
+    bool operator==(const HostLanAddressesResponse&) const = default;
+};
+
 struct HostProfilesChanged {
     HostProfileChange change{};
     // Absent for RESET.

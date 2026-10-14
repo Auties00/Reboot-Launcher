@@ -142,6 +142,9 @@ public:
     virtual ::rb::Result<::rb::OpHandle> start_identity_export(const CallContext& context, const HostIdentityExportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
     // Completes with HostIdentityImportResponse.
     virtual ::rb::Result<::rb::OpHandle> start_identity_import(const CallContext& context, const HostIdentityImportRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
+    // Read fresh each time, so a VPN that came up since is listed.
+    // Completes with HostLanAddressesResponse.
+    virtual ::rb::Result<::rb::OpHandle> start_lan_addresses(const CallContext& context, const HostLanAddressesRequest& request, ::rb::DisconnectPolicy disconnect) = 0;
 };
 
 // The player name and the account ids derived from it.

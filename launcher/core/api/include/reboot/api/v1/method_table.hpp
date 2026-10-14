@@ -12,7 +12,7 @@
 namespace rb::api {
 
 // Changes with every change to the schema's payloads or methods; Engine.info reports the engine's.
-inline constexpr std::string_view kSchemaFingerprint = "d95cee8b23319f5c";
+inline constexpr std::string_view kSchemaFingerprint = "6e62d17b6419bdef";
 
 inline constexpr u32 kEngineStatus = 0x00010001;
 inline constexpr u32 kEngineInfo = 0x00010002;
@@ -66,6 +66,7 @@ inline constexpr u32 kHostStatus = 0x000b0008;
 inline constexpr u32 kHostCancelMatchEnd = 0x000b0009;
 inline constexpr u32 kHostIdentityExport = 0x000b000a;
 inline constexpr u32 kHostIdentityImport = 0x000b000b;
+inline constexpr u32 kHostLanAddresses = 0x000b000c;
 inline constexpr u32 kSessionsList = 0x000c0001;
 inline constexpr u32 kSessionsGet = 0x000c0002;
 inline constexpr u32 kSessionsSetLease = 0x000c0003;
@@ -120,7 +121,7 @@ inline constexpr u32 kRequestsPending = 0x00150001;
 inline constexpr u32 kRequestsRespond = 0x00150002;
 
 // Sorted by id.
-inline constexpr std::array<MethodSpec, 104> kMethods{{
+inline constexpr std::array<MethodSpec, 105> kMethods{{
     MethodSpec{
         .id = kEngineStatus,
         .service = "reboot.api.v1.Engine",
@@ -640,6 +641,16 @@ inline constexpr std::array<MethodSpec, 104> kMethods{{
         .progress = ProgressUnit::NoProgress,
         .request_type = "reboot.api.v1.HostIdentityImportRequest",
         .response_type = "reboot.api.v1.HostIdentityImportResponse",
+    },
+    MethodSpec{
+        .id = kHostLanAddresses,
+        .service = "reboot.api.v1.Host",
+        .name = "host.lan_addresses",
+        .kind = MethodKind::Operation,
+        .default_disconnect = Disconnect::BoundToConnection,
+        .progress = ProgressUnit::NoProgress,
+        .request_type = "reboot.api.v1.HostLanAddressesRequest",
+        .response_type = "reboot.api.v1.HostLanAddressesResponse",
     },
     MethodSpec{
         .id = kSessionsList,

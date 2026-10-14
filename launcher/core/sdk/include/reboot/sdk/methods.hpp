@@ -406,6 +406,15 @@ public:
         return self().template attach<api::HostIdentityImportResponse>(api::kHostIdentityImport, op_id);
     }
 
+    // host.lan_addresses: operation, bound by default.
+    [[nodiscard]] Expected<Op<api::HostLanAddressesResponse>> host_lan_addresses(
+        const api::HostLanAddressesRequest& request = {}, Disconnect disconnect = Disconnect::Default) const {
+        return self().template start<api::HostLanAddressesResponse>(api::kHostLanAddresses, request, disconnect);
+    }
+    [[nodiscard]] Expected<Op<api::HostLanAddressesResponse>> attach_host_lan_addresses(std::uint64_t op_id) const {
+        return self().template attach<api::HostLanAddressesResponse>(api::kHostLanAddresses, op_id);
+    }
+
     // sessions.list: call.
     [[nodiscard]] Expected<api::SessionsListResponse> sessions_list(
         const api::SessionsListRequest& request = {}, std::chrono::milliseconds timeout = {}) const {

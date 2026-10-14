@@ -49,6 +49,7 @@ class WorkerPool;
 }  // namespace rb
 
 namespace rb::ports {
+class INetworkInterfaces;
 class ISecurityProductProbe;
 class IUiLanguageSource;
 }  // namespace rb::ports
@@ -213,6 +214,7 @@ struct ApiRouterDeps {
     integration::PurgeService& purge;
     integration::ShellService& shell;
     ports::ISecurityProductProbe& security;
+    ports::INetworkInterfaces& interfaces;
     // The user's preferred UI languages, between ui.language and English.
     ports::IUiLanguageSource& languages;
 };
@@ -326,6 +328,7 @@ public:
     Result<api::HostCancelMatchEndResponse> cancel_match_end(const api::CallContext& context, const api::HostCancelMatchEndRequest& request) override;
     Result<OpHandle> start_identity_export(const api::CallContext& context, const api::HostIdentityExportRequest& request, DisconnectPolicy disconnect) override;
     Result<OpHandle> start_identity_import(const api::CallContext& context, const api::HostIdentityImportRequest& request, DisconnectPolicy disconnect) override;
+    Result<OpHandle> start_lan_addresses(const api::CallContext& context, const api::HostLanAddressesRequest& request, DisconnectPolicy disconnect) override;
     // Identity
     Result<api::IdentityGetResponse> get(const api::CallContext& context, const api::IdentityGetRequest& request) override;
     Result<api::IdentitySetDisplayNameResponse> set_display_name(const api::CallContext& context, const api::IdentitySetDisplayNameRequest& request) override;

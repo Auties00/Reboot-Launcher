@@ -408,6 +408,22 @@ TEST_CASE("engine flow: the join history answers every client and forgets on req
     CHECK(rig.call<api::JoinHistoryClearResponse>(*client, api::kJoinHistoryClear, api::JoinHistoryClearRequest{}));
 }
 
+TEST_CASE("engine flow: the LAN addresses are read fresh for each ask") {
+    EngineRig rig;
+    rig.boot();
+    auto client = rig.connect();
+    Result<u64> op = rig.start(*client, api::kHostLanAddresses, api::HostLanAddressesRequest{});
+    REQUIRE(op);
+    const api::HostLanAddressesResponse listed = EngineRig::completed<api::HostLanAddressesResponse>(rig.settle_op(*client, *op));
+    CHECK(listed.addresses == std::vector{api::LanAddress{"192.168.1.20", "Ethernet"}});
+
+    rig.interfaces->set(std::vector<ports::LocalAddress>{{IpAddress::v4(0x0A930001), "ZeroTier One"}});
+    op = rig.start(*client, api::kHostLanAddresses, api::HostLanAddressesRequest{});
+    REQUIRE(op);
+    CHECK(EngineRig::completed<api::HostLanAddressesResponse>(rig.settle_op(*client, *op)).addresses ==
+          std::vector{api::LanAddress{"10.147.0.1", "ZeroTier One"}});
+}
+
 TEST_CASE("engine flow: a client of another build only gets the bootstrap subset") {
     EngineRig rig;
     rig.boot();

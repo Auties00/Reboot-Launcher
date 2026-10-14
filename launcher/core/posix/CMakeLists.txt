@@ -2,6 +2,7 @@
 reboot_add_package(posix
   OS POSIX
   SOURCES
+    src/ifaddrs_network_interfaces.cpp
     src/ignore_sigpipe.cpp
     src/messages.cpp
     src/owner_only_directory.cpp

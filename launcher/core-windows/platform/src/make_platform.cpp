@@ -21,6 +21,7 @@
 #include "reboot/os_windows/platform/windows_file_watcher.hpp"
 #include "reboot/os_windows/platform/windows_integration_registrar.hpp"
 #include "reboot/os_windows/platform/windows_log_file_system.hpp"
+#include "reboot/os_windows/platform/windows_network_interfaces.hpp"
 #include "reboot/os_windows/platform/windows_paths.hpp"
 #include "reboot/os_windows/platform/windows_port_inspector.hpp"
 #include "reboot/os_windows/platform/windows_prerequisites.hpp"
@@ -79,6 +80,7 @@ Result<PlatformServices> make_platform(const PlatformOptions& options) {
     services.ports = std::make_unique<win::WindowsPortInspector>();
     services.peer_inspector = std::make_unique<win::UnsupportedPeerInspector>();
     services.resolver = std::make_unique<win::WindowsResolver>();
+    services.interfaces = std::make_unique<win::WindowsNetworkInterfaces>();
     services.shell = std::make_unique<win::WindowsShell>();
     services.integration = std::make_unique<win::WindowsIntegrationRegistrar>(install_root, std::move(*sid_text));
     services.security = std::make_unique<win::WmiSecurityProductProbe>();

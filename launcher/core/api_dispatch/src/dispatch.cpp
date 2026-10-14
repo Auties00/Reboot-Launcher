@@ -251,6 +251,8 @@ template <class Response>
             return start(handlers.host, &IHostHandler::start_identity_export, context, method_id, request, policy);
         case kHostIdentityImport:
             return start(handlers.host, &IHostHandler::start_identity_import, context, method_id, request, policy);
+        case kHostLanAddresses:
+            return start(handlers.host, &IHostHandler::start_lan_addresses, context, method_id, request, policy);
         case kSessionsStop:
             return start(handlers.sessions, &ISessionsHandler::start_stop, context, method_id, request, policy);
         case kBackendStart:
@@ -326,6 +328,8 @@ template <class Response>
             return encode_result<HostIdentityExportResponse>(value);
         case kHostIdentityImport:
             return encode_result<HostIdentityImportResponse>(value);
+        case kHostLanAddresses:
+            return encode_result<HostLanAddressesResponse>(value);
         case kSessionsStop:
             return encode_result<SessionsStopResponse>(value);
         case kBackendStart:

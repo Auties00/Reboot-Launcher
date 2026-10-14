@@ -27,6 +27,7 @@ reboot_add_package(testing
     src/fake_http_transport.cpp
     src/fake_loopback_peer_inspector.cpp
     src/fake_platform.cpp
+    src/fake_network_interfaces.cpp
     src/fake_platform_paths.cpp
     src/fake_port_binder.cpp
     src/fake_port_inspector.cpp

@@ -71,6 +71,7 @@ FakePlatform::FakePlatform(DeterministicRuntime& runtime, FakePlatformOptions op
     port_inspector_ = install<FakePortInspector>(services_.ports);
     peer_inspector_ = install<FakeLoopbackPeerInspector>(services_.peer_inspector, os == FakeOs::Linux);
     resolver_ = install<FakeResolver>(services_.resolver, strand);
+    interfaces_ = install<FakeNetworkInterfaces>(services_.interfaces);
     services_.ipc_listener = ipc_.make_listener();
     shell_ = install<FakeShell>(services_.shell, fs_);
     integration_ = install<FakeRegistrar>(services_.integration);

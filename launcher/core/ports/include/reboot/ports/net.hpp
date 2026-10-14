@@ -38,6 +38,30 @@ public:
     virtual Result<std::optional<u32>> peer_uid(Endpoint local, Endpoint remote) = 0;
 };
 
+// An IPv4 address of this machine that another one on a LAN or a virtual LAN could reach.
+struct LocalAddress {
+    IpAddress address;
+    // The adapter as the OS names it: "Ethernet" or "ZeroTier One" on Windows, "en0" or "zt0" elsewhere.
+    std::string adapter;
+
+    bool operator==(const LocalAddress&) const = default;
+};
+
+// IPv4, and neither unspecified, loopback nor link-local (169.254/16, an adapter with no DHCP answer).
+[[nodiscard]] constexpr bool is_lan_candidate(const IpAddress& address) noexcept {
+    if (!address.is_v4() || address.is_loopback()) return false;
+    if (address.bytes[12] == 0) return false;
+    return !(address.bytes[12] == 169 && address.bytes[13] == 254);
+}
+
+// Blocking but quick, so a worker runs it.
+class INetworkInterfaces {
+public:
+    virtual ~INetworkInterfaces() = default;
+    // The is_lan_candidate addresses of every adapter that is up, in the OS's adapter order.
+    virtual Result<std::vector<LocalAddress>> local_addresses() = 0;
+};
+
 // `done` runs on an I/O or worker thread.
 class IResolver {
 public:

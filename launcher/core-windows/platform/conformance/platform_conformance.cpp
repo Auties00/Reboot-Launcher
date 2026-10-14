@@ -32,6 +32,7 @@
 #include "reboot/os_windows/platform/windows_file_watcher.hpp"
 #include "reboot/os_windows/platform/windows_integration_registrar.hpp"
 #include "reboot/os_windows/platform/windows_log_file_system.hpp"
+#include "reboot/os_windows/platform/windows_network_interfaces.hpp"
 #include "reboot/os_windows/platform/windows_paths.hpp"
 #include "reboot/os_windows/platform/windows_port_inspector.hpp"
 #include "reboot/os_windows/platform/windows_prerequisites.hpp"
@@ -743,6 +744,11 @@ TEST_CASE("WindowsSystemInfo passes the system info suite", "[conformance][syste
     require_passed(testing::run_system_info_conformance(system));
     CHECK(system.os().name == "windows");
     CHECK(std::stoul(system.os().build) >= WindowsPrerequisites::kMinimumBuild);
+}
+
+TEST_CASE("WindowsNetworkInterfaces passes the network interfaces suite", "[conformance][net]") {
+    WindowsNetworkInterfaces interfaces;
+    require_passed(testing::run_network_interfaces_conformance(interfaces));
 }
 
 TEST_CASE("VelopackApplier passes the update suite, installed or portable", "[conformance][update]") {

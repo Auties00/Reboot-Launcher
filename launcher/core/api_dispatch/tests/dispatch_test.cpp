@@ -101,6 +101,7 @@ using rb::u64;
     X_CALL(kHostCancelMatchEnd, cancel_match_end, HostCancelMatchEndRequest, HostCancelMatchEndResponse) \
     X_OP(kHostIdentityExport, start_identity_export, HostIdentityExportRequest) \
     X_OP(kHostIdentityImport, start_identity_import, HostIdentityImportRequest) \
+    X_OP(kHostLanAddresses, start_lan_addresses, HostLanAddressesRequest) \
     X_CALL(kSessionsList, list, SessionsListRequest, SessionsListResponse) \
     X_CALL(kSessionsGet, get, SessionsGetRequest, SessionsGetResponse) \
     X_CALL(kSessionsSetLease, set_lease, SessionsSetLeaseRequest, SessionsSetLeaseResponse) \

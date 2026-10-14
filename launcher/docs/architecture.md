@@ -295,6 +295,7 @@ The **foundation** is `core/base`, `core/foundation`, `core/ports` and `core/con
 | IPortInspector | GetExtendedTcpTable/UdpTable v4/v6 | libproc PROC_PIDFDSOCKETINFO | sock_diag, /proc/net fallback |
 | ILoopbackPeerInspector | not_supported | not_supported | sock_diag owner uid |
 | IResolver | GetAddrInfoExW (cancellable) | getaddrinfo on a worker | getaddrinfo on a worker |
+| INetworkInterfaces | GetAdaptersAddresses, with adapter friendly names | getifaddrs (posix) | getifaddrs (posix) |
 | IIpcListener (engine) / IIpcConnector (C) | named pipe with PipeTrust | AF_UNIX (posix) + getpeereid | AF_UNIX (posix) + SO_PEERCRED + LISTEN_FDS |
 | IEngineStarter (C) | breakaway → on-demand task → CannotDetach | SMAppService.agent + `launchctl kickstart` → AgentRequiresApproval | `systemctl --user start` socket → `systemd-run --user` → setsid double fork (refused under a Steam reaper) |
 | ICallerContextProbe (C) | session id, elevation, AllowSetForegroundWindow | Aqua session | display env allow-list |
@@ -486,7 +487,7 @@ A schema change changes `RB_SCHEMA_FINGERPRINT`. `RB_ABI_MAJOR.MINOR` versions o
 | Identity | get, set_display_name, reset | - | IdentityChanged |
 | Secrets | state, clear | - | SecretStateChanged |
 | Play | plan | start (detached) → SessionId | via Sessions |
-| Host | profiles_list/create/update/delete, share_link, status, cancel_match_end | start (detached); command, identity_export, identity_import (bound) | HostPhaseChanged, HostListening, ReachabilityChanged, PortMappingChanged, PublishStateChanged, MatchEvent, PlayerEvent, HostProfilesChanged |
+| Host | profiles_list/create/update/delete, share_link, status, cancel_match_end | start (detached); command, identity_export, identity_import, lan_addresses (bound) | HostPhaseChanged, HostListening, ReachabilityChanged, PortMappingChanged, PublishStateChanged, MatchEvent, PlayerEvent, HostProfilesChanged |
 | Sessions | list, get, set_lease | stop (bound) | SessionStateChanged, SessionSpawned, SessionDegraded, SessionEnded |
 | Backend | status, data_dir, set_target, accounts_list | start, stop, accounts_reset/delete/prune/rename (bound) | BackendStateChanged, BackendAccountsChanged, XmppUnavailable |
 | Browser | open_view, update_view, close_view, state, buckets | resolve, search (bound) | BrowserConnectionChanged, ViewSnapshot, ViewDelta |
